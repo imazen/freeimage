@@ -4,7 +4,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 PROJECT_NAME           = FreeImagePlus
-PROJECT_NUMBER         = "FreeImage 3.5.0"
+PROJECT_NUMBER         = "FreeImage 3.5.1"
 OUTPUT_DIRECTORY       = C:/Projects/FreeImage/Wrapper/FreeImagePlus/
 OUTPUT_LANGUAGE        = English
 USE_WINDOWS_ENCODING   = YES
