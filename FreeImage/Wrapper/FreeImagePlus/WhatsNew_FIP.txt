@@ -5,6 +5,10 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+January 5th, 2005
+[Herve Drolon]
+! changed the prototype of get/set Resolution functions
+
 December 19th, 2004
 [Herve Drolon]
 ! updated fipImage::rotate to handle 1-bit images

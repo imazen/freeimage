@@ -161,20 +161,20 @@ WORD fipImage::getLine() {
 	return FreeImage_GetLine(_dib);
 }
 
-WORD fipImage::getHorizontalResolution() {
-	return (FreeImage_GetDotsPerMeterX(_dib) / 100); 
+double fipImage::getHorizontalResolution() {
+	return (FreeImage_GetDotsPerMeterX(_dib) / (double)100); 
 }
 
-WORD fipImage::getVerticalResolution() {
-	return (FreeImage_GetDotsPerMeterY(_dib) / 100);
+double fipImage::getVerticalResolution() {
+	return (FreeImage_GetDotsPerMeterY(_dib) / (double)100);
 }
 
-void fipImage::setHorizontalResolution(LONG value) {
-	FreeImage_SetDotsPerMeterX(_dib, value * 100);
+void fipImage::setHorizontalResolution(double value) {
+	FreeImage_SetDotsPerMeterX(_dib, (unsigned)(value * 100 + 0.5));
 }
 
-void fipImage::setVerticalResolution(LONG value) {
-	FreeImage_SetDotsPerMeterY(_dib, value * 100);
+void fipImage::setVerticalResolution(double value) {
+	FreeImage_SetDotsPerMeterY(_dib, (unsigned)(value * 100 + 0.5));
 }
 
 

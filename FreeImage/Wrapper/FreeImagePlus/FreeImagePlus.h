@@ -308,25 +308,25 @@ public:
 	Returns the bitmap resolution along the X axis, in pixels / cm
 	@see FreeImage_GetDotsPerMeterX
 	*/
-	WORD getHorizontalResolution();
+	double getHorizontalResolution();
 	
 	/**
 	Returns the bitmap resolution along the Y axis, in pixels / cm
 	@see FreeImage_GetDotsPerMeterY
 	*/
-	WORD getVerticalResolution();
+	double getVerticalResolution();
 
 	/**
 	set the bitmap resolution along the X axis, in pixels / cm
 	@see FreeImage_GetInfoHeader
 	*/
-	void setHorizontalResolution(LONG value);
+	void setHorizontalResolution(double value);
 	
 	/**
 	set the bitmap resolution along the Y axis, in pixels / cm
 	@see FreeImage_GetInfoHeader
 	*/
-	void setVerticalResolution(LONG value);
+	void setVerticalResolution(double value);
 	//@}
 
 	/**@name Palette operations */
