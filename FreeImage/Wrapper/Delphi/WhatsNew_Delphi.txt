@@ -1,0 +1,27 @@
+What's New for Delphi FreeImage wrapper
+
+* : fixed
+- : removed
+! : changed
++ : added
+
+November 12, 2004
++ [Anatoliy Pulyaevskiy] added TFreeBitmap.Assign(Source: PFIBITMAP)
+- [Anatoliy Pulyaevskiy] removed TFreeBitmap.SetDib
+! [Anatoliy Pulyaevskiy] TFreeBitmap.Dib property now read-only
+* [Anatoliy Pulyaevskiy] TFreeMultiBitmap.UnlockPage implemented
+* [Anatoliy Pulyaevskiy] fixed TFreeBitmap.Rescale not applies changes
+
+November 8, 2004
++ [Anatoliy Pulyaevskiy] added Delphi version of FreeImagePlus
++ [Anatoliy Pulyaevskiy] updated the wrapper for FreeImage 3.5.0
+
+January 7, 2004
++ [Tommy] added TargaImage unit
+
+October 28, 2003
++ [Peter Byström] updated the wrapper for FreeImage 3.0.2
+
+August 9, 2003
++ [Simon Beavis] added a wrapper for FreeImage 2.6.1
+
