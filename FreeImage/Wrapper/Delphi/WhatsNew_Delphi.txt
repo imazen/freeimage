@@ -1,18 +1,26 @@
-What's New for Delphi FreeImage wrapper
+What's New for Delphi FreeImage Wrapper
 
 * : fixed
 - : removed
 ! : changed
 + : added
 
-November 12, 2004
+December 20, 2004 - Version 1.2.0
++ [Anatoliy Pulyaevskiy] added MultiBitmap Demo
+* [Anatoliy Pulyaevskiy] fixed TFreeMultiBitmap.LockPage due to error with Locking/Unlocking pages
++ [Anatoliy Pulyaevskiy] added TFreeBitmap.ConvertTo4Bits
+* [Anatoliy Pulyaevskiy] TFreeBitmap.ConvertToGrayScale fixed converting bitmaps with FIC_MINISWHITE color type
+* [Anatoliy Pulyaevskiy] fixed TFreeWinBitmap.DrawEx FDisplayDib deleting
++ [Anatoliy Pulyaevskiy] updated the wrapper for FreeImage 3.5.2
+
+November 12, 2004 - Version 1.1.0
 + [Anatoliy Pulyaevskiy] added TFreeBitmap.Assign(Source: PFIBITMAP)
 - [Anatoliy Pulyaevskiy] removed TFreeBitmap.SetDib
 ! [Anatoliy Pulyaevskiy] TFreeBitmap.Dib property now read-only
 * [Anatoliy Pulyaevskiy] TFreeMultiBitmap.UnlockPage implemented
 * [Anatoliy Pulyaevskiy] fixed TFreeBitmap.Rescale not applies changes
 
-November 8, 2004
+November 8, 2004 - Version 1.0.0
 + [Anatoliy Pulyaevskiy] added Delphi version of FreeImagePlus
 + [Anatoliy Pulyaevskiy] updated the wrapper for FreeImage 3.5.0
 

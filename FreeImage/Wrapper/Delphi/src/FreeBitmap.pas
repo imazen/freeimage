@@ -25,10 +25,7 @@ unit FreeBitmap;
 //
 // From begining all code of this file is based on C++ wrapper to
 // FreeImage - FreeImagePlus. So it is simply translation from C on Delphi Pascal
-// with just some minor changes. But in the future releases the contents of
-// these files can be changed, depending on development needs.
-// In the near future it is planned to add a control for display of images
-// and some more interesting things.
+// with just some minor changes.
 //
 // ==========================================================
 
@@ -38,6 +35,15 @@ uses
   SysUtils, Classes, Windows, FreeImage;
 
 type
+  TFreeStretchFilter = (
+    sfBox,
+    sfBicubic,
+    sfBilinear,
+    sfBSpline,
+    sfCatmullRom,
+    sfLanczos3
+  );
+
   { TFreeObject }
 
   TFreeObject = class
@@ -66,7 +72,7 @@ type
     // copying
     procedure Assign(Source: TFreeBitmap); overload;
     procedure Assign(Source: PFIBITMAP); overload;
-    function CopySubImage(Left, Top, Right, Bottom: Integer; var Dest: TFreeBitmap): Boolean;
+    function CopySubImage(Left, Top, Right, Bottom: Integer; Dest: TFreeBitmap): Boolean;
     function PasteSubImage(Src: TFreeBitmap; Left, Top: Integer; Alpha: Integer = 256): Boolean;    
     // clearing
     procedure Clear;
@@ -109,6 +115,7 @@ type
     // convertion
     function ConvertToType(ImageType: FREE_IMAGE_TYPE; ScaleLinear: Boolean): Boolean;
     function Threshold(T: Byte): Boolean;
+    function ConvertTo4Bits: Boolean;
     function ConvertTo8Bits: Boolean;
     function ConvertTo16Bits555: Boolean;
     function ConvertTo16Bits565: Boolean;
@@ -143,7 +150,7 @@ type
     function AdjustContrast(Percentage: Double): Boolean;
     function GetHistogram(Histo: PDWORD; Channel: FREE_IMAGE_COLOR_CHANNEL = FICC_BLACK): Boolean;
     // upsampling / downsampling
-    function Rescale(NewWidth, NewHeight: Integer; Filter: FREE_IMAGE_FILTER): Boolean;
+    function Rescale(NewWidth, NewHeight: Integer; Filter: TFreeStretchFilter; Dest: TFreeBitmap = nil): Boolean;
     { Properties }
     property Dib: PFIBITMAP read FDib;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
@@ -208,7 +215,7 @@ type
     procedure InsertPage(Page: Integer; Bitmap: TFreeBitmap);
     procedure DeletePage(Page: Integer);
     function MovePage(Target, Source: Integer): Boolean;
-    function LockPage(Page: Integer): PFIBITMAP;
+    procedure LockPage(Page: Integer; DestBitmap: TFreeBitmap);
     procedure UnlockPage(Bitmap: TFreeBitmap; Changed: Boolean);
     function GetLockedPageNumbers(var Pages: Integer; var Count: Integer): Boolean;    
     // overriden methods
@@ -220,6 +227,8 @@ type
   end;
 
 implementation
+
+uses ConvUtils;
 
 { TFreeObject }
 
@@ -410,6 +419,18 @@ begin
     Result := False
 end;
 
+function TFreeBitmap.ConvertTo4Bits: Boolean;
+var
+  dib4: PFIBITMAP;
+begin
+  Result := False;
+  if IsValid then
+  begin
+    dib4 := FreeImage_ConvertTo4Bits(FDib);
+    Result := Replace(dib4);
+  end;
+end;
+
 function TFreeBitmap.ConvertTo8Bits: Boolean;
 var
   dib8: PFIBITMAP;
@@ -429,7 +450,8 @@ begin
 
   if FDib <> nil then
   begin
-    if FreeImage_GetColorType(FDib) = FIC_PALETTE then
+    if (FreeImage_GetColorType(FDib) = FIC_PALETTE) or
+       (FreeImage_GetColorType(FDib) = FIC_MINISWHITE) then
     begin
       // convert the palette to 24-bit, then to 8-bit
       Result := ConvertTo24Bits;
@@ -457,7 +479,7 @@ begin
 end;
 
 function TFreeBitmap.CopySubImage(Left, Top, Right, Bottom: Integer;
-  var Dest: TFreeBitmap): Boolean;
+  Dest: TFreeBitmap): Boolean;
 begin
   if FDib <> nil then
   begin
@@ -575,8 +597,7 @@ end;
 
 function TFreeBitmap.GetImageType: FREE_IMAGE_TYPE;
 begin
-  Result := FIT_UNKNOWN; // to be implemented
-//  Result := FreeImage_GetImageType(
+  Result := FreeImage_GetImageType(FDib)
 end;
 
 function TFreeBitmap.GetInfo: PBitmapInfo;
@@ -624,7 +645,7 @@ begin
   if ScanLine < H then
     Result := FreeImage_GetScanLine(FDib, ScanLine)
   else
-    Result := nil
+    Result := nil;
 end;
 
 function TFreeBitmap.GetScanWidth: Integer;
@@ -751,8 +772,8 @@ begin
     // load the file
     FDib := MemIO.Read(fif, Flag);
 
-    Change;
     Result := IsValid;
+    Change;
   end else
     Result := False;
 end;
@@ -782,10 +803,19 @@ begin
 end;
 
 function TFreeBitmap.Rescale(NewWidth, NewHeight: Integer;
-  Filter: FREE_IMAGE_FILTER): Boolean;
+  Filter: TFreeStretchFilter; Dest: TFreeBitmap): Boolean;
+const
+  cFilter: array [TFreeStretchFilter] of FREE_IMAGE_FILTER = (
+    FILTER_BOX,
+    FILTER_BICUBIC,
+    FILTER_BILINEAR,
+    FILTER_BSPLINE,
+    FILTER_CATMULLROM,
+    FILTER_LANCZOS3
+  );
 var
   Bpp: Integer;
-  Dst: PFIBITMAP;
+  DstDib: PFIBITMAP;
 begin
   Result := False;
 
@@ -794,29 +824,29 @@ begin
     Bpp := FreeImage_GetBPP(FDib);
 
     if Bpp < 8 then
-      // convert to 8-bit
-      if not ConvertTo8Bits then Exit
-    else if Bpp = 16 then
-      // convert to 24-bit
+      if not ConvertToGrayscale then Exit
+    else
+    if Bpp = 16 then
+    // convert to 24-bit
       if not ConvertTo24Bits then Exit;
 
     // perform upsampling / downsampling
-    Dst := FreeImage_Rescale(FDib, NewWidth, NewHeight, Filter);
-    Result := Replace(Dst);
+    DstDib := FreeImage_Rescale(FDib, NewWidth, NewHeight, cFilter[Filter]);
+    if Dest = nil then
+      Result := Replace(DstDib)
+    else
+      Result := Dest.Replace(DstDib)
   end
 end;
 
 function TFreeBitmap.Rotate(Angle: Double): Boolean;
 var
-  Bpp: Integer;
   Rotated: PFIBITMAP;
 begin
   Result := False;
   if FDib <> nil then
   begin
-    Bpp := FreeImage_GetBPP(FDib);
-
-    if (Bpp = 1) or (Bpp >= 8) then
+    if FreeImage_GetBPP(FDib) >= 8 then
     begin
       Rotated := FreeImage_RotateClassic(FDib, Angle);
       Result := Replace(Rotated);
@@ -1305,14 +1335,17 @@ var
   HasBackground, Transparent: Boolean;
   DibDouble: PFIBITMAP;
 begin
+  if not IsValid then Exit;
+  
   // convert to standart bitmap if needed
   if FDeleteMe then
   begin
     FreeImage_Unload(FDisplayDib);
+    FDisplayDib := nil;
     FDeleteMe := False;
   end;
 
-  ImageType := GetImageType;
+  ImageType := FreeImage_GetImageType(FDib);
   if ImageType = FIT_BITMAP then
   begin
     HasBackground := FreeImage_HasBackgroundColor(Dib);
@@ -1330,19 +1363,21 @@ begin
     end
   end
   else
-  // convert to standart dib for display
-  if ImageType <> FIT_COMPLEX then
-    FDisplayDib := FreeImage_ConvertToStandardType(Dib, True)
-  else
   begin
-    // convert to type FIT_DOUBLE
-    DibDouble := FreeImage_GetComplexChannel(Dib, FICC_MAG);
-    FDisplayDib := FreeImage_ConvertToStandardType(DibDouble, True);
-    // free image of type FIT_DOUBLE
-    FreeImage_Unload(DibDouble);
+    // convert to standart dib for display
+    if ImageType <> FIT_COMPLEX then
+      FDisplayDib := FreeImage_ConvertToStandardType(Dib, True)
+    else
+    begin
+      // convert to type FIT_DOUBLE
+      DibDouble := FreeImage_GetComplexChannel(Dib, FICC_MAG);
+      FDisplayDib := FreeImage_ConvertToStandardType(DibDouble, True);
+      // free image of type FIT_DOUBLE
+      FreeImage_Unload(DibDouble);
+    end;
+    // remember to delete FDisplayDib
+    FDeleteMe := True;
   end;
-  // remember to delete FDisplayDib
-  FDeleteMe := True;
 
 
   // Draw the DIB
@@ -1426,11 +1461,15 @@ begin
   Result := FMPage <> nil
 end;
 
-function TFreeMultiBitmap.LockPage(Page: Integer): PFIBITMAP;
+procedure TFreeMultiBitmap.LockPage(Page: Integer; DestBitmap: TFreeBitmap);
 begin
-  Result := nil;
   if not IsValid then Exit;
-  Result := FreeImage_LockPage(FMPage, Page)
+
+  if Assigned(DestBitmap) then
+  begin
+    // copy pointer
+    DestBitmap.Replace(FreeImage_LockPage(FMPage, Page));
+  end;
 end;
 
 function TFreeMultiBitmap.MovePage(Target, Source: Integer): Boolean;
@@ -1467,6 +1506,8 @@ begin
   begin
     FreeImage_UnlockPage(FMPage, Bitmap.FDib, Changed);
     // clear the image so that it becomes invalid.
+    // don't use Bitmap.Clear method because it calls FreeImage_Unload
+    // just clear the pointer
     Bitmap.FDib := nil;
     Bitmap.Change;
   end;

@@ -31,6 +31,8 @@ type
     mnuClockwise: TMenuItem;
     mnuAntiClockwise: TMenuItem;
     mnuInvert: TMenuItem;
+    mnuClear: TMenuItem;
+    mnuTo4Bits: TMenuItem;
     procedure FormDestroy(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -53,7 +55,7 @@ implementation
 {$R *.dfm}
 
 uses
-  FI_Utils, FreeImage;
+  FreeUtils, FreeImage;
 
 procedure TfwbMainForm.FormDestroy(Sender: TObject);
 begin
@@ -74,8 +76,7 @@ end;
 
 procedure TfwbMainForm.FormCreate(Sender: TObject);
 begin
-  if FBitmap = nil then
-    FBitmap := TFreeWinBitmap.Create;
+  FBitmap := TFreeWinBitmap.Create;
 
   mnuImage.Enabled := FBitmap.IsValid;
   OD.Filter := FIU_GetAllFilters;
@@ -86,6 +87,16 @@ begin
   Close;
 end;
 
+const
+  cColorType: array [FREE_IMAGE_COLOR_TYPE] of string = (
+    'MinIsWhite',
+    'MinIsBlack',
+    'RGB',
+    'Palette',
+    'RGBAlpha',
+    'CMYK'
+  );
+
 procedure TfwbMainForm.mnuFileOpenClick(Sender: TObject);
 var
   t: Cardinal;
@@ -94,11 +105,12 @@ begin
   begin
     t := GetTickCount;
     FBitmap.Load(OD.FileName);
-    mnuImage.Enabled := FBitmap.IsValid;
     t := GetTickCount - t;
-    Invalidate;
+    mnuImage.Enabled := FBitmap.IsValid;
     StatusBar.Panels[0].Text := 'Loaded in ' + IntToStr(t) + 'msec.';
     StatusBar.Panels[1].Text := Format('%dx%d', [FBitmap.GetWidth, FBitmap.GetHeight]);
+    StatusBar.Panels[2].Text := 'Color type: ' + cColorType[FBitmap.GetColorType];
+    Invalidate;
   end;
 end;
 
@@ -119,6 +131,8 @@ begin
     FLipHorizontal else
   if Sender = mnuFlipVert then
     FlipVertical else
+  if Sender = mnuTo4Bits then
+    ConvertTo4Bits else
   if Sender = mnuTo8Bits then
     ConvertTo8Bits else
   if Sender = mnuTo16Bits555 then
@@ -140,9 +154,10 @@ begin
   if Sender = mnuAntiClockwise then
     Rotate(90) else
   if Sender = mnuInvert then
-    Invert;
-
-
+    Invert else
+  if Sender = mnuClear then
+    Clear;
+  StatusBar.Panels[2].Text := 'Color type: ' + cColorType[FBitmap.GetColorType];
   Invalidate;
 end;
 

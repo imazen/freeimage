@@ -10,6 +10,9 @@ uses Windows;
 // - Simon Beavis
 // - Peter Byström
 //
+// Contributors:
+// - Anatoliy Pulyaevskiy (xvel84@rambler.ru)
+//
 // This file is part of FreeImage 3
 //
 // COVERED CODE IS PROVIDED UNDER THIS LICENSE ON AN "AS IS" BASIS, WITHOUT WARRANTY
@@ -75,32 +78,32 @@ type
 type
   // I/O image format identifiers.
   FREE_IMAGE_FORMAT = (
-	FIF_UNKNOWN = -1,
-	FIF_BMP		  = 0,
-	FIF_ICO	  	= 1,
-	FIF_JPEG   	= 2,
-	FIF_JNG	  	= 3,
-	FIF_KOALA 	= 4,
-	FIF_LBM	  	= 5,
-	FIF_IFF     = FIF_LBM,
-	FIF_MNG	  	= 6,
-	FIF_PBM	  	= 7,
-	FIF_PBMRAW	= 8,
-	FIF_PCD	  	= 9,
-	FIF_PCX	  	= 10,
-	FIF_PGM	  	= 11,
-	FIF_PGMRAW	= 12,
-	FIF_PNG	  	= 13,
-	FIF_PPM	  	= 14,
-	FIF_PPMRAW	= 15,
-	FIF_RAS	  	= 16,
-	FIF_TARGA 	= 17,
-	FIF_TIFF  	= 18,
-	FIF_WBMP  	= 19,
-	FIF_PSD	  	= 20,
-	FIF_CUT	  	= 21,
-	FIF_XBM	  	= 22,
-	FIF_XPM	  	= 23
+    FIF_UNKNOWN = -1,
+    FIF_BMP		  = 0,
+    FIF_ICO	  	= 1,
+    FIF_JPEG   	= 2,
+    FIF_JNG	  	= 3,
+    FIF_KOALA 	= 4,
+    FIF_LBM	  	= 5,
+    FIF_IFF     = FIF_LBM,
+    FIF_MNG	  	= 6,
+    FIF_PBM	  	= 7,
+    FIF_PBMRAW	= 8,
+    FIF_PCD	  	= 9,
+    FIF_PCX	  	= 10,
+    FIF_PGM	  	= 11,
+    FIF_PGMRAW	= 12,
+    FIF_PNG	  	= 13,
+    FIF_PPM	  	= 14,
+    FIF_PPMRAW	= 15,
+    FIF_RAS	  	= 16,
+    FIF_TARGA 	= 17,
+    FIF_TIFF  	= 18,
+    FIF_WBMP  	= 19,
+    FIF_PSD	  	= 20,
+    FIF_CUT	  	= 21,
+    FIF_XBM	  	= 22,
+    FIF_XPM	  	= 23
   );
 
 {
@@ -371,13 +374,18 @@ type
   FreeImage_OutputMessageFunction = function(fif: FREE_IMAGE_FORMAT; msg: PChar): pointer; stdcall;
 
 procedure FreeImage_SetOutputMessage(omf: FreeImage_OutputMessageFunction); stdcall;
-  external FIDLL name '_FreeImage_SetOutputMessage@8';
+  external FIDLL name '_FreeImage_SetOutputMessage@4';
 
 // Allocate/Unload routines ------------------------------------------------
 
 function FreeImage_Allocate(width, height, bpp: integer; red_mask: Cardinal = 0;
   green_mask: Cardinal = 0; blue_mask: Cardinal = 0): PFIBITMAP; stdcall;
   external FIDLL name '_FreeImage_Allocate@24';
+
+function FreeImage_AllocateT(Atype: FREE_IMAGE_TYPE; Width, Height: Integer;
+  bpp: Integer = 8; red_mask: Cardinal = 0;
+  green_mask: Cardinal = 0; blue_mask: Cardinal = 0): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_AllocateT@28';
 
 function FreeImage_Clone(dib: PFIBITMAP): PFIBITMAP; stdcall;
   external FIDLL name '_FreeImage_Clone@4';
@@ -388,7 +396,8 @@ procedure FreeImage_Unload(dib: PFIBITMAP); stdcall;
 // Load / Save routines -----------------------------------------------------
 
 function FreeImage_Load(fif: FREE_IMAGE_FORMAT; filename: PChar;
-  flags: integer = 0): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_Load@12';
+  flags: integer = 0): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_Load@12';
 
 function FreeImage_LoadFromHandle(fif: FREE_IMAGE_FORMAT; io: PFreeImageIO;
   handle: fi_handle; flags: integer = 0): PFIBITMAP; stdcall;
@@ -413,7 +422,7 @@ procedure FreeImage_CloseMemory(stream: PFIMEMORY); stdcall;
 
 function FreeImage_LoadFromMemory(fif: FREE_IMAGE_FORMAT; stream: PFIMEMORY;
   flags: Integer = 0): PFIBITMAP; stdcall;
-  external FIDLL name '_FreeImage_LoadFromMemory@8';
+  external FIDLL name '_FreeImage_LoadFromMemory@12';
 
 function FreeImage_SaveToMemory(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP;
   stream: PFIMEMORY; flags: Integer = 0): Boolean; stdcall;
@@ -484,7 +493,7 @@ function FreeImage_FIFSupportsICCProfiles(fif: FREE_IMAGE_FORMAT): boolean; stdc
 
 function FreeImage_FIFSupportsExportType(fif: FREE_IMAGE_FORMAT;
   image_type: FREE_IMAGE_TYPE): Boolean; stdcall;
-  external FIDLL name '_FreeImage_FIFSupportsExportType@12';
+  external FIDLL name '_FreeImage_FIFSupportsExportType@8';
 
 // Multipaging interface ----------------------------------------------------
 
@@ -537,7 +546,7 @@ function FreeImage_GetFileTypeFromMemory(stream: PFIMEMORY;
 // ImageType request routine ------------------------------------------------
 
 function FreeImage_GetImageType(dib: PFIBITMAP): FREE_IMAGE_TYPE; stdcall;
-  external FIDLL name '_FreeImage_GetImageType@8';
+  external FIDLL name '_FreeImage_GetImageType@4';
 
 // FreeImage info routines -------------------------------------------------
 
@@ -569,10 +578,10 @@ function FreeImage_HasBackgroundColor(dib: PFIBITMAP): Boolean; stdcall;
   external FIDLL name '_FreeImage_HasBackgroundColor@4';
 
 function FreeImage_GetBackgroundColor(dib: PFIBITMAP; var bkcolor: PRGBQUAD): Boolean; stdcall;
-  external FIDLL name '_FreeImage_GetBackgroundColor@12';
+  external FIDLL name '_FreeImage_GetBackgroundColor@8';
 
 function FreeImage_SetBackgroundColor(dib: PFIBITMAP; bkcolor: PRGBQUAD): Boolean; stdcall;
-  external FIDLL name '_FreeImage_SetBackgroundColor@12';
+  external FIDLL name '_FreeImage_SetBackgroundColor@8';
 
 
 // DIB info routines -------------------------------------------------------
@@ -654,102 +663,163 @@ procedure FreeImage_DestroyICCProfile(var dib : FIBITMAP); stdcall;
 
 // Line conversion routines -----------------------------------------------------
 
-procedure FreeImage_ConvertLine1To8(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine1To8@12';
-procedure FreeImage_ConvertLine4To8(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine4To8@12';
-procedure FreeImage_ConvertLine16To8_555(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine16To8_555@12';
-procedure FreeImage_ConvertLine16To8_565(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine16To8_565@12';
-procedure FreeImage_ConvertLine24To8(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine24To8@12';
-procedure FreeImage_ConvertLine32To8(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine32To8@12';
+procedure FreeImage_ConvertLine1To8(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine1To8@12';
 
-procedure FreeImage_ConvertLine1To16_555(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine1To16_555@16';
-procedure FreeImage_ConvertLine4To16_555(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine4To16_555@16';
-procedure FreeImage_ConvertLine8To16_555(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine8To16_555@16';
-procedure FreeImage_ConvertLine16_565_To16_555(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine16_565_To16_555@12';
-procedure FreeImage_ConvertLine24To16_555(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine24To16_555@12';
-procedure FreeImage_ConvertLine32To16_555(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine32To16_555@12';
+procedure FreeImage_ConvertLine4To8(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine4To8@12';
 
-procedure FreeImage_ConvertLine1To16_565(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine1To16_565@16';
-procedure FreeImage_ConvertLine4To16_565(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine4To16_565@16';
-procedure FreeImage_ConvertLine8To16_565(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine8To16_565@16';
-procedure FreeImage_ConvertLine16_555_To16_565(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine16_555_To16_565@12';
-procedure FreeImage_ConvertLine24To16_565(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine24To16_565@12';
-procedure FreeImage_ConvertLine32To16_565(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine32To16_565@12';
+procedure FreeImage_ConvertLine16To8_555(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine16To8_555@12';
 
-procedure FreeImage_ConvertLine1To24(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine1To24@16';
-procedure FreeImage_ConvertLine4To24(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine4To24@16';
-procedure FreeImage_ConvertLine8To24(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine8To24@16';
-procedure FreeImage_ConvertLine16To24_555(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine16To24_555@12';
-procedure FreeImage_ConvertLine16To24_565(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine16To24_565@12';
-procedure FreeImage_ConvertLine32To24(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine32To24@12';
+procedure FreeImage_ConvertLine16To8_565(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine16To8_565@12';
 
-procedure FreeImage_ConvertLine1To32(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine1To32@16';
-procedure FreeImage_ConvertLine4To32(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine4To32@16';
-procedure FreeImage_ConvertLine8To32(target, source : PBYTE; width_in_pixels : integer; palette : PRGBQUAD);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine8To32@16';
-procedure FreeImage_ConvertLine16To32_555(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine16To32_555@12';
-procedure FreeImage_ConvertLine16To32_565(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine16To32_565@12';
-procedure FreeImage_ConvertLine24To32(target, source : PBYTE; width_in_pixels : integer);
-                                stdcall; external FIDLL name '_FreeImage_ConvertLine24To32@12';
+procedure FreeImage_ConvertLine24To8(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine24To8@12';
+
+procedure FreeImage_ConvertLine32To8(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine32To8@12';
+
+procedure FreeImage_ConvertLine1To16_555(target, source: PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine1To16_555@16';
+
+procedure FreeImage_ConvertLine4To16_555(target, source: PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine4To16_555@16';
+  
+procedure FreeImage_ConvertLine8To16_555(target, source: PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine8To16_555@16';
+
+procedure FreeImage_ConvertLine16_565_To16_555(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine16_565_To16_555@12';
+
+procedure FreeImage_ConvertLine24To16_555(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine24To16_555@12';
+
+procedure FreeImage_ConvertLine32To16_555(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine32To16_555@12';
+
+procedure FreeImage_ConvertLine1To16_565(target, source : PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine1To16_565@16';
+
+procedure FreeImage_ConvertLine4To16_565(target, source : PBYTE;
+  width_in_pixels : integer; palette : PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine4To16_565@16';
+
+procedure FreeImage_ConvertLine8To16_565(target, source: PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine8To16_565@16';
+
+procedure FreeImage_ConvertLine16_555_To16_565(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine16_555_To16_565@12';
+
+procedure FreeImage_ConvertLine24To16_565(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine24To16_565@12';
+
+procedure FreeImage_ConvertLine32To16_565(target, source : PBYTE;
+  width_in_pixels : integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine32To16_565@12';
+
+procedure FreeImage_ConvertLine1To24(target, source: PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine1To24@16';
+
+procedure FreeImage_ConvertLine4To24(target, source : PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine4To24@16';
+
+procedure FreeImage_ConvertLine8To24(target, source: PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine8To24@16';
+
+procedure FreeImage_ConvertLine16To24_555(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine16To24_555@12';
+
+procedure FreeImage_ConvertLine16To24_565(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine16To24_565@12';
+
+procedure FreeImage_ConvertLine32To24(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine32To24@12';
+
+procedure FreeImage_ConvertLine1To32(target, source: PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine1To32@16';
+
+procedure FreeImage_ConvertLine4To32(target, source: PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine4To32@16';
+
+procedure FreeImage_ConvertLine8To32(target, source: PBYTE;
+  width_in_pixels: integer; palette: PRGBQUAD); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine8To32@16';
+
+procedure FreeImage_ConvertLine16To32_555(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine16To32_555@12';
+
+procedure FreeImage_ConvertLine16To32_565(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine16To32_565@12';
+procedure FreeImage_ConvertLine24To32(target, source: PBYTE;
+  width_in_pixels: integer); stdcall;
+  external FIDLL name '_FreeImage_ConvertLine24To32@12';
 
 // Smart conversion routines ------------------------------------------------
 
-function FreeImage_ConvertTo8Bits(dib : PFIBITMAP) : PFIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_ConvertTo8Bits@4';
-function FreeImage_ConvertTo16Bits555(dib : PFIBITMAP) : PFIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_ConvertTo16Bits555@4';
-function FreeImage_ConvertTo16Bits565(dib : PFIBITMAP) : PFIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_ConvertTo16Bits565@4';
-function FreeImage_ConvertTo24Bits(dib : PFIBITMAP) : PFIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_ConvertTo24Bits@4';
-function FreeImage_ConvertTo32Bits(dib : PFIBITMAP) : PFIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_ConvertTo32Bits@4';
+function FreeImage_ConvertTo4Bits(dib: PFIBITMAP): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_ConvertTo4Bits@4';
 
-function FreeImage_ColorQuantize(dib : PFIBITMAP; quantize : FREE_IMAGE_QUANTIZE) : PFIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_ColorQuantize@8';
+function FreeImage_ConvertTo8Bits(dib: PFIBITMAP): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_ConvertTo8Bits@4';
 
-function FreeImage_Threshold(dib : PFIBITMAP; T : Byte) : PFIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_Threshold@8';
-function FreeImage_Dither(dib : PFIBITMAP; algorithm : FREE_IMAGE_DITHER) : PFIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_Dither@8';
+function FreeImage_ConvertTo16Bits555(dib: PFIBITMAP): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_ConvertTo16Bits555@4';
 
+function FreeImage_ConvertTo16Bits565(dib: PFIBITMAP): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_ConvertTo16Bits565@4';
 
-function FreeImage_ConvertFromRawBits(bits : PBYTE; width, height, pitch : integer;
-                                bpp, red_mask, green_mask, blue_mask : longword;
-                                topdown : boolean) : FIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_ConvertFromRawBits@36';
+function FreeImage_ConvertTo24Bits(dib: PFIBITMAP): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_ConvertTo24Bits@4';
 
-procedure FreeImage_ConvertToRawBits(bits : PBYTE; dib : PFIBITMAP; pitch : integer;
-                                bpp, red_mask, green_mask, blue_mask : longword;
-                                topdown  : boolean);
-                                stdcall; external FIDLL name '_FreeImage_ConvertToRawBits@32';
+function FreeImage_ConvertTo32Bits(dib: PFIBITMAP): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_ConvertTo32Bits@4';
+
+function FreeImage_ColorQuantize(dib: PFIBITMAP;
+  quantize: FREE_IMAGE_QUANTIZE): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_ColorQuantize@8';
+
+function FreeImage_Threshold(dib: PFIBITMAP; T: Byte): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_Threshold@8';
+
+function FreeImage_Dither(dib: PFIBITMAP;
+  algorithm: FREE_IMAGE_DITHER): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_Dither@8';
+
+function FreeImage_ConvertFromRawBits(bits: PBYTE; width, height, pitch: integer;
+  bpp, red_mask, green_mask, blue_mask: longword; topdown: boolean): FIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_ConvertFromRawBits@36';
+
+procedure FreeImage_ConvertToRawBits(bits: PBYTE; dib: PFIBITMAP; pitch: integer;
+  bpp, red_mask, green_mask, blue_mask: longword; topdown: boolean); stdcall;
+  external FIDLL name '_FreeImage_ConvertToRawBits@32';
 
 function FreeImage_ConvertToStandardType(src: PFIBITMAP;
   scale_linear: Boolean = True): PFIBITMAP; stdcall;
@@ -763,12 +833,13 @@ function FreeImage_ConvertToType(src: PFIBITMAP; dst_type: FREE_IMAGE_TYPE;
 
 // ZLib interface -----------------------------------------------------------
 
-function FreeImage_ZLibCompress(target : PBYTE; target_size : DWORD; source : PBYTE;
-                                source_size : DWORD) : DWORD; stdcall;external FIDLL name '_FreeImage_ZLibCompress@16';
+function FreeImage_ZLibCompress(target: PBYTE; target_size: DWORD; source: PBYTE;
+  source_size: DWORD): DWORD; stdcall;
+  external FIDLL name '_FreeImage_ZLibCompress@16';
 
-
-function FreeImage_ZLibUncompress(target : PBYTE; target_size : DWORD; source : PBYTE;
-                                source_size : DWORD) : DWORD; stdcall;external FIDLL name '_FreeImage_ZLibUncompress@16';
+function FreeImage_ZLibUncompress(target: PBYTE; target_size: DWORD; source: PBYTE;
+  source_size: DWORD): DWORD; stdcall;
+  external FIDLL name '_FreeImage_ZLibUncompress@16';
 
 // --------------------------------------------------------------------------
 // Metadata routines --------------------------------------------------------
@@ -813,28 +884,45 @@ function FreeImage_TagToString(model: FREE_IMAGE_MDMODEL; tag: PFITAG;
 // --------------------------------------------------------------------------
 
 // rotation and flipping
-function FreeImage_RotateClassic(dib : PFIBITMAP; angle : Double) : PFIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_RotateClassic@12';
-function FreeImage_RotateEx(dib : PFIBITMAP; angle, x_shift, y_shift, x_origin, y_origin : Double;
-                                use_mask : Boolean) : PFIBITMAP; stdcall; external FIDLL name '_FreeImage_RotateEx@48';
-function FreeImage_FlipHorizontal(dib : PFIBITMAP) : Boolean; stdcall; external FIDLL name '_FreeImage_FlipHorizontal@4';
-function FreeImage_FlipVertical(dib : PFIBITMAP) : Boolean; stdcall; external FIDLL name '_FreeImage_FlipVertical@4';
+function FreeImage_RotateClassic(dib: PFIBITMAP; angle: Double): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_RotateClassic@12';
+
+function FreeImage_RotateEx(dib: PFIBITMAP;
+  angle, x_shift, y_shift, x_origin, y_origin: Double; use_mask: Boolean): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_RotateEx@48';
+
+function FreeImage_FlipHorizontal(dib: PFIBITMAP): Boolean; stdcall;
+  external FIDLL name '_FreeImage_FlipHorizontal@4';
+
+function FreeImage_FlipVertical(dib: PFIBITMAP): Boolean; stdcall;
+  external FIDLL name '_FreeImage_FlipVertical@4';
 
 // upsampling / downsampling
-function FreeImage_Rescale(dib : PFIBITMAP; dst_width, dst_height : Integer; filter : FREE_IMAGE_FILTER) : PFIBITMAP;
-                                stdcall; external FIDLL name '_FreeImage_Rescale@16';
+function FreeImage_Rescale(dib: PFIBITMAP; dst_width, dst_height: Integer;
+  filter: FREE_IMAGE_FILTER): PFIBITMAP; stdcall;
+  external FIDLL name '_FreeImage_Rescale@16';
+  
 // color manipulation routines (point operations)
-function FreeImage_AdjustCurve(dib : PFIBITMAP; LUT : PBYTE; channel : FREE_IMAGE_COLOR_CHANNEL) : Boolean;
-                                stdcall; external FIDLL name '_FreeImage_AdjustCurve@12';
-function FreeImage_AdjustGamma(dib : PFIBITMAP; gamma : Double) : Boolean;
-                                stdcall; external FIDLL name '_FreeImage_AdjustGamma@12';
-function FreeImage_AdjustBrightness(dib : PFIBITMAP; percentage : Double) : Boolean;
-                                stdcall; external FIDLL name '_FreeImage_AdjustBrightness@12';
-function FreeImage_AdjustContrast(dib : PFIBITMAP; percentage : Double) : Boolean;
-                                stdcall; external FIDLL name '_FreeImage_AdjustContrast@12';
-function FreeImage_Invert(dib : PFIBITMAP) : Boolean; stdcall; external FIDLL name '_FreeImage_Invert@4';
-function FreeImage_GetHistogram(dib : PFIBITMAP; histo : PDWORD; channel : FREE_IMAGE_COLOR_CHANNEL = FICC_BLACK) : Boolean;
-                                stdcall; external FIDLL name '_FreeImage_GetHistogram@12';
+function FreeImage_AdjustCurve(dib: PFIBITMAP; LUT: PBYTE;
+  channel: FREE_IMAGE_COLOR_CHANNEL): Boolean; stdcall;
+  external FIDLL name '_FreeImage_AdjustCurve@12';
+
+function FreeImage_AdjustGamma(dib: PFIBITMAP; gamma: Double): Boolean; stdcall;
+  external FIDLL name '_FreeImage_AdjustGamma@12';
+
+function FreeImage_AdjustBrightness(dib: PFIBITMAP; percentage: Double): Boolean; stdcall;
+  external FIDLL name '_FreeImage_AdjustBrightness@12';
+
+function FreeImage_AdjustContrast(dib: PFIBITMAP; percentage: Double): Boolean; stdcall;
+  external FIDLL name '_FreeImage_AdjustContrast@12';
+
+function FreeImage_Invert(dib: PFIBITMAP): Boolean; stdcall;
+  external FIDLL name '_FreeImage_Invert@4';
+
+function FreeImage_GetHistogram(dib: PFIBITMAP; histo: PDWORD;
+  channel: FREE_IMAGE_COLOR_CHANNEL = FICC_BLACK): Boolean; stdcall;
+  external FIDLL name '_FreeImage_GetHistogram@12';
+
 // channel processing routines
 function FreeImage_GetChannel(dib: PFIBITMAP;
   channel: FREE_IMAGE_COLOR_CHANNEL): PFIBITMAP; stdcall;

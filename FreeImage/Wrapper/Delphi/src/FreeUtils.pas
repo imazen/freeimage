@@ -1,11 +1,11 @@
-unit FI_Utils;
+unit FreeUtils;
 
 // ==========================================================
 //
 // Delphi wrapper for FreeImage 3
 //
 // Design and implementation by
-// - Anatoliy Pulyaevskiy
+// - Anatoliy Pulyaevskiy (xvel84@rambler.ru)
 //
 // This file is part of FreeImage 3
 //
@@ -20,11 +20,6 @@ unit FI_Utils;
 // THIS DISCLAIMER.
 //
 // Use at your own risk!
-//
-// ==========================================================
-//
-// Contact:
-// Anatoliy Pulyaevskiy, mailto: xvel84@rambler.ru
 //
 // ==========================================================
 

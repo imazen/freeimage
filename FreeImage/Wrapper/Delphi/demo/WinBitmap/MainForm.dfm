@@ -1,6 +1,6 @@
 object fwbMainForm: TfwbMainForm
-  Left = 221
-  Top = 200
+  Left = 205
+  Top = 206
   Width = 696
   Height = 480
   Caption = 'FreeWinBitmap - MainDemo'
@@ -20,7 +20,7 @@ object fwbMainForm: TfwbMainForm
   TextHeight = 13
   object StatusBar: TStatusBar
     Left = 0
-    Top = 408
+    Top = 411
     Width = 688
     Height = 23
     Panels = <
@@ -65,6 +65,10 @@ object fwbMainForm: TfwbMainForm
       end
       object mnuConvert: TMenuItem
         Caption = 'Convert'
+        object mnuTo4Bits: TMenuItem
+          Caption = 'To 4 Bits'
+          OnClick = mnuFlipHorzClick
+        end
         object mnuTo8Bits: TMenuItem
           Caption = 'To 8 Bits'
           OnClick = mnuFlipHorzClick
@@ -111,6 +115,10 @@ object fwbMainForm: TfwbMainForm
       end
       object mnuInvert: TMenuItem
         Caption = 'Invert'
+        OnClick = mnuFlipHorzClick
+      end
+      object mnuClear: TMenuItem
+        Caption = 'Clear'
         OnClick = mnuFlipHorzClick
       end
     end
