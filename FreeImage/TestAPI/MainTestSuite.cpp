@@ -47,21 +47,18 @@ int main(int argc, char *argv[]) {
 #endif
 
 	// initialize our own FreeImage error handler
-
 	FreeImage_SetOutputMessage(FreeImageErrorHandler);
 
 	// test memory IO
 	testMemIO("sample.png");
 
 	// test plugins capabilities
-
 	showPlugins();
 
 	// test the clone function
 	testAllocateCloneUnload("exif.jpg");
 
 	// test internal image types
-
 	testImageType(width, height);
 
 	// test loading / saving / converting image types using the TIFF plugin
@@ -70,7 +67,9 @@ int main(int argc, char *argv[]) {
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)
 	FreeImage_DeInitialise();
 #endif
-
+#if defined(_DEBUG) && defined(WIN32)
+    _CrtDumpMemoryLeaks();
+#endif
 	return 0;
 }
 
