@@ -378,6 +378,11 @@ public:
 	*/
 	BOOL threshold(BYTE T);
 	
+	/** @brief Converts the bitmap to 4 bits. Unless the bitmap is a 1-bit palettized bitmap, colour values are converted to greyscale.
+		@return Returns TRUE if successfull, FALSE otherwise. 
+	*/
+	BOOL convertTo4Bits();
+
 	/** @brief Converts the bitmap to 8 bits. If the bitmap is 24 or 32-bit RGB, the colour values are converted to greyscale.
 		@return Returns TRUE if successfull, FALSE otherwise. 
 	*/

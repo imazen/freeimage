@@ -402,6 +402,14 @@ BOOL fipImage::threshold(BYTE T) {
 	return FALSE;
 }
 
+BOOL fipImage::convertTo4Bits() {
+	if(_dib) {
+		FIBITMAP *dib4 = FreeImage_ConvertTo4Bits(_dib);
+		return replace(dib4);
+	}
+	return FALSE;
+}
+
 BOOL fipImage::convertTo8Bits() {
 	if(_dib) {
 		FIBITMAP *dib8 = FreeImage_ConvertTo8Bits(_dib);

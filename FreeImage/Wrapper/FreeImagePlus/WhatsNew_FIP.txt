@@ -5,6 +5,10 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+November 18th, 2004
+[Herve Drolon]
++ added fipImage::convertTo4Bits
+
 August 18th, 2004
 [Herve Drolon]
 - removed fipInternetIO
