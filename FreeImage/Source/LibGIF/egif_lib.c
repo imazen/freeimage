@@ -11,41 +11,7 @@
  * 26 Jun 96 - Version 3.0 by Eric S. Raymond (Full GIF89 support)
  *****************************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#ifdef __MSDOS__
-#include <io.h>
-#include <alloc.h>
-#include <sys\stat.h>
-#else
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifdef R6000
-
-/* FIXME: What is sys/mode.h?  Can we substitute a check for this file rather
- * than a check based on machine type?
- */
-#include <sys/mode.h>
-#endif
-#endif /* __MSDOS__ */
-
-#ifdef HAVE_IO_H
-#include <io.h>
-#endif
-
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif /* HAVE_FCNTL_H */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include "gif_lib.h"
-#include "gif_lib_private.h"
+#include "config.h"
 
 /* #define DEBUG_NO_PREFIX                  Dump only compressed data. */
 

@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /Zp4 /MT /W3 /GX /O1 /I "./" /D "NDEBUG" /D "WIN32" /D "_LIB" /D "HAVE_CONFIG_H" /FD /c
+# ADD CPP /nologo /Zp4 /MT /W3 /GX /O1 /I "./" /D "NDEBUG" /D "WIN32" /D "_LIB" /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -64,7 +64,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "./" /D "_DEBUG" /D "WIN32" /D "_LIB" /D "HAVE_CONFIG_H" /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "./" /D "_DEBUG" /D "WIN32" /D "_LIB" /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -85,10 +85,6 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\dev2gif.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\dgif_lib.c
 # End Source File
 # Begin Source File
@@ -97,15 +93,7 @@ SOURCE=.\egif_lib.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\getarg.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\gif_err.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\gif_font.c
 # End Source File
 # Begin Source File
 
@@ -115,14 +103,6 @@ SOURCE=.\gif_hash.c
 
 SOURCE=.\gifalloc.c
 # End Source File
-# Begin Source File
-
-SOURCE=.\qprintf.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\quantize.c
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -130,10 +110,6 @@ SOURCE=.\quantize.c
 # Begin Source File
 
 SOURCE=.\config.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\getarg.h
 # End Source File
 # Begin Source File
 

@@ -9,12 +9,7 @@
  * 17 Jun 89 - Version 1.0 by Gershon Elber.                     
  ****************************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#include <stdio.h>
-#include "gif_lib.h"
+#include "config.h"
 
 int _GifError = 0;
 

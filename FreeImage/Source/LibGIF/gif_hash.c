@@ -16,28 +16,8 @@
 * 14 Jun 89 - Version 1.0 by Gershon Elber.				     *
 *****************************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#ifdef __MSDOS__
-#include <io.h>
-#include <alloc.h>
-#include <sys\stat.h>
-#else
-#include <sys/types.h>
-#include <sys/stat.h>
-#endif /* __MSDOS__ */
-
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif /* HAVE_FCNTL_H */
-#include <stdio.h>
-#include <string.h>
-#include <malloc.h>
-#include "gif_lib.h"
+#include "config.h"
 #include "gif_hash.h"
-#include "gif_lib_private.h"
 
 /* #define  DEBUG_HIT_RATE    Debug number of misses per hash Insert/Exists. */
 

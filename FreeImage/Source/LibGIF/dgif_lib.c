@@ -10,34 +10,7 @@
  *  3 Sep 90 - Version 1.1 by Gershon Elber (Support for Gif89, Unique names).
  *****************************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#include <stdlib.h>
-#if defined (__MSDOS__) && !defined(__DJGPP__) && !defined(__GNUC__)
-#include <io.h>
-#include <alloc.h>
-#include <sys\stat.h>
-#else
-#include <sys/types.h>
-#include <sys/stat.h>
-#endif /* __MSDOS__ */
-
-#ifdef HAVE_IO_H
-#include <io.h>
-#endif
-
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif /* HAVE_FCNTL_H */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-#include <stdio.h>
-#include <string.h>
-#include "gif_lib.h"
-#include "gif_lib_private.h"
+#include "config.h"
 
 #define COMMENT_EXT_FUNC_CODE 0xfe  /* Extension function code for
                                        comment. */
