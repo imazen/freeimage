@@ -91,7 +91,7 @@ _tiffCloseProc(thandle_t fd) {
 static toff_t
 _tiffSizeProc(thandle_t file) {
 	struct stat sb;
-	return (fstat((int) file, &sb) < 0 ? 0 : sb.st_size);
+	return (fstat((long) file, &sb) < 0 ? 0 : sb.st_size);
 }
 
 static int
@@ -120,8 +120,12 @@ TIFFFdOpen(thandle_t handle, const char *name, const char *mode) {
 	    _tiffReadProc, _tiffWriteProc, _tiffSeekProc, _tiffCloseProc,
 	    _tiffSizeProc, _tiffMapProc, _tiffUnmapProc);
 
-	if (tif)
-		tif->tif_fd = (int)handle;
+	// Warning: tif_fd is declared as 'int' currently (see libTIFF), 
+    // may result in incorrect file pointers inside libTIFF on 
+    // 64bit machines (sizeof(int) != sizeof(long)). 
+    // Needs to be fixed within libTIFF.
+    if (tif)
+		tif->tif_fd = (long)handle;
 
 	return tif;
 }

@@ -81,13 +81,13 @@ FI_STRUCT (FREEIMAGEHEADER) {
 void* FreeImage_Aligned_Malloc(size_t amount, size_t alignment) {
 	void* mem_real = malloc(amount + alignment);
 	if(!mem_real) return NULL;
-	char* mem_align = (char*)((unsigned int)(alignment - (unsigned int)mem_real % (unsigned int)alignment) + (unsigned int)mem_real);
-	*((int*)mem_align - 1) = (int)mem_real;
+	char* mem_align = (char*)((unsigned long)(alignment - (unsigned long)mem_real % (unsigned long)alignment) + (unsigned long)mem_real);
+	*((long*)mem_align - 1) = (long)mem_real;
 	return mem_align;
 }
 
 void FreeImage_Aligned_Free(void* mem) {
-	free((void*)*((int*)mem - 1));
+	free((void*)*((long*)mem - 1));
 }
 
 // ----------------------------------------------------------
