@@ -138,7 +138,7 @@ readline(FreeImageIO &io, fi_handle handle, BYTE *buffer, WORD length, BOOL rle,
 
 #ifdef FREEIMAGE_BIGENDIAN
 static void
-SwapInfoHeader(PCXHEADER *header) {
+SwapHeader(PCXHEADER *header) {
 	SwapShort(&header->window[0]);
 	SwapShort(&header->window[1]);
 	SwapShort(&header->window[2]);
