@@ -136,8 +136,6 @@ FreeImage_GetFileTypeFromMemory(FIMEMORY *stream, int size) {
 	if (stream != NULL) {
 		FIMEMORYHEADER *mem_header = (FIMEMORYHEADER*)(stream->data);
 
-		mem_header->curpos = 0;
-
 		return FreeImage_GetFileTypeFromHandle(&io, (fi_handle)stream, size);
 	}
 
