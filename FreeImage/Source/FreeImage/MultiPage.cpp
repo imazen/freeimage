@@ -6,6 +6,8 @@
 // - Laurent Rocher (rocherl@club-internet.fr)
 // - Steve Johnson (steve@parisgroup.net)
 // - Petr Pytelka (pyta@lightcomp.com)
+// - Hervé Drolon (drolon@infonie.fr)
+// - Vadim Alexandrov (vadimalexandrov@users.sourceforge.net
 //
 // This file is part of FreeImage 3
 //
@@ -359,9 +361,6 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 							{
 								BlockReference *ref = (BlockReference *)(*i);
 
-								FIBITMAP dib;
-								dib.data = (BYTE*)malloc(ref->m_uncompressed_size * sizeof(BYTE));
-
 								// read the compressed data
 
 								BYTE *compressed_data = (BYTE*)malloc(ref->m_size * sizeof(BYTE));
@@ -370,17 +369,21 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 								// uncompress the data
 
-								FreeImage_ZLibUncompress((BYTE *)dib.data, ref->m_uncompressed_size, compressed_data, ref->m_size);
+								FIMEMORY *hmem = FreeImage_OpenMemory(compressed_data, ref->m_size);
+								FIBITMAP *dib = FreeImage_LoadFromMemory(FIF_PNG, hmem, PNG_DEFAULT);
+								FreeImage_CloseMemory(hmem);
+
+								// get rid of the buffer
+								free(compressed_data);
 
 								// save the data
 
-								success = header->node->m_plugin->save_proc(header->io, &dib, (fi_handle)f, count, flags, data);
+								success = header->node->m_plugin->save_proc(header->io, dib, (fi_handle)f, count, flags, data);
 								count++;
 
-								// get rid of the buffers
+								// unload the dib
 
-								free(compressed_data);
-								free(dib.data);
+								FreeImage_Unload(dib);
 
 								break;
 							}
@@ -444,7 +447,7 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 			// delete the FIMULTIBITMAPHEADER
 
-			delete (BYTE*)bitmap->data;
+			delete header;
 		}
 
 		delete bitmap;
@@ -488,13 +491,19 @@ FreeImage_AppendPage(FIMULTIBITMAP *bitmap, FIBITMAP *data) {
 		MULTIBITMAPHEADER *header = FreeImage_GetMultiBitmapHeader(bitmap);
 
 		if ((!header->read_only) && (header->locked_pages.empty())) {
+			DWORD compressed_size = 0;
+			BYTE *compressed_data = NULL;
+
 			DWORD size = FreeImage_GetFreeImageHeaderSize() + FreeImage_GetDIBSize(data);
 
 			// compress the bitmap data
 
-			DWORD compressed_size = (DWORD)((double)size + (0.1 * (double)size) + 12);
-			BYTE *compressed_data = (BYTE*)malloc(compressed_size * sizeof(BYTE));
-			compressed_size = FreeImage_ZLibCompress(compressed_data, compressed_size, (BYTE *)data->data, size);
+			// open a memory handle
+			FIMEMORY *hmem = FreeImage_OpenMemory();
+			// save the file to memory
+			FreeImage_SaveToMemory(FIF_PNG, data, hmem, PNG_DEFAULT);
+			// get the buffer from the memory stream
+			FreeImage_AcquireMemory(hmem, &compressed_data, &compressed_size);
 
 			// write the compressed data to the cache
 
@@ -504,7 +513,7 @@ FreeImage_AppendPage(FIMULTIBITMAP *bitmap, FIBITMAP *data) {
 
 			// get rid of the compressed data
 
-			free(compressed_data);
+			FreeImage_CloseMemory(hmem);
 
 			// add the block
 
@@ -522,13 +531,19 @@ FreeImage_InsertPage(FIMULTIBITMAP *bitmap, int page, FIBITMAP *data) {
 			MULTIBITMAPHEADER *header = FreeImage_GetMultiBitmapHeader(bitmap);
 
 			if ((!header->read_only) && (header->locked_pages.empty())) {
-				int size = FreeImage_GetFreeImageHeaderSize() + FreeImage_GetDIBSize(data);
+				DWORD compressed_size = 0;
+				BYTE *compressed_data = NULL;
+
+				DWORD size = FreeImage_GetFreeImageHeaderSize() + FreeImage_GetDIBSize(data);
 
 				// compress the bitmap data
 
-				DWORD compressed_size = (DWORD)((double)size + (0.1 * (double)size) + 12);
-				BYTE *compressed_data = (BYTE*)malloc(compressed_size * sizeof(BYTE));
-				compressed_size = FreeImage_ZLibCompress(compressed_data, compressed_size, (BYTE *)data->data, size);
+				// open a memory handle
+				FIMEMORY *hmem = FreeImage_OpenMemory();
+				// save the file to memory
+				FreeImage_SaveToMemory(FIF_PNG, data, hmem, PNG_DEFAULT);
+				// get the buffer from the memory stream
+				FreeImage_AcquireMemory(hmem, &compressed_data, &compressed_size);
 
 				// write the compressed data to the cache
 
@@ -550,7 +565,7 @@ FreeImage_InsertPage(FIMULTIBITMAP *bitmap, int page, FIBITMAP *data) {
 
 				// get rid of the compressed buffer
 
-				free(compressed_data);
+				FreeImage_CloseMemory(hmem);
 
 				header->changed = TRUE;
 				header->page_count = -1;
@@ -651,11 +666,17 @@ FreeImage_UnlockPage(FIMULTIBITMAP *bitmap, FIBITMAP *page, BOOL changed) {
 
 				// compress the data
 
-				int size = FreeImage_GetFreeImageHeaderSize() + FreeImage_GetDIBSize(page);
+				DWORD compressed_size = 0;
+				BYTE *compressed_data = NULL;
 
-				DWORD compressed_size = (DWORD)((double)size + (0.1 * (double)size) + 12);
-				BYTE *compressed_data = (BYTE*)malloc(compressed_size * sizeof(BYTE));
-				compressed_size = FreeImage_ZLibCompress(compressed_data, compressed_size, (BYTE *)page->data, size);
+				DWORD size = FreeImage_GetFreeImageHeaderSize() + FreeImage_GetDIBSize(page);
+
+				// open a memory handle
+				FIMEMORY *hmem = FreeImage_OpenMemory();
+				// save the page to memory
+				FreeImage_SaveToMemory(FIF_PNG, page, hmem, PNG_DEFAULT);
+				// get the buffer from the memory stream
+				FreeImage_AcquireMemory(hmem, &compressed_data, &compressed_size);
 
 				// write the data to the cache
 
@@ -689,7 +710,7 @@ FreeImage_UnlockPage(FIMULTIBITMAP *bitmap, FIBITMAP *page, BOOL changed) {
 
 				// get rid of the compressed data
 
-				free(compressed_data);
+				FreeImage_CloseMemory(hmem);
 			}
 
 			// reset the locked page so that another page can be locked

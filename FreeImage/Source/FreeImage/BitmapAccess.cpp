@@ -747,18 +747,20 @@ FreeImage_GetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 		return FALSE;
 
 	TAGMAP *tagmap = NULL;
+	*tag = NULL;
 
 	// get the metadata model
 	METADATAMAP *metadata = ((FREEIMAGEHEADER *)dib->data)->metadata;
-	tagmap = (*metadata)[model];
-	if(!tagmap) {
-		// this model, doesn't exist: return
-		return FALSE;
+	if(!(*metadata).empty()) {
+		tagmap = (*metadata)[model];
+		if(!tagmap) {
+			// this model, doesn't exist: return
+			return FALSE;
+		}
+
+		// get the requested tag
+		*tag = (FITAG*)(*tagmap)[key];
 	}
-
-	// get the requested tag
-	*tag = (FITAG*)(*tagmap)[key];
-
 	return (*tag != NULL) ? TRUE : FALSE;
 }
 
