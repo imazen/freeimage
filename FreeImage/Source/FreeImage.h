@@ -194,6 +194,63 @@ typedef struct tagBITMAPINFO {
 
 #endif // _WINDOWS_
 
+// Types used in the library (specific to FreeImage) ------------------------
+
+#if (defined(WIN32) || defined(__WIN32__))
+#pragma pack(push, 1)
+#else
+#pragma pack(1)
+#endif // WIN32
+
+/** 48-bit RGB 
+*/
+typedef struct tagFIRGB16 {
+	WORD red;
+	WORD green;
+	WORD blue;
+} FIRGB16;
+
+/** 64-bit RGBA
+*/
+typedef struct tagFIRGBA16 {
+	WORD red;
+	WORD green;
+	WORD blue;
+	WORD alpha;
+} FIRGBA16;
+
+/** 96-bit RGB Float
+*/
+typedef struct tagFIRGBF {
+	float red;
+	float green;
+	float blue;
+} FIRGBF;
+
+/** 128-bit RGBA Float
+*/
+typedef struct tagFIRGBAF {
+	float red;
+	float green;
+	float blue;
+	float alpha;
+} FIRGBAF;
+
+/** Data structure for COMPLEX type (complex number)
+*/
+typedef struct tagFICOMPLEX {
+    /// real part
+	double r;
+	/// imaginary part
+    double i;
+} FICOMPLEX;
+
+#if (defined(WIN32) || defined(__WIN32__))
+#pragma pack(pop)
+#else
+#pragma pack()
+#endif // WIN32
+
 // Indexes for byte arrays, masks and shifts for treating pixels as words ---
 // These coincide with the order of RGBQUAD and RGBTRIPLE -------------------
 
@@ -301,17 +358,12 @@ FI_ENUM(FREE_IMAGE_TYPE) {
 	FIT_INT32	= 5,	// array of long			: signed 32-bit
 	FIT_FLOAT	= 6,	// array of float			: 32-bit IEEE floating point
 	FIT_DOUBLE	= 7,	// array of double			: 64-bit IEEE floating point
-	FIT_COMPLEX	= 8		// array of FICOMPLEX		: 2 x 64-bit IEEE floating point
+	FIT_COMPLEX	= 8,	// array of FICOMPLEX		: 2 x 64-bit IEEE floating point
+	FIT_RGB16	= 9,	// 48-bit RGB image			: 3 x 16-bit
+	FIT_RGBA16	= 10,	// 64-bit RGBA image		: 4 x 16-bit
+	FIT_RGBF	= 11,	// 96-bit RGB float image	: 3 x 32-bit IEEE floating point
+	FIT_RGBAF	= 12	// 128-bit RGBA float image	: 4 x 32-bit IEEE floating point
 };
-
-/** Data structure for COMPLEX type (complex number)
-*/
-typedef struct tagFreeImageComplex {
-    /// real part
-	double r;
-	/// imaginary part
-    double i;
-} FICOMPLEX;
 
 /** Image color type used in FreeImage.
 */

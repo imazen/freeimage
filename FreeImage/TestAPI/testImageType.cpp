@@ -144,6 +144,48 @@ BOOL testAllocateCloneUnloadType(FREE_IMAGE_TYPE image_type, unsigned width, uns
 					}
 				}
 				break;
+			case FIT_RGB16:
+				for(y = 0; y < FreeImage_GetHeight(image); y++) {
+					FIRGB16 *bits = (FIRGB16 *)FreeImage_GetScanLine(image, y);
+					for(x = 0; x < FreeImage_GetWidth(image); x++) {
+						bits[x].red = 128;
+						bits[x].green = 128;
+						bits[x].blue = 128;
+					}
+				}
+				break;
+			case FIT_RGBF:
+				for(y = 0; y < FreeImage_GetHeight(image); y++) {
+					FIRGBF *bits = (FIRGBF *)FreeImage_GetScanLine(image, y);
+					for(x = 0; x < FreeImage_GetWidth(image); x++) {
+						bits[x].red = 128;
+						bits[x].green = 128;
+						bits[x].blue = 128;
+					}
+				}
+				break;
+			case FIT_RGBA16:
+				for(y = 0; y < FreeImage_GetHeight(image); y++) {
+					FIRGBA16 *bits = (FIRGBA16 *)FreeImage_GetScanLine(image, y);
+					for(x = 0; x < FreeImage_GetWidth(image); x++) {
+						bits[x].red = 128;
+						bits[x].green = 128;
+						bits[x].blue = 128;
+						bits[x].alpha = 128;
+					}
+				}
+				break;	
+			case FIT_RGBAF:
+				for(y = 0; y < FreeImage_GetHeight(image); y++) {
+					FIRGBAF *bits = (FIRGBAF *)FreeImage_GetScanLine(image, y);
+					for(x = 0; x < FreeImage_GetWidth(image); x++) {
+						bits[x].red = 128;
+						bits[x].green = 128;
+						bits[x].blue = 128;
+						bits[x].alpha = 128;
+					}
+				}
+				break;
 		}
 
 		
@@ -223,11 +265,48 @@ BOOL testAllocateCloneUnloadType(FREE_IMAGE_TYPE image_type, unsigned width, uns
 				for(y = 0; y < FreeImage_GetHeight(clone); y++) {
 					FICOMPLEX *bits = (FICOMPLEX *)FreeImage_GetScanLine(clone, y);
 					for(x = 0; x < FreeImage_GetWidth(clone); x++) {
-						if((bits[x].r - bits[x].i) != 0)
+						if((bits[x].r != 128) || ((bits[x].r - bits[x].i) != 0))
 							throw(1);
 					}
 				}
 				break;
+			case FIT_RGB16:
+				for(y = 0; y < FreeImage_GetHeight(clone); y++) {
+					FIRGB16 *bits = (FIRGB16 *)FreeImage_GetScanLine(clone, y);
+					for(x = 0; x < FreeImage_GetWidth(clone); x++) {
+						if((bits[x].red != 128) || (bits[x].green != 128) || (bits[x].blue != 128))
+							throw(1);
+					}
+				}
+				break;
+			case FIT_RGBF:
+				for(y = 0; y < FreeImage_GetHeight(clone); y++) {
+					FIRGBF *bits = (FIRGBF *)FreeImage_GetScanLine(clone, y);
+					for(x = 0; x < FreeImage_GetWidth(clone); x++) {
+						if((bits[x].red != 128) || (bits[x].green != 128) || (bits[x].blue != 128))
+							throw(1);
+					}
+				}
+				break;
+			case FIT_RGBA16:
+				for(y = 0; y < FreeImage_GetHeight(clone); y++) {
+					FIRGBA16 *bits = (FIRGBA16 *)FreeImage_GetScanLine(clone, y);
+					for(x = 0; x < FreeImage_GetWidth(clone); x++) {
+						if((bits[x].red != 128) || (bits[x].green != 128) || (bits[x].blue != 128) || (bits[x].alpha != 128))
+							throw(1);
+					}
+				}
+				break;	
+			case FIT_RGBAF:
+				for(y = 0; y < FreeImage_GetHeight(clone); y++) {
+					FIRGBAF *bits = (FIRGBAF *)FreeImage_GetScanLine(clone, y);
+					for(x = 0; x < FreeImage_GetWidth(clone); x++) {
+						if((bits[x].red != 128) || (bits[x].green != 128) || (bits[x].blue != 128) || (bits[x].alpha != 128))
+							throw(1);
+					}
+				}
+				break;
+
 		}
 
 		// test unload function
@@ -365,6 +444,15 @@ void testImageType(unsigned width, unsigned height) {
 	assert(bResult);
 	bResult = testAllocateCloneUnloadType(FIT_COMPLEX, width, height);
 	assert(bResult);
+	bResult = testAllocateCloneUnloadType(FIT_RGB16, width, height);
+	assert(bResult);
+	bResult = testAllocateCloneUnloadType(FIT_RGBA16, width, height);
+	assert(bResult);
+	bResult = testAllocateCloneUnloadType(FIT_RGBF, width, height);
+	assert(bResult);
+	bResult = testAllocateCloneUnloadType(FIT_RGBAF, width, height);
+	assert(bResult);
+
 
 	printf("\tOK\n");
 }
