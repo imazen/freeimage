@@ -231,13 +231,25 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 				case PNG_COLOR_TYPE_GRAY:
-				case PNG_COLOR_TYPE_GRAY_ALPHA:
 					// Expand grayscale images to the full 8 bits from 2 or 4 bits/pixel
 
 					if ((bpp == 2) || (bpp == 4)) {
 						png_set_expand(png_ptr);
 						bpp = 8;
 					}
+
+					break;
+
+				case PNG_COLOR_TYPE_GRAY_ALPHA:
+					// Expand 8-bit greyscale + 8-bit alpha to 32-bit
+
+					png_set_gray_to_rgb(png_ptr);
+#ifndef FREEIMAGE_BIGENDIAN
+					// Flip the RGBA pixels to BGRA
+
+					png_set_bgr(png_ptr);
+#endif
+					bpp = 32;
 
 					break;
 
@@ -252,13 +264,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			png_color_16p image_background = NULL;
 			RGBQUAD rgbBkColor;
 
-			if (color_type != PNG_COLOR_TYPE_RGB_ALPHA) {
-				if (png_get_bKGD(png_ptr, info_ptr, &image_background)) {
-					rgbBkColor.rgbRed      = image_background->red;
-					rgbBkColor.rgbGreen    = image_background->green;
-					rgbBkColor.rgbBlue     = image_background->blue;
-					rgbBkColor.rgbReserved = 0;
-				}
+			if (png_get_bKGD(png_ptr, info_ptr, &image_background)) {
+				rgbBkColor.rgbRed      = image_background->red;
+				rgbBkColor.rgbGreen    = image_background->green;
+				rgbBkColor.rgbBlue     = image_background->blue;
+				rgbBkColor.rgbReserved = 0;
 			}
 
 			// if this image has transparency, store the trns values
@@ -281,6 +291,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// All transformations have been registered; now update info_ptr data
 
 			png_read_update_info(png_ptr, info_ptr);
+
+			// color type may have changed, due to our transformations
+
+			color_type = png_get_color_type(png_ptr,info_ptr);
 
 			// Create a DIB and write the bitmap header
 			// set up the DIB palette, if needed
@@ -319,7 +333,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 				case PNG_COLOR_TYPE_GRAY:
-				case PNG_COLOR_TYPE_GRAY_ALPHA:
 					dib = FreeImage_Allocate(width, height, bpp);
 
 					palette = FreeImage_GetPalette(dib);
@@ -415,10 +428,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if (row_pointers)
 				free(row_pointers);
 
+			// read the rest of the file, getting any additional chunks in info_ptr
 			png_read_end(png_ptr, info_ptr);
 
-			if (png_ptr)
+			if (png_ptr) {
+				// clean up after the read, and free any memory allocated - REQUIRED
 				png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+			}
 
 			return dib;
 		} catch (const char *text) {
