@@ -5,6 +5,10 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month Day, 2004 - 3.4.1
+! [Hervé Drolon] improved TIFF LZW compression using a predictor
++ [Herve Drolon] added support for loading/saving of 8-bit transparent TIFF
+
 July 8th, 2004 - 3.4.0
 ! [Jim Keir] improved FreeImage_FlipVertical function
 ! [Hervé Drolon] LZW compression is now enabled in FreeImage
