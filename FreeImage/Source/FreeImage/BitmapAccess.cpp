@@ -260,20 +260,22 @@ FreeImage_Clone(FIBITMAP *dib) {
 			int model = (*i).first;
 			TAGMAP *src_tagmap = (*i).second;
 
-			// create a metadata model
-			TAGMAP *dst_tagmap = new TAGMAP();
+			if(src_tagmap) {
+				// create a metadata model
+				TAGMAP *dst_tagmap = new TAGMAP();
 
-			// fill the model
-			for(TAGMAP::iterator j = src_tagmap->begin(); j != src_tagmap->end(); j++) {
-				std::string dst_key = (*j).first;
-				FITAG *dst_tag = FreeImage_CloneTag( (*j).second );
+				// fill the model
+				for(TAGMAP::iterator j = src_tagmap->begin(); j != src_tagmap->end(); j++) {
+					std::string dst_key = (*j).first;
+					FITAG *dst_tag = FreeImage_CloneTag( (*j).second );
 
-				// assign key and tag value
-				(*dst_tagmap)[dst_key] = dst_tag;
+					// assign key and tag value
+					(*dst_tagmap)[dst_key] = dst_tag;
+				}
+
+				// assign key and model
+				(*dst_metadata)[model] = dst_tagmap;
 			}
-
-			// assign key and model
-			(*dst_metadata)[model] = dst_tagmap;
 		}
 
 		return new_dib;
