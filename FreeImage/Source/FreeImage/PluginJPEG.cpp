@@ -754,15 +754,29 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// step 4b: allocate dib and init header
 
-			dib = FreeImage_Allocate(cinfo.image_width, cinfo.image_height, 8 * cinfo.num_components, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+			if((cinfo.num_components == 4) && (cinfo.out_color_space == JCS_CMYK)) {
+				// CMYK image
+				if((flags & JPEG_CMYK) == JPEG_CMYK) {
+					// load as CMYK
+					dib = FreeImage_Allocate(cinfo.image_width, cinfo.image_height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+					FreeImage_GetICCProfile(dib)->flags |= FIICC_COLOR_IS_CMYK;
+				} else {
+					// load as CMYK and convert to RGB
+					dib = FreeImage_Allocate(cinfo.image_width, cinfo.image_height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+				}
+			} else {
+				// RGB or greyscale image
+				dib = FreeImage_Allocate(cinfo.image_width, cinfo.image_height, 8 * cinfo.num_components, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
-			if (cinfo.num_components == 1) {
-				RGBQUAD *colors = FreeImage_GetPalette(dib);
+				if (cinfo.num_components == 1) {
+					// build a greyscale palette
+					RGBQUAD *colors = FreeImage_GetPalette(dib);
 
-				for (int i = 0; i < 256; i++) {
-					colors[i].rgbRed   = i;
-					colors[i].rgbGreen = i;
-					colors[i].rgbBlue  = i;
+					for (int i = 0; i < 256; i++) {
+						colors[i].rgbRed   = i;
+						colors[i].rgbGreen = i;
+						colors[i].rgbBlue  = i;
+					}
 				}
 			}
 
@@ -788,28 +802,57 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// step 6a: while (scan lines remain to be read) jpeg_read_scanlines(...);
 
-			while (cinfo.output_scanline < cinfo.output_height) {
-				JSAMPROW b = FreeImage_GetScanLine(dib, cinfo.output_height - cinfo.output_scanline - 1);
+			if((cinfo.out_color_space == JCS_CMYK) && ((flags & JPEG_CMYK) != JPEG_CMYK)) {
+				// convert from CMYK to RGB
 
-				jpeg_read_scanlines(&cinfo, &b, 1);
-			}
+				JSAMPARRAY buffer;		// output row buffer
+				unsigned row_stride;	// physical row width in output buffer
 
-			// step 6b: swap red and blue components (see LibJPEG/jmorecfg.h: #define RGB_RED, ...)
-			// The default behavior of the JPEG library is kept "as is" because LibTIFF uses 
-			// LibJPEG "as is".
+				// JSAMPLEs per row in output buffer
+				row_stride = cinfo.output_width * cinfo.output_components;
+				// make a one-row-high sample array that will go away when done with image
+				buffer = (*cinfo.mem->alloc_sarray)((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
 
-#ifndef FREEIMAGE_BIGENDIAN
-			if(cinfo.num_components == 3) {
-				for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
-					BYTE *target = FreeImage_GetScanLine(dib, y);
-					BYTE *target_p = target;
+				while (cinfo.output_scanline < cinfo.output_height) {
+					JSAMPROW src = buffer[0];
+					JSAMPROW dst = FreeImage_GetScanLine(dib, cinfo.output_height - cinfo.output_scanline - 1);
+
+					jpeg_read_scanlines(&cinfo, buffer, 1);
+
 					for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
-						INPLACESWAP(target_p[0], target_p[2]);
-						target_p += 3;
+						WORD K = (WORD)src[3];
+						dst[FI_RGBA_RED]   = (BYTE)((K * src[0]) / 255);
+						dst[FI_RGBA_GREEN] = (BYTE)((K * src[1]) / 255);
+						dst[FI_RGBA_BLUE]  = (BYTE)((K * src[2]) / 255);
+						src += 4;
+						dst += 3;
 					}
 				}
-			}
+			} else {
+				// normal case (RGB or greyscale image)
+
+				while (cinfo.output_scanline < cinfo.output_height) {
+					JSAMPROW dst = FreeImage_GetScanLine(dib, cinfo.output_height - cinfo.output_scanline - 1);
+
+					jpeg_read_scanlines(&cinfo, &dst, 1);
+				}
+
+				// step 6b: swap red and blue components (see LibJPEG/jmorecfg.h: #define RGB_RED, ...)
+				// The default behavior of the JPEG library is kept "as is" because LibTIFF uses 
+				// LibJPEG "as is".
+
+#ifndef FREEIMAGE_BIGENDIAN
+				if(cinfo.num_components == 3) {
+					for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
+						BYTE *target = FreeImage_GetScanLine(dib, y);
+						for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
+							INPLACESWAP(target[0], target[2]);
+							target += 3;
+						}
+					}
+				}
 #endif
+			}
 
 			// step 7: read special markers
 

@@ -11,6 +11,7 @@ Month day, 2005 - 3.5.4
 + [Detlev Vendt] added LZW support to PluginGIF:Save
 + [Herve Drolon] added VS.Net 2003 project files
 + [Herve Drolon] added VERSIONINFO resource to the DLL
++ [Herve Drolon] added support for CMYK JPEG on loading
 * [Detlev Vendt] fixed PluginPNG not being thread safe
 * [Herve Drolon] fixed compiler warning C4018 occuring with VS.Net 2003
 
