@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -38,8 +38,6 @@
  *
  * Contributed by Tom Lane <tgl@sss.pgh.pa.us>.
  */
-#include <assert.h>
-#include <stdio.h>
 #include <setjmp.h>
 
 int TIFFFillStrip(TIFF*, tstrip_t);
@@ -51,22 +49,27 @@ int TIFFFillTile(TIFF*, ttile_t);
 #undef FAR
 #endif
 
+
 /*
    The windows RPCNDR.H file defines boolean, but defines it with the
-   wrong size.  So we declare HAVE_BOOLEAN so that the jpeg include file
-   won't try to typedef boolean, but #define it to override the rpcndr.h
-   definition.
+   unsigned char size.  You should compile JPEG library using appropriate
+   definitions in jconfig.h header, but many users compile library in wrong
+   way. That causes errors of the following type:
 
-   http://bugzilla.remotesensing.org/show_bug.cgi?id=188
+   "JPEGLib: JPEG parameter struct mismatch: library thinks size is 432,
+   caller expects 464"
+
+   For such users we wil fix the problem here. See install.doc file from
+   the JPEG library distribution for details.
 */
 
-/* Commented out by FreeImage : the correct definition is in ../LibJPEG/jconfig.h */
-/*
-#if defined(__RPCNDR_H__)
-#define HAVE_BOOLEAN
-#define boolean unsigned int
+/* Define "boolean" as unsigned char, not int, per Windows custom. */
+#if defined(WIN32)
+# ifndef __RPCNDR_H__            /* don't conflict if rpcndr.h already read */
+   typedef unsigned char boolean;
+# endif
+# define HAVE_BOOLEAN            /* prevent jmorecfg.h from redefining it */
 #endif
-*/
 
 #include "../LibJPEG/jpeglib.h"
 #include "../LibJPEG/jerror.h"
@@ -700,22 +703,32 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 		/* Component 0 should have expected sampling factors */
 		if (sp->cinfo.d.comp_info[0].h_samp_factor != sp->h_sampling ||
 		    sp->cinfo.d.comp_info[0].v_samp_factor != sp->v_sampling) {
-			TIFFWarning(module, 
+			    TIFFWarning(module, 
                                     "Improper JPEG sampling factors %d,%d\n"
-                                    "Apparently should be %d,%d, "
-                                    "decompressor will try reading with "
-                                    "sampling %d,%d",
+                                    "Apparently should be %d,%d.",
                                     sp->cinfo.d.comp_info[0].h_samp_factor,
                                     sp->cinfo.d.comp_info[0].v_samp_factor,
-                                    sp->h_sampling, 
-                                    sp->v_sampling,
-                                    sp->cinfo.d.comp_info[0].h_samp_factor,
-                                    sp->cinfo.d.comp_info[0].v_samp_factor );
+                                    sp->h_sampling, sp->v_sampling);
 
-                        sp->h_sampling = (uint16)
-                            sp->cinfo.d.comp_info[0].h_samp_factor;
-                        sp->v_sampling = (uint16)
-                            sp->cinfo.d.comp_info[0].v_samp_factor;
+			    /*
+			     * XXX: Files written by the Intergraph software
+			     * has different sampling factors stored in the
+			     * TIFF tags and in the JPEG structures. We will
+			     * try to deduce Intergraph files by the presense
+			     * of the tag 33918.
+			     */
+			    if (!_TIFFFindFieldInfo(tif, 33918, TIFF_ANY)) {
+				    TIFFWarning(module, 
+					"Decompressor will try reading with "
+					"sampling %d,%d.",
+					sp->cinfo.d.comp_info[0].h_samp_factor,
+					sp->cinfo.d.comp_info[0].v_samp_factor);
+
+				    sp->h_sampling = (uint16)
+					sp->cinfo.d.comp_info[0].h_samp_factor;
+				    sp->v_sampling = (uint16)
+					sp->cinfo.d.comp_info[0].v_samp_factor;
+			    }
 		}
 		/* Rest should have sampling factors 1,1 */
 		for (ci = 1; ci < sp->cinfo.d.num_components; ci++) {
@@ -737,7 +750,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG &&
 	    sp->photometric == PHOTOMETRIC_YCBCR &&
 	    sp->jpegcolormode == JPEGCOLORMODE_RGB) {
-    	/* Convert YCbCr to RGB */
+	/* Convert YCbCr to RGB */
 		sp->cinfo.d.jpeg_color_space = JCS_YCbCr;
 		sp->cinfo.d.out_color_space = JCS_RGB;
 	} else {
@@ -884,7 +897,7 @@ JPEGDecodeRaw(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 
         /* Close down the decompressor if done. */
         return sp->cinfo.d.output_scanline < sp->cinfo.d.output_height
-       	    || TIFFjpeg_finish_decompress(sp);
+	    || TIFFjpeg_finish_decompress(sp);
 }
 
 
@@ -1382,7 +1395,7 @@ JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		 * Must recalculate cached tile size
 		 * in case sampling state changed.
 		 */
-		tif->tif_tilesize = TIFFTileSize(tif);
+		tif->tif_tilesize = isTiled(tif) ? TIFFTileSize(tif) : (tsize_t) -1;
 		return (1);			/* pseudo tag */
 	case TIFFTAG_JPEGTABLESMODE:
 		sp->jpegtablesmode = va_arg(ap, int);
@@ -1431,7 +1444,7 @@ JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
 static void 
 JPEGFixupTestSubsampling( TIFF * tif )
 {
-#if CHECK_JPEG_YCBCR_SUBSAMPLING == 1
+#ifdef CHECK_JPEG_YCBCR_SUBSAMPLING
     JPEGState *sp = JState(tif);
     TIFFDirectory *td = &tif->tif_dir;
 
@@ -1462,7 +1475,7 @@ JPEGFixupTestSubsampling( TIFF * tif )
 
     TIFFSetField( tif, TIFFTAG_YCBCRSUBSAMPLING, 
                   (uint16) sp->h_sampling, (uint16) sp->v_sampling );
-#endif /* CHECK_JPEG_YCBCR_SUBSAMPLING == 1 */
+#endif /* CHECK_JPEG_YCBCR_SUBSAMPLING */
 }
 
 static int
@@ -1472,9 +1485,10 @@ JPEGVGetField(TIFF* tif, ttag_t tag, va_list ap)
 
 	switch (tag) {
 	case TIFFTAG_JPEGTABLES:
-		/* u_short is bogus --- should be uint32 ??? */
+		/* unsigned short is bogus --- should be uint32 ??? */
 		/* TIFFWriteNormalTag needs fixed  XXX */
-		*va_arg(ap, u_short*) = (u_short) sp->jpegtables_length;
+		*va_arg(ap, unsigned short*) =
+                        (unsigned short) sp->jpegtables_length;
 		*va_arg(ap, void**) = sp->jpegtables;
 		break;
 	case TIFFTAG_JPEGQUALITY:
@@ -1504,7 +1518,7 @@ JPEGPrintDir(TIFF* tif, FILE* fd, long flags)
 	(void) flags;
 	if (TIFFFieldSet(tif,FIELD_JPEGTABLES))
 		fprintf(fd, "  JPEG Tables: (%lu bytes)\n",
-			(u_long) sp->jpegtables_length);
+			(unsigned long) sp->jpegtables_length);
 }
 
 static uint32
@@ -1612,7 +1626,7 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 		TIFFError("TIFFInitJPEG", "No space for JPEG state block");
 		return (0);
 	}
-        memset( tif->tif_data, 0, sizeof(JPEGState));
+        _TIFFmemset( tif->tif_data, 0, sizeof(JPEGState));
 
 	sp = JState(tif);
 	sp->tif = tif;				/* back link */
@@ -1669,3 +1683,5 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	return (1);
 }
 #endif /* JPEG_SUPPORT */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

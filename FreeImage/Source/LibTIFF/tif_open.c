@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -76,6 +76,20 @@ static const int litTypeshift[13] = {
 	0,		/* TIFF_FLOAT */
 	0,		/* TIFF_DOUBLE */
 };
+
+/*
+ * Dummy functions to fill the omitted client procedures.
+ */
+static int
+_tiffDummyMapProc(thandle_t fd, tdata_t* pbase, toff_t* psize)
+{
+	return (0);
+}
+
+static void
+_tiffDummyUnmapProc(thandle_t fd, tdata_t base, toff_t size)
+{
+}
 
 /*
  * Initialize the shift & mask tables, and the
@@ -156,18 +170,24 @@ TIFFClientOpen(
 	tif->tif_curstrip = (tstrip_t) -1;	/* invalid strip */
 	tif->tif_row = (uint32) -1;		/* read/write pre-increment */
 	tif->tif_clientdata = clientdata;
-	if (!readproc || !writeproc || !seekproc || !closeproc
-			|| !sizeproc || !mapproc || !unmapproc) {
-		TIFFError(module, "One of the client procedures are NULL pointer");
-		goto bad3;
+	if (!readproc || !writeproc || !seekproc || !closeproc || !sizeproc) {
+		TIFFError(module,
+			  "One of the client procedures is NULL pointer.");
+		goto bad2;
 	}
 	tif->tif_readproc = readproc;
 	tif->tif_writeproc = writeproc;
 	tif->tif_seekproc = seekproc;
 	tif->tif_closeproc = closeproc;
 	tif->tif_sizeproc = sizeproc;
-	tif->tif_mapproc = mapproc;
-	tif->tif_unmapproc = unmapproc;
+        if (mapproc)
+		tif->tif_mapproc = mapproc;
+	else
+		tif->tif_mapproc = _tiffDummyMapProc;
+	if (unmapproc)
+		tif->tif_unmapproc = unmapproc;
+	else
+		tif->tif_unmapproc = _tiffDummyUnmapProc;
 	_TIFFSetDefaultCompressionState(tif);	/* setup default state */
 	/*
 	 * Default is to return data MSB2LSB and enable the
@@ -219,7 +239,7 @@ TIFFClientOpen(
 	 * bit order for compatibiltiy with older versions of this
 	 * library.  Returning data in the bit order of the native cpu
 	 * makes the most sense but also requires applications to check
-	 * the value of the FillOrder tag; something they probabyl do
+	 * the value of the FillOrder tag; something they probably do
 	 * not do right now.
 	 *
 	 * The 'M' and 'm' flags are provided because some virtual memory
@@ -340,6 +360,12 @@ TIFFClientOpen(
 	 * Note that this isn't actually a version number, it's a
 	 * magic number that doesn't change (stupid).
 	 */
+	if (tif->tif_header.tiff_version == TIFF_BIGTIFF_VERSION) {
+		TIFFError(name,
+                          "This is a BigTIFF file.  This format not supported\n"
+                          "by this version of libtiff." );
+		goto bad;
+	}
 	if (tif->tif_header.tiff_version != TIFF_VERSION) {
 		TIFFError(name,
 		    "Not a TIFF file, bad version number %d (0x%x)",
@@ -382,11 +408,9 @@ TIFFClientOpen(
 	}
 bad:
 	tif->tif_mode = O_RDONLY;	/* XXX avoid flush */
-	TIFFClose(tif);
-	return ((TIFF*)0);
+        TIFFCleanup(tif);
 bad2:
 	(void) (*closeproc)(clientdata);
-bad3:
 	return ((TIFF*)0);
 }
 
@@ -404,6 +428,17 @@ TIFFFileName(TIFF* tif)
 }
 
 /*
+ * Set the file name.
+ */
+const char *
+TIFFSetFileName(TIFF* tif, const char *name)
+{
+	const char* old_name = tif->tif_name;
+	tif->tif_name = (char *)name;
+	return (old_name);
+}
+
+/*
  * Return open file's I/O descriptor.
  */
 int
@@ -413,12 +448,54 @@ TIFFFileno(TIFF* tif)
 }
 
 /*
+ * Set open file's I/O descriptor, and return previous value.
+ */
+int
+TIFFSetFileno(TIFF* tif, int fd)
+{
+        int old_fd = tif->tif_fd;
+	tif->tif_fd = fd;
+	return old_fd;
+}
+
+/*
+ * Return open file's clientdata.
+ */
+thandle_t
+TIFFClientdata(TIFF* tif)
+{
+	return (tif->tif_clientdata);
+}
+
+/*
+ * Set open file's clientdata, and return previous value.
+ */
+thandle_t
+TIFFSetClientdata(TIFF* tif, thandle_t newvalue)
+{
+	thandle_t m = tif->tif_clientdata;
+	tif->tif_clientdata = newvalue;
+	return m;
+}
+
+/*
  * Return read/write mode.
  */
 int
 TIFFGetMode(TIFF* tif)
 {
 	return (tif->tif_mode);
+}
+
+/*
+ * Return read/write mode.
+ */
+int
+TIFFSetMode(TIFF* tif, int mode)
+{
+	int old_mode = tif->tif_mode;
+	tif->tif_mode = mode;
+	return (old_mode);
 }
 
 /*
@@ -493,3 +570,77 @@ TIFFIsMSB2LSB(TIFF* tif)
 {
 	return (isFillOrder(tif, FILLORDER_MSB2LSB));
 }
+
+/*
+ * Return nonzero if given file was written in big-endian order.
+ */
+int
+TIFFIsBigEndian(TIFF* tif)
+{
+	return (tif->tif_header.tiff_magic == TIFF_BIGENDIAN);
+}
+
+/*
+ * Return pointer to file read method.
+ */
+TIFFReadWriteProc
+TIFFGetReadProc(TIFF* tif)
+{
+	return (tif->tif_readproc);
+}
+
+/*
+ * Return pointer to file write method.
+ */
+TIFFReadWriteProc
+TIFFGetWriteProc(TIFF* tif)
+{
+	return (tif->tif_writeproc);
+}
+
+/*
+ * Return pointer to file seek method.
+ */
+TIFFSeekProc
+TIFFGetSeekProc(TIFF* tif)
+{
+	return (tif->tif_seekproc);
+}
+
+/*
+ * Return pointer to file close method.
+ */
+TIFFCloseProc
+TIFFGetCloseProc(TIFF* tif)
+{
+	return (tif->tif_closeproc);
+}
+
+/*
+ * Return pointer to file size requesting method.
+ */
+TIFFSizeProc
+TIFFGetSizeProc(TIFF* tif)
+{
+	return (tif->tif_sizeproc);
+}
+
+/*
+ * Return pointer to memory mapping method.
+ */
+TIFFMapFileProc
+TIFFGetMapFileProc(TIFF* tif)
+{
+	return (tif->tif_mapproc);
+}
+
+/*
+ * Return pointer to memory unmapping method.
+ */
+TIFFUnmapFileProc
+TIFFGetUnmapFileProc(TIFF* tif)
+{
+	return (tif->tif_unmapproc);
+}
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

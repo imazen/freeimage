@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -37,16 +37,9 @@ TIFFNoEncode(TIFF* tif, char* method)
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
 	if (c) { 
-	  if (! strncmp(c->name, "LZW", 3) ){ 
-	    TIFFError(tif->tif_name, 
-		      "%s %s encoding is no longer implemented due to Unisys patent enforcement", 
-		      c->name, method); 
-	  } else { 
-	    TIFFError(tif->tif_name, "%s %s encoding is not implemented",
-		      c->name, method);
-	  }
-	}
-	else { 
+	        TIFFError(tif->tif_name, "%s %s encoding is not implemented",
+                          c->name, method);
+	} else { 
 		TIFFError(tif->tif_name,
 			  "Compression scheme %u %s encoding is not implemented",
 		    tif->tif_dir.td_compression, method);
@@ -210,9 +203,11 @@ TIFFRegisterCODEC(uint16 scheme, const char* name, TIFFInitMethod init)
 		cd->info->init = init;
 		cd->next = registeredCODECS;
 		registeredCODECS = cd;
-	} else
+	} else {
 		TIFFError("TIFFRegisterCODEC",
 		    "No space to register compression scheme %s", name);
+		return NULL;
+	}
 	return (cd->info);
 }
 
@@ -231,3 +226,59 @@ TIFFUnRegisterCODEC(TIFFCodec* c)
 	TIFFError("TIFFUnRegisterCODEC",
 	    "Cannot remove compression scheme %s; not registered", c->name);
 }
+
+/************************************************************************/
+/*                       TIFFGetConfisuredCODECs()                      */
+/************************************************************************/
+
+/**
+ * Get list of configured codecs, both built-in and registered by user.
+ * Caller is responsible to free this structure.
+ * 
+ * @return returns array of TIFFCodec records (the last record should be NULL)
+ * or NULL if function failed.
+ */
+
+TIFFCodec*
+TIFFGetConfiguredCODECs()
+{
+	int		i = 1;
+        codec_t		*cd;
+        const TIFFCodec	*c;
+	TIFFCodec	*codecs = NULL, *new_codecs;
+
+        for (cd = registeredCODECS; cd; cd = cd->next) {
+                new_codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+		if (!new_codecs) {
+			_TIFFfree (codecs);
+			return NULL;
+		}
+		codecs = new_codecs;
+		_TIFFmemcpy(codecs + i - 1, cd, sizeof(TIFFCodec));
+		i++;
+	}
+        for (c = _TIFFBuiltinCODECS; c->name; c++) {
+                if (TIFFIsCODECConfigured(c->scheme)) {
+                        new_codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+			if (!new_codecs) {
+				_TIFFfree (codecs);
+				return NULL;
+			}
+			codecs = new_codecs;
+			_TIFFmemcpy(codecs + i - 1, (const tdata_t)c, sizeof(TIFFCodec));
+			i++;
+		}
+	}
+
+	new_codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+	if (!new_codecs) {
+		_TIFFfree (codecs);
+		return NULL;
+	}
+	codecs = new_codecs;
+	_TIFFmemset(codecs + i - 1, 0, sizeof(TIFFCodec));
+
+        return codecs;
+}
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

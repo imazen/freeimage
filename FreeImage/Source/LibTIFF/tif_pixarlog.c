@@ -1,3 +1,5 @@
+/* $Id$ */
+
 /*
  * Copyright (c) 1996-1997 Sam Leffler
  * Copyright (c) 1996 Pixar
@@ -85,10 +87,9 @@
  */
 
 #include "tif_predict.h"
-#include "zlib.h"
+#include "../ZLib/zlib.h"
 
 #include <stdio.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -176,7 +177,7 @@ horizontalAccumulate12(uint16 *wp, int n, int stride, int16 *op,
     register unsigned int  cr, cg, cb, ca, mask;
     register float  t0, t1, t2, t3;
 
-#define SCALE12 2048.0
+#define SCALE12 2048.0F
 #define CLAMP12(t) (((t) < 3071) ? (uint16) (t) : 3071)
 
     if (n >= stride) {
@@ -498,13 +499,13 @@ PixarLogMakeTables(PixarLogState *sp)
     uint16  *From8;
 
     c = log(RATIO);	
-    nlin = (int)1./c;	/* nlin must be an integer */
+    nlin = (int)(1./c);	/* nlin must be an integer */
     c = 1./nlin;
     b = exp(-c*ONE);	/* multiplicative scale factor [b*exp(c*ONE) = 1] */
     linstep = b*c*exp(1.);
 
-    LogK1 = 1./c;	/* if (v >= 2)  token = k1*log(v*k2) */
-    LogK2 = 1./b;
+    LogK1 = (float)(1./c);	/* if (v >= 2)  token = k1*log(v*k2) */
+    LogK2 = (float)(1./b);
     lt2size = (int)(2./linstep) + 1;
     FromLT2 = (uint16 *)_TIFFmalloc(lt2size*sizeof(uint16));
     From14 = (uint16 *)_TIFFmalloc(16384*sizeof(uint16));
@@ -533,11 +534,11 @@ PixarLogMakeTables(PixarLogState *sp)
 
     for (i = 0; i < nlin; i++)  {
 	v = i * linstep;
-	ToLinearF[j++] = v;
+	ToLinearF[j++] = (float)v;
     }
 
     for (i = nlin; i < TSIZE; i++)
-	ToLinearF[j++] = b*exp(c*i);
+	ToLinearF[j++] = (float)(b*exp(c*i));
 
     ToLinearF[2048] = ToLinearF[2047];
 
@@ -574,7 +575,7 @@ PixarLogMakeTables(PixarLogState *sp)
 	From8[i] = j;
     }
 
-    Fltsize = lt2size/2;
+    Fltsize = (float)(lt2size/2);
 
     sp->ToLinearF = ToLinearF;
     sp->ToLinear16 = ToLinear16;
@@ -630,11 +631,23 @@ PixarLogGuessDataFmt(TIFFDirectory *td)
 	return guess;
 }
 
+static uint32
+multiply(size_t m1, size_t m2)
+{
+	uint32	bytes = m1 * m2;
+
+	if (m1 && bytes / m1 != m2)
+		bytes = 0;
+
+	return bytes;
+}
+
 static int
 PixarLogSetupDecode(TIFF* tif)
 {
 	TIFFDirectory *td = &tif->tif_dir;
 	PixarLogState* sp = DecoderState(tif);
+	tsize_t tbuf_size;
 	static const char module[] = "PixarLogSetupDecode";
 
 	assert(sp != NULL);
@@ -647,8 +660,13 @@ PixarLogSetupDecode(TIFF* tif)
 
 	sp->stride = (td->td_planarconfig == PLANARCONFIG_CONTIG ?
 	    td->td_samplesperpixel : 1);
-	sp->tbuf = (uint16 *) _TIFFmalloc(sp->stride * 
-		td->td_imagewidth * td->td_rowsperstrip * sizeof(uint16));
+	tbuf_size = multiply(multiply(multiply(sp->stride, td->td_imagewidth),
+				      td->td_rowsperstrip), sizeof(uint16));
+	if (tbuf_size == 0)
+		return (0);
+	sp->tbuf = (uint16 *) _TIFFmalloc(tbuf_size);
+	if (sp->tbuf == NULL)
+		return (0);
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN)
 		sp->user_datafmt = PixarLogGuessDataFmt(td);
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN) {
@@ -798,6 +816,7 @@ PixarLogSetupEncode(TIFF* tif)
 {
 	TIFFDirectory *td = &tif->tif_dir;
 	PixarLogState* sp = EncoderState(tif);
+	tsize_t tbuf_size;
 	static const char module[] = "PixarLogSetupEncode";
 
 	assert(sp != NULL);
@@ -806,8 +825,13 @@ PixarLogSetupEncode(TIFF* tif)
 
 	sp->stride = (td->td_planarconfig == PLANARCONFIG_CONTIG ?
 	    td->td_samplesperpixel : 1);
-	sp->tbuf = (uint16 *) _TIFFmalloc(sp->stride * 
-		td->td_imagewidth * td->td_rowsperstrip * sizeof(uint16));
+	tbuf_size = multiply(multiply(multiply(sp->stride, td->td_imagewidth),
+				      td->td_rowsperstrip), sizeof(uint16));
+	if (tbuf_size == 0)
+		return (0);
+	sp->tbuf = (uint16 *) _TIFFmalloc(tbuf_size);
+	if (sp->tbuf == NULL)
+		return (0);
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN)
 		sp->user_datafmt = PixarLogGuessDataFmt(td);
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN) {
@@ -1208,7 +1232,7 @@ PixarLogVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	/*
 	 * Must recalculate sizes should bits/sample change.
 	 */
-	tif->tif_tilesize = TIFFTileSize(tif);
+	tif->tif_tilesize = isTiled(tif) ? TIFFTileSize(tif) : (tsize_t) -1;
 	tif->tif_scanlinesize = TIFFScanlineSize(tif);
 	result = 1;		/* NB: pseudo tag */
 	break;
@@ -1255,7 +1279,7 @@ TIFFInitPixarLog(TIFF* tif, int scheme)
 	if (tif->tif_data == NULL)
 		goto bad;
 	sp = (PixarLogState*) tif->tif_data;
-	memset(sp, 0, sizeof (*sp));
+	_TIFFmemset(sp, 0, sizeof (*sp));
 	sp->stream.data_type = Z_BINARY;
 	sp->user_datafmt = PIXARLOGDATAFMT_UNKNOWN;
 
@@ -1303,3 +1327,5 @@ bad:
 	return (0);
 }
 #endif /* PIXARLOG_SUPPORT */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -36,29 +36,17 @@
  *    Suite 200
  *    Seattle, WA  98104
  *    206-622-5500
+ *    
+ *    (http://partners.adobe.com/asn/developer/PDFS/TN/TIFF6.pdf)
+ *
+ * For Big TIFF design notes see the following link
+ *    http://gdal.maptools.org/twiki/bin/view/libtiff/BigTIFFDesign
  */
-#define	TIFF_VERSION	42
+#define	TIFF_VERSION	        42
+#define TIFF_BIGTIFF_VERSION    43
 
 #define	TIFF_BIGENDIAN		0x4d4d
 #define	TIFF_LITTLEENDIAN	0x4949
-
-/*
- * The so called TIFF types conflict with definitions from inttypes.h 
- * included from sys/types.h on AIX (at least using VisualAge compiler). 
- * We try to work around this by detecting this case.  Defining 
- * _TIFF_DATA_TYPEDEFS_ short circuits the later definitions in tiff.h, and
- * we will in the holes not provided for by inttypes.h. 
- *
- * See http://bugzilla.remotesensing.org/show_bug.cgi?id=39
- */
-#if defined(_H_INTTYPES) && defined(_ALL_SOURCE) && defined(USING_VISUALAGE)
-
-#define _TIFF_DATA_TYPEDEFS_
-typedef unsigned char uint8;
-typedef unsigned short uint16;
-typedef unsigned int uint32;
-
-#endif
 
 /*
  * Intrinsic data types required by the file format:
@@ -71,24 +59,34 @@ typedef unsigned int uint32;
 #ifndef _TIFF_DATA_TYPEDEFS_
 #define _TIFF_DATA_TYPEDEFS_
 
-#ifdef __STDC__
+#ifndef HAVE_INT8
+# ifdef __STDC__
 typedef	signed char int8;	/* NB: non-ANSI compilers may not grok */
-#else
+# else
 typedef	char int8;
+# endif
 #endif
+
 typedef	unsigned char uint8;
+#ifndef HAVE_INT16
 typedef	short int16;
-typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
-#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64) || defined(__LP64__) || defined(__arch64__)
-typedef	int int32;
-typedef	unsigned int uint32;	/* sizeof (uint32) must == 4 */
-#else
-typedef	long int32;
-typedef	unsigned long uint32;	/* sizeof (uint32) must == 4 */
 #endif
+typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
+#if SIZEOF_LONG == 4
+# ifndef HAVE_INT32
+typedef	long int32;
+# endif
+typedef	unsigned long uint32;	/* sizeof (uint32) must == 4 */
+#else
+# ifndef HAVE_INT32
+typedef	int int32;
+# endif
+typedef	unsigned int uint32;	/* sizeof (uint32) must == 4 */
+#endif
+
 #endif /* _TIFF_DATA_TYPEDEFS_ */
 
-/*	For TIFFReassignTagToIgnore */
+/* For TIFFReassignTagToIgnore */
 enum TIFFIgnoreSense /* IGNORE tag table */
 {
 	TIS_STORE,
@@ -96,24 +94,29 @@ enum TIFFIgnoreSense /* IGNORE tag table */
 	TIS_EMPTY
 };
 
+/*
+ * TIFF header.
+ */
 typedef	struct {
 	uint16	tiff_magic;	/* magic number (defines byte order) */
+#define TIFF_MAGIC_SIZE		2
 	uint16	tiff_version;	/* TIFF version number */
+#define TIFF_VERSION_SIZE	2
 	uint32	tiff_diroff;	/* byte offset to first directory */
+#define TIFF_DIROFFSET_SIZE	4
 } TIFFHeader;
 
+
 /*
- * TIFF Image File Directories are comprised of
- * a table of field descriptors of the form shown
- * below.  The table is sorted in ascending order
- * by tag.  The values associated with each entry
- * are disjoint and may appear anywhere in the file
- * (so long as they are placed on a word boundary).
+ * TIFF Image File Directories are comprised of a table of field
+ * descriptors of the form shown below.  The table is sorted in
+ * ascending order by tag.  The values associated with each entry are
+ * disjoint and may appear anywhere in the file (so long as they are
+ * placed on a word boundary).
  *
- * If the value is 4 bytes or less, then it is placed
- * in the offset field to save space.  If the value
- * is less than 4 bytes, it is left-justified in the
- * offset field.
+ * If the value is 4 bytes or less, then it is placed in the offset
+ * field to save space.  If the value is less than 4 bytes, it is
+ * left-justified in the offset field.
  */
 typedef	struct {
 	uint16		tdir_tag;	/* see below */
@@ -315,14 +318,14 @@ typedef	enum {
 #define	TIFFTAG_SMINSAMPLEVALUE		340	/* !variable MinSampleValue */
 #define	TIFFTAG_SMAXSAMPLEVALUE		341	/* !variable MaxSampleValue */
 #define	TIFFTAG_CLIPPATH		343	/* %ClipPath [Adobe TIFF technote 2] */
-#define	TIFFTAG_XCLIPPATHUNITS	344	/* %XClipPathUnits [Adobe TIFF technote 2] */
-#define	TIFFTAG_YCLIPPATHUNITS	344	/* %YClipPathUnits [Adobe TIFF technote 2] */
-#define	TIFFTAG_INDEXED			345	/* %Indexed [Adobe TIFF Technote 3] */
+#define	TIFFTAG_XCLIPPATHUNITS		344	/* %XClipPathUnits [Adobe TIFF technote 2] */
+#define	TIFFTAG_YCLIPPATHUNITS		345	/* %YClipPathUnits [Adobe TIFF technote 2] */
+#define	TIFFTAG_INDEXED			346	/* %Indexed [Adobe TIFF Technote 3] */
 #define	TIFFTAG_JPEGTABLES		347	/* %JPEG table stream */
 #define	TIFFTAG_OPIPROXY		351	/* %OPI Proxy [Adobe TIFF technote] */
 /*
- * Tags 512-521 are obsoleted by Technical Note #2
- * which specifies a revised JPEG-in-TIFF scheme.
+ * Tags 512-521 are obsoleted by Technical Note #2 which specifies a
+ * revised JPEG-in-TIFF scheme.
  */
 #define	TIFFTAG_JPEGPROC		512	/* !JPEG processing algorithm */
 #define	    JPEGPROC_BASELINE		1	/* !baseline sequential */
@@ -341,7 +344,7 @@ typedef	enum {
 #define	    YCBCRPOSITION_CENTERED	1	/* !as in PostScript Level 2 */
 #define	    YCBCRPOSITION_COSITED	2	/* !as in CCIR 601-1 */
 #define	TIFFTAG_REFERENCEBLACKWHITE	532	/* !colorimetry info */
-#define	TIFFTAG_XMLPACKET		700		/* %XML packet [Adobe XMP technote 9-14-02] (dkelly@apago.com) */
+#define	TIFFTAG_XMLPACKET		700	/* %XML packet [Adobe XMP Specification, January 2004 */
 #define TIFFTAG_OPIIMAGEID		32781	/* %OPI ImageID [Adobe TIFF technote] */
 /* tags 32952-32956 are private tags registered to Island Graphics */
 #define TIFFTAG_REFPTS			32953	/* image reference points */
@@ -376,7 +379,7 @@ typedef	enum {
 /* tag 33432 is listed in the 6.0 spec w/ unknown ownership */
 #define	TIFFTAG_COPYRIGHT		33432	/* copyright string */
 /* IPTC TAG from RichTIFF specifications */
-#define TIFFTAG_RICHTIFFIPTC    33723
+#define TIFFTAG_RICHTIFFIPTC		33723
 /* 34016-34029 are reserved for ANSI IT8 TIFF/IT <dkelly@apago.com) */
 #define TIFFTAG_IT8SITE			34016	/* site name */
 #define TIFFTAG_IT8COLORSEQUENCE	34017	/* color seq. [RGB,CMYK,etc] */
@@ -392,7 +395,7 @@ typedef	enum {
 #define TIFFTAG_IT8PIXELINTENSITYRANGE	34027	/* MP pixel intensity value */
 #define TIFFTAG_IT8TRANSPARENCYINDICATOR 34028	/* HC transparency switch */
 #define TIFFTAG_IT8COLORCHARACTERIZATION 34029	/* color character. table */
-#define TIFFTAG_IT8HCUSAGE			34030	/* HC usage indicator */
+#define TIFFTAG_IT8HCUSAGE		34030	/* HC usage indicator */
 #define TIFFTAG_IT8TRAPINDICATOR	34031	/* Trapping indicator (untrapped=0, trapped=1) */
 #define TIFFTAG_IT8CMYKEQUIVALENT	34032	/* CMYK color equivalents */
 /* tags 34232-34236 are private tags registered to Texas Instruments */
@@ -400,7 +403,7 @@ typedef	enum {
 /* tag 34750 is a private tag registered to Adobe? */
 #define TIFFTAG_ICCPROFILE		34675	/* ICC profile data */
 /* tag 34377 is private tag registered to Adobe for PhotoShop */
-#define TIFFTAG_PHOTOSHOP				34377 
+#define TIFFTAG_PHOTOSHOP		34377 
 /* tag 34750 is a private tag registered to Pixel Magic */
 #define	TIFFTAG_JBIGOPTIONS		34750	/* JBIG options */
 /* tags 34908-34914 are private tags registered to SGI */
@@ -415,15 +418,15 @@ typedef	enum {
 #define TIFFTAG_DCSHUESHIFTVALUES       65535   /* hue shift correction data */
 
 /*
- * The following are ``pseudo tags'' that can be
- * used to control codec-specific functionality.
- * These tags are not written to file.  Note that
- * these values start at 0xffff+1 so that they'll
- * never collide with Aldus-assigned tags.
+ * The following are ``pseudo tags'' that can be used to control
+ * codec-specific functionality.  These tags are not written to file.
+ * Note that these values start at 0xffff+1 so that they'll never
+ * collide with Aldus-assigned tags.
  *
- * If you want your private pseudo tags ``registered''
- * (i.e. added to this file), send mail to sam@sgi.com
- * with the appropriate C definitions to add.
+ * If you want your private pseudo tags ``registered'' (i.e. added to
+ * this file), please post a bug report via the tracking system at
+ * http://www.remotesensing.org/libtiff/bugs.html with the appropriate
+ * C definitions to add.
  */
 #define	TIFFTAG_FAXMODE			65536	/* Group 3/4 format control */
 #define	    FAXMODE_CLASSIC	0x0000		/* default, include RTC */
@@ -480,3 +483,5 @@ typedef	enum {
 #define     SGILOGENCODE_NODITHER	0     /* do not dither encoded values*/
 #define     SGILOGENCODE_RANDITHER	1     /* randomly dither encd values */
 #endif /* _TIFF_ */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

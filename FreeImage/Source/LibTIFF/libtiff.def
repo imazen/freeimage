@@ -1,6 +1,7 @@
 LIBRARY libtiff
 EXPORTS TIFFOpen
 	TIFFGetVersion
+	TIFFCleanup
 	TIFFClose
 	TIFFFlush
 	TIFFFlushData
@@ -22,6 +23,7 @@ EXPORTS TIFFOpen
 	TIFFGetMode
 	TIFFIsTiled
 	TIFFIsByteSwapped
+	TIFFIsBigEndian
 	TIFFCIELabToRGBInit
 	TIFFCIELabToXYZ
 	TIFFXYZToRGB
@@ -97,6 +99,9 @@ EXPORTS TIFFOpen
 	_TIFFmemcmp
 	TIFFCreateDirectory
 	TIFFDefaultStripSize
-
-
-
+	TIFFSetTagExtender
+	TIFFMergeFieldInfo
+	TIFFCurrentDirOffset
+	TIFFWriteCheck
+	TIFFRGBAImageOK
+	TIFFNumberOfDirectories

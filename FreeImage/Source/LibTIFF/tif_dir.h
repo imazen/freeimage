@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -36,7 +36,7 @@
 typedef	struct {
 #define	FIELD_SETLONGS	4
 	/* bit vector of fields that are set */
-	u_long	td_fieldsset[FIELD_SETLONGS];
+	unsigned long	td_fieldsset[FIELD_SETLONGS];
 
 	uint32	td_imagewidth, td_imagelength, td_imagedepth;
 	uint32	td_tilewidth, td_tilelength, td_tiledepth;
@@ -75,41 +75,34 @@ typedef	struct {
 	tstrip_t td_nstrips;		/* size of offset & bytecount arrays */
 	uint32*	td_stripoffset;
 	uint32*	td_stripbytecount;
-#if SUBIFD_SUPPORT
+	int	td_stripbytecountsorted; /* is the bytecount array sorted ascending? */
 	uint16	td_nsubifd;
 	uint32*	td_subifd;
-#endif
-#ifdef YCBCR_SUPPORT
+	/* YCbCr parameters */
 	float*	td_ycbcrcoeffs;
 	uint16	td_ycbcrsubsampling[2];
 	uint16	td_ycbcrpositioning;
-#endif
-#ifdef COLORIMETRY_SUPPORT
+	/* Colorimetry parameters */
 	float*	td_whitepoint;
 	float*	td_primarychromas;
 	float*	td_refblackwhite;
 	uint16*	td_transferfunction[3];
-#endif
-#ifdef CMYK_SUPPORT
+	/* CMYK parameters */
 	uint16	td_inkset;
 	uint16	td_ninks;
 	uint16	td_dotrange[2];
 	int	td_inknameslen;
 	char*	td_inknames;
 	char*	td_targetprinter;
-#endif
-#ifdef ICC_SUPPORT
+	/* ICC parameters */
 	uint32	td_profileLength;
 	void	*td_profileData;
-#endif
-#ifdef PHOTOSHOP_SUPPORT
+	/* Adobe Photoshop tag handling */
 	uint32	td_photoshopLength;
 	void	*td_photoshopData;
-#endif
-#ifdef IPTC_SUPPORT
+	/* IPTC parameters */
 	uint32	td_richtiffiptcLength;
 	void	*td_richtiffiptcData;
-#endif
         /* Begin Pixar Tag values. */
         uint32	td_imagefullwidth, td_imagefulllength;
  	char*	td_textureformat;
@@ -120,7 +113,7 @@ typedef	struct {
  	/* End Pixar Tag Values. */
 	uint32	td_xmlpacketLength;
 	void	*td_xmlpacketData;
-		int     td_customValueCount;
+	int     td_customValueCount;
         TIFFTagValue *td_customValues;
 } TIFFDirectory;
 
@@ -236,7 +229,7 @@ typedef	struct {
 	(v) & (tif)->tif_typemask[type]))
 
 
-#define BITn(n)				(((u_long)1L)<<((n)&0x1f)) 
+#define BITn(n)				(((unsigned long)1L)<<((n)&0x1f)) 
 #define BITFIELDn(tif, n)		((tif)->tif_dir.td_fieldsset[(n)/32]) 
 #define TIFFFieldSet(tif, field)	(BITFIELDn(tif, field) & BITn(field)) 
 #define TIFFSetFieldBit(tif, field)	(BITFIELDn(tif, field) |= BITn(field))
@@ -257,11 +250,15 @@ extern  const TIFFFieldInfo* _TIFFFindOrRegisterFieldInfo( TIFF *tif,
 extern  TIFFFieldInfo* _TIFFCreateAnonFieldInfo( TIFF *tif, ttag_t tag,
                                                  TIFFDataType dt );
 
-#define _TIFFMergeFieldInfo TIFFMergeFieldInfo
-#define _TIFFFindFieldInfo  TIFFFindFieldInfo
-#define _TIFFFieldWithTag   TIFFFieldWithTag
-    
+#define _TIFFMergeFieldInfo	    TIFFMergeFieldInfo
+#define _TIFFFindFieldInfo	    TIFFFindFieldInfo
+#define _TIFFFindFieldInfoByName    TIFFFindFieldInfoByName
+#define _TIFFFieldWithTag	    TIFFFieldWithTag
+#define _TIFFFieldWithName	    TIFFFieldWithName
+
 #if defined(__cplusplus)
 }
 #endif
 #endif /* _TIFFDIR_ */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -97,7 +97,7 @@ typedef	void* thandle_t;	/* client data handle */
 #endif
 
 #ifndef NULL
-#define	NULL	0
+# define NULL	(void *)0
 #endif
 
 /*
@@ -281,6 +281,7 @@ extern	const TIFFCodec* TIFFFindCODEC(uint16);
 extern	TIFFCodec* TIFFRegisterCODEC(uint16, const char*, TIFFInitMethod);
 extern	void TIFFUnRegisterCODEC(TIFFCodec*);
 extern  int TIFFIsCODECConfigured(uint16);
+extern	TIFFCodec* TIFFGetConfiguredCODECs();
 
 extern	tdata_t _TIFFmalloc(tsize_t);
 extern	tdata_t _TIFFrealloc(tdata_t, tsize_t);
@@ -289,6 +290,7 @@ extern	void _TIFFmemcpy(tdata_t, const tdata_t, tsize_t);
 extern	int _TIFFmemcmp(const tdata_t, const tdata_t, tsize_t);
 extern	void _TIFFfree(tdata_t);
 
+extern	void TIFFCleanup(TIFF*);
 extern	void TIFFClose(TIFF*);
 extern	int TIFFFlush(TIFF*);
 extern	int TIFFFlushData(TIFF*);
@@ -308,11 +310,23 @@ extern	tsize_t TIFFVTileSize(TIFF*, uint32);
 extern	uint32 TIFFDefaultStripSize(TIFF*, uint32);
 extern	void TIFFDefaultTileSize(TIFF*, uint32*, uint32*);
 extern	int TIFFFileno(TIFF*);
+extern  int TIFFSetFileno(TIFF*, int);
+extern  thandle_t TIFFClientdata(TIFF*);
+extern  thandle_t TIFFSetClientdata(TIFF*, thandle_t);
 extern	int TIFFGetMode(TIFF*);
+extern	int TIFFSetMode(TIFF*, int);
 extern	int TIFFIsTiled(TIFF*);
 extern	int TIFFIsByteSwapped(TIFF*);
 extern	int TIFFIsUpSampled(TIFF*);
 extern	int TIFFIsMSB2LSB(TIFF*);
+extern	int TIFFIsBigEndian(TIFF*);
+extern	TIFFReadWriteProc TIFFGetReadProc(TIFF*);
+extern	TIFFReadWriteProc TIFFGetWriteProc(TIFF*);
+extern	TIFFSeekProc TIFFGetSeekProc(TIFF*);
+extern	TIFFCloseProc TIFFGetCloseProc(TIFF*);
+extern	TIFFSizeProc TIFFGetSizeProc(TIFF*);
+extern	TIFFMapFileProc TIFFGetMapFileProc(TIFF*);
+extern	TIFFUnmapFileProc TIFFGetUnmapFileProc(TIFF*);
 extern	uint32 TIFFCurrentRow(TIFF*);
 extern	tdir_t TIFFCurrentDirectory(TIFF*);
 extern	tdir_t TIFFNumberOfDirectories(TIFF*);
@@ -365,6 +379,7 @@ extern	TIFF* TIFFClientOpen(const char*, const char*,
 	    TIFFSizeProc,
 	    TIFFMapFileProc, TIFFUnmapFileProc);
 extern	const char* TIFFFileName(TIFF*);
+extern const char* TIFFSetFileName(TIFF*, const char *);
 extern	void TIFFError(const char*, const char*, ...);
 extern	void TIFFWarning(const char*, const char*, ...);
 extern	TIFFErrorHandler TIFFSetErrorHandler(TIFFErrorHandler);
@@ -424,7 +439,7 @@ extern	uint32 LogLuv32fromXYZ(float*, int);
 #endif /* LOGLUV_PUBLIC */
 
 /*
-** New stuff going public in 3.6.x.
+** Stuff, related to tag handling and creating custom tags.
 */
 extern  int  TIFFGetTagListCount( TIFF * );
 extern  ttag_t TIFFGetTagListEntry( TIFF *, int tag_index );
@@ -455,7 +470,10 @@ typedef struct _TIFFTagValue {
 
 extern	void TIFFMergeFieldInfo(TIFF*, const TIFFFieldInfo[], int);
 extern	const TIFFFieldInfo* TIFFFindFieldInfo(TIFF*, ttag_t, TIFFDataType);
+extern  const TIFFFieldInfo* TIFFFindFieldInfoByName(TIFF* , const char *,
+						     TIFFDataType);
 extern	const TIFFFieldInfo* TIFFFieldWithTag(TIFF*, ttag_t);
+extern	const TIFFFieldInfo* TIFFFieldWithName(TIFF*, const char *);
 
 typedef	int (*TIFFVSetMethod)(TIFF*, ttag_t, va_list);
 typedef	int (*TIFFVGetMethod)(TIFF*, ttag_t, va_list);
@@ -475,3 +493,5 @@ extern  void TIFFSetClientInfo( TIFF *, void *, const char * );
 }
 #endif
 #endif /* _TIFFIO_ */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

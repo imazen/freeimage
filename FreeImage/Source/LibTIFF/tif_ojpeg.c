@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include "tiffiop.h"
 #ifdef OJPEG_SUPPORT
 
@@ -211,7 +213,7 @@ typedef struct             /* This module's private, per-image state variable */
         samplesperclump,
         scancount;                           /* No. of scan lines accumulated */
     J_COLOR_SPACE photometric;          /* IJG JPEG Library's photometry code */
-    u_char h_sampling,                          /* Luminance sampling factors */
+    unsigned char h_sampling,                          /* Luminance sampling factors */
            v_sampling,
            jpegcolormode;           /* Who performs RGB <-> YCbCr conversion? */
 			/* JPEGCOLORMODE_RAW <=> TIFF Library or its client */
@@ -326,13 +328,20 @@ static const char JPEGLib_name[]={"JPEG Library"},
 */
 static void
 TIFFojpeg_error_exit(register j_common_ptr cinfo)
-  { char buffer[JMSG_LENGTH_MAX];
+{
+    char buffer[JMSG_LENGTH_MAX];
+    int code = cinfo->err->msg_code;
+
+    if (((OJPEGState *)cinfo)->is_WANG) {
+	if (code == JERR_SOF_DUPLICATE || code == JERR_SOI_DUPLICATE)
+	    return;	    /* ignore it */
+    }
 
     (*cinfo->err->format_message)(cinfo,buffer);
     TIFFError(JPEGLib_name,buffer); /* Display error message */
     jpeg_abort(cinfo); /* Clean up JPEG Library state */
     LONGJMP(((OJPEGState *)cinfo)->exit_jmpbuf,1); /* Return to TIFF client */
-  }
+}
 
 static void
 TIFFojpeg_output_message(register j_common_ptr cinfo)
@@ -2128,7 +2137,7 @@ OJPEGVSetField(register TIFF *tif,ttag_t tag,va_list ap)
                 bufoff=0;
                 for(i2=0;i2<sp->jpegqtables_length;i2++){
                     TIFFSeekFile(tif, v[i2], SEEK_SET);
-                    TIFFReadFile(tif, &(((u_char*)(sp->jpegqtables))[bufoff]),
+                    TIFFReadFile(tif, &(((unsigned char*)(sp->jpegqtables))[bufoff]),
 				 64);
                     bufoff+=64;
                 }
@@ -2184,14 +2193,14 @@ OJPEGVSetField(register TIFF *tif,ttag_t tag,va_list ap)
                     for(i2=0;i2<sp->jpegdctables_length;i2++){
                         TIFFSeekFile(tif, v[i2], SEEK_SET);
                         TIFFReadFile(tif,
-				     &(((u_char*)(sp->jpegdctables))[bufoff]),
+				     &(((unsigned char*)(sp->jpegdctables))[bufoff]),
 				     16);
                         code_count=0;
                         for(k2=0;k2<16;k2++){
-                            code_count+=((u_char*)(sp->jpegdctables))[k2+bufoff];
+                            code_count+=((unsigned char*)(sp->jpegdctables))[k2+bufoff];
                         }
                         TIFFReadFile(tif,
-				     &(((u_char*)(sp->jpegdctables))[bufoff+16]),
+				     &(((unsigned char*)(sp->jpegdctables))[bufoff+16]),
 				     code_count);
                         bufoff+=16;
                         bufoff+=code_count;
@@ -2292,7 +2301,7 @@ OJPEGVSetField(register TIFF *tif,ttag_t tag,va_list ap)
 
           if ((tif->tif_flags ^ v32) & TIFF_UPSAMPLED)
             {
-              tif->tif_tilesize = TIFFTileSize(tif);
+              tif->tif_tilesize = isTiled(tif) ? TIFFTileSize(tif) : (tsize_t) -1;
               tif->tif_flags |= TIFF_DIRTYDIRECT;
             };
           return 1;
@@ -2628,3 +2637,5 @@ TIFFInitOJPEG(register TIFF *tif,int scheme)
 #   undef td
   }
 #endif /* OJPEG_SUPPORT */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

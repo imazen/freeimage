@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -38,7 +38,6 @@
  */
 #include "tif_predict.h"
 
-#include <assert.h>
 #include <stdio.h>
 
 /*
@@ -92,9 +91,9 @@
 typedef	struct {
 	TIFFPredictorState predict;	/* predictor super class */
 
-	u_short		nbits;		/* # of bits/code */
-	u_short		maxcode;	/* maximum code for lzw_nbits */
-	u_short		free_ent;	/* next free entry in hash table */
+	unsigned short	nbits;		/* # of bits/code */
+	unsigned short	maxcode;	/* maximum code for lzw_nbits */
+	unsigned short	free_ent;	/* next free entry in hash table */
 	long		nextdata;	/* next bits of i/o */
 	long		nextbits;	/* # of valid bits in lzw_nextdata */
 
@@ -121,9 +120,9 @@ typedef struct {
  */
 typedef struct code_ent {
 	struct code_ent *next;
-	u_short	length;			/* string len, including this token */
-	u_char	value;			/* data value */
-	u_char	firstchar;		/* first token of string */
+	unsigned short	length;		/* string len, including this token */
+	unsigned char	value;		/* data value */
+	unsigned char	firstchar;	/* first token of string */
 } code_t;
 
 typedef	int (*decodeFunc)(TIFF*, tidata_t, tsize_t, tsample_t);
@@ -343,7 +342,7 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 	char *op = (char*) op0;
 	long occ = (long) occ0;
 	char *tp;
-	u_char *bp;
+	unsigned char *bp;
 	hcode_t code;
 	int len;
 	long nbits, nextbits, nextdata, nbitsmask;
@@ -394,7 +393,7 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 		sp->dec_restart = 0;
 	}
 
-	bp = (u_char *)tif->tif_rawcp;
+	bp = (unsigned char *)tif->tif_rawcp;
 	nbits = sp->lzw_nbits;
 	nextdata = sp->lzw_nextdata;
 	nextbits = sp->lzw_nextbits;
@@ -415,7 +414,7 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 			NextCode(tif, sp, bp, code, GetNextCode);
 			if (code == CODE_EOI)
 				break;
-			*op++ = code, occ--;
+			*op++ = (char)code, occ--;
 			oldcodep = sp->dec_codetab + code;
 			continue;
 		}
@@ -501,11 +500,11 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 			}
 			op += len, occ -= len;
 		} else
-			*op++ = code, occ--;
+			*op++ = (char)code, occ--;
 	}
 
 	tif->tif_rawcp = (tidata_t) bp;
-	sp->lzw_nbits = (u_short) nbits;
+	sp->lzw_nbits = (unsigned short) nbits;
 	sp->lzw_nextdata = nextdata;
 	sp->lzw_nextbits = nextbits;
 	sp->dec_nbitsmask = nbitsmask;
@@ -527,10 +526,10 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
  * Decode a "hunk of data" for old images.
  */
 #define	GetNextCodeCompat(sp, bp, code) {			\
-	nextdata |= (u_long) *(bp)++ << nextbits;		\
+	nextdata |= (unsigned long) *(bp)++ << nextbits;	\
 	nextbits += 8;						\
 	if (nextbits < nbits) {					\
-		nextdata |= (u_long) *(bp)++ << nextbits;	\
+		nextdata |= (unsigned long) *(bp)++ << nextbits;\
 		nextbits += 8;					\
 	}							\
 	code = (hcode_t)(nextdata & nbitsmask);			\
@@ -545,7 +544,7 @@ LZWDecodeCompat(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 	char *op = (char*) op0;
 	long occ = (long) occ0;
 	char *tp;
-	u_char *bp;
+	unsigned char *bp;
 	int code, nbits;
 	long nextbits, nextdata, nbitsmask;
 	code_t *codep, *free_entp, *maxcodep, *oldcodep;
@@ -590,7 +589,7 @@ LZWDecodeCompat(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 		sp->dec_restart = 0;
 	}
 
-	bp = (u_char *)tif->tif_rawcp;
+	bp = (unsigned char *)tif->tif_rawcp;
 	nbits = sp->lzw_nbits;
 	nextdata = sp->lzw_nextdata;
 	nextbits = sp->lzw_nextbits;
@@ -764,10 +763,10 @@ LZWPreEncode(TIFF* tif, tsample_t s)
 #define	PutNextCode(op, c) {					\
 	nextdata = (nextdata << nbits) | c;			\
 	nextbits += nbits;					\
-	*op++ = (u_char)(nextdata >> (nextbits-8));		\
+	*op++ = (unsigned char)(nextdata >> (nextbits-8));		\
 	nextbits -= 8;						\
 	if (nextbits >= 8) {					\
-		*op++ = (u_char)(nextdata >> (nextbits-8));	\
+		*op++ = (unsigned char)(nextdata >> (nextbits-8));	\
 		nextbits -= 8;					\
 	}							\
 	outcount += nbits;					\
@@ -970,7 +969,7 @@ LZWPostEncode(TIFF* tif)
 	}
 	PutNextCode(op, CODE_EOI);
 	if (nextbits > 0) 
-		*op++ = (u_char)(nextdata << (8-nextbits));
+		*op++ = (unsigned char)(nextdata << (8-nextbits));
 	tif->tif_rawcc = (tsize_t)(op - tif->tif_rawdata);
 	return (1);
 }
@@ -1076,3 +1075,5 @@ bad:
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #endif /* LZW_SUPPORT */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

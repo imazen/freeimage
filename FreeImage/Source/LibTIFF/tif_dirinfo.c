@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -31,6 +31,7 @@
  */
 #include "tiffiop.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 /*
  * NB: NB: THIS ARRAY IS ASSUMED TO BE SORTED BY TAG.
@@ -172,6 +173,8 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       FALSE,	FALSE,	"TileByteCounts" },
     { TIFFTAG_TILEBYTECOUNTS,	-1, 1, TIFF_SHORT,	FIELD_STRIPBYTECOUNTS,
       FALSE,	FALSE,	"TileByteCounts" },
+    { TIFFTAG_SUBIFD,		-1,-1, TIFF_IFD,	FIELD_SUBIFD,
+      TRUE,	TRUE,	"SubIFD" },
     { TIFFTAG_SUBIFD,		-1,-1, TIFF_LONG,	FIELD_SUBIFD,
       TRUE,	TRUE,	"SubIFD" },
     { TIFFTAG_INKSET,		 1, 1, TIFF_SHORT,	FIELD_INKSET,
@@ -208,7 +211,7 @@ const TIFFFieldInfo tiffFieldInfo[] = {
 /* XXX temporarily accept LONG for backwards compatibility */
     { TIFFTAG_REFERENCEBLACKWHITE,6,6,TIFF_LONG,	FIELD_REFBLACKWHITE,
       TRUE,	FALSE,	"ReferenceBlackWhite" },
-    { TIFFTAG_XMLPACKET,	-1,-3, TIFF_UNDEFINED,	FIELD_XMLPACKET,
+    { TIFFTAG_XMLPACKET,	-1,-3, TIFF_BYTE,	FIELD_XMLPACKET,
       FALSE,	TRUE,	"XMLPacket" },
 /* begin SGI tags */
     { TIFFTAG_MATTEING,		 1, 1, TIFF_SHORT,	FIELD_EXTRASAMPLES,
@@ -242,15 +245,8 @@ const TIFFFieldInfo tiffFieldInfo[] = {
     { TIFFTAG_COPYRIGHT,	-1,-1, TIFF_ASCII,	FIELD_COPYRIGHT,
       TRUE,	FALSE,	"Copyright" },
 /* end Pixar tags */
-#ifdef IPTC_SUPPORT
-#ifdef PHOTOSHOP_SUPPORT
     { TIFFTAG_RICHTIFFIPTC, -1,-1, TIFF_LONG,   FIELD_RICHTIFFIPTC, 
       FALSE,    TRUE,   "RichTIFFIPTC" },
-#else
-    { TIFFTAG_RICHTIFFIPTC, -1,-3, TIFF_UNDEFINED, FIELD_RICHTIFFIPTC, 
-      FALSE,    TRUE,   "RichTIFFIPTC" },
-#endif
-#endif
     { TIFFTAG_PHOTOSHOP,    -1,-3, TIFF_BYTE,   FIELD_PHOTOSHOP, 
       FALSE,    TRUE,   "Photoshop" },
     { TIFFTAG_ICCPROFILE,	-1,-3, TIFF_UNDEFINED,	FIELD_ICCPROFILE,
@@ -295,11 +291,22 @@ tagCompare(const void* a, const void* b)
 		return ((int)tb->field_type - (int)ta->field_type);
 }
 
+static int
+tagNameCompare(const void* a, const void* b)
+{
+	const TIFFFieldInfo* ta = *(const TIFFFieldInfo**) a;
+	const TIFFFieldInfo* tb = *(const TIFFFieldInfo**) b;
+
+        return strcmp(ta->field_name, tb->field_name);
+}
+
 void
 _TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], int n)
 {
 	TIFFFieldInfo** tp;
 	int i;
+
+        tif->tif_foundfield = NULL;
 
 	if (tif->tif_nfields > 0) {
 		tif->tif_fieldinfo = (TIFFFieldInfo**)
@@ -309,6 +316,7 @@ _TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], int n)
 		tif->tif_fieldinfo = (TIFFFieldInfo**)
 		    _TIFFmalloc(n * sizeof (TIFFFieldInfo*));
 	}
+	assert(tif->tif_fieldinfo != NULL);
 	tp = &tif->tif_fieldinfo[tif->tif_nfields];
 	for (i = 0; i < n; i++)
 		tp[i] = (TIFFFieldInfo*) &info[i];	/* XXX */
@@ -376,7 +384,7 @@ TIFFDataWidth(TIFFDataType type)
 TIFFDataType
 _TIFFSampleToTagType(TIFF* tif)
 {
-	int bps = (int) TIFFhowmany(tif->tif_dir.td_bitspersample, 8);
+	uint32 bps = TIFFhowmany8(tif->tif_dir.td_bitspersample);
 
 	switch (tif->tif_dir.td_sampleformat) {
 	case SAMPLEFORMAT_IEEEFP:
@@ -397,13 +405,12 @@ _TIFFSampleToTagType(TIFF* tif)
 const TIFFFieldInfo*
 _TIFFFindFieldInfo(TIFF* tif, ttag_t tag, TIFFDataType dt)
 {
-	static const TIFFFieldInfo *last = NULL;
 	int i, n;
 
-	if (last && last->field_tag == tag &&
-	    (dt == TIFF_ANY || dt == last->field_type))
-		return (last);
-	/* NB: if table gets big, use sorted search (e.g. binary search) */
+	if (tif->tif_foundfield && tif->tif_foundfield->field_tag == tag &&
+	    (dt == TIFF_ANY || dt == tif->tif_foundfield->field_type))
+		return (tif->tif_foundfield);
+	/* NB: use sorted search (e.g. binary search) */
 	if(dt != TIFF_ANY) {
             TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
             key.field_tag = tag;
@@ -417,13 +424,38 @@ _TIFFFindFieldInfo(TIFF* tif, ttag_t tag, TIFFDataType dt)
 		const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
 		if (fip->field_tag == tag &&
 		    (dt == TIFF_ANY || fip->field_type == dt))
-			return (last = fip);
+			return (tif->tif_foundfield = fip);
 	}
 	return ((const TIFFFieldInfo *)0);
 }
 
-#include <assert.h>
-#include <stdio.h>
+const TIFFFieldInfo*
+_TIFFFindFieldInfoByName(TIFF* tif, const char *field_name, TIFFDataType dt)
+{
+	int i, n;
+
+	if (tif->tif_foundfield
+	    && streq(tif->tif_foundfield->field_name, field_name)
+	    && (dt == TIFF_ANY || dt == tif->tif_foundfield->field_type))
+		return (tif->tif_foundfield);
+	/* NB: use sorted search (e.g. binary search) */
+	if(dt != TIFF_ANY) {
+            TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
+            key.field_name = (char *)field_name;
+            key.field_type = dt;
+            return((const TIFFFieldInfo *) bsearch(&key, 
+						   tif->tif_fieldinfo, 
+						   tif->tif_nfields,
+						   sizeof(TIFFFieldInfo), 
+						   tagNameCompare));
+        } else for (i = 0, n = tif->tif_nfields; i < n; i++) {
+		const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
+		if (streq(fip->field_name, field_name) &&
+		    (dt == TIFF_ANY || fip->field_type == dt))
+			return (tif->tif_foundfield = fip);
+	}
+	return ((const TIFFFieldInfo *)0);
+}
 
 const TIFFFieldInfo*
 _TIFFFieldWithTag(TIFF* tif, ttag_t tag)
@@ -431,7 +463,22 @@ _TIFFFieldWithTag(TIFF* tif, ttag_t tag)
 	const TIFFFieldInfo* fip = _TIFFFindFieldInfo(tif, tag, TIFF_ANY);
 	if (!fip) {
 		TIFFError("TIFFFieldWithTag",
-		    "Internal error, unknown tag 0x%x", (u_int) tag);
+			  "Internal error, unknown tag 0x%x",
+                          (unsigned int) tag);
+		assert(fip != NULL);
+		/*NOTREACHED*/
+	}
+	return (fip);
+}
+
+const TIFFFieldInfo*
+_TIFFFieldWithName(TIFF* tif, const char *field_name)
+{
+	const TIFFFieldInfo* fip =
+		_TIFFFindFieldInfoByName(tif, field_name, TIFF_ANY);
+	if (!fip) {
+		TIFFError("TIFFFieldWithName",
+			  "Internal error, unknown tag %s", field_name);
 		assert(fip != NULL);
 		/*NOTREACHED*/
 	}
@@ -460,6 +507,8 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
     TIFFFieldInfo *fld;
 
     fld = (TIFFFieldInfo *) _TIFFmalloc(sizeof (TIFFFieldInfo));
+    if (fld == NULL)
+	return NULL;
     _TIFFmemset( fld, 0, sizeof(TIFFFieldInfo) );
 
     fld->field_tag = tag;
@@ -470,6 +519,10 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
     fld->field_oktochange = TRUE;
     fld->field_passcount = TRUE;
     fld->field_name = (char *) _TIFFmalloc(32);
+    if (fld->field_name == NULL) {
+	_TIFFfree(fld);
+	return NULL;
+    }
 
     /* note that this name is a special sign to TIFFClose() and
      * _TIFFSetupFieldInfo() to free the field
@@ -478,3 +531,5 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
 
     return fld;    
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

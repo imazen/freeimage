@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -59,12 +59,8 @@ static	int TIFFWriteDoubleArray(TIFF *,
 static	int TIFFWriteByteArray(TIFF*, TIFFDirEntry*, char*);
 static	int TIFFWriteAnyArray(TIFF*,
 	    TIFFDataType, ttag_t, TIFFDirEntry*, uint32, double*);
-#ifdef COLORIMETRY_SUPPORT
 static	int TIFFWriteTransferFunction(TIFF*, TIFFDirEntry*);
-#endif
-#ifdef CMYK_SUPPORT
 static	int TIFFWriteInkNames(TIFF*, TIFFDirEntry*);
-#endif
 static	int TIFFWriteData(TIFF*, TIFFDirEntry*, char*);
 static	int TIFFLinkDirectory(TIFF*);
 
@@ -99,7 +95,7 @@ _TIFFWriteDirectory(TIFF* tif, int done)
 	char* data;
 	TIFFDirEntry* dir;
 	TIFFDirectory* td;
-	u_long b, fields[FIELD_SETLONGS];
+	unsigned long b, fields[FIELD_SETLONGS];
 	int fi, nfi;
 
 	if (tif->tif_mode == O_RDONLY)
@@ -296,28 +292,19 @@ _TIFFWriteDirectory(TIFF* tif, int done)
 			break;
 		case FIELD_PAGENUMBER:
 		case FIELD_HALFTONEHINTS:
-#ifdef YCBCR_SUPPORT
 		case FIELD_YCBCRSUBSAMPLING:
-#endif
-#ifdef CMYK_SUPPORT
 		case FIELD_DOTRANGE:
-#endif
 			if (!TIFFSetupShortPair(tif, fip->field_tag, dir))
 				goto bad;
 			break;
-#ifdef CMYK_SUPPORT
 		case FIELD_INKNAMES:
 			if (!TIFFWriteInkNames(tif, dir))
 				goto bad;
 			break;
-#endif
-#ifdef COLORIMETRY_SUPPORT
 		case FIELD_TRANSFERFUNCTION:
 			if (!TIFFWriteTransferFunction(tif, dir))
 				goto bad;
 			break;
-#endif
-#if SUBIFD_SUPPORT
 		case FIELD_SUBIFD:
 			if (!TIFFWriteNormalTag(tif, dir, fip))
 				goto bad;
@@ -341,7 +328,6 @@ _TIFFWriteDirectory(TIFF* tif, int done)
 					    + ((char*)&dir->tdir_offset-data));
 			}
 			break;
-#endif
 		default:
 			if (!TIFFWriteNormalTag(tif, dir, fip))
 				goto bad;
@@ -439,11 +425,11 @@ TIFFCheckpointDirectory(TIFF* tif)
 static int
 TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 {
-	u_short wc = (u_short) fip->field_writecount;
+	unsigned short wc = (unsigned short) fip->field_writecount;
 	uint32 wc2;
 
 	dir->tdir_tag = (uint16) fip->field_tag;
-	dir->tdir_type = (u_short) fip->field_type;
+	dir->tdir_type = (unsigned short) fip->field_type;
 	dir->tdir_count = wc;
 #define	WRITEF(x,y)	x(tif, fip->field_type, fip->field_tag, dir, wc, y)
 	switch (fip->field_type) {
@@ -451,7 +437,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_SSHORT:
 		if (wc > 1) {
 			uint16* wp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &wp);
 			else
@@ -477,7 +463,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_IFD:
 		if (wc > 1) {
 			uint32* lp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &lp);
 			else
@@ -501,7 +487,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_SRATIONAL:
 		if (wc > 1) {
 			float* fp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &fp);
 			else
@@ -525,7 +511,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_FLOAT:
 		if (wc > 1) {
 			float* fp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &fp);
 			else
@@ -549,7 +535,7 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 	case TIFF_DOUBLE:
 		if (wc > 1) {
 			double* dp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount)
 				TIFFGetField(tif, fip->field_tag, &wc, &dp);
 			else
@@ -571,11 +557,16 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 		}
 		break;
 	case TIFF_ASCII:
-		{ char* cp;
-		  TIFFGetField(tif, fip->field_tag, &cp);
-		  dir->tdir_count = (uint32) (strlen(cp) + 1);
-		  if (!TIFFWriteByteArray(tif, dir, cp))
-			return (0);
+		{ 
+                    char* cp;
+                    if (fip->field_passcount)
+                        TIFFGetField(tif, fip->field_tag, &wc, &cp);
+                    else
+                        TIFFGetField(tif, fip->field_tag, &cp);
+
+                    dir->tdir_count = (uint32) (strlen(cp) + 1);
+                    if (!TIFFWriteByteArray(tif, dir, cp))
+                        return (0);
 		}
 		break;
 
@@ -585,11 +576,11 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
         case TIFF_SBYTE:          
 		if (wc > 1) {
 			char* cp;
-			if (wc == (u_short) TIFF_VARIABLE
+			if (wc == (unsigned short) TIFF_VARIABLE
 			    || fip->field_passcount) {
 				TIFFGetField(tif, fip->field_tag, &wc, &cp);
 				dir->tdir_count = wc;
-			} else if (wc == (u_short) TIFF_VARIABLE2) {
+			} else if (wc == (unsigned short) TIFF_VARIABLE2) {
 				TIFFGetField(tif, fip->field_tag, &wc2, &cp);
 				dir->tdir_count = wc2;
 			} else
@@ -614,10 +605,10 @@ TIFFWriteNormalTag(TIFF* tif, TIFFDirEntry* dir, const TIFFFieldInfo* fip)
 
 	case TIFF_UNDEFINED:
 		{ char* cp;
-		  if (wc == (u_short) TIFF_VARIABLE) {
+		  if (wc == (unsigned short) TIFF_VARIABLE) {
 			TIFFGetField(tif, fip->field_tag, &wc, &cp);
 			dir->tdir_count = wc;
-		  } else if (wc == (u_short) TIFF_VARIABLE2) {
+		  } else if (wc == (unsigned short) TIFF_VARIABLE2) {
 			TIFFGetField(tif, fip->field_tag, &wc2, &cp);
 			dir->tdir_count = wc2;
 		  } else 
@@ -692,8 +683,14 @@ TIFFWritePerSampleShorts(TIFF* tif, ttag_t tag, TIFFDirEntry* dir)
 	uint16* w = buf;
 	int i, status, samples = tif->tif_dir.td_samplesperpixel;
 
-	if (samples > NITEMS(buf))
+	if (samples > NITEMS(buf)) {
 		w = (uint16*) _TIFFmalloc(samples * sizeof (uint16));
+		if (w == NULL) {
+			TIFFError(tif->tif_name,
+			    "No space to write per-sample shorts");
+			return (0);
+		}
+	}
 	TIFFGetField(tif, tag, &v);
 	for (i = 0; i < samples; i++)
 		w[i] = v;
@@ -717,8 +714,14 @@ TIFFWritePerSampleAnys(TIFF* tif,
 	int i, status;
 	int samples = (int) tif->tif_dir.td_samplesperpixel;
 
-	if (samples > NITEMS(buf))
+	if (samples > NITEMS(buf)) {
 		w = (double*) _TIFFmalloc(samples * sizeof (double));
+		if (w == NULL) {
+			TIFFError(tif->tif_name,
+			    "No space to write per-sample values");
+			return (0);
+		}
+	}
 	TIFFGetField(tif, tag, &v);
 	for (i = 0; i < samples; i++)
 		w[i] = v;
@@ -840,6 +843,11 @@ TIFFWriteRationalArray(TIFF* tif,
 	dir->tdir_type = (short) type;
 	dir->tdir_count = n;
 	t = (uint32*) _TIFFmalloc(2*n * sizeof (uint32));
+	if (t == NULL) {
+		TIFFError(tif->tif_name,
+		    "No space to write RATIONAL array");
+		return (0);
+	}
 	for (i = 0; i < n; i++) {
 		float fv = v[i];
 		int sign = 1;
@@ -910,8 +918,14 @@ TIFFWriteAnyArray(TIFF* tif,
 	char* w = buf;
 	int i, status = 0;
 
-	if (n * TIFFDataWidth(type) > sizeof buf)
+	if (n * TIFFDataWidth(type) > sizeof buf) {
 		w = (char*) _TIFFmalloc(n * TIFFDataWidth(type));
+		if (w == NULL) {
+			TIFFError(tif->tif_name,
+			    "No space to write array");
+			return (0);
+		}
+	}
 	switch (type) {
 	case TIFF_BYTE:
 		{ uint8* bp = (uint8*) w;
@@ -992,7 +1006,6 @@ TIFFWriteAnyArray(TIFF* tif,
 	return (status);
 }
 
-#ifdef COLORIMETRY_SUPPORT
 static int
 TIFFWriteTransferFunction(TIFF* tif, TIFFDirEntry* dir)
 {
@@ -1015,9 +1028,7 @@ TIFFWriteTransferFunction(TIFF* tif, TIFFDirEntry* dir)
 	return (TIFFWriteShortTable(tif,
 	    TIFFTAG_TRANSFERFUNCTION, dir, ncols, tf));
 }
-#endif
 
-#ifdef CMYK_SUPPORT
 static int
 TIFFWriteInkNames(TIFF* tif, TIFFDirEntry* dir)
 {
@@ -1028,7 +1039,6 @@ TIFFWriteInkNames(TIFF* tif, TIFFDirEntry* dir)
 	dir->tdir_count = td->td_inknameslen;
 	return (TIFFWriteByteArray(tif, dir, td->td_inknames));
 }
-#endif
 
 /*
  * Write a contiguous directory item.
@@ -1097,12 +1107,8 @@ TIFFRewriteDirectory( TIFF *tif )
         tif->tif_header.tiff_diroff = 0;
         tif->tif_diroff = 0;
 
-#if defined(__hpux) && defined(__LP64__)
-#define HDROFF(f) ((toff_t)(unsigned long) &(((TIFFHeader*) 0)->f))
-#else
-#define	HDROFF(f)	((toff_t) &(((TIFFHeader*) 0)->f))
-#endif
-        TIFFSeekFile(tif, HDROFF(tiff_diroff), SEEK_SET);
+        TIFFSeekFile(tif, (toff_t)(TIFF_MAGIC_SIZE+TIFF_VERSION_SIZE),
+		     SEEK_SET);
         if (!WriteOK(tif, &(tif->tif_header.tiff_diroff), 
                      sizeof (tif->tif_diroff))) 
         {
@@ -1166,8 +1172,11 @@ TIFFLinkDirectory(TIFF* tif)
 	diroff = tif->tif_diroff;
 	if (tif->tif_flags & TIFF_SWAB)
 		TIFFSwabLong(&diroff);
-#if SUBIFD_SUPPORT
-	if (tif->tif_flags & TIFF_INSUBIFD) {
+
+	/*
+	 * Handle SubIFDs
+	 */
+        if (tif->tif_flags & TIFF_INSUBIFD) {
 		(void) TIFFSeekFile(tif, tif->tif_subifdoff, SEEK_SET);
 		if (!WriteOK(tif, &diroff, sizeof (diroff))) {
 			TIFFError(module,
@@ -1186,14 +1195,15 @@ TIFFLinkDirectory(TIFF* tif)
 			tif->tif_flags &= ~TIFF_INSUBIFD;
 		return (1);
 	}
-#endif
+
 	if (tif->tif_header.tiff_diroff == 0) {
 		/*
 		 * First directory, overwrite offset in header.
 		 */
 		tif->tif_header.tiff_diroff = tif->tif_diroff;
-#define	HDROFF(f)	((toff_t) &(((TIFFHeader*) 0)->f))
-		(void) TIFFSeekFile(tif, HDROFF(tiff_diroff), SEEK_SET);
+		(void) TIFFSeekFile(tif,
+				    (toff_t)(TIFF_MAGIC_SIZE+TIFF_VERSION_SIZE),
+                                    SEEK_SET);
 		if (!WriteOK(tif, &diroff, sizeof (diroff))) {
 			TIFFError(tif->tif_name, "Error writing TIFF header");
 			return (0);
@@ -1231,3 +1241,5 @@ TIFFLinkDirectory(TIFF* tif)
 	}
 	return (1);
 }
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -29,20 +29,33 @@
 /*
  * ``Library-private'' definitions.
  */
-/*
- * UNIX systems should run the configure script to generate
- * a port.h file that reflects the system capabilities.
- * Doing this obviates all the dreck done in tiffcomp.h.
- */
-#if defined(unix) || defined(__unix)
-#include "port.h"
-#include "tiffconf.h"
-#else
-#include "tiffconf.h"
-#include "tiffcomp.h"
+
+#include "tif_config.h"
+
+#if HAVE_FCNTL_H
+# include <fcntl.h>
 #endif
+
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
+#if HAVE_STRING_H
+# include <string.h>
+#endif
+
+#if HAVE_ASSERT_H
+# include <assert.h>
+#endif
+
 #include "tiffio.h"
 #include "tif_dir.h"
+
+typedef double dblparam_t;
+
+#define GLOBALDATA(TYPE,NAME)	extern TYPE NAME
+
+#define    streq(a,b)      (strcmp(a,b) == 0)
 
 #ifndef TRUE
 #define	TRUE	1
@@ -104,10 +117,9 @@ struct tiff {
 	tstrip_t	tif_curstrip;	/* current strip for read/write */
 	toff_t		tif_curoff;	/* current offset for read/write */
 	toff_t		tif_dataoff;	/* current offset for writing dir */
-#if SUBIFD_SUPPORT
+/* SubIFD support */
 	uint16		tif_nsubifd;	/* remaining subifds to write */
 	toff_t		tif_subifdoff;	/* offset for patching SubIFD link */
-#endif
 /* tiling support */
 	uint32 		tif_col;	/* current column (offset by row too) */
 	ttile_t		tif_curtile;	/* current tile for read/write */
@@ -156,6 +168,7 @@ struct tiff {
 /* tag support */
 	TIFFFieldInfo**	tif_fieldinfo;	/* sorted table of registered tags */
 	int		tif_nfields;	/* # entries in registered tag table */
+	const TIFFFieldInfo *tif_foundfield;/* cached pointer to already found tag */
         TIFFTagMethods  tif_tagmethods; /* tag get/set/print routines */
         TIFFClientInfoLink *tif_clientinfo; /* extra client information. */
 };
@@ -198,8 +211,9 @@ struct tiff {
 #endif
 
 /* NB: the uint32 casts are to silence certain ANSI-C compilers */
-#define	TIFFhowmany(x, y) ((((uint32)(x))+(((uint32)(y))-1))/((uint32)(y)))
-#define	TIFFroundup(x, y) (TIFFhowmany(x,y)*((uint32)(y)))
+#define TIFFhowmany(x, y) ((((uint32)(x))+(((uint32)(y))-1))/((uint32)(y)))
+#define TIFFhowmany8(x) (((x)&0x07)?((uint32)(x)>>3)+1:(uint32)(x)>>3)
+#define	TIFFroundup(x, y) (TIFFhowmany(x,y)*(y))
 
 #define TIFFmax(A,B) ((A)>(B)?(A):(B))
 #define TIFFmin(A,B) ((A)<(B)?(A):(B))
@@ -286,3 +300,5 @@ extern	TIFFCodec _TIFFBuiltinCODECS[];
 }
 #endif
 #endif /* _TIFFIOP_ */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */
