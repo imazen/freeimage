@@ -42,21 +42,25 @@
 
 // ----------------------------------------------------------
 
-static FreeImageIO *s_io;
-static fi_handle s_handle;
+typedef struct {
+    FreeImageIO *s_io;
+    fi_handle    s_handle;
+} fi_ioStructure, *pfi_ioStructure;
 
 /////////////////////////////////////////////////////////////////////////////
 // libpng interface 
 // 
 
 static void
-_ReadProc(struct png_struct_def *, unsigned char *data, png_size_t size) {
-	s_io->read_proc(data, size, 1, s_handle);
+_ReadProc(png_structp png_ptr, unsigned char *data, png_size_t size) {
+    pfi_ioStructure pfio = (pfi_ioStructure)png_get_io_ptr(png_ptr);
+	pfio->s_io->read_proc(data, size, 1, pfio->s_handle);
 }
 
 static void
-_WriteProc(struct png_struct_def *, unsigned char *data, png_size_t size) {
-	s_io->write_proc(data, size, 1, s_handle);
+_WriteProc(png_structp png_ptr, unsigned char *data, png_size_t size) {
+    pfi_ioStructure pfio = (pfi_ioStructure)png_get_io_ptr(png_ptr);
+    pfio->s_io->write_proc(data, size, 1, pfio->s_handle);
 }
 
 static void
@@ -65,14 +69,14 @@ _FlushProc(png_structp png_ptr) {
 }
 
 static void
-error_handler(struct png_struct_def *, const char *error) {
+error_handler(png_structp png_ptr, const char *error) {
 	throw error;
 }
 
 // in FreeImage warnings disabled
 
 static void
-warning_handler(struct png_struct_def *, const char *warning) {
+warning_handler(png_structp png_ptr, const char *warning) {
 }
 
 // ==========================================================
@@ -255,9 +259,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	png_bytepp  row_pointers = NULL;
 	int i;
 
-	s_io = io;
-	s_handle = handle;
-
+    fi_ioStructure fio;
+    fio.s_handle = handle;
+	fio.s_io = io;
+    
 	if (handle) {
 		try {		
 			// check to see if the file is in fact a PNG file
@@ -271,7 +276,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			
 			// create the chunk manage structure
 
-			png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)error_handler, error_handler, warning_handler);
+			png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, error_handler, warning_handler);
 
 			if (!png_ptr)
 				return NULL;			
@@ -287,9 +292,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// init the IO
 
-			png_set_read_fn(png_ptr, info_ptr, _ReadProc);
+			png_set_read_fn(png_ptr, &fio, _ReadProc);
 
-			if (setjmp(png_jmpbuf(png_ptr))) {
+            if (setjmp(png_jmpbuf(png_ptr))) {
 				png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 				return NULL;
 			}
@@ -593,14 +598,15 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 	int palette_entries;
 	int	interlace_type;
 
-	s_io = io;
-	s_handle = handle;
+	fi_ioStructure fio;
+    fio.s_handle = handle;
+	fio.s_io = io;
 
 	if ((dib) && (handle)) {
 		try {
 			// create the chunk manage structure
 
-			png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)error_handler, error_handler, warning_handler);
+			png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, error_handler, warning_handler);
 
 			if (!png_ptr)  {
 				return FALSE;
@@ -627,8 +633,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			}
 
 			// init the IO
-
-			png_set_write_fn(png_ptr, info_ptr, _WriteProc, _FlushProc);
+            
+			png_set_write_fn(png_ptr, &fio, _WriteProc, _FlushProc);
 
 			// set physical resolution
 
