@@ -579,13 +579,6 @@ Close(FreeImageIO *io, fi_handle handle, void *data) {
 
 // ----------------------------------------------------------
 
-static int DLL_CALLCONV
-PageCount(FreeImageIO *io, fi_handle handle, void *data) {
-	return 0;
-}
-
-// ----------------------------------------------------------
-
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	DDSHEADER header;
@@ -632,7 +625,7 @@ InitDDS(Plugin *plugin, int format_id) {
 	plugin->regexpr_proc = RegExpr;
 	plugin->open_proc = Open;
 	plugin->close_proc = Close;
-	plugin->pagecount_proc = NULL; //PageCount;
+	plugin->pagecount_proc = NULL;
 	plugin->pagecapability_proc = NULL;
 	plugin->load_proc = Load;
 	plugin->save_proc = NULL;	//Save;	// not implemented (yet?)

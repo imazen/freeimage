@@ -259,7 +259,7 @@ PageCount(FreeImageIO *io, fi_handle handle, void *data) {
 	if(lpIH) {
 		return lpIH->idCount;
 	}
-	return -1;
+	return 1;
 }
 
 // ----------------------------------------------------------
