@@ -843,7 +843,10 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		uint16 photometric;
 		uint16 compression;
 		uint16 pitch;
-		int32 x, y;
+#ifndef FREEIMAGE_BIGENDIAN
+		int32 x;
+#endif
+		int32 y;
 
 		FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 
