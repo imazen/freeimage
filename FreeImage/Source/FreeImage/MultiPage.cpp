@@ -5,6 +5,7 @@
 // - Floris van den Berg (flvdberg@wxs.nl)
 // - Laurent Rocher (rocherl@club-internet.fr)
 // - Steve Johnson (steve@parisgroup.net)
+// - Petr Pytelka (pyta@lightcomp.com)
 //
 // This file is part of FreeImage 3
 //
@@ -306,8 +307,10 @@ FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL crea
 BOOL DLL_CALLCONV
 FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 	if (bitmap) {
+		BOOL success = TRUE;
+
 		if (bitmap->data) {
-			MULTIBITMAPHEADER *header = FreeImage_GetMultiBitmapHeader(bitmap);
+			MULTIBITMAPHEADER *header = FreeImage_GetMultiBitmapHeader(bitmap);			
 
 			if (header->changed) {
 				// open a temp file
@@ -331,8 +334,7 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 				// write all the pages to the temp file
 
-				int count = 0;
-				BOOL success = TRUE;
+				int count = 0;				
 
 				for (BlockListIterator i = header->m_blocks.begin(); i != header->m_blocks.end(); i++) {
 					if (success) {
@@ -447,7 +449,7 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 		delete bitmap;
 
-		return TRUE;
+		return success;
 	}
 
 	return FALSE;
@@ -535,7 +537,7 @@ FreeImage_InsertPage(FIMULTIBITMAP *bitmap, int page, FIBITMAP *data) {
 				// add a block
 
 				if (page > 0) {
-					BlockListIterator block_source = FreeImage_FindBlock(bitmap, page + 1);
+					BlockListIterator block_source = FreeImage_FindBlock(bitmap, page);
 
 					BlockReference *block = new BlockReference(ref, compressed_size, size);
 
