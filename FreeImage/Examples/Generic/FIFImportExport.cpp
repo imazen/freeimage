@@ -19,7 +19,7 @@
 // Use at own risk!
 // ==========================================================
 
-// This example shows how to use Plugin fonctions to explore FreeImage capabilities. 
+// This example shows how to use Plugin functions to explore FreeImage capabilities. 
 // Whenever an external plugin is added to the library, it is automatically loaded 
 // with FreeImage and can be asked for its capabilities via the plugin functions.
 // 
