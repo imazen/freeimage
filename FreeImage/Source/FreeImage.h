@@ -554,9 +554,12 @@ DLL_API FREE_IMAGE_FORMAT DLL_CALLCONV FreeImage_GetFileTypeFromHandle(FreeImage
 
 DLL_API FREE_IMAGE_TYPE DLL_CALLCONV FreeImage_GetImageType(FIBITMAP *dib);
 
-// FreeImage info routines --------------------------------------------------
+// FreeImage helpers routines -----------------------------------------------
 
 DLL_API BOOL DLL_CALLCONV FreeImage_IsLittleEndian();
+DLL_API BOOL DLL_CALLCONV FreeImage_LookupX11Color(const char *szColor, BYTE *nRed, BYTE *nGreen, BYTE *nBlue);
+DLL_API BOOL DLL_CALLCONV FreeImage_LookupSVGColor(const char *szColor, BYTE *nRed, BYTE *nGreen, BYTE *nBlue);
+
 
 // Pixel access routines ----------------------------------------------------
 

@@ -4,6 +4,7 @@
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
 // - Hervé Drolon <drolon@infonie.fr>
+// - Ryan Rubley (ryan@lostreality.org)
 //
 // This file is part of FreeImage 3
 //

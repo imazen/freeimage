@@ -8,6 +8,7 @@ What's New for FreeImage
 Month day, 2004 - 3.3.1
 ! [Jim Keir] improved FreeImage_FlipVertical function
 + [Karl-Heinz Bussian] added constants to FreeImage.h to get at compile time the library version
++ [Karl-Heinz Bussian] added color lookup functions for X11 and SVG
 * [Herve Drolon] fixed a bug with loading of FAX TIFF images (introduced with LibTIFF 3.6.1)
 * [Herve Drolon] fixed a bug in Floyd-Steinberg dithering algorithm
 * [Herve Drolon] fixed a bug in Targa plugin save function

@@ -245,6 +245,10 @@ SOURCE=..\FreeImage\BitmapAccess.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\FreeImage\ColorLookup.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\FreeImage\FreeImage.cpp
 # End Source File
 # Begin Source File
