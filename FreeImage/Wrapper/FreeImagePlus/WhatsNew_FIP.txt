@@ -5,6 +5,10 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+December 19th, 2004
+[Herve Drolon]
+! updated fipImage::rotate to handle 1-bit images
+
 November 18th, 2004
 [Herve Drolon]
 + added fipImage::convertTo4Bits
