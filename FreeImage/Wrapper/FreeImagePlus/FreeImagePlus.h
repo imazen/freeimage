@@ -125,7 +125,7 @@ public:
 	/**
 	<b>Assignement operator</b><br>
 	Copy the input pointer and manage its destruction
-	@see operator FIBITMAP*
+	@see operator FIBITMAP*()
 	*/
 	fipImage& operator=(FIBITMAP *dib);
 
@@ -260,7 +260,7 @@ public:
 	<pre>
 	fipImage src, dst;
 	src.load("test.png");
-	dst = FreeImage_Invert(src);
+	dst = FreeImage_ConvertTo8Bits(src);
 	</pre>
 	@see operator=(FIBITMAP *dib)
 	*/

@@ -47,8 +47,8 @@
 // Version information ------------------------------------------------------
 
 #define FREEIMAGE_MAJOR_VERSION   3
-#define FREEIMAGE_MINOR_VERSION   5
-#define FREEIMAGE_RELEASE_SERIAL  4
+#define FREEIMAGE_MINOR_VERSION   6
+#define FREEIMAGE_RELEASE_SERIAL  0
 
 // Compiler options ---------------------------------------------------------
 

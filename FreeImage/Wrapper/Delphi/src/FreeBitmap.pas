@@ -7,6 +7,9 @@ unit FreeBitmap;
 // Design and implementation by
 // - Anatoliy Pulyaevskiy (xvel84@rambler.ru)
 //
+// Contributors:
+// - Enzo Costantini (enzocostantini@libero.it)
+//
 // This file is part of FreeImage 3
 //
 // COVERED CODE IS PROVIDED UNDER THIS LICENSE ON AN "AS IS" BASIS, WITHOUT WARRANTY
@@ -113,6 +116,7 @@ type
     function SetPixelIndex(X, Y: Cardinal; Value: PByte): Boolean;
     function SetPixelColor(X, Y: Cardinal; Value: PRGBQUAD): Boolean;
     // convertion
+    function ConvertToStandartType(ScaleLinear: Boolean): Boolean;
     function ConvertToType(ImageType: FREE_IMAGE_TYPE; ScaleLinear: Boolean): Boolean;
     function Threshold(T: Byte): Boolean;
     function ConvertTo4Bits: Boolean;
@@ -150,6 +154,7 @@ type
     function AdjustContrast(Percentage: Double): Boolean;
     function GetHistogram(Histo: PDWORD; Channel: FREE_IMAGE_COLOR_CHANNEL = FICC_BLACK): Boolean;
     // upsampling / downsampling
+    procedure MakeThumbnail(const Width, Height: Integer; DestBitmap: TFreeBitmap);
     function Rescale(NewWidth, NewHeight: Integer; Filter: TFreeStretchFilter; Dest: TFreeBitmap = nil): Boolean;
     { Properties }
     property Dib: PFIBITMAP read FDib;
@@ -169,6 +174,7 @@ type
     function CopyToHandle: THandle;
     function CopyFromHandle(HMem: THandle): Boolean;
     function CopyFromBitmap(HBmp: HBITMAP): Boolean;
+    function CopyToBitmapH: HBITMAP;
     function CopyToClipBoard(NewOwner: HWND): Boolean;
     function PasteFromClipBoard: Boolean;
     function CaptureWindow(ApplicationWindow, SelectedWindow: HWND): Boolean;
@@ -228,7 +234,7 @@ type
 
 implementation
 
-uses ConvUtils;
+//uses ConvUtils;
 
 { TFreeObject }
 
@@ -445,13 +451,16 @@ begin
 end;
 
 function TFreeBitmap.ConvertToGrayscale: Boolean;
+var
+  ColorType: FREE_IMAGE_COLOR_TYPE;
 begin
   Result := False;
 
   if FDib <> nil then
   begin
-    if (FreeImage_GetColorType(FDib) = FIC_PALETTE) or
-       (FreeImage_GetColorType(FDib) = FIC_MINISWHITE) then
+    ColorType := FreeImage_GetColorType(FDib);
+
+    if (ColorType in [FIC_PALETTE, FIC_MINISWHITE]) then
     begin
       // convert the palette to 24-bit, then to 8-bit
       Result := ConvertTo24Bits;
@@ -462,6 +471,19 @@ begin
       // convert the bitmap to 8-bit grayscale
       Result := ConvertTo8Bits
   end
+end;
+
+function TFreeBitmap.ConvertToStandartType(ScaleLinear: Boolean): Boolean;
+var
+  dibStandart: PFIBITMAP;
+begin
+  if IsValid then
+  begin
+    dibStandart := FreeImage_ConvertToStandardType(FDib, ScaleLinear);
+    Result := Replace(dibStandart);
+  end
+  else
+    Result := False;
 end;
 
 function TFreeBitmap.ConvertToType(ImageType: FREE_IMAGE_TYPE;
@@ -778,6 +800,180 @@ begin
     Result := False;
 end;
 
+const
+  ThumbSize = 150;
+
+procedure TFreeBitmap.MakeThumbnail(const Width, Height: Integer;
+  DestBitmap: TFreeBitmap);
+type
+  PRGB24 = ^TRGB24;
+  TRGB24 = packed record
+    B: Byte;
+    G: Byte;
+    R: Byte;
+  end;
+var
+  x, y, ix, iy: integer;
+  x1, x2, x3: integer;
+
+  xscale, yscale: single;
+  iRed, iGrn, iBlu, iRatio: Longword;
+  p, c1, c2, c3, c4, c5: TRGB24;
+  pt, pt1: PRGB24;
+  iSrc, iDst, s1: integer;
+  i, j, r, g, b, tmpY: integer;
+
+  RowDest, RowSource, RowSourceStart: integer;
+  w, h: Integer;
+  dxmin, dymin: integer;
+  ny1, ny2, ny3: integer;
+  dx, dy: integer;
+  lutX, lutY: array of integer;
+
+  SrcBmp, DestBmp: PFIBITMAP;
+begin
+  if not IsValid then Exit;
+
+  if (GetWidth <= ThumbSize) and (GetHeight <= ThumbSize) then
+  begin
+    DestBitmap.Assign(Self);
+    Exit;
+  end;
+
+  w := Width;
+  h := Height;
+
+  // prepare bitmaps
+  if GetBitsPerPixel <> 24 then
+    SrcBmp := FreeImage_ConvertTo24Bits(FDib)
+  else
+    SrcBmp := FDib;
+  DestBmp := FreeImage_Allocate(w, h, 24);
+  Assert(DestBmp <> nil, 'TFreeBitmap.MakeThumbnail error');
+
+{  iDst := (w * 24 + 31) and not 31;
+  iDst := iDst div 8; //BytesPerScanline
+  iSrc := (GetWidth * 24 + 31) and not 31;
+  iSrc := iSrc div 8;
+}
+  // BytesPerScanline
+  iDst := FreeImage_GetPitch(DestBmp);
+  iSrc := FreeImage_GetPitch(SrcBmp);
+
+  xscale := 1 / (w / FreeImage_GetWidth(SrcBmp));
+  yscale := 1 / (h / FreeImage_GetHeight(SrcBmp));
+
+  // X lookup table
+  SetLength(lutX, w);
+  x1 := 0;
+  x2 := trunc(xscale);
+  for x := 0 to w - 1 do
+  begin
+    lutX[x] := x2 - x1;
+    x1 := x2;
+    x2 := trunc((x + 2) * xscale);
+  end;
+
+  // Y lookup table
+  SetLength(lutY, h);
+  x1 := 0;
+  x2 := trunc(yscale);
+  for x := 0 to h - 1 do
+  begin
+    lutY[x] := x2 - x1;
+    x1 := x2;
+    x2 := trunc((x + 2) * yscale);
+  end;
+
+  Dec(w);
+  Dec(h);
+  RowDest := integer(FreeImage_GetScanLine(DestBmp, 0));
+  RowSourceStart := integer(FreeImage_GetScanLine(SrcBmp, 0));
+  RowSource := RowSourceStart;
+
+  for y := 0 to h do
+  // resampling
+  begin
+    dy := lutY[y];
+    x1 := 0;
+    x3 := 0;
+    for x := 0 to w do  // loop through row
+    begin
+      dx:= lutX[x];
+      iRed:= 0;
+      iGrn:= 0;
+      iBlu:= 0;
+      RowSource := RowSourceStart;
+      for iy := 1 to dy do
+      begin
+        pt := PRGB24(RowSource + x1);
+        for ix := 1 to dx do
+        begin
+          iRed := iRed + pt.R;
+          iGrn := iGrn + pt.G;
+          iBlu := iBlu + pt.B;
+          inc(pt);
+        end;
+        RowSource := RowSource + iSrc;
+      end;
+      iRatio := 65535 div (dx * dy);
+      pt1 := PRGB24(RowDest + x3);
+      pt1.R := (iRed * iRatio) shr 16;
+      pt1.G := (iGrn * iRatio) shr 16;
+      pt1.B := (iBlu * iRatio) shr 16;
+      x1 := x1 + 3 * dx;
+      inc(x3,3);
+    end;
+    RowDest := RowDest + iDst;
+    RowSourceStart := RowSource;
+  end; // resampling
+
+  if FreeImage_GetHeight(DestBmp) >= 3 then
+  // Sharpening...
+  begin
+    s1 := integer(FreeImage_GetScanLine(DestBmp, 0));
+    iDst := integer(FreeImage_GetScanLine(DestBmp, 1)) - s1;
+    ny1 := Integer(s1);
+    ny2 := ny1 + iDst;
+    ny3 := ny2 + iDst;
+    for y := 1 to FreeImage_GetHeight(DestBmp) - 2 do
+    begin
+      for x := 0 to FreeImage_GetWidth(DestBmp) - 3 do
+      begin
+        x1 := x * 3;
+        x2 := x1 + 3;
+        x3 := x1 + 6;
+
+        c1 := pRGB24(ny1 + x1)^;
+        c2 := pRGB24(ny1 + x3)^;
+        c3 := pRGB24(ny2 + x2)^;
+        c4 := pRGB24(ny3 + x1)^;
+        c5 := pRGB24(ny3 + x3)^;
+
+        r := (c1.R + c2.R + (c3.R * -12) + c4.R + c5.R) div -8;
+        g := (c1.G + c2.G + (c3.G * -12) + c4.G + c5.G) div -8;
+        b := (c1.B + c2.B + (c3.B * -12) + c4.B + c5.B) div -8;
+
+        if r < 0 then r := 0 else if r > 255 then r := 255;
+        if g < 0 then g := 0 else if g > 255 then g := 255;
+        if b < 0 then b := 0 else if b > 255 then b := 255;
+
+        pt1 := pRGB24(ny2 + x2);
+        pt1.R := r;
+        pt1.G := g;
+        pt1.B := b;
+      end;
+      inc(ny1, iDst);
+      inc(ny2, iDst);
+      inc(ny3, iDst);
+    end;
+  end; // sharpening
+
+  if SrcBmp <> FDib then
+    FreeImage_Unload(SrcBmp);
+  DestBitmap.Replace(DestBmp);
+end;
+
 function TFreeBitmap.PasteSubImage(Src: TFreeBitmap; Left, Top,
   Alpha: Integer): Boolean;
 begin
@@ -841,12 +1037,14 @@ end;
 
 function TFreeBitmap.Rotate(Angle: Double): Boolean;
 var
+  Bpp: Integer;
   Rotated: PFIBITMAP;
 begin
   Result := False;
   if FDib <> nil then
   begin
-    if FreeImage_GetBPP(FDib) >= 8 then
+    Bpp := FreeImage_GetBPP(FDib);
+    if (Bpp = 1) or (Bpp >= 8) then
     begin
       Rotated := FreeImage_RotateClassic(FDib, Angle);
       Result := Replace(Rotated);
@@ -1245,6 +1443,23 @@ begin
   end;
 end;
 
+function TFreeWinBitmap.CopyToBitmapH: HBITMAP;
+var DC : HDC;
+begin
+  Result:=0;
+  if IsValid then
+  begin
+    DC:=GetDC(0);
+    Result:=CreateDIBitmap(DC,
+                           FreeImage_GetInfoHeader(Dib)^,
+                           CBM_INIT,
+                           PAnsiChar(FreeImage_GetBits(Dib)),
+                           FreeImage_GetInfo(Dib^)^,
+                           DIB_RGB_COLORS);
+    ReleaseDC(0,DC);
+  end;
+end;
+
 function TFreeWinBitmap.CopyToClipBoard(NewOwner: HWND): Boolean;
 var
   HDib: THandle;
@@ -1467,7 +1682,6 @@ begin
 
   if Assigned(DestBitmap) then
   begin
-    // copy pointer
     DestBitmap.Replace(FreeImage_LockPage(FMPage, Page));
   end;
 end;

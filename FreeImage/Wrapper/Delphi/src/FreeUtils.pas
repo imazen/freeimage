@@ -7,6 +7,9 @@ unit FreeUtils;
 // Design and implementation by
 // - Anatoliy Pulyaevskiy (xvel84@rambler.ru)
 //
+// Contributors:
+// - Enzo Costantini (enzocostantini@libero.it)
+//
 // This file is part of FreeImage 3
 //
 // COVERED CODE IS PROVIDED UNDER THIS LICENSE ON AN "AS IS" BASIS, WITHOUT WARRANTY
@@ -28,6 +31,8 @@ interface
 uses
     SysUtils, Classes, FreeImage;
 
+function FIU_GetFIFType(filename: string): FREE_IMAGE_FORMAT;
+
 // returns FIF (plugin) description string
 function FIU_GetFIFDescription(fif: FREE_IMAGE_FORMAT): string;
 
@@ -48,6 +53,11 @@ function FIU_GetAllFilters: string;
 implementation
 
 uses StrUtils;
+
+function FIU_GetFIFType(filename: string): FREE_IMAGE_FORMAT;
+begin
+  Result:=FreeImage_GetFileType(PAnsiChar(filename),0);
+end;
 
 function FIU_GetFIFDescription(fif: FREE_IMAGE_FORMAT): string;
 begin

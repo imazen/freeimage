@@ -1,9 +1,18 @@
-What's New for Delphi FreeImage Wrapper
+What's New for FreeImage Delphi Wrapper
 
 * : fixed
 - : removed
 ! : changed
 + : added
+
+January 24, 2005 - Version 1.2.1
++ [Anatoliy Pulyaevskiy] updated the wrapper for FreeImage 3.5.3
++ [Anatoliy Pulyaevskiy] added TFreeBitmap.SetHorizontalResolution and TFreeBitmap.SetVerticalResolution
++ [Anatoliy Pulyaevskiy] added TFreeBitmap.MakeThumbnail procedure ( an adapted version of function given by Enzo Costantini)
++ [Enzo Costantini] added FIU_GetFIFType utility function
++ [Enzo Costantini] added TFreeWinBitmap.CopyToBitmapH function
+* [Anatoliy Pulyaevskiy] fixed TFreeBitmap.Rotate (fix from FreeImage CVS)
++ [Anatoliy Pulyaevskiy] added TFreeBitmap.ConvertToStandartType
 
 December 20, 2004 - Version 1.2.0
 + [Anatoliy Pulyaevskiy] added MultiBitmap Demo
