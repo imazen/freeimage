@@ -58,9 +58,8 @@ public:
 	@param pFilter Filter used for upsampling or downsampling
 	@param uLineSize Length (in pixels) of the destination line buffer
 	@param uSrcSize Length (in pixels) of the source line buffer
-	@param dScale Scale factor (should be equal to uDstSize / uSrcSize)
 	*/
-	CWeightsTable(CGenericFilter *pFilter, DWORD uDstSize, DWORD uSrcSize, double dScale);
+	CWeightsTable(CGenericFilter *pFilter, DWORD uDstSize, DWORD uSrcSize);
 
 	/**
 	Destructor<br>
@@ -100,7 +99,7 @@ public:
  CResizeEngine<br>
  This class performs filtered zoom. It scales an image to the desired dimensions with 
  any of the CGenericFilter derived filter class.<br>
- It only works with 8-bit buffers.<br><br>
+ It works with 8-, 24- and 32-bit buffers.<br><br>
 
  <b>References</b> : <br>
  [1] Paul Heckbert, C code to zoom raster images up or down, with nice filtering. 
@@ -124,7 +123,7 @@ public:
 	virtual ~CResizeEngine() {}
 
     /** Scale an image to the desired dimensions
-	@param src Pointer to the 8-bit source image
+	@param src Pointer to the source image
 	@param dst_width Destination image width
 	@param dst_height Destination image height
 	@return Returns the scaled image if successful, returns NULL otherwise
