@@ -5,7 +5,7 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month Day, 2004 - 3.5.0
+November 1st, 2004 - 3.5.0
 ! FreeImage now uses libPNG 1.2.7
 ! FreeImage now uses libTIFF 3.7.0
 ! FreeImage now uses libMNG 1.0.8
