@@ -80,6 +80,7 @@ FI_STRUCT (FREEIMAGEHEADER) {
 
 void* FreeImage_Aligned_Malloc(size_t amount, size_t alignment) {
 	void* mem_real = malloc(amount + alignment);
+	if(!mem_real) return NULL;
 	char* mem_align = (char*)((unsigned int)(alignment - (unsigned int)mem_real % (unsigned int)alignment) + (unsigned int)mem_real);
 	*((int*)mem_align - 1) = (int)mem_real;
 	return mem_align;
@@ -153,8 +154,10 @@ FreeImage_AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp, unsign
 		dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);  
 		dib_size += FIBITMAP_ALIGNMENT - sizeof(BITMAPINFOHEADER) % FIBITMAP_ALIGNMENT; 
 		dib_size += sizeof(BITMAPINFOHEADER);  
+		// palette is aligned on a 16 bytes boundary
 		dib_size += sizeof(RGBQUAD) * CalculateUsedPaletteEntries(bpp);  
 		dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);  
+		// pixels are aligned on a 16 bytes boundary
 		dib_size += CalculatePitch(CalculateLine(width, bpp)) * height; 
 
 		bitmap->data = (BYTE *)FreeImage_Aligned_Malloc(dib_size * sizeof(BYTE), FIBITMAP_ALIGNMENT);

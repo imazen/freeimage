@@ -71,6 +71,8 @@ FreeImage_DeleteTag(FITAG *tag) {
 			free(tag_header->key); 
 			free(tag_header->description); 
 			free(tag_header->value);
+			// delete the tag
+			free(tag->data);
 		}
 		// and the wrapper
 		free(tag);
