@@ -42,9 +42,11 @@ FreeImage: $(STATICLIB) $(SHAREDLIB)
 	$(CPP) $(CFLAGS) -c $< -o $@
 
 $(STATICLIB): $(MODULES)
+	rm -f $@
 	$(LIBTOOL) -o $@ $?
 
 $(SHAREDLIB): $(MODULES)
+	rm -f $@
 	$(LIBTOOL) -dynamic $(LIBRARIES) -o $@ $?
 
 install:
