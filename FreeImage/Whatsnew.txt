@@ -12,6 +12,7 @@ Month Day, 2004 - 3.2.2
 + [Ryan Rubley] Set/GetPixelColor now works with 16-bit pixels (555 or 565)
 * [Herve Drolon] fixed a bug with loading of 8-bit and 16-bit PNG with a 8-bit alpha channel
 * [Herve Drolon] fixed a bug in NN quantizer algorithm with handling of 4-byte boundary alignment.
+* [Herve Drolon] fixed a bug in PluginIFF Validate function
 
 March 16, 2004 - 3.2.1
 ! [Volker Gärtner] improved the DDS plugin

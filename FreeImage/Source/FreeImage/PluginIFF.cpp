@@ -158,6 +158,7 @@ static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {
 	DWORD type = 0;
 
+	// read chunk type
 	io->read_proc(&type, 4, 1, handle);
 #ifndef FREEIMAGE_BIGENDIAN
 	SwapLong(&type);
@@ -166,6 +167,10 @@ Validate(FreeImageIO *io, fi_handle handle) {
 	if(type != ID_FORM)
 		return FALSE;
 		
+	// skip 4 bytes
+	io->read_proc(&type, 4, 1, handle);
+
+	// read chunk type
 	io->read_proc(&type, 4, 1, handle);
 #ifndef FREEIMAGE_BIGENDIAN
 	SwapLong(&type);
