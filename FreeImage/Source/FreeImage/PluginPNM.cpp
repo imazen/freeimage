@@ -171,9 +171,9 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	char id_one, id_two;
-	WORD x, y;
+	int x, y;
 	FIBITMAP *dib = NULL;
-    	BYTE *bits;		// pointer to dib data
+    BYTE *bits;		// pointer to dib data
 	RGBQUAD *pal;	// pointer to dib palette
 	int i, max, level;
 
@@ -221,8 +221,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		// Read the image...
 
-		int pitch = FreeImage_GetPitch(dib);
-
 		switch(id_two)  {
 			case '1':
 			case '4':
@@ -235,8 +233,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// write the bitmap data
 
 				if (id_two == '1') {	// ASCII bitmap
-					for (y = 0; y < height; y++) {				
-						bits = FreeImage_GetBits(dib) + (height - 1 - y) * pitch;
+					for (y = 0; y < height; y++) {		
+						bits = FreeImage_GetScanLine(dib, height - 1 - y);
 
 						for (x = 0; x < width; x++) {
 							if (GetInt(io, handle) == 0)
@@ -248,8 +246,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}  else {		// Raw bitmap
 					int line = CalculateLine(width, 1);
 
-					for (y = 0; y < height; y++) {				
-						bits = FreeImage_GetBits(dib) + (height - 1 - y) * pitch;
+					for (y = 0; y < height; y++) {	
+						bits = FreeImage_GetScanLine(dib, height - 1 - y);
 
 						for (x = 0; x < line; x++) {
 							io->read_proc(&bits[x], 1, 1, handle);
@@ -278,8 +276,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// write the bitmap data
 
 				if(id_two == '2') {		// ASCII greymap
-					for (y = 0; y < height; y++) {				
-						bits = FreeImage_GetBits(dib) + (height - 1 - y) * pitch;
+					for (y = 0; y < height; y++) {	
+						bits = FreeImage_GetScanLine(dib, height - 1 - y);
 
 						for (x = 0; x < width; x++) {
 							level = GetInt(io, handle);
@@ -289,8 +287,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				} else {		// Raw greymap
 					level = 0;
 
-					for (y = 0; y < height; y++) {				
-						bits = FreeImage_GetBits(dib) + (height - 1 - y) * pitch;
+					for (y = 0; y < height; y++) {		
+						bits = FreeImage_GetScanLine(dib, height - 1 - y);
 
 						for (x = 0; x < width; x++) {
 							io->read_proc(&level, 1, 1, handle);
@@ -308,8 +306,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// write the bitmap data
 
 				if (id_two == '3') {		// ASCII pixmap
-					for (y = 0; y < height; y++) {				
-						bits = FreeImage_GetBits(dib) + (height - 1 - y) * pitch;
+					for (y = 0; y < height; y++) {	
+						bits = FreeImage_GetScanLine(dib, height - 1 - y);
 
 						for (x = 0; x < width; x++) {
 							bits[FI_RGBA_RED] = (BYTE)((255 * GetInt(io, handle)) / max);	// R
@@ -322,8 +320,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}  else {			// Raw pixmap
 					level = 0;
 
-					for (y = 0; y < height; y++) {				
-						bits = FreeImage_GetBits(dib) + (height - 1 - y) * pitch;
+					for (y = 0; y < height; y++) {	
+						bits = FreeImage_GetScanLine(dib, height - 1 - y);
 
 						for (x = 0; x < width; x++) {
 							io->read_proc(&level, 1, 1, handle); 
@@ -386,7 +384,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 	// ----------------------------------------------------------
 
     int magic, bpp;
-	WORD x, y, width, height;
+	int x, y, width, height;
     BYTE *bits;		// pointer to dib data
 	
 	if ((dib) && (handle)) {

@@ -16,6 +16,7 @@ Month day, 2004 - 3.5.3
 + [Herve Drolon] added FreeImage_SetDotsPerMeterX and FreeImage_SetDotsPerMeterY
 * [Nan Feng] fixed memory leak in FreeImage_DeleteTag (internal stuff)
 * [Nigel Stewart] added conditional #pragma with #ifdef _MSC_VER / #endif
+* [Herve Drolon] fixed the '65536 lines' limit on loading in PNM plugin
 
 November 27th, 2004 - 3.5.2
 * [Herve Drolon] fixed a second bug in FreeImage_Clone function
