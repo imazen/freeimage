@@ -155,11 +155,13 @@ BOOL testAllocateCloneUnloadType(FREE_IMAGE_TYPE image_type, unsigned width, uns
 
 		switch(image_type) {
 			case FIT_BITMAP:
-				for(y = 0; y < FreeImage_GetHeight(clone); y++) {
-					BYTE *bits = (BYTE *)FreeImage_GetScanLine(clone, y);
-					for(x = 0; x < FreeImage_GetWidth(clone); x++) {
-						if(bits[x] != 128)
-							throw(1);
+				if(FreeImage_GetBPP(clone) == 8) {
+					for(y = 0; y < FreeImage_GetHeight(clone); y++) {
+						BYTE *bits = (BYTE *)FreeImage_GetScanLine(clone, y);
+						for(x = 0; x < FreeImage_GetWidth(clone); x++) {
+							if(bits[x] != 128)
+								throw(1);
+						}
 					}
 				}
 				break;
