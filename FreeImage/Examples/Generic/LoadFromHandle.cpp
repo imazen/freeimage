@@ -77,7 +77,9 @@ int
 main(int argc, char *argv[]) {
 	
 	// call this ONLY when linking with FreeImage as a static library
-	//FreeImage_Initialise();
+#ifdef FREEIMAGE_LIB
+	FreeImage_Initialise();
+#endif // FREEIMAGE_LIB
 
 	// initialize your own FreeImage error handler
 
@@ -133,7 +135,9 @@ main(int argc, char *argv[]) {
 	}
 
 	// call this ONLY when linking with FreeImage as a static library
-	//FreeImage_DeInitialise();
+#ifdef FREEIMAGE_LIB
+	FreeImage_DeInitialise();
+#endif // FREEIMAGE_LIB
 
 	return 0;
 }

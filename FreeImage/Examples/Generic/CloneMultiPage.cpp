@@ -91,7 +91,9 @@ main(int argc, char *argv[]) {
 	char *output_filename = "images\\clone.tif";
 
 	// call this ONLY when linking with FreeImage as a static library
-	//FreeImage_Initialise();
+#ifdef FREEIMAGE_LIB
+	FreeImage_Initialise();
+#endif // FREEIMAGE_LIB
 
 	// initialize our own FreeImage error handler
 
@@ -102,7 +104,9 @@ main(int argc, char *argv[]) {
 	CloneMultiPage(FIF_TIFF, input_filename, output_filename, 0);
 
 	// call this ONLY when linking with FreeImage as a static library
-	//FreeImage_DeInitialise();
+#ifdef FREEIMAGE_LIB
+	FreeImage_DeInitialise();
+#endif // FREEIMAGE_LIB
 
 	return 0;
 }
