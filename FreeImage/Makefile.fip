@@ -49,7 +49,7 @@ FreeImage: $(STATICLIB) $(SHAREDLIB)
 	$(CPP) $(CFLAGS) -c $< -o $@
 
 $(STATICLIB): $(MODULES)
-	$(AR) r $@ $(MODLUES)
+	$(AR) r $@ $(MODULES)
 
 $(SHAREDLIB): $(MODULES)
 	$(CC) -s -shared -Wl,-soname,$(LIBNAME) -o $@ $(MODULES) $(LIBRARIES)

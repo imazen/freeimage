@@ -37,7 +37,7 @@ dist: FreeImage
 	cp Source/FreeImage.h Dist
 
 dos2unix:
-	@$(DOS2UNIX) $(SRCS)
+	@$(DOS2UNIX) $(SRCS) $(INCLS)
 
 FreeImage: $(STATICLIB) $(SHAREDLIB)
 
@@ -48,7 +48,7 @@ FreeImage: $(STATICLIB) $(SHAREDLIB)
 	$(CPP) $(CFLAGS) -c $< -o $@
 
 $(STATICLIB): $(MODULES)
-	$(AR) r $@ $(MODLES)
+	$(AR) r $@ $(MODULES)
 
 $(SHAREDLIB): $(MODULES)
 	$(CC) -s -shared -Wl,-soname,$(LIBNAME) -o $@ $(MODULES) $(LIBRARIES)
