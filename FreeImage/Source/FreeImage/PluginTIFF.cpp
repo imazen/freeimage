@@ -154,13 +154,13 @@ TIFFErrorHandler _TIFFwarningHandler = msdosWarningHandler;
 
 static void
 msdosErrorHandler(const char* module, const char* fmt, va_list ap) {
-	/*
+	
 	if (module != NULL) {
 		char msg[1024];
 		vsprintf(msg, fmt, ap);
 		FreeImage_OutputMessageProc(s_format_id, "%s%s", module, msg);
 	}
-	*/
+	
 }
 
 TIFFErrorHandler _TIFFerrorHandler = msdosErrorHandler;
@@ -559,9 +559,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
 			TIFFGetField(tif, TIFFTAG_ICCPROFILE, &iccSize, &iccBuf);
 
-			// get image data type
-
-			FREE_IMAGE_TYPE image_type = GetImageType(tif, bitspersample, samplesperpixel);
+			// check for unsupported formats
+			// ---------------------------------------------------------------------------------
 
 			if (compression == COMPRESSION_LZW)
 				throw "LZW compression is no longer supported due to Unisys patent enforcement";
@@ -571,6 +570,21 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			if((photometric == PHOTOMETRIC_SEPARATED) && (bitspersample == 16))
 				throw "Unable to handle 16-bit CMYK TIFF";
+
+			if(samplesperpixel > 4) {
+				// generate a warning
+				FreeImage_OutputMessageProc(s_format_id, "Warning: %d additional alpha channel(s) ignored", samplesperpixel-4);
+				// ignore Photoshop additional alpha channels
+				samplesperpixel = 4;
+				// load as a RGBA file (ignore possible CMYK flag)
+				flags = TIFF_DEFAULT;
+			}
+
+			// ---------------------------------------------------------------------------------
+
+			// get image data type
+
+			FREE_IMAGE_TYPE image_type = GetImageType(tif, bitspersample, samplesperpixel);
 
 			// Convert to 24 or 32 bits RGB if the image is full color
 
