@@ -12,6 +12,8 @@ Month day, 2005 - 3.5.4
 + [Herve Drolon] added VS.Net 2003 project files
 + [Herve Drolon] added VERSIONINFO resource to the DLL
 + [Herve Drolon] added support for CMYK JPEG on loading
++ [Petr Supina] added 16-bytes alignment to FIBITMAP palette and pixels starting address
++ [Petr Supina] added support for MMX/SSE2 code in LibJPEG (based on Mozilla/Firefox code)
 * [Detlev Vendt] fixed PluginPNG not being thread safe
 * [Herve Drolon] fixed compiler warning C4018 occuring with VS.Net 2003
 
