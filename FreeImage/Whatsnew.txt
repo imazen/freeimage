@@ -5,6 +5,9 @@ What's New for FreeImage
 ! : changed
 + : added
 
+November 27th, 2004 - 3.5.2
+* [Herve Drolon] fixed a second bug in FreeImage_Clone function
+
 November 26th, 2004 - 3.5.1
 + [Riley McNiff] added FreeImage_ConvertTo4Bits
 * [Herve Drolon] fixed a buffer overrun with some ILBM images
