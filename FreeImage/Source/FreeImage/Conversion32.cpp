@@ -34,10 +34,10 @@ FreeImage_ConvertLine1To32(BYTE *target, BYTE *source, int width_in_pixels, RGBQ
 	for (int cols = 0; cols < width_in_pixels; cols++) {
 		int index = (source[cols>>3] & (0x80 >> (cols & 0x07))) != 0 ? 1 : 0;
 
-		target[0] = palette[index].rgbBlue;
-		target[1] = palette[index].rgbGreen;
-		target[2] = palette[index].rgbRed;
-		target[3] = 0xff;
+		target[FIRGBA_RED] = palette[index].rgbBlue;
+		target[FIRGBA_GREEN] = palette[index].rgbGreen;
+		target[FIRGBA_BLUE] = palette[index].rgbRed;
+		target[FIRGBA_ALPHA] = 0xff;
 		target += 4;
 	}	
 }
@@ -49,20 +49,20 @@ FreeImage_ConvertLine4To32(BYTE *target, BYTE *source, int width_in_pixels, RGBQ
 
 	for (int cols = 0 ; cols < width_in_pixels ; ++cols) {
 		if (low_nibble) {
-			target[0] = palette[LOWNIBBLE(source[x])].rgbBlue;
-			target[1] = palette[LOWNIBBLE(source[x])].rgbGreen;
-			target[2] = palette[LOWNIBBLE(source[x])].rgbRed;
+			target[FIRGBA_RED] = palette[LOWNIBBLE(source[x])].rgbBlue;
+			target[FIRGBA_GREEN] = palette[LOWNIBBLE(source[x])].rgbGreen;
+			target[FIRGBA_BLUE] = palette[LOWNIBBLE(source[x])].rgbRed;
 
 			x++;
 		} else {
-			target[0] = palette[HINIBBLE(source[x]) >> 4].rgbBlue;
-			target[1] = palette[HINIBBLE(source[x]) >> 4].rgbGreen;
-			target[2] = palette[HINIBBLE(source[x]) >> 4].rgbRed;
+			target[FIRGBA_RED] = palette[HINIBBLE(source[x]) >> 4].rgbBlue;
+			target[FIRGBA_GREEN] = palette[HINIBBLE(source[x]) >> 4].rgbGreen;
+			target[FIRGBA_BLUE] = palette[HINIBBLE(source[x]) >> 4].rgbRed;
 		}
 
 		low_nibble = !low_nibble;
 
-		target[3] = 0xff;
+		target[FIRGBA_ALPHA] = 0xff;
 		target += 4;
 	}
 }
@@ -70,10 +70,10 @@ FreeImage_ConvertLine4To32(BYTE *target, BYTE *source, int width_in_pixels, RGBQ
 void DLL_CALLCONV
 FreeImage_ConvertLine8To32(BYTE *target, BYTE *source, int width_in_pixels, RGBQUAD *palette) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[0] = palette[source[cols]].rgbBlue;
-		target[1] = palette[source[cols]].rgbGreen;
-		target[2] = palette[source[cols]].rgbRed;
-		target[3] = 0xff;
+		target[FIRGBA_RED] = palette[source[cols]].rgbBlue;
+		target[FIRGBA_GREEN] = palette[source[cols]].rgbGreen;
+		target[FIRGBA_BLUE] = palette[source[cols]].rgbRed;
+		target[FIRGBA_ALPHA] = 0xff;
 		target += 4;
 	}
 }
@@ -83,10 +83,10 @@ FreeImage_ConvertLine16To32_555(BYTE *target, BYTE *source, int width_in_pixels)
 	WORD *bits = (WORD *)source;
 
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[2] = (((bits[cols] & 0x7C00) >> 10) * 0xFF) / 0x1F;
-		target[1] = (((bits[cols] & 0x3E0) >> 5) * 0xFF) / 0x1F;
-		target[0] = ((bits[cols] & 0x1F) * 0xFF) / 0x1F;
-		target[3] = 0xff;
+		target[FIRGBA_RED] = (((bits[cols] & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+		target[FIRGBA_GREEN] = (((bits[cols] & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+		target[FIRGBA_BLUE] = (((bits[cols] & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+		target[FIRGBA_ALPHA] = 0xff;
 		target += 4;
 	}
 }
@@ -96,10 +96,10 @@ FreeImage_ConvertLine16To32_565(BYTE *target, BYTE *source, int width_in_pixels)
 	WORD *bits = (WORD *)source;
 
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[2] = ((bits[cols] & 0xF800) >> 11) << 3;
-		target[1] = ((bits[cols] & 0x7E0) >> 5) << 2;
-		target[0] = (bits[cols] & 0x1F) << 3;
-		target[3] = 0xff;
+		target[FIRGBA_RED] = (((bits[cols] & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) * 0xFF) / 0x1F;
+		target[FIRGBA_GREEN] = (((bits[cols] & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) * 0xFF) / 0x3F;
+		target[FIRGBA_BLUE] = (((bits[cols] & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) * 0xFF) / 0x1F;
+		target[FIRGBA_ALPHA] = 0xff;
 		target += 4;
 	}
 }
@@ -107,8 +107,7 @@ FreeImage_ConvertLine16To32_565(BYTE *target, BYTE *source, int width_in_pixels)
 void DLL_CALLCONV
 FreeImage_ConvertLine24To32(BYTE *target, BYTE *source, int width_in_pixels) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		*(DWORD *)target = (*(DWORD *) source & 0x00FFFFFF) | 0xFF000000;
-
+		*(DWORD *)target = (*(DWORD *) source & FIRGBA_RGB_MASK) | FIRGBA_ALPHA_MASK;
 		target += 4;
 		source += 3;
 	}
@@ -138,7 +137,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 		switch(bpp) {
 			case 1 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, 0xFF, 0xFF00, 0xFF0000);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
 
 				if (new_dib != NULL)
 					for (int rows = 0; rows < height; rows++)
@@ -149,7 +148,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 
 			case 4 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, 0xFF, 0xFF00, 0xFF0000);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
 
 				if (new_dib != NULL) {
 					for (int rows = 0; rows < height; rows++) {
@@ -166,7 +165,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 				
 			case 8 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, 0xFF, 0xFF00, 0xFF0000);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
 
 				if (new_dib != NULL) {
 					for (int rows = 0; rows < height; rows++) {
@@ -183,11 +182,11 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 
 			case 16 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, 0xFF, 0xFF00, 0xFF0000);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
 
 				if (new_dib != NULL) {
 					for (int rows = 0; rows < height; rows++) {
-						if ((FreeImage_GetRedMask(dib) == 0x1F) && (FreeImage_GetGreenMask(dib) == 0x7E0) && (FreeImage_GetBlueMask(dib) == 0xF800)) {
+						if ((FreeImage_GetRedMask(dib) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dib) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dib) == FI16_565_BLUE_MASK)) {
 							FreeImage_ConvertLine16To32_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
 						} else {
 							// includes case where all the masks are 0
@@ -201,7 +200,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 
 			case 24 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, 0xFF, 0xFF00, 0xFF0000);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
 
 				if (new_dib != NULL)
 					for (int rows = 0; rows < height; rows++)
