@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_display.h          copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.7                                                      * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Display management (definition)                            * */
 /* *                                                                        * */
@@ -51,6 +51,9 @@
 /* *             1.0.7 - 03/24/2004 - G.R-P.                                * */
 /* *             - added some SKIPCHUNK conditionals                        * */
 /* *                                                                        * */
+/* *             1.0.9 - 12/11/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_DISPLAYCALLS              * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #if defined(__BORLANDC__) && defined(MNG_STRICT_ANSI)
@@ -86,6 +89,8 @@ mng_retcode mng_execute_delta_image   (mng_datap      pData,
 mng_retcode mng_process_display       (mng_datap      pData);
 
 /* ************************************************************************** */
+
+#ifndef MNG_OPTIMIZE_DISPLAYCALLS
 
 mng_retcode mng_process_display_ihdr  (mng_datap      pData);
 
@@ -239,6 +244,68 @@ mng_retcode mng_process_display_past  (mng_datap      pData,
                                        mng_ptr        pSources);
 mng_retcode mng_process_display_past2 (mng_datap      pData);
 #endif
+
+#else /* MNG_OPTIMIZE_DISPLAYCALLS */
+
+mng_retcode mng_process_display_ihdr  (mng_datap      pData);
+mng_retcode mng_process_display_idat  (mng_datap      pData);
+mng_retcode mng_process_display_iend  (mng_datap      pData);
+mng_retcode mng_process_display_mend  (mng_datap      pData);
+mng_retcode mng_process_display_mend2 (mng_datap      pData);
+mng_retcode mng_process_display_defi  (mng_datap      pData);
+#ifndef MNG_SKIPCHUNK_BASI
+mng_retcode mng_process_display_basi  (mng_datap      pData);
+#endif
+#ifndef MNG_SKIPCHUNK_CLON
+mng_retcode mng_process_display_clon  (mng_datap      pData);
+mng_retcode mng_process_display_clon2 (mng_datap      pData);
+#endif
+#ifndef MNG_SKIPCHUNK_DISC
+mng_retcode mng_process_display_disc  (mng_datap      pData);
+#endif
+#ifndef MNG_SKIPCHUNK_FRAM
+mng_retcode mng_process_display_fram  (mng_datap      pData);
+mng_retcode mng_process_display_fram2 (mng_datap      pData);
+#endif
+#ifndef MNG_SKIPCHUNK_MOVE
+mng_retcode mng_process_display_move  (mng_datap      pData);
+#endif
+#ifndef MNG_SKIPCHUNK_CLIP
+mng_retcode mng_process_display_clip  (mng_datap      pData);
+#endif
+#ifndef MNG_SKIPCHUNK_SHOW
+mng_retcode mng_process_display_show  (mng_datap      pData);
+#endif
+#ifndef MNG_SKIPCHUNK_SAVE
+mng_retcode mng_process_display_save  (mng_datap      pData);
+#endif
+#ifndef MNG_SKIPCHUNK_SEEK
+mng_retcode mng_process_display_seek  (mng_datap      pData);
+#endif
+#ifdef MNG_INCLUDE_JNG
+mng_retcode mng_process_display_jhdr  (mng_datap      pData);
+mng_retcode mng_process_display_jdaa  (mng_datap      pData);
+mng_retcode mng_process_display_jdat  (mng_datap      pData);
+#endif
+#ifndef MNG_NO_DELTA_PNG
+mng_retcode mng_process_display_dhdr  (mng_datap      pData);
+mng_retcode mng_process_display_prom  (mng_datap      pData);
+mng_retcode mng_process_display_ipng  (mng_datap      pData);
+#ifdef MNG_INCLUDE_JNG
+mng_retcode mng_process_display_ijng  (mng_datap      pData);
+#endif
+mng_retcode mng_process_display_pplt  (mng_datap      pData);
+#endif
+#ifndef MNG_SKIPCHUNK_MAGN
+mng_retcode mng_process_display_magn  (mng_datap      pData);
+mng_retcode mng_process_display_magn2 (mng_datap      pData);
+#endif
+#ifndef MNG_SKIPCHUNK_PAST
+mng_retcode mng_process_display_past  (mng_datap      pData);
+mng_retcode mng_process_display_past2 (mng_datap      pData);
+#endif
+
+#endif /* MNG_OPTIMIZE_DISPLAYCALLS */
 
 /* ************************************************************************** */
 

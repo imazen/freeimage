@@ -89,6 +89,10 @@ SOURCE=.\libmng_callback_xs.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\libmng_chunk_descr.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\libmng_chunk_io.c
 # End Source File
 # Begin Source File
@@ -162,6 +166,10 @@ SOURCE=.\libmng_zlib.c
 # Begin Source File
 
 SOURCE=.\libmng.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\libmng_chunk_descr.h
 # End Source File
 # Begin Source File
 

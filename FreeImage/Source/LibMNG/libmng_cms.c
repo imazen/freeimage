@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_cms.c              copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_cms.c              copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : color management routines (implementation)                 * */
 /* *                                                                        * */
@@ -66,6 +66,9 @@
 /* *             - B719420 - fixed several MNG_APP_CMS problems             * */
 /* *             1.0.6 - 07/11/2003 - G. R-P                                * */
 /* *             - added conditional MNG_SKIPCHUNK_cHRM/iCCP                * */
+/* *                                                                        * */
+/* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
+/* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -163,7 +166,7 @@ void mnglcms_freetransform (mng_cmstrans hTrans)
 mng_retcode mng_clear_cms (mng_datap pData)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_CLEAR_CMS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_CLEAR_CMS, MNG_LC_START);
 #endif
 
   if (pData->hTrans)                   /* transformation still active ? */
@@ -177,7 +180,7 @@ mng_retcode mng_clear_cms (mng_datap pData)
   pData->hProf1 = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_CLEAR_CMS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_CLEAR_CMS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -206,7 +209,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
   mng_imagedatap pBuf   = MNG_NULL;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_INIT_FULL_CMS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_INIT_FULL_CMS, MNG_LC_START);
 #endif
 
   if (bObject)                         /* use object if present ? */
@@ -233,7 +236,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
         pData->hProf2 = mnglcms_createsrgbprofile ();
 
         if (!pData->hProf2)            /* handle error ? */
-          MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+          MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
       }
 
       if ((pBuf) && (pBuf->bHasICCP))  /* generate a profile handle */
@@ -244,7 +247,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
       pData->hProf1 = hProf;           /* save for future use */
 
       if (!hProf)                      /* handle error ? */
-        MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+        MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
 
 #ifndef MNG_NO_16BIT_SUPPORT
       if (pData->bIsRGBA16)            /* 16-bit intermediates ? */
@@ -260,7 +263,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
       pData->hTrans = hTrans;          /* save for future use */
 
       if (!hTrans)                     /* handle error ? */
-        MNG_ERRORL (pData, MNG_LCMS_NOTRANS)
+        MNG_ERRORL (pData, MNG_LCMS_NOTRANS);
                                        /* load color-correction routine */
       pData->fCorrectrow = (mng_fptr)mng_correct_full_cms;
 
@@ -280,7 +283,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
         pData->hProf3 = mnglcms_createsrgbprofile ();
 
         if (!pData->hProf3)            /* handle error ? */
-          MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+          MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
       }
 
       hProf = pData->hProf3;           /* convert from sRGB profile */
@@ -302,7 +305,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
       pData->hTrans = hTrans;          /* save for future use */
 
       if (!hTrans)                     /* handle error ? */
-        MNG_ERRORL (pData, MNG_LCMS_NOTRANS)
+        MNG_ERRORL (pData, MNG_LCMS_NOTRANS);
                                        /* load color-correction routine */
       pData->fCorrectrow = (mng_fptr)mng_correct_full_cms;
 
@@ -323,7 +326,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
         pData->hProf2 = mnglcms_createsrgbprofile ();
 
         if (!pData->hProf2)            /* handle error ? */
-          MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+          MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
       }
 
 #ifndef MNG_SKIPCHUNK_cHRM
@@ -368,7 +371,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
       pGammatable [2] = cmsBuildGamma (256, dGamma);
 
       if (!pGammatable [0])            /* enough memory ? */
-        MNG_ERRORL (pData, MNG_LCMS_NOMEM)
+        MNG_ERRORL (pData, MNG_LCMS_NOMEM);
                                        /* create the profile */
       hProf = cmsCreateRGBProfile (&sWhitepoint, &sPrimaries, pGammatable);
 
@@ -378,7 +381,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
       pData->hProf1 = hProf;           /* save for future use */
 
       if (!hProf)                      /* handle error ? */
-        MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+        MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
 
       if (pData->bIsRGBA16)            /* 16-bit intermediates ? */
         hTrans = cmsCreateTransform (hProf,         TYPE_RGBA_16_SE,
@@ -392,7 +395,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
       pData->hTrans = hTrans;          /* save for future use */
 
       if (!hTrans)                     /* handle error ? */
-        MNG_ERRORL (pData, MNG_LCMS_NOTRANS)
+        MNG_ERRORL (pData, MNG_LCMS_NOTRANS);
                                        /* load color-correction routine */
       pData->fCorrectrow = (mng_fptr)mng_correct_full_cms;
 
@@ -401,7 +404,7 @@ mng_retcode mng_init_full_cms (mng_datap pData,
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_INIT_FULL_CMS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_INIT_FULL_CMS, MNG_LC_END);
 #endif
                                        /* if we get here, we'll only do gamma */
   return mng_init_gamma_only (pData, bGlobal, bObject, bRetrobj);
@@ -414,13 +417,13 @@ mng_retcode mng_init_full_cms (mng_datap pData,
 mng_retcode mng_correct_full_cms (mng_datap pData)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_CORRECT_FULL_CMS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_CORRECT_FULL_CMS, MNG_LC_START);
 #endif
 
   cmsDoTransform (pData->hTrans, pData->pRGBArow, pData->pRGBArow, pData->iRowsamples);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_CORRECT_FULL_CMS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_CORRECT_FULL_CMS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -440,7 +443,7 @@ mng_retcode mng_init_gamma_only (mng_datap pData,
   mng_imagedatap pBuf   = MNG_NULL;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_INIT_GAMMA_ONLY, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_INIT_GAMMA_ONLY, MNG_LC_START);
 #endif
 
   if (bObject)                         /* use object if present ? */
@@ -494,7 +497,7 @@ mng_retcode mng_init_gamma_only (mng_datap pData,
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_INIT_GAMMA_ONLY, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_INIT_GAMMA_ONLY, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -510,7 +513,7 @@ mng_retcode mng_correct_gamma_only (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_CORRECT_GAMMA_ONLY, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_CORRECT_GAMMA_ONLY, MNG_LC_START);
 #endif
 
   pWork = pData->pRGBArow;             /* address intermediate row */
@@ -546,7 +549,7 @@ mng_retcode mng_correct_gamma_only (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_CORRECT_GAMMA_ONLY, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_CORRECT_GAMMA_ONLY, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -567,7 +570,7 @@ mng_retcode mng_init_app_cms (mng_datap pData,
   mng_retcode    iRetcode;
   
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_INIT_APP_CMS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_INIT_APP_CMS, MNG_LC_START);
 #endif
 
   if (bObject)                         /* use object if present ? */
@@ -605,7 +608,7 @@ mng_retcode mng_init_app_cms (mng_datap pData,
       }
                                        /* inform the app */
       if (!pData->fProcessiccp ((mng_handle)pData, iProfilesize, pProfile))
-        MNG_ERROR (pData, MNG_APPCMSERROR)
+        MNG_ERROR (pData, MNG_APPCMSERROR);
                                        /* load color-correction routine */
       pData->fCorrectrow = (mng_fptr)mng_correct_app_cms;
       bDone              = MNG_TRUE;
@@ -623,7 +626,7 @@ mng_retcode mng_init_app_cms (mng_datap pData,
         iIntent = pData->iGlobalRendintent;
                                        /* inform the app */
       if (!pData->fProcesssrgb ((mng_handle)pData, iIntent))
-        MNG_ERROR (pData, MNG_APPCMSERROR)
+        MNG_ERROR (pData, MNG_APPCMSERROR);
                                        /* load color-correction routine */
       pData->fCorrectrow = (mng_fptr)mng_correct_app_cms;
       bDone              = MNG_TRUE;
@@ -665,7 +668,7 @@ mng_retcode mng_init_app_cms (mng_datap pData,
                                                      iPrimaryredx,   iPrimaryredy,
                                                      iPrimarygreenx, iPrimarygreeny,
                                                      iPrimarybluex,  iPrimarybluey))
-        MNG_ERROR (pData, MNG_APPCMSERROR)
+        MNG_ERROR (pData, MNG_APPCMSERROR);
                                        /* load color-correction routine */
       pData->fCorrectrow = (mng_fptr)mng_correct_app_cms;
       bDone              = MNG_TRUE;
@@ -714,7 +717,7 @@ mng_retcode mng_init_app_cms (mng_datap pData,
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_INIT_APP_CMS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_INIT_APP_CMS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -727,16 +730,16 @@ mng_retcode mng_init_app_cms (mng_datap pData,
 mng_retcode mng_correct_app_cms (mng_datap pData)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_CORRECT_APP_CMS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_CORRECT_APP_CMS, MNG_LC_START);
 #endif
 
   if (pData->fProcessarow)             /* let the app do something with our row */
     if (!pData->fProcessarow ((mng_handle)pData, pData->iRowsamples,
                               pData->bIsRGBA16, pData->pRGBArow))
-      MNG_ERROR (pData, MNG_APPCMSERROR)
+      MNG_ERROR (pData, MNG_APPCMSERROR);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_CORRECT_APP_CMS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_CORRECT_APP_CMS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;

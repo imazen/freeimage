@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_read.c             copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.8                                                      * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Read logic (implementation)                                * */
 /* *                                                                        * */
@@ -93,6 +93,18 @@
 /* *             1.0.8 - 07/28/2004 - G.R-P                                 * */
 /* *             - added check for extreme chunk-lengths                    * */
 /* *                                                                        * */
+/* *             1.0.9 - 09/16/2004 - G.Juyn                                * */
+/* *             - fixed chunk pushing mechanism                            * */
+/* *             1.0.9 - 12/05/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_CHUNKINITFREE             * */
+/* *             1.0.9 - 12/06/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_CHUNKASSIGN               * */
+/* *             - added conditional MNG_OPTIMIZE_CHUNKREADER               * */
+/* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
+/* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
+/* *             1.0.9 - 12/31/2004 - G.R-P                                 * */
+/* *             - removed stray characters from #ifdef directive           * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #include "libmng.h"
@@ -106,6 +118,9 @@
 #include "libmng_objects.h"
 #include "libmng_object_prc.h"
 #include "libmng_chunks.h"
+#ifdef MNG_OPTIMIZE_CHUNKREADER
+#include "libmng_chunk_descr.h"
+#endif
 #include "libmng_chunk_prc.h"
 #include "libmng_chunk_io.h"
 #include "libmng_display.h"
@@ -130,7 +145,7 @@ mng_retcode mng_process_eof (mng_datap pData)
 #ifndef MNG_NO_OPEN_CLOSE_STREAM
     if (pData->fClosestream && !pData->fClosestream ((mng_handle)pData))
     {
-      MNG_ERROR (pData, MNG_APPIOERROR)
+      MNG_ERROR (pData, MNG_APPIOERROR);
     }
 #endif
   }
@@ -146,7 +161,7 @@ mng_retcode mng_release_pushdata (mng_datap pData)
   mng_pushdatap pNext   = pFirst->pNext;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_RELEASE_PUSHDATA, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_RELEASE_PUSHDATA, MNG_LC_START);
 #endif
 
   pData->pFirstpushdata = pNext;       /* next becomes the first */
@@ -157,12 +172,12 @@ mng_retcode mng_release_pushdata (mng_datap pData)
   if ((pFirst->bOwned) && (pData->fReleasedata))
     pData->fReleasedata ((mng_handle)pData, pFirst->pData, pFirst->iLength);
   else                                 /* otherwise use internal free mechanism */
-    MNG_FREEX (pData, pFirst->pData, pFirst->iLength)
+    MNG_FREEX (pData, pFirst->pData, pFirst->iLength);
                                        /* and free it */
-  MNG_FREEX (pData, pFirst, sizeof(mng_pushdata))
+  MNG_FREEX (pData, pFirst, sizeof(mng_pushdata));
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_RELEASE_PUSHDATA, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_RELEASE_PUSHDATA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -176,7 +191,7 @@ mng_retcode mng_release_pushchunk (mng_datap pData)
   mng_pushdatap pNext   = pFirst->pNext;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_RELEASE_PUSHCHUNK, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_RELEASE_PUSHCHUNK, MNG_LC_START);
 #endif
 
   pData->pFirstpushchunk = pNext;      /* next becomes the first */
@@ -187,12 +202,12 @@ mng_retcode mng_release_pushchunk (mng_datap pData)
   if ((pFirst->bOwned) && (pData->fReleasedata))
     pData->fReleasedata ((mng_handle)pData, pFirst->pData, pFirst->iLength);
   else                                 /* otherwise use internal free mechanism */
-    MNG_FREEX (pData, pFirst->pData, pFirst->iLength)
+    MNG_FREEX (pData, pFirst->pData, pFirst->iLength);
                                        /* and free it */
-  MNG_FREEX (pData, pFirst, sizeof(mng_pushdata))
+  MNG_FREEX (pData, pFirst, sizeof(mng_pushdata));
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_RELEASE_PUSHCHUNK, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_RELEASE_PUSHCHUNK, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -213,7 +228,7 @@ MNG_LOCAL mng_retcode read_data (mng_datap    pData,
   *iRead                  = 0;         /* nothing yet */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DATA, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_DATA, MNG_LC_START);
 #endif
 
   while (pPush)                        /* calculate size of pushed data */
@@ -230,7 +245,7 @@ MNG_LOCAL mng_retcode read_data (mng_datap    pData,
                                        /* enough data remaining in this buffer? */
       if (pPush->iRemaining <= iTempsize)
       {                                /* no: then copy what we've got */
-        MNG_COPY (pTempbuf, pPush->pDatanext, pPush->iRemaining)
+        MNG_COPY (pTempbuf, pPush->pDatanext, pPush->iRemaining);
                                        /* move pointers & lengths */
         pTempbuf  += pPush->iRemaining;
         *iRead    += pPush->iRemaining;
@@ -242,7 +257,7 @@ MNG_LOCAL mng_retcode read_data (mng_datap    pData,
       }
       else
       {                                /* copy the needed bytes */
-        MNG_COPY (pTempbuf, pPush->pDatanext, iTempsize)
+        MNG_COPY (pTempbuf, pPush->pDatanext, iTempsize);
                                        /* move pointers & lengths */
         pPush->iRemaining -= iTempsize;
         pPush->pDatanext  += iTempsize;
@@ -263,7 +278,7 @@ MNG_LOCAL mng_retcode read_data (mng_datap    pData,
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DATA, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_DATA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -280,7 +295,7 @@ MNG_LOCAL mng_retcode read_databuffer (mng_datap    pData,
   mng_retcode iRetcode;
   
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DATABUFFER, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_DATABUFFER, MNG_LC_START);
 #endif
 
   if (pData->bSuspensionmode)
@@ -294,7 +309,7 @@ MNG_LOCAL mng_retcode read_databuffer (mng_datap    pData,
     {
       pData->iSuspendbufsize = MNG_SUSPENDBUFFERSIZE;
                                        /* so, create it */
-      MNG_ALLOC (pData, pData->pSuspendbuf, pData->iSuspendbufsize)
+      MNG_ALLOC (pData, pData->pSuspendbuf, pData->iSuspendbufsize);
 
       pData->iSuspendbufleft = 0;      /* make sure to fill it first time */
       pData->pSuspendbufnext = pData->pSuspendbuf;
@@ -308,7 +323,7 @@ MNG_LOCAL mng_retcode read_databuffer (mng_datap    pData,
       {
         if (pData->iSuspendbufleft)    /* do we have some data left ? */
         {                              /* then copy it */
-          MNG_COPY (pBuf, pData->pSuspendbufnext, pData->iSuspendbufleft)
+          MNG_COPY (pBuf, pData->pSuspendbufnext, pData->iSuspendbufleft);
                                        /* fixup variables */
           *pBufnext              = pBuf + pData->iSuspendbufleft;
           pData->pSuspendbufnext = pData->pSuspendbuf;
@@ -356,13 +371,13 @@ MNG_LOCAL mng_retcode read_databuffer (mng_datap    pData,
                                                           MNG_SUSPENDREQUESTSIZE)
         {
           if (pData->iSuspendbufleft)  /* then lets shift (if there's anything left) */
-            MNG_COPY (pData->pSuspendbuf, pData->pSuspendbufnext, pData->iSuspendbufleft)
+            MNG_COPY (pData->pSuspendbuf, pData->pSuspendbufnext, pData->iSuspendbufleft);
                                        /* adjust running pointer */
           pData->pSuspendbufnext = pData->pSuspendbuf;
         }
                                        /* still not enough room ? */
         if (pData->iSuspendbufsize - pData->iSuspendbufleft < MNG_SUSPENDREQUESTSIZE)
-          MNG_ERROR (pData, MNG_INTERNALERROR)
+          MNG_ERROR (pData, MNG_INTERNALERROR);
                                        /* now read some more data */
         pTemp = pData->pSuspendbufnext + pData->iSuspendbufleft;
 
@@ -379,7 +394,7 @@ MNG_LOCAL mng_retcode read_databuffer (mng_datap    pData,
             return iRetcode;
 
           if (pData->iSuspendbufleft)  /* return the leftover scraps */
-            MNG_COPY (pBuf, pData->pSuspendbufnext, pData->iSuspendbufleft)
+            MNG_COPY (pBuf, pData->pSuspendbufnext, pData->iSuspendbufleft);
                                        /* and indicate so */
           *iRead = pData->iSuspendbufleft;
           pData->pSuspendbufnext = pData->pSuspendbuf;
@@ -397,7 +412,7 @@ MNG_LOCAL mng_retcode read_databuffer (mng_datap    pData,
 
       if ((!pData->bSuspended) && (!pData->bEOF))
       {                                /* return the data ! */
-        MNG_COPY (pBuf, pData->pSuspendbufnext, iSize)
+        MNG_COPY (pBuf, pData->pSuspendbufnext, iSize);
 
         *iRead = iSize;                /* returned it all */
                                        /* adjust suspension-buffer variables */
@@ -418,7 +433,7 @@ MNG_LOCAL mng_retcode read_databuffer (mng_datap    pData,
   pData->iSuspendpoint = 0;            /* safely reset it here ! */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DATABUFFER, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_DATABUFFER, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -430,6 +445,8 @@ MNG_LOCAL mng_retcode process_raw_chunk (mng_datap  pData,
                                          mng_uint8p pBuf,
                                          mng_uint32 iBuflen)
 {
+
+#ifndef MNG_OPTIMIZE_CHUNKREADER
   /* the table-idea & binary search code was adapted from
      libpng 1.1.0 (pngread.c) */
   /* NOTE1: the table must remain sorted by chunkname, otherwise the binary
@@ -438,10 +455,168 @@ MNG_LOCAL mng_retcode process_raw_chunk (mng_datap  pData,
      chunk-structures (yes, that means even the pNext and pPrev fields;
      it's wasting a bit of space, but hey, the code is a lot easier) */
 
-  mng_chunk_header chunk_unknown = {MNG_UINT_HUH, mng_init_unknown, mng_free_unknown,
-                                    mng_read_unknown, mng_write_unknown, mng_assign_unknown, 0, 0};
+#ifdef MNG_OPTIMIZE_CHUNKINITFREE
+  mng_chunk_header mng_chunk_unknown = {MNG_UINT_HUH, mng_init_general, mng_free_unknown,
+                                        mng_read_unknown, mng_write_unknown, mng_assign_unknown, 0, 0, sizeof(mng_unknown_chunk)};
+#else
+  mng_chunk_header mng_chunk_unknown = {MNG_UINT_HUH, mng_init_unknown, mng_free_unknown,
+                                        mng_read_unknown, mng_write_unknown, mng_assign_unknown, 0, 0};
+#endif
 
-  mng_chunk_header chunk_table [] =
+#ifdef MNG_OPTIMIZE_CHUNKINITFREE
+
+  mng_chunk_header mng_chunk_table [] =
+  {
+#ifndef MNG_SKIPCHUNK_BACK
+    {MNG_UINT_BACK, mng_init_general, mng_free_general, mng_read_back, mng_write_back, mng_assign_general, 0, 0, sizeof(mng_back)},
+#endif
+#ifndef MNG_SKIPCHUNK_BASI
+    {MNG_UINT_BASI, mng_init_general, mng_free_general, mng_read_basi, mng_write_basi, mng_assign_general, 0, 0, sizeof(mng_basi)},
+#endif
+#ifndef MNG_SKIPCHUNK_CLIP
+    {MNG_UINT_CLIP, mng_init_general, mng_free_general, mng_read_clip, mng_write_clip, mng_assign_general, 0, 0, sizeof(mng_clip)},
+#endif
+#ifndef MNG_SKIPCHUNK_CLON
+    {MNG_UINT_CLON, mng_init_general, mng_free_general, mng_read_clon, mng_write_clon, mng_assign_general, 0, 0, sizeof(mng_clon)},
+#endif
+#ifndef MNG_NO_DELTA_PNG
+#ifndef MNG_SKIPCHUNK_DBYK
+    {MNG_UINT_DBYK, mng_init_general, mng_free_dbyk,    mng_read_dbyk, mng_write_dbyk, mng_assign_dbyk,    0, 0, sizeof(mng_dbyk)},
+#endif
+#endif
+#ifndef MNG_SKIPCHUNK_DEFI
+    {MNG_UINT_DEFI, mng_init_general, mng_free_general, mng_read_defi, mng_write_defi, mng_assign_general, 0, 0, sizeof(mng_defi)},
+#endif
+#ifndef MNG_NO_DELTA_PNG
+    {MNG_UINT_DHDR, mng_init_general, mng_free_general, mng_read_dhdr, mng_write_dhdr, mng_assign_general, 0, 0, sizeof(mng_dhdr)},
+#endif
+#ifndef MNG_SKIPCHUNK_DISC
+    {MNG_UINT_DISC, mng_init_general, mng_free_disc,    mng_read_disc, mng_write_disc, mng_assign_disc,    0, 0, sizeof(mng_disc)},
+#endif
+#ifndef MNG_NO_DELTA_PNG
+#ifndef MNG_SKIPCHUNK_DROP
+    {MNG_UINT_DROP, mng_init_general, mng_free_drop,    mng_read_drop, mng_write_drop, mng_assign_drop,    0, 0, sizeof(mng_drop)},
+#endif
+#endif
+#ifndef MNG_SKIPCHUNK_LOOP
+    {MNG_UINT_ENDL, mng_init_general, mng_free_general, mng_read_endl, mng_write_endl, mng_assign_general, 0, 0, sizeof(mng_endl)},
+#endif
+#ifndef MNG_SKIPCHUNK_FRAM
+    {MNG_UINT_FRAM, mng_init_general, mng_free_fram,    mng_read_fram, mng_write_fram, mng_assign_fram,    0, 0, sizeof(mng_fram)},
+#endif
+    {MNG_UINT_IDAT, mng_init_general, mng_free_idat,    mng_read_idat, mng_write_idat, mng_assign_idat,    0, 0, sizeof(mng_idat)},  /* 12-th element! */
+    {MNG_UINT_IEND, mng_init_general, mng_free_general, mng_read_iend, mng_write_iend, mng_assign_general, 0, 0, sizeof(mng_iend)},
+    {MNG_UINT_IHDR, mng_init_general, mng_free_general, mng_read_ihdr, mng_write_ihdr, mng_assign_general, 0, 0, sizeof(mng_ihdr)},
+#ifndef MNG_NO_DELTA_PNG
+#ifdef MNG_INCLUDE_JNG
+    {MNG_UINT_IJNG, mng_init_general, mng_free_general, mng_read_ijng, mng_write_ijng, mng_assign_general, 0, 0, sizeof(mng_ijng)},
+#endif
+    {MNG_UINT_IPNG, mng_init_general, mng_free_general, mng_read_ipng, mng_write_ipng, mng_assign_general, 0, 0, sizeof(mng_ipng)},
+#endif
+#ifdef MNG_INCLUDE_JNG
+    {MNG_UINT_JDAA, mng_init_general, mng_free_jdaa,    mng_read_jdaa, mng_write_jdaa, mng_assign_jdaa,    0, 0, sizeof(mng_jdaa)},
+    {MNG_UINT_JDAT, mng_init_general, mng_free_jdat,    mng_read_jdat, mng_write_jdat, mng_assign_jdat,    0, 0, sizeof(mng_jdat)},
+    {MNG_UINT_JHDR, mng_init_general, mng_free_general, mng_read_jhdr, mng_write_jhdr, mng_assign_general, 0, 0, sizeof(mng_jhdr)},
+    {MNG_UINT_JSEP, mng_init_general, mng_free_general, mng_read_jsep, mng_write_jsep, mng_assign_general, 0, 0, sizeof(mng_jsep)},
+    {MNG_UINT_JdAA, mng_init_general, mng_free_jdaa,    mng_read_jdaa, mng_write_jdaa, mng_assign_jdaa,    0, 0, sizeof(mng_jdaa)},
+#endif
+#ifndef MNG_SKIPCHUNK_LOOP
+    {MNG_UINT_LOOP, mng_init_general, mng_free_loop,    mng_read_loop, mng_write_loop, mng_assign_loop,    0, 0, sizeof(mng_loop)},
+#endif
+#ifndef MNG_SKIPCHUNK_MAGN
+    {MNG_UINT_MAGN, mng_init_general, mng_free_general, mng_read_magn, mng_write_magn, mng_assign_general, 0, 0, sizeof(mng_magn)},
+#endif
+    {MNG_UINT_MEND, mng_init_general, mng_free_general, mng_read_mend, mng_write_mend, mng_assign_general, 0, 0, sizeof(mng_mend)},
+    {MNG_UINT_MHDR, mng_init_general, mng_free_general, mng_read_mhdr, mng_write_mhdr, mng_assign_general, 0, 0, sizeof(mng_mhdr)},
+#ifndef MNG_SKIPCHUNK_MOVE
+    {MNG_UINT_MOVE, mng_init_general, mng_free_general, mng_read_move, mng_write_move, mng_assign_general, 0, 0, sizeof(mng_move)},
+#endif
+#ifndef MNG_NO_DELTA_PNG
+#ifndef MNG_SKIPCHUNK_ORDR
+    {MNG_UINT_ORDR, mng_init_general, mng_free_ordr,    mng_read_ordr, mng_write_ordr, mng_assign_ordr,    0, 0, sizeof(mng_ordr)},
+#endif
+#endif
+#ifndef MNG_SKIPCHUNK_PAST
+    {MNG_UINT_PAST, mng_init_general, mng_free_past,    mng_read_past, mng_write_past, mng_assign_past,    0, 0, sizeof(mng_past)},
+#endif
+    {MNG_UINT_PLTE, mng_init_general, mng_free_general, mng_read_plte, mng_write_plte, mng_assign_general, 0, 0, sizeof(mng_plte)},
+#ifndef MNG_NO_DELTA_PNG
+    {MNG_UINT_PPLT, mng_init_general, mng_free_general, mng_read_pplt, mng_write_pplt, mng_assign_general, 0, 0, sizeof(mng_pplt)},
+    {MNG_UINT_PROM, mng_init_general, mng_free_general, mng_read_prom, mng_write_prom, mng_assign_general, 0, 0, sizeof(mng_prom)},
+#endif
+#ifndef MNG_SKIPCHUNK_SAVE
+    {MNG_UINT_SAVE, mng_init_general, mng_free_save,    mng_read_save, mng_write_save, mng_assign_save,    0, 0, sizeof(mng_save)},
+#endif
+#ifndef MNG_SKIPCHUNK_SEEK
+    {MNG_UINT_SEEK, mng_init_general, mng_free_seek,    mng_read_seek, mng_write_seek, mng_assign_seek,    0, 0, sizeof(mng_seek)},
+#endif
+#ifndef MNG_SKIPCHUNK_SHOW
+    {MNG_UINT_SHOW, mng_init_general, mng_free_general, mng_read_show, mng_write_show, mng_assign_general, 0, 0, sizeof(mng_show)},
+#endif
+#ifndef MNG_SKIPCHUNK_TERM
+    {MNG_UINT_TERM, mng_init_general, mng_free_general, mng_read_term, mng_write_term, mng_assign_general, 0, 0, sizeof(mng_term)},
+#endif
+#ifndef MNG_SKIPCHUNK_bKGD
+    {MNG_UINT_bKGD, mng_init_general, mng_free_general, mng_read_bkgd, mng_write_bkgd, mng_assign_general, 0, 0, sizeof(mng_bkgd)},
+#endif
+#ifndef MNG_SKIPCHUNK_cHRM
+    {MNG_UINT_cHRM, mng_init_general, mng_free_general, mng_read_chrm, mng_write_chrm, mng_assign_general, 0, 0, sizeof(mng_chrm)},
+#endif
+#ifndef MNG_SKIPCHUNK_eXPI
+    {MNG_UINT_eXPI, mng_init_general, mng_free_expi,    mng_read_expi, mng_write_expi, mng_assign_expi,    0, 0, sizeof(mng_expi)},
+#endif
+#ifndef MNG_SKIPCHUNK_evNT
+    {MNG_UINT_evNT, mng_init_general, mng_free_evnt,    mng_read_evnt, mng_write_evnt, mng_assign_evnt,    0, 0, sizeof(mng_evnt)},
+#endif
+#ifndef MNG_SKIPCHUNK_fPRI
+    {MNG_UINT_fPRI, mng_init_general, mng_free_general, mng_read_fpri, mng_write_fpri, mng_assign_general, 0, 0, sizeof(mng_fpri)},
+#endif
+#ifndef MNG_SKIPCHUNK_gAMA
+    {MNG_UINT_gAMA, mng_init_general, mng_free_general, mng_read_gama, mng_write_gama, mng_assign_general, 0, 0, sizeof(mng_gama)},
+#endif
+#ifndef MNG_SKIPCHUNK_hIST
+    {MNG_UINT_hIST, mng_init_general, mng_free_general, mng_read_hist, mng_write_hist, mng_assign_general, 0, 0, sizeof(mng_hist)},
+#endif
+#ifndef MNG_SKIPCHUNK_iCCP
+    {MNG_UINT_iCCP, mng_init_general, mng_free_iccp,    mng_read_iccp, mng_write_iccp, mng_assign_iccp,    0, 0, sizeof(mng_iccp)},
+#endif
+#ifndef MNG_SKIPCHUNK_iTXt
+    {MNG_UINT_iTXt, mng_init_general, mng_free_itxt,    mng_read_itxt, mng_write_itxt, mng_assign_itxt,    0, 0, sizeof(mng_itxt)},
+#endif
+#ifndef MNG_SKIPCHUNK_nEED
+    {MNG_UINT_nEED, mng_init_general, mng_free_need,    mng_read_need, mng_write_need, mng_assign_need,    0, 0, sizeof(mng_need)},
+#endif
+/* TODO:     {MNG_UINT_oFFs, 0, 0, 0, 0, 0, 0},  */
+/* TODO:     {MNG_UINT_pCAL, 0, 0, 0, 0, 0, 0},  */
+#ifndef MNG_SKIPCHUNK_pHYg
+    {MNG_UINT_pHYg, mng_init_general, mng_free_general, mng_read_phyg, mng_write_phyg, mng_assign_general, 0, 0, sizeof(mng_phyg)},
+#endif
+#ifndef MNG_SKIPCHUNK_pHYs
+    {MNG_UINT_pHYs, mng_init_general, mng_free_general, mng_read_phys, mng_write_phys, mng_assign_general, 0, 0, sizeof(mng_phys)},
+#endif
+#ifndef MNG_SKIPCHUNK_sBIT
+    {MNG_UINT_sBIT, mng_init_general, mng_free_general, mng_read_sbit, mng_write_sbit, mng_assign_general, 0, 0, sizeof(mng_sbit)},
+#endif
+/* TODO:     {MNG_UINT_sCAL, 0, 0, 0, 0, 0, 0},  */
+#ifndef MNG_SKIPCHUNK_sPLT
+    {MNG_UINT_sPLT, mng_init_general, mng_free_splt,    mng_read_splt, mng_write_splt, mng_assign_splt,    0, 0, sizeof(mng_splt)},
+#endif
+    {MNG_UINT_sRGB, mng_init_general, mng_free_general, mng_read_srgb, mng_write_srgb, mng_assign_general, 0, 0, sizeof(mng_srgb)},
+#ifndef MNG_SKIPCHUNK_tEXt
+    {MNG_UINT_tEXt, mng_init_general, mng_free_text,    mng_read_text, mng_write_text, mng_assign_text,    0, 0, sizeof(mng_text)},
+#endif
+#ifndef MNG_SKIPCHUNK_tIME
+    {MNG_UINT_tIME, mng_init_general, mng_free_general, mng_read_time, mng_write_time, mng_assign_general, 0, 0, sizeof(mng_time)},
+#endif
+    {MNG_UINT_tRNS, mng_init_general, mng_free_general, mng_read_trns, mng_write_trns, mng_assign_general, 0, 0, sizeof(mng_trns)},
+#ifndef MNG_SKIPCHUNK_zTXt
+    {MNG_UINT_zTXt, mng_init_general, mng_free_ztxt,    mng_read_ztxt, mng_write_ztxt, mng_assign_ztxt,    0, 0, sizeof(mng_ztxt)},
+#endif
+  };
+
+#else                        /* MNG_OPTIMIZE_CHUNKINITFREE */
+
+  mng_chunk_header mng_chunk_table [] =
   {
 #ifndef MNG_SKIPCHUNK_BACK
     {MNG_UINT_BACK, mng_init_back, mng_free_back, mng_read_back, mng_write_back, mng_assign_back, 0, 0},
@@ -589,15 +764,22 @@ MNG_LOCAL mng_retcode process_raw_chunk (mng_datap  pData,
     {MNG_UINT_zTXt, mng_init_ztxt, mng_free_ztxt, mng_read_ztxt, mng_write_ztxt, mng_assign_ztxt, 0, 0},
 #endif
   };
+
+#endif                       /* MNG_OPTIMIZE_CHUNKINITFREE */
+
                                        /* binary search variables */
   mng_int32         iTop, iLower, iUpper, iMiddle;
   mng_chunk_headerp pEntry;            /* pointer to found entry */
+#else
+  mng_chunk_header  sEntry;            /* temp chunk-header */
+#endif /* MNG_OPTIMIZE_CHUNKREADER */
+
   mng_chunkid       iChunkname;        /* the chunk's tag */
   mng_chunkp        pChunk;            /* chunk structure (if #define MNG_STORE_CHUNKS) */
   mng_retcode       iRetcode;          /* temporary error-code */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_PROCESS_RAW_CHUNK, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_PROCESS_RAW_CHUNK, MNG_LC_START);
 #endif
                                        /* reset timer indicator on read-cycle */
   if ((pData->bReading) && (!pData->bDisplaying))
@@ -607,8 +789,11 @@ MNG_LOCAL mng_retcode process_raw_chunk (mng_datap  pData,
 
   pBuf += sizeof (mng_chunkid);        /* adjust the buffer */
   iBuflen -= sizeof (mng_chunkid);
+  pChunk = 0;
+
+#ifndef MNG_OPTIMIZE_CHUNKREADER
                                        /* determine max index of table */
-  iTop = (sizeof (chunk_table) / sizeof (chunk_table [0])) - 1;
+  iTop = (sizeof (mng_chunk_table) / sizeof (mng_chunk_table [0])) - 1;
 
   /* binary search; with 54 chunks, worst-case is 7 comparisons */
   iLower  = 0;
@@ -619,17 +804,16 @@ MNG_LOCAL mng_retcode process_raw_chunk (mng_datap  pData,
 #endif
   iUpper  = iTop;
   pEntry  = 0;                         /* no goods yet! */
-  pChunk  = 0;
 
   do                                   /* the binary search itself */
     {
-      if (chunk_table [iMiddle].iChunkname < iChunkname)
+      if (mng_chunk_table [iMiddle].iChunkname < iChunkname)
         iLower = iMiddle + 1;
-      else if (chunk_table [iMiddle].iChunkname > iChunkname)
+      else if (mng_chunk_table [iMiddle].iChunkname > iChunkname)
         iUpper = iMiddle - 1;
       else
       {
-        pEntry = &chunk_table [iMiddle];
+        pEntry = &mng_chunk_table [iMiddle];
         break;
       }
 
@@ -638,21 +822,42 @@ MNG_LOCAL mng_retcode process_raw_chunk (mng_datap  pData,
   while (iLower <= iUpper);
 
   if (!pEntry)                         /* unknown chunk ? */
-    pEntry = &chunk_unknown;           /* make it so! */
+    pEntry = &mng_chunk_unknown;       /* make it so! */
+
+#else /* MNG_OPTIMIZE_CHUNKREADER */
+
+  mng_get_chunkheader (iChunkname, &sEntry);
+
+#endif /* MNG_OPTIMIZE_CHUNKREADER */
 
   pData->iChunkname = iChunkname;      /* keep track of where we are */
   pData->iChunkseq++;
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
   if (pEntry->fRead)                   /* read-callback available ? */
   {
     iRetcode = pEntry->fRead (pData, pEntry, iBuflen, (mng_ptr)pBuf, &pChunk);
 
     if (!iRetcode)                     /* everything oke ? */
     {                                  /* remember unknown chunk's id */
-      if ((pChunk) && (pEntry == &chunk_unknown))
+      if ((pChunk) && (pEntry->iChunkname == MNG_UINT_HUH))
         ((mng_chunk_headerp)pChunk)->iChunkname = iChunkname;
     }
   }
+#else /* MNG_OPTIMIZE_CHUNKREADER */
+  if (sEntry.fRead)                    /* read-callback available ? */
+  {
+    iRetcode = sEntry.fRead (pData, &sEntry, iBuflen, (mng_ptr)pBuf, &pChunk);
+
+#ifndef MNG_OPTIMIZE_CHUNKREADER
+    if (!iRetcode)                     /* everything oke ? */
+    {                                  /* remember unknown chunk's id */
+      if ((pChunk) && (sEntry.iChunkname == MNG_UINT_HUH))
+        ((mng_chunk_headerp)pChunk)->iChunkname = iChunkname;
+    }
+#endif
+  }
+#endif /* MNG_OPTIMIZE_CHUNKREADER */
   else
     iRetcode = MNG_NOERROR;
 
@@ -670,7 +875,7 @@ MNG_LOCAL mng_retcode process_raw_chunk (mng_datap  pData,
     return iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_PROCESS_RAW_CHUNK, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_PROCESS_RAW_CHUNK, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -687,7 +892,7 @@ MNG_LOCAL mng_retcode check_chunk_crc (mng_datap  pData,
   mng_retcode iRetcode = MNG_NOERROR;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_CHUNK_CRC, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_CHUNK_CRC, MNG_LC_START);
 #endif
 
   if (pData->iCrcmode & MNG_CRC_INPUT) /* crc included ? */
@@ -724,9 +929,9 @@ MNG_LOCAL mng_retcode check_chunk_crc (mng_datap  pData,
         }
 
         if (bWarning)
-          MNG_WARNING (pData, MNG_INVALIDCRC)
+          MNG_WARNING (pData, MNG_INVALIDCRC);
         if (bError)
-          MNG_ERROR (pData, MNG_INVALIDCRC)
+          MNG_ERROR (pData, MNG_INVALIDCRC);
       }
     }
 
@@ -739,7 +944,7 @@ MNG_LOCAL mng_retcode check_chunk_crc (mng_datap  pData,
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_CHUNK_CRC, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_CHUNK_CRC, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -756,7 +961,7 @@ MNG_LOCAL mng_retcode read_chunk (mng_datap  pData)
   mng_retcode iRetcode  = MNG_NOERROR;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_CHUNK, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_CHUNK, MNG_LC_START);
 #endif
 
 #ifdef MNG_SUPPORT_DISPLAY
@@ -894,21 +1099,20 @@ MNG_LOCAL mng_retcode read_chunk (mng_datap  pData)
             else
             {
               if (iRead != iBuflen)    /* did we get all the data ? */
-                MNG_ERROR (pData, MNG_UNEXPECTEDEOF)
-              else
-                iRetcode = check_chunk_crc (pData, pBuf, iBuflen);
+                MNG_ERROR (pData, MNG_UNEXPECTEDEOF);
+              iRetcode = check_chunk_crc (pData, pBuf, iBuflen);
             }
           }
           else
           {
             if (iBuflen > 16777216)    /* is the length incredible? */
-              MNG_ERROR (pData, MNG_IMPROBABLELENGTH)
+              MNG_ERROR (pData, MNG_IMPROBABLELENGTH);
 
             if (!pData->iSuspendpoint) /* create additional large buffer ? */
             {                          /* again reserve space for the last zero-byte */
               pData->iLargebufsize = iBuflen + 1;
               pData->pLargebufnext = MNG_NULL;
-              MNG_ALLOC (pData, pData->pLargebuf, pData->iLargebufsize)
+              MNG_ALLOC (pData, pData->pLargebuf, pData->iLargebufsize);
             }
 
             iRetcode = read_databuffer (pData, pData->pLargebuf, &pData->pLargebufnext, iBuflen, &iRead);
@@ -920,11 +1124,10 @@ MNG_LOCAL mng_retcode read_chunk (mng_datap  pData)
             else
             {
               if (iRead != iBuflen)    /* did we get all the data ? */
-                MNG_ERROR (pData, MNG_UNEXPECTEDEOF)
-              else
-                iRetcode = check_chunk_crc (pData, pData->pLargebuf, iBuflen);
+                MNG_ERROR (pData, MNG_UNEXPECTEDEOF);
+              iRetcode = check_chunk_crc (pData, pData->pLargebuf, iBuflen);
                                        /* cleanup additional large buffer */
-              MNG_FREE (pData, pData->pLargebuf, pData->iLargebufsize)
+              MNG_FREE (pData, pData->pLargebuf, pData->iLargebufsize);
             }
           }
         }
@@ -946,7 +1149,7 @@ MNG_LOCAL mng_retcode read_chunk (mng_datap  pData)
 #else
             (pData->bHasIHDR || pData->bHasMHDR))
 #endif
-          MNG_ERROR (pData, MNG_UNEXPECTEDEOF)
+          MNG_ERROR (pData, MNG_UNEXPECTEDEOF);
       } 
     }
   }
@@ -962,7 +1165,7 @@ MNG_LOCAL mng_retcode read_chunk (mng_datap  pData)
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_CHUNK, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_CHUNK, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -972,12 +1175,95 @@ MNG_LOCAL mng_retcode read_chunk (mng_datap  pData)
 
 MNG_LOCAL mng_retcode process_pushedchunk (mng_datap pData)
 {
-  mng_retcode   iRetcode;
-  mng_pushdatap pPush = pData->pFirstpushchunk;
+  mng_pushdatap pPush;
+  mng_retcode   iRetcode = MNG_NOERROR;
 
-  iRetcode = process_raw_chunk (pData, pPush->pData, pPush->iLength);
-  if (iRetcode)
+#ifdef MNG_SUPPORT_DISPLAY
+  if (pData->pCurraniobj)              /* processing an animation object ? */
+  {
+    do                                 /* process it then */
+    {
+      iRetcode = ((mng_object_headerp)pData->pCurraniobj)->fProcess (pData, pData->pCurraniobj);
+                                       /* refresh needed ? */
+/*      if ((!iRetcode) && (!pData->bTimerset) && (pData->bNeedrefresh))
+        iRetcode = display_progressive_refresh (pData, 1); */
+                                       /* can we advance to next object ? */
+      if ((!iRetcode) && (pData->pCurraniobj) &&
+          (!pData->bTimerset) && (!pData->bSectionwait))
+      {                                /* reset timer indicator on read-cycle */
+        if ((pData->bReading) && (!pData->bDisplaying))
+          pData->bTimerset = MNG_FALSE;
+
+        pData->pCurraniobj = ((mng_object_headerp)pData->pCurraniobj)->pNext;
+                                       /* TERM processing to be done ? */
+        if ((!pData->pCurraniobj) && (pData->bHasTERM) && (!pData->bHasMHDR))
+          iRetcode = mng_process_display_mend (pData);
+      }
+    }                                  /* until error or a break or no more objects */
+    while ((!iRetcode) && (pData->pCurraniobj) &&
+           (!pData->bTimerset) && (!pData->bSectionwait) && (!pData->bFreezing));
+  }
+  else
+  {
+    if (pData->iBreakpoint)            /* do we need to finish something first ? */
+    {
+      switch (pData->iBreakpoint)      /* return to broken display routine */
+      {
+#ifndef MNG_SKIPCHUNK_FRAM
+        case  1 : { iRetcode = mng_process_display_fram2 (pData); break; }
+#endif
+        case  2 : { iRetcode = mng_process_display_ihdr  (pData); break; }
+#ifndef MNG_SKIPCHUNK_SHOW
+        case  3 : ;                     /* same as 4 !!! */
+        case  4 : { iRetcode = mng_process_display_show  (pData); break; }
+#endif
+#ifndef MNG_SKIPCHUNK_CLON
+        case  5 : { iRetcode = mng_process_display_clon2 (pData); break; }
+#endif
+#ifdef MNG_INCLUDE_JNG
+        case  7 : { iRetcode = mng_process_display_jhdr  (pData); break; }
+#endif
+        case  6 : ;                     /* same as 8 !!! */
+        case  8 : { iRetcode = mng_process_display_iend  (pData); break; }
+#ifndef MNG_SKIPCHUNK_MAGN
+        case  9 : { iRetcode = mng_process_display_magn2 (pData); break; }
+#endif
+        case 10 : { iRetcode = mng_process_display_mend2 (pData); break; }
+#ifndef MNG_SKIPCHUNK_PAST
+        case 11 : { iRetcode = mng_process_display_past2 (pData); break; }
+#endif
+      }
+    }
+  }
+
+  if (iRetcode)                        /* on error bail out */
     return iRetcode;
+
+#endif /* MNG_SUPPORT_DISPLAY */
+                                       /* can we continue processing now, or do we */
+                                       /* need to wait for the timer to finish (again) ? */
+#ifdef MNG_SUPPORT_DISPLAY
+  if ((!pData->bTimerset) && (!pData->bSectionwait) && (!pData->bEOF))
+#else
+  if (!pData->bEOF)
+#endif
+  {
+    pData->iSuspendpoint = 0;            /* safely reset it here ! */
+    pPush = pData->pFirstpushchunk;
+
+    iRetcode = process_raw_chunk (pData, pPush->pData, pPush->iLength);
+    if (iRetcode)
+      return iRetcode;
+
+#ifdef MNG_SUPPORT_DISPLAY             /* refresh needed ? */
+    if ((!pData->bTimerset) && (!pData->bSuspended) && (pData->bNeedrefresh))
+    {
+      iRetcode = mng_display_progressive_refresh (pData, 1);
+      if (iRetcode)                      /* on error bail out */
+        return iRetcode;
+    }
+#endif
+  }
 
   return mng_release_pushchunk (pData);
 }
@@ -991,13 +1277,13 @@ mng_retcode mng_read_graphic (mng_datap pData)
   mng_retcode iRetcode;                /* temporary error-code */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_GRAPHIC, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_GRAPHIC, MNG_LC_START);
 #endif
 
   if (!pData->pReadbuf)                /* buffer allocated ? */
   {
     pData->iReadbufsize = 4200;        /* allocate a default read buffer */
-    MNG_ALLOC (pData, pData->pReadbuf, pData->iReadbufsize)
+    MNG_ALLOC (pData, pData->pReadbuf, pData->iReadbufsize);
   }
                                        /* haven't processed the signature ? */
   if ((!pData->bHavesig) || (pData->iSuspendpoint == 1))
@@ -1061,7 +1347,7 @@ mng_retcode mng_read_graphic (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_GRAPHIC, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_GRAPHIC, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;

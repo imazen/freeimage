@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_zlib.c             copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_zlib.c             copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : ZLIB library interface (implementation)                    * */
 /* *                                                                        * */
@@ -46,6 +46,9 @@
 /* *                                                                        * */
 /* *             1.0.6 - 07/07/2003 - G.R-P                                 * */
 /* *             - added MNG_NO_16BIT_SUPPORT support                       * */
+/* *                                                                        * */
+/* *             1.0.9 - 10/09/2004 - G.R-P                                 * */
+/* *             - added MNG_NO_1_2_4BIT_SUPPORT support                    * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -107,7 +110,7 @@ void mngzlib_free (voidpf pData,
 mng_retcode mngzlib_initialize (mng_datap pData)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_INITIALIZE, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_ZLIB_INITIALIZE, MNG_LC_START);
 #endif
 
 #ifdef MNG_INTERNAL_MEMMNGMT
@@ -124,7 +127,7 @@ mng_retcode mngzlib_initialize (mng_datap pData)
   pData->bDeflating   = MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_INITIALIZE, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_ZLIB_INITIALIZE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
@@ -135,7 +138,7 @@ mng_retcode mngzlib_initialize (mng_datap pData)
 mng_retcode mngzlib_cleanup (mng_datap pData)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_CLEANUP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_ZLIB_CLEANUP, MNG_LC_START);
 #endif
 
   if (pData->bInflating)               /* force zlib cleanup */
@@ -144,7 +147,7 @@ mng_retcode mngzlib_cleanup (mng_datap pData)
     mngzlib_deflatefree (pData);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_CLEANUP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_ZLIB_CLEANUP, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
@@ -157,19 +160,19 @@ mng_retcode mngzlib_inflateinit (mng_datap pData)
   int iZrslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEINIT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEINIT, MNG_LC_START);
 #endif
                                        /* initialize zlib structures and such */
   iZrslt = inflateInit (&pData->sZlib);
 
   if (iZrslt != Z_OK)                  /* on error bail out */
-    MNG_ERRORZ (pData, (mng_uint32)iZrslt)
+    MNG_ERRORZ (pData, (mng_uint32)iZrslt);
 
   pData->bInflating      = MNG_TRUE;   /* really inflating something now */
   pData->sZlib.next_out  = 0;          /* force JIT initialization */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEINIT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEINIT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
@@ -187,7 +190,7 @@ mng_retcode mngzlib_inflaterows (mng_datap  pData,
   mng_ptr     pSwap;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEROWS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEROWS, MNG_LC_START);
 #endif
 
   pData->sZlib.next_in   = pIndata;    /* let zlib know where to get stuff */
@@ -197,6 +200,11 @@ mng_retcode mngzlib_inflaterows (mng_datap  pData,
   {                                    /* let zlib know where to store stuff */
     pData->sZlib.next_out  = pData->pWorkrow;
     pData->sZlib.avail_out = (uInt)(pData->iRowsize + pData->iPixelofs);
+#ifdef MNG_NO_1_2_4BIT_SUPPORT
+    if (pData->iPNGdepth < 8)
+       pData->sZlib.avail_out = (uInt)((pData->iPNGdepth*pData->iRowsize + 7)/8
+           + pData->iPixelofs);
+#endif
 #ifdef MNG_NO_16BIT_SUPPORT
     if (pData->iPNGdepth > 8)
        pData->sZlib.avail_out = (uInt)(2*pData->iRowsize + pData->iPixelofs);
@@ -212,6 +220,111 @@ mng_retcode mngzlib_inflaterows (mng_datap  pData,
     {                                  /* image not completed yet ? */
       if (pData->iRow < (mng_int32)pData->iDataheight)
       {
+#ifdef MNG_NO_1_2_4BIT_SUPPORT
+        if (pData->iPNGdepth == 1)
+        {
+          /* Inflate Workrow to 8-bit */
+          mng_int32  iX;
+          mng_uint8p pSrc = pData->pWorkrow+1;
+          mng_uint8p pDest = pSrc + pData->iRowsize - (pData->iRowsize+7)/8;
+
+          for (iX = ((pData->iRowsize+7)/8) ; iX > 0 ; iX--)
+             *pDest++ = *pSrc++;
+
+          pDest = pData->pWorkrow+1;
+          pSrc = pDest + pData->iRowsize - (pData->iRowsize+7)/8;
+          for (iX = pData->iRowsize; ;)
+          {
+            *pDest++ = (((*pSrc)>>7)&1);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)>>6)&1);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)>>5)&1);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)>>4)&1);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)>>3)&1);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)>>2)&1);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)>>1)&1);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)   )&1);
+            if (iX-- <= 0)
+              break;
+            pSrc++;
+          }
+        }
+        else if (pData->iPNGdepth == 2)
+        {
+          /* Inflate Workrow to 8-bit */
+          mng_int32  iX;
+          mng_uint8p pSrc = pData->pWorkrow+1;
+          mng_uint8p pDest = pSrc + pData->iRowsize - (2*pData->iRowsize+7)/8;
+
+          for (iX = ((2*pData->iRowsize+7)/8) ; iX > 0 ; iX--)
+             *pDest++ = *pSrc++;
+
+          pDest = pData->pWorkrow+1;
+          pSrc = pDest + pData->iRowsize - (2*pData->iRowsize+7)/8;
+          for (iX = pData->iRowsize; ;)
+          {
+            *pDest++ = (((*pSrc)>>6)&3);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)>>4)&3);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)>>2)&3);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)   )&3);
+            if (iX-- <= 0)
+              break;
+            pSrc++;
+          }
+        }
+        else if (pData->iPNGdepth == 4)
+        {
+          /* Inflate Workrow to 8-bit */
+          mng_int32  iX;
+          mng_uint8p pSrc = pData->pWorkrow+1;
+          mng_uint8p pDest = pSrc + pData->iRowsize - (4*pData->iRowsize+7)/8;
+
+          for (iX = ((4*pData->iRowsize+7)/8) ; iX > 0 ; iX--)
+             *pDest++ = *pSrc++;
+
+          pDest = pData->pWorkrow+1;
+          pSrc = pDest + pData->iRowsize - (4*pData->iRowsize+7)/8;
+          for (iX = pData->iRowsize; ;)
+          {
+            *pDest++ = (((*pSrc)>>4)&0x0f);
+            if (iX-- <= 0)
+              break;
+            *pDest++ = (((*pSrc)   )&0x0f);
+            if (iX-- <= 0)
+              break;
+            pSrc++;
+          }
+        }
+        if (pData->iPNGdepth < 8 && pData->iColortype == 0)
+        {
+          /* Expand samples to 8-bit by LBR */
+          mng_int32  iX;
+          mng_uint8p pSrc = pData->pWorkrow+1;
+          mng_uint8 multiplier[]={0,255,85,0,17,0,0,0,1};
+
+          for (iX = pData->iRowsize; iX > 0; iX--)
+              *pSrc++ *= multiplier[pData->iPNGdepth];
+        }
+#endif
 #ifdef MNG_NO_16BIT_SUPPORT
         if (pData->iPNGdepth > 8)
         {
@@ -300,6 +413,11 @@ mng_retcode mngzlib_inflaterows (mng_datap  pData,
                                        /* let zlib know where to store next output */
       pData->sZlib.next_out  = pData->pWorkrow;
       pData->sZlib.avail_out = (uInt)(pData->iRowsize + pData->iPixelofs);
+#ifdef MNG_NO_1_2_4BIT_SUPPORT
+    if (pData->iPNGdepth < 8)
+       pData->sZlib.avail_out = (uInt)((pData->iPNGdepth*pData->iRowsize + 7)/8
+           + pData->iPixelofs);
+#endif
 #ifdef MNG_NO_16BIT_SUPPORT
       if (pData->iPNGdepth > 8)
         pData->sZlib.avail_out = (uInt)(2*pData->iRowsize + pData->iPixelofs);
@@ -312,13 +430,13 @@ mng_retcode mngzlib_inflaterows (mng_datap  pData,
             ( (pData->iPass >= 0) && (pData->iPass < 7) )    )    );
                                        /* on error bail out */
   if ((iZrslt != Z_OK) && (iZrslt != Z_STREAM_END))
-    MNG_ERRORZ (pData, (mng_uint32)iZrslt)
+    MNG_ERRORZ (pData, (mng_uint32)iZrslt);
                                        /* too much data ? */
   if ((iZrslt == Z_OK) && (pData->sZlib.avail_in > 0))
-    MNG_WARNING (pData, MNG_TOOMUCHIDAT)
+    MNG_WARNING (pData, MNG_TOOMUCHIDAT);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEROWS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEROWS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -334,7 +452,7 @@ mng_retcode mngzlib_inflatedata (mng_datap  pData,
   int iZrslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEDATA, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEDATA, MNG_LC_START);
 #endif
                                        /* let zlib know where to get stuff */
   pData->sZlib.next_in   = pIndata;
@@ -346,10 +464,10 @@ mng_retcode mngzlib_inflatedata (mng_datap  pData,
     return MNG_BUFOVERFLOW;
                                        /* on error bail out */
   if ((iZrslt != Z_OK) && (iZrslt != Z_STREAM_END))
-    MNG_ERRORZ (pData, (mng_uint32)iZrslt)
+    MNG_ERRORZ (pData, (mng_uint32)iZrslt);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEDATA, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEDATA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -362,7 +480,7 @@ mng_retcode mngzlib_inflatefree (mng_datap pData)
   int iZrslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEFREE, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEFREE, MNG_LC_START);
 #endif
 
   pData->bInflating = MNG_FALSE;       /* stopped it */
@@ -370,10 +488,10 @@ mng_retcode mngzlib_inflatefree (mng_datap pData)
   iZrslt = inflateEnd (&pData->sZlib); /* let zlib cleanup its own stuff */
 
   if (iZrslt != Z_OK)                  /* on error bail out */
-    MNG_ERRORZ (pData, (mng_uint32)iZrslt)
+    MNG_ERRORZ (pData, (mng_uint32)iZrslt);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEFREE, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_ZLIB_INFLATEFREE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
@@ -386,7 +504,7 @@ mng_retcode mngzlib_deflateinit (mng_datap pData)
   int iZrslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEINIT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEINIT, MNG_LC_START);
 #endif
                                        /* initialize zlib structures and such */
   iZrslt = deflateInit2 (&pData->sZlib, pData->iZlevel, pData->iZmethod,
@@ -394,12 +512,12 @@ mng_retcode mngzlib_deflateinit (mng_datap pData)
                          pData->iZstrategy);
 
   if (iZrslt != Z_OK)                  /* on error bail out */
-    MNG_ERRORZ (pData, (mng_uint32)iZrslt)
+    MNG_ERRORZ (pData, (mng_uint32)iZrslt);
 
   pData->bDeflating = MNG_TRUE;        /* really deflating something now */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEINIT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEINIT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
@@ -412,14 +530,14 @@ mng_retcode mngzlib_deflaterows (mng_datap  pData,
                                  mng_uint8p pIndata)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEROWS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEROWS, MNG_LC_START);
 #endif
 
 
 
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEROWS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEROWS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -434,7 +552,7 @@ mng_retcode mngzlib_deflatedata (mng_datap  pData,
   int iZrslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEDATA, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEDATA, MNG_LC_START);
 #endif
 
   pData->sZlib.next_in  = pIndata;     /* let zlib know where to get stuff */
@@ -446,10 +564,10 @@ mng_retcode mngzlib_deflatedata (mng_datap  pData,
     return MNG_BUFOVERFLOW;
                                        /* on error bail out */
   if ((iZrslt != Z_OK) && (iZrslt != Z_STREAM_END))
-    MNG_ERRORZ (pData, (mng_uint32)iZrslt)
+    MNG_ERRORZ (pData, (mng_uint32)iZrslt);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEDATA, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEDATA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -462,18 +580,18 @@ mng_retcode mngzlib_deflatefree (mng_datap pData)
   int iZrslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEFREE, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEFREE, MNG_LC_START);
 #endif
 
   iZrslt = deflateEnd (&pData->sZlib); /* let zlib cleanup it's own stuff */
 
   if (iZrslt != Z_OK)                  /* on error bail out */
-    MNG_ERRORZ (pData, (mng_uint32)iZrslt)
+    MNG_ERRORZ (pData, (mng_uint32)iZrslt);
 
   pData->bDeflating = MNG_FALSE;       /* stopped it */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEFREE, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEFREE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */

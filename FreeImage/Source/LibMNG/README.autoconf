@@ -1,3 +1,21 @@
+**********************************************************************
+**********************************************************************
+
+                ***** this is unmaintained *****
+
+If you happen to find problems with autoconfiguration and building,
+I simply cannot help you. I'm looking for a maintainer that doesn't mind
+spending a few minutes every now and then on the next release to make sure
+things are still in working order.
+
+For the moment all autoconf stuff ahs been moved into unmaintained!!
+
+**********************************************************************
+**********************************************************************
+
+
+
+
 Configuration from CVS
 ======================
 

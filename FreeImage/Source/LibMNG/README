@@ -1,7 +1,12 @@
-libmng 1.0.8
+libmng 1.0.9
 ------------
 
-Added special data-pushing mechanisms and a few other tid-bits.
+A number of optimizations in the chunk handling and reader/writer code.
+This saves over 20KB on binary footprint!
+
+Also several bugfixes and a couple of patches bring it another step
+closer to perfection.... :-)
+
 See CHANGELOG for details.
 
 

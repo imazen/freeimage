@@ -6,8 +6,8 @@ The samples are in platform-specific directories.
 bcb - Borland C++ Builder (3.0) (found under bcb/xxx)
 -----------------------------------------------------
 
-win32dll - sample project to create a Windows dll. Requires zlib1.1.4,
-           IJG jpgsrc6b and lcms1.0.8. The directories containing these
+win32dll - sample project to create a Windows dll. Requires zlib1.2.1,
+           IJG jpgsrc6b and lcms1.0.14. The directories containing these
            libraries must be at the same level as the libmng directory.
            So if you're in the directory with this file and the libmng
            sources, they should be in ..\zlib , ..\jpgsrc6b and ..\lcms

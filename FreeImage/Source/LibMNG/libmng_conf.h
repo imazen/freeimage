@@ -46,6 +46,10 @@
 /* *             1.0.7 - 03/07/2004 - G.R-P                                 * */
 /* *             - added MNG_VERSION_QUERY_SUPPORT_ conditional             * */
 /* *                                                                        * */
+/* *             1.0.9 - 05/12/2004 - G.Juyn                                * */
+/* *             - clearified MNG_BIGENDIAN_SUPPORTED conditional           * */
+/* *             - added MNG_LITTLEENDIAN_SUPPORTED conditional             * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 
@@ -64,6 +68,17 @@
 /* *                                                                        * */
 /* *  User-selectable compile-time options                                  * */
 /* *                                                                        * */
+/* ************************************************************************** */
+
+/* ************************************************************************** */
+/* added by FreeImage */
+/* ************************************************************************** */
+
+#define MNG_OPTIMIZE_CHUNKINITFREE
+#define MNG_OPTIMIZE_OBJCLEANUP
+#define MNG_OPTIMIZE_CHUNKASSIGN
+#define MNG_OPTIMIZE_CHUNKREADER
+
 /* ************************************************************************** */
 
 /* enable exactly one(1) of the MNG-(sub)set selectors */
@@ -213,13 +228,16 @@
 
 /* ************************************************************************** */
 
-/* enable big-endian support  */
-/* enable this if you're on an architecture that supports big-endian reads
+/* enable BIG/LITTLE endian optimizations */
+/* enable BIG if you're on an architecture that supports big-endian reads
    and writes that aren't word-aligned */
 /* according to reliable sources this only works for PowerPC (bigendian mode)
    and 680x0 */
+/* enable LITTLE if you're on an architecture that supports little-endian */
+/* when in doubt leave both off !!! */
 
 /* #define MNG_BIGENDIAN_SUPPORTED */
+/* #define MNG_LITTLEENDIAN_SUPPORTED */
 
 /* ************************************************************************** */
 /* enable 'version' functions */

@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_types.h            copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.8                                                      * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : type specifications                                        * */
 /* *                                                                        * */
@@ -110,10 +110,16 @@
 /* *                                                                        * */
 /* *             1.0.7 - 03/10/2004 - G.R-P                                 * */
 /* *             - added conditionals around openstream/closestream         * */
+/* *                                                                        * */
 /* *             1.0.8 - 04/11/2004 - G.Juyn                                * */
 /* *             - added data-push mechanisms for specialized decoders      * */
 /* *             1.0.8 - 08/01/2004 - G.Juyn                                * */
 /* *             - added support for 3+byte pixelsize for JPEG's            * */
+/* *                                                                        * */
+/* *             1.0.9 - 12/05/2004 - G.Juyn                                * */
+/* *             - inclusion of zlib/lcms/ijgsrc6b with <> instead of ""    * */
+/* *             1.0.9 - 12/06/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_CHUNKREADER               * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -160,14 +166,14 @@
 #endif
 
 #ifdef MNG_INCLUDE_ZLIB                /* zlib by Mark Adler & Jean-loup Gailly */
-#include "zlib.h"
+#include <zlib.h>
 #endif
 
 #ifdef MNG_INCLUDE_LCMS                /* little cms by Marti Maria Saguer */
 #ifndef ZLIB_DLL
 #undef FAR
 #endif
-#include "lcms.h"
+#include <lcms.h>
 #endif /* MNG_INCLUDE_LCMS */
 
 #ifdef MNG_INCLUDE_IJG6B               /* IJG's jpgsrc6b */
@@ -183,7 +189,7 @@
 #undef FAR                             /* possibly defined by zlib or lcms */
 #endif
 #define JPEG_INTERNAL_OPTIONS          /* for RGB_PIXELSIZE */
-#include "../LibJPEG/jpeglib.h"                   /* all that for JPEG support  :-) */
+#include "../LibJPEG/jpeglib.h"        /* all that for JPEG support  :-) */
 #endif /* MNG_INCLUDE_IJG6B */
 
 #if defined(MNG_INTERNAL_MEMMNGMT) || defined(MNG_INCLUDE_FILTERS)
@@ -390,6 +396,11 @@ typedef enum mng_imgtypes mng_imgtype;
 enum mng_speedtypes {mng_st_normal, mng_st_fast, mng_st_slow, mng_st_slowest};
 typedef enum mng_speedtypes mng_speedtype;
 
+#ifdef MNG_OPTIMIZE_CHUNKREADER
+                                       /* enumeration object-creation indicators */
+enum mng_createobjtypes {mng_create_none, mng_create_always, mng_create_ifglobal};
+typedef enum mng_createobjtypes mng_createobjtype;
+#endif
 
 /* ************************************************************************** */
 

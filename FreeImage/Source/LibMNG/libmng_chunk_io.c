@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_chunk_io.c         copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.8                                                      * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Chunk I/O routines (implementation)                        * */
 /* *                                                                        * */
@@ -205,6 +205,26 @@
 /* *             1.0.8 - 07/07/2004 - G.R-P                                 * */
 /* *             - change worst-case iAlphadepth to 1 for standalone PNGs   * */
 /* *                                                                        * */
+/* *             1.0.9 - 09/28/2004 - G.R-P                                 * */
+/* *             - improved handling of cheap transparency when 16-bit      * */
+/* *               support is disabled                                      * */
+/* *             1.0.9 - 10/04/2004 - G.Juyn                                * */
+/* *             - fixed bug in writing sBIT for indexed color              * */
+/* *             1.0.9 - 10/10/2004 - G.R-P.                                * */
+/* *             - added MNG_NO_1_2_4BIT_SUPPORT                            * */
+/* *             1.0.9 - 12/05/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_CHUNKINITFREE             * */
+/* *             1.0.9 - 12/06/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_CHUNKASSIGN               * */
+/* *             1.0.9 - 12/07/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_CHUNKREADER               * */
+/* *             1.0.9 - 12/11/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_DISPLAYCALLS              * */
+/* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
+/* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
+/* *             1.0.9 - 01/17/2005 - G.Juyn                                * */
+/* *             - fixed problem with global PLTE/tRNS                      * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #include "libmng.h"
@@ -388,37 +408,37 @@ void mng_put_uint16 (mng_uint8p pBuf,
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 MNG_LOCAL mng_uint8p find_null (mng_uint8p pIn)
 {
   mng_uint8p pOut = pIn;
-
   while (*pOut)                        /* the read_graphic routine has made sure there's */
     pOut++;                            /* always at least 1 zero-byte in the buffer */
-
   return pOut;
 }
+#endif
 
 /* ************************************************************************** */
 
-#if !defined(MNG_SKIPCHUNK_iCCP) && !defined(MNG_SKIPCHUNK_zTXt) && !defined(MNG_SKIPCHUNK_iTXt)
-MNG_LOCAL mng_retcode inflate_buffer (mng_datap  pData,
-                                      mng_uint8p pInbuf,
-                                      mng_uint32 iInsize,
-                                      mng_uint8p *pOutbuf,
-                                      mng_uint32 *iOutsize,
-                                      mng_uint32 *iRealsize)
+#if !defined(MNG_SKIPCHUNK_iCCP) || !defined(MNG_SKIPCHUNK_zTXt) || !defined(MNG_SKIPCHUNK_iTXt)
+mng_retcode mng_inflate_buffer (mng_datap  pData,
+                                mng_uint8p pInbuf,
+                                mng_uint32 iInsize,
+                                mng_uint8p *pOutbuf,
+                                mng_uint32 *iOutsize,
+                                mng_uint32 *iRealsize)
 {
   mng_retcode iRetcode = MNG_NOERROR;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_INFLATE_BUFFER, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_INFLATE_BUFFER, MNG_LC_START);
 #endif
 
   if (iInsize)                         /* anything to do ? */
   {
     *iOutsize = iInsize * 3;           /* estimate uncompressed size */
                                        /* and allocate a temporary buffer */
-    MNG_ALLOC (pData, *pOutbuf, *iOutsize)
+    MNG_ALLOC (pData, *pOutbuf, *iOutsize);
 
     do
     {
@@ -437,9 +457,9 @@ MNG_LOCAL mng_retcode inflate_buffer (mng_datap  pData,
 
       if (iRetcode == MNG_BUFOVERFLOW) /* not enough space ? */
       {                                /* then get some more */
-        MNG_FREEX (pData, *pOutbuf, *iOutsize)
+        MNG_FREEX (pData, *pOutbuf, *iOutsize);
         *iOutsize = *iOutsize + iInsize;
-        MNG_ALLOC (pData, *pOutbuf, *iOutsize)
+        MNG_ALLOC (pData, *pOutbuf, *iOutsize);
       }
     }                                  /* repeat if we didn't have enough space */
     while ((iRetcode == MNG_BUFOVERFLOW) &&
@@ -457,7 +477,7 @@ MNG_LOCAL mng_retcode inflate_buffer (mng_datap  pData,
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_INFLATE_BUFFER, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_INFLATE_BUFFER, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -476,7 +496,7 @@ MNG_LOCAL mng_retcode inflate_buffer (mng_datap  pData,
 #ifdef MNG_INCLUDE_WRITE_PROCS
 /* ************************************************************************** */
 
-#if !defined(MNG_SKIPCHUNK_iCCP) && !defined(MNG_SKIPCHUNK_zTXt) && !defined(MNG_SKIPCHUNK_iTXt)
+#if !defined(MNG_SKIPCHUNK_iCCP) || !defined(MNG_SKIPCHUNK_zTXt) || !defined(MNG_SKIPCHUNK_iTXt)
 MNG_LOCAL mng_retcode deflate_buffer (mng_datap  pData,
                                       mng_uint8p pInbuf,
                                       mng_uint32 iInsize,
@@ -487,14 +507,14 @@ MNG_LOCAL mng_retcode deflate_buffer (mng_datap  pData,
   mng_retcode iRetcode = MNG_NOERROR;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DEFLATE_BUFFER, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DEFLATE_BUFFER, MNG_LC_START);
 #endif
 
   if (iInsize)                         /* anything to do ? */
   {
     *iOutsize = (iInsize * 5) >> 2;    /* estimate compressed size */
                                        /* and allocate a temporary buffer */
-    MNG_ALLOC (pData, *pOutbuf, *iOutsize)
+    MNG_ALLOC (pData, *pOutbuf, *iOutsize);
 
     do
     {
@@ -511,9 +531,9 @@ MNG_LOCAL mng_retcode deflate_buffer (mng_datap  pData,
 
       if (iRetcode == MNG_BUFOVERFLOW) /* not enough space ? */
       {                                /* then get some more */
-        MNG_FREEX (pData, *pOutbuf, *iOutsize)
+        MNG_FREEX (pData, *pOutbuf, *iOutsize);
         *iOutsize = *iOutsize + (iInsize >> 1);
-        MNG_ALLOC (pData, *pOutbuf, *iOutsize)
+        MNG_ALLOC (pData, *pOutbuf, *iOutsize);
       }
     }                                  /* repeat if we didn't have enough space */
     while (iRetcode == MNG_BUFOVERFLOW);
@@ -526,7 +546,7 @@ MNG_LOCAL mng_retcode deflate_buffer (mng_datap  pData,
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DEFLATE_BUFFER, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DEFLATE_BUFFER, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -544,7 +564,7 @@ MNG_LOCAL mng_retcode write_raw_chunk (mng_datap   pData,
   mng_uint32 iWritten;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_RAW_CHUNK, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_RAW_CHUNK, MNG_LC_START);
 #endif
                                        /* temporary buffer ? */
   if ((pRawdata != 0) && (pRawdata != pData->pWritebuf+8))
@@ -565,24 +585,24 @@ MNG_LOCAL mng_retcode write_raw_chunk (mng_datap   pData,
     }
                                        /* write the length & chunktype */
     if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf, 8, &iWritten))
-      MNG_ERROR (pData, MNG_APPIOERROR)
+      MNG_ERROR (pData, MNG_APPIOERROR);
 
     if (iWritten != 8)                 /* disk full ? */
-      MNG_ERROR (pData, MNG_OUTPUTERROR)
+      MNG_ERROR (pData, MNG_OUTPUTERROR);
                                        /* write the temporary buffer */
     if (!pData->fWritedata ((mng_handle)pData, pRawdata, iRawlen, &iWritten))
-      MNG_ERROR (pData, MNG_APPIOERROR)
+      MNG_ERROR (pData, MNG_APPIOERROR);
 
     if (iWritten != iRawlen)           /* disk full ? */
-      MNG_ERROR (pData, MNG_OUTPUTERROR)
+      MNG_ERROR (pData, MNG_OUTPUTERROR);
 
     if (pData->iCrcmode & MNG_CRC_OUTPUT)
     {                                  /* write the crc */
       if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf+8, 4, &iWritten))
-        MNG_ERROR (pData, MNG_APPIOERROR)
+        MNG_ERROR (pData, MNG_APPIOERROR);
 
       if (iWritten != 4)               /* disk full ? */
-        MNG_ERROR (pData, MNG_OUTPUTERROR)
+        MNG_ERROR (pData, MNG_OUTPUTERROR);
     }
   }
   else
@@ -601,21 +621,21 @@ MNG_LOCAL mng_retcode write_raw_chunk (mng_datap   pData,
       mng_put_uint32 (pData->pWritebuf + iRawlen + 8, iCrc);
                                        /* write it in a single pass */
       if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf, iRawlen + 12, &iWritten))
-        MNG_ERROR (pData, MNG_APPIOERROR)
+        MNG_ERROR (pData, MNG_APPIOERROR);
 
       if (iWritten != iRawlen + 12)    /* disk full ? */
-        MNG_ERROR (pData, MNG_OUTPUTERROR)
+        MNG_ERROR (pData, MNG_OUTPUTERROR);
     } else {
       if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf, iRawlen + 8, &iWritten))
-        MNG_ERROR (pData, MNG_APPIOERROR)
+        MNG_ERROR (pData, MNG_APPIOERROR);
 
       if (iWritten != iRawlen + 8)     /* disk full ? */
-        MNG_ERROR (pData, MNG_OUTPUTERROR)
+        MNG_ERROR (pData, MNG_OUTPUTERROR);
     }
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_RAW_CHUNK, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_RAW_CHUNK, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -635,27 +655,422 @@ MNG_LOCAL mng_retcode write_raw_chunk (mng_datap   pData,
 
 /* ************************************************************************** */
 
+#ifdef MNG_OPTIMIZE_CHUNKREADER
+
+/* ************************************************************************** */
+
+MNG_LOCAL mng_retcode create_chunk_storage (mng_datap       pData,
+                                            mng_chunkp      pHeader,
+                                            mng_uint32      iRawlen,
+                                            mng_uint8p      pRawdata,
+                                            mng_field_descp pField,
+                                            mng_uint16      iFields,
+                                            mng_chunkp*     ppChunk,
+                                            mng_bool        bWorkcopy)
+{
+  mng_field_descp pTempfield  = pField;
+  mng_uint16      iFieldcount = iFields;
+  mng_uint8p      pTempdata   = pRawdata;
+  mng_uint32      iTemplen    = iRawlen;
+  mng_uint16      iLastgroup  = 0;
+  mng_uint8p      pChunkdata;
+  mng_uint32      iDatalen;
+  mng_uint8       iColortype;
+  mng_bool        bProcess;
+                                       /* initialize storage */
+  mng_retcode iRetcode = ((mng_chunk_headerp)pHeader)->fCreate (pData, pHeader, ppChunk);
+  if (iRetcode)                        /* on error bail out */
+    return iRetcode;
+
+  if (((mng_chunk_headerp)(*ppChunk))->iChunkname == MNG_UINT_HUH)
+    ((mng_chunk_headerp)(*ppChunk))->iChunkname = pData->iChunkname;
+
+  if ((!bWorkcopy) ||
+      ((((mng_chunk_headerp)pHeader)->iChunkname != MNG_UINT_IDAT) &&
+       (((mng_chunk_headerp)pHeader)->iChunkname != MNG_UINT_JDAT) &&
+       (((mng_chunk_headerp)pHeader)->iChunkname != MNG_UINT_JDAA)   ))
+  {
+    pChunkdata = (mng_uint8p)(*ppChunk);
+
+#ifdef MNG_INCLUDE_JNG                 /* determine current colortype */
+    if (pData->bHasJHDR)
+      iColortype = (mng_uint8)(pData->iJHDRcolortype - 8);
+    else
+#endif /* MNG_INCLUDE_JNG */
+    if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
+      iColortype = pData->iColortype;
+    else
+      iColortype = 6;
+
+    if (iTemplen)                      /* not empty ? */
+    {                                  /* then go fill the fields */
+      while ((iFieldcount) && (iTemplen))
+      {
+        if (pTempfield->iOffsetchunk)
+        {
+          if (pTempfield->iFlags & MNG_FIELD_PUTIMGTYPE)
+          {
+            *(pChunkdata+pTempfield->iOffsetchunk) = iColortype;
+            bProcess = MNG_FALSE;
+          }
+          else
+          if (pTempfield->iFlags & MNG_FIELD_IFIMGTYPES)
+            bProcess = (mng_bool)(((pTempfield->iFlags & MNG_FIELD_IFIMGTYPE0) && (iColortype == 0)) ||
+                                  ((pTempfield->iFlags & MNG_FIELD_IFIMGTYPE2) && (iColortype == 2)) ||
+                                  ((pTempfield->iFlags & MNG_FIELD_IFIMGTYPE3) && (iColortype == 3)) ||
+                                  ((pTempfield->iFlags & MNG_FIELD_IFIMGTYPE4) && (iColortype == 4)) ||
+                                  ((pTempfield->iFlags & MNG_FIELD_IFIMGTYPE6) && (iColortype == 6))   );
+          else
+            bProcess = MNG_TRUE;
+
+          if (bProcess)
+          {
+            iLastgroup = (mng_uint16)(pTempfield->iFlags & MNG_FIELD_GROUPMASK);
+                                      /* numeric field ? */
+            if (pTempfield->iFlags & MNG_FIELD_INT)
+            {
+              if (iTemplen < pTempfield->iLengthmax)
+                MNG_ERROR (pData, MNG_INVALIDLENGTH);
+
+              switch (pTempfield->iLengthmax)
+              {
+                case 1 : { mng_uint8 iNum = *pTempdata;
+                           if (((mng_uint16)iNum < pTempfield->iMinvalue) ||
+                               ((mng_uint16)iNum > pTempfield->iMaxvalue)    )
+                             MNG_ERROR (pData, MNG_INVALIDFIELDVAL);
+                           *(pChunkdata+pTempfield->iOffsetchunk) = iNum;
+                           break; }
+                case 2 : { mng_uint16 iNum = mng_get_uint16 (pTempdata);
+                           if ((iNum < pTempfield->iMinvalue) || (iNum > pTempfield->iMaxvalue))
+                             MNG_ERROR (pData, MNG_INVALIDFIELDVAL);
+                           *((mng_uint16p)(pChunkdata+pTempfield->iOffsetchunk)) = iNum;
+                           break; }
+                case 4 : { mng_uint32 iNum = mng_get_uint32 (pTempdata);
+                           if ((iNum < pTempfield->iMinvalue) ||
+                               ((pTempfield->iFlags & MNG_FIELD_NOHIGHBIT) && (iNum & 0x80000000)) )
+                             MNG_ERROR (pData, MNG_INVALIDFIELDVAL);
+                           *((mng_uint32p)(pChunkdata+pTempfield->iOffsetchunk)) = iNum;
+                           break; }
+              }
+
+              pTempdata += pTempfield->iLengthmax;
+              iTemplen  -= pTempfield->iLengthmax;
+
+            } else {                   /* not numeric so it's a bunch of bytes */
+
+              if (!pTempfield->iOffsetchunklen)    /* big fat NONO */
+                MNG_ERROR (pData, MNG_INTERNALERROR);
+                                       /* with terminating 0 ? */
+              if (pTempfield->iFlags & MNG_FIELD_TERMINATOR)
+              {
+                mng_uint8p pWork = pTempdata;
+                while (*pWork)         /* find the zero */
+                  pWork++;
+                iDatalen = (mng_uint32)(pWork - pTempdata);
+              } else {                 /* no terminator, so everything that's left ! */
+                iDatalen = iTemplen;
+              }
+
+              if ((pTempfield->iLengthmax) && (iDatalen > pTempfield->iLengthmax))
+                MNG_ERROR (pData, MNG_INVALIDLENGTH);
+                                       /* needs decompression ? */
+              if (pTempfield->iFlags & MNG_FIELD_DEFLATED)
+              {
+                mng_uint8p pBuf = 0;
+                mng_uint32 iBufsize = 0;
+                mng_uint32 iRealsize;
+                mng_ptr    pWork;
+
+                iRetcode = mng_inflate_buffer (pData, pTempdata, iDatalen,
+                                               &pBuf, &iBufsize, &iRealsize);
+
+#ifdef MNG_CHECK_BAD_ICCP              /* Check for bad iCCP chunk */
+                if ((iRetcode) && (((mng_chunk_headerp)pHeader)->iChunkname == MNG_UINT_iCCP))
+                {
+                  *((mng_ptr *)(pChunkdata+pTempfield->iOffsetchunk))      = MNG_NULL;
+                  *((mng_uint32p)(pChunkdata+pTempfield->iOffsetchunklen)) = iDatalen;
+                }
+                else
+#endif
+                {
+                  if (iRetcode)
+                    return iRetcode;
+                                       /* don't forget to generate null terminator */
+                  MNG_ALLOC (pData, pWork, iRealsize+1);
+                  MNG_COPY (pWork, pBuf, iRealsize);
+
+                  *((mng_ptr *)(pChunkdata+pTempfield->iOffsetchunk))      = pWork;
+                  *((mng_uint32p)(pChunkdata+pTempfield->iOffsetchunklen)) = iRealsize;
+                }
+
+                if (pBuf)              /* free the temporary buffer */
+                  MNG_FREEX (pData, pBuf, iBufsize);
+
+              } else {                 /* no decompression, so just copy */
+
+                mng_ptr pWork;
+                                       /* don't forget to generate null terminator */
+                MNG_ALLOC (pData, pWork, iDatalen+1);
+                MNG_COPY (pWork, pTempdata, iDatalen);
+
+                *((mng_ptr *)(pChunkdata+pTempfield->iOffsetchunk))      = pWork;
+                *((mng_uint32p)(pChunkdata+pTempfield->iOffsetchunklen)) = iDatalen;
+              }
+
+              if (pTempfield->iFlags & MNG_FIELD_TERMINATOR)
+                iDatalen++;            /* skip the terminating zero as well !!! */
+
+              iTemplen  -= iDatalen;
+              pTempdata += iDatalen;
+            }
+                                       /* need to set an indicator ? */
+            if (pTempfield->iOffsetchunkind)
+              *((mng_uint8p)(pChunkdata+pTempfield->iOffsetchunkind)) = MNG_TRUE;
+          }
+        }
+
+        if (pTempfield->pSpecialfunc)  /* special function required ? */
+        {
+          iRetcode = pTempfield->pSpecialfunc(pData, *ppChunk, &iTemplen, &pTempdata);
+          if (iRetcode)                /* on error bail out */
+            return iRetcode;
+        }
+
+        pTempfield++;                  /* Neeeeeeexxxtt */
+        iFieldcount--;
+      }
+
+      if (iTemplen)                    /* extra data ??? */
+        MNG_ERROR (pData, MNG_INVALIDLENGTH);
+
+      while (iFieldcount)              /* not enough data ??? */
+      {
+        if (pTempfield->iFlags & MNG_FIELD_IFIMGTYPES)
+          bProcess = (mng_bool)(((pTempfield->iFlags & MNG_FIELD_IFIMGTYPE0) && (iColortype == 0)) ||
+                                ((pTempfield->iFlags & MNG_FIELD_IFIMGTYPE2) && (iColortype == 2)) ||
+                                ((pTempfield->iFlags & MNG_FIELD_IFIMGTYPE3) && (iColortype == 3)) ||
+                                ((pTempfield->iFlags & MNG_FIELD_IFIMGTYPE4) && (iColortype == 4)) ||
+                                ((pTempfield->iFlags & MNG_FIELD_IFIMGTYPE6) && (iColortype == 6))   );
+        else
+          bProcess = MNG_TRUE;
+
+        if (bProcess)
+        {
+          if (!(pTempfield->iFlags & MNG_FIELD_OPTIONAL))
+            MNG_ERROR (pData, MNG_INVALIDLENGTH);
+          if ((pTempfield->iFlags & MNG_FIELD_GROUPMASK) &&
+              ((mng_uint16)(pTempfield->iFlags & MNG_FIELD_GROUPMASK) == iLastgroup))
+            MNG_ERROR (pData, MNG_INVALIDLENGTH);
+        }
+
+        pTempfield++;
+        iFieldcount--;
+      }
+    }
+  }
+
+  return MNG_NOERROR;
+}
+
+/* ************************************************************************** */
+
+READ_CHUNK (mng_read_general)
+{
+  mng_chunk_descp pDescr   = ((mng_chunk_headerp)pHeader)->pChunkdescr;
+  mng_field_descp pField   = pDescr->pFielddesc;
+  mng_uint16      iFields  = pDescr->iFielddesc;
+  mng_retcode     iRetcode = MNG_NOERROR;
+
+  if (!pDescr)                         /* this is a bad booboo !!! */
+    MNG_ERROR (pData, MNG_INTERNALERROR);
+                                       /* check chunk against signature */
+  if ((pDescr->eImgtype == mng_it_mng) && (pData->eSigtype != mng_it_mng))
+    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED);
+
+  if ((pDescr->eImgtype == mng_it_jng) && (pData->eSigtype == mng_it_png))
+    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED);
+                                       /* empties allowed ? */
+  if ((iRawlen == 0) && (!(pDescr->iAllowed & MNG_DESCR_EMPTY)))
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
+
+  if ((pData->eImagetype != mng_it_mng) || (!(pDescr->iAllowed & MNG_DESCR_GLOBAL)))
+  {                                    /* *a* header required ? */
+    if ((pDescr->iMusthaves & MNG_DESCR_GenHDR) &&
+#ifdef MNG_INCLUDE_JNG
+        (!pData->bHasIHDR) && (!pData->bHasBASI) && (!pData->bHasDHDR) && (!pData->bHasJHDR))
+#else
+        (!pData->bHasIHDR) && (!pData->bHasBASI) && (!pData->bHasDHDR))
+#endif
+      MNG_ERROR (pData, MNG_SEQUENCEERROR);
+
+#ifdef MNG_INCLUDE_JNG
+    if ((pDescr->iMusthaves & MNG_DESCR_JngHDR) &&
+        (!pData->bHasDHDR) && (!pData->bHasJHDR))
+      MNG_ERROR (pData, MNG_SEQUENCEERROR);
+#endif
+  }
+                                       /* specific chunk pre-requisite ? */
+  if (((pDescr->iMusthaves & MNG_DESCR_IHDR) && (!pData->bHasIHDR)) ||
+#ifdef MNG_INCLUDE_JNG
+      ((pDescr->iMusthaves & MNG_DESCR_JHDR) && (!pData->bHasJHDR)) ||
+#endif
+      ((pDescr->iMusthaves & MNG_DESCR_DHDR) && (!pData->bHasDHDR)) ||
+      ((pDescr->iMusthaves & MNG_DESCR_LOOP) && (!pData->bHasLOOP)) ||
+      ((pDescr->iMusthaves & MNG_DESCR_PLTE) && (!pData->bHasPLTE)) ||
+      ((pDescr->iMusthaves & MNG_DESCR_MHDR) && (!pData->bHasMHDR)) ||
+      ((pDescr->iMusthaves & MNG_DESCR_SAVE) && (!pData->bHasSAVE))   )
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
+                                       /* specific chunk undesired ? */
+  if (((pDescr->iMustNOThaves & MNG_DESCR_NOIHDR) && (pData->bHasIHDR)) ||
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOBASI) && (pData->bHasBASI)) ||
+      ((pDescr->iMustNOThaves & MNG_DESCR_NODHDR) && (pData->bHasDHDR)) ||
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOIDAT) && (pData->bHasIDAT)) ||
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOPLTE) && (pData->bHasPLTE)) ||
+#ifdef MNG_INCLUDE_JNG
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOJHDR) && (pData->bHasJHDR)) ||
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOJDAT) && (pData->bHasJDAT)) ||
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOJDAA) && (pData->bHasJDAA)) ||
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOJSEP) && (pData->bHasJSEP)) ||
+#endif
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOMHDR) && (pData->bHasMHDR)) ||
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOLOOP) && (pData->bHasLOOP)) ||
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOTERM) && (pData->bHasTERM)) ||
+      ((pDescr->iMustNOThaves & MNG_DESCR_NOSAVE) && (pData->bHasSAVE))   )
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
+
+  if (pData->eSigtype == mng_it_mng)   /* check global and embedded empty chunks */
+  {
+#ifdef MNG_INCLUDE_JNG
+    if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
+#else
+    if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
+#endif
+    {
+      if ((iRawlen == 0) && (!(pDescr->iAllowed & MNG_DESCR_EMPTYEMBED)))
+        MNG_ERROR (pData, MNG_INVALIDLENGTH);
+    } else {
+      if ((iRawlen == 0) && (!(pDescr->iAllowed & MNG_DESCR_EMPTYGLOBAL)))
+        MNG_ERROR (pData, MNG_INVALIDLENGTH);
+    }
+  }
+
+  if (pDescr->pSpecialfunc)            /* need special processing ? */
+  {
+    iRetcode = create_chunk_storage (pData, pHeader, iRawlen, pRawdata,
+                                     pField, iFields, ppChunk, MNG_TRUE);
+    if (iRetcode)                      /* on error bail out */
+      return iRetcode;
+                                       /* empty indicator ? */
+    if ((!iRawlen) && (pDescr->iOffsetempty))
+      *(((mng_uint8p)*ppChunk)+pDescr->iOffsetempty) = MNG_TRUE;
+
+    iRetcode = pDescr->pSpecialfunc(pData, *ppChunk);
+    if (iRetcode)                      /* on error bail out */
+      return iRetcode;
+
+    if ((((mng_chunk_headerp)pHeader)->iChunkname == MNG_UINT_IDAT) ||
+        (((mng_chunk_headerp)pHeader)->iChunkname == MNG_UINT_JDAT) ||
+        (((mng_chunk_headerp)pHeader)->iChunkname == MNG_UINT_JDAA)    )
+    {
+      iRetcode = ((mng_chunk_headerp)*ppChunk)->fCleanup (pData, *ppChunk);
+      if (iRetcode)                    /* on error bail out */
+        return iRetcode;
+      *ppChunk = MNG_NULL;
+    } else {
+#ifdef MNG_STORE_CHUNKS
+      if (!pData->bStorechunks)
+#endif
+      {
+        iRetcode = ((mng_chunk_headerp)*ppChunk)->fCleanup (pData, *ppChunk);
+        if (iRetcode)                  /* on error bail out */
+          return iRetcode;
+        *ppChunk = MNG_NULL;
+      }
+    }
+  }
+
+#ifdef MNG_SUPPORT_DISPLAY
+  if (iRawlen)
+  {
+#ifdef MNG_OPTIMIZE_DISPLAYCALLS
+    pData->iRawlen  = iRawlen;
+    pData->pRawdata = pRawdata;
+#endif
+
+                                       /* display processing */
+#ifndef MNG_OPTIMIZE_DISPLAYCALLS
+    if (((mng_chunk_headerp)pHeader)->iChunkname == MNG_UINT_IDAT)
+      iRetcode = mng_process_display_idat (pData, iRawlen, pRawdata);
+#ifdef MNG_INCLUDE_JNG
+    else
+    if (((mng_chunk_headerp)pHeader)->iChunkname == MNG_UINT_JDAT)
+      iRetcode = mng_process_display_jdat (pData, iRawlen, pRawdata);
+    else
+    if (((mng_chunk_headerp)pHeader)->iChunkname == MNG_UINT_JDAA)
+      iRetcode = mng_process_display_jdaa (pData, iRawlen, pRawdata);
+#endif
+#else
+    if (((mng_chunk_headerp)pHeader)->iChunkname == MNG_UINT_IDAT)
+      iRetcode = mng_process_display_idat (pData);
+#ifdef MNG_INCLUDE_JNG
+    else
+    if (((mng_chunk_headerp)pHeader)->iChunkname == MNG_UINT_JDAT)
+      iRetcode = mng_process_display_jdat (pData);
+    else
+    if (((mng_chunk_headerp)pHeader)->iChunkname == MNG_UINT_JDAA)
+      iRetcode = mng_process_display_jdaa (pData);
+#endif
+#endif
+
+    if (iRetcode)
+      return iRetcode;
+  }
+#endif /* MNG_SUPPORT_DISPLAY */
+
+#ifdef MNG_STORE_CHUNKS
+  if ((pData->bStorechunks) && (!(*ppChunk)))
+  {
+    iRetcode = create_chunk_storage (pData, pHeader, iRawlen, pRawdata,
+                                     pField, iFields, ppChunk, MNG_FALSE);
+    if (iRetcode)                      /* on error bail out */
+      return iRetcode;
+                                       /* empty indicator ? */
+    if ((!iRawlen) && (pDescr->iOffsetempty))
+      *(((mng_uint8p)*ppChunk)+pDescr->iOffsetempty) = MNG_TRUE;
+  }
+#endif /* MNG_STORE_CHUNKS */
+
+  return MNG_NOERROR;
+}
+
+/* ************************************************************************** */
+
+#endif /* MNG_OPTIMIZE_CHUNKREADER */
+
+/* ************************************************************************** */
+
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 READ_CHUNK (mng_read_ihdr)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_IHDR, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_IHDR, MNG_LC_START);
 #endif
 
   if (iRawlen != 13)                   /* length oke ? */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
                                        /* only allowed inside PNG or MNG */
   if ((pData->eSigtype != mng_it_png) && (pData->eSigtype != mng_it_mng))
-    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED)
+    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED);
                                        /* sequence checks */
   if ((pData->eSigtype == mng_it_png) && (pData->iChunkseq > 1))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasIDAT) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasIDAT))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   pData->bHasIHDR      = MNG_TRUE;     /* indicate IHDR is present */
                                        /* and store interesting fields */
@@ -664,17 +1079,24 @@ READ_CHUNK (mng_read_ihdr)
     pData->iDatawidth  = mng_get_uint32 (pRawdata);
     pData->iDataheight = mng_get_uint32 (pRawdata+4);
   }
-  
+
   pData->iBitdepth     = *(pRawdata+8);
   pData->iColortype    = *(pRawdata+9);
   pData->iCompression  = *(pRawdata+10);
   pData->iFilter       = *(pRawdata+11);
   pData->iInterlace    = *(pRawdata+12);
 
-#if defined(MNG_NO_16BIT_SUPPORT)
+#if defined(MNG_NO_1_2_4BIT_SUPPORT) || defined(MNG_NO_16BIT_SUPPORT)
   pData->iPNGmult = 1;
   pData->iPNGdepth = pData->iBitdepth;
+#endif
 
+#ifdef MNG_NO_1_2_4BIT_SUPPORT
+  if (pData->iBitdepth < 8)
+      pData->iBitdepth = 8;
+#endif
+
+#ifdef MNG_NO_16BIT_SUPPORT
   if (pData->iBitdepth > 8)
     {
       pData->iBitdepth = 8;
@@ -683,33 +1105,35 @@ READ_CHUNK (mng_read_ihdr)
 #endif
 
   if ((pData->iBitdepth !=  8)      /* parameter validity checks */
+#ifndef MNG_NO_1_2_4BIT_SUPPORT
       && (pData->iBitdepth !=  1) &&
       (pData->iBitdepth !=  2) &&
       (pData->iBitdepth !=  4)
+#endif
 #ifndef MNG_NO_16BIT_SUPPORT
       && (pData->iBitdepth != 16)   
 #endif
       )
-    MNG_ERROR (pData, MNG_INVALIDBITDEPTH)
+    MNG_ERROR (pData, MNG_INVALIDBITDEPTH);
 
   if ((pData->iColortype != MNG_COLORTYPE_GRAY   ) &&
       (pData->iColortype != MNG_COLORTYPE_RGB    ) &&
       (pData->iColortype != MNG_COLORTYPE_INDEXED) &&
       (pData->iColortype != MNG_COLORTYPE_GRAYA  ) &&
       (pData->iColortype != MNG_COLORTYPE_RGBA   )    )
-    MNG_ERROR (pData, MNG_INVALIDCOLORTYPE)
+    MNG_ERROR (pData, MNG_INVALIDCOLORTYPE);
 
   if ((pData->iColortype == MNG_COLORTYPE_INDEXED) && (pData->iBitdepth > 8))
-    MNG_ERROR (pData, MNG_INVALIDBITDEPTH)
+    MNG_ERROR (pData, MNG_INVALIDBITDEPTH);
 
   if (((pData->iColortype == MNG_COLORTYPE_RGB    ) ||
        (pData->iColortype == MNG_COLORTYPE_GRAYA  ) ||
        (pData->iColortype == MNG_COLORTYPE_RGBA   )    ) &&
       (pData->iBitdepth < 8                            )    )
-    MNG_ERROR (pData, MNG_INVALIDBITDEPTH)
+    MNG_ERROR (pData, MNG_INVALIDBITDEPTH);
 
   if (pData->iCompression != MNG_COMPRESSION_DEFLATE)
-    MNG_ERROR (pData, MNG_INVALIDCOMPRESS)
+    MNG_ERROR (pData, MNG_INVALIDCOMPRESS);
 
 #if defined(FILTER192) || defined(FILTER193)
   if ((pData->iFilter != MNG_FILTER_ADAPTIVE ) &&
@@ -723,15 +1147,15 @@ READ_CHUNK (mng_read_ihdr)
       (pData->iFilter != MNG_FILTER_NOFILTER )    )
 #endif
 #endif
-    MNG_ERROR (pData, MNG_INVALIDFILTER)
+    MNG_ERROR (pData, MNG_INVALIDFILTER);
 #else
   if (pData->iFilter)
-    MNG_ERROR (pData, MNG_INVALIDFILTER)
+    MNG_ERROR (pData, MNG_INVALIDFILTER);
 #endif
 
   if ((pData->iInterlace != MNG_INTERLACE_NONE ) &&
       (pData->iInterlace != MNG_INTERLACE_ADAM7)    )
-    MNG_ERROR (pData, MNG_INVALIDINTERLACE)
+    MNG_ERROR (pData, MNG_INVALIDINTERLACE);
 
 #ifdef MNG_SUPPORT_DISPLAY 
 #ifndef MNG_NO_DELTA_PNG
@@ -745,7 +1169,7 @@ READ_CHUNK (mng_read_ihdr)
              (pBuf->iColortype  == MNG_COLORTYPE_GRAY   )    ) &&
            ( (pData->iColortype != MNG_COLORTYPE_GRAY   ) ||
              (pBuf->iColortype  == MNG_COLORTYPE_INDEXED)    )    )
-        MNG_ERROR (pData, MNG_INVALIDCOLORTYPE)
+        MNG_ERROR (pData, MNG_INVALIDCOLORTYPE);
     }
   }
 #endif
@@ -768,11 +1192,11 @@ READ_CHUNK (mng_read_ihdr)
       pData->iAlphadepth = 1;  /* Possible tRNS cheap binary transparency */
                                        /* fits on maximum canvas ? */
     if ((pData->iWidth > pData->iMaxwidth) || (pData->iHeight > pData->iMaxheight))
-      MNG_WARNING (pData, MNG_IMAGETOOLARGE)
+      MNG_WARNING (pData, MNG_IMAGETOOLARGE);
 
     if (pData->fProcessheader)         /* inform the app ? */
       if (!pData->fProcessheader (((mng_handle)pData), pData->iWidth, pData->iHeight))
-        MNG_ERROR (pData, MNG_APPMISCERROR)
+        MNG_ERROR (pData, MNG_APPMISCERROR);
   }
 
   if (!pData->bHasDHDR)
@@ -806,14 +1230,16 @@ READ_CHUNK (mng_read_ihdr)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_IHDR, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_IHDR, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif /* MNG_OPTIMIZE_CHUNKREADER */
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 READ_CHUNK (mng_read_plte)
 {
 #if defined(MNG_SUPPORT_DISPLAY) || defined(MNG_STORE_CHUNKS)
@@ -825,39 +1251,39 @@ READ_CHUNK (mng_read_plte)
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PLTE, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_PLTE, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIDAT) || (pData->bHasJHDR))
 #else
   if (pData->bHasIDAT)
 #endif  
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* multiple PLTE only inside BASI */
   if ((pData->bHasPLTE) && (!pData->bHasBASI))
-    MNG_ERROR (pData, MNG_MULTIPLEERROR)
+    MNG_ERROR (pData, MNG_MULTIPLEERROR);
                                        /* length must be multiple of 3 */
   if (((iRawlen % 3) != 0) || (iRawlen > 768))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
   {                                    /* only allowed for indexed-color or
                                           rgb(a)-color! */
     if ((pData->iColortype != 2) && (pData->iColortype != 3) && (pData->iColortype != 6))
-      MNG_ERROR (pData, MNG_CHUNKNOTALLOWED)
+      MNG_ERROR (pData, MNG_CHUNKNOTALLOWED);
                                        /* empty only allowed if global present */
     if ((iRawlen == 0) && (!pData->bHasglobalPLTE))
-        MNG_ERROR (pData, MNG_CANNOTBEEMPTY)
+        MNG_ERROR (pData, MNG_CANNOTBEEMPTY);
   }
   else
   {
     if (iRawlen == 0)                  /* cannot be empty as global! */
-      MNG_ERROR (pData, MNG_CANNOTBEEMPTY)
+      MNG_ERROR (pData, MNG_CANNOTBEEMPTY);
   }
 
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
@@ -906,7 +1332,7 @@ READ_CHUNK (mng_read_plte)
       {
         pBuf->iPLTEcount = pData->iGlobalPLTEcount;
         MNG_COPY (pBuf->aPLTEentries, pData->aGlobalPLTEentries,
-                  sizeof (pBuf->aPLTEentries))
+                  sizeof (pBuf->aPLTEentries));
 
         if (pData->bHasglobalTRNS)     /* also copy global tRNS ? */
         {                              /* indicate tRNS available */
@@ -916,10 +1342,10 @@ READ_CHUNK (mng_read_plte)
           pRawdata2 = (mng_uint8p)(pData->aGlobalTRNSrawdata);
                                        /* global length oke ? */
           if ((iRawlen2 == 0) || (iRawlen2 > pBuf->iPLTEcount))
-            MNG_ERROR (pData, MNG_GLOBALLENGTHERR)
+            MNG_ERROR (pData, MNG_GLOBALLENGTHERR);
                                        /* copy it */
           pBuf->iTRNScount = iRawlen2;
-          MNG_COPY (pBuf->aTRNSentries, pRawdata2, iRawlen2)
+          MNG_COPY (pBuf->aTRNSentries, pRawdata2, iRawlen2);
         }
       }
       else
@@ -955,7 +1381,6 @@ READ_CHUNK (mng_read_plte)
     {                                  /* create an animation object */
       mng_retcode iRetcode = mng_create_ani_plte (pData, pData->iGlobalPLTEcount,
                                                   pData->aGlobalPLTEentries);
-
       if (iRetcode)                    /* on error bail out */
         return iRetcode;
     }
@@ -986,18 +1411,20 @@ READ_CHUNK (mng_read_plte)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PLTE, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_PLTE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif /* MNG_OPTIMIZE_CHUNKREADER */
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 READ_CHUNK (mng_read_idat)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_IDAT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_IDAT, MNG_LC_START);
 #endif
 
 #ifdef MNG_INCLUDE_JNG                 /* sequence checks */
@@ -1005,27 +1432,27 @@ READ_CHUNK (mng_read_idat)
 #else
   if ((!pData->bHasIHDR) && (!pData->bHasBASI) && (!pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasJHDR) &&
       (pData->iJHDRalphacompression != MNG_COMPRESSION_DEFLATE))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (pData->bHasJSEP)
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 #endif
                                        /* not allowed for deltatype NO_CHANGE */
 #ifndef MNG_NO_DELTA_PNG
   if ((pData->bHasDHDR) && ((pData->iDeltatype == MNG_DELTATYPE_NOCHANGE)))
-    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED)
+    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED);
 #endif
                                        /* can only be empty in BASI-block! */
   if ((iRawlen == 0) && (!pData->bHasBASI))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
                                        /* indexed-color requires PLTE */
   if ((pData->bHasIHDR) && (pData->iColortype == 3) && (!pData->bHasPLTE))
-    MNG_ERROR (pData, MNG_PLTEMISSING)
+    MNG_ERROR (pData, MNG_PLTEMISSING);
 
   pData->bHasIDAT = MNG_TRUE;          /* got some IDAT now, don't we */
 
@@ -1052,25 +1479,27 @@ READ_CHUNK (mng_read_idat)
 
     if (iRawlen != 0)                  /* is there any data ? */
     {
-      MNG_ALLOC (pData, ((mng_idatp)*ppChunk)->pData, iRawlen)
-      MNG_COPY  (((mng_idatp)*ppChunk)->pData, pRawdata, iRawlen)
+      MNG_ALLOC (pData, ((mng_idatp)*ppChunk)->pData, iRawlen);
+      MNG_COPY  (((mng_idatp)*ppChunk)->pData, pRawdata, iRawlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_IDAT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_IDAT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 READ_CHUNK (mng_read_iend)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_IEND, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_IEND, MNG_LC_START);
 #endif
 
   if (iRawlen > 0)                     /* must not contain data! */
@@ -1081,22 +1510,20 @@ READ_CHUNK (mng_read_iend)
 #else
   if ((!pData->bHasIHDR) && (!pData->bHasBASI) && (!pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* IHDR-block requires IDAT */
   if ((pData->bHasIHDR) && (!pData->bHasIDAT))
-    MNG_ERROR (pData, MNG_IDATMISSING)
+    MNG_ERROR (pData, MNG_IDATMISSING);
 
   pData->iImagelevel--;                /* one level up */
 
 #ifdef MNG_SUPPORT_DISPLAY
   {                                    /* create an animation object */
     mng_retcode iRetcode = mng_create_ani_image (pData);
-                               
     if (iRetcode)                      /* on error bail out */
       return iRetcode;
                                        /* display processing */
     iRetcode = mng_process_display_iend (pData);
-
     if (iRetcode)                      /* on error bail out */
       return iRetcode;
   }
@@ -1126,7 +1553,7 @@ READ_CHUNK (mng_read_iend)
     pData->bHasIDAT         = MNG_FALSE;
 #ifdef MNG_SUPPORT_DISPLAY
   }
-#endif  
+#endif
 
 #ifdef MNG_STORE_CHUNKS
   if (pData->bStorechunks)
@@ -1139,49 +1566,51 @@ READ_CHUNK (mng_read_iend)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_IEND, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_IEND, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 READ_CHUNK (mng_read_trns)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_TRNS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_TRNS, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIDAT) || (pData->bHasJHDR))
 #else
   if (pData->bHasIDAT)
 #endif  
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* multiple tRNS only inside BASI */
   if ((pData->bHasTRNS) && (!pData->bHasBASI))
-    MNG_ERROR (pData, MNG_MULTIPLEERROR)
+    MNG_ERROR (pData, MNG_MULTIPLEERROR);
 
   if (iRawlen > 256)                   /* it just can't be bigger than that! */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
   {                                    /* not allowed with full alpha-channel */
     if ((pData->iColortype == 4) || (pData->iColortype == 6))
-      MNG_ERROR (pData, MNG_CHUNKNOTALLOWED)
+      MNG_ERROR (pData, MNG_CHUNKNOTALLOWED);
 
     if (iRawlen != 0)                  /* filled ? */
     {                                  /* length checks */
       if ((pData->iColortype == 0) && (iRawlen != 2))
-        MNG_ERROR (pData, MNG_INVALIDLENGTH)
+        MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
       if ((pData->iColortype == 2) && (iRawlen != 6))
-        MNG_ERROR (pData, MNG_INVALIDLENGTH)
+        MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
       if (pData->iColortype == 3)
@@ -1195,14 +1624,14 @@ READ_CHUNK (mng_read_trns)
         pBuf = pImage->pImgbuf;        /* address object buffer */
 
         if (iRawlen > pBuf->iPLTEcount)
-          MNG_ERROR (pData, MNG_INVALIDLENGTH)
+          MNG_ERROR (pData, MNG_INVALIDLENGTH);
       }
 #endif
     }
     else                               /* if empty there must be global stuff! */
     {
       if (!pData->bHasglobalTRNS)
-        MNG_ERROR (pData, MNG_CANNOTBEEMPTY)
+        MNG_ERROR (pData, MNG_CANNOTBEEMPTY);
     }
   }
 
@@ -1228,11 +1657,22 @@ READ_CHUNK (mng_read_trns)
       switch (pData->iColortype)       /* store fields for future reference */
       {
         case 0: {                      /* gray */
+#if defined(MNG_NO_1_2_4BIT_SUPPORT)
+                  mng_uint8 multiplier[]={0,255,85,0,17,0,0,0,1,
+                                          0,0,0,0,0,0,0,1};
+#endif
                   pBuf->iTRNSgray  = mng_get_uint16 (pRawdata);
                   pBuf->iTRNSred   = 0;
                   pBuf->iTRNSgreen = 0;
                   pBuf->iTRNSblue  = 0;
                   pBuf->iTRNScount = 0;
+#if defined(MNG_NO_1_2_4BIT_SUPPORT)
+                  pBuf->iTRNSgray *= multiplier[pData->iPNGdepth];
+#endif
+#if defined(MNG_NO_16BIT_SUPPORT)
+                  if (pData->iPNGmult == 2)
+                     pBuf->iTRNSgray >>= 8;
+#endif
                   break;
                 }
         case 2: {                      /* rgb */
@@ -1241,6 +1681,14 @@ READ_CHUNK (mng_read_trns)
                   pBuf->iTRNSgreen = mng_get_uint16 (pRawdata+2);
                   pBuf->iTRNSblue  = mng_get_uint16 (pRawdata+4);
                   pBuf->iTRNScount = 0;
+#if defined(MNG_NO_16BIT_SUPPORT)
+                  if (pData->iPNGmult == 2)
+                  {
+                     pBuf->iTRNSred   >>= 8;
+                     pBuf->iTRNSgreen >>= 8;
+                     pBuf->iTRNSblue  >>= 8;
+                  }
+#endif
                   break;
                 }
         case 3: {                      /* indexed */
@@ -1249,7 +1697,7 @@ READ_CHUNK (mng_read_trns)
                   pBuf->iTRNSgreen = 0;
                   pBuf->iTRNSblue  = 0;
                   pBuf->iTRNScount = iRawlen;
-                  MNG_COPY (pBuf->aTRNSentries, pRawdata, iRawlen)
+                  MNG_COPY (pBuf->aTRNSentries, pRawdata, iRawlen);
                   break;
                 }
       }
@@ -1273,13 +1721,13 @@ READ_CHUNK (mng_read_trns)
         pRawdata2 = (mng_ptr)(pData->aGlobalTRNSrawdata);
                                          /* global length oke ? */
         if ((pData->iColortype == 0) && (iRawlen2 != 2))
-          MNG_ERROR (pData, MNG_GLOBALLENGTHERR)
+          MNG_ERROR (pData, MNG_GLOBALLENGTHERR);
 
         if ((pData->iColortype == 2) && (iRawlen2 != 6))
-          MNG_ERROR (pData, MNG_GLOBALLENGTHERR)
+          MNG_ERROR (pData, MNG_GLOBALLENGTHERR);
 
         if ((pData->iColortype == 3) && ((iRawlen2 == 0) || (iRawlen2 > pBuf->iPLTEcount)))
-          MNG_ERROR (pData, MNG_GLOBALLENGTHERR)
+          MNG_ERROR (pData, MNG_GLOBALLENGTHERR);
       }
       else
       {
@@ -1295,6 +1743,10 @@ READ_CHUNK (mng_read_trns)
                   pBuf->iTRNSgreen = 0;
                   pBuf->iTRNSblue  = 0;
                   pBuf->iTRNScount = 0;
+#if defined(MNG_NO_16BIT_SUPPORT)
+                  if (pData->iPNGmult == 2)
+                     pBuf->iTRNSgray >>= 8;
+#endif
                   break;
                 }
         case 2: {                      /* rgb */
@@ -1303,6 +1755,14 @@ READ_CHUNK (mng_read_trns)
                   pBuf->iTRNSgreen = mng_get_uint16 (pRawdata2+2);
                   pBuf->iTRNSblue  = mng_get_uint16 (pRawdata2+4);
                   pBuf->iTRNScount = 0;
+#if defined(MNG_NO_16BIT_SUPPORT)
+                  if (pData->iPNGmult == 2)
+                  {
+                     pBuf->iTRNSred   >>= 8;
+                     pBuf->iTRNSgreen >>= 8;
+                     pBuf->iTRNSblue  >>= 8;
+                  }
+#endif
                   break;
                 }
         case 3: {                      /* indexed */
@@ -1311,7 +1771,7 @@ READ_CHUNK (mng_read_trns)
                   pBuf->iTRNSgreen = 0;
                   pBuf->iTRNSblue  = 0;
                   pBuf->iTRNScount = iRawlen2;
-                  MNG_COPY (pBuf->aTRNSentries, pRawdata2, iRawlen2)
+                  MNG_COPY (pBuf->aTRNSentries, pRawdata2, iRawlen2);
                   break;
                 }
       }
@@ -1320,7 +1780,7 @@ READ_CHUNK (mng_read_trns)
   else                                 /* store as global */
   {
     pData->iGlobalTRNSrawlen = iRawlen;
-    MNG_COPY (pData->aGlobalTRNSrawdata, pRawdata, iRawlen)
+    MNG_COPY (pData->aGlobalTRNSrawdata, pRawdata, iRawlen);
 
     {                                  /* create an animation object */
       mng_retcode iRetcode = mng_create_ani_trns (pData, pData->iGlobalTRNSrawlen,
@@ -1365,7 +1825,7 @@ READ_CHUNK (mng_read_trns)
                   }
           case 3: {                    /* indexed */
                     ((mng_trnsp)*ppChunk)->iCount = iRawlen;
-                    MNG_COPY (((mng_trnsp)*ppChunk)->aEntries, pRawdata, iRawlen)
+                    MNG_COPY (((mng_trnsp)*ppChunk)->aEntries, pRawdata, iRawlen);
                     break;
                   }
         }
@@ -1378,24 +1838,26 @@ READ_CHUNK (mng_read_trns)
       ((mng_trnsp)*ppChunk)->iType   = 0;
       ((mng_trnsp)*ppChunk)->iRawlen = iRawlen;
 
-      MNG_COPY (((mng_trnsp)*ppChunk)->aRawdata, pRawdata, iRawlen)
+      MNG_COPY (((mng_trnsp)*ppChunk)->aRawdata, pRawdata, iRawlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_TRNS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_TRNS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 READ_CHUNK (mng_read_gama)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_GAMA, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_GAMA, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -1405,14 +1867,14 @@ READ_CHUNK (mng_read_gama)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIDAT) || (pData->bHasPLTE) || (pData->bHasJDAT) || (pData->bHasJDAA))
 #else
   if ((pData->bHasIDAT) || (pData->bHasPLTE))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
@@ -1421,12 +1883,12 @@ READ_CHUNK (mng_read_gama)
 #endif
   {                                    /* length must be exactly 4 */
     if (iRawlen != 4)
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
   else
   {                                    /* length must be empty or exactly 4 */
     if ((iRawlen != 0) && (iRawlen != 4))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
 
 #ifdef MNG_INCLUDE_JNG
@@ -1499,19 +1961,21 @@ READ_CHUNK (mng_read_gama)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_GAMA, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_GAMA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_cHRM
 READ_CHUNK (mng_read_chrm)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_CHRM, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_CHRM, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -1521,14 +1985,14 @@ READ_CHUNK (mng_read_chrm)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIDAT) || (pData->bHasPLTE) || (pData->bHasJDAT) || (pData->bHasJDAA))
 #else
   if ((pData->bHasIDAT) || (pData->bHasPLTE))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
@@ -1537,12 +2001,12 @@ READ_CHUNK (mng_read_chrm)
 #endif
   {                                    /* length must be exactly 32 */
     if (iRawlen != 32)
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
   else
   {                                    /* length must be empty or exactly 32 */
     if ((iRawlen != 0) && (iRawlen != 32))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
 
 #ifdef MNG_INCLUDE_JNG
@@ -1665,24 +2129,26 @@ READ_CHUNK (mng_read_chrm)
       ((mng_chrmp)*ppChunk)->iGreeny      = mng_get_uint32 (pRawdata+20);
       ((mng_chrmp)*ppChunk)->iBluex       = mng_get_uint32 (pRawdata+24);
       ((mng_chrmp)*ppChunk)->iBluey       = mng_get_uint32 (pRawdata+28);
-    }  
+    }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_CHRM, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_CHRM, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 READ_CHUNK (mng_read_srgb)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SRGB, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_SRGB, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -1692,14 +2158,14 @@ READ_CHUNK (mng_read_srgb)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIDAT) || (pData->bHasPLTE) || (pData->bHasJDAT) || (pData->bHasJDAA))
 #else
   if ((pData->bHasIDAT) || (pData->bHasPLTE))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
@@ -1708,12 +2174,12 @@ READ_CHUNK (mng_read_srgb)
 #endif
   {                                    /* length must be exactly 1 */
     if (iRawlen != 1)
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
   else
   {                                    /* length must be empty or exactly 1 */
     if ((iRawlen != 0) && (iRawlen != 1))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
 
 #ifdef MNG_INCLUDE_JNG
@@ -1786,14 +2252,16 @@ READ_CHUNK (mng_read_srgb)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SRGB, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_SRGB, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_iCCP
 READ_CHUNK (mng_read_iccp)
 {
@@ -1805,7 +2273,7 @@ READ_CHUNK (mng_read_iccp)
   mng_uint8p  pBuf = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_ICCP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_ICCP, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -1815,14 +2283,14 @@ READ_CHUNK (mng_read_iccp)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIDAT) || (pData->bHasPLTE) || (pData->bHasJDAT) || (pData->bHasJDAA))
 #else
   if ((pData->bHasIDAT) || (pData->bHasPLTE))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
@@ -1831,38 +2299,41 @@ READ_CHUNK (mng_read_iccp)
 #endif
   {                                    /* length must be at least 2 */
     if (iRawlen < 2)
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
   else
   {                                    /* length must be empty or at least 2 */
     if ((iRawlen != 0) && (iRawlen < 2))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
 
   pTemp = find_null (pRawdata);        /* find null-separator */
                                        /* not found inside input-data ? */
   if ((pTemp - pRawdata) > (mng_int32)iRawlen)
-    MNG_ERROR (pData, MNG_NULLNOTFOUND)
+    MNG_ERROR (pData, MNG_NULLNOTFOUND);
                                        /* determine size of compressed profile */
   iCompressedsize = (mng_uint32)(iRawlen - (pTemp - pRawdata) - 2);
                                        /* decompress the profile */
-  iRetcode = inflate_buffer (pData, pTemp+2, iCompressedsize,
-                             &pBuf, &iBufsize, &iProfilesize);
+  iRetcode = mng_inflate_buffer (pData, pTemp+2, iCompressedsize,
+                                 &pBuf, &iBufsize, &iProfilesize);
 
 #ifdef MNG_CHECK_BAD_ICCP              /* Check for bad iCCP chunk */
   if ((iRetcode) && (!strncmp ((char *)pRawdata, "Photoshop ICC profile", 21)))
   {
     if (iRawlen == 2615)               /* is it the sRGB profile ? */
     {
-      mng_chunk_header chunk_srgb = {MNG_UINT_sRGB, mng_init_srgb, mng_free_srgb,
-                                     mng_read_srgb, mng_write_srgb, mng_assign_srgb,
-                                     0, 0};
+      mng_chunk_header chunk_srgb =
+#ifdef MNG_OPTIMIZE_CHUNKINITFREE
+        {MNG_UINT_sRGB, mng_init_general, mng_free_general, mng_read_srgb, mng_write_srgb, mng_assign_general, 0, 0, sizeof(mng_srgb)};
+#else
+        {MNG_UINT_sRGB, mng_init_srgb, mng_free_srgb, mng_read_srgb, mng_write_srgb, mng_assign_srgb, 0, 0};
+#endif
                                        /* pretend it's an sRGB chunk then ! */
       iRetcode = mng_read_srgb (pData, &chunk_srgb, 1, (mng_ptr)"0", ppChunk);
 
       if (iRetcode)                    /* on error bail out */
       {                                /* don't forget to drop the temp buffer */
-        MNG_FREEX (pData, pBuf, iBufsize)
+        MNG_FREEX (pData, pBuf, iBufsize);
         return iRetcode;
       }
     }
@@ -1873,7 +2344,7 @@ READ_CHUNK (mng_read_iccp)
 
     if (iRetcode)                      /* on error bail out */
     {                                  /* don't forget to drop the temp buffer */
-      MNG_FREEX (pData, pBuf, iBufsize)
+      MNG_FREEX (pData, pBuf, iBufsize);
       return iRetcode;
     }
 
@@ -1901,10 +2372,10 @@ READ_CHUNK (mng_read_iccp)
         pImage = (mng_imagep)pData->pObjzero;
 
         if (pImage->pImgbuf->pProfile) /* profile existed ? */
-          MNG_FREEX (pData, pImage->pImgbuf->pProfile, pImage->pImgbuf->iProfilesize)
+          MNG_FREEX (pData, pImage->pImgbuf->pProfile, pImage->pImgbuf->iProfilesize);
                                        /* allocate a buffer & copy it */
-        MNG_ALLOC (pData, pImage->pImgbuf->pProfile, iProfilesize)
-        MNG_COPY  (pImage->pImgbuf->pProfile, pBuf, iProfilesize)
+        MNG_ALLOC (pData, pImage->pImgbuf->pProfile, iProfilesize);
+        MNG_COPY  (pImage->pImgbuf->pProfile, pBuf, iProfilesize);
                                        /* store it's length as well */
         pImage->pImgbuf->iProfilesize = iProfilesize;
         pImage->pImgbuf->bHasICCP     = MNG_TRUE;
@@ -1918,10 +2389,10 @@ READ_CHUNK (mng_read_iccp)
           pImage = (mng_imagep)pData->pObjzero;
 
         if (pImage->pImgbuf->pProfile) /* profile existed ? */
-          MNG_FREEX (pData, pImage->pImgbuf->pProfile, pImage->pImgbuf->iProfilesize)
+          MNG_FREEX (pData, pImage->pImgbuf->pProfile, pImage->pImgbuf->iProfilesize);
                                        /* allocate a buffer & copy it */
-        MNG_ALLOC (pData, pImage->pImgbuf->pProfile, iProfilesize)
-        MNG_COPY  (pImage->pImgbuf->pProfile, pBuf, iProfilesize)
+        MNG_ALLOC (pData, pImage->pImgbuf->pProfile, iProfilesize);
+        MNG_COPY  (pImage->pImgbuf->pProfile, pBuf, iProfilesize);
                                        /* store it's length as well */
         pImage->pImgbuf->iProfilesize = iProfilesize;
         pImage->pImgbuf->bHasICCP     = MNG_TRUE;
@@ -1932,15 +2403,15 @@ READ_CHUNK (mng_read_iccp)
       if (iRawlen == 0)                /* empty chunk ? */
       {
         if (pData->pGlobalProfile)     /* did we have a global profile ? */
-          MNG_FREEX (pData, pData->pGlobalProfile, pData->iGlobalProfilesize)
+          MNG_FREEX (pData, pData->pGlobalProfile, pData->iGlobalProfilesize);
 
         pData->iGlobalProfilesize = 0; /* reset to null */
         pData->pGlobalProfile     = MNG_NULL;
       }
       else
       {                                /* allocate a global buffer & copy it */
-        MNG_ALLOC (pData, pData->pGlobalProfile, iProfilesize)
-        MNG_COPY  (pData->pGlobalProfile, pBuf, iProfilesize)
+        MNG_ALLOC (pData, pData->pGlobalProfile, iProfilesize);
+        MNG_COPY  (pData->pGlobalProfile, pBuf, iProfilesize);
                                        /* store it's length as well */
         pData->iGlobalProfilesize = iProfilesize;
       }
@@ -1962,7 +2433,7 @@ READ_CHUNK (mng_read_iccp)
 
       if (iRetcode)                    /* on error bail out */
       {                                /* don't forget to drop the temp buffer */
-        MNG_FREEX (pData, pBuf, iBufsize)
+        MNG_FREEX (pData, pBuf, iBufsize);
         return iRetcode;
       }
                                        /* store the fields */
@@ -1975,16 +2446,16 @@ READ_CHUNK (mng_read_iccp)
           pTemp = find_null (pRawdata);
                                        /* not found inside input-data ? */
           if ((pTemp - pRawdata) > (mng_int32)iRawlen)
-            MNG_ERROR (pData, MNG_NULLNOTFOUND)
+            MNG_ERROR (pData, MNG_NULLNOTFOUND);
                                        /* determine size of compressed profile */
           iCompressedsize = iRawlen - (pTemp - pRawdata) - 2;
                                        /* decompress the profile */
-          iRetcode = inflate_buffer (pData, pTemp+2, iCompressedsize,
-                                     &pBuf, &iBufsize, &iProfilesize);
+          iRetcode = mng_inflate_buffer (pData, pTemp+2, iCompressedsize,
+                                         &pBuf, &iBufsize, &iProfilesize);
 
           if (iRetcode)                /* on error bail out */
           {                            /* don't forget to drop the temp buffer */
-            MNG_FREEX (pData, pBuf, iBufsize)
+            MNG_FREEX (pData, pBuf, iBufsize);
             return iRetcode;
           }
         }
@@ -1994,37 +2465,39 @@ READ_CHUNK (mng_read_iccp)
         if (((mng_iccpp)*ppChunk)->iNamesize)
         {
           MNG_ALLOC (pData, ((mng_iccpp)*ppChunk)->zName,
-                            ((mng_iccpp)*ppChunk)->iNamesize + 1)
+                            ((mng_iccpp)*ppChunk)->iNamesize + 1);
           MNG_COPY  (((mng_iccpp)*ppChunk)->zName, pRawdata,
-                     ((mng_iccpp)*ppChunk)->iNamesize)
+                     ((mng_iccpp)*ppChunk)->iNamesize);
         }
 
         ((mng_iccpp)*ppChunk)->iCompression = *(pTemp+1);
         ((mng_iccpp)*ppChunk)->iProfilesize = iProfilesize;
 
-        MNG_ALLOC (pData, ((mng_iccpp)*ppChunk)->pProfile, iProfilesize)
-        MNG_COPY  (((mng_iccpp)*ppChunk)->pProfile, pBuf, iProfilesize)
+        MNG_ALLOC (pData, ((mng_iccpp)*ppChunk)->pProfile, iProfilesize);
+        MNG_COPY  (((mng_iccpp)*ppChunk)->pProfile, pBuf, iProfilesize);
       }
     }
 #endif /* MNG_STORE_CHUNKS */
 
     if (pBuf)                          /* free the temporary buffer */
-      MNG_FREEX (pData, pBuf, iBufsize)
+      MNG_FREEX (pData, pBuf, iBufsize);
 
 #ifdef MNG_CHECK_BAD_ICCP
   }
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_ICCP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_ICCP, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_tEXt
 READ_CHUNK (mng_read_text)
 {
@@ -2033,7 +2506,7 @@ READ_CHUNK (mng_read_text)
   mng_uint8p pTemp;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_TEXT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_TEXT, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -2043,18 +2516,18 @@ READ_CHUNK (mng_read_text)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen < 2)                     /* length must be at least 2 */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   pTemp = find_null (pRawdata);        /* find the null separator */
                                        /* not found inside input-data ? */
   if ((pTemp - pRawdata) > (mng_int32)iRawlen)
-    MNG_ERROR (pData, MNG_NULLNOTFOUND)
+    MNG_ERROR (pData, MNG_NULLNOTFOUND);
 
   if (pTemp == pRawdata)               /* there must be at least 1 char for keyword */
-    MNG_ERROR (pData, MNG_KEYWORDNULL)
+    MNG_ERROR (pData, MNG_KEYWORDNULL);
 
   iKeywordlen = (mng_uint32)(pTemp - pRawdata);
   iTextlen    = iRawlen - iKeywordlen - 1;
@@ -2063,27 +2536,27 @@ READ_CHUNK (mng_read_text)
   {
     mng_bool bOke;
 
-    MNG_ALLOC (pData, zKeyword, iKeywordlen + 1)
-    MNG_COPY  (zKeyword, pRawdata, iKeywordlen)
+    MNG_ALLOC (pData, zKeyword, iKeywordlen + 1);
+    MNG_COPY  (zKeyword, pRawdata, iKeywordlen);
 
-    MNG_ALLOCX (pData, zText, iTextlen + 1)
+    MNG_ALLOCX (pData, zText, iTextlen + 1);
 
     if (!zText)                        /* on error bail out */
     {
-      MNG_FREEX (pData, zKeyword, iKeywordlen + 1)
-      MNG_ERROR (pData, MNG_OUTOFMEMORY)
+      MNG_FREEX (pData, zKeyword, iKeywordlen + 1);
+      MNG_ERROR (pData, MNG_OUTOFMEMORY);
     }
 
     if (iTextlen)
-      MNG_COPY (zText, pTemp+1, iTextlen)
+      MNG_COPY (zText, pTemp+1, iTextlen);
 
     bOke = pData->fProcesstext ((mng_handle)pData, MNG_TYPE_TEXT, zKeyword, zText, 0, 0);
 
-    MNG_FREEX (pData, zText, iTextlen + 1)
-    MNG_FREEX (pData, zKeyword, iKeywordlen + 1)
+    MNG_FREEX (pData, zText, iTextlen + 1);
+    MNG_FREEX (pData, zKeyword, iKeywordlen + 1);
 
     if (!bOke)
-      MNG_ERROR (pData, MNG_APPMISCERROR)
+      MNG_ERROR (pData, MNG_APPMISCERROR);
 
   }
 
@@ -2100,28 +2573,30 @@ READ_CHUNK (mng_read_text)
 
     if (iKeywordlen)
     {
-      MNG_ALLOC (pData, ((mng_textp)*ppChunk)->zKeyword, iKeywordlen+1)
-      MNG_COPY  (((mng_textp)*ppChunk)->zKeyword, pRawdata, iKeywordlen)
+      MNG_ALLOC (pData, ((mng_textp)*ppChunk)->zKeyword, iKeywordlen+1);
+      MNG_COPY  (((mng_textp)*ppChunk)->zKeyword, pRawdata, iKeywordlen);
     }
 
     if (iTextlen)
     {
-      MNG_ALLOC (pData, ((mng_textp)*ppChunk)->zText, iTextlen+1)
-      MNG_COPY  (((mng_textp)*ppChunk)->zText, pTemp+1, iTextlen)
+      MNG_ALLOC (pData, ((mng_textp)*ppChunk)->zText, iTextlen+1);
+      MNG_COPY  (((mng_textp)*ppChunk)->zText, pTemp+1, iTextlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_TEXT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_TEXT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_zTXt
 READ_CHUNK (mng_read_ztxt)
 {
@@ -2134,7 +2609,7 @@ READ_CHUNK (mng_read_ztxt)
   mng_uint8p  pBuf;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_ZTXT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_ZTXT, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -2144,21 +2619,21 @@ READ_CHUNK (mng_read_ztxt)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen < 3)                     /* length must be at least 3 */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   pTemp = find_null (pRawdata);        /* find the null separator */
                                        /* not found inside input-data ? */
   if ((pTemp - pRawdata) > (mng_int32)iRawlen)
-    MNG_ERROR (pData, MNG_NULLNOTFOUND)
+    MNG_ERROR (pData, MNG_NULLNOTFOUND);
 
   if (pTemp == pRawdata)               /* there must be at least 1 char for keyword */
-    MNG_ERROR (pData, MNG_KEYWORDNULL)
+    MNG_ERROR (pData, MNG_KEYWORDNULL);
 
   if (*(pTemp+1) != 0)                 /* only deflate compression-method allowed */
-    MNG_ERROR (pData, MNG_INVALIDCOMPRESS)
+    MNG_ERROR (pData, MNG_INVALIDCOMPRESS);
 
   iKeywordlen     = (mng_uint32)(pTemp - pRawdata);
   iCompressedsize = (mng_uint32)(iRawlen - iKeywordlen - 2);
@@ -2168,30 +2643,30 @@ READ_CHUNK (mng_read_ztxt)
 
   if (pData->fProcesstext)             /* inform the application ? */
   {                                    /* decompress the text */
-    iRetcode = inflate_buffer (pData, pTemp+2, iCompressedsize,
-                               &pBuf, &iBufsize, &iTextlen);
+    iRetcode = mng_inflate_buffer (pData, pTemp+2, iCompressedsize,
+                                   &pBuf, &iBufsize, &iTextlen);
 
     if (iRetcode)                      /* on error bail out */
     {                                  /* don't forget to drop the temp buffers */
-      MNG_FREEX (pData, pBuf, iBufsize)
+      MNG_FREEX (pData, pBuf, iBufsize);
       return iRetcode;
     }
 
-    MNG_ALLOCX (pData, zKeyword, iKeywordlen+1)
+    MNG_ALLOCX (pData, zKeyword, iKeywordlen+1);
 
     if (!zKeyword)                     /* on error bail out */
     {                                  /* don't forget to drop the temp buffers */
-      MNG_FREEX (pData, pBuf, iBufsize)
+      MNG_FREEX (pData, pBuf, iBufsize);
       MNG_ERROR (pData, MNG_OUTOFMEMORY);
     }
 
-    MNG_COPY (zKeyword, pRawdata, iKeywordlen)
+    MNG_COPY (zKeyword, pRawdata, iKeywordlen);
 
     if (!pData->fProcesstext ((mng_handle)pData, MNG_TYPE_ZTXT, zKeyword, (mng_pchar)pBuf, 0, 0))
     {                                  /* don't forget to drop the temp buffers */
-      MNG_FREEX (pData, pBuf, iBufsize)
-      MNG_FREEX (pData, zKeyword, iKeywordlen+1)
-      MNG_ERROR (pData, MNG_APPMISCERROR)
+      MNG_FREEX (pData, pBuf, iBufsize);
+      MNG_FREEX (pData, zKeyword, iKeywordlen+1);
+      MNG_ERROR (pData, MNG_APPMISCERROR);
     }
   }
 
@@ -2202,8 +2677,8 @@ READ_CHUNK (mng_read_ztxt)
 
     if (iRetcode)                      /* on error bail out */
     {                                  /* don't forget to drop the temp buffers */
-      MNG_FREEX (pData, pBuf, iBufsize)
-      MNG_FREEX (pData, zKeyword, iKeywordlen+1)
+      MNG_FREEX (pData, pBuf, iBufsize);
+      MNG_FREEX (pData, zKeyword, iKeywordlen+1);
       return iRetcode;
     }
                                        /* store the fields */
@@ -2212,59 +2687,61 @@ READ_CHUNK (mng_read_ztxt)
 
     if ((!pBuf) && (iCompressedsize))  /* did we not get a text-buffer yet ? */
     {                                  /* decompress the text */
-      iRetcode = inflate_buffer (pData, pTemp+2, iCompressedsize,
-                                 &pBuf, &iBufsize, &iTextlen);
+      iRetcode = mng_inflate_buffer (pData, pTemp+2, iCompressedsize,
+                                     &pBuf, &iBufsize, &iTextlen);
 
       if (iRetcode)                    /* on error bail out */
       {                                /* don't forget to drop the temp buffers */
-        MNG_FREEX (pData, pBuf, iBufsize)
-        MNG_FREEX (pData, zKeyword, iKeywordlen+1)
+        MNG_FREEX (pData, pBuf, iBufsize);
+        MNG_FREEX (pData, zKeyword, iKeywordlen+1);
         return iRetcode;
       }
     }
 
-    MNG_ALLOCX (pData, ((mng_ztxtp)*ppChunk)->zKeyword, iKeywordlen + 1)
+    MNG_ALLOCX (pData, ((mng_ztxtp)*ppChunk)->zKeyword, iKeywordlen + 1);
                                        /* on error bail out */
     if (!((mng_ztxtp)*ppChunk)->zKeyword)
     {                                  /* don't forget to drop the temp buffers */
-      MNG_FREEX (pData, pBuf, iBufsize)
-      MNG_FREEX (pData, zKeyword, iKeywordlen+1)
+      MNG_FREEX (pData, pBuf, iBufsize);
+      MNG_FREEX (pData, zKeyword, iKeywordlen+1);
       MNG_ERROR (pData, MNG_OUTOFMEMORY);
     }
 
-    MNG_COPY (((mng_ztxtp)*ppChunk)->zKeyword, pRawdata, iKeywordlen)
+    MNG_COPY (((mng_ztxtp)*ppChunk)->zKeyword, pRawdata, iKeywordlen);
 
     ((mng_ztxtp)*ppChunk)->iTextsize = iTextlen;
 
     if (iCompressedsize)
     {
-      MNG_ALLOCX (pData, ((mng_ztxtp)*ppChunk)->zText, iTextlen + 1)
+      MNG_ALLOCX (pData, ((mng_ztxtp)*ppChunk)->zText, iTextlen + 1);
                                        /* on error bail out */
       if (!((mng_ztxtp)*ppChunk)->zText)
       {                                /* don't forget to drop the temp buffers */
-        MNG_FREEX (pData, pBuf, iBufsize)
-        MNG_FREEX (pData, zKeyword, iKeywordlen+1)
+        MNG_FREEX (pData, pBuf, iBufsize);
+        MNG_FREEX (pData, zKeyword, iKeywordlen+1);
         MNG_ERROR (pData, MNG_OUTOFMEMORY);
       }
 
-      MNG_COPY (((mng_ztxtp)*ppChunk)->zText, pBuf, iTextlen)
+      MNG_COPY (((mng_ztxtp)*ppChunk)->zText, pBuf, iTextlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
-  MNG_FREEX (pData, pBuf, iBufsize)    /* free the temporary buffers */
-  MNG_FREEX (pData, zKeyword, iKeywordlen+1)
+  MNG_FREEX (pData, pBuf, iBufsize);   /* free the temporary buffers */
+  MNG_FREEX (pData, zKeyword, iKeywordlen+1);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_ZTXT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_ZTXT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_iTXt
 READ_CHUNK (mng_read_itxt)
 {
@@ -2278,7 +2755,7 @@ READ_CHUNK (mng_read_itxt)
   mng_uint8p  pBuf;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_ITXT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_ITXT, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -2288,10 +2765,10 @@ READ_CHUNK (mng_read_itxt)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen < 6)                     /* length must be at least 6 */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   pNull1 = find_null (pRawdata);       /* find the null separators */
   pNull2 = find_null (pNull1+3);
@@ -2300,16 +2777,16 @@ READ_CHUNK (mng_read_itxt)
   if (((pNull1 - pRawdata) > (mng_int32)iRawlen) ||
       ((pNull2 - pRawdata) > (mng_int32)iRawlen) ||
       ((pNull3 - pRawdata) > (mng_int32)iRawlen)    )
-    MNG_ERROR (pData, MNG_NULLNOTFOUND)
+    MNG_ERROR (pData, MNG_NULLNOTFOUND);
 
   if (pNull1 == pRawdata)              /* there must be at least 1 char for keyword */
-    MNG_ERROR (pData, MNG_KEYWORDNULL)
+    MNG_ERROR (pData, MNG_KEYWORDNULL);
                                        /* compression or not ? */
   if ((*(pNull1+1) != 0) && (*(pNull1+1) != 1))
-    MNG_ERROR (pData, MNG_INVALIDCOMPRESS)
+    MNG_ERROR (pData, MNG_INVALIDCOMPRESS);
 
   if (*(pNull1+2) != 0)                /* only deflate compression-method allowed */
-    MNG_ERROR (pData, MNG_INVALIDCOMPRESS)
+    MNG_ERROR (pData, MNG_INVALIDCOMPRESS);
 
   iKeywordlen      = (mng_uint32)(pNull1 - pRawdata);
   iLanguagelen     = (mng_uint32)(pNull2 - pNull1 - 3);
@@ -2327,12 +2804,12 @@ READ_CHUNK (mng_read_itxt)
   {
     if (iCompressionflag)              /* decompress the text ? */
     {
-      iRetcode = inflate_buffer (pData, pNull3+1, iCompressedsize,
-                                 &pBuf, &iBufsize, &iTextlen);
+      iRetcode = mng_inflate_buffer (pData, pNull3+1, iCompressedsize,
+                                     &pBuf, &iBufsize, &iTextlen);
 
       if (iRetcode)                    /* on error bail out */
       {                                /* don't forget to drop the temp buffer */
-        MNG_FREEX (pData, pBuf, iBufsize)
+        MNG_FREEX (pData, pBuf, iBufsize);
         return iRetcode;
       }
     }
@@ -2345,32 +2822,32 @@ READ_CHUNK (mng_read_itxt)
       MNG_COPY  (pBuf, pNull3+1, iTextlen);
     }
 
-    MNG_ALLOCX (pData, zKeyword,     iKeywordlen     + 1)
-    MNG_ALLOCX (pData, zLanguage,    iLanguagelen    + 1)
-    MNG_ALLOCX (pData, zTranslation, iTranslationlen + 1)
+    MNG_ALLOCX (pData, zKeyword,     iKeywordlen     + 1);
+    MNG_ALLOCX (pData, zLanguage,    iLanguagelen    + 1);
+    MNG_ALLOCX (pData, zTranslation, iTranslationlen + 1);
                                        /* on error bail out */
     if ((!zKeyword) || (!zLanguage) || (!zTranslation))
     {                                  /* don't forget to drop the temp buffers */
-      MNG_FREEX (pData, zTranslation, iTranslationlen + 1)
-      MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1)
-      MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1)
-      MNG_FREEX (pData, pBuf, iBufsize)
-      MNG_ERROR (pData, MNG_OUTOFMEMORY)
+      MNG_FREEX (pData, zTranslation, iTranslationlen + 1);
+      MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1);
+      MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1);
+      MNG_FREEX (pData, pBuf, iBufsize);
+      MNG_ERROR (pData, MNG_OUTOFMEMORY);
     }
 
-    MNG_COPY (zKeyword,     pRawdata, iKeywordlen)
-    MNG_COPY (zLanguage,    pNull1+3, iLanguagelen)
-    MNG_COPY (zTranslation, pNull2+1, iTranslationlen)
+    MNG_COPY (zKeyword,     pRawdata, iKeywordlen);
+    MNG_COPY (zLanguage,    pNull1+3, iLanguagelen);
+    MNG_COPY (zTranslation, pNull2+1, iTranslationlen);
 
     if (!pData->fProcesstext ((mng_handle)pData, MNG_TYPE_ITXT, zKeyword, (mng_pchar)pBuf,
                                                                 zLanguage, zTranslation))
     {                                  /* don't forget to drop the temp buffers */
-      MNG_FREEX (pData, zTranslation, iTranslationlen + 1)
-      MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1)
-      MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1)
-      MNG_FREEX (pData, pBuf,         iBufsize)
-      
-      MNG_ERROR (pData, MNG_APPMISCERROR)
+      MNG_FREEX (pData, zTranslation, iTranslationlen + 1);
+      MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1);
+      MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1);
+      MNG_FREEX (pData, pBuf,         iBufsize);
+
+      MNG_ERROR (pData, MNG_APPMISCERROR);
     }
   }
 
@@ -2381,10 +2858,10 @@ READ_CHUNK (mng_read_itxt)
 
     if (iRetcode)                      /* on error bail out */
     {                                  /* don't forget to drop the temp buffers */
-      MNG_FREEX (pData, zTranslation, iTranslationlen + 1)
-      MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1)
-      MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1)
-      MNG_FREEX (pData, pBuf,         iBufsize)
+      MNG_FREEX (pData, zTranslation, iTranslationlen + 1);
+      MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1);
+      MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1);
+      MNG_FREEX (pData, pBuf,         iBufsize);
       return iRetcode;
     }
                                        /* store the fields */
@@ -2398,15 +2875,15 @@ READ_CHUNK (mng_read_itxt)
     {
       if (iCompressionflag)            /* decompress the text ? */
       {
-        iRetcode = inflate_buffer (pData, pNull3+1, iCompressedsize,
-                                   &pBuf, &iBufsize, &iTextlen);
+        iRetcode = mng_inflate_buffer (pData, pNull3+1, iCompressedsize,
+                                       &pBuf, &iBufsize, &iTextlen);
 
         if (iRetcode)                  /* on error bail out */
         {                              /* don't forget to drop the temp buffers */
-          MNG_FREEX (pData, zTranslation, iTranslationlen + 1)
-          MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1)
-          MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1)
-          MNG_FREEX (pData, pBuf,         iBufsize)
+          MNG_FREEX (pData, zTranslation, iTranslationlen + 1);
+          MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1);
+          MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1);
+          MNG_FREEX (pData, pBuf,         iBufsize);
           return iRetcode;
         }
       }
@@ -2420,60 +2897,62 @@ READ_CHUNK (mng_read_itxt)
       }
     }
 
-    MNG_ALLOCX (pData, ((mng_itxtp)*ppChunk)->zKeyword,     iKeywordlen     + 1)
-    MNG_ALLOCX (pData, ((mng_itxtp)*ppChunk)->zLanguage,    iLanguagelen    + 1)
-    MNG_ALLOCX (pData, ((mng_itxtp)*ppChunk)->zTranslation, iTranslationlen + 1)
+    MNG_ALLOCX (pData, ((mng_itxtp)*ppChunk)->zKeyword,     iKeywordlen     + 1);
+    MNG_ALLOCX (pData, ((mng_itxtp)*ppChunk)->zLanguage,    iLanguagelen    + 1);
+    MNG_ALLOCX (pData, ((mng_itxtp)*ppChunk)->zTranslation, iTranslationlen + 1);
                                        /* on error bail out */
     if ((!((mng_itxtp)*ppChunk)->zKeyword    ) ||
         (!((mng_itxtp)*ppChunk)->zLanguage   ) ||
         (!((mng_itxtp)*ppChunk)->zTranslation)    )
     {                                  /* don't forget to drop the temp buffers */
-      MNG_FREEX (pData, zTranslation, iTranslationlen + 1)
-      MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1)
-      MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1)
-      MNG_FREEX (pData, pBuf,         iBufsize)
-      MNG_ERROR (pData, MNG_OUTOFMEMORY)
+      MNG_FREEX (pData, zTranslation, iTranslationlen + 1);
+      MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1);
+      MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1);
+      MNG_FREEX (pData, pBuf,         iBufsize);
+      MNG_ERROR (pData, MNG_OUTOFMEMORY);
     }
 
-    MNG_COPY (((mng_itxtp)*ppChunk)->zKeyword,     pRawdata, iKeywordlen)
-    MNG_COPY (((mng_itxtp)*ppChunk)->zLanguage,    pNull1+3, iLanguagelen)
-    MNG_COPY (((mng_itxtp)*ppChunk)->zTranslation, pNull2+1, iTranslationlen)
+    MNG_COPY (((mng_itxtp)*ppChunk)->zKeyword,     pRawdata, iKeywordlen);
+    MNG_COPY (((mng_itxtp)*ppChunk)->zLanguage,    pNull1+3, iLanguagelen);
+    MNG_COPY (((mng_itxtp)*ppChunk)->zTranslation, pNull2+1, iTranslationlen);
 
     ((mng_itxtp)*ppChunk)->iTextsize = iTextlen;
 
     if (iTextlen)
     {
-      MNG_ALLOCX (pData, ((mng_itxtp)*ppChunk)->zText, iTextlen + 1)
+      MNG_ALLOCX (pData, ((mng_itxtp)*ppChunk)->zText, iTextlen + 1);
 
       if (!((mng_itxtp)*ppChunk)->zText)
       {                                /* don't forget to drop the temp buffers */
-        MNG_FREEX (pData, zTranslation, iTranslationlen + 1)
-        MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1)
-        MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1)
-        MNG_FREEX (pData, pBuf,         iBufsize)
-        MNG_ERROR (pData, MNG_OUTOFMEMORY)
+        MNG_FREEX (pData, zTranslation, iTranslationlen + 1);
+        MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1);
+        MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1);
+        MNG_FREEX (pData, pBuf,         iBufsize);
+        MNG_ERROR (pData, MNG_OUTOFMEMORY);
       }
 
-      MNG_COPY  (((mng_itxtp)*ppChunk)->zText, pBuf, iTextlen)
+      MNG_COPY  (((mng_itxtp)*ppChunk)->zText, pBuf, iTextlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
                                        /* free the temporary buffers */
-  MNG_FREEX (pData, zTranslation, iTranslationlen + 1)
-  MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1)
-  MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1)
-  MNG_FREEX (pData, pBuf,         iBufsize)
+  MNG_FREEX (pData, zTranslation, iTranslationlen + 1);
+  MNG_FREEX (pData, zLanguage,    iLanguagelen    + 1);
+  MNG_FREEX (pData, zKeyword,     iKeywordlen     + 1);
+  MNG_FREEX (pData, pBuf,         iBufsize);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_ITXT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_ITXT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_bKGD
 READ_CHUNK (mng_read_bkgd)
 {
@@ -2483,7 +2962,7 @@ READ_CHUNK (mng_read_bkgd)
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_BKGD, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_BKGD, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -2493,44 +2972,44 @@ READ_CHUNK (mng_read_bkgd)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIDAT) || (pData->bHasJDAT) || (pData->bHasJDAA))
 #else
   if (pData->bHasIDAT)
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen > 6)                     /* it just can't be bigger than that! */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_INCLUDE_JNG                 /* length checks */
   if (pData->bHasJHDR)
   {
     if (((pData->iJHDRcolortype == 8) || (pData->iJHDRcolortype == 12)) && (iRawlen != 2))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if (((pData->iJHDRcolortype == 10) || (pData->iJHDRcolortype == 14)) && (iRawlen != 6))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
   else
 #endif /* MNG_INCLUDE_JNG */
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
   {
     if (((pData->iColortype == 0) || (pData->iColortype == 4)) && (iRawlen != 2))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if (((pData->iColortype == 2) || (pData->iColortype == 6)) && (iRawlen != 6))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if ((pData->iColortype == 3) && (iRawlen != 1))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
   else
   {
     if (iRawlen != 6)                  /* global is always 16-bit RGB ! */
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
 
 #ifdef MNG_INCLUDE_JNG
@@ -2653,20 +3132,22 @@ READ_CHUNK (mng_read_bkgd)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_BKGD, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_BKGD, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_pHYs
 READ_CHUNK (mng_read_phys)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PHYS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_PHYS, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -2676,17 +3157,17 @@ READ_CHUNK (mng_read_phys)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIDAT) || (pData->bHasJDAT) || (pData->bHasJDAA))
 #else
   if (pData->bHasIDAT)
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* it's 9 bytes or empty; no more, no less! */
   if ((iRawlen != 9) && (iRawlen != 0))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -2718,20 +3199,22 @@ READ_CHUNK (mng_read_phys)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PHYS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_PHYS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_sBIT
 READ_CHUNK (mng_read_sbit)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SBIT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_SBIT, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -2741,56 +3224,56 @@ READ_CHUNK (mng_read_sbit)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasPLTE) || (pData->bHasIDAT) || (pData->bHasJDAT) || (pData->bHasJDAA))
 #else
   if ((pData->bHasPLTE) || (pData->bHasIDAT))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen > 4)                     /* it just can't be bigger than that! */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_INCLUDE_JNG                 /* length checks */
   if (pData->bHasJHDR)
   {
     if ((pData->iJHDRcolortype ==  8) && (iRawlen != 1))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if ((pData->iJHDRcolortype == 10) && (iRawlen != 3))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if ((pData->iJHDRcolortype == 12) && (iRawlen != 2))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if ((pData->iJHDRcolortype == 14) && (iRawlen != 4))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
   else
 #endif /* MNG_INCLUDE_JNG */
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
   {
     if ((pData->iColortype == 0) && (iRawlen != 1))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if ((pData->iColortype == 2) && (iRawlen != 3))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if ((pData->iColortype == 3) && (iRawlen != 3))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if ((pData->iColortype == 4) && (iRawlen != 2))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if ((pData->iColortype == 6) && (iRawlen != 4))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
   else
   {                                    /* global = empty or RGBA */
     if ((iRawlen != 0) && (iRawlen != 4))
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
   }
 
 #ifdef MNG_SUPPORT_DISPLAY
@@ -2839,15 +3322,17 @@ READ_CHUNK (mng_read_sbit)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SBIT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_SBIT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_sPLT
 READ_CHUNK (mng_read_splt)
 {
@@ -2857,33 +3342,33 @@ READ_CHUNK (mng_read_splt)
   mng_uint32 iRemain;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SPLT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_SPLT, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (pData->bHasIDAT)
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen)
   {
     pTemp = find_null (pRawdata);      /* find null-separator */
                                        /* not found inside input-data ? */
     if ((pTemp - pRawdata) > (mng_int32)iRawlen)
-      MNG_ERROR (pData, MNG_NULLNOTFOUND)
+      MNG_ERROR (pData, MNG_NULLNOTFOUND);
 
     iNamelen     = (mng_uint32)(pTemp - pRawdata);
     iSampledepth = *(pTemp+1);
     iRemain      = (iRawlen - 2 - iNamelen);
 
     if ((iSampledepth != 1) && (iSampledepth != 2))
-      MNG_ERROR (pData, MNG_INVSAMPLEDEPTH)
+      MNG_ERROR (pData, MNG_INVSAMPLEDEPTH);
                                        /* check remaining length */
     if ( ((iSampledepth == 1) && (iRemain %  6 != 0)) ||
          ((iSampledepth == 2) && (iRemain % 10 != 0))    )
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   }
   else
@@ -2926,44 +3411,46 @@ READ_CHUNK (mng_read_splt)
 
       if (iNamelen)
       {
-        MNG_ALLOC (pData, ((mng_spltp)*ppChunk)->zName, iNamelen+1)
-        MNG_COPY (((mng_spltp)*ppChunk)->zName, pRawdata, iNamelen)
+        MNG_ALLOC (pData, ((mng_spltp)*ppChunk)->zName, iNamelen+1);
+        MNG_COPY (((mng_spltp)*ppChunk)->zName, pRawdata, iNamelen);
       }
 
       if (iRemain)
       {
-        MNG_ALLOC (pData, ((mng_spltp)*ppChunk)->pEntries, iRemain)
-        MNG_COPY (((mng_spltp)*ppChunk)->pEntries, pTemp+2, iRemain)
+        MNG_ALLOC (pData, ((mng_spltp)*ppChunk)->pEntries, iRemain);
+        MNG_COPY (((mng_spltp)*ppChunk)->pEntries, pTemp+2, iRemain);
       }
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SPLT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_SPLT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_hIST
 READ_CHUNK (mng_read_hist)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_HIST, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_HIST, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasIHDR) && (!pData->bHasBASI) && (!pData->bHasDHDR)    )
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if ((!pData->bHasPLTE) || (pData->bHasIDAT))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* length oke ? */
   if ( ((iRawlen & 0x01) != 0) || ((iRawlen >> 1) != pData->iPLTEcount) )
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -2996,20 +3483,22 @@ READ_CHUNK (mng_read_hist)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_HIST, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_HIST, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_tIME
 READ_CHUNK (mng_read_time)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_TIME, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_TIME, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -3019,10 +3508,10 @@ READ_CHUNK (mng_read_time)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen != 7)                    /* length must be exactly 7 */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 /*  if (pData->fProcesstime) */            /* inform the application ? */
 /*  {
@@ -3048,26 +3537,28 @@ READ_CHUNK (mng_read_time)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_TIME, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_TIME, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 READ_CHUNK (mng_read_mhdr)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_MHDR, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_MHDR, MNG_LC_START);
 #endif
 
   if (pData->eSigtype != mng_it_mng)   /* sequence checks */
-    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED)
+    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED);
 
   if (pData->bHasheader)               /* can only be the first chunk! */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* correct length ? */
 #ifndef MNG_NO_OLD_VERSIONS
   if ((iRawlen != 28) && (iRawlen != 12))
@@ -3130,14 +3621,14 @@ READ_CHUNK (mng_read_mhdr)
 #else
   if (pData->iSimplicity & 0x0000FC10)
 #endif
-    MNG_ERROR (pData, MNG_MNGTOOCOMPLEX)
+    MNG_ERROR (pData, MNG_MNGTOOCOMPLEX);
                                        /* fits on maximum canvas ? */
   if ((pData->iWidth > pData->iMaxwidth) || (pData->iHeight > pData->iMaxheight))
-    MNG_WARNING (pData, MNG_IMAGETOOLARGE)
+    MNG_WARNING (pData, MNG_IMAGETOOLARGE);
 
   if (pData->fProcessheader)           /* inform the app ? */
     if (!pData->fProcessheader (((mng_handle)pData), pData->iWidth, pData->iHeight))
-      MNG_ERROR (pData, MNG_APPMISCERROR)
+      MNG_ERROR (pData, MNG_APPMISCERROR);
 
   pData->iImagelevel++;                /* one level deeper */
 
@@ -3160,25 +3651,27 @@ READ_CHUNK (mng_read_mhdr)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_MHDR, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_MHDR, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 READ_CHUNK (mng_read_mend)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_MEND, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_MEND, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen > 0)                     /* must not contain data! */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {                                    /* do something */
@@ -3209,44 +3702,46 @@ READ_CHUNK (mng_read_mend)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_MEND, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_MEND, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_LOOP
 READ_CHUNK (mng_read_loop)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_LOOP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_LOOP, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (!pData->bCacheplayback)          /* must store playback info to work!! */
-    MNG_ERROR (pData, MNG_LOOPWITHCACHEOFF)
+    MNG_ERROR (pData, MNG_LOOPWITHCACHEOFF);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen >= 5)                    /* length checks */
   {
     if (iRawlen >= 6)
     {
       if ((iRawlen - 6) % 4 != 0)
-        MNG_ERROR (pData, MNG_INVALIDLENGTH)
+        MNG_ERROR (pData, MNG_INVALIDLENGTH);
     }
   }
   else
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -3348,7 +3843,7 @@ READ_CHUNK (mng_read_loop)
             if (((mng_loopp)*ppChunk)->iCount)
             {
               MNG_ALLOC (pData, ((mng_loopp)*ppChunk)->pSignals,
-                                ((mng_loopp)*ppChunk)->iCount << 2)
+                                ((mng_loopp)*ppChunk)->iCount << 2);
 
 #ifndef MNG_BIGENDIAN_SUPPORTED
               {
@@ -3364,7 +3859,7 @@ READ_CHUNK (mng_read_loop)
               }
 #else
               MNG_COPY (((mng_loopp)*ppChunk)->pSignals, pRawdata + 14,
-                        ((mng_loopp)*ppChunk)->iCount << 2)
+                        ((mng_loopp)*ppChunk)->iCount << 2);
 #endif /* !MNG_BIGENDIAN_SUPPORTED */
             }
           }
@@ -3376,34 +3871,36 @@ READ_CHUNK (mng_read_loop)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_LOOP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_LOOP, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_LOOP
 READ_CHUNK (mng_read_endl)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_ENDL, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_ENDL, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen != 1)                    /* length must be exactly 1 */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -3426,7 +3923,7 @@ READ_CHUNK (mng_read_endl)
       }
     }
     else
-      MNG_ERROR (pData, MNG_NOMATCHINGLOOP)
+      MNG_ERROR (pData, MNG_NOMATCHINGLOOP);
       
   }
 #endif /* MNG_SUPPORT_DISPLAY */
@@ -3444,35 +3941,37 @@ READ_CHUNK (mng_read_endl)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_ENDL, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_ENDL, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_DEFI
 READ_CHUNK (mng_read_defi)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DEFI, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_DEFI, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* check the length */
   if ((iRawlen != 2) && (iRawlen != 3) && (iRawlen != 4) &&
       (iRawlen != 12) && (iRawlen != 28))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -3593,34 +4092,36 @@ READ_CHUNK (mng_read_defi)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DEFI, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_DEFI, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_BASI
 READ_CHUNK (mng_read_basi)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_BASI, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_BASI, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* check the length */
   if ((iRawlen != 13) && (iRawlen != 19) && (iRawlen != 21) && (iRawlen != 22))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   pData->bHasBASI     = MNG_TRUE;      /* inside a BASI-IEND block now */
                                        /* store interesting fields */
@@ -3633,9 +4134,16 @@ READ_CHUNK (mng_read_basi)
   pData->iInterlace   = *(pRawdata+12);
 
 
-#if defined(MNG_NO_16BIT_SUPPORT)
+#if defined(MNG_NO_1_2_4BIT_SUPPORT) || defined(MNG_NO_16BIT_SUPPORT)
   pData->iPNGmult = 1;
   pData->iPNGdepth = pData->iBitdepth;
+#endif
+
+#ifdef MNG_NO_1_2_4BIT_SUPPORT
+  if (pData->iBitdepth < 8)
+    pData->iBitdepth = 8;
+#endif
+#ifdef MNG_NO_16BIT_SUPPORT
   if (pData->iBitdepth > 8)
     {
       pData->iBitdepth = 8;
@@ -3644,33 +4152,35 @@ READ_CHUNK (mng_read_basi)
 #endif
 
   if ((pData->iBitdepth !=  8)      /* parameter validity checks */
+#ifndef MNG_NO_1_2_4BIT_SUPPORT
       && (pData->iBitdepth !=  1) &&
       (pData->iBitdepth !=  2) &&
       (pData->iBitdepth !=  4)
+#endif
 #ifndef MNG_NO_16BIT_SUPPORT
       && (pData->iBitdepth != 16)
 #endif
       )
-    MNG_ERROR (pData, MNG_INVALIDBITDEPTH)
+    MNG_ERROR (pData, MNG_INVALIDBITDEPTH);
 
   if ((pData->iColortype != MNG_COLORTYPE_GRAY   ) &&
       (pData->iColortype != MNG_COLORTYPE_RGB    ) &&
       (pData->iColortype != MNG_COLORTYPE_INDEXED) &&
       (pData->iColortype != MNG_COLORTYPE_GRAYA  ) &&
       (pData->iColortype != MNG_COLORTYPE_RGBA   )    )
-    MNG_ERROR (pData, MNG_INVALIDCOLORTYPE)
+    MNG_ERROR (pData, MNG_INVALIDCOLORTYPE);
 
   if ((pData->iColortype == MNG_COLORTYPE_INDEXED) && (pData->iBitdepth > 8))
-    MNG_ERROR (pData, MNG_INVALIDBITDEPTH)
+    MNG_ERROR (pData, MNG_INVALIDBITDEPTH);
 
   if (((pData->iColortype == MNG_COLORTYPE_RGB    ) ||
        (pData->iColortype == MNG_COLORTYPE_GRAYA  ) ||
        (pData->iColortype == MNG_COLORTYPE_RGBA   )    ) &&
       (pData->iBitdepth < 8                            )    )
-    MNG_ERROR (pData, MNG_INVALIDBITDEPTH)
+    MNG_ERROR (pData, MNG_INVALIDBITDEPTH);
 
   if (pData->iCompression != MNG_COMPRESSION_DEFLATE)
-    MNG_ERROR (pData, MNG_INVALIDCOMPRESS)
+    MNG_ERROR (pData, MNG_INVALIDCOMPRESS);
 
 #if defined(FILTER192) || defined(FILTER193)
   if ((pData->iFilter != MNG_FILTER_ADAPTIVE ) &&
@@ -3684,15 +4194,15 @@ READ_CHUNK (mng_read_basi)
       (pData->iFilter != MNG_FILTER_NOFILTER )    )
 #endif
 #endif
-    MNG_ERROR (pData, MNG_INVALIDFILTER)
+    MNG_ERROR (pData, MNG_INVALIDFILTER);
 #else
   if (pData->iFilter)
-    MNG_ERROR (pData, MNG_INVALIDFILTER)
+    MNG_ERROR (pData, MNG_INVALIDFILTER);
 #endif
 
   if ((pData->iInterlace != MNG_INTERLACE_NONE ) &&
       (pData->iInterlace != MNG_INTERLACE_ADAM7)    )
-    MNG_ERROR (pData, MNG_INVALIDINTERLACE)
+    MNG_ERROR (pData, MNG_INVALIDINTERLACE);
 
   pData->iImagelevel++;                /* one level deeper */
 
@@ -3773,33 +4283,37 @@ READ_CHUNK (mng_read_basi)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_BASI, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_BASI, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
+#ifndef MNG_SKIPCHUNK_CLON
 READ_CHUNK (mng_read_clon)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_CLON, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_CLON, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* check the length */
   if ((iRawlen != 4) && (iRawlen != 5) && (iRawlen != 6) &&
       (iRawlen != 7) && (iRawlen != 16))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -3888,15 +4402,17 @@ READ_CHUNK (mng_read_clon)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_CLON, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_CLON, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_PAST
 READ_CHUNK (mng_read_past)
 {
@@ -3914,22 +4430,22 @@ READ_CHUNK (mng_read_past)
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PAST, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_PAST, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
                                        /* check the length */
   if ((iRawlen < 41) || (((iRawlen - 11) % 30) != 0))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #if defined(MNG_STORE_CHUNKS) || defined(MNG_SUPPORT_DISPLAY)
   iTargetid   = mng_get_uint16 (pRawdata);
@@ -3941,7 +4457,7 @@ READ_CHUNK (mng_read_past)
 
   pRawdata += 11;
                                        /* get a buffer for all the source blocks */
-  MNG_ALLOC (pData, pSources, iSize)
+  MNG_ALLOC (pData, pSources, iSize);
 
   pSource = (mng_past_sourcep)pSources;
 
@@ -3975,7 +4491,7 @@ READ_CHUNK (mng_read_past)
 
     if (iRetcode)                      /* on error bail out */
     {
-      MNG_FREEX (pData, pSources, iSize)
+      MNG_FREEX (pData, pSources, iSize);
       return iRetcode;
     }
   }
@@ -3988,7 +4504,7 @@ READ_CHUNK (mng_read_past)
 
     if (iRetcode)                      /* on error bail out */
     {
-      MNG_FREEX (pData, pSources, iSize)
+      MNG_FREEX (pData, pSources, iSize);
       return iRetcode;
     }
                                        /* store the fields */
@@ -3998,26 +4514,28 @@ READ_CHUNK (mng_read_past)
     ((mng_pastp)*ppChunk)->iTargety    = iTargety;
     ((mng_pastp)*ppChunk)->iCount      = iCount;
                                        /* get a buffer & copy the source blocks */
-    MNG_ALLOC (pData, ((mng_pastp)*ppChunk)->pSources, iSize)
-    MNG_COPY (((mng_pastp)*ppChunk)->pSources, pSources, iSize)
+    MNG_ALLOC (pData, ((mng_pastp)*ppChunk)->pSources, iSize);
+    MNG_COPY (((mng_pastp)*ppChunk)->pSources, pSources, iSize);
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #if defined(MNG_STORE_CHUNKS) || defined(MNG_SUPPORT_DISPLAY)
                                        /* free the source block buffer */
-  MNG_FREEX (pData, pSources, iSize)
+  MNG_FREEX (pData, pSources, iSize);
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PAST, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_PAST, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_DISC
 READ_CHUNK (mng_read_disc)
 {
@@ -4028,28 +4546,28 @@ READ_CHUNK (mng_read_disc)
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DISC, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_DISC, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if ((iRawlen % 2) != 0)              /* check the length */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #if defined(MNG_SUPPORT_DISPLAY) || defined(MNG_STORE_CHUNKS)
   iCount = (iRawlen / sizeof (mng_uint16));
 
   if (iCount)
   {
-    MNG_ALLOC (pData, pIds, iRawlen)
+    MNG_ALLOC (pData, pIds, iRawlen);
 
 #ifndef MNG_BIGENDIAN_SUPPORTED
     {
@@ -4064,7 +4582,7 @@ READ_CHUNK (mng_read_disc)
       }
     }
 #else
-    MNG_COPY (pIds, pRawdata, iRawlen)
+    MNG_COPY (pIds, pRawdata, iRawlen);
 #endif /* !MNG_BIGENDIAN_SUPPORTED */
   }
 #endif
@@ -4095,46 +4613,48 @@ READ_CHUNK (mng_read_disc)
 
     if (iRawlen)
     {
-      MNG_ALLOC (pData, ((mng_discp)*ppChunk)->pObjectids, iRawlen)
-      MNG_COPY (((mng_discp)*ppChunk)->pObjectids, pIds, iRawlen)
+      MNG_ALLOC (pData, ((mng_discp)*ppChunk)->pObjectids, iRawlen);
+      MNG_COPY (((mng_discp)*ppChunk)->pObjectids, pIds, iRawlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #if defined(MNG_SUPPORT_DISPLAY) || defined(MNG_STORE_CHUNKS)
   if (iRawlen)
-    MNG_FREEX (pData, pIds, iRawlen)
+    MNG_FREEX (pData, pIds, iRawlen);
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DISC, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_DISC, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_BACK
 READ_CHUNK (mng_read_back)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_BACK, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_BACK, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* check the length */
   if ((iRawlen != 6) && (iRawlen != 7) && (iRawlen != 9) && (iRawlen != 10))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -4194,15 +4714,17 @@ READ_CHUNK (mng_read_back)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_BACK, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_BACK, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_FRAM
 READ_CHUNK (mng_read_fram)
 {
@@ -4214,18 +4736,18 @@ READ_CHUNK (mng_read_fram)
   mng_uint32 iRequired = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_FRAM, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_FRAM, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen <= 1)                    /* only framing-mode ? */
   {
@@ -4251,7 +4773,7 @@ READ_CHUNK (mng_read_fram)
       iRemain--;
 
     if ((iRemain) && (iRemain < 4))    /* remains must be empty or at least 4 bytes */
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if (iRemain)
     {
@@ -4264,12 +4786,12 @@ READ_CHUNK (mng_read_fram)
       if (*(pTemp+4))
       {
         if ((iRemain - iRequired) % 4 != 0)
-          MNG_ERROR (pData, MNG_INVALIDLENGTH)
+          MNG_ERROR (pData, MNG_INVALIDLENGTH);
       }
       else
       {
         if (iRemain != iRequired)
-          MNG_ERROR (pData, MNG_INVALIDLENGTH)
+          MNG_ERROR (pData, MNG_INVALIDLENGTH);
       }
     }
   }
@@ -4394,8 +4916,8 @@ READ_CHUNK (mng_read_fram)
 
       if (iNamelen)
       {
-        MNG_ALLOC (pData, ((mng_framp)*ppChunk)->zName, iNamelen+1)
-        MNG_COPY (((mng_framp)*ppChunk)->zName, pRawdata+1, iNamelen)
+        MNG_ALLOC (pData, ((mng_framp)*ppChunk)->zName, iNamelen+1);
+        MNG_COPY (((mng_framp)*ppChunk)->zName, pRawdata+1, iNamelen);
       }
 
       if (iRemain)
@@ -4451,7 +4973,7 @@ READ_CHUNK (mng_read_fram)
             }
 #else
             MNG_COPY (((mng_framp)*ppChunk)->pSyncids, pTemp,
-                      ((mng_framp)*ppChunk)->iCount * 4)
+                      ((mng_framp)*ppChunk)->iCount * 4);
 #endif /* !MNG_BIGENDIAN_SUPPORTED */
           }
         }
@@ -4461,34 +4983,36 @@ READ_CHUNK (mng_read_fram)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_FRAM, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_FRAM, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_MOVE
 READ_CHUNK (mng_read_move)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_MOVE, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_MOVE, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen != 13)                   /* check the length */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -4531,34 +5055,36 @@ READ_CHUNK (mng_read_move)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_MOVE, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_MOVE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_CLIP
 READ_CHUNK (mng_read_clip)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_CLIP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_CLIP, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen != 21)                   /* check the length */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -4607,34 +5133,36 @@ READ_CHUNK (mng_read_clip)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_CLIP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_CLIP, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_SHOW
 READ_CHUNK (mng_read_show)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SHOW, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_SHOW, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* check the length */
   if ((iRawlen != 0) && (iRawlen != 2) && (iRawlen != 4) && (iRawlen != 5))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -4699,15 +5227,17 @@ READ_CHUNK (mng_read_show)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SHOW, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_SHOW, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_TERM
 READ_CHUNK (mng_read_term)
 {
@@ -4717,35 +5247,35 @@ READ_CHUNK (mng_read_term)
   mng_uint32  iItermax    = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_TERM, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_TERM, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
                                        /* should be behind MHDR or SAVE !! */
   if ((!pData->bHasSAVE) && (pData->iChunkseq > 2))
   {
     pData->bMisplacedTERM = MNG_TRUE;  /* indicate we found a misplaced TERM */
                                        /* and send a warning signal!!! */
-    MNG_WARNING (pData, MNG_SEQUENCEERROR)
+    MNG_WARNING (pData, MNG_SEQUENCEERROR);
   }
 
   if (pData->bHasLOOP)                 /* no way, jose! */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (pData->bHasTERM)                 /* only 1 allowed! */
-    MNG_ERROR (pData, MNG_MULTIPLEERROR)
+    MNG_ERROR (pData, MNG_MULTIPLEERROR);
                                        /* check the length */
   if ((iRawlen != 1) && (iRawlen != 10))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   pData->bHasTERM = MNG_TRUE;
 
@@ -4761,7 +5291,7 @@ READ_CHUNK (mng_read_term)
   if (pData->fProcessterm)             /* inform the app ? */
     if (!pData->fProcessterm (((mng_handle)pData), iTermaction, iIteraction,
                                                    iDelay, iItermax))
-      MNG_ERROR (pData, MNG_APPMISCERROR)
+      MNG_ERROR (pData, MNG_APPMISCERROR);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {                                    /* create the TERM ani-object */
@@ -4791,31 +5321,33 @@ READ_CHUNK (mng_read_term)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_TERM, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_TERM, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_SAVE
 READ_CHUNK (mng_read_save)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SAVE, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_SAVE, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) || (pData->bHasSAVE))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   pData->bHasSAVE = MNG_TRUE;
 
@@ -4824,7 +5356,7 @@ READ_CHUNK (mng_read_save)
     mng_bool bOke = pData->fProcesssave ((mng_handle)pData);
 
     if (!bOke)
-      MNG_ERROR (pData, MNG_APPMISCERROR)
+      MNG_ERROR (pData, MNG_APPMISCERROR);
   }
 
 #ifdef MNG_SUPPORT_DISPLAY
@@ -4885,7 +5417,7 @@ READ_CHUNK (mng_read_save)
 
         if (iX)                        /* second run ? */
         {
-          MNG_ALLOC (pData, pEntry, (iCount * sizeof (mng_save_entry)))
+          MNG_ALLOC (pData, pEntry, (iCount * sizeof (mng_save_entry)));
 
           ((mng_savep)*ppChunk)->iCount   = iCount;
           ((mng_savep)*ppChunk)->pEntries = pEntry;
@@ -4969,7 +5501,7 @@ READ_CHUNK (mng_read_save)
             iLen     -= iNamesize;
 
             if (!iLen)                 /* must not end with a null ! */
-              MNG_ERROR (pData, MNG_ENDWITHNULL)
+              MNG_ERROR (pData, MNG_ENDWITHNULL);
           }
 
           if (!pEntry)
@@ -4989,8 +5521,8 @@ READ_CHUNK (mng_read_save)
 
             if (iNamesize)
             {
-              MNG_ALLOC (pData, pEntry->zName, iNamesize+1)
-              MNG_COPY (pEntry->zName, pTemp, iNamesize)
+              MNG_ALLOC (pData, pEntry->zName, iNamesize+1);
+              MNG_COPY (pEntry->zName, pTemp, iNamesize);
             }
 
             pEntry++;
@@ -5004,33 +5536,35 @@ READ_CHUNK (mng_read_save)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SAVE, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_SAVE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_SEEK
 READ_CHUNK (mng_read_seek)
 {
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SEEK, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_SEEK, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) || (!pData->bHasSAVE))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_SUPPORT_DISPLAY
                                        /* create a SEEK animation object */
@@ -5046,17 +5580,17 @@ READ_CHUNK (mng_read_seek)
     mng_bool  bOke;
     mng_pchar zName;
 
-    MNG_ALLOC (pData, zName, iRawlen + 1)
+    MNG_ALLOC (pData, zName, iRawlen + 1);
 
     if (iRawlen)
-      MNG_COPY (zName, pRawdata, iRawlen)
+      MNG_COPY (zName, pRawdata, iRawlen);
 
     bOke = pData->fProcessseek ((mng_handle)pData, zName);
 
-    MNG_FREEX (pData, zName, iRawlen + 1)
+    MNG_FREEX (pData, zName, iRawlen + 1);
 
     if (!bOke)
-      MNG_ERROR (pData, MNG_APPMISCERROR)
+      MNG_ERROR (pData, MNG_APPMISCERROR);
   }
 
 #ifdef MNG_SUPPORT_DISPLAY
@@ -5079,41 +5613,43 @@ READ_CHUNK (mng_read_seek)
 
     if (iRawlen)
     {
-      MNG_ALLOC (pData, ((mng_seekp)*ppChunk)->zName, iRawlen+1)
-      MNG_COPY (((mng_seekp)*ppChunk)->zName, pRawdata, iRawlen)
+      MNG_ALLOC (pData, ((mng_seekp)*ppChunk)->zName, iRawlen+1);
+      MNG_COPY (((mng_seekp)*ppChunk)->zName, pRawdata, iRawlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_SEEK, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_SEEK, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_eXPI
 READ_CHUNK (mng_read_expi)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_EXPI, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_EXPI, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen < 3)                     /* check the length */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -5139,42 +5675,44 @@ READ_CHUNK (mng_read_expi)
     if (((mng_expip)*ppChunk)->iNamesize)
     {
       MNG_ALLOC (pData, ((mng_expip)*ppChunk)->zName,
-                        ((mng_expip)*ppChunk)->iNamesize + 1)
+                        ((mng_expip)*ppChunk)->iNamesize + 1);
       MNG_COPY (((mng_expip)*ppChunk)->zName, pRawdata+2,
-                ((mng_expip)*ppChunk)->iNamesize)
+                ((mng_expip)*ppChunk)->iNamesize);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_EXPI, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_EXPI, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_fPRI
 READ_CHUNK (mng_read_fpri)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_FPRI, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_FPRI, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen != 2)                    /* must be two bytes long */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -5200,15 +5738,17 @@ READ_CHUNK (mng_read_fpri)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_FPRI, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_FPRI, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_nEED
 MNG_LOCAL mng_bool CheckKeyword (mng_datap  pData,
                                  mng_uint8p pKeyword)
@@ -5364,38 +5904,40 @@ MNG_LOCAL mng_bool CheckKeyword (mng_datap  pData,
   return bOke;
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_nEED
 READ_CHUNK (mng_read_need)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_NEED, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_NEED, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen < 1)                     /* check the length */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   {                                    /* let's check it */
     mng_bool   bOke = MNG_TRUE;
     mng_pchar  zKeywords;
     mng_uint8p pNull, pTemp;
 
-    MNG_ALLOC (pData, zKeywords, iRawlen + 1)
+    MNG_ALLOC (pData, zKeywords, iRawlen + 1);
 
     if (iRawlen)
-      MNG_COPY (zKeywords, pRawdata, iRawlen)
+      MNG_COPY (zKeywords, pRawdata, iRawlen);
 
     pTemp = (mng_uint8p)zKeywords;
     pNull = find_null (pTemp);
@@ -5410,10 +5952,10 @@ READ_CHUNK (mng_read_need)
     if (bOke)
       bOke = CheckKeyword (pData, pTemp);
 
-    MNG_FREEX (pData, zKeywords, iRawlen + 1)
+    MNG_FREEX (pData, zKeywords, iRawlen + 1);
 
     if (!bOke)
-      MNG_ERROR (pData, MNG_UNSUPPORTEDNEED)
+      MNG_ERROR (pData, MNG_UNSUPPORTEDNEED);
   }
 
 #ifdef MNG_STORE_CHUNKS
@@ -5428,41 +5970,43 @@ READ_CHUNK (mng_read_need)
 
     if (iRawlen)
     {
-      MNG_ALLOC (pData, ((mng_needp)*ppChunk)->zKeywords, iRawlen+1)
-      MNG_COPY (((mng_needp)*ppChunk)->zKeywords, pRawdata, iRawlen)
+      MNG_ALLOC (pData, ((mng_needp)*ppChunk)->zKeywords, iRawlen+1);
+      MNG_COPY (((mng_needp)*ppChunk)->zKeywords, pRawdata, iRawlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_NEED, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_NEED, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_pHYg
 READ_CHUNK (mng_read_phyg)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PHYG, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_PHYG, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* it's 9 bytes or empty; no more, no less! */
   if ((iRawlen != 9) && (iRawlen != 0))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -5494,33 +6038,35 @@ READ_CHUNK (mng_read_phyg)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PHYG, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_PHYG, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifdef MNG_INCLUDE_JNG
 READ_CHUNK (mng_read_jhdr)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_JHDR, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_JHDR, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((pData->eSigtype != mng_it_jng) && (pData->eSigtype != mng_it_mng))
-    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED)
+    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED);
 
   if ((pData->eSigtype == mng_it_jng) && (pData->iChunkseq > 1))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen != 16)                   /* length oke ? */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
                                        /* inside a JHDR-IEND block now */
   pData->bHasJHDR              = MNG_TRUE;
                                        /* and store interesting fields */
@@ -5536,9 +6082,14 @@ READ_CHUNK (mng_read_jhdr)
   pData->iJHDRalphainterlace   = *(pRawdata+15);
 
 
-#if defined(MNG_NO_16BIT_SUPPORT)
+#if defined(MNG_NO_1_2_4BIT_SUPPORT) || defined(MNG_NO_16BIT_SUPPORT)
   pData->iPNGmult = 1;
   pData->iPNGdepth = pData->iJHDRalphabitdepth;
+#endif
+
+#ifdef MNG_NO_1_2_4BIT_SUPPORT
+  if (pData->iJHDRalphabitdepth < 8)
+    pData->iJHDRalphabitdepth = 8;
 #endif
 
 #ifdef MNG_NO_16BIT_SUPPORT
@@ -5553,40 +6104,42 @@ READ_CHUNK (mng_read_jhdr)
       (pData->iJHDRcolortype != MNG_COLORTYPE_JPEGCOLOR ) &&
       (pData->iJHDRcolortype != MNG_COLORTYPE_JPEGGRAYA ) &&
       (pData->iJHDRcolortype != MNG_COLORTYPE_JPEGCOLORA)    )
-    MNG_ERROR (pData, MNG_INVALIDCOLORTYPE)
+    MNG_ERROR (pData, MNG_INVALIDCOLORTYPE);
 
   if ((pData->iJHDRimgbitdepth != MNG_BITDEPTH_JPEG8     ) &&
       (pData->iJHDRimgbitdepth != MNG_BITDEPTH_JPEG12    ) &&
       (pData->iJHDRimgbitdepth != MNG_BITDEPTH_JPEG8AND12)    )
-    MNG_ERROR (pData, MNG_INVALIDBITDEPTH)
+    MNG_ERROR (pData, MNG_INVALIDBITDEPTH);
 
   if (pData->iJHDRimgcompression != MNG_COMPRESSION_BASELINEJPEG)
-    MNG_ERROR (pData, MNG_INVALIDCOMPRESS)
+    MNG_ERROR (pData, MNG_INVALIDCOMPRESS);
 
   if ((pData->iJHDRimginterlace != MNG_INTERLACE_SEQUENTIAL ) &&
       (pData->iJHDRimginterlace != MNG_INTERLACE_PROGRESSIVE)    )
-    MNG_ERROR (pData, MNG_INVALIDINTERLACE)
+    MNG_ERROR (pData, MNG_INVALIDINTERLACE);
 
   if ((pData->iJHDRcolortype == MNG_COLORTYPE_JPEGGRAYA ) ||
       (pData->iJHDRcolortype == MNG_COLORTYPE_JPEGCOLORA)    )
   {
     if ((pData->iJHDRalphabitdepth != MNG_BITDEPTH_8 )
+#ifndef MNG_NO_1_2_4BIT_SUPPORT
         && (pData->iJHDRalphabitdepth != MNG_BITDEPTH_1 ) &&
         (pData->iJHDRalphabitdepth != MNG_BITDEPTH_2 ) &&
         (pData->iJHDRalphabitdepth != MNG_BITDEPTH_4 )
+#endif
 #ifndef MNG_NO_16BIT_SUPPORT
         && (pData->iJHDRalphabitdepth != MNG_BITDEPTH_16)
 #endif
         )
-      MNG_ERROR (pData, MNG_INVALIDBITDEPTH)
+      MNG_ERROR (pData, MNG_INVALIDBITDEPTH);
 
     if ((pData->iJHDRalphacompression != MNG_COMPRESSION_DEFLATE     ) &&
         (pData->iJHDRalphacompression != MNG_COMPRESSION_BASELINEJPEG)    )
-      MNG_ERROR (pData, MNG_INVALIDCOMPRESS)
+      MNG_ERROR (pData, MNG_INVALIDCOMPRESS);
 
     if ((pData->iJHDRalphacompression == MNG_COMPRESSION_BASELINEJPEG) &&
         (pData->iJHDRalphabitdepth    !=  MNG_BITDEPTH_8             )    )
-      MNG_ERROR (pData, MNG_INVALIDBITDEPTH)
+      MNG_ERROR (pData, MNG_INVALIDBITDEPTH);
 
 #if defined(FILTER192) || defined(FILTER193)
     if ((pData->iJHDRalphafilter != MNG_FILTER_ADAPTIVE ) &&
@@ -5600,30 +6153,30 @@ READ_CHUNK (mng_read_jhdr)
         (pData->iJHDRalphafilter != MNG_FILTER_NOFILTER )    )
 #endif
 #endif
-      MNG_ERROR (pData, MNG_INVALIDFILTER)
+      MNG_ERROR (pData, MNG_INVALIDFILTER);
 #else
     if (pData->iJHDRalphafilter)
-      MNG_ERROR (pData, MNG_INVALIDFILTER)
+      MNG_ERROR (pData, MNG_INVALIDFILTER);
 #endif
 
     if ((pData->iJHDRalphainterlace != MNG_INTERLACE_NONE ) &&
         (pData->iJHDRalphainterlace != MNG_INTERLACE_ADAM7)    )
-      MNG_ERROR (pData, MNG_INVALIDINTERLACE)
+      MNG_ERROR (pData, MNG_INVALIDINTERLACE);
 
   }
   else
   {
     if (pData->iJHDRalphabitdepth)
-      MNG_ERROR (pData, MNG_INVALIDBITDEPTH)
+      MNG_ERROR (pData, MNG_INVALIDBITDEPTH);
 
     if (pData->iJHDRalphacompression)
-      MNG_ERROR (pData, MNG_INVALIDCOMPRESS)
+      MNG_ERROR (pData, MNG_INVALIDCOMPRESS);
 
     if (pData->iJHDRalphafilter)
-      MNG_ERROR (pData, MNG_INVALIDFILTER)
+      MNG_ERROR (pData, MNG_INVALIDFILTER);
 
     if (pData->iJHDRalphainterlace)
-      MNG_ERROR (pData, MNG_INVALIDINTERLACE)
+      MNG_ERROR (pData, MNG_INVALIDINTERLACE);
 
   }
 
@@ -5641,11 +6194,11 @@ READ_CHUNK (mng_read_jhdr)
       pData->iAlphadepth = 0;
                                        /* fits on maximum canvas ? */
     if ((pData->iWidth > pData->iMaxwidth) || (pData->iHeight > pData->iMaxheight))
-      MNG_WARNING (pData, MNG_IMAGETOOLARGE)
+      MNG_WARNING (pData, MNG_IMAGETOOLARGE);
 
     if (pData->fProcessheader)         /* inform the app ? */
       if (!pData->fProcessheader (((mng_handle)pData), pData->iWidth, pData->iHeight))
-      MNG_ERROR (pData, MNG_APPMISCERROR)
+      MNG_ERROR (pData, MNG_APPMISCERROR);
 
   }
 
@@ -5687,7 +6240,7 @@ READ_CHUNK (mng_read_jhdr)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_JHDR, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_JHDR, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
@@ -5695,9 +6248,11 @@ READ_CHUNK (mng_read_jhdr)
 #else
 #define read_jhdr 0
 #endif /* MNG_INCLUDE_JNG */
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifdef MNG_INCLUDE_JNG
 READ_CHUNK (mng_read_jdaa)
 {
@@ -5708,20 +6263,20 @@ READ_CHUNK (mng_read_jdaa)
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_JDAA, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_JDAA, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasJHDR) && (!pData->bHasDHDR))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (pData->bHasJSEP)
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
     
   if (pData->iJHDRalphacompression != MNG_COMPRESSION_BASELINEJPEG)
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen == 0)                    /* can never be empty */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   pData->bHasJDAA = MNG_TRUE;          /* got some JDAA now, don't we */
 
@@ -5745,14 +6300,14 @@ READ_CHUNK (mng_read_jdaa)
 
     if (iRawlen != 0)                  /* is there any data ? */
     {
-      MNG_ALLOC (pData, ((mng_jdaap)*ppChunk)->pData, iRawlen)
-      MNG_COPY  (((mng_jdaap)*ppChunk)->pData, pRawdata, iRawlen)
+      MNG_ALLOC (pData, ((mng_jdaap)*ppChunk)->pData, iRawlen);
+      MNG_COPY  (((mng_jdaap)*ppChunk)->pData, pRawdata, iRawlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_JDAA, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_JDAA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
@@ -5760,9 +6315,11 @@ READ_CHUNK (mng_read_jdaa)
 #else
 #define read_jdaa 0
 #endif /* MNG_INCLUDE_JNG */
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifdef MNG_INCLUDE_JNG
 READ_CHUNK (mng_read_jdat)
 {
@@ -5773,14 +6330,14 @@ READ_CHUNK (mng_read_jdat)
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_JDAT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_JDAT, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasJHDR) && (!pData->bHasDHDR))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen == 0)                    /* can never be empty */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   pData->bHasJDAT = MNG_TRUE;          /* got some JDAT now, don't we */
 
@@ -5804,14 +6361,14 @@ READ_CHUNK (mng_read_jdat)
 
     if (iRawlen != 0)                  /* is there any data ? */
     {
-      MNG_ALLOC (pData, ((mng_jdatp)*ppChunk)->pData, iRawlen)
-      MNG_COPY  (((mng_jdatp)*ppChunk)->pData, pRawdata, iRawlen)
+      MNG_ALLOC (pData, ((mng_jdatp)*ppChunk)->pData, iRawlen);
+      MNG_COPY  (((mng_jdatp)*ppChunk)->pData, pRawdata, iRawlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_JDAT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_JDAT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
@@ -5819,21 +6376,23 @@ READ_CHUNK (mng_read_jdat)
 #else
 #define read_jdat 0
 #endif /* MNG_INCLUDE_JNG */
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifdef MNG_INCLUDE_JNG
 READ_CHUNK (mng_read_jsep)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_JSEP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_JSEP, MNG_LC_START);
 #endif
 
   if (!pData->bHasJHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen != 0)                    /* must be empty ! */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   pData->bHasJSEP = MNG_TRUE;          /* indicate we've had the 8-/12-bit separator */
 
@@ -5849,7 +6408,7 @@ READ_CHUNK (mng_read_jsep)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_JSEP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_JSEP, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
@@ -5857,47 +6416,49 @@ READ_CHUNK (mng_read_jsep)
 #else
 #define read_jsep 0
 #endif /* MNG_INCLUDE_JNG */
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_NO_DELTA_PNG
 READ_CHUNK (mng_read_dhdr)
 {
   mng_uint8 iImagetype, iDeltatype;
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DHDR, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_DHDR, MNG_LC_START);
 #endif
 
   if (!pData->bHasMHDR)                /* sequence checks */
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
 #ifdef MNG_INCLUDE_JNG
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR) || (pData->bHasJHDR))
 #else
   if ((pData->bHasIHDR) || (pData->bHasBASI) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* check for valid length */
   if ((iRawlen != 4) && (iRawlen != 12) && (iRawlen != 20))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   iImagetype = *(pRawdata+2);          /* check fields for validity */
   iDeltatype = *(pRawdata+3);
 
   if (iImagetype > MNG_IMAGETYPE_JNG)
-    MNG_ERROR (pData, MNG_INVIMAGETYPE)
+    MNG_ERROR (pData, MNG_INVIMAGETYPE);
 
   if (iDeltatype > MNG_DELTATYPE_NOCHANGE)
-    MNG_ERROR (pData, MNG_INVDELTATYPE)
+    MNG_ERROR (pData, MNG_INVDELTATYPE);
 
   if ((iDeltatype == MNG_DELTATYPE_REPLACE) && (iRawlen > 12))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   if ((iDeltatype == MNG_DELTATYPE_NOCHANGE) && (iRawlen > 4))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   pData->bHasDHDR   = MNG_TRUE;        /* inside a DHDR-IEND block now */
-  pData->iDeltatype = iDeltatype;      
+  pData->iDeltatype = iDeltatype;
 
   pData->iImagelevel++;                /* one level deeper */
 
@@ -5962,15 +6523,17 @@ READ_CHUNK (mng_read_dhdr)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DHDR, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_DHDR, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_NO_DELTA_PNG
 READ_CHUNK (mng_read_prom)
 {
@@ -5979,14 +6542,14 @@ READ_CHUNK (mng_read_prom)
   mng_uint8 iFilltype;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PROM, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_PROM, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) || (!pData->bHasDHDR))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen != 3)                    /* gotta be exactly 3 bytes */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   iColortype   = *pRawdata;            /* check fields for validity */
   iSampledepth = *(pRawdata+1);
@@ -5997,7 +6560,7 @@ READ_CHUNK (mng_read_prom)
       (iColortype != MNG_COLORTYPE_INDEXED) &&
       (iColortype != MNG_COLORTYPE_GRAYA  ) &&
       (iColortype != MNG_COLORTYPE_RGBA   )    )
-    MNG_ERROR (pData, MNG_INVALIDCOLORTYPE)
+    MNG_ERROR (pData, MNG_INVALIDCOLORTYPE);
 
 #ifdef MNG_NO_16BIT_SUPPORT
   if (iSampledepth == MNG_BITDEPTH_16 )
@@ -6012,11 +6575,11 @@ READ_CHUNK (mng_read_prom)
       && (iSampledepth != MNG_BITDEPTH_16)
 #endif
     )
-    MNG_ERROR (pData, MNG_INVSAMPLEDEPTH)
+    MNG_ERROR (pData, MNG_INVSAMPLEDEPTH);
 
   if ((iFilltype != MNG_FILLMETHOD_LEFTBITREPLICATE) &&
       (iFilltype != MNG_FILLMETHOD_ZEROFILL        )    )
-    MNG_ERROR (pData, MNG_INVFILLMETHOD)
+    MNG_ERROR (pData, MNG_INVFILLMETHOD);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -6046,27 +6609,29 @@ READ_CHUNK (mng_read_prom)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PROM, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_PROM, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_NO_DELTA_PNG
 READ_CHUNK (mng_read_ipng)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_IPNG, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_IPNG, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) || (!pData->bHasDHDR))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen != 0)                    /* gotta be empty */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -6092,15 +6657,17 @@ READ_CHUNK (mng_read_ipng)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_IPNG, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_IPNG, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_NO_DELTA_PNG
 READ_CHUNK (mng_read_pplt)
 {
@@ -6115,22 +6682,22 @@ READ_CHUNK (mng_read_pplt)
   mng_uint8arr  aUsedentries;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PPLT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_PPLT, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) && (!pData->bHasDHDR))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen < 1)                     /* must have at least 1 byte */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   iDeltatype = *pRawdata;
                                        /* valid ? */
   if (iDeltatype > MNG_DELTATYPE_DELTARGBA)
-    MNG_ERROR (pData, MNG_INVDELTATYPE)
+    MNG_ERROR (pData, MNG_INVDELTATYPE);
                                        /* must be indexed color ! */
   if (pData->iColortype != MNG_COLORTYPE_INDEXED)
-    MNG_ERROR (pData, MNG_INVALIDCOLORTYPE)
+    MNG_ERROR (pData, MNG_INVALIDCOLORTYPE);
 
   pTemp = pRawdata + 1;
   iLen  = iRawlen - 1;
@@ -6150,32 +6717,30 @@ READ_CHUNK (mng_read_pplt)
     mng_uint32 iDiff;
 
     if (iLen < 2)
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     iX = *pTemp;                       /* get start and end index */
     iM = *(pTemp+1);
 
     if (iM < iX)
-      MNG_ERROR (pData, MNG_INVALIDINDEX)
+      MNG_ERROR (pData, MNG_INVALIDINDEX);
 
     if ((mng_uint32)iM >= iMax)        /* determine highest used index */
       iMax = (mng_uint32)iM + 1;
 
     pTemp += 2;
     iLen  -= 2;
-
+    iDiff = (iM - iX + 1);
     if ((iDeltatype == MNG_DELTATYPE_REPLACERGB  ) ||
         (iDeltatype == MNG_DELTATYPE_DELTARGB    )    )
-      iDiff = (iM - iX + 1) * 3;
+      iDiff = iDiff * 3;
     else
-    if ((iDeltatype == MNG_DELTATYPE_REPLACEALPHA) ||
-        (iDeltatype == MNG_DELTATYPE_DELTAALPHA  )    )
-      iDiff = (iM - iX + 1);
-    else
-      iDiff = (iM - iX + 1) * 4;
+    if ((iDeltatype == MNG_DELTATYPE_REPLACERGBA) ||
+        (iDeltatype == MNG_DELTATYPE_DELTARGBA  )    )
+      iDiff = iDiff * 4;
 
     if (iLen < iDiff)
-      MNG_ERROR (pData, MNG_INVALIDLENGTH)
+      MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
     if ((iDeltatype == MNG_DELTATYPE_REPLACERGB  ) ||
         (iDeltatype == MNG_DELTATYPE_DELTARGB    )    )
@@ -6224,17 +6789,17 @@ READ_CHUNK (mng_read_pplt)
   {
     case MNG_BITDEPTH_1 : {
                             if (iMax > 2)
-                              MNG_ERROR (pData, MNG_INVALIDINDEX)
+                              MNG_ERROR (pData, MNG_INVALIDINDEX);
                             break;
                           }
     case MNG_BITDEPTH_2 : {
                             if (iMax > 4)
-                              MNG_ERROR (pData, MNG_INVALIDINDEX)
+                              MNG_ERROR (pData, MNG_INVALIDINDEX);
                             break;
                           }
     case MNG_BITDEPTH_4 : {
                             if (iMax > 16)
-                              MNG_ERROR (pData, MNG_INVALIDINDEX)
+                              MNG_ERROR (pData, MNG_INVALIDINDEX);
                             break;
                           }
   }
@@ -6251,7 +6816,7 @@ READ_CHUNK (mng_read_pplt)
 
     if (iRetcode)                      /* on error bail out */
       return iRetcode;
-      
+
   }
 #endif /* MNG_SUPPORT_DISPLAY */
 
@@ -6278,28 +6843,30 @@ READ_CHUNK (mng_read_pplt)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_PPLT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_PPLT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_NO_DELTA_PNG
 #ifdef MNG_INCLUDE_JNG
 READ_CHUNK (mng_read_ijng)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_IJNG, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_IJNG, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) || (!pData->bHasDHDR))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen != 0)                    /* gotta be empty */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -6325,28 +6892,30 @@ READ_CHUNK (mng_read_ijng)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_IJNG, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_IJNG, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_NO_DELTA_PNG
 READ_CHUNK (mng_read_drop)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DROP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_DROP, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) || (!pData->bHasDHDR))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* check length */
   if ((iRawlen < 4) || ((iRawlen % 4) != 0))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -6374,7 +6943,7 @@ READ_CHUNK (mng_read_drop)
       mng_uint8p      pTemp = pRawdata;
       mng_uint32p     pEntry;
 
-      MNG_ALLOC (pData, pEntry, iRawlen)
+      MNG_ALLOC (pData, pEntry, iRawlen);
 
       ((mng_dropp)*ppChunk)->pChunknames = (mng_ptr)pEntry;
 
@@ -6390,28 +6959,30 @@ READ_CHUNK (mng_read_drop)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DROP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_DROP, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_NO_DELTA_PNG
 #ifndef MNG_SKIPCHUNK_DBYK
 READ_CHUNK (mng_read_dbyk)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DBYK, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_DBYK, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) || (!pData->bHasDHDR))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen < 6)                     /* must be at least 6 long */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -6437,36 +7008,38 @@ READ_CHUNK (mng_read_dbyk)
 
     if (iRawlen > 5)
     {
-      MNG_ALLOC (pData, ((mng_dbykp)*ppChunk)->zKeywords, iRawlen-4)
-      MNG_COPY (((mng_dbykp)*ppChunk)->zKeywords, pRawdata+5, iRawlen-5)
-    }  
+      MNG_ALLOC (pData, ((mng_dbykp)*ppChunk)->zKeywords, iRawlen-4);
+      MNG_COPY (((mng_dbykp)*ppChunk)->zKeywords, pRawdata+5, iRawlen-5);
+    }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_DBYK, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_DBYK, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_NO_DELTA_PNG
 #ifndef MNG_SKIPCHUNK_ORDR
 READ_CHUNK (mng_read_ordr)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_ORDR, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_ORDR, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) || (!pData->bHasDHDR))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* check length */
   if ((iRawlen < 5) || ((iRawlen % 5) != 0))
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -6494,7 +7067,7 @@ READ_CHUNK (mng_read_ordr)
       mng_ordr_entryp pEntry;
       mng_uint8p      pTemp = pRawdata;
       
-      MNG_ALLOC (pData, pEntry, iRawlen)
+      MNG_ALLOC (pData, pEntry, iRawlen);
 
       ((mng_ordrp)*ppChunk)->pEntries = pEntry;
 
@@ -6511,16 +7084,18 @@ READ_CHUNK (mng_read_ordr)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_ORDR, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_ORDR, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_MAGN
 READ_CHUNK (mng_read_magn)
 {
@@ -6530,7 +7105,7 @@ READ_CHUNK (mng_read_magn)
   mng_bool   bFaulty;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_MAGN, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_MAGN, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_SUPPORT_JNG
@@ -6538,10 +7113,10 @@ READ_CHUNK (mng_read_magn)
 #else
   if ((!pData->bHasMHDR) || (pData->bHasIHDR) || (pData->bHasDHDR))
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* check length */
   if (iRawlen > 20)
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
   /* following is an ugly hack to allow faulty layout caused by previous
      versions of libmng and MNGeye, which wrote MAGN with a 16-bit
@@ -6668,7 +7243,7 @@ READ_CHUNK (mng_read_magn)
   }
                                        /* check field validity */
   if ((iMethodX > 5) || (iMethodY > 5))
-    MNG_ERROR (pData, MNG_INVALIDMETHOD)
+    MNG_ERROR (pData, MNG_INVALIDMETHOD);
 
 #ifdef MNG_SUPPORT_DISPLAY
   {
@@ -6709,27 +7284,29 @@ READ_CHUNK (mng_read_magn)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_MAGN, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_MAGN, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 #ifndef MNG_SKIPCHUNK_evNT
 READ_CHUNK (mng_read_evnt)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_EVNT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_EVNT, MNG_LC_START);
 #endif
                                        /* sequence checks */
   if ((!pData->bHasMHDR) || (pData->bHasSAVE))
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
 
   if (iRawlen < 2)                     /* must have at least 1 entry ! */
-    MNG_ERROR (pData, MNG_INVALIDLENGTH)
+    MNG_ERROR (pData, MNG_INVALIDLENGTH);
 
 #if defined(MNG_SUPPORT_DISPLAY) && defined(MNG_SUPPORT_DYNAMICMNG)
   {
@@ -6788,7 +7365,7 @@ READ_CHUNK (mng_read_evnt)
                 iLen -= 16;
               }
               else
-                MNG_ERROR (pData, MNG_INVALIDLENGTH)
+                MNG_ERROR (pData, MNG_INVALIDLENGTH);
               break;
             }
           case 2 :
@@ -6800,7 +7377,7 @@ READ_CHUNK (mng_read_evnt)
                 iLen -= 2;
               }
               else
-                MNG_ERROR (pData, MNG_INVALIDLENGTH)
+                MNG_ERROR (pData, MNG_INVALIDLENGTH);
               break;
             }
           case 3 :
@@ -6813,7 +7390,7 @@ READ_CHUNK (mng_read_evnt)
                 iLen -= 3;
               }
               else
-                MNG_ERROR (pData, MNG_INVALIDLENGTH)
+                MNG_ERROR (pData, MNG_INVALIDLENGTH);
               break;
             }
           case 4 :
@@ -6829,7 +7406,7 @@ READ_CHUNK (mng_read_evnt)
                 iLen -= 18;
               }
               else
-                MNG_ERROR (pData, MNG_INVALIDLENGTH)
+                MNG_ERROR (pData, MNG_INVALIDLENGTH);
               break;
             }
           case 5 :
@@ -6846,7 +7423,7 @@ READ_CHUNK (mng_read_evnt)
                 iLen -= 19;
               }
               else
-                MNG_ERROR (pData, MNG_INVALIDLENGTH)
+                MNG_ERROR (pData, MNG_INVALIDLENGTH);
               break;
             }
         }
@@ -6864,7 +7441,7 @@ READ_CHUNK (mng_read_evnt)
           iLen      = iLen - iNamesize - 1;
 
           if (!iLen)                 /* must not end with a null ! */
-            MNG_ERROR (pData, MNG_ENDWITHNULL)
+            MNG_ERROR (pData, MNG_ENDWITHNULL);
         }
 
         iRetcode = mng_create_event (pData, iEventtype, iMasktype, iLeft, iRight,
@@ -6913,7 +7490,7 @@ READ_CHUNK (mng_read_evnt)
 
         if (iX)                        /* second run ? */
         {
-          MNG_ALLOC (pData, pEntry, (iCount * sizeof (mng_evnt_entry)))
+          MNG_ALLOC (pData, pEntry, (iCount * sizeof (mng_evnt_entry)));
 
           ((mng_evntp)*ppChunk)->iCount   = iCount;
           ((mng_evntp)*ppChunk)->pEntries = pEntry;
@@ -6955,7 +7532,7 @@ READ_CHUNK (mng_read_evnt)
                   iLen -= 16;
                 }
                 else
-                  MNG_ERROR (pData, MNG_INVALIDLENGTH)
+                  MNG_ERROR (pData, MNG_INVALIDLENGTH);
                 break;
               }
             case 2 :
@@ -6967,7 +7544,7 @@ READ_CHUNK (mng_read_evnt)
                   iLen -= 2;
                 }
                 else
-                  MNG_ERROR (pData, MNG_INVALIDLENGTH)
+                  MNG_ERROR (pData, MNG_INVALIDLENGTH);
                 break;
               }
             case 3 :
@@ -6980,7 +7557,7 @@ READ_CHUNK (mng_read_evnt)
                   iLen -= 3;
                 }
                 else
-                  MNG_ERROR (pData, MNG_INVALIDLENGTH)
+                  MNG_ERROR (pData, MNG_INVALIDLENGTH);
                 break;
               }
             case 4 :
@@ -6996,7 +7573,7 @@ READ_CHUNK (mng_read_evnt)
                   iLen -= 18;
                 }
                 else
-                  MNG_ERROR (pData, MNG_INVALIDLENGTH)
+                  MNG_ERROR (pData, MNG_INVALIDLENGTH);
                 break;
               }
             case 5 :
@@ -7013,7 +7590,7 @@ READ_CHUNK (mng_read_evnt)
                   iLen -= 19;
                 }
                 else
-                  MNG_ERROR (pData, MNG_INVALIDLENGTH)
+                  MNG_ERROR (pData, MNG_INVALIDLENGTH);
                 break;
               }
           }
@@ -7031,7 +7608,7 @@ READ_CHUNK (mng_read_evnt)
             iLen      = iLen - iNamesize - 1;
 
             if (!iLen)                 /* must not end with a null ! */
-              MNG_ERROR (pData, MNG_ENDWITHNULL)
+              MNG_ERROR (pData, MNG_ENDWITHNULL);
           }
 
           if (!iX)
@@ -7052,8 +7629,8 @@ READ_CHUNK (mng_read_evnt)
 
             if (iNamesize)
             {
-              MNG_ALLOC (pData, pEntry->zSegmentname, iNamesize+1)
-              MNG_COPY (pEntry->zSegmentname, pTemp, iNamesize)
+              MNG_ALLOC (pData, pEntry->zSegmentname, iNamesize+1);
+              MNG_COPY (pEntry->zSegmentname, pTemp, iNamesize);
             }
 
             pEntry++;
@@ -7067,19 +7644,21 @@ READ_CHUNK (mng_read_evnt)
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_EVNT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_EVNT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_OPTIMIZE_CHUNKREADER
 READ_CHUNK (mng_read_unknown)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_UNKNOWN, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_READ_UNKNOWN, MNG_LC_START);
 #endif
                                        /* sequence checks */
 #ifdef MNG_INCLUDE_JNG
@@ -7089,7 +7668,7 @@ READ_CHUNK (mng_read_unknown)
   if ((!pData->bHasMHDR) && (!pData->bHasIHDR) &&
       (!pData->bHasBASI) && (!pData->bHasDHDR)    )
 #endif
-    MNG_ERROR (pData, MNG_SEQUENCEERROR)
+    MNG_ERROR (pData, MNG_SEQUENCEERROR);
                                        /* critical chunk ? */
   if ((((mng_uint32)pData->iChunkname & 0x20000000) == 0)
 #ifdef MNG_SKIPCHUNK_SAVE
@@ -7105,7 +7684,7 @@ READ_CHUNK (mng_read_unknown)
     && (pData->iChunkname != MNG_UINT_ORDR)
 #endif
       )
-    MNG_ERROR (pData, MNG_UNKNOWNCRITICAL)
+    MNG_ERROR (pData, MNG_UNKNOWNCRITICAL);
 
   if (pData->fProcessunknown)          /* let the app handle it ? */
   {
@@ -7113,7 +7692,7 @@ READ_CHUNK (mng_read_unknown)
                                             iRawlen, (mng_ptr)pRawdata);
 
     if (!bOke)
-      MNG_ERROR (pData, MNG_APPMISCERROR)
+      MNG_ERROR (pData, MNG_APPMISCERROR);
   }
 
 #ifdef MNG_STORE_CHUNKS
@@ -7131,18 +7710,19 @@ READ_CHUNK (mng_read_unknown)
       ((mng_unknown_chunkp)*ppChunk)->pData = 0;
     else
     {                                  /* then store it */
-      MNG_ALLOC (pData, ((mng_unknown_chunkp)*ppChunk)->pData, iRawlen)
-      MNG_COPY (((mng_unknown_chunkp)*ppChunk)->pData, pRawdata, iRawlen)
+      MNG_ALLOC (pData, ((mng_unknown_chunkp)*ppChunk)->pData, iRawlen);
+      MNG_COPY (((mng_unknown_chunkp)*ppChunk)->pData, pRawdata, iRawlen);
     }
   }
 #endif /* MNG_STORE_CHUNKS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_READ_UNKNOWN, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_READ_UNKNOWN, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;                  /* done */
 }
+#endif
 
 /* ************************************************************************** */
 
@@ -7166,7 +7746,7 @@ WRITE_CHUNK (mng_write_ihdr)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_IHDR, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_IHDR, MNG_LC_START);
 #endif
 
   pIHDR    = (mng_ihdrp)pChunk;        /* address the proper chunk */
@@ -7185,7 +7765,7 @@ WRITE_CHUNK (mng_write_ihdr)
   iRetcode = write_raw_chunk (pData, pIHDR->sHeader.iChunkname, iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_IHDR, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_IHDR, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7203,7 +7783,7 @@ WRITE_CHUNK (mng_write_plte)
   mng_uint32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PLTE, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_PLTE, MNG_LC_START);
 #endif
 
   pPLTE    = (mng_pltep)pChunk;        /* address the proper chunk */
@@ -7230,7 +7810,7 @@ WRITE_CHUNK (mng_write_plte)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PLTE, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_PLTE, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7244,7 +7824,7 @@ WRITE_CHUNK (mng_write_idat)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_IDAT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_IDAT, MNG_LC_START);
 #endif
 
   pIDAT = (mng_idatp)pChunk;           /* address the proper chunk */
@@ -7256,7 +7836,7 @@ WRITE_CHUNK (mng_write_idat)
                                 pIDAT->iDatasize, pIDAT->pData);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_IDAT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_IDAT, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7270,7 +7850,7 @@ WRITE_CHUNK (mng_write_iend)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_IEND, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_IEND, MNG_LC_START);
 #endif
 
   pIEND = (mng_iendp)pChunk;           /* address the proper chunk */
@@ -7278,7 +7858,7 @@ WRITE_CHUNK (mng_write_iend)
   iRetcode = write_raw_chunk (pData, pIEND->sHeader.iChunkname, 0, 0);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_IEND, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_IEND, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7296,7 +7876,7 @@ WRITE_CHUNK (mng_write_trns)
   mng_uint32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_TRNS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_TRNS, MNG_LC_START);
 #endif
 
   pTRNS = (mng_trnsp)pChunk;           /* address the proper chunk */
@@ -7348,7 +7928,7 @@ WRITE_CHUNK (mng_write_trns)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_TRNS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_TRNS, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7364,7 +7944,7 @@ WRITE_CHUNK (mng_write_gama)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_GAMA, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_GAMA, MNG_LC_START);
 #endif
 
   pGAMA = (mng_gamap)pChunk;           /* address the proper chunk */
@@ -7383,7 +7963,7 @@ WRITE_CHUNK (mng_write_gama)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_GAMA, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_GAMA, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7400,7 +7980,7 @@ WRITE_CHUNK (mng_write_chrm)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_CHRM, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_CHRM, MNG_LC_START);
 #endif
 
   pCHRM = (mng_chrmp)pChunk;           /* address the proper chunk */
@@ -7426,7 +8006,7 @@ WRITE_CHUNK (mng_write_chrm)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_CHRM, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_CHRM, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7443,7 +8023,7 @@ WRITE_CHUNK (mng_write_srgb)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SRGB, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_SRGB, MNG_LC_START);
 #endif
 
   pSRGB = (mng_srgbp)pChunk;           /* address the proper chunk */
@@ -7462,7 +8042,7 @@ WRITE_CHUNK (mng_write_srgb)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SRGB, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_SRGB, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7483,7 +8063,7 @@ WRITE_CHUNK (mng_write_iccp)
   mng_uint32  iReallen;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_ICCP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_ICCP, MNG_LC_START);
 #endif
 
   pICCP = (mng_iccpp)pChunk;           /* address the proper chunk */
@@ -7501,13 +8081,13 @@ WRITE_CHUNK (mng_write_iccp)
       iRawlen  = pICCP->iNamesize + 2 + iReallen;
                                        /* requires large buffer ? */
       if (iRawlen > pData->iWritebufsize)
-        MNG_ALLOC (pData, pRawdata, iRawlen)
+        MNG_ALLOC (pData, pRawdata, iRawlen);
 
       pTemp = pRawdata;                /* fill the buffer */
 
       if (pICCP->iNamesize)
       {
-        MNG_COPY (pTemp, pICCP->zName, pICCP->iNamesize)
+        MNG_COPY (pTemp, pICCP->zName, pICCP->iNamesize);
         pTemp += pICCP->iNamesize;
       }
 
@@ -7516,21 +8096,21 @@ WRITE_CHUNK (mng_write_iccp)
       pTemp += 2;
 
       if (iReallen)
-        MNG_COPY (pTemp, pBuf, iReallen)
+        MNG_COPY (pTemp, pBuf, iReallen);
                                        /* and write it */
       iRetcode = write_raw_chunk (pData, pICCP->sHeader.iChunkname,
                                   iRawlen, pRawdata);
                                        /* drop the temp buffer ? */
       if (iRawlen > pData->iWritebufsize)
-        MNG_FREEX (pData, pRawdata, iRawlen)
+        MNG_FREEX (pData, pRawdata, iRawlen);
 
     }
 
-    MNG_FREEX (pData, pBuf, iBuflen)   /* always drop the extra buffer */
+    MNG_FREEX (pData, pBuf, iBuflen);  /* always drop the extra buffer */
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_ICCP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_ICCP, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7549,7 +8129,7 @@ WRITE_CHUNK (mng_write_text)
   mng_uint8p  pTemp;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_TEXT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_TEXT, MNG_LC_START);
 #endif
 
   pTEXT = (mng_textp)pChunk;           /* address the proper chunk */
@@ -7558,13 +8138,13 @@ WRITE_CHUNK (mng_write_text)
   iRawlen  = pTEXT->iKeywordsize + 1 + pTEXT->iTextsize;
                                        /* requires large buffer ? */
   if (iRawlen > pData->iWritebufsize)
-    MNG_ALLOC (pData, pRawdata, iRawlen)
+    MNG_ALLOC (pData, pRawdata, iRawlen);
 
   pTemp = pRawdata;                    /* fill the buffer */
 
   if (pTEXT->iKeywordsize)
   {
-    MNG_COPY (pTemp, pTEXT->zKeyword, pTEXT->iKeywordsize)
+    MNG_COPY (pTemp, pTEXT->zKeyword, pTEXT->iKeywordsize);
     pTemp += pTEXT->iKeywordsize;
   }
 
@@ -7572,16 +8152,16 @@ WRITE_CHUNK (mng_write_text)
   pTemp += 1;
 
   if (pTEXT->iTextsize)
-    MNG_COPY (pTemp, pTEXT->zText, pTEXT->iTextsize)
+    MNG_COPY (pTemp, pTEXT->zText, pTEXT->iTextsize);
                                        /* and write it */
   iRetcode = write_raw_chunk (pData, pTEXT->sHeader.iChunkname,
                               iRawlen, pRawdata);
 
   if (iRawlen > pData->iWritebufsize)  /* drop the temp buffer ? */
-    MNG_FREEX (pData, pRawdata, iRawlen)
+    MNG_FREEX (pData, pRawdata, iRawlen);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_TEXT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_TEXT, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7603,7 +8183,7 @@ WRITE_CHUNK (mng_write_ztxt)
   mng_uint32  iReallen;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_ZTXT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_ZTXT, MNG_LC_START);
 #endif
 
   pZTXT = (mng_ztxtp)pChunk;           /* address the proper chunk */
@@ -7617,13 +8197,13 @@ WRITE_CHUNK (mng_write_ztxt)
     iRawlen  = pZTXT->iKeywordsize + 2 + iReallen;
                                        /* requires large buffer ? */
     if (iRawlen > pData->iWritebufsize)
-      MNG_ALLOC (pData, pRawdata, iRawlen)
+      MNG_ALLOC (pData, pRawdata, iRawlen);
 
     pTemp = pRawdata;                  /* fill the buffer */
 
     if (pZTXT->iKeywordsize)
     {
-      MNG_COPY (pTemp, pZTXT->zKeyword, pZTXT->iKeywordsize)
+      MNG_COPY (pTemp, pZTXT->zKeyword, pZTXT->iKeywordsize);
       pTemp += pZTXT->iKeywordsize;
     }
 
@@ -7633,20 +8213,20 @@ WRITE_CHUNK (mng_write_ztxt)
     pTemp++;
 
     if (iReallen)
-      MNG_COPY (pTemp, pBuf, iReallen)
+      MNG_COPY (pTemp, pBuf, iReallen);
                                        /* and write it */
     iRetcode = write_raw_chunk (pData, pZTXT->sHeader.iChunkname,
                                 iRawlen, pRawdata);
                                        /* drop the temp buffer ? */
     if (iRawlen > pData->iWritebufsize)
-      MNG_FREEX (pData, pRawdata, iRawlen)
+      MNG_FREEX (pData, pRawdata, iRawlen);
 
   }
 
   MNG_FREEX (pData, pBuf, iBuflen);    /* always drop the compression buffer */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_ZTXT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_ZTXT, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7668,7 +8248,7 @@ WRITE_CHUNK (mng_write_itxt)
   mng_uint32  iReallen;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_ITXT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_ITXT, MNG_LC_START);
 #endif
 
   pITXT = (mng_itxtp)pChunk;           /* address the proper chunk */
@@ -7691,13 +8271,13 @@ WRITE_CHUNK (mng_write_itxt)
       iRawlen = iRawlen + pITXT->iTextsize;
                                        /* requires large buffer ? */
     if (iRawlen > pData->iWritebufsize)
-      MNG_ALLOC (pData, pRawdata, iRawlen)
+      MNG_ALLOC (pData, pRawdata, iRawlen);
 
     pTemp = pRawdata;                  /* fill the buffer */
 
     if (pITXT->iKeywordsize)
     {
-      MNG_COPY (pTemp, pITXT->zKeyword, pITXT->iKeywordsize)
+      MNG_COPY (pTemp, pITXT->zKeyword, pITXT->iKeywordsize);
       pTemp += pITXT->iKeywordsize;
     }
 
@@ -7710,7 +8290,7 @@ WRITE_CHUNK (mng_write_itxt)
 
     if (pITXT->iLanguagesize)
     {
-      MNG_COPY (pTemp, pITXT->zLanguage, pITXT->iLanguagesize)
+      MNG_COPY (pTemp, pITXT->zLanguage, pITXT->iLanguagesize);
       pTemp += pITXT->iLanguagesize;
     }
 
@@ -7719,7 +8299,7 @@ WRITE_CHUNK (mng_write_itxt)
 
     if (pITXT->iTranslationsize)
     {
-      MNG_COPY (pTemp, pITXT->zTranslation, pITXT->iTranslationsize)
+      MNG_COPY (pTemp, pITXT->zTranslation, pITXT->iTranslationsize);
       pTemp += pITXT->iTranslationsize;
     }
 
@@ -7729,19 +8309,19 @@ WRITE_CHUNK (mng_write_itxt)
     if (pITXT->iCompressionflag)
     {
       if (iReallen)
-        MNG_COPY (pTemp, pBuf, iReallen)
+        MNG_COPY (pTemp, pBuf, iReallen);
     }
     else
     {
       if (pITXT->iTextsize)
-        MNG_COPY (pTemp, pITXT->zText, pITXT->iTextsize)
+        MNG_COPY (pTemp, pITXT->zText, pITXT->iTextsize);
     }
                                        /* and write it */
     iRetcode = write_raw_chunk (pData, pITXT->sHeader.iChunkname,
                                 iRawlen, pRawdata);
                                        /* drop the temp buffer ? */
     if (iRawlen > pData->iWritebufsize)
-      MNG_FREEX (pData, pRawdata, iRawlen)
+      MNG_FREEX (pData, pRawdata, iRawlen);
 
   }
 
@@ -7751,7 +8331,7 @@ WRITE_CHUNK (mng_write_itxt)
     return iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_ITXT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_ITXT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -7769,7 +8349,7 @@ WRITE_CHUNK (mng_write_bkgd)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_BKGD, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_BKGD, MNG_LC_START);
 #endif
 
   pBKGD = (mng_bkgdp)pChunk;           /* address the proper chunk */
@@ -7810,7 +8390,7 @@ WRITE_CHUNK (mng_write_bkgd)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_BKGD, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_BKGD, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7828,7 +8408,7 @@ WRITE_CHUNK (mng_write_phys)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PHYS, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_PHYS, MNG_LC_START);
 #endif
 
   pPHYS = (mng_physp)pChunk;           /* address the proper chunk */
@@ -7850,7 +8430,7 @@ WRITE_CHUNK (mng_write_phys)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PHYS, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_PHYS, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7868,7 +8448,7 @@ WRITE_CHUNK (mng_write_sbit)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SBIT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_SBIT, MNG_LC_START);
 #endif
 
   pSBIT = (mng_sbitp)pChunk;           /* address the proper chunk */
@@ -7897,8 +8477,10 @@ WRITE_CHUNK (mng_write_sbit)
                  break;
                }
       case  3: {                       /* indexed */
-                 iRawlen       = 1;    /* fill the size & output buffer */
+                 iRawlen       = 3;    /* fill the size & output buffer */
                  *pRawdata     = pSBIT->aBits[0];
+                 *pRawdata     = pSBIT->aBits[1];
+                 *pRawdata     = pSBIT->aBits[2];
 
                  break;
                }
@@ -7955,7 +8537,7 @@ WRITE_CHUNK (mng_write_sbit)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SBIT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_SBIT, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -7975,7 +8557,7 @@ WRITE_CHUNK (mng_write_splt)
   mng_uint8p  pTemp;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SPLT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_SPLT, MNG_LC_START);
 #endif
 
   pSPLT = (mng_spltp)pChunk;           /* address the proper chunk */
@@ -7985,13 +8567,13 @@ WRITE_CHUNK (mng_write_splt)
   iRawlen     = pSPLT->iNamesize + 2 + iEntrieslen;
                                        /* requires large buffer ? */
   if (iRawlen > pData->iWritebufsize)
-    MNG_ALLOC (pData, pRawdata, iRawlen)
+    MNG_ALLOC (pData, pRawdata, iRawlen);
 
   pTemp = pRawdata;                    /* fill the buffer */
 
   if (pSPLT->iNamesize)
   {
-    MNG_COPY (pTemp, pSPLT->zName, pSPLT->iNamesize)
+    MNG_COPY (pTemp, pSPLT->zName, pSPLT->iNamesize);
     pTemp += pSPLT->iNamesize;
   }
 
@@ -8000,16 +8582,16 @@ WRITE_CHUNK (mng_write_splt)
   pTemp += 2;
 
   if (pSPLT->iEntrycount)
-    MNG_COPY (pTemp, pSPLT->pEntries, iEntrieslen)
+    MNG_COPY (pTemp, pSPLT->pEntries, iEntrieslen);
                                        /* and write it */
   iRetcode = write_raw_chunk (pData, pSPLT->sHeader.iChunkname,
                               iRawlen, pRawdata);
 
   if (iRawlen > pData->iWritebufsize)  /* drop the temp buffer ? */
-    MNG_FREEX (pData, pRawdata, iRawlen)
+    MNG_FREEX (pData, pRawdata, iRawlen);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SPLT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_SPLT, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8029,7 +8611,7 @@ WRITE_CHUNK (mng_write_hist)
   mng_uint32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_HIST, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_HIST, MNG_LC_START);
 #endif
 
   pHIST = (mng_histp)pChunk;           /* address the proper chunk */
@@ -8049,7 +8631,7 @@ WRITE_CHUNK (mng_write_hist)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_HIST, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_HIST, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8067,7 +8649,7 @@ WRITE_CHUNK (mng_write_time)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_TIME, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_TIME, MNG_LC_START);
 #endif
 
   pTIME = (mng_timep)pChunk;           /* address the proper chunk */
@@ -8087,7 +8669,7 @@ WRITE_CHUNK (mng_write_time)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_TIME, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_TIME, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8104,7 +8686,7 @@ WRITE_CHUNK (mng_write_mhdr)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_MHDR, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_MHDR, MNG_LC_START);
 #endif
 
   pMHDR = (mng_mhdrp)pChunk;           /* address the proper chunk */
@@ -8125,7 +8707,7 @@ WRITE_CHUNK (mng_write_mhdr)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_MHDR, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_MHDR, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8139,7 +8721,7 @@ WRITE_CHUNK (mng_write_mend)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_MEND, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_MEND, MNG_LC_START);
 #endif
 
   pMEND = (mng_mendp)pChunk;           /* address the proper chunk */
@@ -8147,7 +8729,7 @@ WRITE_CHUNK (mng_write_mend)
   iRetcode = write_raw_chunk (pData, pMEND->sHeader.iChunkname, 0, 0);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_MEND, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_MEND, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8168,7 +8750,7 @@ WRITE_CHUNK (mng_write_loop)
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_LOOP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_LOOP, MNG_LC_START);
 #endif
 
   pLOOP = (mng_loopp)pChunk;           /* address the proper chunk */
@@ -8216,7 +8798,7 @@ WRITE_CHUNK (mng_write_loop)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_LOOP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_LOOP, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8232,7 +8814,7 @@ WRITE_CHUNK (mng_write_endl)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_ENDL, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_ENDL, MNG_LC_START);
 #endif
 
   pENDL     = (mng_endlp)pChunk;       /* address the proper chunk */
@@ -8246,7 +8828,7 @@ WRITE_CHUNK (mng_write_endl)
                                iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_ENDL, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_ENDL, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8262,7 +8844,7 @@ WRITE_CHUNK (mng_write_defi)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_DEFI, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_DEFI, MNG_LC_START);
 #endif
 
   pDEFI = (mng_defip)pChunk;           /* address the proper chunk */
@@ -8306,7 +8888,7 @@ WRITE_CHUNK (mng_write_defi)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_DEFI, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_DEFI, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8323,7 +8905,7 @@ WRITE_CHUNK (mng_write_basi)
   mng_bool    bOpaque;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_BASI, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_BASI, MNG_LC_START);
 #endif
 
   pBASI = (mng_basip)pChunk;           /* address the proper chunk */
@@ -8374,7 +8956,7 @@ WRITE_CHUNK (mng_write_basi)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_BASI, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_BASI, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8390,7 +8972,7 @@ WRITE_CHUNK (mng_write_clon)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_CLON, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_CLON, MNG_LC_START);
 #endif
 
   pCLON = (mng_clonp)pChunk;           /* address the proper chunk */
@@ -8431,7 +9013,7 @@ WRITE_CHUNK (mng_write_clon)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_CLON, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_CLON, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8451,7 +9033,7 @@ WRITE_CHUNK (mng_write_past)
   mng_uint8p       pTemp;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PAST, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_PAST, MNG_LC_START);
 #endif
 
   pPAST = (mng_pastp)pChunk;           /* address the proper chunk */
@@ -8460,7 +9042,7 @@ WRITE_CHUNK (mng_write_past)
   iRawlen  = 11 + (30 * pPAST->iCount);
                                        /* requires large buffer ? */
   if (iRawlen > pData->iWritebufsize)
-    MNG_ALLOC (pData, pRawdata, iRawlen)
+    MNG_ALLOC (pData, pRawdata, iRawlen);
                                        /* fill the output buffer */
   mng_put_uint16 (pRawdata,   pPAST->iDestid);
 
@@ -8498,10 +9080,10 @@ WRITE_CHUNK (mng_write_past)
                               iRawlen, pRawdata);
                                        /* free temporary buffer ? */
   if (iRawlen > pData->iWritebufsize)
-    MNG_FREEX (pData, pRawdata, iRawlen)
+    MNG_FREEX (pData, pRawdata, iRawlen);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PAST, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_PAST, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8521,7 +9103,7 @@ WRITE_CHUNK (mng_write_disc)
   mng_uint16p      pTemp2;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_DISC, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_DISC, MNG_LC_START);
 #endif
 
   pDISC    = (mng_discp)pChunk;        /* address the proper chunk */
@@ -8544,7 +9126,7 @@ WRITE_CHUNK (mng_write_disc)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_DISC, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_DISC, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8560,7 +9142,7 @@ WRITE_CHUNK (mng_write_back)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_BACK, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_BACK, MNG_LC_START);
 #endif
 
   pBACK = (mng_backp)pChunk;           /* address the proper chunk */
@@ -8594,7 +9176,7 @@ WRITE_CHUNK (mng_write_back)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_BACK, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_BACK, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8613,7 +9195,7 @@ WRITE_CHUNK (mng_write_fram)
   mng_uint32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_FRAM, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_FRAM, MNG_LC_START);
 #endif
 
   pFRAM = (mng_framp)pChunk;           /* address the proper chunk */
@@ -8632,7 +9214,7 @@ WRITE_CHUNK (mng_write_fram)
         (pFRAM->iChangeclipping) || (pFRAM->iChangesyncid )    )
     {
       if (pFRAM->iNamesize)
-        MNG_COPY (pRawdata+1, pFRAM->zName, pFRAM->iNamesize)
+        MNG_COPY (pRawdata+1, pFRAM->zName, pFRAM->iNamesize);
 
       iRawlen += pFRAM->iNamesize;
       pTemp = pRawdata + pFRAM->iNamesize + 1;
@@ -8697,7 +9279,7 @@ WRITE_CHUNK (mng_write_fram)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_FRAM, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_FRAM, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8713,7 +9295,7 @@ WRITE_CHUNK (mng_write_move)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_MOVE, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_MOVE, MNG_LC_START);
 #endif
 
   pMOVE = (mng_movep)pChunk;           /* address the proper chunk */
@@ -8733,7 +9315,7 @@ WRITE_CHUNK (mng_write_move)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_MOVE, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_MOVE, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8749,7 +9331,7 @@ WRITE_CHUNK (mng_write_clip)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_CLIP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_CLIP, MNG_LC_START);
 #endif
 
   pCLIP = (mng_clipp)pChunk;           /* address the proper chunk */
@@ -8771,7 +9353,7 @@ WRITE_CHUNK (mng_write_clip)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_CLIP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_CLIP, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8787,7 +9369,7 @@ WRITE_CHUNK (mng_write_show)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SHOW, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_SHOW, MNG_LC_START);
 #endif
 
   pSHOW = (mng_showp)pChunk;           /* address the proper chunk */
@@ -8818,7 +9400,7 @@ WRITE_CHUNK (mng_write_show)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SHOW, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_SHOW, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8834,7 +9416,7 @@ WRITE_CHUNK (mng_write_term)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_TERM, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_TERM, MNG_LC_START);
 #endif
 
   pTERM     = (mng_termp)pChunk;       /* address the proper chunk */
@@ -8857,7 +9439,7 @@ WRITE_CHUNK (mng_write_term)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_TERM, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_TERM, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8878,7 +9460,7 @@ WRITE_CHUNK (mng_write_save)
   mng_uint32      iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SAVE, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_SAVE, MNG_LC_START);
 #endif
 
   pSAVE = (mng_savep)pChunk;           /* address the proper chunk */
@@ -8947,7 +9529,7 @@ WRITE_CHUNK (mng_write_save)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SAVE, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_SAVE, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8965,7 +9547,7 @@ WRITE_CHUNK (mng_write_seek)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SEEK, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_SEEK, MNG_LC_START);
 #endif
 
   pSEEK    = (mng_seekp)pChunk;        /* address the proper chunk */
@@ -8974,13 +9556,13 @@ WRITE_CHUNK (mng_write_seek)
   iRawlen  = pSEEK->iNamesize;
 
   if (iRawlen)                         /* fill the output buffer */
-    MNG_COPY (pRawdata, pSEEK->zName, iRawlen)
+    MNG_COPY (pRawdata, pSEEK->zName, iRawlen);
                                        /* and write it */
   iRetcode = write_raw_chunk (pData, pSEEK->sHeader.iChunkname,
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_SEEK, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_SEEK, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -8998,7 +9580,7 @@ WRITE_CHUNK (mng_write_expi)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_EXPI, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_EXPI, MNG_LC_START);
 #endif
 
   pEXPI    = (mng_expip)pChunk;        /* address the proper chunk */
@@ -9009,13 +9591,13 @@ WRITE_CHUNK (mng_write_expi)
   mng_put_uint16 (pRawdata, pEXPI->iSnapshotid);
 
   if (pEXPI->iNamesize)
-    MNG_COPY (pRawdata+2, pEXPI->zName, pEXPI->iNamesize)
+    MNG_COPY (pRawdata+2, pEXPI->zName, pEXPI->iNamesize);
                                        /* and write it */
   iRetcode = write_raw_chunk (pData, pEXPI->sHeader.iChunkname,
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_EXPI, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_EXPI, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9033,7 +9615,7 @@ WRITE_CHUNK (mng_write_fpri)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_FPRI, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_FPRI, MNG_LC_START);
 #endif
 
   pFPRI         = (mng_fprip)pChunk;   /* address the proper chunk */
@@ -9048,7 +9630,7 @@ WRITE_CHUNK (mng_write_fpri)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_FPRI, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_FPRI, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9066,7 +9648,7 @@ WRITE_CHUNK (mng_write_need)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_NEED, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_NEED, MNG_LC_START);
 #endif
 
   pNEED    = (mng_needp)pChunk;        /* address the proper chunk */
@@ -9075,13 +9657,13 @@ WRITE_CHUNK (mng_write_need)
   iRawlen  = pNEED->iKeywordssize;
                                        /* fill the output buffer */
   if (pNEED->iKeywordssize)
-    MNG_COPY (pRawdata, pNEED->zKeywords, pNEED->iKeywordssize)
+    MNG_COPY (pRawdata, pNEED->zKeywords, pNEED->iKeywordssize);
                                        /* and write it */
   iRetcode = write_raw_chunk (pData, pNEED->sHeader.iChunkname,
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_NEED, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_NEED, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9099,7 +9681,7 @@ WRITE_CHUNK (mng_write_phyg)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PHYG, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_PHYG, MNG_LC_START);
 #endif
 
   pPHYG = (mng_phygp)pChunk;           /* address the proper chunk */
@@ -9121,7 +9703,7 @@ WRITE_CHUNK (mng_write_phyg)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PHYG, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_PHYG, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9141,7 +9723,7 @@ WRITE_CHUNK (mng_write_jhdr)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_JHDR, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_JHDR, MNG_LC_START);
 #endif
 
   pJHDR    = (mng_jhdrp)pChunk;        /* address the proper chunk */
@@ -9163,7 +9745,7 @@ WRITE_CHUNK (mng_write_jhdr)
   iRetcode = write_raw_chunk (pData, pJHDR->sHeader.iChunkname, iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_JHDR, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_JHDR, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9183,7 +9765,7 @@ WRITE_CHUNK (mng_write_jdaa)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_JDAA, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_JDAA, MNG_LC_START);
 #endif
 
   pJDAA = (mng_jdaap)pChunk;           /* address the proper chunk */
@@ -9195,7 +9777,7 @@ WRITE_CHUNK (mng_write_jdaa)
                                 pJDAA->iDatasize, pJDAA->pData);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_JDAA, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_JDAA, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9215,7 +9797,7 @@ WRITE_CHUNK (mng_write_jdat)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_JDAT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_JDAT, MNG_LC_START);
 #endif
 
   pJDAT = (mng_jdatp)pChunk;           /* address the proper chunk */
@@ -9227,7 +9809,7 @@ WRITE_CHUNK (mng_write_jdat)
                                 pJDAT->iDatasize, pJDAT->pData);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_JDAT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_JDAT, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9249,7 +9831,7 @@ WRITE_CHUNK (mng_write_jsep)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_JSEP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_JSEP, MNG_LC_START);
 #endif
 
   pJSEP = (mng_jsepp)pChunk;           /* address the proper chunk */
@@ -9257,7 +9839,7 @@ WRITE_CHUNK (mng_write_jsep)
   iRetcode = write_raw_chunk (pData, pJSEP->sHeader.iChunkname, 0, 0);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_JSEP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_JSEP, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9279,7 +9861,7 @@ WRITE_CHUNK (mng_write_dhdr)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_DHDR, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_DHDR, MNG_LC_START);
 #endif
 
   pDHDR    = (mng_dhdrp)pChunk;        /* address the proper chunk */
@@ -9310,7 +9892,7 @@ WRITE_CHUNK (mng_write_dhdr)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_DHDR, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_DHDR, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9328,7 +9910,7 @@ WRITE_CHUNK (mng_write_prom)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PROM, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_PROM, MNG_LC_START);
 #endif
 
   pPROM    = (mng_promp)pChunk;        /* address the proper chunk */
@@ -9344,7 +9926,7 @@ WRITE_CHUNK (mng_write_prom)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PROM, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_PROM, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9360,7 +9942,7 @@ WRITE_CHUNK (mng_write_ipng)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_IPNG, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_IPNG, MNG_LC_START);
 #endif
 
   pIPNG = (mng_ipngp)pChunk;           /* address the proper chunk */
@@ -9368,7 +9950,7 @@ WRITE_CHUNK (mng_write_ipng)
   iRetcode = write_raw_chunk (pData, pIPNG->sHeader.iChunkname, 0, 0);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_IPNG, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_IPNG, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9391,7 +9973,7 @@ WRITE_CHUNK (mng_write_pplt)
   mng_uint8p      pLastid = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PPLT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_PPLT, MNG_LC_START);
 #endif
 
   pPPLT = (mng_ppltp)pChunk;           /* address the proper chunk */
@@ -9419,6 +10001,7 @@ WRITE_CHUNK (mng_write_pplt)
         *(pTemp+1) = 0;
 
         pTemp += 2;
+        iRawlen += 2;
       }
 
       switch (pPPLT->iDeltatype)       /* add group-entry depending on type */
@@ -9430,6 +10013,7 @@ WRITE_CHUNK (mng_write_pplt)
                   *(pTemp+2) = pEntry->iBlue;
 
                   pTemp += 3;
+                  iRawlen += 3;
 
                   break;
                 }
@@ -9439,6 +10023,7 @@ WRITE_CHUNK (mng_write_pplt)
                   *pTemp     = pEntry->iAlpha;
 
                   pTemp++;
+                  iRawlen++;
 
                   break;
                 }
@@ -9451,6 +10036,7 @@ WRITE_CHUNK (mng_write_pplt)
                   *(pTemp+3) = pEntry->iAlpha;
 
                   pTemp += 4;
+                  iRawlen += 4;
 
                   break;
                 }
@@ -9473,7 +10059,7 @@ WRITE_CHUNK (mng_write_pplt)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_PPLT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_PPLT, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9490,7 +10076,7 @@ WRITE_CHUNK (mng_write_ijng)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_IJNG, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_IJNG, MNG_LC_START);
 #endif
 
   pIJNG = (mng_ijngp)pChunk;           /* address the proper chunk */
@@ -9498,7 +10084,7 @@ WRITE_CHUNK (mng_write_ijng)
   iRetcode = write_raw_chunk (pData, pIJNG->sHeader.iChunkname, 0, 0);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_IJNG, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_IJNG, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9520,7 +10106,7 @@ WRITE_CHUNK (mng_write_drop)
   mng_chunkidp     pTemp2;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_DROP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_DROP, MNG_LC_START);
 #endif
 
   pDROP    = (mng_dropp)pChunk;        /* address the proper chunk */
@@ -9543,7 +10129,7 @@ WRITE_CHUNK (mng_write_drop)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_DROP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_DROP, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9562,7 +10148,7 @@ WRITE_CHUNK (mng_write_dbyk)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_DBYK, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_DBYK, MNG_LC_START);
 #endif
 
   pDBYK = (mng_dbykp)pChunk;           /* address the proper chunk */
@@ -9574,13 +10160,13 @@ WRITE_CHUNK (mng_write_dbyk)
   *(pRawdata+4) = pDBYK->iPolarity;
 
   if (pDBYK->iKeywordssize)
-    MNG_COPY (pRawdata+5, pDBYK->zKeywords, pDBYK->iKeywordssize)
+    MNG_COPY (pRawdata+5, pDBYK->zKeywords, pDBYK->iKeywordssize);
                                        /* and write it */
   iRetcode = write_raw_chunk (pData, pDBYK->sHeader.iChunkname,
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_DBYK, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_DBYK, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9603,7 +10189,7 @@ WRITE_CHUNK (mng_write_ordr)
   mng_uint32      iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_ORDR, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_ORDR, MNG_LC_START);
 #endif
 
   pORDR    = (mng_ordrp)pChunk;        /* address the proper chunk */
@@ -9626,7 +10212,7 @@ WRITE_CHUNK (mng_write_ordr)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_ORDR, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_ORDR, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9644,7 +10230,7 @@ WRITE_CHUNK (mng_write_magn)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_MAGN, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_MAGN, MNG_LC_START);
 #endif
 
   pMAGN    = (mng_magnp)pChunk;        /* address the proper chunk */
@@ -9716,7 +10302,7 @@ WRITE_CHUNK (mng_write_magn)
                               iRawlen, pRawdata);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_MAGN, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_MAGN, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9737,7 +10323,7 @@ WRITE_CHUNK (mng_write_evnt)
   mng_uint32      iNamesize;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_EVNT, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_EVNT, MNG_LC_START);
 #endif
 
   pEVNT = (mng_evntp)pChunk;           /* address the proper chunk */
@@ -9834,7 +10420,7 @@ WRITE_CHUNK (mng_write_evnt)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_EVNT, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_EVNT, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9849,7 +10435,7 @@ WRITE_CHUNK (mng_write_unknown)
   mng_retcode        iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_UNKNOWN, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_UNKNOWN, MNG_LC_START);
 #endif
                                        /* address the proper chunk */
   pUnknown = (mng_unknown_chunkp)pChunk;
@@ -9858,7 +10444,7 @@ WRITE_CHUNK (mng_write_unknown)
                               pUnknown->iDatasize, pUnknown->pData);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_UNKNOWN, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_UNKNOWN, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -9871,3 +10457,4 @@ WRITE_CHUNK (mng_write_unknown)
 /* ************************************************************************** */
 /* * end of file                                                            * */
 /* ************************************************************************** */
+

@@ -1,5 +1,64 @@
 -----------------------------------------------------------
 
+1.0.9 (jan 30th 2005)
+---------------------
+
+in short:
+
+New optimizations save over 20KB on footprint.
+Also a few bugfixes and several patches.
+
+Thanks to those sending in their additions and for testing!
+
+To turn on the optimizations do:
+
+#DEFINE MNG_OPTIMIZE_CHUNKINITFREE
+#DEFINE MNG_OPTIMIZE_OBJCLEANUP
+#DEFINE MNG_OPTIMIZE_CHUNKASSIGN
+#DEFINE MNG_OPTIMIZE_CHUNKREADER
+
+(eg. they're not on by default (yet) !)
+
+-------------------
+
+bugfixes:
+- fixed chunk pushing mechanism
+- fixed bug in writing sBIT for indexed color
+- fixed PPLT getchunk/putchunk routines
+- fixed MNG_NO_1_2_4BIT_SUPPORT for TBBN1G04.PNG
+- cleaned up macro-invocations (thanks to D. Airlie)
+
+core:
+- added more SKIPCHUNK conditionals
+- replaced MNG_TWEAK_LARGE_FILES with permanent solution
+- improved handling of cheap transparency when 16-bit support is disabled
+- added some MNG_SUPPORT_WRITE conditionals
+- added function to retrieve current FRAM delay
+- added MNG_NO_1_2_4BIT_SUPPORT
+- added bgr565_a8 canvas-style (thanks to J. Elvander)
+- standard windows dll upgraded to zlib 1.2.2
+- added LITTLEENDIAN/BIGENDIAN fixtures (thanks J.Stiles)
+- inclusion of zlib/lcms/ijgsrc6b with <> instead of ""
+- added conditional MNG_OPTIMIZE_CHUNKINITFREE
+- added conditional MNG_OPTIMIZE_OBJCLEANUP
+- added conditional MNG_OPTIMIZE_CHUNKASSIGN
+- added conditional MNG_OPTIMIZE_CHUNKREADER
+- fixed problem with global PLTE/tRNS
+
+samples:
+
+contrib:
+
+doc:
+- patched jng & mng manual pages (Thanks Peter Breitenlohner)
+
+makefiles:
+
+autoconf:
+- patched makefile.am & configure.in (Thanks Peter Breitenlohner)
+
+-----------------------------------------------------------
+
 1.0.8 (aug 5th 2004)
 --------------------
 

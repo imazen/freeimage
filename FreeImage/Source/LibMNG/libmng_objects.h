@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_objects.h          copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.7                                                      * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Internal object structures (definition)                    * */
 /* *                                                                        * */
@@ -65,6 +65,9 @@
 /* *             1.0.7 - 03/24/2004 - G.R-P                                 * */
 /* *             - added more SKIPCHUNK conditionals                        * */
 /* *                                                                        * */
+/* *             1.0.9 - 12/05/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_OBJCLEANUP                * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #if defined(__BORLANDC__) && defined(MNG_STRICT_ANSI)
@@ -96,6 +99,9 @@ typedef struct {
            mng_uint32        iFramenr;
            mng_uint32        iLayernr;
            mng_uint32        iPlaytime;
+#ifdef MNG_OPTIMIZE_OBJCLEANUP
+           mng_size_t        iObjsize;                    
+#endif
         } mng_object_header;
 typedef mng_object_header * mng_object_headerp;
 

@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_prop_xs.c          copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.8                                                      * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : property get/set interface (implementation)                * */
 /* *                                                                        * */
@@ -96,11 +96,20 @@
 /* *             - added CANVAS_RGBA565 and CANVAS_BGRA565                  * */
 /* *             1.0.7 - 01/25/2004 - J.S                                   * */
 /* *             - added premultiplied alpha canvas' for RGBA, ARGB, ABGR   * */
-/* *             1.0.7 - 03/07/2004 - G. Randers-Pehrson                    * */
+/* *             1.0.7 - 03/07/2004 - G.R-P.                                * */
 /* *             - put gamma, cms-related functions inside #ifdef           * */
 /* *                                                                        * */
 /* *             1.0.8 - 04/02/2004 - G.Juyn                                * */
 /* *             - added CRC existence & checking flags                     * */
+/* *                                                                        * */
+/* *             1.0.9 - 09/18/2004 - G.R-P.                                * */
+/* *             - added some MNG_SUPPORT_WRITE conditionals                * */
+/* *             1.0.9 - 10/03/2004 - G.Juyn                                * */
+/* *             - added function to retrieve current FRAM delay            * */
+/* *             1.0.9 - 10/14/2004 - G.Juyn                                * */
+/* *             - added bgr565_a8 canvas-style (thanks to J. Elvander)     * */
+/* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
+/* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -129,14 +138,14 @@ mng_retcode MNG_DECL mng_set_userdata (mng_handle hHandle,
                                        mng_ptr    pUserdata)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_USERDATA, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_USERDATA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->pUserdata = pUserdata;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_USERDATA, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_USERDATA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -148,7 +157,7 @@ mng_retcode MNG_DECL mng_set_canvasstyle (mng_handle hHandle,
                                           mng_uint32 iStyle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CANVASSTYLE, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CANVASSTYLE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
@@ -203,6 +212,9 @@ mng_retcode MNG_DECL mng_set_canvasstyle (mng_handle hHandle,
 #ifndef MNG_SKIPCANVAS_BGRA565
     case MNG_CANVAS_BGRA565 : break;
 #endif
+#ifndef MNG_SKIPCANVAS_BGR565_A8
+    case MNG_CANVAS_BGR565_A8 : break;
+#endif
 /*    case MNG_CANVAS_RGB16   : break; */
 /*    case MNG_CANVAS_RGBA16  : break; */
 /*    case MNG_CANVAS_ARGB16  : break; */
@@ -220,13 +232,13 @@ mng_retcode MNG_DECL mng_set_canvasstyle (mng_handle hHandle,
 /*    case MNG_CANVAS_AGRAY16 : break; */
 /*    case MNG_CANVAS_DX15    : break; */
 /*    case MNG_CANVAS_DX16    : break; */
-    default                 : { MNG_ERROR (((mng_datap)hHandle), MNG_INVALIDCNVSTYLE) }
+    default                 : { MNG_ERROR (((mng_datap)hHandle), MNG_INVALIDCNVSTYLE) };
   }
 
   ((mng_datap)hHandle)->iCanvasstyle = iStyle;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CANVASSTYLE, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CANVASSTYLE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -238,7 +250,7 @@ mng_retcode MNG_DECL mng_set_bkgdstyle (mng_handle hHandle,
                                         mng_uint32 iStyle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_BKGDSTYLE, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_BKGDSTYLE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
@@ -267,13 +279,13 @@ mng_retcode MNG_DECL mng_set_bkgdstyle (mng_handle hHandle,
 /*    case MNG_CANVAS_GRAY16  : break; */
 /*    case MNG_CANVAS_DX15    : break; */
 /*    case MNG_CANVAS_DX16    : break; */
-    default                 : MNG_ERROR (((mng_datap)hHandle), MNG_INVALIDCNVSTYLE)
+    default                 : MNG_ERROR (((mng_datap)hHandle), MNG_INVALIDCNVSTYLE);
   }
 
   ((mng_datap)hHandle)->iBkgdstyle = iStyle;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_BKGDSTYLE, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_BKGDSTYLE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -287,7 +299,7 @@ mng_retcode MNG_DECL mng_set_bgcolor (mng_handle hHandle,
                                       mng_uint16 iBlue)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_BGCOLOR, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_BGCOLOR, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
@@ -297,7 +309,7 @@ mng_retcode MNG_DECL mng_set_bgcolor (mng_handle hHandle,
   ((mng_datap)hHandle)->bUseBKGD = MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_BGCOLOR, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_BGCOLOR, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -309,14 +321,14 @@ mng_retcode MNG_DECL mng_set_usebkgd (mng_handle hHandle,
                                       mng_bool   bUseBKGD)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_USEBKGD, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_USEBKGD, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->bUseBKGD = bUseBKGD;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_USEBKGD, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_USEBKGD, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -328,14 +340,14 @@ mng_retcode MNG_DECL mng_set_storechunks (mng_handle hHandle,
                                           mng_bool   bStorechunks)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_STORECHUNKS, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_STORECHUNKS, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->bStorechunks = bStorechunks;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_STORECHUNKS, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_STORECHUNKS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -347,14 +359,14 @@ mng_retcode MNG_DECL mng_set_sectionbreaks (mng_handle hHandle,
                                             mng_bool   bSectionbreaks)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SECTIONBREAKS, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SECTIONBREAKS, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->bSectionbreaks = bSectionbreaks;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SECTIONBREAKS, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SECTIONBREAKS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -366,18 +378,18 @@ mng_retcode MNG_DECL mng_set_cacheplayback (mng_handle hHandle,
                                             mng_bool   bCacheplayback)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CACHEPLAYBACK, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CACHEPLAYBACK, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
 
   if (((mng_datap)hHandle)->bHasheader)
-    MNG_ERROR (((mng_datap)hHandle), MNG_FUNCTIONINVALID)
+    MNG_ERROR (((mng_datap)hHandle), MNG_FUNCTIONINVALID);
 
   ((mng_datap)hHandle)->bCacheplayback = bCacheplayback;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CACHEPLAYBACK, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CACHEPLAYBACK, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -389,7 +401,7 @@ mng_retcode MNG_DECL mng_set_doprogressive (mng_handle hHandle,
                                             mng_bool   bDoProgressive)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DOPROGRESSIVE, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DOPROGRESSIVE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
@@ -397,7 +409,7 @@ mng_retcode MNG_DECL mng_set_doprogressive (mng_handle hHandle,
   ((mng_datap)hHandle)->bDoProgressive = bDoProgressive;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DOPROGRESSIVE, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DOPROGRESSIVE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -409,7 +421,7 @@ mng_retcode MNG_DECL mng_set_crcmode (mng_handle hHandle,
                                       mng_uint32 iCrcmode)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CRCMODE, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CRCMODE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
@@ -417,7 +429,7 @@ mng_retcode MNG_DECL mng_set_crcmode (mng_handle hHandle,
   ((mng_datap)hHandle)->iCrcmode = iCrcmode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CRCMODE, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CRCMODE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -430,14 +442,14 @@ mng_retcode MNG_DECL mng_set_srgb (mng_handle hHandle,
                                    mng_bool   bIssRGB)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGB, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGB, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->bIssRGB = bIssRGB;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGB, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGB, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -456,7 +468,7 @@ mng_retcode MNG_DECL mng_set_outputprofile (mng_handle hHandle,
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTPROFILE, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTPROFILE, MNG_LC_START);
 #endif
 
 #ifdef MNG_INCLUDE_LCMS
@@ -470,11 +482,11 @@ mng_retcode MNG_DECL mng_set_outputprofile (mng_handle hHandle,
   pData->hProf2 = mnglcms_createfileprofile (zFilename);
 
   if (!pData->hProf2)                  /* handle error ? */
-    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
 #endif /* MNG_INCLUDE_LCMS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTPROFILE, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTPROFILE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -495,7 +507,7 @@ mng_retcode MNG_DECL mng_set_outputprofile2 (mng_handle hHandle,
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTPROFILE2, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTPROFILE2, MNG_LC_START);
 #endif
 
 #ifdef MNG_INCLUDE_LCMS
@@ -509,11 +521,11 @@ mng_retcode MNG_DECL mng_set_outputprofile2 (mng_handle hHandle,
   pData->hProf2 = mnglcms_creatememprofile (iProfilesize, pProfile);
 
   if (!pData->hProf2)                  /* handle error ? */
-    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
 #endif /* MNG_INCLUDE_LCMS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTPROFILE2, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTPROFILE2, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -530,7 +542,7 @@ mng_retcode MNG_DECL mng_set_outputsrgb (mng_handle hHandle)
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTSRGB, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTSRGB, MNG_LC_START);
 #endif
 
 #ifdef MNG_INCLUDE_LCMS
@@ -544,11 +556,11 @@ mng_retcode MNG_DECL mng_set_outputsrgb (mng_handle hHandle)
   pData->hProf2 = mnglcms_createsrgbprofile ();
 
   if (!pData->hProf2)                  /* handle error ? */
-    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
 #endif /* MNG_INCLUDE_LCMS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTSRGB, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_OUTPUTSRGB, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -565,7 +577,7 @@ mng_retcode MNG_DECL mng_set_srgbprofile (mng_handle hHandle,
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBPROFILE2, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBPROFILE2, MNG_LC_START);
 #endif
 
 #ifdef MNG_INCLUDE_LCMS
@@ -579,11 +591,11 @@ mng_retcode MNG_DECL mng_set_srgbprofile (mng_handle hHandle,
   pData->hProf3 = mnglcms_createfileprofile (zFilename);
 
   if (!pData->hProf3)                  /* handle error ? */
-    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
 #endif /* MNG_INCLUDE_LCMS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBPROFILE2, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBPROFILE2, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -602,7 +614,7 @@ mng_retcode MNG_DECL mng_set_srgbprofile2 (mng_handle hHandle,
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBPROFILE, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBPROFILE, MNG_LC_START);
 #endif
 
 #ifdef MNG_INCLUDE_LCMS
@@ -616,11 +628,11 @@ mng_retcode MNG_DECL mng_set_srgbprofile2 (mng_handle hHandle,
   pData->hProf3 = mnglcms_creatememprofile (iProfilesize, pProfile);
 
   if (!pData->hProf3)                  /* handle error ? */
-    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
 #endif /* MNG_INCLUDE_LCMS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBPROFILE, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBPROFILE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -636,7 +648,7 @@ mng_retcode MNG_DECL mng_set_srgbimplicit (mng_handle hHandle)
 #endif
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBIMPLICIT, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBIMPLICIT, MNG_LC_START);
 #endif
 
 #ifdef MNG_INCLUDE_LCMS
@@ -650,11 +662,11 @@ mng_retcode MNG_DECL mng_set_srgbimplicit (mng_handle hHandle)
   pData->hProf3 = mnglcms_createsrgbprofile ();
 
   if (!pData->hProf3)                  /* handle error ? */
-    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE)
+    MNG_ERRORL (pData, MNG_LCMS_NOHANDLE);
 #endif /* MNG_INCLUDE_LCMS */
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBIMPLICIT, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SRGBIMPLICIT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -667,14 +679,14 @@ mng_retcode MNG_DECL mng_set_viewgamma (mng_handle hHandle,
                                         mng_float  dGamma)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_VIEWGAMMA, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_VIEWGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->dViewgamma = dGamma;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_VIEWGAMMA, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_VIEWGAMMA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -687,14 +699,14 @@ mng_retcode MNG_DECL mng_set_displaygamma (mng_handle hHandle,
                                            mng_float  dGamma)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DISPLAYGAMMA, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DISPLAYGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->dDisplaygamma = dGamma;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DISPLAYGAMMA, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DISPLAYGAMMA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -706,14 +718,14 @@ mng_retcode MNG_DECL mng_set_dfltimggamma (mng_handle hHandle,
                                            mng_float  dGamma)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DFLTIMGGAMMA, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DFLTIMGGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->dDfltimggamma = dGamma;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DFLTIMGGAMMA, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DFLTIMGGAMMA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -726,14 +738,14 @@ mng_retcode MNG_DECL mng_set_viewgammaint (mng_handle hHandle,
                                            mng_uint32 iGamma)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_VIEWGAMMA, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_VIEWGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->dViewgamma = (mng_float)iGamma / 100000;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_VIEWGAMMA, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_VIEWGAMMA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -746,14 +758,14 @@ mng_retcode MNG_DECL mng_set_displaygammaint (mng_handle hHandle,
                                               mng_uint32 iGamma)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DISPLAYGAMMA, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DISPLAYGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->dDisplaygamma = (mng_float)iGamma / 100000;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DISPLAYGAMMA, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DISPLAYGAMMA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -766,14 +778,14 @@ mng_retcode MNG_DECL mng_set_dfltimggammaint (mng_handle hHandle,
                                               mng_uint32 iGamma)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DFLTIMGGAMMA, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DFLTIMGGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->dDfltimggamma = (mng_float)iGamma / 100000;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DFLTIMGGAMMA, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DFLTIMGGAMMA, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -787,14 +799,14 @@ mng_retcode MNG_DECL mng_set_maxcanvaswidth (mng_handle hHandle,
                                              mng_uint32 iMaxwidth)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASWIDTH, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASWIDTH, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iMaxwidth = iMaxwidth;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASWIDTH, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASWIDTH, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -806,14 +818,14 @@ mng_retcode MNG_DECL mng_set_maxcanvasheight (mng_handle hHandle,
                                               mng_uint32 iMaxheight)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASHEIGHT, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASHEIGHT, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iMaxheight = iMaxheight;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASHEIGHT, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASHEIGHT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -826,7 +838,7 @@ mng_retcode MNG_DECL mng_set_maxcanvassize (mng_handle hHandle,
                                             mng_uint32 iMaxheight)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASSIZE, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASSIZE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
@@ -834,7 +846,7 @@ mng_retcode MNG_DECL mng_set_maxcanvassize (mng_handle hHandle,
   ((mng_datap)hHandle)->iMaxheight = iMaxheight;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASSIZE, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_MAXCANVASSIZE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -845,22 +857,24 @@ mng_retcode MNG_DECL mng_set_maxcanvassize (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_ZLIB
 #ifdef MNG_ACCESS_ZLIB
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_zlib_level (mng_handle hHandle,
                                          mng_int32  iZlevel)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_LEVEL, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_LEVEL, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iZlevel = iZlevel;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_LEVEL, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_LEVEL, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_ZLIB */
 #endif /* MNG_INCLUDE_ZLIB */
 
@@ -868,22 +882,24 @@ mng_retcode MNG_DECL mng_set_zlib_level (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_ZLIB
 #ifdef MNG_ACCESS_ZLIB
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_zlib_method (mng_handle hHandle,
                                           mng_int32  iZmethod)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_METHOD, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_METHOD, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iZmethod = iZmethod;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_METHOD, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_METHOD, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_ZLIB */
 #endif /* MNG_INCLUDE_ZLIB */
 
@@ -891,22 +907,24 @@ mng_retcode MNG_DECL mng_set_zlib_method (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_ZLIB
 #ifdef MNG_ACCESS_ZLIB
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_zlib_windowbits (mng_handle hHandle,
                                               mng_int32  iZwindowbits)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_WINDOWBITS, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_WINDOWBITS, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iZwindowbits = iZwindowbits;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_WINDOWBITS, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_WINDOWBITS, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_ZLIB */
 #endif /* MNG_INCLUDE_ZLIB */
 
@@ -914,22 +932,24 @@ mng_retcode MNG_DECL mng_set_zlib_windowbits (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_ZLIB
 #ifdef MNG_ACCESS_ZLIB
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_zlib_memlevel (mng_handle hHandle,
                                             mng_int32  iZmemlevel)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_MEMLEVEL, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_MEMLEVEL, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iZmemlevel = iZmemlevel;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_MEMLEVEL, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_MEMLEVEL, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_ZLIB */
 #endif /* MNG_INCLUDE_ZLIB */
 
@@ -937,22 +957,24 @@ mng_retcode MNG_DECL mng_set_zlib_memlevel (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_ZLIB
 #ifdef MNG_ACCESS_ZLIB
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_zlib_strategy (mng_handle hHandle,
                                             mng_int32  iZstrategy)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_STRATEGY, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_STRATEGY, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iZstrategy = iZstrategy;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_STRATEGY, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_STRATEGY, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_ZLIB */
 #endif /* MNG_INCLUDE_ZLIB */
 
@@ -960,22 +982,24 @@ mng_retcode MNG_DECL mng_set_zlib_strategy (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_ZLIB
 #ifdef MNG_ACCESS_ZLIB
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_zlib_maxidat (mng_handle hHandle,
                                            mng_uint32 iMaxIDAT)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_MAXIDAT, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_MAXIDAT, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iMaxIDAT = iMaxIDAT;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_MAXIDAT, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_ZLIB_MAXIDAT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_ZLIB */
 #endif /* MNG_INCLUDE_ZLIB */
 
@@ -983,22 +1007,24 @@ mng_retcode MNG_DECL mng_set_zlib_maxidat (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_JNG
 #ifdef MNG_ACCESS_JPEG
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_jpeg_dctmethod (mng_handle        hHandle,
                                              mngjpeg_dctmethod eJPEGdctmethod)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_DCTMETHOD, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_DCTMETHOD, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->eJPEGdctmethod = eJPEGdctmethod;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_DCTMETHOD, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_DCTMETHOD, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif MNG_SUPPORT_WRITE
 #endif /* MNG_ACCESS_JPEG */
 #endif /* MNG_INCLUDE_JNG */
 
@@ -1006,22 +1032,24 @@ mng_retcode MNG_DECL mng_set_jpeg_dctmethod (mng_handle        hHandle,
 
 #ifdef MNG_INCLUDE_JNG
 #ifdef MNG_ACCESS_JPEG
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_jpeg_quality (mng_handle hHandle,
                                            mng_int32  iJPEGquality)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_QUALITY, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_QUALITY, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iJPEGquality = iJPEGquality;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_QUALITY, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_QUALITY, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_JPEG */
 #endif /* MNG_INCLUDE_JNG */
 
@@ -1029,22 +1057,24 @@ mng_retcode MNG_DECL mng_set_jpeg_quality (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_JNG
 #ifdef MNG_ACCESS_JPEG
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_jpeg_smoothing (mng_handle hHandle,
                                              mng_int32  iJPEGsmoothing)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_SMOOTHING, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_SMOOTHING, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iJPEGsmoothing = iJPEGsmoothing;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_SMOOTHING, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_SMOOTHING, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_JPEG */
 #endif /* MNG_INCLUDE_JNG */
 
@@ -1052,22 +1082,24 @@ mng_retcode MNG_DECL mng_set_jpeg_smoothing (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_JNG
 #ifdef MNG_ACCESS_JPEG
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_jpeg_progressive (mng_handle hHandle,
                                                mng_bool   bJPEGprogressive)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_PROGRESSIVE, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_PROGRESSIVE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->bJPEGcompressprogr = bJPEGprogressive;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_PROGRESSIVE, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_PROGRESSIVE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_JPEG */
 #endif /* MNG_INCLUDE_JNG */
 
@@ -1075,22 +1107,24 @@ mng_retcode MNG_DECL mng_set_jpeg_progressive (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_JNG
 #ifdef MNG_ACCESS_JPEG
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_jpeg_optimized (mng_handle hHandle,
                                              mng_bool   bJPEGoptimized)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_OPTIMIZED, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_OPTIMIZED, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->bJPEGcompressopt = bJPEGoptimized;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_OPTIMIZED, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_OPTIMIZED, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_JPEG */
 #endif /* MNG_INCLUDE_JNG */
 
@@ -1098,22 +1132,24 @@ mng_retcode MNG_DECL mng_set_jpeg_optimized (mng_handle hHandle,
 
 #ifdef MNG_INCLUDE_JNG
 #ifdef MNG_ACCESS_JPEG
+#ifdef MNG_SUPPORT_WRITE
 mng_retcode MNG_DECL mng_set_jpeg_maxjdat (mng_handle hHandle,
                                            mng_uint32 iMaxJDAT)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_MAXJDAT, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_MAXJDAT, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iMaxJDAT = iMaxJDAT;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_MAXJDAT, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_JPEG_MAXJDAT, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
 }
+#endif /* MNG_SUPPORT_WRITE */
 #endif /* MNG_ACCESS_JPEG */
 #endif /* MNG_INCLUDE_JNG */
 
@@ -1124,18 +1160,18 @@ mng_retcode MNG_DECL mng_set_suspensionmode (mng_handle hHandle,
                                              mng_bool   bSuspensionmode)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SUSPENSIONMODE, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SUSPENSIONMODE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
 
   if (((mng_datap)hHandle)->bReading)  /* we must NOT be reading !!! */
-    MNG_ERROR ((mng_datap)hHandle, MNG_FUNCTIONINVALID)
+    MNG_ERROR ((mng_datap)hHandle, MNG_FUNCTIONINVALID);
 
   ((mng_datap)hHandle)->bSuspensionmode = bSuspensionmode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SUSPENSIONMODE, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SUSPENSIONMODE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -1149,14 +1185,14 @@ mng_retcode MNG_DECL mng_set_speed (mng_handle    hHandle,
                                     mng_speedtype iSpeed)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SPEED, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SPEED, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
   ((mng_datap)hHandle)->iSpeed = iSpeed;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SPEED, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_SPEED, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -1180,14 +1216,14 @@ mng_ptr MNG_DECL mng_get_userdata (mng_handle hHandle)
 mng_imgtype MNG_DECL mng_get_sigtype (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SIGTYPE, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SIGTYPE, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_it_unknown;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SIGTYPE, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SIGTYPE, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->eSigtype;
@@ -1198,14 +1234,14 @@ mng_imgtype MNG_DECL mng_get_sigtype (mng_handle hHandle)
 mng_imgtype MNG_DECL mng_get_imagetype (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGETYPE, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGETYPE, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_it_unknown;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGETYPE, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGETYPE, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->eImagetype;
@@ -1216,13 +1252,13 @@ mng_imgtype MNG_DECL mng_get_imagetype (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_imagewidth (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGEWIDTH, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGEWIDTH, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGEWIDTH, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGEWIDTH, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iWidth;
@@ -1233,13 +1269,13 @@ mng_uint32 MNG_DECL mng_get_imagewidth (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_imageheight (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGEWIDTH, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGEWIDTH, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGEHEIGHT, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGEHEIGHT, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iHeight;
@@ -1250,13 +1286,13 @@ mng_uint32 MNG_DECL mng_get_imageheight (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_ticks (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TICKS, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TICKS, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TICKS, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TICKS, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iTicks;
@@ -1267,13 +1303,13 @@ mng_uint32 MNG_DECL mng_get_ticks (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_framecount (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_FRAMECOUNT, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_FRAMECOUNT, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_FRAMECOUNT, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_FRAMECOUNT, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iFramecount;
@@ -1284,13 +1320,13 @@ mng_uint32 MNG_DECL mng_get_framecount (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_layercount (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LAYERCOUNT, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LAYERCOUNT, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LAYERCOUNT, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LAYERCOUNT, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iLayercount;
@@ -1301,13 +1337,13 @@ mng_uint32 MNG_DECL mng_get_layercount (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_playtime (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_PLAYTIME, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_PLAYTIME, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_PLAYTIME, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_PLAYTIME, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iPlaytime;
@@ -1318,13 +1354,13 @@ mng_uint32 MNG_DECL mng_get_playtime (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_simplicity (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SIMPLICITY, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SIMPLICITY, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SIMPLICITY, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SIMPLICITY, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iSimplicity;
@@ -1337,7 +1373,7 @@ mng_uint8 MNG_DECL mng_get_bitdepth (mng_handle hHandle)
   mng_uint8 iRslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_BITDEPTH, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_BITDEPTH, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
@@ -1353,7 +1389,7 @@ mng_uint8 MNG_DECL mng_get_bitdepth (mng_handle hHandle)
     iRslt = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_BITDEPTH, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_BITDEPTH, MNG_LC_END);
 #endif
 
   return iRslt;
@@ -1366,7 +1402,7 @@ mng_uint8 MNG_DECL mng_get_colortype (mng_handle hHandle)
   mng_uint8 iRslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_COLORTYPE, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_COLORTYPE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
@@ -1382,7 +1418,7 @@ mng_uint8 MNG_DECL mng_get_colortype (mng_handle hHandle)
     iRslt = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_COLORTYPE, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_COLORTYPE, MNG_LC_END);
 #endif
 
   return iRslt;
@@ -1395,7 +1431,7 @@ mng_uint8 MNG_DECL mng_get_compression (mng_handle hHandle)
   mng_uint8 iRslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_COMPRESSION, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_COMPRESSION, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
@@ -1411,7 +1447,7 @@ mng_uint8 MNG_DECL mng_get_compression (mng_handle hHandle)
     iRslt = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_COMPRESSION, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_COMPRESSION, MNG_LC_END);
 #endif
 
   return iRslt;
@@ -1424,7 +1460,7 @@ mng_uint8 MNG_DECL mng_get_filter (mng_handle hHandle)
   mng_uint8 iRslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_FILTER, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_FILTER, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
@@ -1435,7 +1471,7 @@ mng_uint8 MNG_DECL mng_get_filter (mng_handle hHandle)
     iRslt = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_FILTER, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_FILTER, MNG_LC_END);
 #endif
 
   return iRslt;
@@ -1448,7 +1484,7 @@ mng_uint8 MNG_DECL mng_get_interlace (mng_handle hHandle)
   mng_uint8 iRslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_INTERLACE, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_INTERLACE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
@@ -1464,7 +1500,7 @@ mng_uint8 MNG_DECL mng_get_interlace (mng_handle hHandle)
     iRslt = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_INTERLACE, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_INTERLACE, MNG_LC_END);
 #endif
 
   return iRslt;
@@ -1477,7 +1513,7 @@ mng_uint8 MNG_DECL mng_get_alphabitdepth (mng_handle hHandle)
   mng_uint8 iRslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHABITDEPTH, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHABITDEPTH, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
@@ -1490,7 +1526,7 @@ mng_uint8 MNG_DECL mng_get_alphabitdepth (mng_handle hHandle)
     iRslt = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHABITDEPTH, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHABITDEPTH, MNG_LC_END);
 #endif
 
   return iRslt;
@@ -1505,7 +1541,7 @@ mng_uint8 MNG_DECL mng_get_refreshpass (mng_handle hHandle)
   mng_datap pData;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_REFRESHPASS, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_REFRESHPASS, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
@@ -1534,7 +1570,7 @@ mng_uint8 MNG_DECL mng_get_refreshpass (mng_handle hHandle)
     iRslt = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_REFRESHPASS, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_REFRESHPASS, MNG_LC_END);
 #endif
 
   return iRslt;
@@ -1542,13 +1578,12 @@ mng_uint8 MNG_DECL mng_get_refreshpass (mng_handle hHandle)
 #endif /* MNG_SUPPORT_DISPLAY */
 
 /* ************************************************************************** */
-
 mng_uint8 MNG_DECL mng_get_alphacompression (mng_handle hHandle)
 {
   mng_uint8 iRslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHACOMPRESSION, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHACOMPRESSION, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
@@ -1561,7 +1596,7 @@ mng_uint8 MNG_DECL mng_get_alphacompression (mng_handle hHandle)
     iRslt = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHACOMPRESSION, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHACOMPRESSION, MNG_LC_END);
 #endif
 
   return iRslt;
@@ -1574,7 +1609,7 @@ mng_uint8 MNG_DECL mng_get_alphafilter (mng_handle hHandle)
   mng_uint8 iRslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHAFILTER, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHAFILTER, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
@@ -1587,7 +1622,7 @@ mng_uint8 MNG_DECL mng_get_alphafilter (mng_handle hHandle)
     iRslt = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHAFILTER, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHAFILTER, MNG_LC_END);
 #endif
 
   return iRslt;
@@ -1600,7 +1635,7 @@ mng_uint8 MNG_DECL mng_get_alphainterlace (mng_handle hHandle)
   mng_uint8 iRslt;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHAINTERLACE, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHAINTERLACE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
@@ -1613,7 +1648,7 @@ mng_uint8 MNG_DECL mng_get_alphainterlace (mng_handle hHandle)
     iRslt = 0;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHAINTERLACE, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHAINTERLACE, MNG_LC_END);
 #endif
 
   return iRslt;
@@ -1624,13 +1659,13 @@ mng_uint8 MNG_DECL mng_get_alphainterlace (mng_handle hHandle)
 mng_uint8 MNG_DECL mng_get_alphadepth (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHADEPTH, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHADEPTH, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHADEPTH, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ALPHADEPTH, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iAlphadepth;
@@ -1641,13 +1676,13 @@ mng_uint8 MNG_DECL mng_get_alphadepth (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_canvasstyle (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CANVASSTYLE, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CANVASSTYLE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CANVASSTYLE, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CANVASSTYLE, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iCanvasstyle;
@@ -1658,13 +1693,13 @@ mng_uint32 MNG_DECL mng_get_canvasstyle (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_bkgdstyle (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_BKGDSTYLE, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_BKGDSTYLE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_BKGDSTYLE, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_BKGDSTYLE, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iBkgdstyle;
@@ -1678,7 +1713,7 @@ mng_retcode MNG_DECL mng_get_bgcolor (mng_handle  hHandle,
                                       mng_uint16* iBlue)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_GET_BGCOLOR, MNG_LC_START)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_GET_BGCOLOR, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
@@ -1687,7 +1722,7 @@ mng_retcode MNG_DECL mng_get_bgcolor (mng_handle  hHandle,
   *iBlue  = ((mng_datap)hHandle)->iBGblue;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (((mng_datap)hHandle), MNG_FN_GET_BGCOLOR, MNG_LC_END)
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_GET_BGCOLOR, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -1698,13 +1733,13 @@ mng_retcode MNG_DECL mng_get_bgcolor (mng_handle  hHandle,
 mng_bool MNG_DECL mng_get_usebkgd (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_USEBKGD, MNG_LC_START)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_USEBKGD, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_USEBKGD, MNG_LC_END)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_USEBKGD, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bUseBKGD;
@@ -1715,13 +1750,13 @@ mng_bool MNG_DECL mng_get_usebkgd (mng_handle hHandle)
 mng_bool MNG_DECL mng_get_storechunks (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_STORECHUNKS, MNG_LC_START)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_STORECHUNKS, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_STORECHUNKS, MNG_LC_END)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_STORECHUNKS, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bStorechunks;
@@ -1732,13 +1767,13 @@ mng_bool MNG_DECL mng_get_storechunks (mng_handle hHandle)
 mng_bool MNG_DECL mng_get_sectionbreaks (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_SECTIONBREAKS, MNG_LC_START)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_SECTIONBREAKS, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_SECTIONBREAKS, MNG_LC_END)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_SECTIONBREAKS, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bSectionbreaks;
@@ -1749,13 +1784,13 @@ mng_bool MNG_DECL mng_get_sectionbreaks (mng_handle hHandle)
 mng_bool MNG_DECL mng_get_cacheplayback (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_CACHEPLAYBACK, MNG_LC_START)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_CACHEPLAYBACK, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_CACHEPLAYBACK, MNG_LC_END)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_CACHEPLAYBACK, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bCacheplayback;
@@ -1766,13 +1801,13 @@ mng_bool MNG_DECL mng_get_cacheplayback (mng_handle hHandle)
 mng_bool MNG_DECL mng_get_doprogressive (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_DOPROGRESSIVE, MNG_LC_START)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_DOPROGRESSIVE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_DOPROGRESSIVE, MNG_LC_END)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_DOPROGRESSIVE, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bDoProgressive;
@@ -1783,13 +1818,13 @@ mng_bool MNG_DECL mng_get_doprogressive (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_crcmode (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_CRCMODE, MNG_LC_START)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_CRCMODE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_CRCMODE, MNG_LC_END)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_CRCMODE, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iCrcmode;
@@ -1801,13 +1836,13 @@ mng_uint32 MNG_DECL mng_get_crcmode (mng_handle hHandle)
 mng_bool MNG_DECL mng_get_srgb (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_SRGB, MNG_LC_START)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_SRGB, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_SRGB, MNG_LC_END)
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_SRGB, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bIssRGB;
@@ -1820,13 +1855,13 @@ mng_bool MNG_DECL mng_get_srgb (mng_handle hHandle)
 mng_float MNG_DECL mng_get_viewgamma (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_VIEWGAMMA, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_VIEWGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_VIEWGAMMA, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_VIEWGAMMA, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->dViewgamma;
@@ -1839,13 +1874,13 @@ mng_float MNG_DECL mng_get_viewgamma (mng_handle hHandle)
 mng_float MNG_DECL mng_get_displaygamma (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DISPLAYGAMMA, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DISPLAYGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DISPLAYGAMMA, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DISPLAYGAMMA, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->dDisplaygamma;
@@ -1859,13 +1894,13 @@ mng_float MNG_DECL mng_get_displaygamma (mng_handle hHandle)
 mng_float MNG_DECL mng_get_dfltimggamma (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DFLTIMGGAMMA, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DFLTIMGGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DFLTIMGGAMMA, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DFLTIMGGAMMA, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->dDfltimggamma;
@@ -1879,13 +1914,13 @@ mng_float MNG_DECL mng_get_dfltimggamma (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_viewgammaint (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_VIEWGAMMA, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_VIEWGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_VIEWGAMMA, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_VIEWGAMMA, MNG_LC_END);
 #endif
 
   return (mng_uint32)(((mng_datap)hHandle)->dViewgamma * 100000);
@@ -1898,13 +1933,13 @@ mng_uint32 MNG_DECL mng_get_viewgammaint (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_displaygammaint (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DISPLAYGAMMA, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DISPLAYGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DISPLAYGAMMA, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DISPLAYGAMMA, MNG_LC_END);
 #endif
 
   return (mng_uint32)(((mng_datap)hHandle)->dDisplaygamma * 100000);
@@ -1918,13 +1953,13 @@ mng_uint32 MNG_DECL mng_get_displaygammaint (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_dfltimggammaint (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DFLTIMGGAMMA, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DFLTIMGGAMMA, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DFLTIMGGAMMA, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_DFLTIMGGAMMA, MNG_LC_END);
 #endif
 
   return (mng_uint32)(((mng_datap)hHandle)->dDfltimggamma * 100000);
@@ -1938,13 +1973,13 @@ mng_uint32 MNG_DECL mng_get_dfltimggammaint (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_maxcanvaswidth (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_MAXCANVASWIDTH, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_MAXCANVASWIDTH, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_MAXCANVASWIDTH, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_MAXCANVASWIDTH, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iMaxwidth;
@@ -1955,13 +1990,13 @@ mng_uint32 MNG_DECL mng_get_maxcanvaswidth (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_maxcanvasheight (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_MAXCANVASHEIGHT, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_MAXCANVASHEIGHT, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_MAXCANVASHEIGHT, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_MAXCANVASHEIGHT, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iMaxheight;
@@ -1975,13 +2010,13 @@ mng_uint32 MNG_DECL mng_get_maxcanvasheight (mng_handle hHandle)
 mng_int32 MNG_DECL mng_get_zlib_level (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_LEVEL, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_LEVEL, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_LEVEL, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_LEVEL, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iZlevel;
@@ -1995,13 +2030,13 @@ mng_int32 MNG_DECL mng_get_zlib_level (mng_handle hHandle)
 mng_int32 MNG_DECL mng_get_zlib_method (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_METHOD, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_METHOD, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_METHOD, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_METHOD, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iZmethod;
@@ -2017,13 +2052,13 @@ mng_int32 MNG_DECL mng_get_zlib_method (mng_handle hHandle)
 mng_int32 MNG_DECL mng_get_zlib_windowbits (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_WINDOWBITS, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_WINDOWBITS, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_WINDOWBITS, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_WINDOWBITS, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iZwindowbits;
@@ -2038,13 +2073,13 @@ mng_int32 MNG_DECL mng_get_zlib_windowbits (mng_handle hHandle)
 mng_int32 MNG_DECL mng_get_zlib_memlevel (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_MEMLEVEL, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_MEMLEVEL, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_MEMLEVEL, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_MEMLEVEL, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iZmemlevel;
@@ -2059,13 +2094,13 @@ mng_int32 MNG_DECL mng_get_zlib_memlevel (mng_handle hHandle)
 mng_int32 MNG_DECL mng_get_zlib_strategy (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_STRATEGY, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_STRATEGY, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_STRATEGY, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_STRATEGY, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iZstrategy;
@@ -2080,13 +2115,13 @@ mng_int32 MNG_DECL mng_get_zlib_strategy (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_zlib_maxidat (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_MAXIDAT, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_MAXIDAT, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_MAXIDAT, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_ZLIB_MAXIDAT, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iMaxIDAT;
@@ -2101,14 +2136,14 @@ mng_uint32 MNG_DECL mng_get_zlib_maxidat (mng_handle hHandle)
 mngjpeg_dctmethod MNG_DECL mng_get_jpeg_dctmethod (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_DCTMETHOD, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_DCTMETHOD, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return JDCT_ISLOW;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_DCTMETHOD, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_DCTMETHOD, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->eJPEGdctmethod;
@@ -2123,13 +2158,13 @@ mngjpeg_dctmethod MNG_DECL mng_get_jpeg_dctmethod (mng_handle hHandle)
 mng_int32 MNG_DECL mng_get_jpeg_quality (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_QUALITY, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_QUALITY, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_QUALITY, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_QUALITY, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iJPEGquality;
@@ -2144,13 +2179,13 @@ mng_int32 MNG_DECL mng_get_jpeg_quality (mng_handle hHandle)
 mng_int32 MNG_DECL mng_get_jpeg_smoothing (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_SMOOTHING, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_SMOOTHING, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_SMOOTHING, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_SMOOTHING, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iJPEGsmoothing;
@@ -2165,13 +2200,13 @@ mng_int32 MNG_DECL mng_get_jpeg_smoothing (mng_handle hHandle)
 mng_bool MNG_DECL mng_get_jpeg_progressive (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_PROGRESSIVE, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_PROGRESSIVE, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_PROGRESSIVE, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_PROGRESSIVE, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bJPEGcompressprogr;
@@ -2186,13 +2221,13 @@ mng_bool MNG_DECL mng_get_jpeg_progressive (mng_handle hHandle)
 mng_bool MNG_DECL mng_get_jpeg_optimized (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_OPTIMIZED, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_OPTIMIZED, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_OPTIMIZED, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_OPTIMIZED, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bJPEGcompressopt;
@@ -2207,13 +2242,13 @@ mng_bool MNG_DECL mng_get_jpeg_optimized (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_jpeg_maxjdat (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_MAXJDAT, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_MAXJDAT, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_MAXJDAT, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_JPEG_MAXJDAT, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iMaxJDAT;
@@ -2227,14 +2262,14 @@ mng_uint32 MNG_DECL mng_get_jpeg_maxjdat (mng_handle hHandle)
 mng_bool MNG_DECL mng_get_suspensionmode (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SUSPENSIONMODE, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SUSPENSIONMODE, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SUSPENSIONMODE, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SUSPENSIONMODE, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bSuspensionmode;
@@ -2247,14 +2282,14 @@ mng_bool MNG_DECL mng_get_suspensionmode (mng_handle hHandle)
 mng_speedtype MNG_DECL mng_get_speed (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SPEED, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SPEED, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_st_normal;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SPEED, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_SPEED, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iSpeed;
@@ -2266,13 +2301,13 @@ mng_speedtype MNG_DECL mng_get_speed (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_imagelevel (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGELEVEL, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGELEVEL, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLEX (hHandle)
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGELEVEL, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_IMAGELEVEL, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iImagelevel;
@@ -2288,13 +2323,13 @@ mng_retcode MNG_DECL mng_get_lastbackchunk (mng_handle  hHandle,
                                             mng_uint8*  iMandatory)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LASTBACKCHUNK, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LASTBACKCHUNK, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
 
   if (((mng_datap)hHandle)->eImagetype != mng_it_mng)
-    MNG_ERROR (((mng_datap)hHandle), MNG_FUNCTIONINVALID)
+    MNG_ERROR (((mng_datap)hHandle), MNG_FUNCTIONINVALID);
 
   *iRed       = ((mng_datap)hHandle)->iBACKred;
   *iGreen     = ((mng_datap)hHandle)->iBACKgreen;
@@ -2302,7 +2337,7 @@ mng_retcode MNG_DECL mng_get_lastbackchunk (mng_handle  hHandle,
   *iMandatory = ((mng_datap)hHandle)->iBACKmandatory;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LASTBACKCHUNK, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LASTBACKCHUNK, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -2318,7 +2353,7 @@ mng_retcode MNG_DECL mng_get_lastseekname (mng_handle hHandle,
   mng_datap pData;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LASTSEEKNAME, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LASTSEEKNAME, MNG_LC_START);
 #endif
 
   MNG_VALIDHANDLE (hHandle)
@@ -2326,14 +2361,14 @@ mng_retcode MNG_DECL mng_get_lastseekname (mng_handle hHandle,
   pData = (mng_datap)hHandle;
                                        /* only allowed for MNG ! */
   if (pData->eImagetype != mng_it_mng)
-    MNG_ERROR (pData, MNG_FUNCTIONINVALID)
+    MNG_ERROR (pData, MNG_FUNCTIONINVALID);
 
   if (pData->pLastseek)                /* is there a last SEEK ? */
   {
     mng_ani_seekp pSEEK = (mng_ani_seekp)pData->pLastseek;
 
     if (pSEEK->iSegmentnamesize)       /* copy the name if there is one */
-      MNG_COPY (zSegmentname, pSEEK->zSegmentname, pSEEK->iSegmentnamesize)
+      MNG_COPY (zSegmentname, pSEEK->zSegmentname, pSEEK->iSegmentnamesize);
 
     *(((mng_uint8p)zSegmentname) + pSEEK->iSegmentnamesize) = 0;
   }
@@ -2343,7 +2378,7 @@ mng_retcode MNG_DECL mng_get_lastseekname (mng_handle hHandle,
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LASTSEEKNAME, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_LASTSEEKNAME, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -2353,17 +2388,46 @@ mng_retcode MNG_DECL mng_get_lastseekname (mng_handle hHandle,
 /* ************************************************************************** */
 
 #ifdef MNG_SUPPORT_DISPLAY
+mng_uint32 MNG_DECL mng_get_currframdelay (mng_handle hHandle)
+{
+  mng_datap  pData;
+  mng_uint32 iRslt;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRFRAMDELAY, MNG_LC_START);
+#endif
+
+  MNG_VALIDHANDLE (hHandle)
+
+  pData = (mng_datap)hHandle;
+                                       /* only allowed for MNG ! */
+  if (pData->eImagetype != mng_it_mng)
+    MNG_ERROR (pData, MNG_FUNCTIONINVALID);
+
+  iRslt = pData->iFramedelay;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRFRAMDELAY, MNG_LC_END);
+#endif
+
+  return iRslt;
+}
+#endif /* MNG_SUPPORT_DISPLAY */
+
+/* ************************************************************************** */
+
+#ifdef MNG_SUPPORT_DISPLAY
 mng_uint32 MNG_DECL mng_get_starttime (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_STARTTIME, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_STARTTIME, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_st_normal;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_STARTTIME, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_STARTTIME, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iStarttime;
@@ -2376,14 +2440,14 @@ mng_uint32 MNG_DECL mng_get_starttime (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_runtime (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_RUNTIME, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_RUNTIME, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_st_normal;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_RUNTIME, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_RUNTIME, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iRuntime;
@@ -2397,14 +2461,14 @@ mng_uint32 MNG_DECL mng_get_runtime (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_currentframe (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTFRAME, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTFRAME, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_st_normal;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTFRAME, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTFRAME, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iFrameseq;
@@ -2419,14 +2483,14 @@ mng_uint32 MNG_DECL mng_get_currentframe (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_currentlayer (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTLAYER, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTLAYER, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_st_normal;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTLAYER, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTLAYER, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iLayerseq;
@@ -2441,14 +2505,14 @@ mng_uint32 MNG_DECL mng_get_currentlayer (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_currentplaytime (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTPLAYTIME, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTPLAYTIME, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_st_normal;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTPLAYTIME, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_CURRENTPLAYTIME, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iFrametime;
@@ -2463,14 +2527,14 @@ mng_uint32 MNG_DECL mng_get_currentplaytime (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_totalframes (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALFRAMES, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALFRAMES, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_st_normal;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALFRAMES, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALFRAMES, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iTotalframes;
@@ -2485,14 +2549,14 @@ mng_uint32 MNG_DECL mng_get_totalframes (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_totallayers (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALLAYERS, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALLAYERS, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_st_normal;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALLAYERS, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALLAYERS, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iTotallayers;
@@ -2507,14 +2571,14 @@ mng_uint32 MNG_DECL mng_get_totallayers (mng_handle hHandle)
 mng_uint32 MNG_DECL mng_get_totalplaytime (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALPLAYTIME, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALPLAYTIME, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return mng_st_normal;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALPLAYTIME, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GET_TOTALPLAYTIME, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->iTotalplaytime;
@@ -2527,14 +2591,14 @@ mng_uint32 MNG_DECL mng_get_totalplaytime (mng_handle hHandle)
 mng_bool MNG_DECL mng_status_error (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_ERROR, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_ERROR, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_ERROR, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_ERROR, MNG_LC_END);
 #endif
 
   return (mng_bool)((mng_datap)hHandle)->iErrorcode;
@@ -2546,14 +2610,14 @@ mng_bool MNG_DECL mng_status_error (mng_handle hHandle)
 mng_bool MNG_DECL mng_status_reading (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_READING, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_READING, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_READING, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_READING, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bReading;
@@ -2566,14 +2630,14 @@ mng_bool MNG_DECL mng_status_reading (mng_handle hHandle)
 mng_bool MNG_DECL mng_status_suspendbreak (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_SUSPENDBREAK, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_SUSPENDBREAK, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_SUSPENDBREAK, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_SUSPENDBREAK, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bSuspended;
@@ -2586,14 +2650,14 @@ mng_bool MNG_DECL mng_status_suspendbreak (mng_handle hHandle)
 mng_bool MNG_DECL mng_status_creating (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_CREATING, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_CREATING, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_CREATING, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_CREATING, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bCreating;
@@ -2606,14 +2670,14 @@ mng_bool MNG_DECL mng_status_creating (mng_handle hHandle)
 mng_bool MNG_DECL mng_status_writing (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_WRITING, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_WRITING, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_WRITING, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_WRITING, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bWriting;
@@ -2626,14 +2690,14 @@ mng_bool MNG_DECL mng_status_writing (mng_handle hHandle)
 mng_bool MNG_DECL mng_status_displaying (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_DISPLAYING, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_DISPLAYING, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_DISPLAYING, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_DISPLAYING, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bDisplaying;
@@ -2646,14 +2710,14 @@ mng_bool MNG_DECL mng_status_displaying (mng_handle hHandle)
 mng_bool MNG_DECL mng_status_running (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_RUNNING, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_RUNNING, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_RUNNING, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_RUNNING, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bRunning;
@@ -2666,14 +2730,14 @@ mng_bool MNG_DECL mng_status_running (mng_handle hHandle)
 mng_bool MNG_DECL mng_status_timerbreak (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_TIMERBREAK, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_TIMERBREAK, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_TIMERBREAK, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_TIMERBREAK, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bTimerset;
@@ -2686,14 +2750,14 @@ mng_bool MNG_DECL mng_status_timerbreak (mng_handle hHandle)
 mng_bool MNG_DECL mng_status_dynamic (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_DYNAMIC, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_DYNAMIC, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_DYNAMIC, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_DYNAMIC, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bDynamic;
@@ -2706,14 +2770,14 @@ mng_bool MNG_DECL mng_status_dynamic (mng_handle hHandle)
 mng_bool MNG_DECL mng_status_runningevent (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_RUNNINGEVENT, MNG_LC_START)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_RUNNINGEVENT, MNG_LC_START);
 #endif
 
   if ((hHandle == 0) || (((mng_datap)hHandle)->iMagic != MNG_MAGIC))
     return MNG_FALSE;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_RUNNINGEVENT, MNG_LC_END)
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_STATUS_RUNNINGEVENT, MNG_LC_END);
 #endif
 
   return ((mng_datap)hHandle)->bRunningevent;

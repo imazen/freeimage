@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_filter.c           copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_filter.c           copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Filtering routines (implementation)                        * */
 /* *                                                                        * */
@@ -31,6 +31,9 @@
 /* *                                                                        * */
 /* *             1.0.6 - 07/07/2003 - G.R-P                                 * */
 /* *             - reversed some loops to use decrementing counter          * */
+/* *                                                                        * */
+/* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
+/* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -61,7 +64,7 @@ MNG_LOCAL mng_retcode filter_sub (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_FILTER_SUB, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_FILTER_SUB, MNG_LC_START);
 #endif
 
   iBpp       = pData->iFilterbpp;
@@ -76,7 +79,7 @@ MNG_LOCAL mng_retcode filter_sub (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_FILTER_SUB, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_FILTER_SUB, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -91,7 +94,7 @@ MNG_LOCAL mng_retcode filter_up (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_FILTER_UP, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_FILTER_UP, MNG_LC_START);
 #endif
 
   pRawx   = pData->pWorkrow + pData->iPixelofs;
@@ -109,7 +112,7 @@ MNG_LOCAL mng_retcode filter_up (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_FILTER_UP, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_FILTER_UP, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -126,7 +129,7 @@ MNG_LOCAL mng_retcode filter_average (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_FILTER_AVERAGE, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_FILTER_AVERAGE, MNG_LC_START);
 #endif
 
   iBpp       = pData->iFilterbpp;
@@ -154,7 +157,7 @@ MNG_LOCAL mng_retcode filter_average (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_FILTER_AVERAGE, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_FILTER_AVERAGE, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -175,7 +178,7 @@ MNG_LOCAL mng_retcode filter_paeth (mng_datap pData)
   mng_uint32 iPa, iPb, iPc;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_FILTER_PAETH, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_FILTER_PAETH, MNG_LC_START);
 #endif
 
   iBpp         = pData->iFilterbpp;
@@ -221,7 +224,7 @@ MNG_LOCAL mng_retcode filter_paeth (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_FILTER_PAETH, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_FILTER_PAETH, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -234,7 +237,7 @@ mng_retcode mng_filter_a_row (mng_datap pData)
   mng_retcode iRetcode;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_FILTER_A_ROW, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_FILTER_A_ROW, MNG_LC_START);
 #endif
 
   switch (*(pData->pWorkrow + pData->iFilterofs))
@@ -260,7 +263,7 @@ mng_retcode mng_filter_a_row (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_FILTER_A_ROW, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_FILTER_A_ROW, MNG_LC_END);
 #endif
 
   return iRetcode;
@@ -276,7 +279,7 @@ mng_retcode mng_init_rowdiffering (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_INIT_ROWDIFFERING, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_INIT_ROWDIFFERING, MNG_LC_START);
 #endif
 
   if (pData->iFilter == 0xC0)          /* has leveling parameters ? */
@@ -362,7 +365,7 @@ mng_retcode mng_init_rowdiffering (mng_datap pData)
     pData->iPixelofs = pData->iFilterofs + 1;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_INIT_ROWDIFFERING, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_INIT_ROWDIFFERING, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -376,7 +379,7 @@ mng_retcode mng_differ_g1 (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_G1, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_G1, MNG_LC_START);
 #endif
 
   if (pData->iLevel0 & 0x01)           /* is it uneven level ? */
@@ -394,7 +397,7 @@ mng_retcode mng_differ_g1 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_G1, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_G1, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -410,7 +413,7 @@ mng_retcode mng_differ_g2 (mng_datap pData)
   mng_uint8  iB, iN, iQ;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_G2, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_G2, MNG_LC_START);
 #endif
 
   pRawi = pData->pWorkrow + pData->iPixelofs;
@@ -448,7 +451,7 @@ mng_retcode mng_differ_g2 (mng_datap pData)
     *pRawo = (mng_uint8)(iN << iS);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_G2, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_G2, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -464,7 +467,7 @@ mng_retcode mng_differ_g4 (mng_datap pData)
   mng_uint8  iB, iN, iQ;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_G4, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_G4, MNG_LC_START);
 #endif
 
   pRawi = pData->pWorkrow + pData->iPixelofs;
@@ -502,7 +505,7 @@ mng_retcode mng_differ_g4 (mng_datap pData)
     *pRawo = (mng_uint8)(iN << iS);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_G4, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_G4, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -516,7 +519,7 @@ mng_retcode mng_differ_g8 (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_G8, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_G8, MNG_LC_START);
 #endif
 
   pRawi = pData->pWorkrow + pData->iPixelofs;
@@ -534,7 +537,7 @@ mng_retcode mng_differ_g8 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_G8, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_G8, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -548,7 +551,7 @@ mng_retcode mng_differ_g16 (mng_datap pData)
   mng_int32   iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_G16, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_G16, MNG_LC_START);
 #endif
 
   pRawi = (mng_uint16p)(pData->pWorkrow + pData->iPixelofs);
@@ -566,7 +569,7 @@ mng_retcode mng_differ_g16 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_G16, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_G16, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -580,7 +583,7 @@ mng_retcode mng_differ_rgb8 (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_RGB8, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_RGB8, MNG_LC_START);
 #endif
 
   pRawi = pData->pWorkrow + pData->iPixelofs;
@@ -603,7 +606,7 @@ mng_retcode mng_differ_rgb8 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_RGB8, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_RGB8, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -617,7 +620,7 @@ mng_retcode mng_differ_rgb16 (mng_datap pData)
   mng_int32   iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_RGB16, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_RGB16, MNG_LC_START);
 #endif
 
   pRawi = (mng_uint16p)(pData->pWorkrow + pData->iPixelofs);
@@ -640,7 +643,7 @@ mng_retcode mng_differ_rgb16 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_RGB16, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_RGB16, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -654,7 +657,7 @@ mng_retcode mng_differ_idx1 (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_IDX1, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_IDX1, MNG_LC_START);
 #endif
 
   if (pData->iLevel0 & 0x01)           /* is it uneven level ? */
@@ -672,7 +675,7 @@ mng_retcode mng_differ_idx1 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_IDX1, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_IDX1, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -688,7 +691,7 @@ mng_retcode mng_differ_idx2 (mng_datap pData)
   mng_uint8  iB, iN, iQ;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_IDX2, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_IDX2, MNG_LC_START);
 #endif
 
   pRawi = pData->pWorkrow + pData->iPixelofs;
@@ -726,7 +729,7 @@ mng_retcode mng_differ_idx2 (mng_datap pData)
     *pRawo = (mng_uint8)(iN << iS);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_IDX2, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_IDX2, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -742,7 +745,7 @@ mng_retcode mng_differ_idx4 (mng_datap pData)
   mng_uint8  iB, iN, iQ;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_IDX4, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_IDX4, MNG_LC_START);
 #endif
 
   pRawi = pData->pWorkrow + pData->iPixelofs;
@@ -780,7 +783,7 @@ mng_retcode mng_differ_idx4 (mng_datap pData)
     *pRawo = (mng_uint8)(iN << iS);
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_IDX4, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_IDX4, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -794,7 +797,7 @@ mng_retcode mng_differ_idx8 (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_IDX8, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_IDX8, MNG_LC_START);
 #endif
 
   pRawi = pData->pWorkrow + pData->iPixelofs;
@@ -812,7 +815,7 @@ mng_retcode mng_differ_idx8 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_IDX8, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_IDX8, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -826,7 +829,7 @@ mng_retcode mng_differ_ga8 (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_GA8, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_GA8, MNG_LC_START);
 #endif
 
   pRawi = pData->pWorkrow + pData->iPixelofs;
@@ -846,7 +849,7 @@ mng_retcode mng_differ_ga8 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_GA8, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_GA8, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -860,7 +863,7 @@ mng_retcode mng_differ_ga16 (mng_datap pData)
   mng_int32   iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_GA16, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_GA16, MNG_LC_START);
 #endif
 
   pRawi = (mng_uint16p)(pData->pWorkrow + pData->iPixelofs);
@@ -879,7 +882,7 @@ mng_retcode mng_differ_ga16 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_GA16, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_GA16, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -893,7 +896,7 @@ mng_retcode mng_differ_rgba8 (mng_datap pData)
   mng_int32  iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_RGBA8, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_RGBA8, MNG_LC_START);
 #endif
 
   pRawi = pData->pWorkrow + pData->iPixelofs;
@@ -917,7 +920,7 @@ mng_retcode mng_differ_rgba8 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_RGBA8, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_RGBA8, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -931,7 +934,7 @@ mng_retcode mng_differ_rgba16 (mng_datap pData)
   mng_int32   iX;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_RGBA16, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_DIFFER_RGBA16, MNG_LC_START);
 #endif
 
   pRawi = (mng_uint16p)(pData->pWorkrow + pData->iPixelofs);
@@ -955,7 +958,7 @@ mng_retcode mng_differ_rgba16 (mng_datap pData)
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_DIFFER_RGBA16, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_DIFFER_RGBA16, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;

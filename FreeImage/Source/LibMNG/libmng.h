@@ -2,7 +2,7 @@
 /* *                                                                        * */
 /* * COPYRIGHT NOTICE:                                                      * */
 /* *                                                                        * */
-/* * Copyright (c) 2000-2004 Gerard Juyn                                    * */
+/* * Copyright (c) 2000-2005 Gerard Juyn                                    * */
 /* * [You may insert additional notices after this sentence if you modify   * */
 /* *  this source]                                                          * */
 /* *                                                                        * */
@@ -102,8 +102,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng.h                  copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.8                                                      * */
+/* * file      : libmng.h                  copyright (c) 2000-2005 G.Juyn   * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : main application interface                                 * */
 /* *                                                                        * */
@@ -280,6 +280,13 @@
 /* *             1.0.8 - 06/05/2004 - G.R-P                                 * */
 /* *             - define MNG_INCLUDE_ZLIB when MNG_USE_ZLIB_CRC is defined * */
 /* *                                                                        * */
+/* *             1.0.9 - 10/03/2004 - G.Juyn                                * */
+/* *             - added function to retrieve current FRAM delay            * */
+/* *             1.0.9 - 10/14/2004 - G.Juyn                                * */
+/* *             - added bgr565_a8 canvas-style (thanks to J. Elvander)     * */
+/* *             1.0.9 - 10/17/2004 - G.Juyn                                * */
+/* *             - fixed PPLT getchunk/putchunk routines                    * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #if defined(__BORLANDC__) && defined(MNG_STRICT_ANSI)
@@ -356,6 +363,16 @@
 #define MNG_INCLUDE_ERROR_STRINGS
 #endif
 
+#ifdef MNG_OPTIMIZE_CHUNKINITFREE
+#ifndef MNG_OPTIMIZE_CHUNKACCESS
+#define MNG_OPTIMIZE_CHUNKACCESS
+#endif
+#else
+#ifdef MNG_OPTIMIZE_CHUNKACCESS
+#undef MNG_OPTIMIZE_CHUNKACCESS
+#endif
+#endif
+
 /* ************************************************************************** */
 
 #include "libmng_types.h"              /* platform-specific definitions
@@ -422,12 +439,12 @@ extern "C" {
 /* *                                                                        * */
 /* ************************************************************************** */
 
-#define MNG_VERSION_TEXT    "1.0.8"
+#define MNG_VERSION_TEXT    "1.0.9"
 #define MNG_VERSION_SO      1          /* eg. libmng.so.1  */
 #define MNG_VERSION_DLL     1          /* but: libmng.dll (!) */
 #define MNG_VERSION_MAJOR   1
 #define MNG_VERSION_MINOR   0
-#define MNG_VERSION_RELEASE 8
+#define MNG_VERSION_RELEASE 9
 #define MNG_VERSION_BETA    MNG_FALSE
 
 MNG_EXT mng_pchar MNG_DECL mng_version_text      (void);
@@ -1014,8 +1031,8 @@ MNG_EXT mng_retcode MNG_DECL mng_set_viewgammaint    (mng_handle        hHandle,
 MNG_EXT mng_retcode MNG_DECL mng_set_displaygammaint (mng_handle        hHandle,
                                                       mng_uint32        iGamma);
 MNG_EXT mng_retcode MNG_DECL mng_set_dfltimggammaint (mng_handle        hHandle,
-#endif
                                                       mng_uint32        iGamma);
+#endif
 
 #ifndef MNG_SKIP_MAXCANVAS
 /* Ultimate clipping size */
@@ -1262,6 +1279,14 @@ MNG_EXT mng_retcode MNG_DECL mng_get_lastbackchunk   (mng_handle        hHandle,
 #ifdef MNG_SUPPORT_DISPLAY
 MNG_EXT mng_retcode MNG_DECL mng_get_lastseekname    (mng_handle        hHandle,
                                                       mng_pchar         zSegmentname);
+#endif
+
+/* FRAM info */
+/* can be used to retrieve the current FRAM delay; this may be useful when
+   retrieving a stream of frames with their corresponding delays by "fake"
+   reading and displaying the file */
+#ifdef MNG_SUPPORT_DISPLAY
+MNG_EXT mng_uint32 MNG_DECL mng_get_currframdelay    (mng_handle        hHandle);
 #endif
 
 /* Display status variables */
@@ -1730,6 +1755,7 @@ MNG_EXT mng_retcode MNG_DECL mng_getchunk_prom       (mng_handle       hHandle,
 
 MNG_EXT mng_retcode MNG_DECL mng_getchunk_pplt       (mng_handle       hHandle,
                                                       mng_handle       hChunk,
+                                                      mng_uint8        *iDeltatype,
                                                       mng_uint32       *iCount);
 
 MNG_EXT mng_retcode MNG_DECL mng_getchunk_pplt_entry (mng_handle       hHandle,
@@ -2150,6 +2176,7 @@ MNG_EXT mng_retcode MNG_DECL mng_putchunk_prom       (mng_handle       hHandle,
 MNG_EXT mng_retcode MNG_DECL mng_putchunk_ipng       (mng_handle       hHandle);
 
 MNG_EXT mng_retcode MNG_DECL mng_putchunk_pplt       (mng_handle       hHandle,
+                                                      mng_uint8        iDeltatype,
                                                       mng_uint32       iCount);
 
 MNG_EXT mng_retcode MNG_DECL mng_putchunk_pplt_entry (mng_handle       hHandle,
@@ -2157,8 +2184,7 @@ MNG_EXT mng_retcode MNG_DECL mng_putchunk_pplt_entry (mng_handle       hHandle,
                                                       mng_uint16       iRed,
                                                       mng_uint16       iGreen,
                                                       mng_uint16       iBlue,
-                                                      mng_uint16       iAlpha,
-                                                      mng_bool         bUsed);
+                                                      mng_uint16       iAlpha);
 
 MNG_EXT mng_retcode MNG_DECL mng_putchunk_jpng       (mng_handle       hHandle);
 
@@ -2406,6 +2432,7 @@ MNG_EXT mng_retcode MNG_DECL mng_updatemngsimplicity (mng_handle        hHandle,
 #define MNG_SEEKNOTFOUND     (mng_retcode)1070 /* EvNT points to unknown SEEK */
 #define MNG_OBJNOTABSTRACT   (mng_retcode)1071 /* object must be abstract     */
 #define MNG_TERMSEQERROR     (mng_retcode)1072 /* TERM in wrong place         */
+#define MNG_INVALIDFIELDVAL  (mng_retcode)1073 /* invalid fieldvalue (generic)*/
 
 #define MNG_INVALIDCNVSTYLE  (mng_retcode)2049 /* can't make anything of this */
 #define MNG_WRONGCHUNK       (mng_retcode)2050 /* accessing the wrong chunk   */
@@ -2472,6 +2499,7 @@ MNG_EXT mng_retcode MNG_DECL mng_updatemngsimplicity (mng_handle        hHandle,
 #define MNG_CANVAS_RGBA565   0x00001005L
 #define MNG_CANVAS_BGR565    0x00000006L
 #define MNG_CANVAS_BGRA565   0x00001006L
+#define MNG_CANVAS_BGR565_A8 0x00004006L
 
 #define MNG_CANVAS_PIXELTYPE(C)  (C & 0x000000FFL)
 #define MNG_CANVAS_BITDEPTH(C)   (C & 0x00000100L)

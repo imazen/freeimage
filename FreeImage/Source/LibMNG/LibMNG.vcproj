@@ -141,6 +141,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\libmng_chunk_descr.c">
+			</File>
+			<File
 				RelativePath="libmng_chunk_io.c">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -486,6 +489,9 @@
 			Filter="h;hpp;hxx;hm;inl">
 			<File
 				RelativePath="libmng.h">
+			</File>
+			<File
+				RelativePath=".\libmng_chunk_descr.h">
 			</File>
 			<File
 				RelativePath="libmng_chunk_io.h">

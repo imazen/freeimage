@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_dither.c           copyright (c) 2000-2002 G.Juyn   * */
-/* * version   : 1.0.5                                                      * */
+/* * file      : libmng_dither.c           copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Dithering routines (implementation)                        * */
 /* *                                                                        * */
@@ -21,6 +21,9 @@
 /* *                                                                        * */
 /* *             1.0.5 - 08/19/2002 - G.Juyn                                * */
 /* *             - B597134 - libmng pollutes the linker namespace           * */
+/* *                                                                        * */
+/* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
+/* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
 /* *                                                                        * */
 /* ************************************************************************** */
 

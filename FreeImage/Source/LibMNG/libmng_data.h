@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_data.h             copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.8                                                      * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : main data structure definition                             * */
 /* *                                                                        * */
@@ -144,6 +144,9 @@
 /* *             - added CRC existence & checking flags                     * */
 /* *             1.0.8 - 04/10/2004 - G.Juyn                                * */
 /* *             - added data-push mechanisms for specialized decoders      * */
+/* *                                                                        * */
+/* *             1.0.9 - 12/11/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_DISPLAYCALLS              * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -819,18 +822,113 @@ typedef struct mng_data_struct {
 #endif /* MNG_INCLUDE_JNG */
 
 #ifndef MNG_USE_ZLIB_CRC
-           mng_uint32        aCRCtable [256];  /* CRC prefab table */
-           mng_bool          bCRCcomputed;     /* "has been built" indicator */
+           mng_uint32        aCRCtable [256];    /* CRC prefab table */
+           mng_bool          bCRCcomputed;       /* "has been built" indicator */
 #endif
 
 #ifdef MNG_OPTIMIZE_FOOTPRINT_INIT
            png_imgtype       ePng_imgtype;
 #endif
 
-#if defined(MNG_NO_16BIT_SUPPORT)
-           mng_uint8         iPNGdepth;     /* Real input depth */
+#if defined(MNG_NO_1_2_4BIT_SUPPORT) || defined(MNG_NO_16BIT_SUPPORT)
+           mng_uint8         iPNGdepth;          /* Real input depth */
            mng_uint8         iPNGmult;
 #endif
+
+#ifdef MNG_OPTIMIZE_DISPLAYCALLS
+           mng_uint32        iRawlen;            /* temp vars for display processing */
+           mng_uint8p        pRawdata;
+#ifndef MNG_SKIPCHUNK_BASI
+           mng_uint16        iBASIred;
+           mng_uint16        iBASIgreen;
+           mng_uint16        iBASIblue;
+           mng_bool          bBASIhasalpha;
+           mng_uint16        iBASIalpha;
+           mng_uint8         iBASIviewable;
+#endif
+#ifndef MNG_SKIPCHUNK_CLON
+           mng_uint16        iCLONsourceid;
+           mng_uint16        iCLONcloneid;
+           mng_uint8         iCLONclonetype;
+           mng_bool          bCLONhasdonotshow;
+           mng_uint8         iCLONdonotshow;
+           mng_uint8         iCLONconcrete;
+           mng_bool          bCLONhasloca;
+           mng_uint8         iCLONlocationtype;
+           mng_int32         iCLONlocationx;
+           mng_int32         iCLONlocationy;
+#endif
+#ifndef MNG_SKIPCHUNK_DISC
+           mng_uint32        iDISCcount;
+           mng_uint16p       pDISCids;
+#endif
+#ifndef MNG_SKIPCHUNK_FRAM
+           mng_uint8         iTempFramemode;
+           mng_uint8         iTempChangedelay;
+           mng_uint32        iTempDelay;
+           mng_uint8         iTempChangetimeout;
+           mng_uint32        iTempTimeout;
+           mng_uint8         iTempChangeclipping;
+           mng_uint8         iTempCliptype;
+           mng_int32         iTempClipl;
+           mng_int32         iTempClipr;
+           mng_int32         iTempClipt;
+           mng_int32         iTempClipb;
+#endif
+#ifndef MNG_SKIPCHUNK_MOVE
+           mng_uint16        iMOVEfromid;
+           mng_uint16        iMOVEtoid;
+           mng_uint8         iMOVEmovetype;
+           mng_int32         iMOVEmovex;
+           mng_int32         iMOVEmovey;
+#endif
+#ifndef MNG_SKIPCHUNK_CLIP
+           mng_uint16        iCLIPfromid;
+           mng_uint16        iCLIPtoid;
+           mng_uint8         iCLIPcliptype;
+           mng_int32         iCLIPclipl;
+           mng_int32         iCLIPclipr;
+           mng_int32         iCLIPclipt;
+           mng_int32         iCLIPclipb;
+#endif
+#ifndef MNG_NO_DELTA_PNG
+           mng_uint16        iDHDRobjectid;
+           mng_uint8         iDHDRimagetype;
+           mng_uint8         iDHDRdeltatype;
+           mng_uint32        iDHDRblockwidth;
+           mng_uint32        iDHDRblockheight;
+           mng_uint32        iDHDRblockx;
+           mng_uint32        iDHDRblocky;
+           mng_uint8         iPROMbitdepth;
+           mng_uint8         iPROMcolortype;
+           mng_uint8         iPROMfilltype;
+           mng_uint8         iPPLTtype;
+           mng_uint32        iPPLTcount;
+           mng_palette8ep    paPPLTindexentries;
+           mng_uint8p        paPPLTalphaentries;
+           mng_uint8p        paPPLTusedentries;
+#endif
+#ifndef MNG_SKIPCHUNK_MAGN
+           mng_uint16        iMAGNfirstid;
+           mng_uint16        iMAGNlastid;
+           mng_uint8         iMAGNmethodX;
+           mng_uint16        iMAGNmX;
+           mng_uint16        iMAGNmY;
+           mng_uint16        iMAGNmL;
+           mng_uint16        iMAGNmR;
+           mng_uint16        iMAGNmT;
+           mng_uint16        iMAGNmB;
+           mng_uint8         iMAGNmethodY;
+#endif
+#ifndef MNG_SKIPCHUNK_PAST
+           mng_uint16        iPASTtargetid;
+           mng_uint8         iPASTtargettype;
+           mng_int32         iPASTtargetx;
+           mng_int32         iPASTtargety;
+           mng_uint32        iPASTcount;
+           mng_ptr           pPASTsources;
+#endif
+#endif /* MNG_OPTIMIZE_DISPLAYCALLS */
 
         } mng_data;
 

@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_write.c            copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.8                                                      * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Write management (implementation)                          * */
 /* *                                                                        * */
@@ -36,6 +36,11 @@
 /* *             1.0.8 - 08/02/2004 - G.Juyn                                * */
 /* *             - added conditional to allow easier writing of large MNG's * */
 /* *                                                                        * */
+/* *             1.0.9 - 09/25/2004 - G.Juyn                                * */
+/* *             - replaced MNG_TWEAK_LARGE_FILES with permanent solution   * */
+/* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
+/* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #include "libmng.h"
@@ -56,6 +61,42 @@
 
 /* ************************************************************************** */
 
+#if defined(MNG_SUPPORT_READ) || defined(MNG_SUPPORT_WRITE)
+mng_retcode mng_drop_chunks (mng_datap pData)
+{
+  mng_chunkp       pChunk;
+  mng_chunkp       pNext;
+  mng_cleanupchunk fCleanup;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (pData, MNG_FN_DROP_CHUNKS, MNG_LC_START);
+#endif
+
+  pChunk = pData->pFirstchunk;         /* and get first stored chunk (if any) */
+
+  while (pChunk)                       /* more chunks to discard ? */
+  {
+    pNext = ((mng_chunk_headerp)pChunk)->pNext;
+                                       /* call appropriate cleanup */
+    fCleanup = ((mng_chunk_headerp)pChunk)->fCleanup;
+    fCleanup (pData, pChunk);
+
+    pChunk = pNext;                    /* neeeext */
+  }
+
+  pData->pFirstchunk = MNG_NULL;
+  pData->pLastchunk  = MNG_NULL;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (pData, MNG_FN_DROP_CHUNKS, MNG_LC_END);
+#endif
+
+  return MNG_NOERROR;
+}
+#endif /* MNG_SUPPORT_READ || MNG_SUPPORT_WRITE */
+
+/* ************************************************************************** */
+
 #ifdef MNG_INCLUDE_WRITE_PROCS
 
 /* ************************************************************************** */
@@ -67,81 +108,80 @@ mng_retcode mng_write_graphic (mng_datap pData)
   mng_uint32  iWritten;
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_GRAPHIC, MNG_LC_START)
+  MNG_TRACE (pData, MNG_FN_WRITE_GRAPHIC, MNG_LC_START);
 #endif
 
   pChunk = pData->pFirstchunk;         /* we'll start with the first, thank you */
 
   if (pChunk)                          /* is there anything to write ? */
   {                                    /* open the file */
-#ifndef MNG_NO_OPEN_CLOSE_STREAM
-    if (pData->fOpenstream && !pData->fOpenstream ((mng_handle)pData))
-      MNG_ERROR (pData, MNG_APPIOERROR)
-    else
-#endif
+    if (!pData->bWriting)
     {
-      pData->bWriting      = MNG_TRUE; /* indicate writing */
-      pData->iWritebufsize = 32768;    /* get a temporary write buffer */
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
+      if (pData->fOpenstream && !pData->fOpenstream ((mng_handle)pData))
+        MNG_ERROR (pData, MNG_APPIOERROR);
+#endif
+      {
+        pData->bWriting      = MNG_TRUE; /* indicate writing */
+        pData->iWritebufsize = 32768;    /* get a temporary write buffer */
                                        /* reserve 12 bytes for length, chunkname & crc */
-      MNG_ALLOC (pData, pData->pWritebuf, pData->iWritebufsize+12)
+        MNG_ALLOC (pData, pData->pWritebuf, pData->iWritebufsize+12);
 
-#ifdef MNG_TWEAK_LARGE_MNG_WRITES
-      if (((mng_chunk_headerp)pChunk)->iChunkname == MNG_UINT_MHDR)
-      {
-#endif
                                        /* write the signature */
-      if (((mng_chunk_headerp)pChunk)->iChunkname == MNG_UINT_IHDR)
-        mng_put_uint32 (pData->pWritebuf, PNG_SIG);
-      else
-      if (((mng_chunk_headerp)pChunk)->iChunkname == MNG_UINT_JHDR)
-        mng_put_uint32 (pData->pWritebuf, JNG_SIG);
-      else
-        mng_put_uint32 (pData->pWritebuf, MNG_SIG);
+        if (((mng_chunk_headerp)pChunk)->iChunkname == MNG_UINT_IHDR)
+          mng_put_uint32 (pData->pWritebuf, PNG_SIG);
+        else
+        if (((mng_chunk_headerp)pChunk)->iChunkname == MNG_UINT_JHDR)
+          mng_put_uint32 (pData->pWritebuf, JNG_SIG);
+        else
+          mng_put_uint32 (pData->pWritebuf, MNG_SIG);
 
-      mng_put_uint32 (pData->pWritebuf+4, POST_SIG);
+        mng_put_uint32 (pData->pWritebuf+4, POST_SIG);
 
-      if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf, 8, &iWritten))
-      {
-        MNG_FREE (pData, pData->pWritebuf, pData->iWritebufsize+12)
-        MNG_ERROR (pData, MNG_APPIOERROR)
-      }
-
-      if (iWritten != 8)               /* disk full ? */
-      {
-        MNG_FREE (pData, pData->pWritebuf, pData->iWritebufsize+12)
-        MNG_ERROR (pData, MNG_OUTPUTERROR)
-      }
-#ifdef MNG_TWEAK_LARGE_MNG_WRITES
-      }
-#endif
-
-      while (pChunk)                   /* so long as there's something to write */
-      {                                /* let's call it's output routine */
-        iRetcode = ((mng_chunk_headerp)pChunk)->fWrite (pData, pChunk);
-
-        if (iRetcode)                  /* on error bail out */
+        if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf, 8, &iWritten))
         {
-          MNG_FREE (pData, pData->pWritebuf, pData->iWritebufsize+12)
-          return iRetcode;
+          MNG_FREE (pData, pData->pWritebuf, pData->iWritebufsize+12);
+          MNG_ERROR (pData, MNG_APPIOERROR);
         }
-                                       /* neeeext */
-        pChunk = ((mng_chunk_headerp)pChunk)->pNext;
+
+        if (iWritten != 8)             /* disk full ? */
+        {
+          MNG_FREE (pData, pData->pWritebuf, pData->iWritebufsize+12);
+          MNG_ERROR (pData, MNG_OUTPUTERROR);
+        }
       }
-                                       /* free the temporary buffer */
-      MNG_FREE (pData, pData->pWritebuf, pData->iWritebufsize+12)
+    }
+
+    while (pChunk)                     /* so long as there's something to write */
+    {                                  /* let's call it's output routine */
+      iRetcode = ((mng_chunk_headerp)pChunk)->fWrite (pData, pChunk);
+      if (iRetcode)                    /* on error bail out */
+        return iRetcode;
+                                       /* neeeext */
+      pChunk = ((mng_chunk_headerp)pChunk)->pNext;
+    }
+
+    if (!pData->bCreating)
+    {                                  /* free the temporary buffer */
+      MNG_FREE (pData, pData->pWritebuf, pData->iWritebufsize+12);
 
       pData->bWriting = MNG_FALSE;     /* done writing */
                                        /* close the stream now */
 #ifndef MNG_NO_OPEN_CLOSE_STREAM
       if (pData->fClosestream && !pData->fClosestream ((mng_handle)pData))
-        MNG_ERROR (pData, MNG_APPIOERROR)
+        MNG_ERROR (pData, MNG_APPIOERROR);
 #endif
 
+    } else {
+                                       /* cleanup the written chunks */
+      iRetcode = mng_drop_chunks (pData);
+      if (iRetcode)                    /* on error bail out */
+        return iRetcode;
     }
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACE (pData, MNG_FN_WRITE_GRAPHIC, MNG_LC_END)
+  MNG_TRACE (pData, MNG_FN_WRITE_GRAPHIC, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;

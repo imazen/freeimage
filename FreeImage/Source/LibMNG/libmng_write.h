@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_write.h            copyright (c) 2000-2002 G.Juyn   * */
-/* * version   : 1.0.5                                                      * */
+/* * file      : libmng_write.h            copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Write management (definition)                              * */
 /* *                                                                        * */
@@ -22,6 +22,9 @@
 /* *             1.0.5 - 08/19/2002 - G.Juyn                                * */
 /* *             - B597134 - libmng pollutes the linker namespace           * */
 /* *                                                                        * */
+/* *             1.0.9 - 09/25/2004 - G.Juyn                                * */
+/* *             - replaced MNG_TWEAK_LARGE_FILES with permanent solution   * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #if defined(__BORLANDC__) && defined(MNG_STRICT_ANSI)
@@ -32,6 +35,8 @@
 #define _libmng_write_h_
 
 /* ************************************************************************** */
+
+mng_retcode mng_drop_chunks   (mng_datap pData);
 
 mng_retcode mng_write_graphic (mng_datap pData);
 

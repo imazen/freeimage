@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_chunk_io.h         copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.7                                                      * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Chunk I/O routines (definition)                            * */
 /* *                                                                        * */
@@ -41,6 +41,9 @@
 /* *             1.0.7 - 03/24/2004 - G.R-P                                 * */
 /* *             - fixed SKIPCHUNK_itXT and SKIPCHUNK_ztXT typos            * */
 /* *                                                                        * */
+/* *             1.0.9 - 12/07/2004 - G.Juyn                                * */
+/* *             - added conditional MNG_OPTIMIZE_CHUNKREADER               * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #if defined(__BORLANDC__) && defined(MNG_STRICT_ANSI)
@@ -60,11 +63,26 @@ mng_uint32 mng_crc (mng_datap  pData,
 
 #ifdef MNG_INCLUDE_READ_PROCS
 
+/* ************************************************************************** */
+
+mng_retcode mng_inflate_buffer (mng_datap  pData,
+                                mng_uint8p pInbuf,
+                                mng_uint32 iInsize,
+                                mng_uint8p *pOutbuf,
+                                mng_uint32 *iOutsize,
+                                mng_uint32 *iRealsize);
+
+/* ************************************************************************** */
+
 #define READ_CHUNK(n) mng_retcode n (mng_datap   pData,    \
                                      mng_chunkp  pHeader,  \
                                      mng_uint32  iRawlen,  \
                                      mng_uint8p  pRawdata, \
                                      mng_chunkp* ppChunk)
+
+#ifdef MNG_OPTIMIZE_CHUNKREADER
+READ_CHUNK (mng_read_general) ;
+#endif
 
 READ_CHUNK (mng_read_ihdr) ;
 READ_CHUNK (mng_read_plte) ;

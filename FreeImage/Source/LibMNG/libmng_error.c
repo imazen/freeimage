@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_error.c            copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.7                                                      * */
+/* * version   : 1.0.9                                                      * */
 /* *                                                                        * */
 /* * purpose   : Error routines (implementation)                            * */
 /* *                                                                        * */
@@ -76,6 +76,9 @@
 /* *                                                                        * */
 /* *             1.0.7 - 03/24/2004 - G.R-P                                 * */
 /* *             - fixed typo on SKIPCHUNK_evNT (->PAST)                    * */
+/* *                                                                        * */
+/* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
+/* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -214,7 +217,7 @@ mng_bool mng_store_error (mng_datap   pData,
                           mng_retcode iExtra2)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (pData, MNG_FN_STORE_ERROR, MNG_LC_START)
+  MNG_TRACEB (pData, MNG_FN_STORE_ERROR, MNG_LC_START);
 #endif
 
   if (pData != 0)
@@ -270,14 +273,14 @@ mng_bool mng_store_error (mng_datap   pData,
       {
         case 0x0800 : { pData->iSeverity = 5; break; }
         case 0x1000 : { pData->iSeverity = 2; break; }
-        case 0x2000 : { pData->iSeverity = 1; break; }
+        case 0x2000 : { pData->iSeverity = 1; break; }      
         default     : { pData->iSeverity = 9; }
       }
     }
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (pData, MNG_FN_STORE_ERROR, MNG_LC_END)
+  MNG_TRACEB (pData, MNG_FN_STORE_ERROR, MNG_LC_END);
 #endif
 
   return MNG_TRUE;
@@ -291,7 +294,7 @@ mng_bool mng_process_error (mng_datap   pData,
                             mng_retcode iExtra2)
 {
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (pData, MNG_FN_PROCESS_ERROR, MNG_LC_START)
+  MNG_TRACEB (pData, MNG_FN_PROCESS_ERROR, MNG_LC_START);
 #endif
 
   mng_store_error (pData, iError, iExtra1, iExtra2);
@@ -305,7 +308,7 @@ mng_bool mng_process_error (mng_datap   pData,
   }
 
 #ifdef MNG_SUPPORT_TRACE
-  MNG_TRACEB (pData, MNG_FN_PROCESS_ERROR, MNG_LC_END)
+  MNG_TRACEB (pData, MNG_FN_PROCESS_ERROR, MNG_LC_END);
 #endif
 
   return MNG_TRUE;                     /* warnings are ignored by default ! */
