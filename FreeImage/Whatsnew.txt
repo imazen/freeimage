@@ -8,6 +8,7 @@ What's New for FreeImage
 Month day, 2004 - 3.5.1
 + [Riley McNiff] added FreeImage_ConvertTo4Bits
 * [Herve Drolon] fixed a buffer overrun with some ILBM images
+* [Riley McNiff] fixed a potential problem when reading TIFF resolution info
 
 November 1st, 2004 - 3.5.0
 ! FreeImage now uses libPNG 1.2.7
