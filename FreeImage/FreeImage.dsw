@@ -12,6 +12,9 @@ Package=<5>
 Package=<4>
 {{{
     Begin Project Dependency
+    Project_Dep_Name LibGIF
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name LibJPEG
     End Project Dependency
     Begin Project Dependency
@@ -38,6 +41,9 @@ Package=<5>
 
 Package=<4>
 {{{
+    Begin Project Dependency
+    Project_Dep_Name LibGIF
+    End Project Dependency
     Begin Project Dependency
     Project_Dep_Name LibJPEG
     End Project Dependency
@@ -68,6 +74,18 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name FreeImage
     End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "LibJPEG"=".\Source\LibGIF\LibGIF.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
 }}}
 
 ###############################################################################

@@ -271,7 +271,8 @@ FI_ENUM(FREE_IMAGE_FORMAT) {
 	FIF_CUT		= 21,
 	FIF_XBM		= 22,
 	FIF_XPM		= 23,
-	FIF_DDS		= 24
+	FIF_DDS		= 24,
+	FIF_GIF     = 25
 };
 
 /** Image type used in FreeImage.

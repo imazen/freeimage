@@ -119,5 +119,6 @@ void DLL_CALLCONV InitWBMP(Plugin *plugin, int format_id);
 void DLL_CALLCONV InitXBM(Plugin *plugin, int format_id);
 void DLL_CALLCONV InitXPM(Plugin *plugin, int format_id);
 void DLL_CALLCONV InitDDS(Plugin *plugin, int format_id);
+void DLL_CALLCONV InitGIF(Plugin *plugin, int format_id);
 
 #endif //!PLUGIN_H

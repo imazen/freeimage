@@ -152,6 +152,10 @@ SOURCE=..\FreeImage\PluginDDS.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\FreeImage\PluginGIF.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\FreeImage\PluginICO.cpp
 # End Source File
 # Begin Source File

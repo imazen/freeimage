@@ -12,6 +12,7 @@ Month day, 2004 - 3.4.0
 + [Karl-Heinz Bussian] added color lookup functions for X11 and SVG
 + [Herve Drolon] added TIFF tags TIFF_CCITTFAX3, TIFF_CCITTFAX4 and TIFF_LZW
 + [Detlev Vendt] added support for CMYK TIFF files with alpha channel
++ [Detlev Vendt] added (re-introduction of) PluginGIF
 * [Herve Drolon] fixed a bug with loading of FAX TIFF images (introduced with LibTIFF 3.6.1)
 * [Herve Drolon] fixed a bug in Floyd-Steinberg dithering algorithm
 * [Herve Drolon] fixed a bug in Targa plugin save function
