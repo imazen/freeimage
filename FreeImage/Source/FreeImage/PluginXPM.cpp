@@ -850,13 +850,13 @@ static char *
 Base92(unsigned int num) {
 	static char b92[16]; //enough for more then 64 bits
 	static char digit[] = " .XoO+@#$%&*=-;:>,<1234567890qwertyuipasdfghjklzxcvbnmMNBVCZASDFGHJKLPIUYTREWQ!~^/()_`'][{}|";
-	int i = 0;
+	b92[15] = '\0';
+	int i = 14;
 	do {
-		b92[i++] = digit[num % 92];
+		b92[i--] = digit[num % 92];
 		num /= 92;
-	} while( num );
-	b92[i] = '\0';
-	return b92;
+	} while( num && i >= 0 );
+	return b92+i+1;
 }
 
 // ==========================================================
@@ -1088,7 +1088,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		footer[] = "\"\n};\n",
 		buf[256]; //256 is more then enough to sprintf 4 ints into, or the base-92 chars and #rrggbb line
 
-		if( io->write_proc(header, sizeof(header), 1, handle) != 1 )
+		if( io->write_proc(header, strlen(header), 1, handle) != 1 )
 			return FALSE;
 
 		int width = FreeImage_GetWidth(dib), height = FreeImage_GetHeight(dib), bpp = FreeImage_GetBPP(dib);
@@ -1124,7 +1124,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					rgb.r = pal[u.index].rgbRed;
 					line++;
 				}
-				if( color2chrs.find(u.index) != color2chrs.end() ) { //new color
+				if( color2chrs.find(u.index) == color2chrs.end() ) { //new color
 					std::string chrs(Base92(num_colors));
 					color2chrs[u.index] = chrs;
 					chrs2color[num_colors] = rgb;
@@ -1139,19 +1139,19 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		if( io->write_proc(buf, strlen(buf), 1, handle) != 1 )
 			return FALSE;
 
-		if( io->write_proc(start_colors, sizeof(start_colors), 1, handle) != 1 )
+		if( io->write_proc(start_colors, strlen(start_colors), 1, handle) != 1 )
 			return FALSE;
 
 		//write colors, using map of chrs->rgb
 		for(x = 0; x < num_colors; x++ ) {
 			sprintf(buf, "%*s c #%02x%02x%02x", cpp, Base92(x), chrs2color[x].r, chrs2color[x].g, chrs2color[x].b );
-			if( io->write_proc(buf, sizeof(start_colors), 1, handle) != 1 )
+			if( io->write_proc(buf, strlen(buf), 1, handle) != 1 )
 				return FALSE;
 			if( x == num_colors - 1 ) {
-				if( io->write_proc(start_pixels, sizeof(start_pixels), 1, handle) != 1 )
+				if( io->write_proc(start_pixels, strlen(start_pixels), 1, handle) != 1 )
 					return FALSE;
 			} else {
-				if( io->write_proc(new_line, sizeof(new_line), 1, handle) != 1 )
+				if( io->write_proc(new_line, strlen(new_line), 1, handle) != 1 )
 					return FALSE;
 			}
 		}
@@ -1175,14 +1175,15 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					pal[u.index].rgbRed;
 					line++;
 				}
-				if( io->write_proc((char *)color2chrs[u.index].c_str(), cpp, 1, handle) != 1 )
+				sprintf(buf, "%*s", cpp, (char *)color2chrs[u.index].c_str());
+				if( io->write_proc(buf, cpp, 1, handle) != 1 )
 					return FALSE;
 			}
 			if( y == height - 1 ) {
-				if( io->write_proc(footer, sizeof(footer), 1, handle) != 1 )
+				if( io->write_proc(footer, strlen(footer), 1, handle) != 1 )
 					return FALSE;
 			} else {
-				if( io->write_proc(new_line, sizeof(new_line), 1, handle) != 1 )
+				if( io->write_proc(new_line, strlen(new_line), 1, handle) != 1 )
 					return FALSE;
 			}
 		}
