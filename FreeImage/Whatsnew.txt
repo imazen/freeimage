@@ -13,7 +13,9 @@ Month Day, 2004 - 3.3.0
 * [Herve Drolon] fixed a bug with loading of 8-bit and 16-bit PNG with a 8-bit alpha channel
 * [Herve Drolon] fixed a bug in NN quantizer algorithm with handling of 4-byte boundary alignment.
 * [Herve Drolon] fixed a bug in PluginIFF Validate function
-* [Herve Drolon] fixed a minor bug in FreeImage_GetFIFFromFormat
+* [Herve Drolon] fixed a minor design issue in FreeImage_GetFIFFromFormat
+* [Brad Schick] fixed some compiler warnings with VC++ 7.1
+* [Herve Drolon] fixed a bug with saving of 8-bit palettized images to 24-bit JPEG (channel inversion)
 
 March 16, 2004 - 3.2.1
 ! [Volker Gärtner] improved the DDS plugin
