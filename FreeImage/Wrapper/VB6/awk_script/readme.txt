@@ -8,7 +8,7 @@ chmod 755 genbas.sh
 ./genbas.sh
 
 
-This will generate a file named modFreeImage.bas that you can include in your VB6 project in oreder to have access to all FreeImage functions.
+This will generate a file named modFreeImage.bas that you can include in your VB6 project in order to have access to all FreeImage functions.
 
 Ryan Rubley
 <ark42 at users.sourceforge.net>
