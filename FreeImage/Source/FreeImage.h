@@ -42,6 +42,12 @@
 #ifndef FREEIMAGE_H
 #define FREEIMAGE_H
 
+// Version information ------------------------------------------------------
+
+#define FREEIMAGE_MAJOR_VERSION   3
+#define FREEIMAGE_MINOR_VERSION   3
+#define FREEIMAGE_RELEASE_SERIAL  1
+
 // Compiler options ---------------------------------------------------------
 
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)

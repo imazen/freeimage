@@ -31,7 +31,6 @@
 
 //----------------------------------------------------------------------
 
-static const char *s_version = "3.3.0";
 static const char *s_copyright = "This program uses FreeImage, a free, open source image library supporting all common bitmap formats. See http://freeimage.sourceforge.net for details";
 
 //----------------------------------------------------------------------
@@ -63,6 +62,9 @@ DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
 
 const char * DLL_CALLCONV
 FreeImage_GetVersion() {
+	static char s_version[16];
+	sprintf(s_version, "%d.%d.%d", FREEIMAGE_MAJOR_VERSION, FREEIMAGE_MINOR_VERSION, FREEIMAGE_RELEASE_SERIAL);
+
 	return s_version;
 }
 
