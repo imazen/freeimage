@@ -515,6 +515,23 @@ FreeImage_GetPixelColor(FIBITMAP *dib, unsigned x, unsigned y, RGBQUAD *value) {
 		BYTE *bits = FreeImage_GetScanLine(dib, y);
 
 		switch(FreeImage_GetBPP(dib)) {
+			case 16:
+			{
+				bits += 2*x;
+				WORD *pixel = (WORD *)bits;
+				if((FreeImage_GetRedMask(dib) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dib) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dib) == FI16_565_BLUE_MASK)) {
+					value->rgbBlue		= (((*pixel & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) * 0xFF) / 0x1F;
+					value->rgbGreen		= (((*pixel & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) * 0xFF) / 0x3F;
+					value->rgbRed		= (((*pixel & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) * 0xFF) / 0x1F;
+					value->rgbReserved	= 0;
+				} else {
+					value->rgbBlue		= (((*pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+					value->rgbGreen		= (((*pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+					value->rgbRed		= (((*pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+					value->rgbReserved	= 0;
+				}
+				break;
+			}
 			case 24:
 				bits += 3*x;
 				value->rgbBlue		= bits[FIRGB_BLUE];	// B
@@ -579,6 +596,21 @@ FreeImage_SetPixelColor(FIBITMAP *dib, unsigned x, unsigned y, RGBQUAD *value) {
 		BYTE *bits = FreeImage_GetScanLine(dib, y);
 
 		switch(FreeImage_GetBPP(dib)) {
+			case 16:
+			{
+				bits += 2*x;
+				WORD *pixel = (WORD *)bits;
+				if((FreeImage_GetRedMask(dib) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dib) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dib) == FI16_565_BLUE_MASK)) {
+					*pixel = ((value->rgbBlue >> 3) << FI16_565_BLUE_SHIFT) |
+						((value->rgbGreen >> 2) << FI16_565_GREEN_SHIFT) |
+						((value->rgbRed >> 3) << FI16_565_RED_SHIFT);
+				} else {
+					*pixel = ((value->rgbBlue >> 3) << FI16_555_BLUE_SHIFT) |
+						((value->rgbGreen >> 3) << FI16_555_GREEN_SHIFT) |
+						((value->rgbRed >> 3) << FI16_555_RED_SHIFT);
+				}
+				break;
+			}
 			case 24:
 				bits += 3*x;
 				bits[FIRGB_BLUE] = value->rgbBlue;	// B
