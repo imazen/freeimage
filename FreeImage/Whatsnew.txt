@@ -5,6 +5,9 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month day, 2004 - 3.3.1
+* [Herve Drolon] fixed a bug with loading of FAX TIFF images (introduced with LibTIFF 3.6.1)
+
 May 2, 2004 - 3.3.0
 ! [Ryan Rubley] FreeImage has been ported to MacOSX and should also work on other big endian processors
 + [Ryan Rubley] rewrote XPM plugin (better load support) and added save support
