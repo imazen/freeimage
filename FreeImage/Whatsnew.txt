@@ -8,6 +8,8 @@ What's New for FreeImage
 Month Day, 2004 - 3.4.1
 ! [Hervé Drolon] improved TIFF LZW compression using a predictor
 + [Herve Drolon] added support for loading/saving of 8-bit transparent TIFF
++ [Riley McNiff] added support for 4-bit dib in FreeImage_Paste
+* [Riley McNiff] fixed a bug with FreeImage_SetPixelIndex and 4-bit images
 
 July 8th, 2004 - 3.4.0
 ! [Jim Keir] improved FreeImage_FlipVertical function
