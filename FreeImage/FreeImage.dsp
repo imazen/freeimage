@@ -285,6 +285,10 @@ SOURCE=.\Source\FreeImage\FreeImageIO.cpp
 
 SOURCE=.\Source\FreeImage\GetType.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=.\Source\FreeImage\PixelAccess.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
