@@ -5,6 +5,7 @@
 // - Floris van den Berg (flvdberg@wxs.nl)
 // - Mark Sibly (marksibly@blitzbasic.com)
 // - Aaron Shumate (trek@startreker.com)
+// - Hervé Drolon (drolon@infonie.fr)
 //
 // This file is part of FreeImage 3
 //
@@ -272,7 +273,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				RGBQUAD *pal = FreeImage_GetPalette(dib);
 
-				for (unsigned k = 0; k < ch_size / 3;++k ){
+				for (unsigned k = 0; k < ch_size / 3; k++) {					
 					io->read_proc(&pal[k].rgbRed, 1, 1, handle );
 					io->read_proc(&pal[k].rgbGreen, 1, 1, handle );
 					io->read_proc(&pal[k].rgbBlue, 1, 1, handle );
@@ -341,18 +342,18 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						if (comp) {
 							for(unsigned x = 0; x < src_size;){
-								signed char t;
+								signed char t = 0;
 
 								io->read_proc(&t, 1, 1, handle);
 
 								if (t >= 0) {
-									++t;
+									unsigned size_to_read = t + 1;
 
-									io->read_proc(src + x, t, 1, handle);
+									io->read_proc(src + x, size_to_read, 1, handle);
 
-									x += t;
+									x += size_to_read;
 								} else if (t != -128){
-									signed char b;
+									signed char b = 0;
 
 									io->read_proc(&b, 1, 1, handle);
 
