@@ -75,14 +75,14 @@ ReadString(FreeImageIO *io, fi_handle handle) {
 	return cstr;
 }
 
-typedef struct tagSYMMAP {
+typedef struct tagCOLORNAMEMAP {
 	char *name;
 	BYTE r, g, b;
-} SYMMAP;
+} COLORNAMEMAP;
 
-// This big list of symbolic colors was formed from the file: /usr/X11R6/lib/X11/rgb.txt
+// This big list of color names was formed from the file: /usr/X11R6/lib/X11/rgb.txt
 // found on a standard Linux installation.
-SYMMAP symmap[] = {
+COLORNAMEMAP colornamemap[] = {
 	{"snow", 255, 250, 250},
 	{"ghost white", 248, 248, 255},
 	{"GhostWhite", 248, 248, 255},
@@ -840,16 +840,16 @@ SYMMAP symmap[] = {
 
 //searches the above table for the symbolic color name, defaults to the NULL value at the end
 static void
-SymbolicToRGB(char *symbolic_name, BYTE *red, BYTE *green, BYTE *blue) {
+ColorNameToRGB(char *color_name, BYTE *red, BYTE *green, BYTE *blue) {
 	int i = 0;
-	while( symmap[i].name ) {
-		if( !strcmp(symbolic_name, symmap[i].name) )
+	while( colornamemap[i].name ) {
+		if( !strcmp(color_name, colornamemap[i].name) )
 			break;
 		i++;
 	}
-	*red = symmap[i].r;
-	*green = symmap[i].g;
-	*blue = symmap[i].b;
+	*red = colornamemap[i].r;
+	*green = colornamemap[i].g;
+	*blue = colornamemap[i].b;
 }
 
 static char *
@@ -963,6 +963,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			std::string chrs(str,cpp); //create a string for the color chars using the first cpp chars
 			char *keys = str + cpp; //the color keys for these chars start after the first cpp chars
 
+			//translate all the tabs to spaces
+			char *tmp = keys;
+			while( strchr(tmp,'\t') ) {
+				tmp = strchr(tmp,'\t');
+				*tmp++ = ' ';
+			}
+
 			//prefer the color visual
 			if( strstr(keys," c ") ) {
 				char *clr = strstr(keys," c ") + 3;
@@ -1003,28 +1010,37 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					rgba.r = red;
 					rgba.g = green;
 					rgba.b = blue;
-				} else if( strncmp(clr,"None",4) || strncmp(clr,"none",4) ) {
-					rgba.r = rgba.g = rgba.b = 0;
+				} else if( !strncmp(clr,"None",4) || !strncmp(clr,"none",4) ) {
+					rgba.r = rgba.g = rgba.b = 0xFF;
 				} else {
-					free(str);
-					throw "No valid color found by c for color visual";
+					char *tmp = clr;
+
+					//scan forward for each space, if its " x " or " xx " end the string there
+					//this means its probably some other visual data beyond that point and not
+					//part of the color name.  How many named color end with a 1 or 2 character
+					//word? Probably none in our list at least.
+					while( (tmp = strchr(tmp,' ')) != NULL ) {
+						if( tmp[1] != ' ' ) {
+							if( (tmp[2] == ' ') || (tmp[2] != ' ' && tmp[3] == ' ') ) {
+								tmp[0] = '\0';
+								break;
+							}
+						}
+						tmp++;
+					}
+
+					//remove any trailing spaces
+					tmp = clr+strlen(clr)-1;
+					while( *tmp == ' ' ) {
+						*tmp = '\0';
+						tmp--;
+					}
+
+					ColorNameToRGB(clr, &rgba.r, &rgba.g, &rgba.b);
 				}
-			} else if( strstr(keys," s ") ) { //also accept some symbolic colors
-				char *sym = strstr(keys," s ") + 3;
-				while( *sym == ' ' ) sym++; //find the start of the symbolic name
-
-				/* This could be improved here, in the cases of trailing spaces or
-				 * more color keys after the symbolic one, but how do you tell if
-				 * "x s green m black" means a symbolic color called "green m black"
-				 * or a symbolic color called "green" and an alternate monochrome color
-				 * of just "black"
-				 * In any case, the "x c #rrggbb" is by far the most common xpm format used.
-				 */
-
-				SymbolicToRGB(sym, &rgba.r, &rgba.g, &rgba.b);
 			} else {
 				free(str);
-				throw "Only color and symbolic visuals are supported";
+				throw "Only color visuals are supported";
 			}
 
 			//add color to map
