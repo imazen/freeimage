@@ -134,19 +134,19 @@ Validate(FreeImageIO *io, fi_handle handle) {
 	if (memcmp(pbm_id1, signature, sizeof(pbm_id1)) == 0)
 		return TRUE;
 
-	if (memcmp(pbm_id1, signature, sizeof(pbm_id2)) == 0)
+	if (memcmp(pbm_id2, signature, sizeof(pbm_id2)) == 0)
 		return TRUE;
 
-	if (memcmp(pbm_id1, signature, sizeof(pgm_id1)) == 0)
+	if (memcmp(pgm_id1, signature, sizeof(pgm_id1)) == 0)
 		return TRUE;
 
-	if (memcmp(pbm_id1, signature, sizeof(pgm_id2)) == 0)
+	if (memcmp(pgm_id2, signature, sizeof(pgm_id2)) == 0)
 		return TRUE;
 
-	if (memcmp(pbm_id1, signature, sizeof(ppm_id1)) == 0)
+	if (memcmp(ppm_id1, signature, sizeof(ppm_id1)) == 0)
 		return TRUE;
 
-	if (memcmp(pbm_id1, signature, sizeof(ppm_id2)) == 0)
+	if (memcmp(ppm_id2, signature, sizeof(ppm_id2)) == 0)
 		return TRUE;
 
 	return FALSE;
