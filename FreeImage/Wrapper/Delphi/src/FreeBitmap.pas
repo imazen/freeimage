@@ -27,8 +27,7 @@ unit FreeBitmap;
 // ==========================================================
 //
 // From begining all code of this file is based on C++ wrapper to
-// FreeImage - FreeImagePlus. So it is simply translation from C on Delphi Pascal
-// with just some minor changes.
+// FreeImage - FreeImagePlus.
 //
 // ==========================================================
 
@@ -54,7 +53,7 @@ type
     function IsValid: Boolean; virtual;
   end;
 
-// forward declarations
+  // forward declarations
   TFreeMemoryIO = class;
 
   { TFreeBitmap }
@@ -67,7 +66,8 @@ type
     function Replace(NewDib: PFIBITMAP): Boolean;
   public
     // construction & destruction
-    constructor Create(ImageType: FREE_IMAGE_TYPE = FIT_BITMAP; Width: Integer = 0; Height: Integer = 0; Bpp: Integer = 0);
+    constructor Create(ImageType: FREE_IMAGE_TYPE = FIT_BITMAP;
+      Width: Integer = 0; Height: Integer = 0; Bpp: Integer = 0);
     destructor Destroy; override;
     function SetSize(ImageType: FREE_IMAGE_TYPE; Width, Height, Bpp: Integer; RedMask: Cardinal = 0; GreenMask: Cardinal = 0; BlueMask: Cardinal = 0): Boolean;
     // change notification
@@ -156,7 +156,8 @@ type
     // upsampling / downsampling
     procedure MakeThumbnail(const Width, Height: Integer; DestBitmap: TFreeBitmap);
     function Rescale(NewWidth, NewHeight: Integer; Filter: TFreeStretchFilter; Dest: TFreeBitmap = nil): Boolean;
-    { Properties }
+
+    // Properties 
     property Dib: PFIBITMAP read FDib;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
   end;
@@ -168,7 +169,8 @@ type
     FDeleteMe: Boolean;     // True - need to delete FDisplayDib
     FDisplayDib: PFIBITMAP; // Image that paints on DC
   public
-    constructor Create(ImageType: FREE_IMAGE_TYPE = FIT_BITMAP; Width: Integer = 0; Height: Integer = 0; Bpp: Integer = 0);
+    constructor Create(ImageType: FREE_IMAGE_TYPE = FIT_BITMAP;
+      Width: Integer = 0; Height: Integer = 0; Bpp: Integer = 0);
     destructor Destroy; override;
 
     function CopyToHandle: THandle;
@@ -197,7 +199,7 @@ type
     function Read(fif: FREE_IMAGE_FORMAT; Flag: Integer = 0): PFIBITMAP;
     function Write(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP; Flag: Integer = 0): Boolean;
     function Tell: Longint;
-    function Seek(Offset: Longint; Origin: Integer): Boolean;
+    function Seek(Offset: Longint; Origin: Word): Boolean;
     function Acquire(var Data: PByte; var SizeInBytes: DWORD): Boolean;
     // overriden methods
     function IsValid: Boolean; override;
@@ -233,8 +235,6 @@ type
   end;
 
 implementation
-
-//uses ConvUtils;
 
 { TFreeObject }
 
@@ -1041,10 +1041,10 @@ var
   Rotated: PFIBITMAP;
 begin
   Result := False;
-  if FDib <> nil then
+  if IsValid then
   begin
     Bpp := FreeImage_GetBPP(FDib);
-    if (Bpp = 1) or (Bpp >= 8) then
+    if Bpp in [1, 8, 24, 32] then
     begin
       Rotated := FreeImage_RotateClassic(FDib, Angle);
       Result := Replace(Rotated);
@@ -1173,11 +1173,12 @@ begin
 end;
 
 procedure TFreeBitmap.SetHorizontalResolution(Value: Integer);
-var
-  bmih: PBitmapInfoHeader;
 begin
-  bmih := FreeImage_GetInfoHeader(FDib);
-  bmih.biXPelsPerMeter := Value * 100;
+  if IsValid then
+  begin
+    FreeImage_SetDotsPerMeterX(FDib, Value * 100);
+    Change;
+  end;
 end;
 
 function TFreeBitmap.SetPixelColor(X, Y: Cardinal;
@@ -1233,11 +1234,12 @@ begin
 end;
 
 procedure TFreeBitmap.SetVerticalResolution(Value: Integer);
-var
-  bmih: PBitmapInfoHeader;
 begin
-  bmih := FreeImage_GetInfoHeader(FDib);
-  bmih.biYPelsPerMeter := Value * 100;
+  if IsValid then
+  begin
+    FreeImage_SetDotsPerMeterY(FDib, Value * 100);
+    Change;
+  end;
 end;
 
 function TFreeBitmap.SplitChannels(RedChannel, GreenChannel,
@@ -1737,6 +1739,7 @@ end;
 
 constructor TFreeMemoryIO.Create(Data: PByte; SizeInBytes: DWORD);
 begin
+  inherited Create;
   FHMem := FreeImage_OpenMemory(Data, SizeInBytes);
 end;
 
@@ -1762,7 +1765,7 @@ begin
   Result := FreeImage_LoadFromMemory(fif, FHMem, Flag)
 end;
 
-function TFreeMemoryIO.Seek(Offset, Origin: Integer): Boolean;
+function TFreeMemoryIO.Seek(Offset: Longint; Origin: Word): Boolean;
 begin
   Result := FreeImage_SeekMemory(FHMem, Offset, Origin)
 end;
