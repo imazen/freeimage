@@ -290,7 +290,7 @@ public:
 	*/
 	BYTE* getScanLine(WORD scanline);
 
-	/** @brief Get the pixel index of a palettized image at position (x, y), including range check (slow access). 
+	/** @brief Get the pixel index of a 1-, 4- or 8-bit palettized image at position (x, y), including range check (slow access). 
 	@param x Pixel position in horizontal direction
 	@param y Pixel position in vertical direction
 	@param value Pixel index (returned value)
@@ -298,7 +298,7 @@ public:
 	*/
 	BOOL getPixelIndex(unsigned x, unsigned y, BYTE *value);
 
-	/** @brief Get the pixel color of a 24- or 32-bit image at position (x, y), including range check (slow access). 
+	/** @brief Get the pixel color of a 16-, 24- or 32-bit image at position (x, y), including range check (slow access). 
 	@param x Pixel position in horizontal direction
 	@param y Pixel position in vertical direction
 	@param value Pixel color (returned value)
@@ -306,7 +306,7 @@ public:
 	*/
 	BOOL getPixelColor(unsigned x, unsigned y, RGBQUAD *value);
 
-	/** @brief Set the pixel index of a palettized image at position (x, y), including range check (slow access). 
+	/** @brief Set the pixel index of a 1-, 4- or 8-bit palettized image at position (x, y), including range check (slow access). 
 	@param x Pixel position in horizontal direction
 	@param y Pixel position in vertical direction
 	@param value Pixel index
@@ -314,7 +314,7 @@ public:
 	*/
 	BOOL setPixelIndex(unsigned x, unsigned y, BYTE *value);
 
-	/** @brief Set the pixel color of a 24- or 32-bit image at position (x, y), including range check (slow access). 
+	/** @brief Set the pixel color of a 16-, 24- or 32-bit image at position (x, y), including range check (slow access). 
 	@param x Pixel position in horizontal direction
 	@param y Pixel position in vertical direction
 	@param value Pixel color
@@ -596,9 +596,6 @@ public:
 	/**@name Internal use */
 	//@{
 	  BOOL replace(FIBITMAP *new_dib);
-	  BOOL replace(fipImage& img) {
-		  return replace(img.getFIBITMAP());
-	  }
 	//@}
 
 };
