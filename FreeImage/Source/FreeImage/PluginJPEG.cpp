@@ -112,11 +112,15 @@ METHODDEF(void)
 jpeg_error_exit (j_common_ptr cinfo) {
 	// always display the message
 	(*cinfo->err->output_message)(cinfo);
+
+	// allow JPEG with a premature end of file
+	if((cinfo)->err->msg_parm.i[0] != 13) {
 	
-	// let the memory manager delete any temp files before we die
-	jpeg_destroy(cinfo);
-	
-	throw s_format_id;
+		// let the memory manager delete any temp files before we die
+		jpeg_destroy(cinfo);
+		
+		throw s_format_id;
+	}
 }
 
 /**

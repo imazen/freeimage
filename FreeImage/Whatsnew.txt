@@ -8,7 +8,8 @@ What's New for FreeImage
 Month day, 2005 - 3.6.2
 + [Detlev Vendt] added FreeImage_ZLibGUnzip
 + [Herve Drolon] added new image data types FIT_RGB16, FIT_RGBA16, FIT_RGBF, FIT_RGBAF
-+ [Herve Drolon] FreeImage_FlipHorizontal & FreeImage_FlipVertical now works with any bitmap type
++ [Herve Drolon] FreeImage_FlipHorizontal & FreeImage_FlipVertical now work with any bitmap type
+* [Herve Drolon] allowed loading of corrupted JPEG with a premature end of file
 
 February 20, 2005 - 3.6.1
 * [Ryan Rubley] fixed a memory leak in the metadata API
