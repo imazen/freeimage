@@ -333,10 +333,10 @@ Public Declare Function FreeImage_LookupX11Color Lib "FreeImage.dll" Alias "_Fre
 Public Declare Function FreeImage_LookupSVGColor Lib "FreeImage.dll" Alias "_FreeImage_LookupSVGColor@16" (ByVal szColor As String, ByRef nRed As Long, ByRef nGreen As Long, ByRef nBlue As Long) As Long
 Public Declare Function FreeImage_GetBits Lib "FreeImage.dll" Alias "_FreeImage_GetBits@4" (ByVal dib As Long) As Long
 Public Declare Function FreeImage_GetScanLine Lib "FreeImage.dll" Alias "_FreeImage_GetScanLine@8" (ByVal dib As Long, ByVal scanline As Long) As Long
-Public Declare Function FreeImage_GetPixelIndex Lib "FreeImage.dll" Alias "_FreeImage_GetPixelIndex@16" (ByVal dib As Long, ByVal x As Long, ByVal y As Long, ByRef value As Long) As Long
-Public Declare Function FreeImage_GetPixelColor Lib "FreeImage.dll" Alias "_FreeImage_GetPixelColor@16" (ByVal dib As Long, ByVal x As Long, ByVal y As Long, ByVal value As Long) As Long
-Public Declare Function FreeImage_SetPixelIndex Lib "FreeImage.dll" Alias "_FreeImage_SetPixelIndex@16" (ByVal dib As Long, ByVal x As Long, ByVal y As Long, ByRef value As Long) As Long
-Public Declare Function FreeImage_SetPixelColor Lib "FreeImage.dll" Alias "_FreeImage_SetPixelColor@16" (ByVal dib As Long, ByVal x As Long, ByVal y As Long, ByVal value As Long) As Long
+Public Declare Function FreeImage_GetPixelIndex Lib "FreeImage.dll" Alias "_FreeImage_GetPixelIndex@16" (ByVal dib As Long, ByVal x As Long, ByVal y As Long, ByRef value As Byte) As Long
+Public Declare Function FreeImage_GetPixelColor Lib "FreeImage.dll" Alias "_FreeImage_GetPixelColor@16" (ByVal dib As Long, ByVal x As Long, ByVal y As Long, ByRef value As RGBQUAD) As Long
+Public Declare Function FreeImage_SetPixelIndex Lib "FreeImage.dll" Alias "_FreeImage_SetPixelIndex@16" (ByVal dib As Long, ByVal x As Long, ByVal y As Long, ByRef Value As Byte) As Long
+Public Declare Function FreeImage_SetPixelColor Lib "FreeImage.dll" Alias "_FreeImage_SetPixelColor@16" (ByVal dib As Long, ByVal x As Long, ByVal y As Long, ByRef Value As RGBQUAD) As Long
 Public Declare Function FreeImage_GetColorsUsed Lib "FreeImage.dll" Alias "_FreeImage_GetColorsUsed@4" (ByVal dib As Long) As Long
 Public Declare Function FreeImage_GetBPP Lib "FreeImage.dll" Alias "_FreeImage_GetBPP@4" (ByVal dib As Long) As Long
 Public Declare Function FreeImage_GetWidth Lib "FreeImage.dll" Alias "_FreeImage_GetWidth@4" (ByVal dib As Long) As Long
@@ -408,13 +408,6 @@ Public Declare Function FreeImage_ConvertToStandardType Lib "FreeImage.dll" Alia
 Public Declare Function FreeImage_ConvertToType Lib "FreeImage.dll" Alias "_FreeImage_ConvertToType@12" (ByVal src As Long, ByVal dst_type As FREE_IMAGE_TYPE, Optional ByVal scale_linear As Long = 1) As Long
 Public Declare Function FreeImage_ZLibCompress Lib "FreeImage.dll" Alias "_FreeImage_ZLibCompress@16" (ByRef target As Long, ByVal target_size As Long, ByRef source As Long, ByVal source_size As Long) As Long
 Public Declare Function FreeImage_ZLibUncompress Lib "FreeImage.dll" Alias "_FreeImage_ZLibUncompress@16" (ByRef target As Long, ByVal target_size As Long, ByRef source As Long, ByVal source_size As Long) As Long
-Public Declare Function FreeImage_FindFirstMetadata Lib "FreeImage.dll" Alias "_FreeImage_FindFirstMetadata@4" (UNKNOWN model As FREE_IMAGE_MDMODEL, ByVal dib As Long, UNKNOWN tag As FITAG **) As FIMETADATA *
-Public Declare Function FreeImage_FindNextMetadata Lib "FreeImage.dll" Alias "_FreeImage_FindNextMetadata@0" (UNKNOWN mdhandle As FIMETADATA *, UNKNOWN tag As FITAG **) As Long
-Public Declare Sub FreeImage_FindCloseMetadata Lib "FreeImage.dll" Alias "_FreeImage_FindCloseMetadata@0" (UNKNOWN mdhandle As FIMETADATA *)
-Public Declare Function FreeImage_SetMetadata Lib "FreeImage.dll" Alias "_FreeImage_SetMetadata@8" (UNKNOWN model As FREE_IMAGE_MDMODEL, ByVal dib As Long, ByVal key As String, UNKNOWN tag As FITAG *) As Long
-Public Declare Function FreeImage_GetMetadata Lib "FreeImage.dll" Alias "_FreeImage_GetMetadata@8" (UNKNOWN model As FREE_IMAGE_MDMODEL, ByVal dib As Long, ByVal key As String, UNKNOWN tag As FITAG **) As Long
-Public Declare Function FreeImage_GetMetadataCount Lib "FreeImage.dll" Alias "_FreeImage_GetMetadataCount@4" (UNKNOWN model As FREE_IMAGE_MDMODEL, ByVal dib As Long) As Long
-Public Declare Function FreeImage_TagToString Lib "FreeImage.dll" Alias "_FreeImage_TagToString@4" (UNKNOWN model As FREE_IMAGE_MDMODEL, UNKNOWN tag As FITAG *, Optional ByVal Make As String = 0) As const char*
 Public Declare Function FreeImage_RotateClassic Lib "FreeImage.dll" Alias "_FreeImage_RotateClassic@12" (ByVal dib As Long, ByVal angle As Double) As Long
 Public Declare Function FreeImage_RotateEx Lib "FreeImage.dll" Alias "_FreeImage_RotateEx@48" (ByVal dib As Long, ByVal angle As Double, ByVal x_shift As Double, ByVal y_shift As Double, ByVal x_origin As Double, ByVal y_origin As Double, ByVal use_mask As Long) As Long
 Public Declare Function FreeImage_FlipHorizontal Lib "FreeImage.dll" Alias "_FreeImage_FlipHorizontal@4" (ByVal dib As Long) As Long
