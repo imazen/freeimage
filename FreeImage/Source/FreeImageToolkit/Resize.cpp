@@ -31,7 +31,9 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, DWORD uDstSize, DWORD uSrc
 	double dWidth;
 	double dFScale = 1.0;
 	double dFilterWidth = pFilter->GetWidth();
-    double dScale = double(uDstSize) / double(uSrcSize);
+
+	// scale factor
+	double dScale = double(uDstSize) / double(uSrcSize);
 
 	if(dScale < 1.0) {
 		// minification
@@ -124,9 +126,19 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 	DWORD src_width  = FreeImage_GetWidth(src); 
 	DWORD src_height = FreeImage_GetHeight(src);
 
+	unsigned bpp = FreeImage_GetBPP(src);
+
 	// allocate the dst image
-	FIBITMAP *dst = FreeImage_Allocate(dst_width, dst_height, m_bpp);
+	FIBITMAP *dst = FreeImage_Allocate(dst_width, dst_height, bpp);
 	if(!dst) return NULL;
+
+	if(bpp == 8) {
+		// build a greyscale palette
+		RGBQUAD *dst_pal = FreeImage_GetPalette(dst);
+		for(int i = 0; i < 256; i++) {
+			dst_pal[i].rgbRed = dst_pal[i].rgbGreen = dst_pal[i].rgbBlue = (BYTE)i;
+		}
+	}
 
 	// decide which filtering order (xy or yx) is faster for this mapping by
 	// counting convolution multiplies
@@ -136,7 +148,7 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 		// -------------
 
 		// allocate a temporary image
-		FIBITMAP *tmp = FreeImage_Allocate(dst_width, src_height, m_bpp);
+		FIBITMAP *tmp = FreeImage_Allocate(dst_width, src_height, bpp);
 		if(!tmp) {
 			FreeImage_Unload(dst);
 			return NULL;
@@ -156,7 +168,7 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 		// -------------
 
 		// allocate a temporary image
-		FIBITMAP *tmp = FreeImage_Allocate(src_width, dst_height, m_bpp);
+		FIBITMAP *tmp = FreeImage_Allocate(src_width, dst_height, bpp);
 		if(!tmp) {
 			FreeImage_Unload(dst);
 			return NULL;
@@ -177,8 +189,7 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 
 
 /// Performs horizontal image filtering
-void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned src_height, FIBITMAP *dst, unsigned dst_width, unsigned dst_height) {
-    int samplesperpixel = (m_bpp / 8);
+void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned src_height, FIBITMAP *dst, unsigned dst_width, unsigned dst_height) { 
 	if(dst_width == src_width) {
 		// no scaling required, just copy
 		BYTE *src_bits = FreeImage_GetBits(src);
@@ -186,76 +197,108 @@ void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned
 		memcpy(dst_bits, src_bits, dst_height * FreeImage_GetPitch(dst));
 	}
 	else {
+		unsigned index;	// pixel index
+
 		// allocate and calculate the contributions
 		CWeightsTable weightsTable(m_pFilter, dst_width, src_width); 
+		
+		// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+		unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
-		// step through rows            
-		for(unsigned y = 0; y < dst_height; y++) {
-			// scale each row 
-			BYTE *src_bits = FreeImage_GetScanLine(src, y);
-			BYTE *dst_bits = FreeImage_GetScanLine(dst, y);
+		// step through rows
+		switch(FreeImage_GetBPP(src)) {
+			case 8:
+			case 24:
+			case 32:
+			{
+				for(unsigned y = 0; y < dst_height; y++) {
+					// scale each row 
+					BYTE *src_bits = FreeImage_GetScanLine(src, y);
+					BYTE *dst_bits = FreeImage_GetScanLine(dst, y);
 
-			for(unsigned x = 0; x < dst_width; x++) {
-				// loop through row
-                double value[4] = {0, 0, 0, 0};                 // 4 = 32bpp max
-				int iLeft = weightsTable.getLeftBoundary(x);    // retrieve left boundary
-				int iRight = weightsTable.getRightBoundary(x);  // retrieve right boundary
+					for(unsigned x = 0; x < dst_width; x++) {
+						// loop through row
+						double value[4] = {0, 0, 0, 0};                 // 4 = 32bpp max
+						int iLeft = weightsTable.getLeftBoundary(x);    // retrieve left boundary
+						int iRight = weightsTable.getRightBoundary(x);  // retrieve right boundary
 
-				for(int i = iLeft; i <= iRight; i++) {
-					// scan between boundaries
-					// accumulate weighted effect of each neighboring pixel
-					double weight = weightsTable.getWeight(x, i-iLeft);
-                    for (int j = 0; j < m_bpp / 8; j++)
-					    value[j] += (weight * (double)src_bits[i*samplesperpixel + j]); 
-				} 
+						for(int i = iLeft; i <= iRight; i++) {
+							// scan between boundaries
+							// accumulate weighted effect of each neighboring pixel
+							double weight = weightsTable.getWeight(x, i-iLeft);
+							
+							index = i * bytespp;
+							for (int j = 0; j < bytespp; j++) {
+								value[j] += (weight * (double)src_bits[index + j]); 
+							}
+						} 
 
-				// place result in destination pixel
-                for (int j = 0; j < m_bpp / 8; j++)
-				    dst_bits[x*samplesperpixel + j] = 
-                        (BYTE)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)255);
-			} 
+						// clamp and place result in destination pixel
+						index = x * bytespp;
+						for (int j = 0; j < bytespp; j++) {
+							dst_bits[index + j] = (BYTE)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)255);
+						}
+					} 
+				}
+			}
+			break;
 		}
 	}
 } 
 
 /// Performs vertical image filtering
 void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned src_height, FIBITMAP *dst, unsigned dst_width, unsigned dst_height) { 
-    int samplesperpixel = (m_bpp / 8);
 	if(src_height == dst_height) {
 		// no scaling required, just copy
 		BYTE *src_bits = FreeImage_GetBits(src);
 		BYTE *dst_bits = FreeImage_GetBits(dst);
-		memcpy(dst_bits, src_bits, dst_height * FreeImage_GetPitch(dst));
+		memcpy(dst_bits, src_bits, dst_height * FreeImage_GetPitch(dst));	
 	}
 	else {
+		unsigned index;	// pixel index
+
 		// allocate and calculate the contributions
 		CWeightsTable weightsTable(m_pFilter, dst_height, src_height); 
 
+		// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+		unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+
 		// step through columns
-		for(unsigned x = 0; x < dst_width; x++) {
-			// scale each column
-			for(unsigned y = 0; y < dst_height; y++) {
-				// loop through column
-                double value[4] = {0, 0, 0, 0};                 // 4 = 32bpp max
-				int iLeft = weightsTable.getLeftBoundary(y);    // retrieve left boundary
-				int iRight = weightsTable.getRightBoundary(y);  // retrieve right boundary
+		switch(FreeImage_GetBPP(src)) {
+			case 8:
+			case 24:
+			case 32:
+			{
+				for(unsigned x = 0; x < dst_width; x++) {
+					index = x * bytespp;
 
-				BYTE *dst_bits = FreeImage_GetScanLine(dst, y);
+					// scale each column
+					for(unsigned y = 0; y < dst_height; y++) {
+						// loop through column
+						double value[4] = {0, 0, 0, 0};                 // 4 = 32bpp max
+						int iLeft = weightsTable.getLeftBoundary(y);    // retrieve left boundary
+						int iRight = weightsTable.getRightBoundary(y);  // retrieve right boundary
 
-				for(int i = iLeft; i <= iRight; i++) {
-					// scan between boundaries
-					// accumulate weighted effect of each neighboring pixel
-					BYTE *src_bits = FreeImage_GetScanLine(src, i);
-					double weight = weightsTable.getWeight(y, i-iLeft);
-                    for (int j = 0; j < m_bpp / 8; j++)
-					    value[j] += (weight * (double)src_bits[x*samplesperpixel + j]);
+						BYTE *dst_bits = FreeImage_GetScanLine(dst, y);		
+
+						for(int i = iLeft; i <= iRight; i++) {
+							// scan between boundaries
+							// accumulate weighted effect of each neighboring pixel
+							BYTE *src_bits = FreeImage_GetScanLine(src, i);
+							double weight = weightsTable.getWeight(y, i-iLeft);					
+							for (int j = 0; j < bytespp; j++) {
+								value[j] += (weight * (double)src_bits[index + j]);
+							}
+						}
+
+						// clamp and place result in destination pixel
+						for (int j = 0; j < bytespp; j++) {
+							dst_bits[index + j] = (BYTE)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)255);
+						}
+					}
 				}
-
-				// clamp and place result in destination pixel
-                for (int j = 0; j < m_bpp / 8; j++)
-				    dst_bits[x*samplesperpixel + j] = 
-                        (BYTE)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)255);
 			}
+			break;
 		}
 	}
 } 
