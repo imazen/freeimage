@@ -118,6 +118,8 @@ void testAcquireMemIO(const char *lpszPathName) {
 	// save the file to memory
 	FreeImage_SaveToMemory(FIF_PNG, dib, hmem, PNG_DEFAULT);
 
+	FreeImage_Unload(dib);
+
 	// get the buffer from the memory stream
 	BYTE *mem_buffer = NULL;
 	DWORD size_in_bytes = 0;
