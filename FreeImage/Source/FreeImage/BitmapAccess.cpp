@@ -517,17 +517,17 @@ FreeImage_GetPixelColor(FIBITMAP *dib, unsigned x, unsigned y, RGBQUAD *value) {
 		switch(FreeImage_GetBPP(dib)) {
 			case 24:
 				bits += 3*x;
-				value->rgbBlue		= bits[0];	// B
-				value->rgbGreen		= bits[1];	// G
-				value->rgbRed		= bits[2];	// R
+				value->rgbBlue		= bits[FIRGB_BLUE];	// B
+				value->rgbGreen		= bits[FIRGB_GREEN];	// G
+				value->rgbRed		= bits[FIRGB_RED];	// R
 				value->rgbReserved	= 0;
 				break;
 			case 32:
 				bits += 4*x;
-				value->rgbBlue		= bits[0];	// B
-				value->rgbGreen		= bits[1];	// G
-				value->rgbRed		= bits[2];	// R
-				value->rgbReserved	= bits[3];	// A
+				value->rgbBlue		= bits[FIRGBA_BLUE];	// B
+				value->rgbGreen		= bits[FIRGBA_GREEN];	// G
+				value->rgbRed		= bits[FIRGBA_RED];	// R
+				value->rgbReserved	= bits[FIRGBA_ALPHA];	// A
 				break;
 			default:
 				return FALSE;
@@ -581,16 +581,16 @@ FreeImage_SetPixelColor(FIBITMAP *dib, unsigned x, unsigned y, RGBQUAD *value) {
 		switch(FreeImage_GetBPP(dib)) {
 			case 24:
 				bits += 3*x;
-				bits[0] = value->rgbBlue;	// B
-				bits[1] = value->rgbGreen;	// G
-				bits[2] = value->rgbRed;	// R
+				bits[FIRGB_BLUE] = value->rgbBlue;	// B
+				bits[FIRGB_GREEN] = value->rgbGreen;	// G
+				bits[FIRGB_RED] = value->rgbRed;	// R
 				break;
 			case 32:
 				bits += 4*x;
-				bits[0] = value->rgbBlue;		// B
-				bits[1] = value->rgbGreen;		// G
-				bits[2] = value->rgbRed;		// R
-				bits[3] = value->rgbReserved;	// A
+				bits[FIRGBA_BLUE] = value->rgbBlue;		// B
+				bits[FIRGBA_GREEN] = value->rgbGreen;		// G
+				bits[FIRGBA_RED] = value->rgbRed;		// R
+				bits[FIRGBA_ALPHA] = value->rgbReserved;	// A
 				break;
 			default:
 				return FALSE;
