@@ -33,7 +33,7 @@
   <ul>
   <li> evaluate image compression 
   <li> evaluate filter properties 
-  <li< evaluate the quality of resampling algorithms 
+  <li> evaluate the quality of resampling algorithms 
   <li> adjust gamma correction - at the proper gamma setting, the møires should be minimized 
   </ul>
   Reference: 

@@ -49,6 +49,11 @@ SRCS = \
 	tif_write.c \
 	tif_zip.c
 
+if HAVE_CXX
+HDRS +=	tiffio.hxx
+SRCS += tif_stream.cxx
+endif
+
 EXTRA_SRCS = \
 	tif_acorn.c \
 	tif_apple.c \

@@ -25,6 +25,41 @@
 // Local test functions
 // ----------------------------------------------------------
 
+BOOL testClone(const char *lpszPathName) {
+	FIBITMAP *dib1 = NULL, *dib2 = NULL; 
+
+	try {
+		FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(lpszPathName);
+
+		dib1 = FreeImage_Load(fif, lpszPathName, 0); 
+		if(!dib1) throw(1);
+		
+		dib2 = FreeImage_Clone(dib1); 
+		if(!dib2) throw(1);
+		
+		FreeImage_Unload(dib1); 
+		FreeImage_Unload(dib2); 
+
+		return TRUE;
+	} 
+	catch(int) {
+		if(dib1) FreeImage_Unload(dib1); 
+		if(dib2) FreeImage_Unload(dib2); 
+		return FALSE;
+	}
+	
+	return FALSE; 
+}
+
+void testAllocateCloneUnload(const char *lpszPathName) {
+	printf("testAllocateCloneUnload ...");
+
+	BOOL bResult = testClone(lpszPathName);
+	assert(bResult);
+
+	printf("\tOK\n");
+}
+
 BOOL testAllocateCloneUnloadType(FREE_IMAGE_TYPE image_type, unsigned width, unsigned height) {
 	FIBITMAP *image = NULL;
 	FIBITMAP *clone = NULL;

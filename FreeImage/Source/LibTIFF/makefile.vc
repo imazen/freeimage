@@ -31,6 +31,12 @@
 
 INCL	= -I. $(JPEG_INCLUDE) $(ZLIB_INCLUDE)
 
+!IFDEF USE_WIN_CRT_LIB
+OBJ_SYSDEP_MODULE = tif_unix.obj
+!ELSE
+OBJ_SYSDEP_MODULE = tif_win32.obj
+!ENDIF
+
 OBJ	= \
 	tif_aux.obj \
 	tif_close.obj \
@@ -59,17 +65,18 @@ OBJ	= \
 	tif_predict.obj \
 	tif_print.obj \
 	tif_read.obj \
+	tif_stream.obj \
 	tif_swab.obj \
 	tif_strip.obj \
 	tif_thunder.obj \
 	tif_tile.obj \
-	tif_win32.obj \
 	tif_version.obj \
 	tif_warning.obj \
 	tif_write.obj \
-	tif_zip.obj
+	tif_zip.obj \
+	$(OBJ_SYSDEP_MODULE)
 
-all:	libtiff.lib libtiff.dll
+all:	libtiff.lib $(DLLNAME)
 
 tif_config.h:
 	copy tif_config.h.vc tif_config.h
@@ -80,8 +87,8 @@ tiffconf.h:
 libtiff.lib:	tif_config.h $(OBJ)
 	$(AR) /out:libtiff.lib $(OBJ) $(LIBS)
 
-libtiff.dll:	tif_config.h $(OBJ)
-	$(LD) /dll /def:libtiff.def /out:libtiff.dll \
+$(DLLNAME):	tif_config.h $(OBJ)
+	$(LD) /debug /dll /def:libtiff.def /out:$(DLLNAME) \
 	/implib:libtiff_i.lib $(OBJ) $(LIBS)
 	
 clean:

@@ -442,7 +442,7 @@ CheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
 	char	*cp = NULL;
 	tsize_t	bytes = nmemb * elem_size;
 
-	if (elem_size && bytes / elem_size == nmemb)
+	if (nmemb && elem_size && bytes / elem_size == nmemb)
 		cp = (char*) _TIFFmalloc(bytes);
 
 	if (cp == NULL)
@@ -504,7 +504,8 @@ Fax3SetupState(TIFF* tif)
 		dsp->refruns = dsp->runs + (nruns>>1);
 	else
 		dsp->refruns = NULL;
-	if (is2DEncoding(dsp)) {	/* NB: default is 1D routine */
+	if (td->td_compression == COMPRESSION_CCITTFAX3
+	    && is2DEncoding(dsp)) {	/* NB: default is 1D routine */
 		tif->tif_decoderow = Fax3Decode2D;
 		tif->tif_decodestrip = Fax3Decode2D;
 		tif->tif_decodetile = Fax3Decode2D;
@@ -774,7 +775,7 @@ static	int32 find1span(unsigned char*, int32, int32);
  * table.  The ``base'' of the bit string is supplied
  * along with the start+end bit indices.
  */
-/*inline*/ static int32 
+/*inline*/ static int32
 find0span(unsigned char* bp, int32 bs, int32 be)
 {
 	int32 bits = be - bs;

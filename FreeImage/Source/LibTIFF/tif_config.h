@@ -12,16 +12,16 @@
 #define PACKAGE_NAME "LibTIFF Software"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LibTIFF Software 3.7.0"
+#define PACKAGE_STRING "LibTIFF Software 3.7.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "tiff"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.7.0"
+#define PACKAGE_VERSION "3.7.1"
 
 /* Version number of package */
-#define VERSION "3.7.0"
+#define VERSION "3.7.1"
 
 
 /* --- byte order --- */

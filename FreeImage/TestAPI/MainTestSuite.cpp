@@ -57,6 +57,9 @@ int main(int argc, char *argv[]) {
 
 	showPlugins();
 
+	// test the clone function
+	testAllocateCloneUnload("exif.jpg");
+
 	// test internal image types
 
 	testImageType(width, height);
