@@ -56,15 +56,19 @@ FreeImage_ColorQuantize(FIBITMAP *dib, FREE_IMAGE_QUANTIZE quantize) {
 		if (FreeImage_GetBPP(dib) == 24) {
 			switch(quantize) {
 				case FIQ_WUQUANT :
+				{
 					try {
 						WuQuantizer Q (dib);
-						return (FIBITMAP *) Q.Quantize();
+						return Q.Quantize();
 					} catch (char *) {
 						return NULL;
 					}
-
+				}
 				case FIQ_NNQUANT :
-					return NNQuantizer(dib, 15);
+				{
+					NNQuantizer Q;
+					return Q.Quantize(dib, 1);
+				}
 			}
 		}
 	}

@@ -25,15 +25,14 @@
 //               Author: Hervé Drolon (drolon@infonie.fr)
 // March 2004:   Adaptation for the FreeImage 3 library (port to big endian processors)
 //               Author: Hervé Drolon (drolon@infonie.fr)
+// April 2004:   Algorithm rewritten as a C++ class. 
+//               Fixed a bug in the algorithm with handling of 4-byte boundary alignment.
+//               Author: Hervé Drolon (drolon@infonie.fr)
 ///////////////////////////////////////////////////////////////////////
 
+#include "Quantizers.h"
 #include "FreeImage.h"
-
-const int netsize = 256;			// number of colours used
-
-
-// For 256 colours, fixed arrays need 8kb, plus space for the image
-// ----------------------------------------------------------------
+#include "Utilities.h"
 
 
 // Four primes near 500 - assume no image has a length so large
@@ -45,87 +44,15 @@ const int netsize = 256;			// number of colours used
 #define prime3		487
 #define prime4		503
 
-// Prototypes 
-// ==========================================================
-
-static void initnet(BYTE *thepic, DWORD len, int sample);	
-static void unbiasnet();	// can edit this function to do output of colour map
-static void inxbuild();
-static int inxsearch(int b, int g, int r);
-static int contest(int b, int g, int r);
-static void altersingle(int alpha, int i, int b, int g, int r);
-static void alterneigh(int rad, int i, int b, int g, int r);
-static void learn();
-
-// Network Definitions
-// ==========================================================
-
-#define maxnetpos		(netsize-1)
-#define netbiasshift	4			// bias for colour values
-#define ncycles			100			// no. of learning cycles
-
-// defs for freq and bias
-
-#define intbiasshift    16			// bias for fractions
-#define intbias		(((int) 1)<<intbiasshift)
-#define gammashift  	10			// gamma = 1024
-#define gamma   	(((int) 1)<<gammashift)
-#define betashift  	10
-#define beta		(intbias>>betashift)	// beta = 1 / 1024
-#define betagamma	(intbias<<(gammashift-betashift))
-
-// defs for decreasing radius factor
-
-#define initrad			(netsize>>3)	// for 256 cols, radius starts
-#define radiusbiasshift	6				// at 32.0 biased by 6 bits
-#define radiusbias	(((int) 1)<<radiusbiasshift)
-#define initradius	(initrad*radiusbias)	// and decreases by a 
-#define radiusdec	30						// factor of 1/30 each cycle
-
-// defs for decreasing alpha factor
-
-#define alphabiasshift	10			// alpha starts at 1.0
-#define initalpha	(((int) 1)<<alphabiasshift)
-
-// radbias and alpharadbias used for radpower calculation
-
-#define radbiasshift	8
-#define radbias			(((int) 1)<<radbiasshift)
-#define alpharadbshift  (alphabiasshift+radbiasshift)
-#define alpharadbias    (((int) 1)<<alpharadbshift)
-
-// Types and Global Variables
-// ==========================================================
-   
-static BYTE *thepicture;	// the input image itself
-static DWORD lengthcount;	// lengthcount = H*W*3
-
-static int samplefac;				// sampling factor 1..30
-
-
-typedef int pixel[4];				// BGRc
-static pixel network[netsize];		// the network itself
-
-static int netindex[256];			// for network lookup - really 256
-
-static int bias [netsize];			// bias and freq arrays for learning
-static int freq [netsize];
-static int radpower[initrad];		// radpower for precomputation
-
-// ==========================================================
+// ----------------------------------------------------------------
 
 ///////////////////////////////////////////////////////////////////////////
 // Initialise network in range (0,0,0) to (255,255,255) and set parameters
 // -----------------------------------------------------------------------
 
-static void initnet(BYTE *thepic, DWORD len, int sample)	
-{
+void NNQuantizer::initnet() {
 	int i, *p;
-	
-	thepicture = thepic;
-	lengthcount = len;
-	samplefac = sample;
-	
+
 	for (i = 0; i < netsize; i++) {
 		p = network[i];
 		p[FI_RGBA_BLUE] = p[FI_RGBA_GREEN] = p[FI_RGBA_RED] = (i << (netbiasshift+8))/netsize;
@@ -138,8 +65,7 @@ static void initnet(BYTE *thepic, DWORD len, int sample)
 // Unbias network to give byte values 0..255 and record position i to prepare for sort
 // ------------------------------------------------------------------------------------
 
-static void unbiasnet()
-{
+void NNQuantizer::unbiasnet() {
 	int i, j, temp;
 
 	for (i = 0; i < netsize; i++) {
@@ -158,8 +84,7 @@ static void unbiasnet()
 // Insertion sort of network and building of netindex[0..255] (to do after unbias)
 // -------------------------------------------------------------------------------
 
-static void inxbuild()
-{
+void NNQuantizer::inxbuild() {
 	int i,j,smallpos,smallval;
 	int *p,*q;
 	int previouscol,startpos;
@@ -204,8 +129,7 @@ static void inxbuild()
 // Search for BGR values 0..255 (after net is unbiased) and return colour index
 // ----------------------------------------------------------------------------
 
-static int inxsearch(int b, int g, int r)
-{
+int NNQuantizer::inxsearch(int b, int g, int r) {
 	int i, j, dist, a, bestd;
 	int *p;
 	int best;
@@ -274,8 +198,7 @@ static int inxsearch(int b, int g, int r)
 // Search for biased BGR values
 // ----------------------------
 
-static int contest(int b, int g, int r)
-{
+int NNQuantizer::contest(int b, int g, int r) {
 	// finds closest neuron (min dist) and updates freq
 	// finds best neuron (min dist-bias) and returns position
 	// for frequently chosen neurons, freq[i] is high and bias[i] is negative
@@ -327,8 +250,7 @@ static int contest(int b, int g, int r)
 // Move neuron i towards biased (b,g,r) by factor alpha
 // ---------------------------------------------------- 
 
-static void altersingle(int alpha, int i, int b, int g, int r)
-{
+void NNQuantizer::altersingle(int alpha, int i, int b, int g, int r) {
 	int *n;
 
 	n = network[i];				// alter hit neuron
@@ -341,8 +263,7 @@ static void altersingle(int alpha, int i, int b, int g, int r)
 // Move adjacent neurons by precomputed alpha*(1-((i-j)^2/[r]^2)) in radpower[|i-j|]
 // ---------------------------------------------------------------------------------
 
-static void alterneigh(int rad, int i, int b, int g, int r)
-{
+void NNQuantizer::alterneigh(int rad, int i, int b, int g, int r) {
 	int j, k, lo, hi, a;
 	int *p, *q;
 
@@ -375,23 +296,47 @@ static void alterneigh(int rad, int i, int b, int g, int r)
 // Main Learning Loop
 // ------------------
 
-static void learn()
-{
+/**
+ Get a pixel sample at position pos. Handle 4-byte boundary alignment.
+ @param pos pixel position in a WxHx3 pixel buffer
+ @param b blue pixel component
+ @param g green pixel component
+ @param r red pixel component
+*/
+void NNQuantizer::getSample(long pos, int *b, int *g, int *r) {
+	// get equivalent pixel coordinates 
+	// - assume it's a 24-bit image -
+	int x = pos % img_line;
+	int y = pos / img_line;
+
+	BYTE *bits = FreeImage_GetScanLine(dib_ptr, y) + x;
+
+	*b = bits[FI_RGBA_BLUE] << netbiasshift;
+	*g = bits[FI_RGBA_GREEN] << netbiasshift;
+	*r = bits[FI_RGBA_RED] << netbiasshift;
+}
+
+void NNQuantizer::learn(int sampling_factor) {
 	int i, j, b, g, r;
 	int radius, rad, alpha, step, delta, samplepixels;
 	int alphadec; // biased by 10 bits
-	BYTE *p;
-	BYTE *lim;
+	long pos, lengthcount;
 
-	alphadec = 30 + ((samplefac - 1) / 3);
-	p = thepicture;
-	lim = thepicture + lengthcount;
-	samplepixels = lengthcount / (3*samplefac);
+	// image size as viewed by the scan algorithm
+	lengthcount = img_width * img_height * 3;
+
+	// number of samples used for the learning phase
+	samplepixels = lengthcount / (3 * sampling_factor);
+
+	// decrease learning rate after delta pixel presentations
 	delta = samplepixels / ncycles;
 	if(delta == 0) {
-		// avoid 'divide by zero' error
+		// avoid a 'divide by zero' error with very small images
 		delta = 1;
 	}
+
+	// initialize learning parameters
+	alphadec = 30 + ((sampling_factor - 1) / 3);
 	alpha = initalpha;
 	radius = initradius;
 	
@@ -400,6 +345,7 @@ static void learn()
 	for (i = 0; i < rad; i++) 
 		radpower[i] = alpha*(((rad*rad - i*i)*radbias)/(rad*rad));
 	
+	// initialize pseudo-random scan
 	if ((lengthcount % prime1) != 0)
 		step = 3*prime1;
 	else {
@@ -413,21 +359,29 @@ static void learn()
 		}
 	}
 	
-	i = 0;
+	i = 0;		// iteration
+	pos = 0;	// pixel position
+
 	while (i < samplepixels) {
-		b = p[FI_RGBA_BLUE] << netbiasshift;
-		g = p[FI_RGBA_GREEN] << netbiasshift;
-		r = p[FI_RGBA_RED] << netbiasshift;
-		j = contest(b,g,r);
+		// get next learning sample
+		getSample(pos, &b, &g, &r);
 
-		altersingle(alpha,j,b,g,r);
-		if (rad) alterneigh(rad,j,b,g,r);   // alter neighbours 
+		// find winning neuron
+		j = contest(b, g, r);
 
-		p += step;
-		if (p >= lim) p -= lengthcount;
+		// alter winner
+		altersingle(alpha, j, b, g, r);
+
+		// alter neighbours 
+		if (rad) alterneigh(rad, j, b, g, r);
+
+		// next sample
+		pos += step;
+		if (pos >= lengthcount) pos -= lengthcount;
 	
 		i++;
 		if (i % delta == 0) {	
+			// decrease learning rate and also the neighborhood
 			alpha -= alpha / alphadec;
 			radius -= radius / radiusdec;
 			rad = radius >> radiusbiasshift;
@@ -436,57 +390,47 @@ static void learn()
 				radpower[j] = alpha * (((rad*rad - j*j) * radbias) / (rad*rad));
 		}
 	}
+	
 }
 
-///////////////////////////
-// FreeImage implementation
-// ------------------------
+//////////////
+// Quantizer
+// -----------
 
-// Input parameters: 
-// - void* dib: DIB 24-bit to be quantized
-// - int sampling: a sampling factor in range 1..30
-//                 1 => slower, 30 => faster. Default value is 15
-// Return value: 
-// - NULL  if the DIB is not valid or if it's not a 24-bit DIB
-// - the quantized 8-bit (color palette) DIB otherwise
-
-FIBITMAP *
-NNQuantizer(FIBITMAP *dib, int sampling)
-{
-	LONG width, height;
-	BYTE *dib_bits;			// the input image itself
-	DWORD length;
+FIBITMAP* NNQuantizer::Quantize(FIBITMAP *dib, int sampling) {
 
 	if ((!dib) || (FreeImage_GetBPP(dib) != 24)) {
 		return NULL;
 	}
 
 	// 1) Select a sampling factor in range 1..30 (input parameter 'sampling')
-	//    1 => slower, 30 => faster. Default value is 15
+	//    1 => slower, 30 => faster. Default value is 1
 
 
 	// 2) Get DIB parameters
+
+	dib_ptr = dib;
 	
-	width = FreeImage_GetWidth(dib);	// DIB width
-	height = FreeImage_GetHeight(dib);	// DIB height
-	dib_bits = FreeImage_GetBits(dib);	// pointer to DIB pixels
-	length = 3L * width * height;		// image size in bytes
+	img_width  = FreeImage_GetWidth(dib);	// DIB width
+	img_height = FreeImage_GetHeight(dib);	// DIB height
+	img_line   = FreeImage_GetLine(dib);	// DIB line length in bytes (should be equal to 3 x W)
 
 	// For small images, adjust the sampling factor to avoid a 'divide by zero' error later 
 	// (see delta in learn() routine)
-	int adjust = (width * height) / ncycles;
+	int adjust = (img_width * img_height) / ncycles;
 	if(sampling >= adjust)
 		sampling = 1;
 
+
 	// 3) Initialize the network and apply the learning algorithm
 
-	initnet(dib_bits, length, sampling);
-	learn();
+	initnet();
+	learn(sampling);
 	unbiasnet();
 
 	// 4) Allocate a new 8-bit DIB
 
-	FIBITMAP *new_dib = FreeImage_Allocate(width, height, 8);
+	FIBITMAP *new_dib = FreeImage_Allocate(img_width, img_height, 8);
 
 	if (new_dib == NULL)
 		return NULL;
@@ -505,11 +449,11 @@ NNQuantizer(FIBITMAP *dib, int sampling)
 
 	// 6) Write output image using inxsearch(b,g,r)
 
-	for (WORD rows = 0; rows < height; rows++) {
+	for (WORD rows = 0; rows < img_height; rows++) {
 		BYTE *new_bits = FreeImage_GetScanLine(new_dib, rows);			
-		BYTE *bits = FreeImage_GetScanLine(dib, rows);
+		BYTE *bits = FreeImage_GetScanLine(dib_ptr, rows);
 
-		for (WORD cols = 0; cols < FreeImage_GetWidth(dib); cols++) {
+		for (WORD cols = 0; cols < img_width; cols++) {
 			new_bits[cols] = (BYTE)inxsearch(bits[FI_RGBA_BLUE], bits[FI_RGBA_GREEN], bits[FI_RGBA_RED]);
 
 			bits += 3;
