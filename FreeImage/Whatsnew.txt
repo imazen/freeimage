@@ -9,7 +9,7 @@ November 1st, 2004 - 3.5.0
 ! FreeImage now uses libPNG 1.2.7
 ! FreeImage now uses libTIFF 3.7.0
 ! FreeImage now uses libMNG 1.0.8
-! [Hervé Drolon] improved TIFF LZW compression using a predictor
+! [Herve Drolon] improved TIFF LZW compression using a predictor
 ! [Detlev Vendt] FreeImagesPlus: corrected references to FreeImage.h and FreeImage.lib
 + [Herve Drolon] added support for loading/saving of 8-bit transparent TIFF
 + [Riley McNiff] added support for 4-bit dib in FreeImage_Paste
@@ -47,7 +47,7 @@ November 1st, 2004 - 3.5.0
 
 July 8th, 2004 - 3.4.0
 ! [Jim Keir] improved FreeImage_FlipVertical function
-! [Hervé Drolon] LZW compression is now enabled in FreeImage
+! [Herve Drolon] LZW compression is now enabled in FreeImage
 + [Karl-Heinz Bussian] added constants to FreeImage.h to get at compile time the library version
 + [Karl-Heinz Bussian] added color lookup functions for X11 and SVG
 + [Herve Drolon] added TIFF tags TIFF_CCITTFAX3, TIFF_CCITTFAX4 and TIFF_LZW
