@@ -57,26 +57,28 @@ static FIBITMAP* FloydSteinberg(FIBITMAP *dib) {
 	memset(cerr, 0, width * sizeof(int));
 
 	// left border
-	bits = FreeImage_GetBits(dib);
-	new_bits = FreeImage_GetBits(new_dib);
 	error = 0;
 	for(y = 0; y < height; y++) {
+		bits = FreeImage_GetScanLine(dib, y);
+		new_bits = FreeImage_GetScanLine(new_dib, y);
+
 		threshold = (WHITE / 2 + RAND(129) - 64);
-		pixel = bits[y * pitch] + error;
+		pixel = bits[0] + error;
 		p = (pixel > threshold) ? WHITE : BLACK;
 		error = pixel - p;
-		new_bits[y * pitch] = (BYTE)p;
+		new_bits[0] = (BYTE)p;
 	}
 	// right border
-	bits = FreeImage_GetBits(dib) + (width - 1);
-	new_bits = FreeImage_GetBits(dib) + (width - 1);
 	error = 0;
 	for(y = 0; y < height; y++) {
+		bits = FreeImage_GetScanLine(dib, y);
+		new_bits = FreeImage_GetScanLine(new_dib, y);
+
 		threshold = (WHITE / 2 + RAND(129) - 64);
-		pixel = bits[y * pitch] + error;
+		pixel = bits[width-1] + error;
 		p = (pixel > threshold) ? WHITE : BLACK;
 		error = pixel - p;
-		new_bits[y * pitch] = p;
+		new_bits[width-1] = (BYTE)p;
 	}
 	// top border
 	bits = FreeImage_GetBits(dib);
@@ -87,7 +89,7 @@ static FIBITMAP* FloydSteinberg(FIBITMAP *dib) {
 		pixel = bits[x] + error;
 		p = (pixel > threshold) ? WHITE : BLACK;
 		error = pixel - p;
-		new_bits[x] = p;
+		new_bits[x] = (BYTE)p;
 		lerr[x] = INITERR(bits[x], p);
 	}
 
@@ -96,6 +98,7 @@ static FIBITMAP* FloydSteinberg(FIBITMAP *dib) {
 		// scan left to right
 		bits = FreeImage_GetScanLine(dib, y);
 		new_bits = FreeImage_GetScanLine(new_dib, y);
+
 	    cerr[0] = INITERR(bits[0], new_bits[0]);
 		for(x = 1; x < width - 1; x++) {
 			error = (lerr[x-1] + 5 * lerr[x] + 3 * lerr[x+1] + 7 * cerr[x-1]) / 16;
