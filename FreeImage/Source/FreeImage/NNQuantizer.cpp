@@ -377,7 +377,7 @@ void NNQuantizer::learn(int sampling_factor) {
 
 		// next sample
 		pos += step;
-		if (pos >= lengthcount) pos -= lengthcount;
+		while (pos >= lengthcount) pos -= lengthcount;
 	
 		i++;
 		if (i % delta == 0) {	
