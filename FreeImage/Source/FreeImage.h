@@ -63,6 +63,14 @@
 #endif // FREEIMAGE_EXPORTS
 #endif // FREEIMAGE_LIB || !WIN32
 
+//some versions of gcc may have BYTE_ORDER or __BYTE_ORDER defined
+//if your big endian system isn't being detected, add an OS specific check
+#if (defined(BYTE_ORDER) && BYTE_ORDER==BIG_ENDIAN) || \
+	(defined(__BYTE_ORDER) && __BYTE_ORDER==__BIG_ENDIAN) || \
+	defined(__APPLE__)
+#define FREEIMAGE_BIGENDIAN
+#endif
+
 // For C compatility --------------------------------------------------------
 
 #ifdef __cplusplus
@@ -108,12 +116,60 @@ typedef unsigned short WORD;
 typedef unsigned long DWORD;
 typedef long LONG;
 
+#ifdef WIN32
+#pragma pack(push, 1)
+#else
+#pragma pack(1)
+#endif // WIN32
+
 typedef struct tagRGBQUAD {
-  BYTE rgbBlue; 
-  BYTE rgbGreen; 
-  BYTE rgbRed; 
-  BYTE rgbReserved; 
-} RGBQUAD; 
+#ifdef FREEIMAGE_BIGENDIAN
+  BYTE rgbRed;
+  BYTE rgbGreen;
+  BYTE rgbBlue;
+#else
+  BYTE rgbBlue;
+  BYTE rgbGreen;
+  BYTE rgbRed;
+#endif
+  BYTE rgbReserved;
+} RGBQUAD;
+
+typedef struct tagRGBTRIPLE {
+#ifdef FREEIMAGE_BIGENDIAN
+  BYTE rgbtRed;
+  BYTE rgbtGreen;
+  BYTE rgbtBlue;
+#else
+  BYTE rgbtBlue;
+  BYTE rgbtGreen;
+  BYTE rgbtRed;
+#endif
+} RGBTRIPLE;
+
+#ifdef WIN32
+#pragma pack(pop)
+#else
+#pragma pack()
+#endif // WIN32
+
+#ifdef FREEIMAGE_BIGENDIAN
+#define FIRGBA_RED		0
+#define FIRGBA_GREEN	1
+#define FIRGBA_BLUE		2
+#define FIRGBA_ALPHA	3
+#define FIRGB_RED		0
+#define FIRGB_GREEN		1
+#define FIRGB_BLUE		2
+#else
+#define FIRGBA_RED		2
+#define FIRGBA_GREEN	1
+#define FIRGBA_BLUE		0
+#define FIRGBA_ALPHA	3
+#define FIRGB_RED		2
+#define FIRGB_GREEN		1
+#define FIRGB_BLUE		0
+#endif
 
 typedef struct tagBITMAPINFOHEADER{
   DWORD biSize;

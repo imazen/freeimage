@@ -71,12 +71,6 @@ typedef struct tagBITMAPFILEHEADER {
   DWORD   bfOffBits; 
 } BITMAPFILEHEADER, *PBITMAPFILEHEADER;
 
-typedef struct tagRGBTRIPLE { 
-  BYTE rgbtBlue; 
-  BYTE rgbtGreen; 
-  BYTE rgbtRed; 
-} RGBTRIPLE; 
-
 #ifdef WIN32
 #pragma pack(pop)
 #else

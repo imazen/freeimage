@@ -91,18 +91,6 @@ typedef struct tagSUNHEADER {
 // ==========================================================
 
 static void
-SwapLong(DWORD *lp) {
-	// Byte Swapping Support
-
-	register BYTE *cp = (BYTE*) lp;
-
-	BYTE t;
-
-	t = cp[3]; cp[3] = cp[0]; cp[0] = t;
-	t = cp[2]; cp[2] = cp[1]; cp[1] = t;
-}
-
-static void
 ReadData(FreeImageIO *io, fi_handle handle, BYTE *buf, DWORD length, BOOL rle) {
 	// Read either Run-Length Encoded or normal image data
 

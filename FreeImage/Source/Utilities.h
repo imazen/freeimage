@@ -41,6 +41,41 @@
 #include <vector>
 
 // ==========================================================
+//   File I/O structs
+// ==========================================================
+
+// these structs are for file I/O and should not be confused with similar
+// structs in FreeImage.h which are for in-memory bitmap handling
+
+#ifdef WIN32
+#pragma pack(push, 1)
+#else
+#pragma pack(1)
+#endif // WIN32
+
+typedef struct tagFILE_RGBA {
+  unsigned char r,g,b,a;
+} FILE_RGBA;
+
+typedef struct tagFILE_BGRA {
+  unsigned char b,g,r,a;
+} FILE_BGRA;
+
+typedef struct tagFILE_RGB {
+  unsigned char r,g,b;
+} FILE_RGB;
+
+typedef struct tagFILE_BGR {
+  unsigned char b,g,r;
+} FILE_BGR;
+
+#ifdef WIN32
+#pragma pack(pop)
+#else
+#pragma pack()
+#endif // WIN32
+
+// ==========================================================
 //   Utility functions
 // ==========================================================
 
@@ -136,6 +171,17 @@ ReplaceExtension(char *result, const char *filename, const char *extension) {
 	memcpy(result, filename, strlen(filename));
 	result[strlen(filename)] = '.';
 	memcpy(result + strlen(filename) + 1, extension, strlen(extension) + 1);
+}
+
+inline void
+SwapShort(unsigned short *sp) {
+	unsigned char *cp = (unsigned char *)sp, t = cp[0]; cp[0] = cp[1]; cp[1] = t;
+}
+
+inline void
+SwapLong(unsigned long *lp) {
+	unsigned char *cp = (unsigned char *)lp, t = cp[0]; cp[0] = cp[3]; cp[3] = t;
+	t = cp[1]; cp[1] = cp[2]; cp[2] = t;
 }
 
 // ==========================================================

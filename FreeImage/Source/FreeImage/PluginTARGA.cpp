@@ -37,12 +37,6 @@
 #pragma pack(1)
 #endif
 
-typedef struct tagRGBTRIPLE { 
-  BYTE rgbtBlue; 
-  BYTE rgbtGreen;
-  BYTE rgbtRed;
-} RGBTRIPLE; 
-
 typedef struct tagBGRAQUAD { 
   BYTE bgraBlue; 
   BYTE bgraGreen; 

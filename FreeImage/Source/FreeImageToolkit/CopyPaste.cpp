@@ -31,24 +31,6 @@
 #define RGB555(r, g, b) ((r >> 3) | ((g >> 3) << 5) | ((b >> 3) << 10))
 #define RGB565(r, g, b) ((r >> 3) | ((g >> 2) << 5) | ((b >> 3) << 11))
 
-#ifdef WIN32
-#pragma pack(push, 1)
-#else
-#pragma pack(1)
-#endif
-
-typedef struct tagRGBTRIPLE { 
-  BYTE rgbtBlue; 
-  BYTE rgbtGreen; 
-  BYTE rgbtRed; 
-} RGBTRIPLE; 
-
-#ifdef WIN32
-#pragma pack(pop)
-#else
-#pragma pack()
-#endif
-
 // ----------------------------------------------------------
 //   Helpers
 // ----------------------------------------------------------

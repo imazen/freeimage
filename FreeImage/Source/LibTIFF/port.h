@@ -1,5 +1,6 @@
 /*
  * Warning, this file was automatically created by the TIFF configure script
+ ************ More warning - it was edited to use a freeimage define too
  * VERSION:	 v3.6.1
  * RELEASE:   
  * DATE:	 mer fév 18 20:38:40 CET 2004
@@ -13,7 +14,11 @@ extern "C" {
 #endif
 #include <sys/types.h>
 #define HOST_FILLORDER FILLORDER_MSB2LSB
+#ifdef FREEIMAGE_BIGENDIAN
+#define HOST_BIGENDIAN	1
+#else
 #define HOST_BIGENDIAN	0
+#endif
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
