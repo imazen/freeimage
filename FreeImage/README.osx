@@ -25,3 +25,4 @@ will need to do the following :
 ./configure
 3) copy the file "tiff-v3.6.1\libtiff\port.h" to "FreeImage\Source\LibTIFF\"
 4) go to the normal FreeImage installation process
+
