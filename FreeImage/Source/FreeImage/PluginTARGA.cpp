@@ -1062,7 +1062,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				// get the transparency table
 				BYTE *trns = FreeImage_GetTransparencyTable(dib);
 
-				for(int i = 0; i < header.cm_length; i++) {
+				for(unsigned i = 0; i < header.cm_length; i++) {
 					bgra_pal[i].b = palette[i].rgbBlue;
 					bgra_pal[i].g = palette[i].rgbGreen;
 					bgra_pal[i].r = palette[i].rgbRed;
@@ -1076,7 +1076,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			} else {
 				FILE_BGR *bgr_pal = (FILE_BGR*)malloc(header.cm_length * sizeof(FILE_BGR));
 
-				for(int i = 0; i < header.cm_length; i++) {
+				for(unsigned i = 0; i < header.cm_length; i++) {
 					bgr_pal[i].b = palette[i].rgbBlue;
 					bgr_pal[i].g = palette[i].rgbGreen;
 					bgr_pal[i].r = palette[i].rgbRed;
@@ -1090,21 +1090,20 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		// write the data bits
 
-		int line = FreeImage_GetLine(dib);
+		for (unsigned y = 0; y < header.is_height; y++) {
+			BYTE *bits = FreeImage_GetScanLine(dib, y);
 
-		for (int i = 0; i < header.is_height; ++i) {
-			BYTE *bits = FreeImage_GetScanLine(dib, i);
 			switch(bpp) {
 				case 8:
 				{
-					io->write_proc(bits, line, 1, handle);
+					io->write_proc(bits, header.is_width, 1, handle);
 					break;
 				}
 				case 16:
 				{
 					WORD pixel;
-					for(int x = 0; x < line; ++x) {
-						pixel = ((WORD *)bits)[x];
+					for(unsigned x = 0; x < header.is_width; x++) {
+						pixel = *(((WORD *)bits) + x);
 #ifdef FREEIMAGE_BIGENDIAN
 						SwapShort(&pixel);
 #endif
@@ -1116,8 +1115,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				{
 					FILE_BGR bgr;
 					RGBTRIPLE *trip;
-					for(int x = 0; x < line; ++x) {
-						trip = ((RGBTRIPLE *)bits)+x;
+					for(unsigned x = 0; x < header.is_width; x++) {
+						trip = ((RGBTRIPLE *)bits) + x;
 						bgr.b = trip->rgbtBlue;
 						bgr.g = trip->rgbtGreen;
 						bgr.r = trip->rgbtRed;
@@ -1129,8 +1128,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				{
 					FILE_BGRA bgra;
 					RGBQUAD *quad;
-					for(int x = 0; x < line; ++x) {
-						quad = ((RGBQUAD *)bits)+x;
+					for(int x = 0; x < header.is_width; x++) {
+						quad = ((RGBQUAD *)bits) + x;
 						bgra.b = quad->rgbBlue;
 						bgra.g = quad->rgbGreen;
 						bgra.r = quad->rgbRed;
