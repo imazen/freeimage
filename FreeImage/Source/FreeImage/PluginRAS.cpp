@@ -204,6 +204,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			io->read_proc(&header, sizeof(SUNHEADER), 1, handle);
 
+#ifndef FREEIMAGE_BIGENDIAN
 			// SUN rasterfiles are big endian only
 
 			SwapLong(&header.magic);
@@ -214,6 +215,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			SwapLong(&header.type);
 			SwapLong(&header.maptype);
 			SwapLong(&header.maplength);
+#endif
 
 			// Verify SUN identifier
 
@@ -248,6 +250,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			switch(header.type) {
 				case RT_OLD:
 				case RT_STANDARD:
+				case RT_FORMAT_TIFF: // I don't even know what these format are...
+				case RT_FORMAT_IFF: //The TIFF and IFF format types indicate that the raster
+					//file was originally converted from either of these file formats.
+					//so lets at least try to process them as RT_STANDARD
 					break;
 
 				case RT_BYTE_ENCODED:
@@ -257,9 +263,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				case RT_FORMAT_RGB:
 					isRGB = TRUE;
 					break;
-
-				case RT_FORMAT_TIFF: // I don't even know what these format are...
-				case RT_FORMAT_IFF:
 
 				default:
 					throw "Unsupported Sun rasterfile";
@@ -375,17 +378,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						if (isRGB) {
 							for (x = 0; x < header.width; x++) {
-								bits[2] = *(bp++); // red
-								bits[1] = *(bp++); // green
-								bits[0] = *(bp++); // blue
+								bits[FIRGB_RED] = *(bp++); // red
+								bits[FIRGB_GREEN] = *(bp++); // green
+								bits[FIRGB_BLUE] = *(bp++); // blue
 
 								bits += 3;
 							}
 						} else {
 							for (x = 0; x < header.width; x++) {
-								bits[2] = *(bp + 2); // red
-								bits[1] = *(bp + 1); // green
-								bits[0] = *bp;       // blue
+								bits[FIRGB_RED] = *(bp + 2); // red
+								bits[FIRGB_GREEN] = *(bp + 1); // green
+								bits[FIRGB_BLUE] = *bp;       // blue
 
 								bits += 3; bp += 3;
 							}
@@ -414,20 +417,20 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						if (isRGB) {
 							for (x = 0; x < header.width; x++) {
-								bp++;				// skip byte
-
-								bits[2] = *(bp++);	// red
-								bits[1] = *(bp++);	// green
-								bits[0] = *(bp++);	// blue
+								bits[FIRGBA_ALPHA] = *(bp++);	// alpha (why skip it?)
+								bits[FIRGBA_RED] = *(bp++);	// red
+								bits[FIRGBA_GREEN] = *(bp++);	// green
+								bits[FIRGBA_BLUE] = *(bp++);	// blue
 
 								bits += 4;
 							}
 						}
 						else {
 							for (x = 0; x < header.width; x++) {
-								bits[2] = *(bp + 3); // red
-								bits[1] = *(bp + 2); // green
-								bits[0] = *(bp + 1); // blue
+								bits[FIRGBA_RED] = *(bp + 3); // red
+								bits[FIRGBA_GREEN] = *(bp + 2); // green
+								bits[FIRGBA_BLUE] = *(bp + 1); // blue
+								bits[FIRGBA_ALPHA] = *bp;
 
 								bits += 4;
 								bp += 4;
