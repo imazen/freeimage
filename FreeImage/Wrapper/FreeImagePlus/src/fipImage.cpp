@@ -501,11 +501,12 @@ BOOL fipImage::splitChannels(fipImage& RedChannel, fipImage& GreenChannel, fipIm
 	}
 	return FALSE;
 }
+
 BOOL fipImage::combineChannels(fipImage& red, fipImage& green, fipImage& blue) {
 	if(!_dib) {
 		int width = red.getWidth();
 		int height = red.getHeight();
-		_dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+		_dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 	}
 
 	if(_dib) {
