@@ -48,10 +48,10 @@ FreeImage: $(STATICLIB) $(SHAREDLIB)
 	$(CPP) $(CFLAGS) -c $< -o $@
 
 $(STATICLIB): $(MODULES)
-	$(AR) r $@ $?
+	$(AR) r $@ $(MODLES)
 
 $(SHAREDLIB): $(MODULES)
-	$(CC) -s -shared -Wl,-soname,$(LIBNAME) -o $@ $? $(LIBRARIES)
+	$(CC) -s -shared -Wl,-soname,$(LIBNAME) -o $@ $(MODULES) $(LIBRARIES)
 
 install:
 	install -m 644 -o root -g root $(STATICLIB) $(INSTALLDIR)
