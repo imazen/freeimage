@@ -241,19 +241,26 @@ FreeImage_Clone(FIBITMAP *dib) {
 			FreeImage_GetRedMask(dib), FreeImage_GetGreenMask(dib), FreeImage_GetBlueMask(dib));
 
 	if (new_dib) {
+		// save ICC profile links
+		FIICCPROFILE *src_iccProfile = FreeImage_GetICCProfile(dib);
+		FIICCPROFILE *dst_iccProfile = FreeImage_GetICCProfile(new_dib);
+
 		// save metadata links
 		METADATAMAP *src_metadata = ((FREEIMAGEHEADER *)dib->data)->metadata;
 		METADATAMAP *dst_metadata = ((FREEIMAGEHEADER *)new_dib->data)->metadata;
 
-		// copy the bitmap
+		// copy the bitmap + internal pointers (remember to restore new_dib internal pointers later)
 		memcpy(new_dib->data, dib->data, sizeof(FREEIMAGEHEADER) + FreeImage_GetDIBSize(dib));
 
-		// copy possible ICC profile
-		FIICCPROFILE *iccProfile = FreeImage_GetICCProfile(dib);
-		FreeImage_CreateICCProfile(new_dib, iccProfile->data, iccProfile->size);
+		// reset ICC profile link for new_dib
+		memset(dst_iccProfile, 0, sizeof(FIICCPROFILE));
 
 		// restore metadata link for new_dib
 		((FREEIMAGEHEADER *)new_dib->data)->metadata = dst_metadata;
+
+		// copy possible ICC profile
+		FreeImage_CreateICCProfile(new_dib, src_iccProfile->data, src_iccProfile->size);
+		dst_iccProfile->flags = src_iccProfile->flags;
 
 		// copy metadata models
 		for(METADATAMAP::iterator i = (*src_metadata).begin(); i != (*src_metadata).end(); i++) {
@@ -273,7 +280,7 @@ FreeImage_Clone(FIBITMAP *dib) {
 					(*dst_tagmap)[dst_key] = dst_tag;
 				}
 
-				// assign key and model
+				// assign model and tagmap
 				(*dst_metadata)[model] = dst_tagmap;
 			}
 		}
