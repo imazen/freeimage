@@ -893,9 +893,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			// Set JFIF density parameters from the DIB data
 
 			BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-			cinfo.X_density = (WORD)(pInfoHeader->biXPelsPerMeter / 100.0F + 0.5);
-			cinfo.Y_density = (WORD)(pInfoHeader->biYPelsPerMeter / 100.0F + 0.5);
-			cinfo.density_unit = 2;	// dots / cm
+			cinfo.X_density = (UINT16) (0.5 + 0.0254 * pInfoHeader->biXPelsPerMeter);
+			cinfo.Y_density = (UINT16) (0.5 + 0.0254 * pInfoHeader->biYPelsPerMeter);
+			cinfo.density_unit = 1;	// dots / inch
 
 			// Step 4: set quality
 			// the first 7 bits are reserved for low level quality settings
