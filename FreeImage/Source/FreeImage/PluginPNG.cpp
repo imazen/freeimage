@@ -666,7 +666,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 #endif
 
 
-			if ((bit_depth == 32) && (!has_alpha_channel)) {
+			if ((pixel_depth == 32) && (!has_alpha_channel)) {
 				BYTE *buffer = (BYTE *)malloc(width * 3);
 
 				// transparent conversion to 24-bit
