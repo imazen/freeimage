@@ -88,29 +88,36 @@ ReadMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 	// XMP keyword
 	char *g_png_xmp_keyword = "XML:com.adobe.xmp";
 
+	FITAG *tag = NULL;
 	png_textp text_ptr = NULL;
 	int num_text = 0;
 
 	// iTXt/tEXt/zTXt chuncks
 	if(png_get_text(png_ptr, info_ptr, &text_ptr, &num_text) > 0) {
 		for(int i = 0; i < num_text; i++) {
-			FITAG tag;
-			memset(&tag, 0, sizeof(FITAG));
+			// create a tag
+			tag = FreeImage_CreateTag();
+			if(!tag) return FALSE;
 
-			tag.length = MAX(text_ptr[i].text_length, text_ptr[i].itxt_length);
-			tag.count = tag.length;
-			tag.type = FIDT_ASCII;
-			tag.value = (char*)text_ptr[i].text;
+			DWORD tag_length = MAX(text_ptr[i].text_length, text_ptr[i].itxt_length);
+
+			FreeImage_SetTagLength(tag, tag_length);
+			FreeImage_SetTagCount(tag, tag_length);
+			FreeImage_SetTagType(tag, FIDT_ASCII);
+			FreeImage_SetTagValue(tag, text_ptr[i].text);
 
 			if(strcmp(text_ptr[i].key, g_png_xmp_keyword) == 0) {
 				// store the tag as XMP
-				tag.key = g_TagLib_XMPFieldName;
-				FreeImage_SetMetadata(FIMD_XMP, dib, tag.key, &tag);
+				FreeImage_SetTagKey(tag, g_TagLib_XMPFieldName);
+				FreeImage_SetMetadata(FIMD_XMP, dib, FreeImage_GetTagKey(tag), tag);
 			} else {
 				// store the tag as a comment
-				tag.key = text_ptr[i].key;
-				FreeImage_SetMetadata(FIMD_COMMENTS, dib, tag.key, &tag);
+				FreeImage_SetTagKey(tag, text_ptr[i].key);
+				FreeImage_SetMetadata(FIMD_COMMENTS, dib, FreeImage_GetTagKey(tag), tag);
 			}
+			
+			// destroy the tag
+			FreeImage_DeleteTag(tag);
 		}
 	}
 
@@ -136,13 +143,13 @@ WriteMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 	if(mdhandle) {
 		do {
 			memset(&text_metadata, 0, sizeof(png_text));
-			text_metadata.compression = 1;			 // iTXt, none
-			text_metadata.key = tag->key;			 // keyword, 1-79 character description of "text"
-			text_metadata.text = (char*)tag->value;	 // comment, may be an empty string (ie "")
-			text_metadata.text_length = tag->length; // length of the text string
-			text_metadata.itxt_length = tag->length; // length of the itxt string
-			text_metadata.lang = 0;					 // language code, 0-79 characters or a NULL pointer
-			text_metadata.lang_key = 0;				 // keyword translated UTF-8 string, 0 or more chars or a NULL pointer
+			text_metadata.compression = 1;							// iTXt, none
+			text_metadata.key = (char*)FreeImage_GetTagKey(tag);	// keyword, 1-79 character description of "text"
+			text_metadata.text = (char*)FreeImage_GetTagValue(tag);	// comment, may be an empty string (ie "")
+			text_metadata.text_length = FreeImage_GetTagLength(tag);// length of the text string
+			text_metadata.itxt_length = FreeImage_GetTagLength(tag);// length of the itxt string
+			text_metadata.lang = 0;		 // language code, 0-79 characters or a NULL pointer
+			text_metadata.lang_key = 0;	 // keyword translated UTF-8 string, 0 or more chars or a NULL pointer
 
 			// set the tag 
 			png_set_text(png_ptr, info_ptr, &text_metadata, 1);
@@ -156,15 +163,15 @@ WriteMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 	// set the 'XMP' metadata as iTXt chuncks
 	tag = NULL;
 	FreeImage_GetMetadata(FIMD_XMP, dib, g_TagLib_XMPFieldName, &tag);
-	if(tag && tag->length) {
+	if(tag && FreeImage_GetTagLength(tag)) {
 		memset(&text_metadata, 0, sizeof(png_text));
-		text_metadata.compression = 1;			 // iTXt, none
-		text_metadata.key = g_png_xmp_keyword;	 // keyword, 1-79 character description of "text"
-		text_metadata.text = (char*)tag->value;	 // comment, may be an empty string (ie "")
-		text_metadata.text_length = tag->length; // length of the text string
-		text_metadata.itxt_length = tag->length; // length of the itxt string
-		text_metadata.lang = 0;					 // language code, 0-79 characters or a NULL pointer
-		text_metadata.lang_key = 0;				 // keyword translated UTF-8 string, 0 or more chars or a NULL pointer
+		text_metadata.compression = 1;							// iTXt, none
+		text_metadata.key = g_png_xmp_keyword;					// keyword, 1-79 character description of "text"
+		text_metadata.text = (char*)FreeImage_GetTagValue(tag);	// comment, may be an empty string (ie "")
+		text_metadata.text_length = FreeImage_GetTagLength(tag);// length of the text string
+		text_metadata.itxt_length = FreeImage_GetTagLength(tag);// length of the itxt string
+		text_metadata.lang = 0;		 // language code, 0-79 characters or a NULL pointer
+		text_metadata.lang_key = 0;	 // keyword translated UTF-8 string, 0 or more chars or a NULL pointer
 
 		// set the tag 
 		png_set_text(png_ptr, info_ptr, &text_metadata, 1);

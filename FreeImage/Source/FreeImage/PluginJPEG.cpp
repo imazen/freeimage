@@ -393,18 +393,21 @@ jpeg_read_comment(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 	value[count] = '\0';
 
 	// create a tag
-	FITAG tag;
-	memset(&tag, 0, sizeof(FITAG));
+	FITAG *tag = FreeImage_CreateTag();
+	if(tag) {
+		FreeImage_SetTagID(tag, JPEG_COM);
+		FreeImage_SetTagKey(tag, "Comment");
+		FreeImage_SetTagLength(tag, count);
+		FreeImage_SetTagCount(tag, count);
+		FreeImage_SetTagType(tag, FIDT_ASCII);
+		FreeImage_SetTagValue(tag, value);
+		
+		// store the tag
+		FreeImage_SetMetadata(FIMD_COMMENTS, dib, FreeImage_GetTagKey(tag), tag);
 
-	tag.id = JPEG_COM;
-	tag.key = "Comment";
-	tag.length = count;
-	tag.count = count;
-	tag.type = FIDT_ASCII;
-	tag.value = value;
-
-	// store the tag
-	FreeImage_SetMetadata(FIMD_COMMENTS, dib, tag.key, &tag);
+		// destroy the tag
+		FreeImage_DeleteTag(tag);
+	}
 
 	free(value);
 
@@ -483,25 +486,21 @@ jpeg_read_xmp_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) 
 		length  -= offset;
 
 		// create a tag
-		FITAG tag;
-		memset(&tag, 0, sizeof(FITAG));
+		FITAG *tag = FreeImage_CreateTag();
+		if(tag) {
+			FreeImage_SetTagID(tag, JPEG_APP0+1);	// 0xFFE1
+			FreeImage_SetTagKey(tag, g_TagLib_XMPFieldName);
+			FreeImage_SetTagLength(tag, length);
+			FreeImage_SetTagCount(tag, length);
+			FreeImage_SetTagType(tag, FIDT_ASCII);
+			FreeImage_SetTagValue(tag, profile);
+			
+			// store the tag
+			FreeImage_SetMetadata(FIMD_XMP, dib, FreeImage_GetTagKey(tag), tag);
 
-		tag.id = (JPEG_APP0+1);	// 0xFFE1
-		tag.key = g_TagLib_XMPFieldName;
-		tag.length = length;
-		tag.count =  length;
-		tag.type = FIDT_ASCII;
-		char *value = (char*)malloc((length + 1) * sizeof(char));
-		for(size_t i = 0; i < length; i++) {
-			value[i] = (char)profile[i];
+			// destroy the tag
+			FreeImage_DeleteTag(tag);
 		}
-		value[length] = '\0';
-		tag.value = value;
-
-		// store the tag
-		FreeImage_SetMetadata(FIMD_XMP, dib, tag.key, &tag);
-
-		free(value);
 
 		return TRUE;
 	}
@@ -554,11 +553,15 @@ jpeg_write_comment(j_compress_ptr cinfo, FIBITMAP *dib) {
 
 	// write user comment as a JPEG_COM marker
 	FreeImage_GetMetadata(FIMD_COMMENTS, dib, "Comment", &tag);
-	if(tag && (NULL != tag->value)) {
-		for(long i = 0; i < (long)strlen((char*)tag->value); i+= 65533L) {
-			jpeg_write_marker(cinfo, JPEG_COM, (BYTE*)tag->value + i, MIN((long)strlen((char*)tag->value + i), 65533L));
+	if(tag) {
+		const char *tag_value = (char*)FreeImage_GetTagValue(tag);
+
+		if(NULL != tag_value) {
+			for(long i = 0; i < (long)strlen(tag_value); i+= 65533L) {
+				jpeg_write_marker(cinfo, JPEG_COM, (BYTE*)tag_value + i, MIN((long)strlen(tag_value + i), 65533L));
+			}
+			return TRUE;
 		}
-		return TRUE;
 	}
 	return FALSE;
 }
@@ -611,23 +614,29 @@ jpeg_write_xmp_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 	FITAG *tag_xmp = NULL;
 	FreeImage_GetMetadata(FIMD_XMP, dib, g_TagLib_XMPFieldName, &tag_xmp);
 
-	if(tag_xmp && (NULL != tag_xmp->value)) {
-		// XMP signature is 29 bytes long
-		unsigned xmp_header_size = strlen(xmp_signature) + 1;
+	if(tag_xmp) {
+		const BYTE *tag_value = (BYTE*)FreeImage_GetTagValue(tag_xmp);
 
-		BYTE *profile = (BYTE*)malloc((tag_xmp->length + xmp_header_size) * sizeof(BYTE));
-		memcpy(profile, xmp_signature, xmp_header_size);
+		if(NULL != tag_value) {
+			// XMP signature is 29 bytes long
+			unsigned xmp_header_size = strlen(xmp_signature) + 1;
 
-		for(DWORD i = 0; i < tag_xmp->length; i += 65504L) {
-			unsigned length = MIN((long)(tag_xmp->length - i), 65504L);
-			
-			memcpy(profile + xmp_header_size, (BYTE*)tag_xmp->value + i, length);
-			jpeg_write_marker(cinfo, (JPEG_APP0+1), profile, (length + xmp_header_size));
+			DWORD tag_length = FreeImage_GetTagLength(tag_xmp);
+
+			BYTE *profile = (BYTE*)malloc((tag_length + xmp_header_size) * sizeof(BYTE));
+			memcpy(profile, xmp_signature, xmp_header_size);
+
+			for(DWORD i = 0; i < tag_length; i += 65504L) {
+				unsigned length = MIN((long)(tag_length - i), 65504L);
+				
+				memcpy(profile + xmp_header_size, tag_value + i, length);
+				jpeg_write_marker(cinfo, (JPEG_APP0+1), profile, (length + xmp_header_size));
+			}
+
+			free(profile);
+
+			return TRUE;	
 		}
-
-		free(profile);
-
-		return TRUE;		
 	}
 
 	return FALSE;

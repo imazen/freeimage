@@ -531,8 +531,12 @@ SetCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint16 
 		compression = COMPRESSION_CCITTFAX4;
 	else if ((flags & TIFF_LZW) == TIFF_LZW)
 		compression = COMPRESSION_LZW;
-	else if ((flags & TIFF_JPEG) == TIFF_JPEG)
-		compression = COMPRESSION_JPEG;
+	else if ((flags & TIFF_JPEG) == TIFF_JPEG) {
+		if(((bitsperpixel == 8) && (photometric != PHOTOMETRIC_PALETTE)) || (bitsperpixel == 24))
+			compression = COMPRESSION_JPEG;
+		else
+			compression = COMPRESSION_LZW;
+	}
 	else {
 		// default compression scheme
 
@@ -616,25 +620,21 @@ tiff_read_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
 
 	if (TIFFGetField(tiff, TIFFTAG_XMLPACKET, &profile_size, &profile) == 1) {
 		// create a tag
-		FITAG tag;
-		memset(&tag, 0, sizeof(FITAG));
+		FITAG *tag = FreeImage_CreateTag();
+		if(!tag) return FALSE;
 
-		tag.id = TIFFTAG_XMLPACKET;	// 700
-		tag.key = g_TagLib_XMPFieldName;
-		tag.length = profile_size;
-		tag.count = tag.length;
-		tag.type = FIDT_ASCII;
-		char *value = (char*)malloc((profile_size + 1) * sizeof(char));
-		for(uint32 i = 0; i < profile_size; i++) {
-			value[i] = (char)profile[i];
-		}
-		value[profile_size] = '\0';
-		tag.value = value;
+		FreeImage_SetTagID(tag, TIFFTAG_XMLPACKET);	// 700
+		FreeImage_SetTagKey(tag, g_TagLib_XMPFieldName);
+		FreeImage_SetTagLength(tag, profile_size);
+		FreeImage_SetTagCount(tag, profile_size);
+		FreeImage_SetTagType(tag, FIDT_ASCII);
+		FreeImage_SetTagValue(tag, profile);
 
 		// store the tag
-		FreeImage_SetMetadata(FIMD_XMP, dib, tag.key, &tag);
+		FreeImage_SetMetadata(FIMD_XMP, dib, FreeImage_GetTagKey(tag), tag);
 
-		free(value);
+		// destroy the tag
+		FreeImage_DeleteTag(tag);
 
 		return TRUE;
 	}
@@ -703,9 +703,9 @@ tiff_write_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
 	FITAG *tag_xmp = NULL;
 	FreeImage_GetMetadata(FIMD_XMP, dib, g_TagLib_XMPFieldName, &tag_xmp);
 
-	if(tag_xmp && (NULL != tag_xmp->value)) {
+	if(tag_xmp && (NULL != FreeImage_GetTagValue(tag_xmp))) {
 		
-		TIFFSetField(tiff, TIFFTAG_XMLPACKET, (uint32)tag_xmp->length, (BYTE*)tag_xmp->value);
+		TIFFSetField(tiff, TIFFTAG_XMLPACKET, (uint32)FreeImage_GetTagLength(tag_xmp), (BYTE*)FreeImage_GetTagValue(tag_xmp));
 
 		return TRUE;		
 	}

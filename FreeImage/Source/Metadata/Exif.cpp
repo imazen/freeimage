@@ -132,12 +132,12 @@ ReadUint32(BOOL msb_order, void *buffer) {
 Process a IFD offset
 */
 static void 
-processIFDOffset(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, DWORD *subdirOffset, TagLib::MDMODEL *md_model) {
+processIFDOffset(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *subdirOffset, TagLib::MDMODEL *md_model) {
 	// get the IFD offset
 	*subdirOffset = (DWORD) ReadUint32(msb_order, pval);
 
 	// select a tag info table
-	switch(tag.id) {
+	switch(FreeImage_GetTagID(tag)) {
 		case TAG_EXIF_OFFSET:
 			*md_model = TagLib::EXIF_EXIF;
 			break;
@@ -155,7 +155,7 @@ processIFDOffset(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, DWORD *
 Process a maker note IFD offset
 */
 static void 
-processMakerNote(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, DWORD *subdirOffset, TagLib::MDMODEL *md_model) {
+processMakerNote(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *subdirOffset, TagLib::MDMODEL *md_model) {
 	FITAG *tagMake = NULL;
 
 	*subdirOffset = 0;
@@ -163,13 +163,14 @@ processMakerNote(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, DWORD *
 
 	// Determine the camera model and makernote format
 	FreeImage_GetMetadata(FIMD_EXIF_MAIN, dib, "Make", &tagMake);
+	const char *Maker = (char*)FreeImage_GetTagValue(tagMake);
 
 	if(strncmp("OLYMP", pval, 5) == 0) {
 		// Olympus Makernote
 		*md_model = TagLib::EXIF_MAKERNOTE_OLYMPUS;
 		*subdirOffset = 8;
 	} 
-	else if(FreeImage_strnicmp("NIKON", (char*)tagMake->value, 5) == 0) {
+	else if(FreeImage_strnicmp("NIKON", Maker, 5) == 0) {
 		if(strncmp("Nikon", pval, 5) == 0) {
 			/* There are two scenarios here:
 			 * Type 1:
@@ -196,15 +197,15 @@ processMakerNote(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, DWORD *
 			*md_model = TagLib::EXIF_MAKERNOTE_NIKONTYPE2;
 			*subdirOffset = 0;
 		}
-    } else if(FreeImage_strnicmp("Canon", (char*)tagMake->value, 5) == 0) {
+    } else if(FreeImage_strnicmp("Canon", Maker, 5) == 0) {
         // Canon Makernote
 		*md_model = TagLib::EXIF_MAKERNOTE_CANON;
 		*subdirOffset = 0;		
-    } else if(FreeImage_strnicmp("Casio", (char*)tagMake->value, 5) == 0) {
+    } else if(FreeImage_strnicmp("Casio", Maker, 5) == 0) {
         // Casio Makernote
 		*md_model = TagLib::EXIF_MAKERNOTE_CASIO;
 		*subdirOffset = 0;
-	} else if ((strncmp("FUJIFILM", pval, 8) == 0) || (FreeImage_strnicmp("Fujifilm", (char*)tagMake->value, 8) == 0)) {
+	} else if ((strncmp("FUJIFILM", pval, 8) == 0) || (FreeImage_strnicmp("Fujifilm", Maker, 8) == 0)) {
         // Fujifile Makernote
 		*md_model = TagLib::EXIF_MAKERNOTE_FUJIFILM;
         DWORD ifdStart = (DWORD) ReadUint32(msb_order, pval + 8);
@@ -214,7 +215,7 @@ processMakerNote(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, DWORD *
 		*md_model = TagLib::EXIF_MAKERNOTE_KYOCERA;
 		*subdirOffset = 22;
 	}
-	else if(FreeImage_strnicmp("Minolta", (char*)tagMake->value, 7) == 0) {
+	else if(FreeImage_strnicmp("Minolta", Maker, 7) == 0) {
 		// Minolta maker note
 		*md_model = TagLib::EXIF_MAKERNOTE_MINOLTA;
 		*subdirOffset = 0;
@@ -224,7 +225,7 @@ processMakerNote(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, DWORD *
 		*md_model = TagLib::EXIF_MAKERNOTE_PANASONIC;
 		*subdirOffset = 12;
 	}
-	else if((FreeImage_strnicmp("Pentax", (char*)tagMake->value, 6) == 0) || (FreeImage_strnicmp("Asahi", (char*)tagMake->value, 5) == 0)) {
+	else if((FreeImage_strnicmp("Pentax", Maker, 6) == 0) || (FreeImage_strnicmp("Asahi", Maker, 5) == 0)) {
 		// Pentax maker note
 		*md_model = TagLib::EXIF_MAKERNOTE_PENTAX;
 		if(strncmp("AOC\x00", pval, 4) == 0) {
@@ -242,74 +243,68 @@ Process a Canon maker note tag.
 A single Canon tag may contain many other tags within.
 */
 static void 
-processCanonMakerNoteTag(FIBITMAP *dib, FITAG & tag) {
+processCanonMakerNoteTag(FIBITMAP *dib, FITAG *tag) {
 	TagLib& s = TagLib::instance();
 
-	if (tag.id == TAG_CANON_CAMERA_STATE_1) {
-        // this single tag has multiple values within
+	WORD tag_id = FreeImage_GetTagID(tag);
 
-		FITAG canonTag;
-		WORD *pvalue = (WORD*)tag.value;
+	if((tag_id == TAG_CANON_CAMERA_STATE_1) || (tag_id == TAG_CANON_CAMERA_STATE_2)) {
+		// this single tag has multiple values within
 
-        int subTagTypeBase = 0xC100;
+		int subTagTypeBase = 0;
 
-        // we intentionally skip the first array member
-        for (DWORD i = 1; i < tag.count; i++) {
-			memset(&canonTag, 0, sizeof(FITAG));
+		switch(tag_id) {
+			case TAG_CANON_CAMERA_STATE_1:
+				subTagTypeBase = 0xC100;
+				break;
+			case TAG_CANON_CAMERA_STATE_2:
+				subTagTypeBase = 0xC400;
+				break;
+		}
 
-			canonTag.id = subTagTypeBase + (WORD)i;
-			canonTag.type = FIDT_SHORT;
-			canonTag.count = 1;
-			canonTag.length = 2;
-			canonTag.value = &pvalue[i];
-
-			// get the tag key and description
-			canonTag.key = (char*)s.getTagFieldName(TagLib::EXIF_MAKERNOTE_CANON, canonTag.id);
-			canonTag.description = (char*)s.getTagDescription(TagLib::EXIF_MAKERNOTE_CANON, canonTag.id);
-
-			// store the tag
-			if(canonTag.key) {
-				FreeImage_SetMetadata(FIMD_EXIF_MAKERNOTE, dib, canonTag.key, &canonTag);
-			}
-        }
-    } else if (tag.id == TAG_CANON_CAMERA_STATE_2) {
-        // this single tag has multiple values within
-
-		FITAG canonTag;
-		WORD *pvalue = (WORD*)tag.value;
-
-        int subTagTypeBase = 0xC400;
+		WORD *pvalue = (WORD*)FreeImage_GetTagValue(tag);
 
         // we intentionally skip the first array member
-        for (DWORD i = 1; i < tag.count; i++) {
-			memset(&canonTag, 0, sizeof(FITAG));
+        for (DWORD i = 1; i < FreeImage_GetTagCount(tag); i++) {
+			// create a tag
+			FITAG *canonTag = FreeImage_CreateTag();
+			if(!canonTag) return;
 
-			canonTag.id = subTagTypeBase + (WORD)i;
-			canonTag.type = FIDT_SHORT;
-			canonTag.count = 1;
-			canonTag.length = 2;
-			canonTag.value = &pvalue[i];
+			tag_id = subTagTypeBase + (WORD)i;
+
+			FreeImage_SetTagID(canonTag, tag_id);
+			FreeImage_SetTagType(canonTag, FIDT_SHORT);
+			FreeImage_SetTagCount(canonTag, 1);
+			FreeImage_SetTagLength(canonTag, 2);
+			FreeImage_SetTagValue(canonTag, &pvalue[i]);
 
 			// get the tag key and description
-			canonTag.key = (char*)s.getTagFieldName(TagLib::EXIF_MAKERNOTE_CANON, canonTag.id);
-			canonTag.description = (char*)s.getTagDescription(TagLib::EXIF_MAKERNOTE_CANON, canonTag.id);
+			const char *key = s.getTagFieldName(TagLib::EXIF_MAKERNOTE_CANON, tag_id);
+			FreeImage_SetTagKey(canonTag, key);
+			const char *description = s.getTagDescription(TagLib::EXIF_MAKERNOTE_CANON, tag_id);
+			FreeImage_SetTagDescription(canonTag, description);
 
 			// store the tag
-			if(canonTag.key) {
-				FreeImage_SetMetadata(FIMD_EXIF_MAKERNOTE, dib, canonTag.key, &canonTag);
+			if(key) {
+				FreeImage_SetMetadata(FIMD_EXIF_MAKERNOTE, dib, key, canonTag);
 			}
+
+			// delete the tag
+			FreeImage_DeleteTag(canonTag);
         }
 	}
 	else {
 		// process as a normal tag
 
 		// get the tag key and description
-		tag.key = (char*)s.getTagFieldName(TagLib::EXIF_MAKERNOTE_CANON, tag.id);
-		tag.description = (char*)s.getTagDescription(TagLib::EXIF_MAKERNOTE_CANON, tag.id);
+		const char *key = s.getTagFieldName(TagLib::EXIF_MAKERNOTE_CANON, tag_id);
+		FreeImage_SetTagKey(tag, key);
+		const char *description = s.getTagDescription(TagLib::EXIF_MAKERNOTE_CANON, tag_id);
+		FreeImage_SetTagDescription(tag, description);
 
 		// store the tag
-		if(tag.key) {
-			FreeImage_SetMetadata(FIMD_EXIF_MAKERNOTE, dib, tag.key, &tag);
+		if(key) {
+			FreeImage_SetMetadata(FIMD_EXIF_MAKERNOTE, dib, key, tag);
 		}
 	}
 }
@@ -318,51 +313,51 @@ processCanonMakerNoteTag(FIBITMAP *dib, FITAG & tag) {
 Process a standard Exif tag
 */
 static void 
-processExifTag(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, TagLib::MDMODEL md_model) {
+processExifTag(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, TagLib::MDMODEL md_model) {
 	int n;
 	DWORD i;
 
 	// allocate a buffer to store the tag value
-	BYTE *exif_value = (BYTE*)malloc(tag.length * sizeof(BYTE));
-	memset(exif_value, 0, tag.length * sizeof(BYTE));
+	BYTE *exif_value = (BYTE*)malloc(FreeImage_GetTagLength(tag) * sizeof(BYTE));
+	memset(exif_value, 0, FreeImage_GetTagLength(tag) * sizeof(BYTE));
 
 	// get the tag value
-	switch(tag.type) {
+	switch(FreeImage_GetTagType(tag)) {
 
 		case FIDT_SHORT:
 		{
 			WORD *value = (WORD*)&exif_value[0];
-			for(i = 0; i < tag.count; i++) {
+			for(i = 0; i < FreeImage_GetTagCount(tag); i++) {
 				value[i] = ReadUint16(msb_order, pval + i * sizeof(WORD));
 			}
-			tag.value = value;
+			FreeImage_SetTagValue(tag, value);
 			break;
 		}
 		case FIDT_SSHORT:
 		{
 			short *value = (short*)&exif_value[0];
-			for(i = 0; i < tag.count; i++) {
+			for(i = 0; i < FreeImage_GetTagCount(tag); i++) {
 				value[i] = ReadInt16(msb_order, pval + i * sizeof(short));
 			}
-			tag.value = value;
+			FreeImage_SetTagValue(tag, value);
 			break;
 		}
 		case FIDT_LONG:
 		{
 			DWORD *value = (DWORD*)&exif_value[0];
-			for(i = 0; i < tag.count; i++) {
+			for(i = 0; i < FreeImage_GetTagCount(tag); i++) {
 				value[i] = ReadUint32(msb_order, pval + i * sizeof(DWORD));
 			}
-			tag.value = value;
+			FreeImage_SetTagValue(tag, value);
 			break;
 		}
 		case FIDT_SLONG:
 		{
 			LONG *value = (LONG*)&exif_value[0];
-			for(i = 0; i < tag.count; i++) {
+			for(i = 0; i < FreeImage_GetTagCount(tag); i++) {
 				value[i] = ReadInt32(msb_order, pval + i * sizeof(LONG));
 			}
-			tag.value = value;
+			FreeImage_SetTagValue(tag, value);
 			break;
 		}
 		case FIDT_RATIONAL:
@@ -370,11 +365,11 @@ processExifTag(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, TagLib::M
 			n = sizeof(DWORD);
 
 			DWORD *value = (DWORD*)&exif_value[0];						
-			for(i = 0; i < 2 * tag.count; i++) {
+			for(i = 0; i < 2 * FreeImage_GetTagCount(tag); i++) {
 				// read a sequence of (numerator, denominator)
 				value[i] = ReadUint32(msb_order, n*i + (char*)pval);
 			}
-			tag.value = value;
+			FreeImage_SetTagValue(tag, value);
 			break;
 		}
 		case FIDT_SRATIONAL:
@@ -382,11 +377,11 @@ processExifTag(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, TagLib::M
 			n = sizeof(LONG);
 
 			LONG *value = (LONG*)&exif_value[0];
-			for(i = 0; i < 2 * tag.count; i++) {
+			for(i = 0; i < 2 * FreeImage_GetTagCount(tag); i++) {
 				// read a sequence of (numerator, denominator)
 				value[i] = ReadInt32(msb_order, n*i + (char*)pval);
 			}
-			tag.value = value;
+			FreeImage_SetTagValue(tag, value);
 			break;
 		}
 		case FIDT_BYTE:
@@ -396,7 +391,7 @@ processExifTag(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, TagLib::M
 		case FIDT_FLOAT:
 		case FIDT_DOUBLE:
 		default:
-			tag.value = pval;
+			FreeImage_SetTagValue(tag, pval);
 			break;
 	}
 
@@ -406,13 +401,18 @@ processExifTag(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, TagLib::M
 	}
 	else {
 		TagLib& s = TagLib::instance();
+
+		WORD tag_id = FreeImage_GetTagID(tag);
+
 		// get the tag key and description
-		tag.key = (char*)s.getTagFieldName(md_model, tag.id);
-		tag.description = (char*)s.getTagDescription(md_model, tag.id);
+		const char *key = s.getTagFieldName(md_model, tag_id);
+		FreeImage_SetTagKey(tag, key);
+		const char *description = s.getTagDescription(md_model, tag_id);
+		FreeImage_SetTagDescription(tag, description);
 
 		// store the tag
-		if(tag.key) {
-			FreeImage_SetMetadata(s.getFreeImageModel(md_model), dib, tag.key, &tag);
+		if(key) {
+			FreeImage_SetMetadata(s.getFreeImageModel(md_model), dib, key, tag);
 		}
 	}
 	
@@ -442,7 +442,6 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 
     #define DIR_ENTRY_ADDR(_start, _entry) (_start + 2 + (12 * _entry))
 
-
 	// set the metadata model to Exif
 
 	TagLib::MDMODEL md_model = TagLib::EXIF_MAIN;
@@ -467,22 +466,28 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 		for(; de < nde; de++) {
 			char *pde = NULL;	// pointer to the directory entry
 			char *pval = NULL;	// pointer to the tag value
-
-			FITAG tag;
-			memset(&tag, 0, sizeof(FITAG));
+			
+			// create a tag
+			FITAG *tag = FreeImage_CreateTag();
+			if(!tag) return FALSE;
 
 			// point to the directory entry
 			pde = (char*) DIR_ENTRY_ADDR(ifdp, de);
-			
-			tag.id = (WORD)ReadUint16(msb_order, pde);			// get tag value
-			tag.type = (WORD)ReadUint16(msb_order, pde + 2);	// get the format
 
-			if((tag.type - 1) >= EXIF_NUM_FORMATS)
+			// get the tag ID
+			FreeImage_SetTagID(tag, ReadUint16(msb_order, pde));
+			// get the tag format
+			WORD tag_type = (WORD)ReadUint16(msb_order, pde + 2);
+			if((tag_type - 1) >= EXIF_NUM_FORMATS)
 				break;
+			FreeImage_SetTagType(tag, (FREE_IMAGE_MDTYPE)tag_type);
 
-			tag.count = (DWORD)ReadUint32(msb_order, pde + 4);			// get number of components
-			tag.length = tag.count * FreeImage_TagDataWidth(tag.type);	// get the size of the tag value in bytes
-			if(tag.length <= 4) {
+			// get number of components
+			FreeImage_SetTagCount(tag, ReadUint32(msb_order, pde + 4));
+			// get the size of the tag value in bytes
+			FreeImage_SetTagLength(tag, FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth(FreeImage_GetTagType(tag)));
+
+			if(FreeImage_GetTagLength(tag) <= 4) {
 				// 4 bytes or less and value is in the dir entry itself
 				pval = pde + 8;
 			} else {
@@ -490,14 +495,14 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 
 				// if its bigger than 4 bytes, the directory entry contains an offset
 				offset_value = ReadUint32(msb_order, pde + 8);
-				if((size_t) (offset_value + tag.length) > length)
+				if((size_t) (offset_value + FreeImage_GetTagLength(tag)) > length)
 					continue;
 				pval = (char*)(tiffp + offset_value);
 			}
 
 			// check for a IFD offset
 			BOOL isIFDOffset = FALSE;
-			switch(tag.id) {
+			switch(FreeImage_GetTagID(tag)) {
 				case TAG_EXIF_OFFSET:
 				case TAG_GPS_OFFSET:
 				case TAG_INTEROP_OFFSET:
@@ -511,7 +516,7 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 				BYTE *next_ifd = ifdp;
 				
 				// get offset and metadata model
-				if (tag.id == TAG_MAKER_NOTE) {
+				if (FreeImage_GetTagID(tag) == TAG_MAKER_NOTE) {
 					processMakerNote(dib, tag, pval, msb_order, &sub_offset, &next_mdmodel);
 					next_ifd = (BYTE*)pval + sub_offset;
 				} else {
@@ -548,13 +553,16 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 				// process as a standard tag
 				processExifTag(dib, tag, pval, msb_order, md_model);
 			}
-
+			
+			// delete the tag
+			FreeImage_DeleteTag(tag);
 
         } // for(nde)
 
 		// additional thumbnail data is skipped
 
     } while (!destack.empty()); 
+
 
 	return TRUE;
 }

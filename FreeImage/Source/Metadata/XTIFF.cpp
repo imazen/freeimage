@@ -102,14 +102,12 @@ XTIFFInitialize(void) {
 
 void 
 tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
-	FITAG tag;
 
 	size_t tag_size = sizeof(xtiffFieldInfo) / sizeof(xtiffFieldInfo[0]);
 
 	TagLib& tag_lib = TagLib::instance();
 
 	for(unsigned i = 0; i < tag_size; i++) {
-		memset(&tag, 0, sizeof(FITAG));
 
 		const TIFFFieldInfo *fieldInfo = &xtiffFieldInfo[i];
 
@@ -117,31 +115,50 @@ tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 			char *params = NULL;
 
 			if(TIFFGetField(tif, fieldInfo->field_tag, &params)) {
-				tag.type = (FREE_IMAGE_MDTYPE)fieldInfo->field_type;
-				tag.id = (WORD)fieldInfo->field_tag;
-				tag.key = (char*)tag_lib.getTagFieldName(TagLib::GEOTIFF, tag.id);
-				tag.description = (char*)tag_lib.getTagDescription(TagLib::GEOTIFF, tag.id);
-				tag.length = strlen(params) + 1;
-				tag.count = tag.length;
-				tag.value = params;
-				FreeImage_SetMetadata(FIMD_GEOTIFF, dib, tag.key, &tag);
+				// create a tag
+				FITAG *tag = FreeImage_CreateTag();
+				if(!tag) return;
+
+				WORD tag_id = (WORD)fieldInfo->field_tag;
+
+				FreeImage_SetTagType(tag, (FREE_IMAGE_MDTYPE)fieldInfo->field_type);
+				FreeImage_SetTagID(tag, tag_id);
+				FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::GEOTIFF, tag_id));
+				FreeImage_SetTagDescription(tag, tag_lib.getTagDescription(TagLib::GEOTIFF, tag_id));
+				FreeImage_SetTagLength(tag, strlen(params) + 1);
+				FreeImage_SetTagCount(tag, FreeImage_GetTagLength(tag));
+				FreeImage_SetTagValue(tag, params);
+				FreeImage_SetMetadata(FIMD_GEOTIFF, dib, FreeImage_GetTagKey(tag), tag);
+				
+				// delete the tag
+				FreeImage_DeleteTag(tag);
 			}
 		} else {
 			short tag_count = 0;
 			void* data = NULL;
 
 			if(TIFFGetField(tif, fieldInfo->field_tag, &tag_count, &data)) {
-				tag.type = (FREE_IMAGE_MDTYPE)fieldInfo->field_type;
-				tag.id = (WORD)fieldInfo->field_tag;
-				tag.key = (char*)tag_lib.getTagFieldName(TagLib::GEOTIFF, tag.id);
-				tag.description = (char*)tag_lib.getTagDescription(TagLib::GEOTIFF, tag.id);
-				tag.length = FreeImage_TagDataWidth(tag.type) * tag_count;
-				tag.count = tag_count;
-				tag.value = data;
-				FreeImage_SetMetadata(FIMD_GEOTIFF, dib, tag.key, &tag);
+				// create a tag
+				FITAG *tag = FreeImage_CreateTag();
+				if(!tag) return;
+
+				WORD tag_id = (WORD)fieldInfo->field_tag;
+				FREE_IMAGE_MDTYPE tag_type = (FREE_IMAGE_MDTYPE)fieldInfo->field_type;
+
+				FreeImage_SetTagType(tag, tag_type);
+				FreeImage_SetTagID(tag, tag_id);
+				FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::GEOTIFF, tag_id));
+				FreeImage_SetTagDescription(tag, tag_lib.getTagDescription(TagLib::GEOTIFF, tag_id));
+				FreeImage_SetTagLength(tag, FreeImage_TagDataWidth(tag_type) * tag_count);
+				FreeImage_SetTagCount(tag, tag_count);
+				FreeImage_SetTagValue(tag, data);
+				FreeImage_SetMetadata(FIMD_GEOTIFF, dib, FreeImage_GetTagKey(tag), tag);
+
+				// delete the tag
+				FreeImage_DeleteTag(tag);
 			}
 		}
-	}	
+	} // for(tag_size)	
 }
 
 void 
@@ -161,10 +178,10 @@ tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 		const char *key = tag_lib.getTagFieldName(TagLib::GEOTIFF, (WORD)fieldInfo->field_tag);
 
 		if(FreeImage_GetMetadata(FIMD_GEOTIFF, dib, key, &tag)) {
-			if(tag->type == FIDT_ASCII) {
-				TIFFSetField(tif, fieldInfo->field_tag, tag->value);
+			if(FreeImage_GetTagType(tag) == FIDT_ASCII) {
+				TIFFSetField(tif, fieldInfo->field_tag, FreeImage_GetTagValue(tag));
 			} else {
-				TIFFSetField(tif, fieldInfo->field_tag, tag->count, tag->value);
+				TIFFSetField(tif, fieldInfo->field_tag, FreeImage_GetTagCount(tag), FreeImage_GetTagValue(tag));
 			}				
 		}
 	}

@@ -49,17 +49,17 @@ FIRational::FIRational(long n, long d) {
 
 /// Constructor with FITAG
 FIRational::FIRational(const FITAG *tag) {
-	switch(tag->type) {
+	switch(FreeImage_GetTagType((FITAG*)tag)) {
 		case FIDT_RATIONAL:		// 64-bit unsigned fraction 
 		{
-			DWORD *pvalue = (DWORD*)tag->value;
+			DWORD *pvalue = (DWORD*)FreeImage_GetTagValue((FITAG*)tag);
 			initialize((long)pvalue[0], (long)pvalue[1]);
 			break;
 		}
 
 		case FIDT_SRATIONAL:	// 64-bit signed fraction 
 		{
-			LONG *pvalue = (LONG*)tag->value;
+			LONG *pvalue = (LONG*)FreeImage_GetTagValue((FITAG*)tag);
 			initialize((long)pvalue[0], (long)pvalue[1]);
 			break;
 		}

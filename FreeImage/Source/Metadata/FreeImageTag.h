@@ -245,12 +245,12 @@
 /**
 Clone a FITAG structure
 */
-FITAG* FreeImage_CloneTag(const FITAG *tag);
+//FITAG* FreeImage_CloneTag(const FITAG *tag);
 
 /**
 Free a FITAG structure
 */
-void FreeImage_DeleteTag(FITAG *tag);
+//void FreeImage_DeleteTag(FITAG *tag);
 
 /** 
 Describes the tag format descriptor

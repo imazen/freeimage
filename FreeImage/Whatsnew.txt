@@ -8,6 +8,7 @@ What's New for FreeImage
 Month day, 2005 - 3.5.4
 ! [Herve Drolon] improved the speed of FreeImage_Rescale
 ! [Herve Drolon] improved FreeImage_RotateClassic (more compact code, a little faster)
+! [Herve Drolon] improved the metadata API using tag accessors
 + [Detlev Vendt] added LZW support to PluginGIF:Save
 + [Herve Drolon] added VS.Net 2003 project files
 + [Herve Drolon] added VERSIONINFO resource to the DLL

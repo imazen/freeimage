@@ -46,14 +46,17 @@ ConvertAnyTag(FITAG *tag) {
 	
 	// convert the tag value to a string buffer
 
-	switch(tag->type) {
+	FREE_IMAGE_MDTYPE tag_type = FreeImage_GetTagType(tag);
+	DWORD tag_count = FreeImage_GetTagCount(tag);
+
+	switch(tag_type) {
 		case FIDT_BYTE:		// N x 8-bit unsigned integer 
 		{
-			BYTE *pvalue = (BYTE*)tag->value;
+			BYTE *pvalue = (BYTE*)FreeImage_GetTagValue(tag);
 
 			sprintf(format, "%ld",	(long) pvalue[0]);
 			buffer += format;
-			for(i = 1; i < tag->count; i++) {
+			for(i = 1; i < tag_count; i++) {
 				sprintf(format, " %ld",	(long) pvalue[i]);
 				buffer += format;
 			}
@@ -61,11 +64,11 @@ ConvertAnyTag(FITAG *tag) {
 		}
 		case FIDT_SHORT:	// N x 16-bit unsigned integer 
 		{
-			unsigned short *pvalue = (unsigned short *)tag->value;
+			unsigned short *pvalue = (unsigned short *)FreeImage_GetTagValue(tag);
 
 			sprintf(format, "%hu", pvalue[0]);
 			buffer += format;
-			for(i = 1; i < tag->count; i++) {
+			for(i = 1; i < tag_count; i++) {
 				sprintf(format, " %hu",	pvalue[i]);
 				buffer += format;
 			}
@@ -73,11 +76,11 @@ ConvertAnyTag(FITAG *tag) {
 		}
 		case FIDT_LONG:		// N x 32-bit unsigned integer 
 		{
-			unsigned long *pvalue = (unsigned long *)tag->value;
+			unsigned long *pvalue = (unsigned long *)FreeImage_GetTagValue(tag);
 
 			sprintf(format, "%lu", pvalue[0]);
 			buffer += format;
-			for(i = 1; i < tag->count; i++) {
+			for(i = 1; i < tag_count; i++) {
 				sprintf(format, " %lu",	pvalue[i]);
 				buffer += format;
 			}
@@ -85,11 +88,11 @@ ConvertAnyTag(FITAG *tag) {
 		}
 		case FIDT_RATIONAL: // N x 64-bit unsigned fraction 
 		{
-			DWORD *pvalue = (DWORD*)tag->value;
+			DWORD *pvalue = (DWORD*)FreeImage_GetTagValue(tag);
 
 			sprintf(format, "%ld/%ld", pvalue[0], pvalue[1]);
 			buffer += format;
-			for(i = 1; i < tag->count; i++) {
+			for(i = 1; i < tag_count; i++) {
 				sprintf(format, " %ld/%ld", pvalue[2*i], pvalue[2*i+1]);
 				buffer += format;
 			}
@@ -97,11 +100,11 @@ ConvertAnyTag(FITAG *tag) {
 		}
 		case FIDT_SBYTE:	// N x 8-bit signed integer 
 		{
-			char *pvalue = (char*)tag->value;
+			char *pvalue = (char*)FreeImage_GetTagValue(tag);
 
 			sprintf(format, "%ld",	(long) pvalue[0]);
 			buffer += format;
-			for(i = 1; i < tag->count; i++) {
+			for(i = 1; i < tag_count; i++) {
 				sprintf(format, " %ld",	(long) pvalue[i]);
 				buffer += format;
 			}
@@ -109,11 +112,11 @@ ConvertAnyTag(FITAG *tag) {
 		}
 		case FIDT_SSHORT:	// N x 16-bit signed integer 
 		{
-			short *pvalue = (short *)tag->value;
+			short *pvalue = (short *)FreeImage_GetTagValue(tag);
 
 			sprintf(format, "%hd", pvalue[0]);
 			buffer += format;
-			for(i = 1; i < tag->count; i++) {
+			for(i = 1; i < tag_count; i++) {
 				sprintf(format, " %hd",	pvalue[i]);
 				buffer += format;
 			}
@@ -121,11 +124,11 @@ ConvertAnyTag(FITAG *tag) {
 		}
 		case FIDT_SLONG:	// N x 32-bit signed integer 
 		{
-			long *pvalue = (long *)tag->value;
+			long *pvalue = (long *)FreeImage_GetTagValue(tag);
 
 			sprintf(format, "%ld", pvalue[0]);
 			buffer += format;
-			for(i = 1; i < tag->count; i++) {
+			for(i = 1; i < tag_count; i++) {
 				sprintf(format, " %ld",	pvalue[i]);
 				buffer += format;
 			}
@@ -133,11 +136,11 @@ ConvertAnyTag(FITAG *tag) {
 		}
 		case FIDT_SRATIONAL:// N x 64-bit signed fraction 
 		{
-			LONG *pvalue = (LONG*)tag->value;
+			LONG *pvalue = (LONG*)FreeImage_GetTagValue(tag);
 
 			sprintf(format, "%ld/%ld", pvalue[0], pvalue[1]);
 			buffer += format;
-			for(i = 1; i < tag->count; i++) {
+			for(i = 1; i < tag_count; i++) {
 				sprintf(format, " %ld/%ld", pvalue[2*i], pvalue[2*i+1]);
 				buffer += format;
 			}
@@ -145,11 +148,11 @@ ConvertAnyTag(FITAG *tag) {
 		}
 		case FIDT_FLOAT:	// N x 32-bit IEEE floating point 
 		{
-			float *pvalue = (float *)tag->value;
+			float *pvalue = (float *)FreeImage_GetTagValue(tag);
 
 			sprintf(format, "%f", (double) pvalue[0]);
 			buffer += format;
-			for(i = 1; i < tag->count; i++) {
+			for(i = 1; i < tag_count; i++) {
 				sprintf(format, "%f", (double) pvalue[i]);
 				buffer += format;
 			}
@@ -157,11 +160,11 @@ ConvertAnyTag(FITAG *tag) {
 		}
 		case FIDT_DOUBLE:	// N x 64-bit IEEE floating point 
 		{
-			double *pvalue = (double *)tag->value;
+			double *pvalue = (double *)FreeImage_GetTagValue(tag);
 
 			sprintf(format, "%f", pvalue[0]);
 			buffer += format;
-			for(i = 1; i < tag->count; i++) {
+			for(i = 1; i < tag_count; i++) {
 				sprintf(format, "%f", pvalue[i]);
 				buffer += format;
 			}
@@ -171,10 +174,10 @@ ConvertAnyTag(FITAG *tag) {
 		case FIDT_UNDEFINED:// 8-bit untyped data 
 		default:
 		{
-			int max_size = MIN((int)tag->length, (int)MAX_TEXT_EXTENT);
+			int max_size = MIN((int)FreeImage_GetTagLength(tag), (int)MAX_TEXT_EXTENT);
 			if(max_size == MAX_TEXT_EXTENT)
 				max_size--;
-			memcpy(format, (char*)tag->value, max_size);
+			memcpy(format, (char*)FreeImage_GetTagValue(tag), max_size);
 			format[max_size] = '\0';
 			buffer += format;
 			break;
@@ -199,10 +202,10 @@ ConvertExifTag(FITAG *tag) {
 
 	// convert the tag value to a string buffer
 
-	switch(tag->id) {
+	switch(FreeImage_GetTagID(tag)) {
 		case TAG_ORIENTATION:
 		{
-			unsigned short orientation = *((unsigned short *)tag->value);
+			unsigned short orientation = *((unsigned short *)FreeImage_GetTagValue(tag));
 			switch (orientation) {
 				case 1:
 					return "top, left side";
@@ -228,8 +231,8 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_REFERENCE_BLACK_WHITE:
 		{
-			DWORD *pvalue = (DWORD*)tag->value;
-			if(tag->length == 48) {
+			DWORD *pvalue = (DWORD*)FreeImage_GetTagValue(tag);
+			if(FreeImage_GetTagLength(tag) == 48) {
 				// reference black point value and reference white point value (ReferenceBlackWhite)
 				int blackR = 0, whiteR = 0, blackG = 0, whiteG = 0, blackB = 0, whiteB = 0;
 				if(pvalue[1])
@@ -255,7 +258,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_COLOR_SPACE:
 		{
-			unsigned short colorSpace = *((unsigned short *)tag->value);
+			unsigned short colorSpace = *((unsigned short *)FreeImage_GetTagValue(tag));
 			if (colorSpace == 1) {
 				return "sRGB";
 			} else if (colorSpace == 65535) {
@@ -269,8 +272,8 @@ ConvertExifTag(FITAG *tag) {
 		case TAG_COMPONENTS_CONFIGURATION:
 		{
 			char *componentStrings[7] = {"", "Y", "Cb", "Cr", "R", "G", "B"};
-			BYTE *pvalue = (BYTE*)tag->value;
-			for(DWORD i = 0; i < MIN((DWORD)4, tag->count); i++) {
+			BYTE *pvalue = (BYTE*)FreeImage_GetTagValue(tag);
+			for(DWORD i = 0; i < MIN((DWORD)4, FreeImage_GetTagCount(tag)); i++) {
 				int j = pvalue[i];
 				if(j > 0 && j < 7)
 					buffer += componentStrings[j];
@@ -307,7 +310,7 @@ ConvertExifTag(FITAG *tag) {
 		case TAG_RESOLUTION_UNIT:
 		case TAG_FOCAL_PLANE_UNIT:
 		{
-			unsigned short resolutionUnit = *((unsigned short *)tag->value);
+			unsigned short resolutionUnit = *((unsigned short *)FreeImage_GetTagValue(tag));
 			switch (resolutionUnit) {
 				case 1:
 					return "(No unit)";
@@ -323,7 +326,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_YCBCR_POSITIONING:
 		{
-			unsigned short yCbCrPosition = *((unsigned short *)tag->value);
+			unsigned short yCbCrPosition = *((unsigned short *)FreeImage_GetTagValue(tag));
 			switch (yCbCrPosition) {
 				case 1:
 					return "Center of pixel array";
@@ -390,7 +393,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_FOCAL_LENGTH_IN_35MM_FILM:
 		{
-			unsigned short focalLength = *((unsigned short *)tag->value);
+			unsigned short focalLength = *((unsigned short *)FreeImage_GetTagValue(tag));
 			sprintf(format, "%hu mm", focalLength);
 			buffer += format;
 			return buffer.c_str();
@@ -399,7 +402,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_FLASH:
 		{
-			unsigned short flash = *((unsigned short *)tag->value);
+			unsigned short flash = *((unsigned short *)FreeImage_GetTagValue(tag));
 			switch(flash) {
 				case 0x0000:
 					return "Flash did not fire";
@@ -455,7 +458,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_SCENE_TYPE:
 		{
-			BYTE sceneType = *((BYTE*)tag->value);
+			BYTE sceneType = *((BYTE*)FreeImage_GetTagValue(tag));
 			if (sceneType == 1) {
 				return "Directly photographed image";
 			} else {
@@ -484,7 +487,7 @@ ConvertExifTag(FITAG *tag) {
 			
 		case TAG_METERING_MODE:
 		{
-			unsigned short meteringMode = *((unsigned short *)tag->value);
+			unsigned short meteringMode = *((unsigned short *)FreeImage_GetTagValue(tag));
 			switch (meteringMode) {
 				case 0:
 					return "Unknown";
@@ -510,7 +513,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_LIGHT_SOURCE:
 		{
-			unsigned short lightSource = *((unsigned short *)tag->value);
+			unsigned short lightSource = *((unsigned short *)FreeImage_GetTagValue(tag));
 			switch (lightSource) {
 				case 0:
 					return "Unknown";
@@ -562,7 +565,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_SENSING_METHOD:
 		{
-			unsigned short sensingMethod = *((unsigned short *)tag->value);
+			unsigned short sensingMethod = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (sensingMethod) {
 				case 1:
@@ -587,7 +590,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_FILE_SOURCE:
 		{
-			BYTE fileSource = *((BYTE*)tag->value);
+			BYTE fileSource = *((BYTE*)FreeImage_GetTagValue(tag));
 			if (fileSource == 3) {
 				return "Digital Still Camera (DSC)";
 			} else {
@@ -600,7 +603,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_EXPOSURE_PROGRAM:
 		{
-			unsigned short exposureProgram = *((unsigned short *)tag->value);
+			unsigned short exposureProgram = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (exposureProgram) {
 				case 1:
@@ -629,7 +632,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_CUSTOM_RENDERED:
 		{
-			unsigned short customRendered = *((unsigned short *)tag->value);
+			unsigned short customRendered = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (customRendered) {
 				case 0:
@@ -646,7 +649,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_EXPOSURE_MODE:
 		{
-			unsigned short exposureMode = *((unsigned short *)tag->value);
+			unsigned short exposureMode = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (exposureMode) {
 				case 0:
@@ -665,7 +668,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_WHITE_BALANCE:
 		{
-			unsigned short whiteBalance = *((unsigned short *)tag->value);
+			unsigned short whiteBalance = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (whiteBalance) {
 				case 0:
@@ -682,7 +685,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_SCENE_CAPTURE_TYPE:
 		{
-			unsigned short sceneType = *((unsigned short *)tag->value);
+			unsigned short sceneType = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (sceneType) {
 				case 0:
@@ -703,7 +706,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_GAIN_CONTROL:
 		{
-			unsigned short gainControl = *((unsigned short *)tag->value);
+			unsigned short gainControl = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (gainControl) {
 				case 0:
@@ -726,7 +729,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_CONTRAST:
 		{
-			unsigned short contrast = *((unsigned short *)tag->value);
+			unsigned short contrast = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (contrast) {
 				case 0:
@@ -745,7 +748,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_SATURATION:
 		{
-			unsigned short saturation = *((unsigned short *)tag->value);
+			unsigned short saturation = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (saturation) {
 				case 0:
@@ -764,7 +767,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_SHARPNESS:
 		{
-			unsigned short sharpness = *((unsigned short *)tag->value);
+			unsigned short sharpness = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (sharpness) {
 				case 0:
@@ -783,7 +786,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_SUBJECT_DISTANCE_RANGE:
 		{
-			unsigned short distanceRange = *((unsigned short *)tag->value);
+			unsigned short distanceRange = *((unsigned short *)FreeImage_GetTagValue(tag));
 
 			switch (distanceRange) {
 				case 0:
@@ -804,7 +807,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_ISO_SPEED_RATINGS:
 		{
-			unsigned short isoEquiv = *((unsigned short *)tag->value);
+			unsigned short isoEquiv = *((unsigned short *)FreeImage_GetTagValue(tag));
 			if (isoEquiv < 50) {
 				isoEquiv *= 200;
 			}
@@ -834,13 +837,13 @@ ConvertExifGPSTag(FITAG *tag) {
 
 	// convert the tag value to a string buffer
 
-	switch(tag->id) {
+	switch(FreeImage_GetTagID(tag)) {
 		case TAG_GPS_LATITUDE:
 		case TAG_GPS_LONGITUDE:
 		case TAG_GPS_TIME_STAMP:
 		{
-			DWORD *pvalue = (DWORD*)tag->value;
-			if(tag->length == 24) {
+			DWORD *pvalue = (DWORD*)FreeImage_GetTagValue(tag);
+			if(FreeImage_GetTagLength(tag) == 24) {
 				// dd:mm:ss or hh:mm:ss
 				int dd = 0, mm = 0;
 				double ss = 0;

@@ -170,10 +170,10 @@ void PrintMetadata(iostream& ios, const char *sectionTitle, FIBITMAP *dib, FREE_
 			// print the tag 
 			// note that most tags do not have a description, 
 			// especially when the metadata specifications are not available
-			if(tag->description) {
-				ios << "<TR><TD>" << tag->key << "</TD><TD>" << value << "</TD><TD>" << tag->description << "</TD></TR>\n";
+			if(FreeImage_GetTagDescription(tag)) {
+				ios << "<TR><TD>" << FreeImage_GetTagKey(tag) << "</TD><TD>" << value << "</TD><TD>" << FreeImage_GetTagDescription(tag) << "</TD></TR>\n";
 			} else {
-				ios << "<TR><TD>" << tag->key << "</TD><TD>" << value << "</TD><TD>" << "" << "</TD></TR>\n";
+				ios << "<TR><TD>" << FreeImage_GetTagKey(tag) << "</TD><TD>" << value << "</TD><TD>" << "&nbsp;" << "</TD></TR>\n";
 			}
 
 		} while(FreeImage_FindNextMetadata(mdhandle, &tag));
@@ -212,8 +212,9 @@ main(int argc, char *argv[]) {
 		return 0;
 
 	// Create a HTML file
+	std::string html_file(strtok(argv[1], ".") + std::string(".html"));
 
-	fstream metadataFile("metadata.html", ios::out);
+	fstream metadataFile(html_file.c_str(), ios::out);
 
 	// Print the header
 
@@ -254,7 +255,7 @@ main(int argc, char *argv[]) {
 		FITAG *tagMake = NULL;
 		FreeImage_GetMetadata(FIMD_EXIF_MAIN, dib, "Make", &tagMake);
 
-		std::string buffer((char*)tagMake->value);
+		std::string buffer((char*)FreeImage_GetTagValue(tagMake));
 		buffer += " Makernote";
 
 		PrintMetadata(metadataFile, buffer.c_str(), dib, FIMD_EXIF_MAKERNOTE);
@@ -263,6 +264,11 @@ main(int argc, char *argv[]) {
 		cout << "\nFIMD_IPTC (" << count << " data)\n-----------------------------------------\n";
 
 		PrintMetadata(metadataFile, "IPTC/NAA", dib, FIMD_IPTC);
+	}
+	if(count = FreeImage_GetMetadataCount(FIMD_GEOTIFF, dib)) {
+		cout << "\nFIMD_GEOTIFF (" << count << " data)\n-----------------------------------------\n";
+
+		PrintMetadata(metadataFile, "GEOTIFF", dib, FIMD_GEOTIFF);
 	}
 
 	// Print the footer
@@ -279,12 +285,13 @@ main(int argc, char *argv[]) {
 	if(count = FreeImage_GetMetadataCount(FIMD_XMP, dib)) {
 		cout << "\nFIMD_XMP (" << count << " packet)\n-----------------------------------------\n";
 
-		metadataFile.open("metadata.xmp", ios::out);
+		std::string xmp_file(strtok(argv[1], ".") + std::string(".xmp"));
+		metadataFile.open(xmp_file.c_str(), ios::out);
 
 		FITAG *tag = NULL;
 		FreeImage_GetMetadata(FIMD_XMP, dib, "XMLPacket", &tag);
 		if(tag) {
-			metadataFile << (char*)tag->value;
+			metadataFile << (char*)FreeImage_GetTagValue(tag);
 		}
 
 		metadataFile.close();
