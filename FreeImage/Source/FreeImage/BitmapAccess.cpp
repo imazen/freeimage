@@ -598,6 +598,20 @@ FreeImage_GetDotsPerMeterY(FIBITMAP *dib) {
 	return (dib) ? FreeImage_GetInfoHeader(dib)->biYPelsPerMeter : 0;
 }
 
+void DLL_CALLCONV
+FreeImage_SetDotsPerMeterX(FIBITMAP *dib, unsigned res) {
+	if(dib) {
+		FreeImage_GetInfoHeader(dib)->biXPelsPerMeter = res;
+	}
+}
+
+void DLL_CALLCONV
+FreeImage_SetDotsPerMeterY(FIBITMAP *dib, unsigned res) {
+	if(dib) {
+		FreeImage_GetInfoHeader(dib)->biYPelsPerMeter = res;
+	}
+}
+
 BITMAPINFOHEADER * DLL_CALLCONV
 FreeImage_GetInfoHeader(FIBITMAP *dib) {
 	return (dib) ? (BITMAPINFOHEADER *)((BYTE *)dib->data + sizeof(FREEIMAGEHEADER)) : NULL;

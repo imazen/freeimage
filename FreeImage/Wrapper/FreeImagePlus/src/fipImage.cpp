@@ -170,13 +170,11 @@ WORD fipImage::getVerticalResolution() {
 }
 
 void fipImage::setHorizontalResolution(LONG value) {
-	BITMAPINFOHEADER *bmih = FreeImage_GetInfoHeader(_dib);
-	bmih->biXPelsPerMeter = value * 100;
+	FreeImage_SetDotsPerMeterX(_dib, value * 100);
 }
 
 void fipImage::setVerticalResolution(LONG value) {
-	BITMAPINFOHEADER *bmih = FreeImage_GetInfoHeader(_dib);
-	bmih->biYPelsPerMeter = value * 100;
+	FreeImage_SetDotsPerMeterY(_dib, value * 100);
 }
 
 
