@@ -1,6 +1,6 @@
 rd Release /s /q
 rd Debug /s /q
-del dist\*.*
+del dist\*.* /s /q
 del *.ncb /s /q
 del *.plg /s /q
 del *.opt /s /q
