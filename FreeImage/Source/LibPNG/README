@@ -1,11 +1,11 @@
-README for libpng 1.2.5 - October 3, 2002 (shared library 12.0)
+README for libpng version 1.2.6 - August 15, 2004 (shared library 12.0)
 See the note about version numbers near the top of png.h
 
 See INSTALL for instructions on how to install libpng.
 
-Libpng comes in two distribution formats.  Get libpng-*.tar.gz if you
-want UNIX-style line endings in the text files, or lpng*.zip if you want
-DOS-style line endings.
+Libpng comes in several distribution formats.  Get libpng-*.tar.gz
+or libpng-*.tar.bz2 if you want UNIX-style line endings in the text
+files, or lpng*.zip if you want DOS-style line endings.
 
 Version 0.89 was the first official release of libpng.  Don't let the
 fact that it's the first release fool you.  The libpng library has been in
@@ -104,7 +104,7 @@ fix.  Please mention "libpng" somewhere in the subject line.  Thanks.
 This release was created and will be supported by myself (of course
 based in a large way on Guy's and Andreas' earlier work), and the PNG group.
 
-randeg@alum.rpi.edu
+glennrp@users.sourceforge.net
 png-implement@ccrc.wustl.edu
 
 You can't reach Guy, the original libpng author, at the addresses
