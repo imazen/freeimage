@@ -214,6 +214,10 @@ SOURCE=.\Source\FreeImage\Conversion32.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\Source\FreeImage\Conversion4.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\Source\FreeImage\Conversion8.cpp
 # End Source File
 # Begin Source File

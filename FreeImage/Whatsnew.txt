@@ -5,6 +5,10 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month day, 2004 - 3.5.1
++ [Riley McNiff] added FreeImage_ConvertTo4Bits
+* [Herve Drolon] fixed a buffer overrun with some ILBM images
+
 November 1st, 2004 - 3.5.0
 ! FreeImage now uses libPNG 1.2.7
 ! FreeImage now uses libTIFF 3.7.0
