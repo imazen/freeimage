@@ -115,6 +115,8 @@ FI_STRUCT (FIMULTIBITMAP) { void *data; };
 #define SEEK_END  2
 #endif
 
+#ifndef __MINGW32__		// prevents a bug in mingw32
+
 typedef long BOOL;
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
@@ -176,6 +178,8 @@ typedef struct tagBITMAPINFO {
   BITMAPINFOHEADER bmiHeader; 
   RGBQUAD          bmiColors[1];
 } BITMAPINFO, *PBITMAPINFO;
+
+#endif // __MINGW32__
 
 #endif // _WINDOWS_
 
