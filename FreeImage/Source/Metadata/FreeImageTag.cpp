@@ -88,6 +88,7 @@ FreeImage_DeleteTag(FITAG *tag) {
 		free(tag->value);
 		tag->value = NULL;
 		tag->length = 0;
+		free(tag);
 	}
 }
 
