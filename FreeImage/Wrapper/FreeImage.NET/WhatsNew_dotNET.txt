@@ -5,6 +5,12 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+March 30th, 2005
++ [Werner Haug] added enum LoadSaveFlags
++ [Werner Haug] added #if (DEBUG)
++ [Werner Haug] added ConvertToType
+* [Werner Haug] replaced "FreeImage.dll" by dllName
+
 March 2nd, 2005
 * [buzzweetman] fixed incorrect definition for GetChannel function
 
