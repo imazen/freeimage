@@ -101,9 +101,9 @@ typedef short JSAMPLE;
 
 typedef short JCOEF;
 
-/* Defines for MMX/SSE2 support. */
-
-#if defined(_M_IX86) && !defined(__GNUC__)	// disabled for AT&T
+/* Defines for MMX/SSE2 support.  */
+/* Disabled for AT&T and VC++ 6.0 */
+#if defined(_M_IX86) && !defined(__GNUC__)	&& !(defined(_MSC_VER) && (_MSC_VER<1300)) 
 #define HAVE_MMX_INTEL_MNEMONICS 
 
 /* SSE2 code appears broken for some cpus (bug 247437)
