@@ -36,6 +36,9 @@ Month Day, 2004 - 3.5.0
 * [Aaron Shumate] fixed a bug in IFF plugin (odd-length chunks)
 * [Rupert Hewitt] fixed FreeImage not compiling on National Instruments Cvi Ccompiler
 * [Herve Drolon] fixed a bug in IFF plugin (ILBM data)
+* [Fred Harju] added a Makefile for Solaris 9
+* [Roddy Pratt] fixed FreeImage not linking under Borland C++ Builder
+* [Vadim Alexandrov] fixed a memory leak in the multipage API
 
 July 8th, 2004 - 3.4.0
 ! [Jim Keir] improved FreeImage_FlipVertical function
