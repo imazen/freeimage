@@ -24,9 +24,6 @@
 #include "FreeImage.h"
 #include "Utilities.h"
 
-#include <stdlib.h>
-#include <memory.h> 
-
 // ----------------------------------------------------------
 
 #define PNG_ASSEMBLER_CODE_SUPPORTED
@@ -129,7 +126,10 @@ SupportsExportDepth(int depth) {
 
 static BOOL DLL_CALLCONV 
 SupportsExportType(FREE_IMAGE_TYPE type) {
-	return (type == FIT_BITMAP) ? TRUE : FALSE;
+	return (
+		(type == FIT_BITMAP) ||
+		(type == FIT_UINT16)
+	);
 }
 
 static BOOL DLL_CALLCONV
@@ -145,10 +145,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	png_infop info_ptr;
 	png_uint_32 width, height;
 	png_colorp png_palette;
-	int bpp, color_type, palette_entries;
+	int color_type, palette_entries;
+	int bit_depth, pixel_depth;		// pixel_depth = bit_depth * channels
 
 	FIBITMAP *dib = NULL;
-	RGBQUAD *palette = NULL;	// pointer to dib palette
+	RGBQUAD *palette = NULL;		// pointer to dib palette
 	png_bytepp  row_pointers = NULL;
 	int i;
 
@@ -191,65 +192,76 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				return NULL;
 			}
 
-			// Because we have already read the signature...
+			// because we have already read the signature...
 
 			png_set_sig_bytes(png_ptr, PNG_BYTES_TO_CHECK);
 
 			// read the IHDR chunk
 
 			png_read_info(png_ptr, info_ptr);
-			png_get_IHDR(png_ptr, info_ptr, &width, &height, &bpp, &color_type, NULL, NULL, NULL);
+			png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, NULL, NULL, NULL);
+			pixel_depth = info_ptr->pixel_depth;
 
-			// DIB's don't support >8 bits per sample
-			// => tell libpng to strip 16 bit/color files down to 8 bits/color
+			// get image data type (assume standard image type)
 
-			if (bpp == 16) {
-				png_set_strip_16(png_ptr);
-				bpp = 8;
+			FREE_IMAGE_TYPE image_type = FIT_BITMAP;
+			if (bit_depth == 16) {
+				if (color_type == PNG_COLOR_TYPE_GRAY) {
+					image_type = FIT_UINT16;
+#ifndef FREEIMAGE_BIGENDIAN
+					// turn on 16 bit byte swapping
+					png_set_swap(png_ptr);
+#endif
+				} else {
+					// tell libpng to strip 16 bit/color files down to 8 bits/color
+					png_set_strip_16(png_ptr);
+					bit_depth = 8;
+				}
 			}
 
-			// Set some additional flags
+
+			// set some additional flags
 
 			switch(color_type) {
 				case PNG_COLOR_TYPE_RGB:
 				case PNG_COLOR_TYPE_RGB_ALPHA:
 #ifndef FREEIMAGE_BIGENDIAN
-					// Flip the RGB pixels to BGR (or RGBA to BGRA)
+					// flip the RGB pixels to BGR (or RGBA to BGRA)
 
 					png_set_bgr(png_ptr);
 #endif
 					break;
 
 				case PNG_COLOR_TYPE_PALETTE:
-					// Expand palette images to the full 8 bits from 2 or 4 bits/pixel
+					// expand palette images to the full 8 bits from 2 or 4 bits/pixel
 
-					if ((bpp == 2) || (bpp == 4)) {
+					if ((pixel_depth == 2) || (pixel_depth == 4)) {
 						png_set_packing(png_ptr);
-						bpp = 8;
+						pixel_depth = 8;
 					}					
 
 					break;
 
 				case PNG_COLOR_TYPE_GRAY:
-					// Expand grayscale images to the full 8 bits from 2 or 4 bits/pixel
+					// expand grayscale images to the full 8 bits from 2 or 4 bits/pixel
 
-					if ((bpp == 2) || (bpp == 4)) {
+					if ((pixel_depth == 2) || (pixel_depth == 4)) {
 						png_set_expand(png_ptr);
-						bpp = 8;
+						pixel_depth = 8;
 					}
 
 					break;
 
 				case PNG_COLOR_TYPE_GRAY_ALPHA:
-					// Expand 8-bit greyscale + 8-bit alpha to 32-bit
+					// expand 8-bit greyscale + 8-bit alpha to 32-bit
 
 					png_set_gray_to_rgb(png_ptr);
 #ifndef FREEIMAGE_BIGENDIAN
-					// Flip the RGBA pixels to BGRA
+					// flip the RGBA pixels to BGRA
 
 					png_set_bgr(png_ptr);
 #endif
-					bpp = 32;
+					pixel_depth = 32;
 
 					break;
 
@@ -288,7 +300,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if (png_get_gAMA(png_ptr, info_ptr, &gamma) && ( flags & PNG_IGNOREGAMMA ) != PNG_IGNOREGAMMA)
 				png_set_gamma(png_ptr, screen_gamma, gamma);
 
-			// All transformations have been registered; now update info_ptr data
+			// all transformations have been registered; now update info_ptr data
 
 			png_read_update_info(png_ptr, info_ptr);
 
@@ -296,7 +308,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			color_type = png_get_color_type(png_ptr,info_ptr);
 
-			// Create a DIB and write the bitmap header
+			// create a DIB and write the bitmap header
 			// set up the DIB palette, if needed
 
 			switch (color_type) {
@@ -311,7 +323,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 				case PNG_COLOR_TYPE_PALETTE :
-					dib = FreeImage_Allocate(width, height, bpp);
+					dib = FreeImage_Allocate(width, height, pixel_depth);
 
 					png_get_PLTE(png_ptr,info_ptr, &png_palette,&palette_entries);
 
@@ -333,23 +345,27 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 				case PNG_COLOR_TYPE_GRAY:
-					dib = FreeImage_Allocate(width, height, bpp);
+					dib = FreeImage_AllocateT(image_type, width, height, pixel_depth);
 
-					palette = FreeImage_GetPalette(dib);
-					palette_entries = 1 << bpp;
+					if(pixel_depth <= 8) {
+						palette = FreeImage_GetPalette(dib);
+						palette_entries = 1 << pixel_depth;
 
-					for (i = 0; i < palette_entries; i++) {
-						palette[i].rgbRed   =
-						palette[i].rgbGreen =
-						palette[i].rgbBlue  = (i * 255) / (palette_entries - 1);
+						for (i = 0; i < palette_entries; i++) {
+							palette[i].rgbRed   =
+							palette[i].rgbGreen =
+							palette[i].rgbBlue  = (i * 255) / (palette_entries - 1);
+						}
 					}
-
 					// store the transparency table
 
 					if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
 						FreeImage_SetTransparencyTable(dib, (BYTE *)trans, num_trans);					
 
 					break;
+
+				default:
+					throw "PNG format not supported";
 			}
 
 			// store the background color 
@@ -362,7 +378,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if (png_get_valid(png_ptr, info_ptr, PNG_INFO_pHYs)) {
 				png_uint_32 res_x, res_y;
 				
-				// We'll overload this var and use 0 to mean no phys data,
+				// we'll overload this var and use 0 to mean no phys data,
 				// since if it's not in meters we can't use it anyway
 
 				int res_unit_type = 0;
@@ -464,8 +480,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 	png_uint_32 width, height;
 	BOOL has_alpha_channel = FALSE;
 
-	RGBQUAD *pal;	// pointer to dib palette
-	int bit_depth;
+	RGBQUAD *pal;					// pointer to dib palette
+	int bit_depth, pixel_depth;		// pixel_depth = bit_depth * channels
 	int palette_entries;
 	int	interlace_type;
 
@@ -482,7 +498,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				return FALSE;
 			}
 
-			// Allocate/initialize the image information data.
+			// allocate/initialize the image information data.
 
 			info_ptr = png_create_info_struct(png_ptr);
 
@@ -495,7 +511,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			// error handling functions in the png_create_write_struct() call.
 
 			if (setjmp(png_jmpbuf(png_ptr)))  {
-				// If we get here, we had a problem reading the file
+				// if we get here, we had a problem reading the file
 
 				png_destroy_write_struct(&png_ptr, &info_ptr);
 
@@ -527,15 +543,15 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			interlace_type = PNG_INTERLACE_NONE;	// Default value
 			width = FreeImage_GetWidth(dib);
 			height = FreeImage_GetHeight(dib);
-			bit_depth = FreeImage_GetBPP(dib);			
-
-			if (bit_depth == 16) {
-				png_destroy_write_struct(&png_ptr, &info_ptr);
-
-				throw "Unsupported format";	// Note: this could be enhanced here...
+			pixel_depth = FreeImage_GetBPP(dib);	
+			if(FreeImage_GetImageType(dib) == FIT_BITMAP) {
+				// standard image type
+				bit_depth = (pixel_depth > 8) ? 8 : pixel_depth;
+			} else {
+				// 16-bit greyscale
+				bit_depth = pixel_depth;
 			}
 
-			bit_depth = (bit_depth > 8) ? 8 : bit_depth;
 
 			switch (FreeImage_GetColorType(dib)) {
 				case FIC_MINISWHITE:
@@ -546,6 +562,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					png_set_IHDR(png_ptr, info_ptr, width, height, bit_depth, 
 						PNG_COLOR_TYPE_GRAY, interlace_type, 
 						PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
 					break;
 
 				case FIC_PALETTE:
@@ -583,7 +600,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
 #ifndef FREEIMAGE_BIGENDIAN
-					png_set_bgr(png_ptr); // flip BGR pixels to RGB
+					// flip BGR pixels to RGB
+					png_set_bgr(png_ptr);
 #endif
 					break;
 	
@@ -593,7 +611,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
 #ifndef FREEIMAGE_BIGENDIAN
-					png_set_bgr(png_ptr); // flip BGR pixels to RGB
+					// flip BGR pixels to RGB
+					png_set_bgr(png_ptr);
 #endif
 					break;
 					
@@ -614,7 +633,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			// set the transparency table
 
-			if ((bit_depth == 8) && (FreeImage_IsTransparent(dib)) && (FreeImage_GetTransparencyCount(dib) > 0))
+			if ((pixel_depth == 8) && (FreeImage_IsTransparent(dib)) && (FreeImage_GetTransparencyCount(dib) > 0))
 				png_set_tRNS(png_ptr, info_ptr, FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), NULL);
 
 			// set the background color
@@ -639,9 +658,18 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			// write out the image data
 
+#ifndef FREEIMAGE_BIGENDIAN
+			if (bit_depth == 16) {
+				// turn on 16 bit byte swapping
+				png_set_swap(png_ptr);
+			}
+#endif
+
+
 			if ((bit_depth == 32) && (!has_alpha_channel)) {
 				BYTE *buffer = (BYTE *)malloc(width * 3);
 
+				// transparent conversion to 24-bit
 				for (png_uint_32 k = 0; k < height; k++) {
 					FreeImage_ConvertLine32To24(buffer, FreeImage_GetScanLine(dib, height - k - 1), width);
 
