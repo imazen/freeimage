@@ -651,6 +651,16 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					BYTE *source = FreeImage_GetScanLine(dib, FreeImage_GetHeight(dib) - cinfo.next_scanline - 1);
 					FreeImage_ConvertLine8To24(target, source, cinfo.image_width, palette);
 
+#ifndef FREEIMAGE_BIGENDIAN
+					// swap R and B channels
+					BYTE *target_p = target;
+					for(unsigned x = 0; x < cinfo.image_width; x++) {
+						INPLACESWAP(target_p[0], target_p[2]);
+						target_p += 3;
+					}
+#endif
+
+
 					jpeg_write_scanlines(&cinfo, &target, 1);
 				}
 
