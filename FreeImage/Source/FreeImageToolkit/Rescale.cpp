@@ -3,6 +3,7 @@
 //
 // Design and implementation by
 // - Hervé Drolon (drolon@infonie.fr)
+// - Detlev Vendt (detlev.vendt@brillit.de)
 //
 // This file is part of FreeImage 3
 //
@@ -23,6 +24,8 @@
 
 FIBITMAP * DLL_CALLCONV 
 FreeImage_Rescale(FIBITMAP *src, int dst_width, int dst_height, FREE_IMAGE_FILTER filter) {
+	FIBITMAP *dst = NULL, *imt = NULL, *tmp = NULL;
+    int bpp;
 
 	if (!src || (dst_width <= 0) || (dst_height <= 0)) {
 		return NULL;
@@ -51,13 +54,32 @@ FreeImage_Rescale(FIBITMAP *src, int dst_width, int dst_height, FREE_IMAGE_FILTE
 			break;
 	}
 
-	CResizeEngine Engine(pFilter);
+    bpp = FreeImage_GetBPP(src);
+    CResizeEngine Engine(pFilter, (8 == bpp ? 24 : bpp));
 
-	// perform upsampling or downsampling
-	FIBITMAP *dst = Engine.scale(src, dst_width, dst_height);
+	try {
+        if(8 == bpp)   // palettized pictures are containing indices, no colours...
+            imt = FreeImage_ConvertTo24Bits(src);
 
-	delete pFilter;
+        dst = Engine.scale((imt ? imt : src), dst_width, dst_height);
+		if(!dst) throw(1);
 
-	return dst;
+		if(8 == bpp) {
+            tmp = FreeImage_ColorQuantize(dst, FIQ_WUQUANT);
+            if(tmp) {
+                FreeImage_Unload(dst);
+                dst = tmp; 
+            }
+		}
+		delete pFilter;
+		return dst;
+
+	} catch(int) {
+        if(tmp) FreeImage_Unload(tmp);
+        if(imt) FreeImage_Unload(imt);
+		if(dst) FreeImage_Unload(dst);
+        delete pFilter;
+	}
+	return NULL;
 }
 

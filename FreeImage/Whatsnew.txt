@@ -10,6 +10,7 @@ Month day, 2004 - 3.5.3
 ! FreeImage now uses libPNG 1.2.8
 ! FreeImage now uses libTIFF 3.7.1
 ! [Herve Drolon] improved FreeImage_RotateClassic
+! [Detlev Vendt] improved FreeImage_Rescale (more compact code, preserving 8-bpp colors)
 + [Herve Drolon] added support for transparency saving in ICO plugin
 + [Herve Drolon] added support for 1-bit images to FreeImage_RotateClassic
 + [Herve Drolon] added FreeImage_SetDotsPerMeterX and FreeImage_SetDotsPerMeterY

@@ -3,6 +3,7 @@
 //
 // Design and implementation by
 // - Hervé Drolon (drolon@infonie.fr)
+// - Detlev Vendt (detlev.vendt@brillit.de)
 //
 // This file is part of FreeImage 3
 //
@@ -113,11 +114,13 @@ class CResizeEngine
 private:
 	/// Pointer to the FIR / IIR filter
 	CGenericFilter* m_pFilter;
+    int m_bpp;
 
 public:
 
     /// Constructor
-	CResizeEngine(CGenericFilter* filter):m_pFilter(filter) {}
+	CResizeEngine(CGenericFilter* filter):m_pFilter(filter), m_bpp(8) {}
+    CResizeEngine(CGenericFilter* filter, int bpp):m_pFilter(filter), m_bpp(bpp) {}
 
     /// Destructor
 	virtual ~CResizeEngine() {}
@@ -138,7 +141,5 @@ private:
     /// Performs vertical image filtering
     void verticalFilter(FIBITMAP *src, unsigned src_width, unsigned src_height, FIBITMAP *dst, unsigned dst_width, unsigned dst_height);
 };
-
-
 
 #endif //   _RESIZE_H_
