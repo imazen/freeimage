@@ -213,9 +213,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			switch(color_type) {
 				case PNG_COLOR_TYPE_RGB:
 				case PNG_COLOR_TYPE_RGB_ALPHA:
+#ifndef FREEIMAGE_BIGENDIAN
 					// Flip the RGB pixels to BGR (or RGBA to BGRA)
 
 					png_set_bgr(png_ptr);
+#endif
 					break;
 
 				case PNG_COLOR_TYPE_PALETTE:
@@ -564,7 +566,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						PNG_COLOR_TYPE_RGBA, interlace_type, 
 						PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
+#ifndef FREEIMAGE_BIGENDIAN
 					png_set_bgr(png_ptr); // flip BGR pixels to RGB
+#endif
 					break;
 	
 				case FIC_RGB:
@@ -572,7 +576,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						PNG_COLOR_TYPE_RGB, interlace_type, 
 						PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
+#ifndef FREEIMAGE_BIGENDIAN
 					png_set_bgr(png_ptr); // flip BGR pixels to RGB
+#endif
 					break;
 					
 				case FIC_CMYK:
