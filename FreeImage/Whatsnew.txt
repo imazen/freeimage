@@ -5,11 +5,12 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month day, 2004 - 3.3.1
+Month day, 2004 - 3.4.0
 ! [Jim Keir] improved FreeImage_FlipVertical function
+! [Hervé Drolon] LZW compression is now enabled in FreeImage
 + [Karl-Heinz Bussian] added constants to FreeImage.h to get at compile time the library version
 + [Karl-Heinz Bussian] added color lookup functions for X11 and SVG
-+ [Herve Drolon] added TIFF tags TIFF_CCITTFAX3 and TIFF_CCITTFAX4
++ [Herve Drolon] added TIFF tags TIFF_CCITTFAX3, TIFF_CCITTFAX4 and TIFF_LZW
 + [Detlev Vendt] added support for CMYK TIFF files with alpha channel
 * [Herve Drolon] fixed a bug with loading of FAX TIFF images (introduced with LibTIFF 3.6.1)
 * [Herve Drolon] fixed a bug in Floyd-Steinberg dithering algorithm
