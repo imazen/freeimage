@@ -664,9 +664,9 @@ FreeImage_RotateEx(FIBITMAP *dib, double angle, double x_shift, double y_shift, 
 			int width  = FreeImage_GetWidth(dib);
 			int height = FreeImage_GetHeight(dib);
 			if( bpp == 24 ) {
-				dst = FreeImage_Allocate(width, height, bpp, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				dst = FreeImage_Allocate(width, height, bpp, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 			} else {
-				dst = FreeImage_Allocate(width, height, bpp, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+				dst = FreeImage_Allocate(width, height, bpp, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 			}
 			if(!dst) throw(1);
 

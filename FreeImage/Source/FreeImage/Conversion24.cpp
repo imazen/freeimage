@@ -132,7 +132,7 @@ FreeImage_ConvertTo24Bits(FIBITMAP *dib) {
 		switch(bpp) {
 			case 1 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 				if (new_dib != NULL)
 					for (int rows = 0; rows < height; rows++)
@@ -143,7 +143,7 @@ FreeImage_ConvertTo24Bits(FIBITMAP *dib) {
 
 			case 4 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 				if (new_dib != NULL)
 					for (int rows = 0; rows < height; rows++)
@@ -154,7 +154,7 @@ FreeImage_ConvertTo24Bits(FIBITMAP *dib) {
 				
 			case 8 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 				if (new_dib != NULL)
 					for (int rows = 0; rows < height; rows++)
@@ -165,7 +165,7 @@ FreeImage_ConvertTo24Bits(FIBITMAP *dib) {
 
 			case 16 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 				if (new_dib != NULL) {
 					for (int rows = 0; rows < height; rows++) {
@@ -183,7 +183,7 @@ FreeImage_ConvertTo24Bits(FIBITMAP *dib) {
 
 			case 32 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 				if (new_dib != NULL)
 					for (int rows = 0; rows < height; rows++)

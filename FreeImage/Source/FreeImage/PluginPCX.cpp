@@ -345,7 +345,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			WORD bitcount = header.bpp * header.planes;
 
 			if (bitcount == 24)
-				dib = FreeImage_Allocate(width, height, bitcount, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				dib = FreeImage_Allocate(width, height, bitcount, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 			else
 				dib = FreeImage_Allocate(width, height, bitcount);			
 
@@ -516,7 +516,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					readline(*io, handle, line, linelength, rle, ReadBuf, &ReadPos);
 
 					// convert the plane stream to BGR (RRRRGGGGBBBB -> BGRBGRBGRBGR)
-					// well, now with the FIRGB_x macros, on BIGENDIAN we convert to RGB
+					// well, now with the FI_RGBA_x macros, on BIGENDIAN we convert to RGB
 
 					pline = line;
 					WORD x;

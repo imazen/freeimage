@@ -169,6 +169,39 @@ typedef struct tagDXT5Block {		// also used by dxt4
 #	pragma pack()
 #endif
 
+// ----------------------------------------------------------
+//   Internal functions
+// ----------------------------------------------------------
+#ifdef FREEIMAGE_BIGENDIAN
+static void
+SwapHeader(DDSHEADER *header) {
+	SwapLong(&header->dwMagic);
+	SwapLong(&header->surfaceDesc.dwSize);
+	SwapLong(&header->surfaceDesc.dwFlags);
+	SwapLong(&header->surfaceDesc.dwHeight);
+	SwapLong(&header->surfaceDesc.dwWidth);
+	SwapLong(&header->surfaceDesc.dwPitchOrLinearSize);
+	SwapLong(&header->surfaceDesc.dwDepth);
+	SwapLong(&header->surfaceDesc.dwMipMapCount);
+	for(int i=0; i<11; i++) {
+		SwapLong(&header->surfaceDesc.dwReserved1[i]);
+	}
+	SwapLong(&header->surfaceDesc.ddpfPixelFormat.dwSize);
+	SwapLong(&header->surfaceDesc.ddpfPixelFormat.dwFlags);
+	SwapLong(&header->surfaceDesc.ddpfPixelFormat.dwFourCC);
+	SwapLong(&header->surfaceDesc.ddpfPixelFormat.dwRGBBitCount);
+	SwapLong(&header->surfaceDesc.ddpfPixelFormat.dwRBitMask);
+	SwapLong(&header->surfaceDesc.ddpfPixelFormat.dwGBitMask);
+	SwapLong(&header->surfaceDesc.ddpfPixelFormat.dwBBitMask);
+	SwapLong(&header->surfaceDesc.ddpfPixelFormat.dwRGBAlphaBitMask);
+	SwapLong(&header->surfaceDesc.ddsCaps.dwCaps1);
+	SwapLong(&header->surfaceDesc.ddsCaps.dwCaps2);
+	SwapLong(&header->surfaceDesc.ddsCaps.dwReserved[0]);
+	SwapLong(&header->surfaceDesc.ddsCaps.dwReserved[1]);
+	SwapLong(&header->surfaceDesc.dwReserved2);
+}
+#endif
+
 // ==========================================================
 
 // Get the 4 possible colors for a block
@@ -370,8 +403,15 @@ LoadRGB (DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int page, int 
 	int filePitch = (desc.dwFlags & DDSD_PITCH) ? (int)desc.dwPitchOrLinearSize : line;
 	long delta = (long)filePitch - (long)line;
 	for (int i = 0; i < height; i++) {
-		io->read_proc (FreeImage_GetScanLine (dib, height - i - 1), 1, line, handle);
+		BYTE *pixels = FreeImage_GetScanLine(dib, height - i - 1);
+		io->read_proc (pixels, 1, line, handle);
 		io->seek_proc (handle, delta, SEEK_CUR);
+#ifdef FREEIMAGE_BIGENDIAN
+		for(int x = 0; x < width; x++) {
+			INPLACESWAP(pixels[FI_RGBA_RED],pixels[FI_RGBA_BLUE]);
+			pixels += 4;
+		}
+#endif
 	}
 	
 	// enable transparency
@@ -402,6 +442,7 @@ LoadDXT_Helper (FreeImageIO *io, fi_handle handle, int page, int flags, void *da
 	if (height >= 4) {
 		for (; y < height; y += 4) {
 			io->read_proc (input_buffer, sizeof (INFO::Block), inputLine, handle);
+			// TODO: probably need some endian work here
 			BYTE *pbSrc = (BYTE *)input_buffer;
 			BYTE *pbDst = FreeImage_GetScanLine (dib, height - y - 1);
 
@@ -419,6 +460,7 @@ LoadDXT_Helper (FreeImageIO *io, fi_handle handle, int page, int flags, void *da
 	}
 	if (heightRest)	{
 		io->read_proc (input_buffer, sizeof (INFO::Block), inputLine, handle);
+		// TODO: probably need some endian work here
 		BYTE *pbSrc = (BYTE *)input_buffer;
 		BYTE *pbDst = FreeImage_GetScanLine (dib, height - y - 1);
 
@@ -442,7 +484,7 @@ LoadDXT (int type, DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int 
 	int height = (int)desc.dwHeight;
 
 	// allocate a 32-bit dib
-	FIBITMAP *dib = FreeImage_Allocate (width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+	FIBITMAP *dib = FreeImage_Allocate (width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 	if (dib == NULL)
 		return NULL;
 
@@ -498,6 +540,9 @@ static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {
 	DDSHEADER header;
 	io->read_proc(&header, 1, sizeof(header), handle);
+#ifdef FREEIMAGE_BIGENDIAN
+	SwapHeader(&header);
+#endif
 	if (header.dwMagic != MAKEFOURCC ('D','D','S',' '))
 		return FALSE;
 	if (header.surfaceDesc.dwSize != sizeof (header.surfaceDesc) ||
@@ -541,6 +586,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	DDSHEADER header;
 	FIBITMAP *dib = NULL;
 	io->read_proc(&header, 1, sizeof(header), handle);
+#ifdef FREEIMAGE_BIGENDIAN
+	SwapHeader(&header);
+#endif
 	if (header.surfaceDesc.ddpfPixelFormat.dwFlags & DDPF_RGB) {
 		dib = LoadRGB (header.surfaceDesc, io, handle, page, flags, data);
 	}

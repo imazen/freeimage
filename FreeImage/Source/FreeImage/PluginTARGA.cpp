@@ -463,7 +463,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					if (TARGA_LOAD_RGB888 & flags) {
 						pixel_bits = 24;
 
-						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 					} else {			
 						pixel_bits = 16;
 
@@ -616,7 +616,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				case 24 :
 				{
-					dib = FreeImage_Allocate(header.is_width, header.is_height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+					dib = FreeImage_Allocate(header.is_width, header.is_height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 					if (dib == 0)
 						throw "DIB allocation failed";					
@@ -816,9 +816,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					// Allocate the DIB
 
 					if( pixel_bits == 24 ) {
-						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 					} else {
-						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 					}
 					
 					if (dib == 0)

@@ -368,7 +368,7 @@ static FIBITMAP* CreateImageType(FREE_IMAGE_TYPE fit, int width, int height, uin
 			}
 			else if(samplesperpixel = 3) {
 				// 48-bit RGB -> convert to 24-bit RGB
-				dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 			}
 		}
 		else if(bpp == 16) {
@@ -377,11 +377,11 @@ static FIBITMAP* CreateImageType(FREE_IMAGE_TYPE fit, int width, int height, uin
 		}
 		else if(bpp == 24) {
 			// BGR
-			dib = FreeImage_Allocate(width, height, bpp, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+			dib = FreeImage_Allocate(width, height, bpp, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 		}
 		else if(bpp == 32) {
 			// BGRA
-			dib = FreeImage_Allocate(width, height, bpp, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+			dib = FreeImage_Allocate(width, height, bpp, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 		}
 		else {
 			// anything else <= 8-bit

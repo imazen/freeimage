@@ -256,7 +256,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				depth = planes > 8 ? 24 : 8;
 
 				if( depth == 24 ) {
-					dib = FreeImage_Allocate(width, height, depth, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+					dib = FreeImage_Allocate(width, height, depth, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 				} else {
 					dib = FreeImage_Allocate(width, height, depth);
 				}

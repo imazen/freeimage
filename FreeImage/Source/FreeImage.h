@@ -173,47 +173,42 @@ typedef struct tagBITMAPINFO {
 
 #endif // _WINDOWS_
 
-// Indexes for byte arrays - These coincide with RGBQUAD and RGBTRIPLE ------
+// Indexes for byte arrays, masks and shifts for treating pixels as words ---
+// These coincide with the order of RGBQUAD and RGBTRIPLE -------------------
 
 #ifndef FREEIMAGE_BIGENDIAN
-// Little Endian (Pentium / MS Windows, Linux) : BGRA order
-#define FI_RGBA_RED		2
-#define FI_RGBA_GREEN	1
-#define FI_RGBA_BLUE	0
-#define FI_RGBA_ALPHA	3
+// Little Endian (x86 / MS Windows, Linux) : BGR(A) order
+#define FI_RGBA_RED				2
+#define FI_RGBA_GREEN			1
+#define FI_RGBA_BLUE			0
+#define FI_RGBA_ALPHA			3
+#define FI_RGBA_RED_MASK		0x00FF0000
+#define FI_RGBA_GREEN_MASK		0x0000FF00
+#define FI_RGBA_BLUE_MASK		0x000000FF
+#define FI_RGBA_ALPHA_MASK		0xFF000000
+#define FI_RGBA_RED_SHIFT		16
+#define FI_RGBA_GREEN_SHIFT		8
+#define FI_RGBA_BLUE_SHIFT		0
+#define FI_RGBA_ALPHA_SHIFT		24
 #else
-// Big Endian (Motorola / Linux, other OS) : RGBA order
-#define FI_RGBA_RED		0
-#define FI_RGBA_GREEN	1
-#define FI_RGBA_BLUE	2
-#define FI_RGBA_ALPHA	3
+// Big Endian (PPC / Linux, MaxOSX) : RGB(A) order
+#define FI_RGBA_RED				0
+#define FI_RGBA_GREEN			1
+#define FI_RGBA_BLUE			2
+#define FI_RGBA_ALPHA			3
+#define FI_RGBA_RED_MASK		0xFF000000
+#define FI_RGBA_GREEN_MASK		0x00FF0000
+#define FI_RGBA_BLUE_MASK		0x0000FF00
+#define FI_RGBA_ALPHA_MASK		0x000000FF
+#define FI_RGBA_RED_SHIFT		24
+#define FI_RGBA_GREEN_SHIFT		16
+#define FI_RGBA_BLUE_SHIFT		8
+#define FI_RGBA_ALPHA_SHIFT		0
 #endif // FREEIMAGE_BIGENDIAN
 
-// Masks for treating pixels as words of various sizes ----------------------
+#define FI_RGBA_RGB_MASK		(FI_RGBA_RED_MASK|FI_RGBA_GREEN_MASK|FI_RGBA_BLUE_MASK)
 
-// These 32bit masks coincide perfectly with the RGBQUAD struct
-
-#ifdef FREEIMAGE_BIGENDIAN
-#define FIRGBA_RED_MASK			0xFF000000
-#define FIRGBA_GREEN_MASK		0x00FF0000
-#define FIRGBA_BLUE_MASK		0x0000FF00
-#define FIRGBA_ALPHA_MASK		0x000000FF
-#else
-#define FIRGBA_RED_MASK			0x00FF0000
-#define FIRGBA_GREEN_MASK		0x0000FF00
-#define FIRGBA_BLUE_MASK		0x000000FF
-#define FIRGBA_ALPHA_MASK		0xFF000000
-#endif // FREEIMAGE_BIGENDIAN
-
-#define FIRGBA_RGB_MASK			(FIRGBA_RED_MASK|FIRGBA_GREEN_MASK|FIRGBA_BLUE_MASK)
-
-// These 24bit masks would coincide nicely with RGBTRIPLE, if there were a 24bit int in C
-
-#define FIRGB_RED_MASK			0xFF0000
-#define FIRGB_GREEN_MASK		0x00FF00
-#define FIRGB_BLUE_MASK			0x0000FF
-
-// The 16bit masks also include a shift value, since each color element is not byte aligned
+// The 16bit macros only include masks and shifts, since each color element is not byte aligned
 
 #define FI16_555_RED_MASK		0x7C00
 #define FI16_555_GREEN_MASK		0x03E0

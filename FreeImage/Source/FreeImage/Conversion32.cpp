@@ -107,7 +107,7 @@ FreeImage_ConvertLine16To32_565(BYTE *target, BYTE *source, int width_in_pixels)
 void DLL_CALLCONV
 FreeImage_ConvertLine24To32(BYTE *target, BYTE *source, int width_in_pixels) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		*(DWORD *)target = (*(DWORD *) source & FIRGBA_RGB_MASK) | FIRGBA_ALPHA_MASK;
+		*(DWORD *)target = (*(DWORD *) source & FI_RGBA_RGB_MASK) | FI_RGBA_ALPHA_MASK;
 		target += 4;
 		source += 3;
 	}
@@ -137,7 +137,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 		switch(bpp) {
 			case 1 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 				if (new_dib != NULL)
 					for (int rows = 0; rows < height; rows++)
@@ -148,7 +148,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 
 			case 4 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 				if (new_dib != NULL) {
 					for (int rows = 0; rows < height; rows++) {
@@ -165,7 +165,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 				
 			case 8 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 				if (new_dib != NULL) {
 					for (int rows = 0; rows < height; rows++) {
@@ -182,7 +182,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 
 			case 16 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 				if (new_dib != NULL) {
 					for (int rows = 0; rows < height; rows++) {
@@ -200,7 +200,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 
 			case 24 :
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
 				if (new_dib != NULL)
 					for (int rows = 0; rows < height; rows++)
