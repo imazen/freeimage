@@ -5,6 +5,7 @@
 // - Alexander Dymerets (sashad@te.net.ua)
 // - Hervé Drolon (drolon@infonie.fr)
 // - Manfred Tausch (manfred.tausch@t-online.de)
+// - Riley McNiff (rmcniff@marexgroup.com)
 //
 // This file is part of FreeImage 3
 //
@@ -39,6 +40,8 @@
 // Alpha blending / combine functions
 
 // ----------------------------------------------------------
+/// 4-bit
+static BOOL Combine4(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha);
 /// 8-bit
 static BOOL Combine8(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha);
 /// 16-bit 555
@@ -50,6 +53,107 @@ static BOOL Combine24(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD
 /// 32- bit
 static BOOL Combine32(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha);
 // ----------------------------------------------------------
+
+// ----------------------------------------------------------
+//   4-bit
+// ----------------------------------------------------------
+
+static BOOL 
+Combine4(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) {
+
+	int swapTable[16];
+	BOOL bOddStart, bOddEnd;
+
+	// check the bit depth of src and dst images
+	if((FreeImage_GetBPP(dst_dib) != 4) || (FreeImage_GetBPP(src_dib) != 4)) {
+		return FALSE;
+	}
+
+	// check the size of src image
+	if((x + FreeImage_GetWidth(src_dib) > FreeImage_GetWidth(dst_dib)) || (y + FreeImage_GetHeight(src_dib) > FreeImage_GetHeight(dst_dib))) {
+		return FALSE;
+	}
+
+	// get src and dst palettes
+	RGBQUAD *src_pal = FreeImage_GetPalette(src_dib);
+	RGBQUAD *dst_pal = FreeImage_GetPalette(dst_dib);
+	if (src_pal == NULL || dst_pal == NULL) {
+		return FALSE;
+	}
+
+	// build a swap table for the closest color match from the source palette to the destination palette
+
+	for (int i = 0; i < 16; i++)	{
+		WORD min_diff = (WORD)-1;
+
+		for (int j = 0; j < 16; j++)	{
+			// calculates the color difference using a Manhattan distance
+			WORD abs_diff = abs(src_pal[i].rgbBlue - dst_pal[j].rgbBlue)
+				          + abs(src_pal[i].rgbGreen - dst_pal[j].rgbGreen)
+				          + abs(src_pal[i].rgbRed - dst_pal[j].rgbRed);
+
+			if (abs_diff < min_diff)	{
+				swapTable[i] = j;
+				min_diff = abs_diff;
+				if (abs_diff == 0) {
+					break;
+				}
+			}
+		}
+	}
+
+	BYTE *dst_bits = FreeImage_GetBits(dst_dib) + ((FreeImage_GetHeight(dst_dib) - FreeImage_GetHeight(src_dib) - y) *	FreeImage_GetPitch(dst_dib)) + (x >> 1);
+	BYTE *src_bits = FreeImage_GetBits(src_dib);    
+
+	// combine images
+
+	// allocate space for our temporary row
+	WORD src_line   = FreeImage_GetLine(src_dib);
+	WORD src_width  = FreeImage_GetWidth(src_dib);
+	WORD src_height = FreeImage_GetHeight(src_dib);
+
+	BYTE *buffer = (BYTE *)malloc(src_line * sizeof(BYTE));
+	if (buffer == NULL) {
+		return FALSE;
+	}
+
+	bOddStart = (x & 0x01) ? TRUE : FALSE;
+
+	if ((bOddStart && !(src_width & 0x01)) || (!bOddStart && (src_width & 0x01)))	{
+		bOddEnd = TRUE;
+	}
+	else {
+		bOddEnd = FALSE;
+	}
+
+	for(WORD rows = 0; rows < src_height; rows++) {
+		memcpy(buffer, src_bits, src_line);
+		
+		// change the values in the temp row to be those from the swap table
+		
+		for (WORD cols = 0; cols < src_line; cols++) {
+			buffer[cols] = (swapTable[HINIBBLE(buffer[cols]) >> 4] << 4) + swapTable[LOWNIBBLE(buffer[cols])];
+		}
+
+		if (bOddStart) {	
+			buffer[0] = HINIBBLE(dst_bits[0]) + LOWNIBBLE(buffer[0]);
+		}
+		
+		if (bOddEnd)	{
+			buffer[src_line - 1] = HINIBBLE(buffer[src_line - 1]) + LOWNIBBLE(dst_bits[src_line - 1]);
+		}
+
+		memcpy(dst_bits, buffer, src_line);
+		
+		dst_bits += FreeImage_GetPitch(dst_dib);
+		src_bits += FreeImage_GetPitch(src_dib);
+	}
+
+	free(buffer);
+
+	return TRUE;
+
+}
 
 // ----------------------------------------------------------
 //   8-bit
@@ -414,6 +518,7 @@ FreeImage_Copy(FIBITMAP *src, int left, int top, int right, int bottom) {
 				value = (src_bits[y_src + ((left+x) >> 1)] & (0x0F << shift)) >> shift;
 				// set nibble at (y, x) in dst image
 				shift = (BYTE)((1 - x % 2) << 2);
+				dst_bits[y_dst + (x >> 1)] &= ~(0x0F << shift);
 				dst_bits[y_dst + (x >> 1)] |= ((value & 0x0F) << shift);
 			}
 		}
@@ -431,7 +536,7 @@ FreeImage_Copy(FIBITMAP *src, int left, int top, int right, int bottom) {
 /**
 Alpha blend or combine a sub part image with the current image.
 The bit depth of dst bitmap must be greater than or equal to the bit depth of src. 
-Upper promotion of src is done internally. Supported bit depth equals to 8, 16, 24 or 32.
+Upper promotion of src is done internally. Supported bit depth equals to 4, 8, 16, 24 or 32.
 @param src Source subimage
 @param left Specifies the left position of the sub image. 
 @param top Specifies the top position of the sub image. 
@@ -497,6 +602,9 @@ FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha) {
 
 	// paste src to dst
 	switch(FreeImage_GetBPP(dst)) {
+		case 4:
+			bResult = Combine4(dst, clone, left, top, alpha);
+			break;
 		case 8:
 			bResult = Combine8(dst, clone, left, top, alpha);
 			break;
