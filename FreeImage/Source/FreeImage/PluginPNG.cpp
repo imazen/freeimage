@@ -5,6 +5,7 @@
 // - Floris van den Berg (flvdberg@wxs.nl)
 // - Herve Drolon (drolon@infonie.fr)
 // - Detlev Vendt (detlev.vendt@brillit.de)
+// - Aaron Shumate (trek@startreker.com)
 //
 // This file is part of FreeImage 3
 //
@@ -420,7 +421,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 
 				FreeImage_Unload(dib);
-				free(row_pointers);
 				return NULL;
 			}
 
@@ -441,8 +441,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				
 			// cleanup
 
-			if (row_pointers)
+			if (row_pointers) {
 				free(row_pointers);
+				row_pointers = NULL;
+			}
 
 			// read the rest of the file, getting any additional chunks in info_ptr
 			png_read_end(png_ptr, info_ptr);
