@@ -151,9 +151,11 @@ ScanForResolution(float* hres, float* vres, FreeImageIO *io, fi_handle handle, i
 static FIBITMAP *
 LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel_count) {
 	// skip the mode data.  (it's the palette for indexed color; other info for other modes.)
+	
+	long area = width * height;
 
 	int	mode_data_count = Read32(io, handle);
-
+  
 	if (mode_data_count)
 		io->seek_proc(handle, mode_data_count, SEEK_CUR);	
 
@@ -212,7 +214,7 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 			if (channel >= channel_count) {
 				// fill this channel with default data.
 
-				for (int i = 0; i < width * height; i++) {
+				for (int i = 0; i < area; i++) {
 					BP_SETVALUE(c.deflt, c.ofs);
 					BP_NEXT(dib, width, height)
 				}
@@ -221,7 +223,7 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 
 				int	count = 0;
 
-				while (count < width * height) {
+				while (count < area) {
 					int	len = Read8(io, handle);
 
 					if (len == 128) {
@@ -230,6 +232,10 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 						// copy next len + 1 bytes literally.
 
 						len++;
+						// check for buffer overrun
+						if ((count + len) > area) {
+							len = area - count; 
+						}
 						count += len;
 
 						while (len) {
@@ -244,6 +250,10 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 
 						len ^= 0x0FF;
 						len += 2;
+						// check for buffer overrun
+						if ((count + len) > area) {
+							len = area - count; 
+						}
 						count += len;
 
 						unsigned val = Read8(io, handle);
@@ -270,14 +280,14 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 			if (channel > channel_count) {
 				// fill this channel with default data.
 
-				for (int i = 0; i < width * height; i++) {
+				for (int i = 0; i < area; i++) {
 					BP_SETVALUE(c.deflt, c.ofs);
 					BP_NEXT(dib, width, height)
 				}
 			} else {
 				// read the data
 
-				for (int i = 0; i < width * height; i++) {
+				for (int i = 0; i < area; i++) {
 					BP_SETVALUE(Read8(io, handle), c.ofs);
 					BP_NEXT(dib, width, height)
 				}
