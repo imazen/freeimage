@@ -87,7 +87,6 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 		tag_id = tagType | (directoryType << 8);
 
 		FreeImage_SetTagID(tag, tag_id);
-		FreeImage_SetTagCount(tag, tagByteCount);
 		FreeImage_SetTagLength(tag, tagByteCount);
 
 		// allocate a buffer to store the tag value
@@ -101,6 +100,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 			{
 				// short
 				FreeImage_SetTagType(tag, FIDT_SSHORT);
+				FreeImage_SetTagCount(tag, 1);
 				short *pvalue = (short*)&iptc_value[0];
 				*pvalue = (short)((profile[offset] << 8) | profile[offset + 1]);
 				FreeImage_SetTagValue(tag, pvalue);
@@ -117,6 +117,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 			{
 				// string
 				FreeImage_SetTagType(tag, FIDT_ASCII);
+				FreeImage_SetTagCount(tag, tagByteCount);
 				for(int i = 0; i < tagByteCount; i++) {
 					iptc_value[i] = profile[offset + i];
 				}

@@ -344,22 +344,22 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags) {
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
-
+		
 		if (node != NULL) {
 			if (node->m_enabled) {
 				if(node->m_plugin->load_proc != NULL) {
-				FIBITMAP *bitmap = NULL;
-
-				void *data = FreeImage_Open(node, io, handle, TRUE);
-
-				bitmap = node->m_plugin->load_proc(io, handle, -1, flags, data);
-
-				FreeImage_Close(node, io, handle, data);
-
-				return bitmap;
+					FIBITMAP *bitmap = NULL;
+					
+					void *data = FreeImage_Open(node, io, handle, TRUE);
+					
+					bitmap = node->m_plugin->load_proc(io, handle, -1, flags, data);
+					
+					FreeImage_Close(node, io, handle, data);
+					
+					return bitmap;
+				}
 			}
 		}
-	}
 	}
 
 	return NULL;
@@ -387,22 +387,22 @@ BOOL DLL_CALLCONV
 FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FreeImageIO *io, fi_handle handle, int flags) {
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
-
+		
 		if (node) {
 			if (node->m_enabled) {
 				if(node->m_plugin->save_proc != NULL) {
-				BOOL result = FALSE;
+					BOOL result = FALSE;
 
-				void *data = FreeImage_Open(node, io, handle, FALSE);
-
-				result = node->m_plugin->save_proc(io, dib, handle, -1, flags, data);
-
-				FreeImage_Close(node, io, handle, data);
-
-				return result;
+					void *data = FreeImage_Open(node, io, handle, FALSE);
+					
+					result = node->m_plugin->save_proc(io, dib, handle, -1, flags, data);
+					
+					FreeImage_Close(node, io, handle, data);
+					
+					return result;
+				}
 			}
 		}
-	}
 	}
 
 	return FALSE;

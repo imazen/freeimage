@@ -472,7 +472,7 @@ void testImageTypeTIFF(unsigned width, unsigned height) {
 	assert(bResult);
 
 	// test load /save / convert
-	// -------------------------
+	// -------------------------	
 
 	bResult = testLoadSaveConvertImageType(src, FIT_BITMAP, width, height);
 	assert(bResult);

@@ -45,7 +45,7 @@ FI_STRUCT (FITAGHEADER) {
 // FITAG creation / destruction
 // --------------------------------------------------------------------------
 
-FITAG *DLL_CALLCONV 
+FITAG * DLL_CALLCONV 
 FreeImage_CreateTag() {
 	FITAG *tag = (FITAG *)malloc(sizeof(FITAG));
 
@@ -79,7 +79,7 @@ FreeImage_DeleteTag(FITAG *tag) {
 	}
 }
 
-FITAG* DLL_CALLCONV 
+FITAG * DLL_CALLCONV 
 FreeImage_CloneTag(FITAG *tag) {
 	if(!tag) return NULL;
 
@@ -128,12 +128,12 @@ FreeImage_CloneTag(FITAG *tag) {
 // FITAG getters / setters
 // --------------------------------------------------------------------------
 
-const char *DLL_CALLCONV 
+const char * DLL_CALLCONV 
 FreeImage_GetTagKey(FITAG *tag) {
 	return tag ? ((FITAGHEADER *)tag->data)->key : 0;
 }
 
-const char *DLL_CALLCONV 
+const char * DLL_CALLCONV 
 FreeImage_GetTagDescription(FITAG *tag) {
 	return tag ? ((FITAGHEADER *)tag->data)->description : 0;
 }

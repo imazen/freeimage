@@ -253,8 +253,8 @@ FreeImage_Unload(FIBITMAP *dib) {
 				TAGMAP *tagmap = (*i).second;
 
 				if(tagmap) {
-					for(TAGMAP::iterator i = tagmap->begin(); i != tagmap->end(); i++) {
-						FITAG *tag = (FITAG*)(*i).second;
+					for(TAGMAP::iterator j = tagmap->begin(); j != tagmap->end(); j++) {
+						FITAG *tag = (*j).second;
 						FreeImage_DeleteTag(tag);
 					}
 
@@ -819,7 +819,7 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 		// destroy the metadata model
 		if(tagmap) {
 			for(TAGMAP::iterator i = tagmap->begin(); i != tagmap->end(); i++) {
-				FITAG *tag = (FITAG*)(*i).second;
+				FITAG *tag = (*i).second;
 				FreeImage_DeleteTag(tag);
 			}
 
@@ -849,7 +849,7 @@ FreeImage_GetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 		}
 
 		// get the requested tag
-		*tag = (FITAG*)(*tagmap)[key];
+		*tag = (*tagmap)[key];
 	}
 	return (*tag != NULL) ? TRUE : FALSE;
 }

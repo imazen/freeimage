@@ -481,8 +481,9 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 			// get the tag format
 			WORD tag_type = (WORD)ReadUint16(msb_order, pde + 2);
             if((tag_type - 1) >= EXIF_NUM_FORMATS) {
-                // delete the tag (not free'd after)
+                // a problem occured : delete the tag (not free'd after)
 			    FreeImage_DeleteTag(tag);
+				// break out of the for loop
 				break;
             }
 			FreeImage_SetTagType(tag, (FREE_IMAGE_MDTYPE)tag_type);
@@ -500,8 +501,12 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 
 				// if its bigger than 4 bytes, the directory entry contains an offset
 				offset_value = ReadUint32(msb_order, pde + 8);
-				if((size_t) (offset_value + FreeImage_GetTagLength(tag)) > length)
+				if((size_t) (offset_value + FreeImage_GetTagLength(tag)) > length) {
+					// a problem occured : delete the tag (not free'd after)
+					FreeImage_DeleteTag(tag);
+					// jump to next entry
 					continue;
+				}
 				pval = (char*)(tiffp + offset_value);
 			}
 
