@@ -35,6 +35,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#include <string>
 #include <list>
 #include <map>
 #include <set>
