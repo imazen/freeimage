@@ -423,9 +423,6 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					line += 3;
 				} else {
 					u.index = *line;
-					pal[u.index].rgbBlue;
-					pal[u.index].rgbGreen;
-					pal[u.index].rgbRed;
 					line++;
 				}
 				sprintf(buf, "%*s", cpp, (char *)color2chrs[u.index].c_str());
