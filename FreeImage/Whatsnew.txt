@@ -6,6 +6,8 @@ What's New for FreeImage
 + : added
 
 Month day, 2004 - 3.5.3
+! FreeImage now uses ZLib 1.2.2
+! FreeImage now uses libPNG 1.2.8
 + [Herve Drolon] added support for transparency saving in ICO plugin
 * [Nan Feng] fixed memory leak in FreeImage_DeleteTag (internal stuff)
 * [Nigel Stewart] added conditional #pragma with #ifdef _MSC_VER / #endif
