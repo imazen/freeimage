@@ -531,6 +531,8 @@ SetCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint16 
 		compression = COMPRESSION_CCITTFAX4;
 	else if ((flags & TIFF_LZW) == TIFF_LZW)
 		compression = COMPRESSION_LZW;
+	else if ((flags & TIFF_JPEG) == TIFF_JPEG)
+		compression = COMPRESSION_JPEG;
 	else {
 		// default compression scheme
 
