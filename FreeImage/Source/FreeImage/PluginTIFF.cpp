@@ -282,6 +282,11 @@ GetResolution(TIFF *tiff, FIBITMAP *dib) {
 	TIFFGetField(tiff, TIFFTAG_RESOLUTIONUNIT, &resUnit);
 	TIFFGetField(tiff, TIFFTAG_XRESOLUTION, &fResX);
 	TIFFGetField(tiff, TIFFTAG_YRESOLUTION, &fResY);
+	
+	// If we don't have a valid resolution unit and valid resolution is specified then assume inch
+	if (resUnit == RESUNIT_NONE && fResX > 0.0 && fResY > 0.0) {
+		resUnit = RESUNIT_INCH;
+	}
 
 	BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
 
