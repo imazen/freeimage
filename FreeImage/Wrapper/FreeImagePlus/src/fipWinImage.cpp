@@ -42,11 +42,6 @@ fipWinImage::fipWinImage(const fipImage& Img) : fipImage(Img) {
 	_bDeleteMe = FALSE;
 }
 
-fipWinImage::fipWinImage(const FIBITMAP *dib) : fipImage(dib) { 
-	_display_dib = NULL;
-	_bDeleteMe = FALSE;
-}
-
 ///////////////////////////////////////////////////////////////////
 // Copying
 

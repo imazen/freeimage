@@ -51,32 +51,27 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-/**@name Useful constants */
-//@{
-/// White value (= 255)
-const BYTE WHITE = 255;
-/// Black value (= 0)
-const BYTE BLACK = 0;
-//@}
-
 // ----------------------------------------------------------
 
-/** Abstract base class for all image types used by the library.
+/** Abstract base class for all objects used by the library.
 	@version FreeImage 3
 	@author Hervé Drolon
 */
 
-class FIP_API fipGenericImage
+class FIP_API fipObject
 {
 public:
 	/**@name Information functions */
 	//@{
-	/// Returns TRUE if the image is allocated, FALSE otherwise
+	/// Returns TRUE if the object is allocated, FALSE otherwise
 	virtual BOOL isValid() = 0;
 	//@}
 };
 
 // ----------------------------------------------------------
+
+class fipMemoryIO;
+class fipMultiPage;
 
 /** A class used to manage all photo related images and all image types used by the library.
 
@@ -86,13 +81,16 @@ public:
 	@author Hervé Drolon
 */
 
-class FIP_API fipImage : public fipGenericImage
+class FIP_API fipImage : public fipObject
 {
 protected:
 	/// DIB data
 	FIBITMAP *_dib;
 	/// TRUE whenever the display need to be refreshed
 	BOOL _bHasChanged;
+
+public:
+	friend class fipMultiPage;
 
 public:
 
@@ -110,8 +108,6 @@ public:
 	//@{	
 	/// Copy constructor
 	fipImage(const fipImage& src);
-	/// Copy constructor
-	fipImage(const FIBITMAP *dib);
 	/// Copy constructor
 	fipImage& operator=(const fipImage& src);
 	/// Assignement operator
@@ -171,6 +167,15 @@ public:
 	BOOL loadFromHandle(FreeImageIO *io, fi_handle handle, int flag = 0);
 
 	/**
+	@brief Loads an image using the specified memory stream and an optional flag.
+	@param memIO FreeImage memory stream
+	@param flag The signification of this flag depends on the image to be read.
+	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_LoadFromMemory, FreeImage documentation
+	*/
+	BOOL loadFromMemory(fipMemoryIO& memIO, int flag = 0);
+
+	/**
 	@brief Saves an image to disk, given its file name and an optional flag.
 	@param lpszPathName Path and file name of the image to save.
 	@param flag The signification of this flag depends on the image to be saved.
@@ -189,6 +194,17 @@ public:
 	@see FreeImage.h, FreeImage documentation
 	*/
 	BOOL saveToHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flag = 0);
+
+	/**
+	@brief Saves an image using the specified memory stream and an optional flag.
+	@param fif Format identifier (FreeImage format)
+	@param memIO FreeImage memory stream
+	@param flag The signification of this flag depends on the image to be saved.
+	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_SaveToMemory, FreeImage documentation
+	*/
+	BOOL saveToMemory(FREE_IMAGE_FORMAT fif, fipMemoryIO& memIO, int flag = 0);
+
 	//@}
 
 	/**	@name Information functions
@@ -212,7 +228,9 @@ public:
 	WORD getScanWidth();
 
 	/// Returns a pointer to the FIBITMAP data. Used for direct access from FREEIMAGE functions.
-	FIBITMAP* getFIBITMAP();
+	operator FIBITMAP*() { 
+		return _dib; 
+	}
 
 	/// Returns TRUE if the image is allocated, FALSE otherwise
 	BOOL  isValid();
@@ -632,9 +650,6 @@ public:
 	/// Copy constructor
 	fipWinImage(const fipImage& Img);
 
-	/// Copy constructor
-	fipWinImage(const FIBITMAP *dib);
-
 	/** Clone function used for clipboard copy.<br>
 	Convert the FIBITMAP image to a DIB, 
 	and transfer the DIB in a global bitmap handle.
@@ -726,101 +741,191 @@ protected:
 
 /** Memory handle
 	
-	fipMemoryIO is a class that allows you to load / save images from a memory handle.
+	fipMemoryIO is a class that allows you to load / save images from / to a memory stream.
 	@version FreeImage 3
 	@author Hervé Drolon
 */
-class FIP_API fipMemoryIO : public FreeImageIO
+class FIP_API fipMemoryIO : public fipObject
 {
 protected:
-	/// Remember to delete the buffer
-	BOOL _delete_me;
-	/// Start buffer address
-    BYTE * _start;
-	/// Current position
-    BYTE *_cp;
-	/// Buffer size
-	DWORD _size;
+	/// Pointer to a memory stream
+	FIMEMORY *_hmem;
 
 public :
 	/** Constructor.
 	Wrap a memory buffer containing image data.<br>
-	The memory buffer has to be freed by the user 
-	when no longer in use.
+	The memory buffer is read only and has to be freed by the user 
+	when no longer in use.<br>
+	When default arguments are used, open a memory file as read/write. 
 	@param data Pointer to the memory buffer
 	@param size_in_bytes Buffer size in bytes
+	@see FreeImage_OpenMemory
 	*/
     fipMemoryIO(BYTE *data = NULL, DWORD size_in_bytes = 0);
 
-	/** Constructor.
-	Load a binary file containing image data.
-	into a memory buffer.<br>
-	The memory buffer is automatically destroyed 
-	when no longer in use.
-	@param lpszPathName Path and file name of the image to load.
-	@return Returns TRUE if successful, FALSE otherwise
-	*/
-    BOOL loadFile(const char *lpszPathName);
-	
 	/** Destructor.
 	Free any allocated memory
+	@see FreeImage_CloseMemory
 	*/
 	~fipMemoryIO();
 
 	/** Returns TRUE if the internal memory buffer is a valid buffer, returns FALSE otherwise
 	*/
-	BOOL isValidIO();
+	BOOL isValid();
 
 	/** Returns the buffer image format
-	@see FreeImage_GetFileTypeFromHandle
+	@see FreeImage_GetFileTypeFromMemory
 	*/
 	FREE_IMAGE_FORMAT getFileType();
 
 	/**@name Memory IO routines */
 	//@{	
-    static unsigned FIP_CALLCONV _ReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle);
-    static unsigned FIP_CALLCONV _WriteProc(void *buffer, unsigned size, unsigned count, fi_handle handle);
-    static int FIP_CALLCONV _SeekProc(fi_handle handle, long offset, int origin);
-	static long FIP_CALLCONV _TellProc(fi_handle handle);
+	/**
+	Loads a dib from a memory stream
+	@param fif Format identifier (FreeImage format)
+	@param flags The signification of this flag depends on the image to be loaded.
+	@return Returns the loaded dib if successful, returns NULL otherwise
+	@see FreeImage_LoadFromMemory
+	*/
+	FIBITMAP* read(FREE_IMAGE_FORMAT fif, int flags = 0);
+	/**
+	Saves a dib to a memory stream
+	@param fif Format identifier (FreeImage format)
+	@param dib Image to be saved
+	@param flags The signification of this flag depends on the image to be saved.
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_SaveToMemory
+	*/
+	BOOL write(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, int flags = 0);
+	/**
+	Gets the current position of a memory pointer
+	@see FreeImage_TellMemory
+	*/
+	long tell();
+	/**
+	Moves the memory pointer to a specified location
+	@see FreeImage_SeekMemory
+	*/
+	BOOL seek(long offset, int origin);
+	/**
+	Provides a direct buffer access to a memory stream
+	@param data Pointer to the memory buffer (returned value)
+	@param size_in_bytes Buffer size in bytes (returned value)
+	@see FreeImage_AcquireMemory
+	*/
+	BOOL acquire(BYTE **data, DWORD *size_in_bytes);
 	//@}
 
 };
 
-#ifdef WIN32
+/** Multi-page file stream
 
-#include <WinInet.h>
-
-/** Internet handle
-	
-	fipInternetIO is a class that allows you to load / save images from a Internet handle.
-	@version FreeImage 3
-	@author Hervé Drolon
+	fipMultiPage encapsulates the multi-page API. It supports reading/writing 
+	multi-page TIFF and ICO files. 
 */
-class FIP_API fipInternetIO : public fipMemoryIO
+class FIP_API fipMultiPage : public fipObject 
 {
 protected:
-	/// Internet session
-	HINTERNET _hInternet;
-	/// handle to HTTP file
-	HINTERNET _hHttpFile;
+	/// Pointer to a multi-page file stream
+	FIMULTIBITMAP *_mpage;
+	/// TRUE when using a memory cache, FALSE otherwise
+	BOOL _bMemoryCache;
 
-public :
-	/** Constructor.
-	Opens a new Internet session
+public:
+	/**
+	Constructor
+	@param keep_cache_in_memory When it is TRUE, all gathered bitmap data in the page manipulation process is kept in memory, otherwise it is lazily flushed to a temporary file on the hard disk in 64 Kb blocks.
 	*/
-    fipInternetIO();
+	fipMultiPage(BOOL keep_cache_in_memory = FALSE);
 
-	/** Destructor.
-	Closes the Internet session
+	/**
+	Destructor
+	Close the file stream if not already done. 
 	*/
-	~fipInternetIO();
+	~fipMultiPage();
 
-	/** Download a file from a URL to internal memory buffer
+	/// Returns TRUE if the multi-page stream is opened
+	BOOL isValid();
+
+	/**
+	Open a file stream
+	@param lpszPathName Name of the multi-page bitmap file
+	@param create_new When TRUE, it means that a new bitmap will be created rather than an existing one being opened
+	@param read_only When TRUE the bitmap is opened read-only
+	@return Returns TRUE if successful, returns FALSE otherwise
 	*/
-	BOOL downloadFile(char *szURL);
+	BOOL open(const char* lpszPathName, BOOL create_new, BOOL read_only);
 
+	/**
+	Close a file stream
+	@param flags Save flags. The signification of this flag depends on the image to be saved.
+	@return Returns TRUE if successful, returns FALSE otherwise
+	*/
+	BOOL close(int flags = 0);
+
+	/// Returns the number of pages currently available in the multi-paged bitmap
+	int getPageCount();
+
+	/**
+	Appends a new page to the end of the bitmap
+	@param image Image to append
+	*/
+	void appendPage(fipImage& image);
+
+	/**
+	Inserts a new page before the given position in the bitmap
+	@param page Page number. Page has to be a number smaller than the current number of pages available in the bitmap.
+	@param image Image to insert
+	*/
+	void insertPage(int page, fipImage& image);
+
+	/**
+	Deletes the page on the given position
+	@param page Page number
+	*/
+	void deletePage(int page);
+
+	/**
+	Moves the source page to the position of the target page. 
+	@param target Target page position
+	@param source Source page position
+	@return Returns TRUE if successful, returns FALSE otherwise
+	*/
+	BOOL movePage(int target, int source);
+
+	/**
+	Locks a page in memory for editing. You must call unlockPage to free the page<br>
+	<b>Usage : </b><br>
+	<pre>
+	fipMultiPage mpage;
+	// ...
+	fipImage image;		// You must declare this before
+	image = mpage.lockPage(2);
+	if(image.isValid()) {
+	  // ...
+	  mpage.unlockPage(image, TRUE);
+	}
+	</pre>
+	@param page Page number
+	@return Returns the page if successful, returns NULL otherwise
+	*/
+	FIBITMAP* lockPage(int page);
+
+	/**
+	Unlocks a previously locked page and gives it back to the multi-page engine
+	@param image Page to unlock
+	@param changed When TRUE, the page is marked changed and the new page data is applied in the multi-page bitmap.
+	*/
+	void unlockPage(fipImage& image, BOOL changed);
+
+	/**
+	Returns an array of page-numbers that are currently locked in memory. 
+	When the pages parameter is NULL, the size of the array is returned in the count variable. 
+	You can then allocate the array of the desired size and call 
+	getLockedPageNumbers again to populate the array.
+	@return Returns TRUE if successful, returns FALSE otherwise
+	*/
+	BOOL getLockedPageNumbers(int *pages, int *count);
 };
-
-#endif // WIN32
 
 #endif	// FREEIMAGEPLUS_H

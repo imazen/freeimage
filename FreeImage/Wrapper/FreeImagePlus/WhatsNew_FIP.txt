@@ -5,6 +5,17 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+August 18th, 2004
+[Herve Drolon]
+- removed fipInternetIO
+- removed copy constructor fipImage::fipImage(const FIBITMAP*)
+- removed copy constructor fipWinImage::fipWinImage(const FIBITMAP*)
+! fipMemoryIO rewritten. It now wraps the FreeImage memory stream API
+! fipGenericImage is now called fipObject
++ added fipImage::loadFromMemory
++ added fipImage::saveToMemory
++ added fipMultiPage
+
 March, 17th, 2004
 [Herve Drolon]
 ! fipImage::setSize now accepts color masks

@@ -27,109 +27,44 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
-fipMemoryIO::fipMemoryIO(BYTE *data, DWORD size_in_bytes) 
-: _start(data), _cp(data), _size(size_in_bytes), _delete_me(FALSE) {
-	read_proc  = _ReadProc;
-	write_proc = _WriteProc;
-	tell_proc  = _TellProc;
-	seek_proc  = _SeekProc;
-}
-
-BOOL fipMemoryIO::loadFile(const char *lpszPathName) {
-	struct stat buf;
-	int result;
-
-	// release previous buffer
-	if(_delete_me) {
-		free(_start);
-		_start = NULL;
-		_delete_me = FALSE;
-	}
-
-	// get data associated with lpszPathName
-	result = stat(lpszPathName, &buf);
-	if(result == 0) {
-		// allocate a memory buffer and load temporary data
-		BYTE *mem_buffer = (BYTE*)malloc(buf.st_size * sizeof(BYTE));
-		if(mem_buffer) {
-			FILE *stream = fopen(lpszPathName, "rb");
-			if(stream) {
-				fread(mem_buffer, sizeof(BYTE), buf.st_size, stream);
-				fclose(stream);
-
-				// Initialize IO
-				_start = mem_buffer;
-				_cp = mem_buffer;
-				_size = buf.st_size;
-
-				// remember to delete the buffer
-				_delete_me = TRUE;
-
-				return TRUE;
-			}
-		}
-	}
-
-	return FALSE;
+fipMemoryIO::fipMemoryIO(BYTE *data, DWORD size_in_bytes) {
+	_hmem = FreeImage_OpenMemory(data, size_in_bytes);
 }
 
 fipMemoryIO::~fipMemoryIO() { 
-	if(_delete_me)
-		free(_start);
+	FreeImage_CloseMemory(_hmem);
 }
 
-BOOL fipMemoryIO::isValidIO() {
-	if((_start != NULL) && (_size > 0)) {
-		return TRUE;
-	}
-
-	return FALSE;
+BOOL fipMemoryIO::isValid() {
+	return (_hmem != NULL);
 }
 
 FREE_IMAGE_FORMAT fipMemoryIO::getFileType() {
-	if((_start != NULL) && (_size > 0)) {
-		return FreeImage_GetFileTypeFromHandle(this, (fi_handle)this);
+	if(_hmem != NULL) {
+		return FreeImage_GetFileTypeFromMemory(_hmem, 0);
 	}
 
 	return FIF_UNKNOWN;
 }
 
-unsigned FIP_CALLCONV fipMemoryIO::_ReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle) {
-    fipMemoryIO *memIO = (fipMemoryIO*)handle;
-    
-    BYTE *tmp = (BYTE *)buffer;
-
-    for (unsigned c = 0; c < count; c++) {
-        memcpy(tmp, memIO->_cp, size);
-
-        memIO->_cp = memIO->_cp + size;
-
-        tmp += size;
-    }
-
-    return count;
+FIBITMAP* fipMemoryIO::read(FREE_IMAGE_FORMAT fif, int flags) {
+	return FreeImage_LoadFromMemory(fif, _hmem, flags);
 }
 
-unsigned FIP_CALLCONV fipMemoryIO::_WriteProc(void *buffer, unsigned size, unsigned count, fi_handle handle) {
-    assert( false );
-    return size;
+BOOL fipMemoryIO::write(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, int flags) {
+	return FreeImage_SaveToMemory(fif, dib, _hmem, flags);
 }
 
-int FIP_CALLCONV fipMemoryIO::_SeekProc(fi_handle handle, long offset, int origin) {
-    assert(origin != SEEK_END);
-
-    fipMemoryIO *memIO = (fipMemoryIO*)handle;
-
-    if (origin == SEEK_SET) 
-        memIO->_cp = memIO->_start + offset;
-    else
-        memIO->_cp = memIO->_cp + offset;
-
-    return 0;
+long fipMemoryIO::tell() {
+	return FreeImage_TellMemory(_hmem);
 }
 
-long FIP_CALLCONV fipMemoryIO::_TellProc(fi_handle handle) {
-    fipMemoryIO *memIO = (fipMemoryIO*)handle;
-
-    return memIO->_cp - memIO->_start;
+BOOL fipMemoryIO::seek(long offset, int origin) {
+	return FreeImage_SeekMemory(_hmem, offset, origin);
 }
+
+BOOL fipMemoryIO::acquire(BYTE **data, DWORD *size_in_bytes) {
+	return FreeImage_AcquireMemory(_hmem, data, size_in_bytes);
+}
+
+

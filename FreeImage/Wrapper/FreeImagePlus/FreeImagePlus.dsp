@@ -56,7 +56,7 @@ LINK32=link.exe
 # ADD LINK32 FreeImage.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=copy      Release\FreeImagePlus.lib      dist\     	copy      Release\FreeImagePlus.dll      dist\     	copy      FreeImagePlus.h      dist\ 
+PostBuild_Cmds=copy         Release\FreeImagePlus.lib         dist\        	copy         Release\FreeImagePlus.dll         dist\        	copy         FreeImagePlus.h         dist\ 
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "FreeImagePlus - Win32 Debug"
@@ -86,7 +86,7 @@ LINK32=link.exe
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib FreeImaged.lib /nologo /dll /debug /machine:I386 /out:"Debug/FreeImagePlusd.dll" /pdbtype:sept
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=copy      Debug\FreeImagePlusd.lib      dist\     	copy      Debug\FreeImagePlusd.dll      dist\     	copy      FreeImagePlus.h      dist\ 
+PostBuild_Cmds=copy         Debug\FreeImagePlusd.lib         dist\        	copy         Debug\FreeImagePlusd.dll         dist\        	copy         FreeImagePlus.h         dist\ 
 # End Special Build Tool
 
 !ENDIF 
@@ -104,11 +104,11 @@ SOURCE=.\src\fipImage.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\fipInternetIO.cpp
+SOURCE=.\src\fipMemoryIO.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\fipMemoryIO.cpp
+SOURCE=.\src\fipMultiPage.cpp
 # End Source File
 # Begin Source File
 

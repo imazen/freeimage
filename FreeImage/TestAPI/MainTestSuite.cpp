@@ -53,8 +53,6 @@ int main(int argc, char *argv[]) {
 	// test memory IO
 	testMemIO("sample.png");
 
-	return 0;
-
 	// test plugins capabilities
 
 	showPlugins();

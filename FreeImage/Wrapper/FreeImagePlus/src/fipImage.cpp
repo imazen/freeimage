@@ -87,12 +87,6 @@ fipImage::fipImage(const fipImage& Image) {
 	replace(clone);
 }
 
-fipImage::fipImage(const FIBITMAP *dib) {
-	_dib = NULL;
-	FIBITMAP *clone = FreeImage_Clone((FIBITMAP*)dib);
-	replace(clone);
-}
-
 fipImage& fipImage::operator=(const fipImage& Image) {
 	if(this != &Image) {
 		FIBITMAP *clone = FreeImage_Clone((FIBITMAP*)Image._dib);
@@ -141,10 +135,6 @@ WORD fipImage::getHeight() {
 
 WORD fipImage::getScanWidth() {
 	return FreeImage_GetPitch(_dib);
-}
-
-FIBITMAP* fipImage::getFIBITMAP() {
-	return _dib;
 }
 
 BOOL fipImage::isValid() {
@@ -295,6 +285,26 @@ BOOL fipImage::loadFromHandle(FreeImageIO *io, fi_handle handle, int flag) {
 	return FALSE;
 }
 
+BOOL fipImage::loadFromMemory(fipMemoryIO& memIO, int flag) {
+	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
+
+	// check the file signature and get its format
+	fif = memIO.getFileType();
+	if((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
+		// Free the previous dib
+		if(_dib) {
+			FreeImage_Unload(_dib);			
+		}
+		// Load the file
+		_dib = memIO.read(fif, flag);
+		_bHasChanged = TRUE;
+		if(_dib == NULL)
+			return FALSE;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 BOOL fipImage::save(const char* lpszPathName, int flag) {
 	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
 	BOOL bSuccess = FALSE;
@@ -342,6 +352,31 @@ BOOL fipImage::saveToHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle ha
 
 		if(bCanSave) {
 			bSuccess = FreeImage_SaveToHandle(fif, _dib, io, handle, flag);
+			return bSuccess;
+		}
+	}
+	return bSuccess;
+}
+
+BOOL fipImage::saveToMemory(FREE_IMAGE_FORMAT fif, fipMemoryIO& memIO, int flag) {
+	BOOL bSuccess = FALSE;
+
+	if(fif != FIF_UNKNOWN ) {
+		// Check that the dib can be saved in this format
+		BOOL bCanSave;
+
+		FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(_dib);
+		if(image_type == FIT_BITMAP) {
+			// standard bitmap type
+			WORD bpp = FreeImage_GetBPP(_dib);
+			bCanSave = (FreeImage_FIFSupportsWriting(fif) && FreeImage_FIFSupportsExportBPP(fif, bpp));
+		} else {
+			// special bitmap type
+			bCanSave = FreeImage_FIFSupportsExportType(fif, image_type);
+		}
+
+		if(bCanSave) {
+			bSuccess = memIO.write(fif, _dib, flag);
 			return bSuccess;
 		}
 	}
