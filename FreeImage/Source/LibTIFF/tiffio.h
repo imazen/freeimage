@@ -89,7 +89,6 @@ typedef	uint32 toff_t;		/* file offset */
 # include <windows.h>
 # ifdef __WIN32__
 DECLARE_HANDLE(thandle_t);	/* Win32 file handle */
-extern	TIFF* TIFFOpenW(const wchar_t*, const char*);
 # else
 typedef	HFILE thandle_t;	/* client data handle */
 # endif /* __WIN32__ */
@@ -167,16 +166,6 @@ typedef struct {				/* CIE Lab 1976->RGB support */
 	float	Yg2g[CIELABTORGB_TABLE_RANGE + 1];  /* Conversion of Yg to g */
 	float	Yb2b[CIELABTORGB_TABLE_RANGE + 1];  /* Conversion of Yb to b */
 } TIFFCIELabToRGB;
-
-extern int TIFFCIELabToRGBInit(TIFFCIELabToRGB*, TIFFDisplay *, float*);
-extern void TIFFCIELabToXYZ(TIFFCIELabToRGB *, uint32, int32, int32,
-			    float *, float *, float *);
-extern void TIFFXYZToRGB(TIFFCIELabToRGB *, float, float, float,
-			 uint32 *, uint32 *, uint32 *);
-
-extern int TIFFYCbCrToRGBInit(TIFFYCbCrToRGB*, float*, float*);
-extern void TIFFYCbCrtoRGB(TIFFYCbCrToRGB *, uint32, int32, int32,
-			   uint32 *, uint32 *, uint32 *);
 
 /*
  * RGBA-style image support.
@@ -372,6 +361,9 @@ extern	int TIFFRGBAImageBegin(TIFFRGBAImage*, TIFF*, int, char [1024]);
 extern	int TIFFRGBAImageGet(TIFFRGBAImage*, uint32*, uint32, uint32);
 extern	void TIFFRGBAImageEnd(TIFFRGBAImage*);
 extern	TIFF* TIFFOpen(const char*, const char*);
+# ifdef __WIN32__
+extern	TIFF* TIFFOpenW(const wchar_t*, const char*);
+# endif /* __WIN32__ */
 extern	TIFF* TIFFFdOpen(int, const char*, const char*);
 extern	TIFF* TIFFClientOpen(const char*, const char*,
 	    thandle_t,
@@ -490,6 +482,16 @@ extern  TIFFTagMethods *TIFFAccessTagMethods( TIFF * );
 extern  void *TIFFGetClientInfo( TIFF *, const char * );
 extern  void TIFFSetClientInfo( TIFF *, void *, const char * );
     
+extern int TIFFCIELabToRGBInit(TIFFCIELabToRGB*, TIFFDisplay *, float*);
+extern void TIFFCIELabToXYZ(TIFFCIELabToRGB *, uint32, int32, int32,
+			    float *, float *, float *);
+extern void TIFFXYZToRGB(TIFFCIELabToRGB *, float, float, float,
+			 uint32 *, uint32 *, uint32 *);
+
+extern int TIFFYCbCrToRGBInit(TIFFYCbCrToRGB*, float*, float*);
+extern void TIFFYCbCrtoRGB(TIFFYCbCrToRGB *, uint32, int32, int32,
+			   uint32 *, uint32 *, uint32 *);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -49,6 +49,24 @@
 #define	TIFF_LITTLEENDIAN	0x4949
 
 /*
+ * The so called TIFF types conflict with definitions from inttypes.h 
+ * included from sys/types.h on AIX (at least using VisualAge compiler). 
+ * We try to work around this by detecting this case.  Defining 
+ * _TIFF_DATA_TYPEDEFS_ short circuits the later definitions in tiff.h, and
+ * we will in the holes not provided for by inttypes.h. 
+ *
+ * See http://bugzilla.remotesensing.org/show_bug.cgi?id=39
+ */
+#if defined(_H_INTTYPES) && defined(_ALL_SOURCE) && defined(USING_VISUALAGE)
+
+#define _TIFF_DATA_TYPEDEFS_
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned int uint32;
+
+#endif
+
+/*
  * Intrinsic data types required by the file format:
  *
  * 8-bit quantities	int8/uint8
@@ -59,11 +77,7 @@
 #ifndef _TIFF_DATA_TYPEDEFS_
 #define _TIFF_DATA_TYPEDEFS_
 
-#ifdef __STDC__
 typedef	signed char int8;	/* NB: non-ANSI compilers may not grok */
-#else
-typedef	char int8;
-#endif
 typedef	unsigned char uint8;
 typedef	short int16;
 typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
@@ -279,8 +293,8 @@ typedef	enum {
 #define	TIFFTAG_PRIMARYCHROMATICITIES	319	/* !primary chromaticities */
 #define	TIFFTAG_COLORMAP		320	/* RGB map for pallette image */
 #define	TIFFTAG_HALFTONEHINTS		321	/* !highlight+shadow info */
-#define	TIFFTAG_TILEWIDTH		322	/* !rows/data tile */
-#define	TIFFTAG_TILELENGTH		323	/* !cols/data tile */
+#define	TIFFTAG_TILEWIDTH		322	/* !tile width in pixels */
+#define	TIFFTAG_TILELENGTH		323	/* !tile height in pixels */
 #define TIFFTAG_TILEOFFSETS		324	/* !offsets to data tiles */
 #define TIFFTAG_TILEBYTECOUNTS		325	/* !byte counts for tiles */
 #define	TIFFTAG_BADFAXLINES		326	/* lines w/ wrong pixel count */
@@ -411,6 +425,7 @@ typedef	enum {
 #define	TIFFTAG_FAXRECVPARAMS		34908	/* encoded Class 2 ses. parms */
 #define	TIFFTAG_FAXSUBADDRESS		34909	/* received SubAddr string */
 #define	TIFFTAG_FAXRECVTIME		34910	/* receive time (secs) */
+#define	TIFFTAG_FAXDCS			34911	/* encoded fax ses. params, Table 2/T.30 */
 /* tags 37439-37443 are registered to SGI <gregl@sgi.com> */
 #define TIFFTAG_STONITS			37439	/* Sample value to Nits */
 /* tag 34929 is a private tag registered to FedEx */

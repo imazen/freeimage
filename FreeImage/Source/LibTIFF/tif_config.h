@@ -1,84 +1,65 @@
 /* FreeImage libtiff config */
 
-/* --- version info --- */
+#ifndef _TIFFCONF_
+#define _TIFFCONF_
 
-/* Name of package */
-#define PACKAGE "tiff"
-
-/* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "tiff@remotesensing.org"
-
-/* Define to the full name of this package. */
-#define PACKAGE_NAME "LibTIFF Software"
-
-/* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LibTIFF Software 3.7.1"
-
-/* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "tiff"
-
-/* Define to the version of this package. */
-#define PACKAGE_VERSION "3.7.1"
-
-/* Version number of package */
-#define VERSION "3.7.1"
-
+/* Define as 0 or 1 according to the floating point format suported by the
+   machine */
+#define HAVE_IEEEFP 1
 
 /* --- byte order --- */
 
-/* Native cpu byte order: 1 if big-endian (Motorola) or 0 if little-endian (Intel) */
-#ifdef FREEIMAGE_BIGENDIAN
-#define HOST_BIGENDIAN	1
-#else
-#define HOST_BIGENDIAN	0
-#endif
-
+/* Some versions of gcc may have BYTE_ORDER or __BYTE_ORDER defined
+   If your big endian system isn't being detected, add an OS specific check
+*/
+#if (defined(BYTE_ORDER) && BYTE_ORDER==BIG_ENDIAN) || \
+	(defined(__BYTE_ORDER) && __BYTE_ORDER==__BIG_ENDIAN) || \
+	defined(__APPLE__)
 /* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
 #define HOST_FILLORDER FILLORDER_MSB2LSB
+/* Native cpu byte order: 1 if big-endian (Motorola) or 0 if little-endian (Intel) */
+#define HOST_BIGENDIAN 1
+#else
+/* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
+#define HOST_FILLORDER FILLORDER_LSB2MSB
+/* Native cpu byte order: 1 if big-endian (Motorola) or 0 if little-endian (Intel) */
+#define HOST_BIGENDIAN 0
+#endif // BYTE_ORDER
 
 /* --- compression algorithms --- */
-
-/* Support Macintosh PackBits algorithm */
-#define PACKBITS_SUPPORT 1
 
 /* Support CCITT Group 3 & 4 algorithms */
 #define CCITT_SUPPORT 1
 
-/* Support LZW algorithm */
-#define LZW_SUPPORT 1
-
 /* Support JPEG compression (requires IJG JPEG library) */
 #define JPEG_SUPPORT 1
-
-/* Support Deflate compression */
-#define ZIP_SUPPORT 1
 
 /* Support LogLuv high dynamic range encoding */
 #define LOGLUV_SUPPORT 1
 
+/* Support LZW algorithm */
+#define LZW_SUPPORT 1
+
 /* Support NeXT 2-bit RLE algorithm */
 #define NEXT_SUPPORT 1
 
+/* Support Old JPEG compresson (read contrib/ojpeg/README first! Compilation
+   fails with unpatched IJG JPEG library) */
+/* #undef OJPEG_SUPPORT */
+
+/* Support Macintosh PackBits algorithm */
+#define PACKBITS_SUPPORT 1
+
 /* Support Pixar log-format algorithm (requires Zlib) */
-#undef PIXARLOG_SUPPORT
+#define PIXARLOG_SUPPORT 1
 
 /* Support ThunderScan 4-bit RLE algorithm */
 #define THUNDER_SUPPORT 1
 
-/* Support Old JPEG compresson (read contrib/ojpeg/README first! Compilation
-   fails with unpatched IJG JPEG library) */
-#undef OJPEG_SUPPORT
+/* Support Deflate compression */
+#define ZIP_SUPPORT 1
 
 /* --- ``Orthogonal Features'' --- */
-
-/* Pick up YCbCr subsampling info from the JPEG data stream to support files
-   lacking the tag (default enabled). */
-#define CHECK_JPEG_YCBCR_SUBSAMPLING 1
-
-/* Treat extra sample as alpha (default enabled). The RGBA interface will
-   treat a fourth sample with no EXTRASAMPLE_ value as being ASSOCALPHA. Many
-   packages produce RGBA files but don't mark the alpha properly. */
-#define DEFAULT_EXTRASAMPLE_AS_ALPHA 1
 
 /* Support strip chopping (whether or not to convert single-strip uncompressed
    images to mutiple strips of ~8Kb to reduce memory usage) */
@@ -87,6 +68,14 @@
 /* Enable SubIFD tag (330) support */
 #define SUBIFD_SUPPORT 1
 
+/* Treat extra sample as alpha (default enabled). The RGBA interface will
+   treat a fourth sample with no EXTRASAMPLE_ value as being ASSOCALPHA. Many
+   packages produce RGBA files but don't mark the alpha properly. */
+#define DEFAULT_EXTRASAMPLE_AS_ALPHA 1
+
+/* Pick up YCbCr subsampling info from the JPEG data stream to support files
+   lacking the tag (default enabled). */
+#define CHECK_JPEG_YCBCR_SUBSAMPLING 1
 
 /* --- include files --- */
 
@@ -258,3 +247,5 @@
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
 /* #undef size_t */
+
+#endif /* _TIFFCONF_ */
