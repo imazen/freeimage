@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_callback_xs.c      copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_callback_xs.c      copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : callback get/set interface (implementation)                * */
 /* *                                                                        * */
@@ -43,6 +43,14 @@
 /* *                                                                        * */
 /* *             1.0.6 - 07/07/2003 - G. R-P                                * */
 /* *             - added SKIPCHUNK feature                                  * */
+/* *                                                                        * */
+/* *             1.0.7 - 03/10/2004 - G.R-P                                 * */
+/* *             - added conditionals around openstream/closestream         * */
+/* *             1.0.7 - 03/19/2004 - G.R-P                                 * */
+/* *             - fixed typo (MNG_SKIPCHUNK_SAVE -> MNG_SKIPCHUNK_nEED     * */
+/* *                                                                        * */
+/* *             1.0.8 - 04/10/2004 - G.Juyn                                * */
+/* *             - added data-push mechanisms for specialized decoders      * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -106,7 +114,29 @@ mng_retcode MNG_DECL mng_setcb_memfree (mng_handle  hHandle,
 
 /* ************************************************************************** */
 
+#ifdef MNG_SUPPORT_READ
+mng_retcode MNG_DECL mng_setcb_releasedata (mng_handle      hHandle,
+                                            mng_releasedata fProc)
+{
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SETCB_RELEASEDATA, MNG_LC_START)
+#endif
+
+  MNG_VALIDHANDLE (hHandle)
+  ((mng_datap)hHandle)->fReleasedata = fProc;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SETCB_RELEASEDATA, MNG_LC_END)
+#endif
+
+  return MNG_NOERROR;
+}
+#endif /* MNG_SUPPORT_READ */
+
+/* ************************************************************************** */
+
 #if defined(MNG_SUPPORT_READ) || defined(MNG_SUPPORT_WRITE)
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
 mng_retcode MNG_DECL mng_setcb_openstream (mng_handle     hHandle,
                                            mng_openstream fProc)
 {
@@ -123,11 +153,13 @@ mng_retcode MNG_DECL mng_setcb_openstream (mng_handle     hHandle,
 
   return MNG_NOERROR;
 }
+#endif
 #endif /* MNG_SUPPORT_READ || MNG_SUPPORT_WRITE */
 
 /* ************************************************************************** */
 
 #if defined(MNG_SUPPORT_READ) || defined(MNG_SUPPORT_WRITE)
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
 mng_retcode MNG_DECL mng_setcb_closestream (mng_handle      hHandle,
                                             mng_closestream fProc)
 {
@@ -144,6 +176,7 @@ mng_retcode MNG_DECL mng_setcb_closestream (mng_handle      hHandle,
 
   return MNG_NOERROR;
 }
+#endif
 #endif /* MNG_SUPPORT_READ || MNG_SUPPORT_WRITE */
 
 /* ************************************************************************** */
@@ -684,6 +717,25 @@ mng_memfree MNG_DECL mng_getcb_memfree (mng_handle hHandle)
 /* ************************************************************************** */
 
 #ifdef MNG_SUPPORT_READ
+mng_releasedata MNG_DECL mng_getcb_releasedata (mng_handle hHandle)
+{
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GETCB_RELEASEDATA, MNG_LC_START)
+#endif
+
+  MNG_VALIDHANDLEX (hHandle)
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACEX (((mng_datap)hHandle), MNG_FN_GETCB_RELEASEDATA, MNG_LC_END)
+#endif
+
+  return ((mng_datap)hHandle)->fReleasedata;
+}
+#endif /* MNG_SUPPORT_READ */
+
+/* ************************************************************************** */
+
+#ifdef MNG_SUPPORT_READ
 mng_readdata MNG_DECL mng_getcb_readdata (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -703,6 +755,7 @@ mng_readdata MNG_DECL mng_getcb_readdata (mng_handle hHandle)
 /* ************************************************************************** */
 
 #if defined(MNG_SUPPORT_READ) || defined(MNG_SUPPORT_WRITE)
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
 mng_openstream MNG_DECL mng_getcb_openstream (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -717,11 +770,13 @@ mng_openstream MNG_DECL mng_getcb_openstream (mng_handle hHandle)
 
   return ((mng_datap)hHandle)->fOpenstream;
 }
+#endif
 #endif /* MNG_SUPPORT_READ || MNG_SUPPORT_WRITE */
 
 /* ************************************************************************** */
 
 #if defined(MNG_SUPPORT_READ) || defined(MNG_SUPPORT_WRITE)
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
 mng_closestream MNG_DECL mng_getcb_closestream (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -736,6 +791,7 @@ mng_closestream MNG_DECL mng_getcb_closestream (mng_handle hHandle)
 
   return ((mng_datap)hHandle)->fClosestream;
 }
+#endif
 #endif /* MNG_SUPPORT_READ || MNG_SUPPORT_WRITE */
 
 /* ************************************************************************** */
@@ -878,7 +934,7 @@ mng_processseek MNG_DECL mng_getcb_processseek (mng_handle hHandle)
 /* ************************************************************************** */
 
 #ifdef MNG_SUPPORT_READ
-#ifndef MNG_SKIPCHUNK_SAVE
+#ifndef MNG_SKIPCHUNK_nEED
 mng_processneed MNG_DECL mng_getcb_processneed (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE

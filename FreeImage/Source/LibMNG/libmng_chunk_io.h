@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_chunk_io.h         copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_chunk_io.h         copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.7                                                      * */
 /* *                                                                        * */
 /* * purpose   : Chunk I/O routines (definition)                            * */
 /* *                                                                        * */
@@ -37,6 +37,9 @@
 /* *             - added SKIP_CHUNK and NO_DELTA_PNG support                * */
 /* *             1.0.6 - 07/29/2003 - G.R-P                                 * */
 /* *             - added conditionals around PAST chunk support             * */
+/* *                                                                        * */
+/* *             1.0.7 - 03/24/2004 - G.R-P                                 * */
+/* *             - fixed SKIPCHUNK_itXT and SKIPCHUNK_ztXT typos            * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -77,10 +80,10 @@ READ_CHUNK (mng_read_iccp) ;
 #ifndef MNG_SKIPCHUNK_tEXt
 READ_CHUNK (mng_read_text) ;
 #endif
-#ifndef MNG_SKIPCHUNK_ztXt
+#ifndef MNG_SKIPCHUNK_zTXt
 READ_CHUNK (mng_read_ztxt) ;
 #endif
-#ifndef MNG_SKIPCHUNK_itXt
+#ifndef MNG_SKIPCHUNK_iTXt
 READ_CHUNK (mng_read_itxt) ;
 #endif
 #ifndef MNG_SKIPCHUNK_bKGD

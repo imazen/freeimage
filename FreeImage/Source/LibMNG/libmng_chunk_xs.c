@@ -5,7 +5,7 @@
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
 /* * file      : libmng_chunk_xs.c         copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : chunk access functions (implementation)                    * */
 /* *                                                                        * */
@@ -71,6 +71,11 @@
 /* *             - added conditionals around PAST chunk support             * */
 /* *             1.0.6 - 08/17/2003 - G.R-P                                 * */
 /* *             - added conditionals around non-VLC chunk support          * */
+/* *                                                                        * */
+/* *             1.0.8 - 04/01/2004 - G.Juyn                                * */
+/* *             - added missing get-/put-chunk-jdaa                        * */
+/* *             1.0.8 - 08/02/2004 - G.Juyn                                * */
+/* *             - added conditional to allow easier writing of large MNG's * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -1862,6 +1867,41 @@ mng_retcode MNG_DECL mng_getchunk_jdat (mng_handle hHandle,
 
 /* ************************************************************************** */
 
+#ifdef MNG_INCLUDE_JNG
+
+mng_retcode MNG_DECL mng_getchunk_jdaa (mng_handle hHandle,
+                                        mng_handle hChunk,
+                                        mng_uint32 *iRawlen,
+                                        mng_ptr    *pRawdata)
+{
+  mng_datap pData;
+  mng_jdaap pChunk;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_GETCHUNK_JDAA, MNG_LC_START)
+#endif
+
+  MNG_VALIDHANDLE (hHandle)            /* check validity handle */
+  pData  = (mng_datap)hHandle;         /* and make it addressable */
+  pChunk = (mng_jdaap)hChunk;          /* address the chunk */
+
+  if (pChunk->sHeader.iChunkname != MNG_UINT_JDAA)
+    MNG_ERROR (pData, MNG_WRONGCHUNK)  /* ouch */
+
+  *iRawlen  = pChunk->iDatasize;       /* fill the fields */
+  *pRawdata = pChunk->pData;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_GETCHUNK_JDAA, MNG_LC_END)
+#endif
+
+  return MNG_NOERROR;
+}
+
+#endif /* MNG_INCLUDE_JNG */
+
+/* ************************************************************************** */
+
 #ifndef MNG_NO_DELTA_PNG
 mng_retcode MNG_DECL mng_getchunk_dhdr (mng_handle hHandle,
                                         mng_handle hChunk,
@@ -2538,6 +2578,7 @@ mng_retcode MNG_DECL mng_putchunk_iend (mng_handle hHandle)
 
   mng_add_chunk (pData, pChunk);       /* add it to the list */
 
+#ifndef MNG_TWEAK_LARGE_MNG_WRITES
 #ifdef MNG_INCLUDE_JNG
   if ((pData->iFirstchunkadded == MNG_UINT_IHDR) ||
       (pData->iFirstchunkadded == MNG_UINT_JHDR)    )
@@ -2545,6 +2586,7 @@ mng_retcode MNG_DECL mng_putchunk_iend (mng_handle hHandle)
   if (pData->iFirstchunkadded == MNG_UINT_IHDR)
 #endif
     pData->bCreating = MNG_FALSE;      /* should be last chunk !!! */
+#endif /* MNG_TWEAK_LARGE_MNG_WRITES */
 
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (((mng_datap)hHandle), MNG_FN_PUTCHUNK_IEND, MNG_LC_END)
@@ -4771,6 +4813,61 @@ mng_retcode MNG_DECL mng_putchunk_jdat (mng_handle hHandle,
 
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (((mng_datap)hHandle), MNG_FN_PUTCHUNK_JDAT, MNG_LC_END)
+#endif
+
+  return MNG_NOERROR;
+}
+
+#endif /*  MNG_INCLUDE_JNG */
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_JNG
+
+mng_retcode MNG_DECL mng_putchunk_jdaa (mng_handle hHandle,
+                                        mng_uint32 iRawlen,
+                                        mng_ptr    pRawdata)
+{
+  mng_datap        pData;
+  mng_chunkp       pChunk;
+  mng_retcode      iRetcode;
+  mng_chunk_header sChunkheader =
+          {MNG_UINT_JDAA, mng_init_jdaa, mng_free_jdaa, mng_read_jdaa, mng_write_jdaa, mng_assign_jdaa, 0, 0};
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_PUTCHUNK_JDAA, MNG_LC_START)
+#endif
+
+  MNG_VALIDHANDLE (hHandle)            /* check validity handle */
+  pData = (mng_datap)hHandle;          /* and make it addressable */
+
+  if (!pData->bCreating)               /* aren't we creating a new file ? */
+    MNG_ERROR (pData, MNG_FUNCTIONINVALID)
+                                       /* must have had a MHDR or JHDR first! */
+  if ((pData->iFirstchunkadded != MNG_UINT_MHDR) &&
+      (pData->iFirstchunkadded != MNG_UINT_JHDR)    )
+    MNG_ERROR (pData, MNG_NOHEADER)
+                                       /* prevent misplaced TERM ! */
+  if (!check_term (pData, MNG_UINT_JDAA))
+    MNG_ERROR (pData, MNG_TERMSEQERROR)
+                                       /* create the chunk */
+  iRetcode = mng_init_jdaa (pData, &sChunkheader, &pChunk);
+
+  if (iRetcode)                        /* on error bail out */
+    return iRetcode;
+                                       /* fill the chunk */
+  ((mng_jdaap)pChunk)->iDatasize = iRawlen;
+
+  if (iRawlen)
+  {
+    MNG_ALLOC (pData, ((mng_jdaap)pChunk)->pData, iRawlen)
+    MNG_COPY (((mng_jdaap)pChunk)->pData, pRawdata, iRawlen)
+  }
+
+  mng_add_chunk (pData, pChunk);       /* add it to the list */
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_PUTCHUNK_JDAA, MNG_LC_END)
 #endif
 
   return MNG_NOERROR;

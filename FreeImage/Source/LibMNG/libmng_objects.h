@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_objects.h          copyright (c) 2000 G.Juyn        * */
-/* * version   : 1.0.5                                                      * */
+/* * file      : libmng_objects.h          copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.7                                                      * */
 /* *                                                                        * */
 /* * purpose   : Internal object structures (definition)                    * */
 /* *                                                                        * */
@@ -58,6 +58,12 @@
 /* *             - added in-memory color-correction of abstract images      * */
 /* *             1.0.5 - 10/07/2002 - G.Juyn                                * */
 /* *             - fixed DISC support                                       * */
+/* *                                                                        * */
+/* *             1.0.6 - 10/07/2003 - G.R-P                                 * */
+/* *             - added SKIPCHUNK conditionals                             * */
+/* *                                                                        * */
+/* *             1.0.7 - 03/24/2004 - G.R-P                                 * */
+/* *             - added more SKIPCHUNK conditionals                        * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -183,6 +189,7 @@ typedef struct {                                 /* MNG specification "object" *
            mng_int32         iClipr;
            mng_int32         iClipt;
            mng_int32         iClipb;
+#ifndef MNG_SKIPCHUNK_MAGN
            mng_uint8         iMAGN_MethodX;      /* magnification (MAGN) */
            mng_uint8         iMAGN_MethodY;
            mng_uint16        iMAGN_MX;
@@ -191,6 +198,7 @@ typedef struct {                                 /* MNG specification "object" *
            mng_uint16        iMAGN_MR;
            mng_uint16        iMAGN_MT;
            mng_uint16        iMAGN_MB;
+#endif
 #ifndef MNG_SKIPCHUNK_PAST
            mng_int32         iPastx;             /* target x/y from previous PAST */
            mng_int32         iPasty;
@@ -234,6 +242,7 @@ typedef mng_ani_gama * mng_ani_gamap;
 
 /* ************************************************************************** */
 
+#ifndef MNG_SKIPCHUNK_cHRM
 typedef struct {                                 /* global cHRM object */
            mng_object_header sHeader;            /* default header (DO NOT REMOVE) */
            mng_bool          bEmpty;
@@ -247,6 +256,7 @@ typedef struct {                                 /* global cHRM object */
            mng_uint32        iBluey;
         } mng_ani_chrm;
 typedef mng_ani_chrm * mng_ani_chrmp;
+#endif
 
 /* ************************************************************************** */
 
@@ -259,6 +269,7 @@ typedef mng_ani_srgb * mng_ani_srgbp;
 
 /* ************************************************************************** */
 
+#ifndef MNG_SKIPCHUNK_iCCP
 typedef struct {                                 /* global iCCP object */
            mng_object_header sHeader;            /* default header (DO NOT REMOVE) */
            mng_bool          bEmpty;
@@ -266,6 +277,7 @@ typedef struct {                                 /* global iCCP object */
            mng_ptr           pProfile;
         } mng_ani_iccp;
 typedef mng_ani_iccp * mng_ani_iccpp;
+#endif
 
 /* ************************************************************************** */
 
@@ -448,7 +460,7 @@ typedef struct {                                 /* SEEK object */
 typedef mng_ani_seek * mng_ani_seekp;
 
 /* ************************************************************************** */
-
+#ifndef MNG_NO_DELTA_PNG
 typedef struct {                                 /* DHDR object */
            mng_object_header sHeader;            /* default header (DO NOT REMOVE) */
            mng_uint16        iObjectid;
@@ -496,9 +508,11 @@ typedef struct {                                 /* PPLT object */
            mng_uint8arr      aUsedentries;
         } mng_ani_pplt;
 typedef mng_ani_pplt * mng_ani_ppltp;
+#endif
 
 /* ************************************************************************** */
 
+#ifndef MNG_SKIPCHUNK_MAGN
 typedef struct {                                 /* MAGN object */
            mng_object_header sHeader;            /* default header (DO NOT REMOVE) */
            mng_uint16        iFirstid;
@@ -513,6 +527,7 @@ typedef struct {                                 /* MAGN object */
            mng_uint8         iMethodY;
         } mng_ani_magn;
 typedef mng_ani_magn * mng_ani_magnp;
+#endif
 
 /* ************************************************************************** */
 
@@ -531,12 +546,14 @@ typedef mng_ani_past * mng_ani_pastp;
 
 /* ************************************************************************** */
 
+#ifndef MNG_SKIPCHUNK_DISC
 typedef struct {                                 /* DISC object */
            mng_object_header sHeader;            /* default header (DO NOT REMOVE) */
            mng_uint32        iCount;
            mng_uint16p       pIds;
         } mng_ani_disc;
 typedef mng_ani_disc * mng_ani_discp;
+#endif
 
 /* ************************************************************************** */
 

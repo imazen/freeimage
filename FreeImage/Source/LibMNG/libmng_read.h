@@ -1,8 +1,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_read.h             copyright (c) 2000-2002 G.Juyn   * */
-/* * version   : 1.0.5                                                      * */
+/* * file      : libmng_read.h             copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : Read management (definition)                               * */
 /* *                                                                        * */
@@ -22,6 +22,9 @@
 /* *             1.0.5 - 08/19/2002 - G.Juyn                                * */
 /* *             - B597134 - libmng pollutes the linker namespace           * */
 /* *                                                                        * */
+/* *             1.0.8 - 04/12/2004 - G.Juyn                                * */
+/* *             - added data-push mechanisms for specialized decoders      * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #if defined(__BORLANDC__) && defined(MNG_STRICT_ANSI)
@@ -33,9 +36,13 @@
 
 /* ************************************************************************** */
 
-mng_retcode mng_process_eof  (mng_datap pData);
+mng_retcode mng_process_eof       (mng_datap pData);
 
-mng_retcode mng_read_graphic (mng_datap pData);
+mng_retcode mng_release_pushdata  (mng_datap pData);
+
+mng_retcode mng_release_pushchunk (mng_datap pData);
+
+mng_retcode mng_read_graphic      (mng_datap pData);
 
 /* ************************************************************************** */
 

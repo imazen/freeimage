@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_error.c            copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_error.c            copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.7                                                      * */
 /* *                                                                        * */
 /* * purpose   : Error routines (implementation)                            * */
 /* *                                                                        * */
@@ -73,6 +73,9 @@
 /* *             - skipped more code when MNG_INCLUDE_JNG is not enabled.   * */
 /* *             1.0.6 - 07/29/2003 - G.R-P                                 * */
 /* *             - added conditional around evNT chunk support              * */
+/* *                                                                        * */
+/* *             1.0.7 - 03/24/2004 - G.R-P                                 * */
+/* *             - fixed typo on SKIPCHUNK_evNT (->PAST)                    * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -164,7 +167,9 @@ MNG_LOCAL mng_error_entry const error_table [] =
     {MNG_TARGETNOALPHA,    "Target object must have alpha-channel"},
     {MNG_MNGTOOCOMPLEX,    "MHDR simplicity indicates unsupported feature(s)"},
     {MNG_UNKNOWNCRITICAL,  "Unknown critical chunk encountered"},
+#ifndef MNG_SKIPCHUNK_nEED
     {MNG_UNSUPPORTEDNEED,  "Requested nEED resources are not supported"},
+#endif
     {MNG_INVALIDDELTA,     "The delta operation is invalid (mismatched color_types?)"},
     {MNG_INVALIDMETHOD,    "Method is invalid"},
     {MNG_IMPROBABLELENGTH, "Chunklength is incredibly large"},
@@ -175,7 +180,7 @@ MNG_LOCAL mng_error_entry const error_table [] =
 #ifndef MNG_SKIPCHUNK_evNT
     {MNG_SEEKNOTFOUND,     "evNT points to unknown SEEK"},
 #endif
-#ifndef MNG_SKIPCHUNK_evNT
+#ifndef MNG_SKIPCHUNK_PAST
     {MNG_OBJNOTABSTRACT,   "Destination object for PAST must be abstract"},
 #endif
     {MNG_TERMSEQERROR,     "TERM misplaced during creation of MNG stream"},

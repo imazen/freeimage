@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_trace.h            copyright (c) 2000-2002 G.Juyn   * */
-/* * version   : 1.0.5                                                      * */
+/* * file      : libmng_trace.h            copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : Trace functions (definition)                               * */
 /* *                                                                        * */
@@ -134,6 +134,18 @@
 /* *             1.0.6 - 07/14/2003 - G.Randers-Pehrson                     * */
 /* *             - added conditionals around rarely used features           * */
 /* *                                                                        * */
+/* *             1.0.7 - 11/27/2003 - R.A                                   * */
+/* *             - added CANVAS_RGB565 and CANVAS_BGR565                    * */
+/* *             1.0.7 - 01/25/2004 - J.S                                   * */
+/* *             - added premultiplied alpha canvas' for RGBA, ARGB, ABGR   * */
+/* *             1.0.7 - 03/10/2004 - G.R-P                                 * */
+/* *             - added conditionals around openstream/closestream         * */
+/* *                                                                        * */
+/* *             1.0.8 - 04/02/2004 - G.Juyn                                * */
+/* *             - added CRC existence & checking flags                     * */
+/* *             1.0.8 - 04/11/2004 - G.Juyn                                * */
+/* *             - added data-push mechanisms for specialized decoders      * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #if defined(__BORLANDC__) && defined(MNG_STRICT_ANSI)
@@ -203,6 +215,9 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_GETLASTERROR            15
 #define MNG_FN_READ_RESUME             16
 #define MNG_FN_TRAPEVENT               17
+#define MNG_FN_READ_PUSHDATA           18
+#define MNG_FN_READ_PUSHSIG            19
+#define MNG_FN_READ_PUSHCHUNK          20
 
 #define MNG_FN_SETCB_MEMALLOC         101
 #define MNG_FN_SETCB_MEMFREE          102
@@ -222,8 +237,10 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_SETCB_PROCESSSRGB      116
 #define MNG_FN_SETCB_PROCESSICCP      117
 #define MNG_FN_SETCB_PROCESSAROW      118
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
 #define MNG_FN_SETCB_OPENSTREAM       119
 #define MNG_FN_SETCB_CLOSESTREAM      120
+#endif
 #define MNG_FN_SETCB_GETALPHALINE     121
 #define MNG_FN_SETCB_PROCESSSAVE      122
 #define MNG_FN_SETCB_PROCESSSEEK      123
@@ -231,6 +248,7 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_SETCB_PROCESSUNKNOWN   125
 #define MNG_FN_SETCB_PROCESSMEND      126
 #define MNG_FN_SETCB_PROCESSTERM      127
+#define MNG_FN_SETCB_RELEASEDATA      128
 
 #define MNG_FN_GETCB_MEMALLOC         201
 #define MNG_FN_GETCB_MEMFREE          202
@@ -250,8 +268,10 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_GETCB_PROCESSSRGB      216
 #define MNG_FN_GETCB_PROCESSICCP      217
 #define MNG_FN_GETCB_PROCESSAROW      218
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
 #define MNG_FN_GETCB_OPENSTREAM       219
 #define MNG_FN_GETCB_CLOSESTREAM      220
+#endif
 #define MNG_FN_GETCB_GETALPHALINE     221
 #define MNG_FN_GETCB_PROCESSSAVE      222
 #define MNG_FN_GETCB_PROCESSSEEK      223
@@ -259,6 +279,7 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_GETCB_PROCESSUNKNOWN   225
 #define MNG_FN_GETCB_PROCESSMEND      226
 #define MNG_FN_GETCB_PROCESSTERM      227
+#define MNG_FN_GETCB_RELEASEDATA      228
 
 #define MNG_FN_SET_USERDATA           301
 #define MNG_FN_SET_CANVASSTYLE        302
@@ -296,6 +317,7 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_SET_SRGBIMPLICIT       334
 #define MNG_FN_SET_CACHEPLAYBACK      335
 #define MNG_FN_SET_DOPROGRESSIVE      336
+#define MNG_FN_SET_CRCMODE            337
 
 #define MNG_FN_GET_USERDATA           401
 #define MNG_FN_GET_SIGTYPE            402
@@ -357,6 +379,7 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_GET_TOTALFRAMES        458
 #define MNG_FN_GET_TOTALLAYERS        459
 #define MNG_FN_GET_TOTALPLAYTIME      460
+#define MNG_FN_GET_CRCMODE            461
 
 #define MNG_FN_STATUS_ERROR           481
 #define MNG_FN_STATUS_READING         482
@@ -539,6 +562,10 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_READ_DATABUFFER       1025
 #define MNG_FN_STORE_ERROR           1026
 #define MNG_FN_DROP_INVALID_OBJECTS  1027
+#define MNG_FN_RELEASE_PUSHDATA      1028
+#define MNG_FN_READ_DATA             1029
+#define MNG_FN_READ_CHUNK_CRC        1030
+#define MNG_FN_RELEASE_PUSHCHUNK     1031
 
 /* ************************************************************************** */
 
@@ -568,6 +595,13 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_DISPLAY_RGB8_A8       1124
 #define MNG_FN_DISPLAY_BGRA8PM       1125
 #define MNG_FN_DISPLAY_BGRX8         1126
+#define MNG_FN_DISPLAY_RGB565        1127
+#define MNG_FN_DISPLAY_RGBA565       1128
+#define MNG_FN_DISPLAY_BGR565        1129
+#define MNG_FN_DISPLAY_BGRA565       1130
+#define MNG_FN_DISPLAY_RGBA8_PM      1131
+#define MNG_FN_DISPLAY_ARGB8_PM      1132
+#define MNG_FN_DISPLAY_ABGR8_PM      1133
 
 /* ************************************************************************** */
 
@@ -831,6 +865,8 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_RESTORE_BGR8          2105
 #define MNG_FN_RESTORE_BKGD          2106
 #define MNG_FN_RESTORE_BGRX8         2107
+#define MNG_FN_RESTORE_RGB565        2108
+#define MNG_FN_RESTORE_BGR565        2109
 
 /* ************************************************************************** */
 

@@ -1,5 +1,84 @@
 -----------------------------------------------------------
 
+1.0.8 (aug 5th 2004)
+--------------------
+
+in short:
+
+added special data-pushing mechanisms and a few other tid-bits
+
+-------------------
+
+bugfixes:
+- fixed problem with PAST usage where source > dest
+
+core:
+- added missing get-/put-chunk-jdaa
+- added CRC existence & checking flags
+- added data-push mechanisms for specialized decoders
+- some speed optimizations (thanks to John Stiles)
+- defend against using undefined closestream function
+- defend against using undefined openstream function
+- added check for extreme chunk-lengths
+- change worst-case iAlphadepth to 1 for standalone PNGs
+- added support for 3+byte pixelsize for JPEG's
+- added conditional to allow easier writing of large MNG's
+
+samples:
+
+contrib:
+
+doc:
+
+makefiles:
+
+autoconf:
+
+-----------------------------------------------------------
+
+1.0.7 (March 21st 2004)
+-----------------------
+
+in short:
+
+A bunch of new canvas-styles, some bug-fixes, upgraded to latest zlib/lcms
+and yet more work to please the Mozilla crowd.
+Releasing beta's doesn't seem very responsive, and this one's hardly changed
+much anyway. I just wanted to bump to a regular version for Mozilla
+re-integration.
+
+-------------------
+
+bugfixes:
+- fixed inclusion of IJNG chunk for non-JNG use (J.S)
+- fixed bug in chunk-storage of SHOW chunk (where from == to)
+- fixed bug in promote_g8_g8 with 16bit support off
+
+core:
+- added CANVAS_RGB565 and CANVAS_BGR565 (big thanx to Raphael Assenat!!)
+- added CANVAS_RGBA565 and CANVAS_BGRA565 ( -- ditto -- )
+- upgraded to zlib 1.2.1
+- upgraded to lcms 1.11
+- added premultiplied alpha canvas' for RGBA, ARGB, ABGR (thx to John Stiles)
+- more optimizations with 16bit support off
+- put conditionals around openstream/closestream callbacks.
+- fixed typo (MNG_SKIPCHUNK_SAVE -> MNG_SKIPCHUNK_nEED)
+- fixed some 64-bit platform compiler warnings
+
+samples:
+
+contrib:
+- fixed mngtree sample (Raphael)
+- added 5-6-5 canvas to SDL sample (Raphael)
+
+doc:
+
+makefiles:
+
+autoconf:
+
+-----------------------------------------------------------
+
 1.0.6 (oct 19th 2003)
 ---------------------
 

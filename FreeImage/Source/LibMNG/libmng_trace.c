@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_trace.c            copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_trace.c            copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : Trace functions (implementation)                           * */
 /* *                                                                        * */
@@ -129,6 +129,20 @@
 /* *             1.0.6 - 07/29/2003 - G.R-P                                 * */
 /* *             - added conditionals around PAST chunk support             * */
 /* *                                                                        * */
+/* *             1.0.7 - 11/27/2003 - R.A                                   * */
+/* *             - added CANVAS_RGB565 and CANVAS_BGR565                    * */
+/* *             1.0.7 - 01/25/2004 - J.S                                   * */
+/* *             - added premultiplied alpha canvas' for RGBA, ARGB, ABGR   * */
+/* *             1.0.7 - 03/07/2004 - G. Randers-Pehrson                    * */
+/* *             - put gamma, cms-related declarations inside #ifdef        * */
+/* *             1.0.7 - 03/10/2004 - G.R-P                                 * */
+/* *             - added conditionals around openstream/closestream         * */
+/* *                                                                        * */
+/* *             1.0.8 - 04/02/2004 - G.Juyn                                * */
+/* *             - added CRC existence & checking flags                     * */
+/* *             1.0.8 - 04/11/2004 - G.Juyn                                * */
+/* *             - added data-push mechanisms for specialized decoders      * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #include "libmng.h"
@@ -171,6 +185,9 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_GETLASTERROR,              "getlasterror"},
     {MNG_FN_READ_RESUME,               "read_resume"},
     {MNG_FN_TRAPEVENT,                 "trapevent"},
+    {MNG_FN_READ_PUSHDATA,             "read_pushdata"},
+    {MNG_FN_READ_PUSHSIG,              "read_pushsig"},
+    {MNG_FN_READ_PUSHCHUNK,            "read_pushchunk"},
 
     {MNG_FN_SETCB_MEMALLOC,            "setcb_memalloc"},
     {MNG_FN_SETCB_MEMFREE,             "setcb_memfree"},
@@ -190,8 +207,10 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_SETCB_PROCESSSRGB,         "setcb_processsrgb"},
     {MNG_FN_SETCB_PROCESSICCP,         "setcb_processiccp"},
     {MNG_FN_SETCB_PROCESSAROW,         "setcb_processarow"},
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
     {MNG_FN_SETCB_OPENSTREAM,          "setcb_openstream"},
     {MNG_FN_SETCB_CLOSESTREAM,         "setcb_closestream"},
+#endif
     {MNG_FN_SETCB_GETALPHALINE,        "setcb_getalphaline"},
     {MNG_FN_SETCB_PROCESSSAVE,         "setcb_processsave"},
     {MNG_FN_SETCB_PROCESSSEEK,         "setcb_processseek"},
@@ -199,6 +218,7 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_SETCB_PROCESSUNKNOWN,      "setcb_processunknown"},
     {MNG_FN_SETCB_PROCESSMEND,         "setcb_processmend"},
     {MNG_FN_SETCB_PROCESSTERM,         "setcb_processterm"},
+    {MNG_FN_SETCB_RELEASEDATA,         "setcb_releasedata"},
 
     {MNG_FN_GETCB_MEMALLOC,            "getcb_memalloc"},
     {MNG_FN_GETCB_MEMFREE,             "getcb_memfree"},
@@ -218,8 +238,10 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_GETCB_PROCESSSRGB,         "getcb_processsrgb"},
     {MNG_FN_GETCB_PROCESSICCP,         "getcb_processiccp"},
     {MNG_FN_GETCB_PROCESSAROW,         "getcb_processarow"},
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
     {MNG_FN_GETCB_OPENSTREAM,          "getcb_openstream"},
     {MNG_FN_GETCB_CLOSESTREAM,         "getcb_closestream"},
+#endif
     {MNG_FN_GETCB_GETALPHALINE,        "getcb_getalphaline"},
     {MNG_FN_GETCB_PROCESSSAVE,         "getcb_processsave"},
     {MNG_FN_GETCB_PROCESSSEEK,         "getcb_processseek"},
@@ -227,17 +249,20 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_GETCB_PROCESSUNKNOWN,      "getcb_processunknown"},
     {MNG_FN_GETCB_PROCESSMEND,         "getcb_processmend"},
     {MNG_FN_GETCB_PROCESSTERM,         "getcb_processterm"},
+    {MNG_FN_GETCB_RELEASEDATA,         "getcb_releasedata"},
 
     {MNG_FN_SET_USERDATA,              "set_userdata"},
     {MNG_FN_SET_CANVASSTYLE,           "set_canvasstyle"},
     {MNG_FN_SET_BKGDSTYLE,             "set_bkgdstyle"},
     {MNG_FN_SET_BGCOLOR,               "set_bgcolor"},
     {MNG_FN_SET_STORECHUNKS,           "set_storechunks"},
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
     {MNG_FN_SET_VIEWGAMMA,             "set_viewgamma"},
 #ifndef MNG_NO_DFLT_INFO
     {MNG_FN_SET_DISPLAYGAMMA,          "set_displaygamma"},
 #endif
     {MNG_FN_SET_DFLTIMGGAMMA,          "set_dfltimggamma"},
+#endif
     {MNG_FN_SET_SRGB,                  "set_srgb"},
     {MNG_FN_SET_OUTPUTPROFILE,         "set_outputprofile"},
     {MNG_FN_SET_SRGBPROFILE,           "set_srgbprofile"},
@@ -272,6 +297,7 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_SET_SRGBIMPLICIT,          "set_srgbimplicit"},
     {MNG_FN_SET_CACHEPLAYBACK,         "set_cacheplayback"},
     {MNG_FN_SET_DOPROGRESSIVE,         "set_doprogressive"},
+    {MNG_FN_SET_CRCMODE,               "set_crcmode"},
 
     {MNG_FN_GET_USERDATA,              "get_userdata"},
     {MNG_FN_GET_SIGTYPE,               "get_sigtype"},
@@ -287,10 +313,12 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_GET_BKGDSTYLE,             "get_bkgdstyle"},
     {MNG_FN_GET_BGCOLOR,               "get_bgcolor"},
     {MNG_FN_GET_STORECHUNKS,           "get_storechunks"},
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
     {MNG_FN_GET_VIEWGAMMA,             "get_viewgamma"},
     {MNG_FN_GET_DISPLAYGAMMA,          "get_displaygamma"},
 #ifndef MNG_NO_DFLT_INFO
     {MNG_FN_GET_DFLTIMGGAMMA,          "get_dfltimggamma"},
+#endif
 #endif
     {MNG_FN_GET_SRGB,                  "get_srgb"},
 #ifndef MNG_SKIP_MAXCANVAS
@@ -345,6 +373,7 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_GET_TOTALLAYERS,           "get_totallayers"},
     {MNG_FN_GET_TOTALPLAYTIME,         "get_totalplaytime"},
 #endif
+    {MNG_FN_GET_CRCMODE,               "get_crcmode"},
 
     {MNG_FN_STATUS_ERROR,              "status_error"},
     {MNG_FN_STATUS_READING,            "status_reading"},
@@ -406,10 +435,14 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
 #endif
     {MNG_FN_GETCHUNK_MHDR,             "getchunk_mhdr"},
     {MNG_FN_GETCHUNK_MEND,             "getchunk_mend"},
+#ifndef MNG_SKIPCHUNK_LOOP
     {MNG_FN_GETCHUNK_LOOP,             "getchunk_loop"},
     {MNG_FN_GETCHUNK_ENDL,             "getchunk_endl"},
+#endif
     {MNG_FN_GETCHUNK_DEFI,             "getchunk_defi"},
+#ifndef MNG_SKIPCHUNK_BASI
     {MNG_FN_GETCHUNK_BASI,             "getchunk_basi"},
+#endif
     {MNG_FN_GETCHUNK_CLON,             "getchunk_clon"},
 #ifndef MNG_SKIPCHUNK_PAST
     {MNG_FN_GETCHUNK_PAST,             "getchunk_past"},
@@ -505,7 +538,7 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
 #ifndef MNG_SKIPCHUNK_tEXt
     {MNG_FN_PUTCHUNK_TEXT,             "putchunk_text"},
 #endif
-#ifndef MNG_SKIPCHUNK_zEXt
+#ifndef MNG_SKIPCHUNK_zTXt
     {MNG_FN_PUTCHUNK_ZTXT,             "putchunk_ztxt"},
 #endif
 #ifndef MNG_SKIPCHUNK_iTXt
@@ -653,6 +686,10 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_READ_DATABUFFER,           "read_databuffer"},
     {MNG_FN_STORE_ERROR,               "store_error"},
     {MNG_FN_DROP_INVALID_OBJECTS,      "drop_invalid_objects"},
+    {MNG_FN_RELEASE_PUSHDATA,          "release_pushdata"},
+    {MNG_FN_READ_DATA,                 "read_data"},
+    {MNG_FN_READ_CHUNK_CRC,            "read_chunk_crc"},
+    {MNG_FN_RELEASE_PUSHCHUNK,         "release_pushchunk"},
 
     {MNG_FN_DISPLAY_RGB8,              "display_rgb8"},
     {MNG_FN_DISPLAY_RGBA8,             "display_rgba8"},
@@ -680,6 +717,13 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_DISPLAY_RGB8_A8,           "display_rgb8_a8"},
     {MNG_FN_DISPLAY_BGRA8PM,           "display_bgra8_pm"},
     {MNG_FN_DISPLAY_BGRX8,             "display_bgrx8"},
+    {MNG_FN_DISPLAY_RGB565,            "display_rgb565"},
+    {MNG_FN_DISPLAY_RGBA565,           "display_rgba565"},
+    {MNG_FN_DISPLAY_BGR565,            "display_bgr565"},
+    {MNG_FN_DISPLAY_BGRA565,           "display_bgra565"},
+    {MNG_FN_DISPLAY_RGBA8_PM,          "display_rgba8_pm"},
+    {MNG_FN_DISPLAY_ARGB8_PM,          "display_argb8_pm"},
+    {MNG_FN_DISPLAY_ABGR8_PM,          "display_abgr8_pm"},
 
     {MNG_FN_INIT_FULL_CMS,             "init_full_cms"},
     {MNG_FN_CORRECT_FULL_CMS,          "correct_full_cms"},
@@ -945,6 +989,7 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_RESTORE_BGR8,              "restore_bgr8"},
     {MNG_FN_RESTORE_BKGD,              "restore_bkgd"},
     {MNG_FN_RESTORE_BGRX8,             "restore_bgrx8"},
+    {MNG_FN_RESTORE_RGB565,            "restore_rgb565"},
 
     {MNG_FN_INIT_IHDR,                 "init_ihdr"},
     {MNG_FN_INIT_PLTE,                 "init_plte"},

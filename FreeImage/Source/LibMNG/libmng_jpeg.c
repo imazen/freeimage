@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_jpeg.c             copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_jpeg.c             copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : JPEG library interface (implementation)                    * */
 /* *                                                                        * */
@@ -46,6 +46,9 @@
 /* *                                                                        * */
 /* *             1.0.6 - 03/04/2003 - G.Juyn                                * */
 /* *             - fixed some compiler-warnings                             * */
+/* *                                                                        * */
+/* *             1.0.8 - 08/01/2004 - G.Juyn                                * */
+/* *             - added support for 3+byte pixelsize for JPEG's            * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -552,7 +555,7 @@ mng_retcode mngjpeg_decompressdata (mng_datap  pData,
           pData->fDisplayrow = MNG_NULL;
                                        /* allocate a row of JPEG-samples */
         if (pData->pJPEGdinfo->jpeg_color_space == JCS_YCbCr)
-          pData->iJPEGrowlen = pData->pJPEGdinfo->image_width * 3;
+          pData->iJPEGrowlen = pData->pJPEGdinfo->image_width * RGB_PIXELSIZE;
         else
           pData->iJPEGrowlen = pData->pJPEGdinfo->image_width;
 
@@ -897,7 +900,7 @@ mng_retcode mngjpeg_decompressdata2 (mng_datap  pData,
           MNG_ERROR (pData, MNG_JPEGPARMSERR)
                                        /* allocate a row of JPEG-samples */
         if (pData->pJPEGdinfo2->jpeg_color_space == JCS_YCbCr)
-          pData->iJPEGrowlen2 = pData->pJPEGdinfo2->image_width * 3;
+          pData->iJPEGrowlen2 = pData->pJPEGdinfo2->image_width * RGB_PIXELSIZE;
         else
           pData->iJPEGrowlen2 = pData->pJPEGdinfo2->image_width;
 

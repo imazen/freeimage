@@ -1,8 +1,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_conf.h             copyright (c) G.Juyn 2000-2003   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_conf.h             copyright (c) G.Juyn 2000-2004   * */
+/* * version   : 1.0.7                                                      * */
 /* *                                                                        * */
 /* * purpose   : main configuration file                                    * */
 /* *                                                                        * */
@@ -42,6 +42,9 @@
 /* *             - added MNG_SKIPCHUNK_evNT conditional                     * */
 /* *             1.0.6 - 07/14/2002 - G.R-P                                 * */
 /* *             - added MNG_NO_SUPPORT_FUNCQUERY conditional               * */
+/* *                                                                        * */
+/* *             1.0.7 - 03/07/2004 - G.R-P                                 * */
+/* *             - added MNG_VERSION_QUERY_SUPPORT_ conditional             * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -154,6 +157,8 @@
    select MNG_APP_CMS */
 
 #define MNG_GAMMA_ONLY
+/* #define MNG_FULL_CMS */
+/* #define MNG_APP_CMS */
 
 /* ************************************************************************** */
 
@@ -217,17 +222,21 @@
 /* #define MNG_BIGENDIAN_SUPPORTED */
 
 /* ************************************************************************** */
+/* enable 'version' functions */
+#if !defined(MNG_VERSION_QUERY_SUPPORT) && \
+    !defined(MNG_NO_VERSION_QUERY_SUPPORT)
+#define MNG_VERSION_QUERY_SUPPORT
+#endif
 
 /* enable 'supports' function */
 /* use this if you need to query the availability of functions at runtime;
    useful for apps that dynamically load the library and that need specific
    functions */
 
-#ifndef MNG_NO_SUPPORT_FUNCQUERY
-#ifndef MNG_SUPPORT_FUNCQUERY
-#if defined(MNG_BUILD_SO) || defined(MNG_USE_SO) || defined(MNG_BUILD_DLL) || defined(MNG_USE_DLL)
+#if !defined(MNG_NO_SUPPORT_FUNCQUERY) && !defined(MNG_SUPPORT_FUNCQUERY)
+#if defined(MNG_BUILD_SO) || defined(MNG_USE_SO) || \
+    defined(MNG_BUILD_DLL) || defined(MNG_USE_DLL)
 #define MNG_SUPPORT_FUNCQUERY
-#endif
 #endif
 #endif
 

@@ -23,8 +23,20 @@ fi
 echo "running aclocal"
 aclocal
 
-echo "running libtoolize"
-libtoolize --automake
+# libtool is named glibtool on MacOS X
+for LIBTOOLIZE in libtoolize glibtoolize nope; do
+  ($LIBTOOLIZE --version) < /dev/null > /dev/null 2>&1 && break
+done
+if test x$LIBTOOLIZE = xnope; then
+  echo "error: Could not find libtoolize in the path!"
+  echo "  You'll need to install a copy of libtool before continuing"
+  echo "  with the generation of the build system."
+  echo
+  exit 1
+fi
+
+echo "running $LIBTOOLIZE"
+$LIBTOOLIZE --automake
 
 echo "running automake"
 automake --foreign --add-missing

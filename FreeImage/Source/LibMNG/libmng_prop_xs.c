@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_prop_xs.c          copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_prop_xs.c          copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : property get/set interface (implementation)                * */
 /* *                                                                        * */
@@ -90,6 +90,18 @@
 /* *             1.0.6 - 07/14/2003 - G.R-P                                 * */
 /* *             - added conditionals around various unused functions       * */
 /* *                                                                        * */
+/* *             1.0.7 - 11/27/2003 - R.A                                   * */
+/* *             - added CANVAS_RGB565 and CANVAS_BGR565                    * */
+/* *             1.0.7 - 12/06/2003 - R.A                                   * */
+/* *             - added CANVAS_RGBA565 and CANVAS_BGRA565                  * */
+/* *             1.0.7 - 01/25/2004 - J.S                                   * */
+/* *             - added premultiplied alpha canvas' for RGBA, ARGB, ABGR   * */
+/* *             1.0.7 - 03/07/2004 - G. Randers-Pehrson                    * */
+/* *             - put gamma, cms-related functions inside #ifdef           * */
+/* *                                                                        * */
+/* *             1.0.8 - 04/02/2004 - G.Juyn                                * */
+/* *             - added CRC existence & checking flags                     * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #include "libmng.h"
@@ -149,8 +161,14 @@ mng_retcode MNG_DECL mng_set_canvasstyle (mng_handle hHandle,
 #ifndef MNG_SKIPCANVAS_RGBA8
     case MNG_CANVAS_RGBA8   : break;
 #endif
+#ifndef MNG_SKIPCANVAS_RGBA8_PM
+    case MNG_CANVAS_RGBA8_PM: break;
+#endif
 #ifndef MNG_SKIPCANVAS_ARGB8
     case MNG_CANVAS_ARGB8   : break;
+#endif
+#ifndef MNG_SKIPCANVAS_ARGB8_PM
+    case MNG_CANVAS_ARGB8_PM: break;
 #endif
 #ifndef MNG_SKIPCANVAS_RGB8_A8
     case MNG_CANVAS_RGB8_A8 : break;
@@ -165,10 +183,25 @@ mng_retcode MNG_DECL mng_set_canvasstyle (mng_handle hHandle,
     case MNG_CANVAS_BGRA8   : break;
 #endif
 #ifndef MNG_SKIPCANVAS_BGRA8_PM
-    case MNG_CANVAS_BGRA8PM : break;
+    case MNG_CANVAS_BGRA8_PM: break;
 #endif
 #ifndef MNG_SKIPCANVAS_ABGR8
     case MNG_CANVAS_ABGR8   : break;
+#endif
+#ifndef MNG_SKIPCANVAS_ABGR8_PM
+    case MNG_CANVAS_ABGR8_PM: break;
+#endif
+#ifndef MNG_SKIPCANVAS_RGB565
+    case MNG_CANVAS_RGB565  : break;
+#endif
+#ifndef MNG_SKIPCANVAS_RGBA565
+    case MNG_CANVAS_RGBA565 : break;
+#endif
+#ifndef MNG_SKIPCANVAS_BGR565
+    case MNG_CANVAS_BGR565  : break;
+#endif
+#ifndef MNG_SKIPCANVAS_BGRA565
+    case MNG_CANVAS_BGRA565 : break;
 #endif
 /*    case MNG_CANVAS_RGB16   : break; */
 /*    case MNG_CANVAS_RGBA16  : break; */
@@ -220,6 +253,12 @@ mng_retcode MNG_DECL mng_set_bkgdstyle (mng_handle hHandle,
 #endif
 #ifndef MNG_SKIPCANVAS_BGRX8
     case MNG_CANVAS_BGRX8   : break;
+#endif
+#ifndef MNG_SKIPCANVAS_RGB565
+    case MNG_CANVAS_RGB565  : break;
+#endif
+#ifndef MNG_SKIPCANVAS_BGR565
+    case MNG_CANVAS_BGR565  : break;
 #endif
 /*    case MNG_CANVAS_RGB16   : break; */
 /*    case MNG_CANVAS_BGR16   : break; */
@@ -359,6 +398,26 @@ mng_retcode MNG_DECL mng_set_doprogressive (mng_handle hHandle,
 
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_DOPROGRESSIVE, MNG_LC_END)
+#endif
+
+  return MNG_NOERROR;
+}
+
+/* ************************************************************************** */
+
+mng_retcode MNG_DECL mng_set_crcmode (mng_handle hHandle,
+                                      mng_uint32 iCrcmode)
+{
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CRCMODE, MNG_LC_START)
+#endif
+
+  MNG_VALIDHANDLE (hHandle)
+
+  ((mng_datap)hHandle)->iCrcmode = iCrcmode;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_SET_CRCMODE, MNG_LC_END)
 #endif
 
   return MNG_NOERROR;
@@ -603,6 +662,7 @@ mng_retcode MNG_DECL mng_set_srgbimplicit (mng_handle hHandle)
 
 /* ************************************************************************** */
 
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
 mng_retcode MNG_DECL mng_set_viewgamma (mng_handle hHandle,
                                         mng_float  dGamma)
 {
@@ -619,6 +679,7 @@ mng_retcode MNG_DECL mng_set_viewgamma (mng_handle hHandle,
 
   return MNG_NOERROR;
 }
+#endif
 
 /* ************************************************************************** */
 
@@ -660,6 +721,7 @@ mng_retcode MNG_DECL mng_set_dfltimggamma (mng_handle hHandle,
 
 /* ************************************************************************** */
 
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
 mng_retcode MNG_DECL mng_set_viewgammaint (mng_handle hHandle,
                                            mng_uint32 iGamma)
 {
@@ -676,6 +738,7 @@ mng_retcode MNG_DECL mng_set_viewgammaint (mng_handle hHandle,
 
   return MNG_NOERROR;
 }
+#endif
 
 /* ************************************************************************** */
 
@@ -1717,6 +1780,23 @@ mng_bool MNG_DECL mng_get_doprogressive (mng_handle hHandle)
 
 /* ************************************************************************** */
 
+mng_uint32 MNG_DECL mng_get_crcmode (mng_handle hHandle)
+{
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_CRCMODE, MNG_LC_START)
+#endif
+
+  MNG_VALIDHANDLEX (hHandle)
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACEB (((mng_datap)hHandle), MNG_FN_GET_CRCMODE, MNG_LC_END)
+#endif
+
+  return ((mng_datap)hHandle)->iCrcmode;
+}
+
+/* ************************************************************************** */
+
 #ifdef MNG_SUPPORT_DISPLAY
 mng_bool MNG_DECL mng_get_srgb (mng_handle hHandle)
 {
@@ -1736,6 +1816,7 @@ mng_bool MNG_DECL mng_get_srgb (mng_handle hHandle)
 
 /* ************************************************************************** */
 
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
 mng_float MNG_DECL mng_get_viewgamma (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -1750,9 +1831,11 @@ mng_float MNG_DECL mng_get_viewgamma (mng_handle hHandle)
 
   return ((mng_datap)hHandle)->dViewgamma;
 }
+#endif
 
 /* ************************************************************************** */
 
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
 mng_float MNG_DECL mng_get_displaygamma (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -1767,10 +1850,12 @@ mng_float MNG_DECL mng_get_displaygamma (mng_handle hHandle)
 
   return ((mng_datap)hHandle)->dDisplaygamma;
 }
+#endif
 
 /* ************************************************************************** */
 
 #ifndef MNG_NO_DFLT_INFO
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
 mng_float MNG_DECL mng_get_dfltimggamma (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -1786,9 +1871,11 @@ mng_float MNG_DECL mng_get_dfltimggamma (mng_handle hHandle)
   return ((mng_datap)hHandle)->dDfltimggamma;
 }
 #endif
+#endif
 
 /* ************************************************************************** */
 
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
 mng_uint32 MNG_DECL mng_get_viewgammaint (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -1803,9 +1890,11 @@ mng_uint32 MNG_DECL mng_get_viewgammaint (mng_handle hHandle)
 
   return (mng_uint32)(((mng_datap)hHandle)->dViewgamma * 100000);
 }
+#endif
 
 /* ************************************************************************** */
 
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
 mng_uint32 MNG_DECL mng_get_displaygammaint (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -1820,10 +1909,12 @@ mng_uint32 MNG_DECL mng_get_displaygammaint (mng_handle hHandle)
 
   return (mng_uint32)(((mng_datap)hHandle)->dDisplaygamma * 100000);
 }
+#endif
 
 /* ************************************************************************** */
 
 #ifndef MNG_NO_DFLT_INFO
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
 mng_uint32 MNG_DECL mng_get_dfltimggammaint (mng_handle hHandle)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -1838,6 +1929,7 @@ mng_uint32 MNG_DECL mng_get_dfltimggammaint (mng_handle hHandle)
 
   return (mng_uint32)(((mng_datap)hHandle)->dDfltimggamma * 100000);
 }
+#endif
 #endif
 
 /* ************************************************************************** */

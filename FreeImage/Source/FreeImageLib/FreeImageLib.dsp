@@ -50,6 +50,10 @@ BSC32=bscmake.exe
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo /out:"Release\FreeImage.lib"
+# Begin Special Build Tool
+SOURCE="$(InputPath)"
+PostBuild_Cmds=copy Release\FreeImage.lib ..\..\Dist	copy ..\FreeImage.h ..\..\Dist
+# End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "FreeImageLib - Win32 Debug"
 
@@ -73,6 +77,10 @@ BSC32=bscmake.exe
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo /out:"Debug\FreeImaged.lib"
+# Begin Special Build Tool
+SOURCE="$(InputPath)"
+PostBuild_Cmds=copy Debug\FreeImaged.lib ..\..\Dist	copy ..\FreeImage.h ..\..\Dist
+# End Special Build Tool
 
 !ENDIF 
 

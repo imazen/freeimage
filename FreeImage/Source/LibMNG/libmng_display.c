@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_display.c          copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_display.c          copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : Display management (implementation)                        * */
 /* *                                                                        * */
@@ -198,6 +198,18 @@
 /* *             - added conditionals around PAST chunk support             * */
 /* *             1.0.6 - 08/17/2003 - G.R-P                                 * */
 /* *             - added conditionals around non-VLC chunk support          * */
+/* *                                                                        * */
+/* *             1.0.7 - 11/27/2003 - R.A                                   * */
+/* *             - added CANVAS_RGB565 and CANVAS_BGR565                    * */
+/* *             1.0.7 - 12/06/2003 - R.A                                   * */
+/* *             - added CANVAS_RGBA565 and CANVAS_BGRA565                  * */
+/* *             1.0.7 - 01/25/2004 - J.S                                   * */
+/* *             - added premultiplied alpha canvas' for RGBA, ARGB, ABGR   * */
+/* *                                                                        * */
+/* *             1.0.8 - 03/31/2004 - G.Juyn                                * */
+/* *             - fixed problem with PAST usage where source > dest        * */
+/* *             1.0.8 - 05/04/2004 - G.R-P.                                * */
+/* *             - fixed misplaced 16-bit conditionals                      * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -439,8 +451,14 @@ MNG_LOCAL void set_display_routine (mng_datap pData)
 #ifndef MNG_SKIPCANVAS_RGBA8
       case MNG_CANVAS_RGBA8   : { pData->fDisplayrow = (mng_fptr)mng_display_rgba8;    break; }
 #endif
+#ifndef MNG_SKIPCANVAS_RGBA8_PM
+      case MNG_CANVAS_RGBA8_PM: { pData->fDisplayrow = (mng_fptr)mng_display_rgba8_pm; break; }
+#endif
 #ifndef MNG_SKIPCANVAS_ARGB8
       case MNG_CANVAS_ARGB8   : { pData->fDisplayrow = (mng_fptr)mng_display_argb8;    break; }
+#endif
+#ifndef MNG_SKIPCANVAS_ARGB8_PM
+      case MNG_CANVAS_ARGB8_PM: { pData->fDisplayrow = (mng_fptr)mng_display_argb8_pm; break; }
 #endif
 #ifndef MNG_SKIPCANVAS_RGB8_A8
       case MNG_CANVAS_RGB8_A8 : { pData->fDisplayrow = (mng_fptr)mng_display_rgb8_a8;  break; }
@@ -455,11 +473,27 @@ MNG_LOCAL void set_display_routine (mng_datap pData)
       case MNG_CANVAS_BGRA8   : { pData->fDisplayrow = (mng_fptr)mng_display_bgra8;    break; }
 #endif
 #ifndef MNG_SKIPCANVAS_BGRA8_PM
-      case MNG_CANVAS_BGRA8PM : { pData->fDisplayrow = (mng_fptr)mng_display_bgra8_pm; break; }
+      case MNG_CANVAS_BGRA8_PM: { pData->fDisplayrow = (mng_fptr)mng_display_bgra8_pm; break; }
 #endif
 #ifndef MNG_SKIPCANVAS_ABGR8
       case MNG_CANVAS_ABGR8   : { pData->fDisplayrow = (mng_fptr)mng_display_abgr8;    break; }
 #endif
+#ifndef MNG_SKIPCANVAS_ABGR8_PM
+      case MNG_CANVAS_ABGR8_PM: { pData->fDisplayrow = (mng_fptr)mng_display_abgr8_pm; break; }
+#endif
+#ifndef MNG_SKIPCANVAS_RGB565
+      case MNG_CANVAS_RGB565  : { pData->fDisplayrow = (mng_fptr)mng_display_rgb565;   break; }
+#endif
+#ifndef MNG_SKIPCANVAS_RGBA565
+      case MNG_CANVAS_RGBA565 : { pData->fDisplayrow = (mng_fptr)mng_display_rgba565;  break; }
+#endif
+#ifndef MNG_SKIPCANVAS_BGR565
+      case MNG_CANVAS_BGR565  : { pData->fDisplayrow = (mng_fptr)mng_display_bgr565;   break; }
+#endif
+#ifndef MNG_SKIPCANVAS_BGRA565
+      case MNG_CANVAS_BGRA565 : { pData->fDisplayrow = (mng_fptr)mng_display_bgra565;  break; }
+#endif
+
 #ifndef MNG_NO_16BIT_SUPPORT
 /*      case MNG_CANVAS_RGB16   : { pData->fDisplayrow = (mng_fptr)mng_display_rgb16;    break; } */
 /*      case MNG_CANVAS_RGBA16  : { pData->fDisplayrow = (mng_fptr)mng_display_rgba16;   break; } */
@@ -472,11 +506,11 @@ MNG_LOCAL void set_display_routine (mng_datap pData)
 /*      case MNG_CANVAS_INDEXA8 : { pData->fDisplayrow = (mng_fptr)mng_display_indexa8;  break; } */
 /*      case MNG_CANVAS_AINDEX8 : { pData->fDisplayrow = (mng_fptr)mng_display_aindex8;  break; } */
 /*      case MNG_CANVAS_GRAY8   : { pData->fDisplayrow = (mng_fptr)mng_display_gray8;    break; } */
-/*      case MNG_CANVAS_GRAY16  : { pData->fDisplayrow = (mng_fptr)mng_display_gray16;   break; } */
+/*      case MNG_CANVAS_AGRAY8  : { pData->fDisplayrow = (mng_fptr)mng_display_agray8;   break; } */
 /*      case MNG_CANVAS_GRAYA8  : { pData->fDisplayrow = (mng_fptr)mng_display_graya8;   break; } */
 #ifndef MNG_NO_16BIT_SUPPORT
+/*      case MNG_CANVAS_GRAY16  : { pData->fDisplayrow = (mng_fptr)mng_display_gray16;   break; } */
 /*      case MNG_CANVAS_GRAYA16 : { pData->fDisplayrow = (mng_fptr)mng_display_graya16;  break; } */
-/*      case MNG_CANVAS_AGRAY8  : { pData->fDisplayrow = (mng_fptr)mng_display_agray8;   break; } */
 /*      case MNG_CANVAS_AGRAY16 : { pData->fDisplayrow = (mng_fptr)mng_display_agray16;  break; } */
 #endif
 /*      case MNG_CANVAS_DX15    : { pData->fDisplayrow = (mng_fptr)mng_display_dx15;     break; } */
@@ -587,6 +621,12 @@ MNG_LOCAL mng_retcode load_bkgdlayer (mng_datap pData)
 #endif
 #ifndef MNG_SKIPCANVAS_BGRX8
           case MNG_CANVAS_BGRX8   : { pData->fRestbkgdrow = (mng_fptr)mng_restore_bkgd_bgrx8;   break; }
+#endif
+#ifndef MNG_SKIPCANVAS_BGR565
+          case MNG_CANVAS_BGR565  : { pData->fRestbkgdrow = (mng_fptr)mng_restore_bkgd_bgr565;  break; }
+#endif
+#ifndef MNG_SKIPCANVAS_RGB565
+          case MNG_CANVAS_RGB565  : { pData->fRestbkgdrow = (mng_fptr)mng_restore_bkgd_rgb565;  break; }
 #endif
 #ifndef MNG_NO_16BIT_SUPPORT
   /*        case MNG_CANVAS_RGB16   : { pData->fRestbkgdrow = (mng_fptr)mng_restore_bkgd_rgb16;   break; } */
@@ -721,7 +761,12 @@ MNG_LOCAL mng_retcode load_bkgdlayer (mng_datap pData)
             pData->iSourcet    = 0;
             pData->iSourceb    = pData->iDestb - pData->iDestt;
                                        /* 16-bit background ? */
+
+#ifdef MNG_NO_16BIT_SUPPORT
+            pData->bIsRGBA16   = MNG_FALSE;
+#else
             pData->bIsRGBA16      = (mng_bool)(pImage->pImgbuf->iBitdepth > 8);
+#endif
                                        /* let restore routine know the offsets !!! */
             pData->iBackimgoffsx  = pImage->iPosx;
             pData->iBackimgoffsy  = pImage->iPosy;
@@ -2098,6 +2143,7 @@ mng_retcode mng_reset_objzero (mng_datap pData)
   pImage->iClipr               = 0;
   pImage->iClipt               = 0;
   pImage->iClipb               = 0;
+#ifndef MNG_SKIPCHUNK_MAGN
   pImage->iMAGN_MethodX        = 0;
   pImage->iMAGN_MethodY        = 0;
   pImage->iMAGN_MX             = 0;
@@ -2106,6 +2152,7 @@ mng_retcode mng_reset_objzero (mng_datap pData)
   pImage->iMAGN_MR             = 0;
   pImage->iMAGN_MT             = 0;
   pImage->iMAGN_MB             = 0;
+#endif
 
   return MNG_NOERROR;
 }
@@ -4645,6 +4692,7 @@ mng_retcode mng_process_display_jhdr (mng_datap pData)
                }
         }
       }
+#ifndef MNG_NO_16BIT_SUPPORT
       else
       {
         pData->bIsRGBA16 = MNG_TRUE;   /* intermediate row is 16-bit deep */
@@ -4653,6 +4701,7 @@ mng_retcode mng_process_display_jhdr (mng_datap pData)
         /* TODO: 8- + 12-bit JPEG (eg. type=20) */
 
       }
+#endif
                                        /* possible IDAT alpha-channel ? */
       if (pData->iJHDRalphacompression == MNG_COMPRESSION_DEFLATE)
       {
@@ -5801,6 +5850,7 @@ mng_retcode mng_process_display_past (mng_datap  pData,
     mng_int32      iTargetrowsize;
     mng_int32      iTargetsamples;
     mng_bool       bTargetRGBA16 = MNG_FALSE;
+    mng_int32      iTemprowsize;
     mng_imagedatap pBuf;
                                        /* needs magnification ? */
     if ((pTargetimg->iMAGN_MethodX) || (pTargetimg->iMAGN_MethodY))
@@ -5833,9 +5883,6 @@ mng_retcode mng_process_display_past (mng_datap  pData,
                                        /* save for next time ... */
       pTargetimg->iPastx      = pData->iPastx;
       pTargetimg->iPasty      = pData->iPasty;
-                                       /* get temporary work-buffers */
-      MNG_ALLOC (pData, pData->pRGBArow, (pTargetimg->pImgbuf->iRowsize << 1))
-      MNG_ALLOC (pData, pData->pWorkrow, (pTargetimg->pImgbuf->iRowsize << 1))
                                        /* address destination for row-routines */
       pData->pStoreobj        = (mng_objectp)pTargetimg;
       pData->pStorebuf        = (mng_objectp)pTargetimg->pImgbuf;
@@ -6152,6 +6199,14 @@ mng_retcode mng_process_display_past (mng_datap  pData,
 #endif
               iTargetrowsize       = (iTargetsamples << 2);
 
+                                       /* get temporary work-buffers */
+            if (iSourcerowsize > iTargetrowsize)
+              iTemprowsize         = iSourcerowsize << 1;
+            else
+              iTemprowsize         = iTargetrowsize << 1;
+            MNG_ALLOC (pData, pData->pRGBArow, iTemprowsize)
+            MNG_ALLOC (pData, pData->pWorkrow, iTemprowsize)
+
             while ((!iRetcode) && (iTargetY < pData->iDestb))
             {                          /* get a row */
               pData->iRow          = iSourceY;
@@ -6192,6 +6247,9 @@ mng_retcode mng_process_display_past (mng_datap  pData,
 
               iTargetY++;
             }
+                                       /* drop the temporary row-buffer */
+            MNG_FREEX (pData, pData->pWorkrow, iTemprowsize)
+            MNG_FREEX (pData, pData->pRGBArow, iTemprowsize)
           }
 
 #if defined(MNG_FULL_CMS)              /* cleanup cms stuff */
@@ -6204,9 +6262,6 @@ mng_retcode mng_process_display_past (mng_datap  pData,
         iX++;
       }
     }
-                                       /* drop the temporary row-buffer */
-    MNG_FREEX (pData, pData->pWorkrow, (pTargetimg->pImgbuf->iRowsize << 1))
-    MNG_FREEX (pData, pData->pRGBArow, (pTargetimg->pImgbuf->iRowsize << 1))
 
     if (iRetcode)                      /* on error bail out */
       return iRetcode;

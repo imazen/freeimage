@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_types.h            copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_types.h            copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : type specifications                                        * */
 /* *                                                                        * */
@@ -108,6 +108,13 @@
 /* *             1.0.6 - 07/07/2003 - G. R-P.                               * */
 /* *             - added png_imgtypes enumeration                           * */
 /* *                                                                        * */
+/* *             1.0.7 - 03/10/2004 - G.R-P                                 * */
+/* *             - added conditionals around openstream/closestream         * */
+/* *             1.0.8 - 04/11/2004 - G.Juyn                                * */
+/* *             - added data-push mechanisms for specialized decoders      * */
+/* *             1.0.8 - 08/01/2004 - G.Juyn                                * */
+/* *             - added support for 3+byte pixelsize for JPEG's            * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #ifndef _libmng_types_h_
@@ -175,6 +182,7 @@
 #ifdef FAR
 #undef FAR                             /* possibly defined by zlib or lcms */
 #endif
+#define JPEG_INTERNAL_OPTIONS          /* for RGB_PIXELSIZE */
 #include "../LibJPEG/jpeglib.h"                   /* all that for JPEG support  :-) */
 #endif /* MNG_INCLUDE_IJG6B */
 
@@ -427,9 +435,15 @@ typedef mng_ptr    (MNG_DECL *mng_memalloc)      (mng_size_t  iLen);
 typedef void       (MNG_DECL *mng_memfree)       (mng_ptr     iPtr,
                                                   mng_size_t  iLen);
 
+typedef void       (MNG_DECL *mng_releasedata)   (mng_ptr     pUserdata,
+                                                  mng_ptr     pData,
+                                                  mng_size_t  iLength);
+
                                        /* I/O management callbacks */
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
 typedef mng_bool   (MNG_DECL *mng_openstream)    (mng_handle  hHandle);
 typedef mng_bool   (MNG_DECL *mng_closestream)   (mng_handle  hHandle);
+#endif
 typedef mng_bool   (MNG_DECL *mng_readdata)      (mng_handle  hHandle,
                                                   mng_ptr     pBuf,
                                                   mng_uint32  iBuflen,

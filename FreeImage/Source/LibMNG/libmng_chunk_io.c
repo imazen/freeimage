@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_chunk_io.c         copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_chunk_io.c         copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : Chunk I/O routines (implementation)                        * */
 /* *                                                                        * */
@@ -190,6 +190,20 @@
 /* *             - added conditionals around PAST chunk support             * */
 /* *             1.0.6 - 08/17/2003 - G.R-P                                 * */
 /* *             - added conditionals around non-VLC chunk support          * */
+/* *                                                                        * */
+/* *             1.0.7 - 10/29/2003 - G.R-P                                 * */
+/* *             - revised JDAA and JDAT readers to avoid compiler bug      * */
+/* *             1.0.7 - 01/25/2004 - J.S                                   * */
+/* *             - added premultiplied alpha canvas' for RGBA, ARGB, ABGR   * */
+/* *             1.0.7 - 01/27/2004 - J.S                                   * */
+/* *             - fixed inclusion of IJNG chunk for non-JNG use            * */
+/* *             1.0.7 - 02/26/2004 - G.Juyn                                * */
+/* *             - fixed bug in chunk-storage of SHOW chunk (from == to)    * */
+/* *                                                                        * */
+/* *             1.0.8 - 04/02/2004 - G.Juyn                                * */
+/* *             - added CRC existence & checking flags                     * */
+/* *             1.0.8 - 07/07/2004 - G.R-P                                 * */
+/* *             - change worst-case iAlphadepth to 1 for standalone PNGs   * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -537,11 +551,18 @@ MNG_LOCAL mng_retcode write_raw_chunk (mng_datap   pData,
   {                                    /* store length & chunktype in default buffer */
     mng_put_uint32 (pData->pWritebuf,   iRawlen);
     mng_put_uint32 (pData->pWritebuf+4, (mng_uint32)iChunkname);
-                                       /* calculate the crc */
-    iCrc = update_crc (pData, 0xffffffffL, pData->pWritebuf+4, 4);
-    iCrc = update_crc (pData, iCrc, pRawdata, iRawlen) ^ 0xffffffffL;
-                                       /* store crc in default buffer */
-    mng_put_uint32 (pData->pWritebuf+8, iCrc);
+
+    if (pData->iCrcmode & MNG_CRC_OUTPUT)
+    {
+      if ((pData->iCrcmode & MNG_CRC_OUTPUT) == MNG_CRC_OUTPUT_GENERATE)
+      {                                /* calculate the crc */
+        iCrc = update_crc (pData, 0xffffffffL, pData->pWritebuf+4, 4);
+        iCrc = update_crc (pData, iCrc, pRawdata, iRawlen) ^ 0xffffffffL;
+      } else {
+        iCrc = 0;                      /* dummy crc */
+      }                                /* store in default buffer */
+      mng_put_uint32 (pData->pWritebuf+8, iCrc);
+    }
                                        /* write the length & chunktype */
     if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf, 8, &iWritten))
       MNG_ERROR (pData, MNG_APPIOERROR)
@@ -555,29 +576,42 @@ MNG_LOCAL mng_retcode write_raw_chunk (mng_datap   pData,
     if (iWritten != iRawlen)           /* disk full ? */
       MNG_ERROR (pData, MNG_OUTPUTERROR)
 
-                                       /* write the crc */
-    if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf+8, 4, &iWritten))
-      MNG_ERROR (pData, MNG_APPIOERROR)
+    if (pData->iCrcmode & MNG_CRC_OUTPUT)
+    {                                  /* write the crc */
+      if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf+8, 4, &iWritten))
+        MNG_ERROR (pData, MNG_APPIOERROR)
 
-    if (iWritten != 4)                 /* disk full ? */
-      MNG_ERROR (pData, MNG_OUTPUTERROR)
-
+      if (iWritten != 4)               /* disk full ? */
+        MNG_ERROR (pData, MNG_OUTPUTERROR)
+    }
   }
   else
   {                                    /* prefix with length & chunktype */
     mng_put_uint32 (pData->pWritebuf,   iRawlen);
     mng_put_uint32 (pData->pWritebuf+4, (mng_uint32)iChunkname);
+
+    if (pData->iCrcmode & MNG_CRC_OUTPUT)
+    {
+      if ((pData->iCrcmode & MNG_CRC_OUTPUT) == MNG_CRC_OUTPUT_GENERATE)
                                        /* calculate the crc */
-    iCrc = mng_crc (pData, pData->pWritebuf+4, iRawlen + 4);
+        iCrc = mng_crc (pData, pData->pWritebuf+4, iRawlen + 4);
+      else
+        iCrc = 0;                      /* dummy crc */
                                        /* add it to the buffer */
-    mng_put_uint32 (pData->pWritebuf + iRawlen + 8, iCrc);
+      mng_put_uint32 (pData->pWritebuf + iRawlen + 8, iCrc);
                                        /* write it in a single pass */
-    if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf, iRawlen + 12, &iWritten))
-      MNG_ERROR (pData, MNG_APPIOERROR)
+      if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf, iRawlen + 12, &iWritten))
+        MNG_ERROR (pData, MNG_APPIOERROR)
 
-    if (iWritten != iRawlen + 12)      /* disk full ? */
-      MNG_ERROR (pData, MNG_OUTPUTERROR)
+      if (iWritten != iRawlen + 12)    /* disk full ? */
+        MNG_ERROR (pData, MNG_OUTPUTERROR)
+    } else {
+      if (!pData->fWritedata ((mng_handle)pData, pData->pWritebuf, iRawlen + 8, &iWritten))
+        MNG_ERROR (pData, MNG_APPIOERROR)
 
+      if (iWritten != iRawlen + 8)     /* disk full ? */
+        MNG_ERROR (pData, MNG_OUTPUTERROR)
+    }
   }
 
 #ifdef MNG_SUPPORT_TRACE
@@ -640,9 +674,7 @@ READ_CHUNK (mng_read_ihdr)
 #if defined(MNG_NO_16BIT_SUPPORT)
   pData->iPNGmult = 1;
   pData->iPNGdepth = pData->iBitdepth;
-#endif
 
-#ifdef MNG_NO_16BIT_SUPPORT
   if (pData->iBitdepth > 8)
     {
       pData->iBitdepth = 8;
@@ -733,7 +765,7 @@ READ_CHUNK (mng_read_ihdr)
     if (pData->iColortype == MNG_COLORTYPE_INDEXED)
       pData->iAlphadepth = 8;          /* worst case scenario */
     else
-      pData->iAlphadepth = 0;
+      pData->iAlphadepth = 1;  /* Possible tRNS cheap binary transparency */
                                        /* fits on maximum canvas ? */
     if ((pData->iWidth > pData->iMaxwidth) || (pData->iHeight > pData->iMaxheight))
       MNG_WARNING (pData, MNG_IMAGETOOLARGE)
@@ -2309,8 +2341,8 @@ READ_CHUNK (mng_read_itxt)
       iTextlen = iCompressedsize;
       iBufsize = iTextlen+1;           /* plus 1 for terminator byte!!! */
 
-      MNG_ALLOCX (pData, pBuf, iBufsize);
-      MNG_COPY   (pBuf, pNull3+1, iTextlen);
+      MNG_ALLOC (pData, pBuf, iBufsize);
+      MNG_COPY  (pBuf, pNull3+1, iTextlen);
     }
 
     MNG_ALLOCX (pData, zKeyword,     iKeywordlen     + 1)
@@ -2383,8 +2415,8 @@ READ_CHUNK (mng_read_itxt)
         iTextlen = iCompressedsize;
         iBufsize = iTextlen+1;         /* plus 1 for terminator byte!!! */
 
-        MNG_ALLOCX (pData, pBuf, iBufsize);
-        MNG_COPY   (pBuf, pNull3+1, iTextlen);
+        MNG_ALLOC (pData, pBuf, iBufsize);
+        MNG_COPY  (pBuf, pNull3+1, iTextlen);
       }
     }
 
@@ -3604,9 +3636,6 @@ READ_CHUNK (mng_read_basi)
 #if defined(MNG_NO_16BIT_SUPPORT)
   pData->iPNGmult = 1;
   pData->iPNGdepth = pData->iBitdepth;
-#endif
-
-#ifdef MNG_NO_16BIT_SUPPORT
   if (pData->iBitdepth > 8)
     {
       pData->iBitdepth = 8;
@@ -3716,16 +3745,16 @@ READ_CHUNK (mng_read_basi)
                                        /* store the fields */
     ((mng_basip)*ppChunk)->iWidth       = mng_get_uint32 (pRawdata);
     ((mng_basip)*ppChunk)->iHeight      = mng_get_uint32 (pRawdata+4);
-    ((mng_basip)*ppChunk)->iBitdepth    = *(pRawdata+8);
+#ifdef MNG_NO_16BIT_SUPPORT
+    if (*(pRawdata+8) > 8)
+      ((mng_basip)*ppChunk)->iBitdepth    = 8;
+    else
+#endif
+      ((mng_basip)*ppChunk)->iBitdepth    = *(pRawdata+8);
     ((mng_basip)*ppChunk)->iColortype   = *(pRawdata+9);
     ((mng_basip)*ppChunk)->iCompression = *(pRawdata+10);
     ((mng_basip)*ppChunk)->iFilter      = *(pRawdata+11);
     ((mng_basip)*ppChunk)->iInterlace   = *(pRawdata+12);
-
-#ifdef MNG_NO_16BIT_SUPPORT
-  if (*(pRawdata+8) > 8)
-      ((mng_basip)*ppChunk)->iBitdepth    = 8;
-#endif
 
     if (iRawlen > 13)
     {
@@ -4660,6 +4689,8 @@ READ_CHUNK (mng_read_show)
 
       if (iRawlen > 2)
         ((mng_showp)*ppChunk)->iLastid = mng_get_uint16 (pRawdata+2);
+      else
+        ((mng_showp)*ppChunk)->iLastid = ((mng_showp)*ppChunk)->iFirstid;
 
       if (iRawlen > 4)
         ((mng_showp)*ppChunk)->iMode   = *(pRawdata+4);
@@ -5205,7 +5236,9 @@ MNG_LOCAL mng_bool CheckKeyword (mng_datap  pData,
     MNG_UINT_IEND,
     MNG_UINT_IHDR,
 #ifndef MNG_NO_DELTA_PNG
+#ifdef MNG_INCLUDE_JNG
     MNG_UINT_IJNG,
+#endif    
     MNG_UINT_IPNG,
 #endif
 #ifdef MNG_INCLUDE_JNG
@@ -5644,7 +5677,7 @@ READ_CHUNK (mng_read_jhdr)
     ((mng_jhdrp)*ppChunk)->iImageinterlace   = *(pRawdata+11);
     ((mng_jhdrp)*ppChunk)->iAlphasampledepth = *(pRawdata+12);
 #ifdef MNG_NO_16BIT_SUPPORT
-    if (*pRawdata+12) > 8)
+    if (*(pRawdata+12) > 8)
         ((mng_jhdrp)*ppChunk)->iAlphasampledepth = 8;
 #endif
     ((mng_jhdrp)*ppChunk)->iAlphacompression = *(pRawdata+13);
@@ -5668,6 +5701,12 @@ READ_CHUNK (mng_read_jhdr)
 #ifdef MNG_INCLUDE_JNG
 READ_CHUNK (mng_read_jdaa)
 {
+#if defined(MNG_SUPPORT_DISPLAY) || defined(MNG_STORE_CHUNKS)
+  volatile mng_retcode iRetcode;
+
+  iRetcode=MNG_NOERROR;
+#endif
+
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (pData, MNG_FN_READ_JDAA, MNG_LC_START)
 #endif
@@ -5687,18 +5726,16 @@ READ_CHUNK (mng_read_jdaa)
   pData->bHasJDAA = MNG_TRUE;          /* got some JDAA now, don't we */
 
 #ifdef MNG_SUPPORT_DISPLAY
-  {
-    mng_retcode iRetcode = mng_process_display_jdaa (pData, iRawlen, pRawdata);
+  iRetcode = mng_process_display_jdaa (pData, iRawlen, pRawdata);
 
-    if (iRetcode)                      /* on error bail out */
-      return iRetcode;
-  }
+  if (iRetcode)                      /* on error bail out */
+    return iRetcode;
 #endif /* MNG_SUPPORT_DISPLAY */
 
 #ifdef MNG_STORE_CHUNKS
   if (pData->bStorechunks)
   {                                    /* initialize storage */
-    mng_retcode iRetcode = ((mng_chunk_headerp)pHeader)->fCreate (pData, pHeader, ppChunk);
+    iRetcode = ((mng_chunk_headerp)pHeader)->fCreate (pData, pHeader, ppChunk);
 
     if (iRetcode)                      /* on error bail out */
       return iRetcode;
@@ -5729,6 +5766,12 @@ READ_CHUNK (mng_read_jdaa)
 #ifdef MNG_INCLUDE_JNG
 READ_CHUNK (mng_read_jdat)
 {
+#if defined(MNG_SUPPORT_DISPLAY) || defined(MNG_STORE_CHUNKS)
+  volatile mng_retcode iRetcode;
+
+  iRetcode=MNG_NOERROR;
+#endif
+
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (pData, MNG_FN_READ_JDAT, MNG_LC_START)
 #endif
@@ -5742,18 +5785,16 @@ READ_CHUNK (mng_read_jdat)
   pData->bHasJDAT = MNG_TRUE;          /* got some JDAT now, don't we */
 
 #ifdef MNG_SUPPORT_DISPLAY
-  {
-    mng_retcode iRetcode = mng_process_display_jdat (pData, iRawlen, pRawdata);
+  iRetcode = mng_process_display_jdat (pData, iRawlen, pRawdata);
 
-    if (iRetcode)                      /* on error bail out */
-      return iRetcode;
-  }
+  if (iRetcode)                      /* on error bail out */
+    return iRetcode;
 #endif /* MNG_SUPPORT_DISPLAY */
 
 #ifdef MNG_STORE_CHUNKS
   if (pData->bStorechunks)
   {                                    /* initialize storage */
-    mng_retcode iRetcode = ((mng_chunk_headerp)pHeader)->fCreate (pData, pHeader, ppChunk);
+    iRetcode = ((mng_chunk_headerp)pHeader)->fCreate (pData, pHeader, ppChunk);
 
     if (iRetcode)                      /* on error bail out */
       return iRetcode;
@@ -5966,8 +6007,11 @@ READ_CHUNK (mng_read_prom)
   if ((iSampledepth != MNG_BITDEPTH_1 ) &&
       (iSampledepth != MNG_BITDEPTH_2 ) &&
       (iSampledepth != MNG_BITDEPTH_4 ) &&
-      (iSampledepth != MNG_BITDEPTH_8 ) &&
-      (iSampledepth != MNG_BITDEPTH_16)    )
+      (iSampledepth != MNG_BITDEPTH_8 )
+#ifndef MNG_NO_16BIT_SUPPORT
+      && (iSampledepth != MNG_BITDEPTH_16)
+#endif
+    )
     MNG_ERROR (pData, MNG_INVSAMPLEDEPTH)
 
   if ((iFilltype != MNG_FILLMETHOD_LEFTBITREPLICATE) &&
@@ -6244,6 +6288,7 @@ READ_CHUNK (mng_read_pplt)
 /* ************************************************************************** */
 
 #ifndef MNG_NO_DELTA_PNG
+#ifdef MNG_INCLUDE_JNG
 READ_CHUNK (mng_read_ijng)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -6285,6 +6330,7 @@ READ_CHUNK (mng_read_ijng)
 
   return MNG_NOERROR;                  /* done */
 }
+#endif
 #endif
 
 /* ************************************************************************** */
@@ -8115,9 +8161,11 @@ WRITE_CHUNK (mng_write_loop)
   mng_uint8p  pRawdata;
   mng_uint32  iRawlen;
   mng_retcode iRetcode;
+#ifndef MNG_NO_LOOP_SIGNALS_SUPPORTED
   mng_uint8p  pTemp1;
   mng_uint32p pTemp2;
   mng_uint32  iX;
+#endif
 
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (pData, MNG_FN_WRITE_LOOP, MNG_LC_START)

@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_chunk_prc.c        copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_chunk_prc.c        copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.7                                                      * */
 /* *                                                                        * */
 /* * purpose   : Chunk initialization & cleanup (implementation)            * */
 /* *                                                                        * */
@@ -53,6 +53,9 @@
 /* *             - added conditionals around PAST chunk support             * */
 /* *             1.0.6 - 08/17/2003 - G.R-P                                 * */
 /* *             - added conditionals around non-VLC chunk support          * */
+/* *                                                                        * */
+/* *             1.0.7 - 03/24/2004 - G.R-P                                 * */
+/* *             - fixed SKIPCHUNK_eXPI -> fPRI typo                        * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -1955,7 +1958,7 @@ FREE_CHUNK_HDR (mng_free_expi)
 
 /* ************************************************************************** */
 
-#ifndef MNG_SKIPCHUNK_eXPI
+#ifndef MNG_SKIPCHUNK_fPRI
 FREE_CHUNK_HDR (mng_free_fpri)
 {
 #ifdef MNG_SUPPORT_TRACE
@@ -2966,15 +2969,15 @@ ASSIGN_CHUNK_HDR (mng_assign_loop)
   ((mng_loopp)pChunkto)->iItermax     = ((mng_loopp)pChunkfrom)->iItermax;
   ((mng_loopp)pChunkto)->iCount       = ((mng_loopp)pChunkfrom)->iCount;
 
+#ifndef MNG_NO_LOOP_SIGNALS_SUPPORTED
   if (((mng_loopp)pChunkto)->iCount)
   {
     mng_uint32 iLen = ((mng_loopp)pChunkto)->iCount * sizeof (mng_uint32);
-
-#ifndef MNG_NO_LOOP_SIGNALS_SUPPORTED
     MNG_ALLOC (pData, ((mng_loopp)pChunkto)->pSignals, iLen)
     MNG_COPY  (((mng_loopp)pChunkto)->pSignals, ((mng_loopp)pChunkfrom)->pSignals, iLen)
-#endif
   }
+#endif
+
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (pData, MNG_FN_ASSIGN_LOOP, MNG_LC_END)
 #endif

@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_pixels.h           copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_pixels.h           copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.7                                                      * */
 /* *                                                                        * */
 /* * purpose   : Pixel-row management routines (definition)                 * */
 /* *                                                                        * */
@@ -68,9 +68,16 @@
 /* *             - added conditionals around 16-bit and delta-PNG           * */
 /* *               supporting code                                          * */
 /* *             1.0.6 - 07/29/2003 - G.R-P                                 * */
-/* *             - added conditionals around PAST chunk support             * */
+/* *             - added SKIPCHUNK conditionals around PAST chunk support   * */
 /* *             1.0.6 - 08/18/2003 - G.R-P                                 * */
 /* *             - added conditionals around 1, 2, and 4-bit prototypes     * */
+/* *                                                                        * */
+/* *             1.0.7 - 11/27/2003 - R.A                                   * */
+/* *             - added CANVAS_RGB565 and CANVAS_BGR565                    * */
+/* *             1.0.7 - 12/06/2003 - R.A                                   * */
+/* *             - added CANVAS_RGBA565 and CANVAS_BGRA565                  * */
+/* *             1.0.7 - 01/25/2004 - J.S                                   * */
+/* *             - added premultiplied alpha canvas' for RGBA, ARGB, ABGR   * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -110,8 +117,14 @@ mng_retcode mng_display_rgb8           (mng_datap  pData);
 #ifndef MNG_SKIPCANVAS_RGBA8
 mng_retcode mng_display_rgba8          (mng_datap  pData);
 #endif
+#ifndef MNG_SKIPCANVAS_RGBA8_PM
+mng_retcode mng_display_rgba8_pm       (mng_datap  pData);
+#endif
 #ifndef MNG_SKIPCANVAS_ARGB8
 mng_retcode mng_display_argb8          (mng_datap  pData);
+#endif
+#ifndef MNG_SKIPCANVAS_ARGB8_PM
+mng_retcode mng_display_argb8_pm       (mng_datap  pData);
 #endif
 #ifndef MNG_SKIPCANVAS_RGB8_A8
 mng_retcode mng_display_rgb8_a8        (mng_datap  pData);
@@ -130,6 +143,21 @@ mng_retcode mng_display_bgra8_pm       (mng_datap  pData);
 #endif
 #ifndef MNG_SKIPCANVAS_ABGR8
 mng_retcode mng_display_abgr8          (mng_datap  pData);
+#endif
+#ifndef MNG_SKIPCANVAS_ABGR8_PM
+mng_retcode mng_display_abgr8_pm       (mng_datap  pData);
+#endif
+#ifndef MNG_SKIPCANVAS_RGB565
+mng_retcode mng_display_rgb565         (mng_datap  pData);
+#endif
+#ifndef MNG_SKIPCANVAS_RGBA565
+mng_retcode mng_display_rgba565        (mng_datap  pData);
+#endif
+#ifndef MNG_SKIPCANVAS_BGR565
+mng_retcode mng_display_bgr565         (mng_datap  pData);
+#endif
+#ifndef MNG_SKIPCANVAS_BGRA565
+mng_retcode mng_display_bgra565        (mng_datap  pData);
 #endif
 
 /* ************************************************************************** */
@@ -151,6 +179,12 @@ mng_retcode mng_restore_bkgd_bgr8      (mng_datap  pData);
 #endif
 #ifndef MNG_SKIPCANVAS_BGRX8
 mng_retcode mng_restore_bkgd_bgrx8     (mng_datap  pData);
+#endif
+#ifndef MNG_SKIPCANVAS_RGB565
+mng_retcode mng_restore_bkgd_rgb565    (mng_datap  pData);
+#endif
+#ifndef MNG_SKIPCANVAS_BGR565
+mng_retcode mng_restore_bkgd_bgr565    (mng_datap  pData);
 #endif
 
 /* ************************************************************************** */

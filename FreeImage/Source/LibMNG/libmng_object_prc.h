@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_object_prc.h       copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_object_prc.h       copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.7                                                      * */
 /* *                                                                        * */
 /* * purpose   : Object processing routines (definition)                    * */
 /* *                                                                        * */
@@ -52,9 +52,12 @@
 /* *                                                                        * */
 /* *             1.0.6 - 07/07/2003 - G.R-P                                 * */
 /* *             - added conditionals around Delta-PNG code                 * */
-/* *             - added SKIP_CHUNK feature                                 * */
+/* *             - added SKIPCHUNK feature                                  * */
 /* *             1.0.6 - 07/29/2003 - G.R-P                                 * */
 /* *             - added conditionals around PAST chunk support             * */
+/* *                                                                        * */
+/* *             1.0.7 - 03/24/2004 - G.R-P                                 * */
+/* *             - added more SKIPCHUNK conditionals                        * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -326,6 +329,7 @@ mng_retcode mng_create_ani_pplt   (mng_datap      pData,
                                    mng_uint8p     paUsedentries);
 #endif
 
+#ifndef MNG_SKIPCHUNK_MAGN
 mng_retcode mng_create_ani_magn   (mng_datap      pData,
                                    mng_uint16     iFirstid,
                                    mng_uint16     iLastid,
@@ -337,6 +341,7 @@ mng_retcode mng_create_ani_magn   (mng_datap      pData,
                                    mng_uint16     iMT,
                                    mng_uint16     iMB,
                                    mng_uint8      iMethodY);
+#endif
 
 #ifndef MNG_SKIPCHUNK_PAST
 mng_retcode mng_create_ani_past   (mng_datap      pData,
@@ -348,9 +353,11 @@ mng_retcode mng_create_ani_past   (mng_datap      pData,
                                    mng_ptr        pSources);
 #endif
 
+#ifndef MNG_SKIPCHUNK_DISC
 mng_retcode mng_create_ani_disc   (mng_datap      pData,
                                    mng_uint32     iCount,
                                    mng_uint16p    pIds);
+#endif
 
 /* ************************************************************************** */
 
@@ -367,8 +374,10 @@ mng_retcode mng_free_ani_gama     (mng_datap    pData,
 mng_retcode mng_free_ani_chrm     (mng_datap    pData,
                                    mng_objectp  pObject);
 #endif
+#ifndef MNG_SKIPCHUNK_sRGB
 mng_retcode mng_free_ani_srgb     (mng_datap    pData,
                                    mng_objectp  pObject);
+#endif
 #ifndef MNG_SKIPCHUNK_iCCP
 mng_retcode mng_free_ani_iccp     (mng_datap    pData,
                                    mng_objectp  pObject);
@@ -377,10 +386,12 @@ mng_retcode mng_free_ani_iccp     (mng_datap    pData,
 mng_retcode mng_free_ani_bkgd     (mng_datap    pData,
                                    mng_objectp  pObject);
 #endif
+#ifndef MNG_SKIPCHUNK_LOOP
 mng_retcode mng_free_ani_loop     (mng_datap    pData,
                                    mng_objectp  pObject);
 mng_retcode mng_free_ani_endl     (mng_datap    pData,
                                    mng_objectp  pObject);
+#endif
 mng_retcode mng_free_ani_defi     (mng_datap    pData,
                                    mng_objectp  pObject);
 mng_retcode mng_free_ani_basi     (mng_datap    pData,
@@ -419,8 +430,10 @@ mng_retcode mng_free_ani_ijng     (mng_datap    pData,
 mng_retcode mng_free_ani_pplt     (mng_datap    pData,
                                    mng_objectp  pObject);
 #endif
+#ifndef MNG_SKIPCHUNK_MAGN
 mng_retcode mng_free_ani_magn     (mng_datap    pData,
                                    mng_objectp  pObject);
+#endif
 #ifndef MNG_SKIPCHUNK_PAST
 mng_retcode mng_free_ani_past     (mng_datap    pData,
                                    mng_objectp  pObject);
@@ -443,8 +456,10 @@ mng_retcode mng_process_ani_gama  (mng_datap    pData,
 mng_retcode mng_process_ani_chrm  (mng_datap    pData,
                                    mng_objectp  pObject);
 #endif
+#ifndef MNG_SKIPCHUNK_sRGB
 mng_retcode mng_process_ani_srgb  (mng_datap    pData,
                                    mng_objectp  pObject);
+#endif
 #ifndef MNG_SKIPCHUNK_iCCP
 mng_retcode mng_process_ani_iccp  (mng_datap    pData,
                                    mng_objectp  pObject);
@@ -453,10 +468,12 @@ mng_retcode mng_process_ani_iccp  (mng_datap    pData,
 mng_retcode mng_process_ani_bkgd  (mng_datap    pData,
                                    mng_objectp  pObject);
 #endif
+#ifndef MNG_SKIPCHUNK_LOOP
 mng_retcode mng_process_ani_loop  (mng_datap    pData,
                                    mng_objectp  pObject);
 mng_retcode mng_process_ani_endl  (mng_datap    pData,
                                    mng_objectp  pObject);
+#endif
 mng_retcode mng_process_ani_defi  (mng_datap    pData,
                                    mng_objectp  pObject);
 mng_retcode mng_process_ani_basi  (mng_datap    pData,

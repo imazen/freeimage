@@ -1,14 +1,8 @@
-libmng 1.0.6
+libmng 1.0.8
 ------------
 
-Final release.
-
-There's been no feedback after the 1.0.6 beta, so here you go.
-
-This release is mostly in the light of footprint-reduction to please the
-Mozilla crew with a leaner and meaner libmng. See bug 18574 if you're
-interested:
-http://bugzilla.mozilla.org/show_bug.cgi?id=18574
+Added special data-pushing mechanisms and a few other tid-bits.
+See CHANGELOG for details.
 
 
 Y.T.

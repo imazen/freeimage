@@ -2,7 +2,7 @@
 /* *                                                                        * */
 /* * COPYRIGHT NOTICE:                                                      * */
 /* *                                                                        * */
-/* * Copyright (c) 2000-2003 Gerard Juyn                                    * */
+/* * Copyright (c) 2000-2004 Gerard Juyn                                    * */
 /* * [You may insert additional notices after this sentence if you modify   * */
 /* *  this source]                                                          * */
 /* *                                                                        * */
@@ -11,6 +11,8 @@
 /* *                                                                        * */
 /* *    Gerard Juyn                 - gjuyn :at: users.sourceforge.net      * */
 /* *    Glenn Randers-Pehrson       - glennrp :at: users.sourceforge.net    * */
+/* *    Raphael Assenat             - raph :at: raphnet.net                 * */
+/* *    John Stiles                 -                                       * */
 /* *                                                                        * */
 /* * The MNG Library is supplied "AS IS".  The Contributing Authors         * */
 /* * disclaim all warranties, expressed or implied, including, without      * */
@@ -100,8 +102,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng.h                  copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng.h                  copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : main application interface                                 * */
 /* *                                                                        * */
@@ -260,6 +262,24 @@
 /* *             1.0.6 - 07/14/2003 - G. Randers-Pehrson                    * */
 /* *             - further optional removal of unused functions             * */
 /* *                                                                        * */
+/* *             1.0.7 - 11/27/2003 - R.A                                   * */
+/* *             - added CANVAS_RGB565 and CANVAS_BGR565                    * */
+/* *             1.0.7 - 12/06/2003 - R.A                                   * */
+/* *             - added CANVAS_RGBA565 and CANVAS_BGRA565                  * */
+/* *             1.0.7 - 01/25/2004 - J.S                                   * */
+/* *             - added premultiplied alpha canvas' for RGBA, ARGB, ABGR   * */
+/* *             1.0.7 - 03/07/2004 - G. Randers-Pehrson                    * */
+/* *             - put gamma, cms-related declarations inside #ifdef        * */
+/* *             1.0.7 - 03/10/2004 - G.R-P                                 * */
+/* *             - added conditionals around openstream/closestream         * */
+/* *                                                                        * */
+/* *             1.0.8 - 04/02/2004 - G.Juyn                                * */
+/* *             - added CRC existence & checking flags                     * */
+/* *             1.0.8 - 04/12/2004 - G.Juyn                                * */
+/* *             - added data-push mechanisms for specialized decoders      * */
+/* *             1.0.8 - 06/05/2004 - G.R-P                                 * */
+/* *             - define MNG_INCLUDE_ZLIB when MNG_USE_ZLIB_CRC is defined * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #if defined(__BORLANDC__) && defined(MNG_STRICT_ANSI)
@@ -283,6 +303,10 @@
 
 #ifdef MNG_SUPPORT_WRITE
 #define MNG_INCLUDE_WRITE_PROCS
+#endif
+
+#ifdef MNG_USE_ZLIB_CRC
+#define MNG_INCLUDE_ZLIB
 #endif
 
 #ifdef MNG_SUPPORT_DISPLAY
@@ -398,12 +422,12 @@ extern "C" {
 /* *                                                                        * */
 /* ************************************************************************** */
 
-#define MNG_VERSION_TEXT    "1.0.6"
+#define MNG_VERSION_TEXT    "1.0.8"
 #define MNG_VERSION_SO      1          /* eg. libmng.so.1  */
 #define MNG_VERSION_DLL     1          /* but: libmng.dll (!) */
 #define MNG_VERSION_MAJOR   1
 #define MNG_VERSION_MINOR   0
-#define MNG_VERSION_RELEASE 6
+#define MNG_VERSION_RELEASE 8
 #define MNG_VERSION_BETA    MNG_FALSE
 
 MNG_EXT mng_pchar MNG_DECL mng_version_text      (void);
@@ -478,6 +502,51 @@ MNG_EXT mng_retcode MNG_DECL mng_cleanup         (mng_handle*   hHandle);
 #ifdef MNG_SUPPORT_READ
 MNG_EXT mng_retcode MNG_DECL mng_read            (mng_handle    hHandle);
 MNG_EXT mng_retcode MNG_DECL mng_read_resume     (mng_handle    hHandle);
+#endif
+
+/* high-level "data push" functions */
+/* these functions can be used in situations where data is streaming into the
+   application and needs to be buffered by libmng before it is actually
+   requested by libmng itself. the pushing complements the normal reading
+   mechanism, but applications can decide to always return "0 bytes read" to
+   make libmng go into suspension mode with the returncode MNG_NEEDMOREDATA */
+/* mng_read_pushdata can be used to push blobs of data of arbitrary size;
+   mng_read_pushsig and mng_read_pushchunk can be used if the application
+   has already done some low-level decoding (eg. at the chunk level) */
+/* the data being pushed into libmng with mng_read_pushdata *must* contain
+   the regular 4-byte chunklength, but *must not* contain it with
+   mng_read_pushchunk!!! */
+/* mng_read_pushsig is used to prevent libmng from trying to parse the regular
+   PNG/JNG/MNG signature bytes; the application must have done this itself
+   and *must* indicate the proper type in the function call or things will
+   go amiss!!
+   also you *must* call this first, so pretty much right after mng_initialize
+   and certainly before any call to mng_read or mng_readdisplay !!!! */
+/* IMPORTANT!!! data can only be safely pushed when libmng is in a
+   "wait" state; eg. during MNG_NEEDTIMERWAIT, MNG_NEEDSECTIONWAIT or
+   MNG_NEEDMOREDATA !!! this just means you can't have one thread displaying
+   and another thread pushing data !!! */
+/* if bOwnership = MNG_TRUE, libmng will retain the supplied pointer and
+   *will* expect the buffer to remain available until libmng is finished
+   with it; what happens then depends on whether or not you have set the
+   releasedata() callback; if this is set than the supplied buffer will
+   be returned through this callback and your application can take care of
+   cleaning it up, otherwise libmng will use its internal freeing mechanism
+   (which, depending on compile-options, will be the standard C free() call,
+   or the memfree() callback */
+/* if bOwnership = MNG_FALSE, libmng will just copy the data into its own
+   buffers and dispose of it in the normal way */
+#ifdef MNG_SUPPORT_READ
+MNG_EXT mng_retcode MNG_DECL mng_read_pushdata   (mng_handle    hHandle,
+                                                  mng_ptr       pData,
+                                                  mng_size_t    iLength,
+                                                  mng_bool      bTakeownership);
+MNG_EXT mng_retcode MNG_DECL mng_read_pushsig    (mng_handle    hHandle,
+                                                  mng_imgtype   eSigtype);
+MNG_EXT mng_retcode MNG_DECL mng_read_pushchunk  (mng_handle    hHandle,
+                                                  mng_ptr       pChunk,
+                                                  mng_size_t    iLength,
+                                                  mng_bool      bTakeownership);
 #endif
 
 /* high-level write & create functions */
@@ -558,10 +627,12 @@ MNG_EXT mng_retcode MNG_DECL mng_setcb_memfree       (mng_handle        hHandle,
 /* open- & close-stream callbacks */
 /* called to open & close streams for input or output */
 #if defined(MNG_SUPPORT_READ) || defined(MNG_SUPPORT_WRITE)
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
 MNG_EXT mng_retcode MNG_DECL mng_setcb_openstream    (mng_handle        hHandle,
                                                       mng_openstream    fProc);
 MNG_EXT mng_retcode MNG_DECL mng_setcb_closestream   (mng_handle        hHandle,
                                                       mng_closestream   fProc);
+#endif
 #endif
 
 /* read callback */
@@ -602,7 +673,16 @@ MNG_EXT mng_retcode MNG_DECL mng_setcb_traceproc     (mng_handle        hHandle,
                 in most other case -> level == 1) */
 /* processsave & processseek are called for SAVE/SEEK chunks */
 /* processneed is called for the nEED chunk; you should specify a callback
-   for this as the default behavior will be to abort processing */
+   for this as the default behavior will be to abort processing, unless
+   the requirement is one of:
+   - a supported chunk
+   - the text "draft nn" where nn is a numeric value
+   - the text "MNG-1.0" or "MNG-1.1"
+   - the text "CACHEOFF" */
+/* processmend is called at the very end of the animation-stream;
+   note that this may not be the end of the animation though! */
+/* processterm is called when a TERM chunk is encountered; there can be only
+   1 in the stream (or none) */
 /* processunknown is called after reading each non-critical unknown chunk */
 #ifdef MNG_SUPPORT_READ
 MNG_EXT mng_retcode MNG_DECL mng_setcb_processheader (mng_handle        hHandle,
@@ -617,10 +697,10 @@ MNG_EXT mng_retcode MNG_DECL mng_setcb_processneed   (mng_handle        hHandle,
                                                       mng_processneed   fProc);
 MNG_EXT mng_retcode MNG_DECL mng_setcb_processmend   (mng_handle        hHandle,
                                                       mng_processmend   fProc);
-MNG_EXT mng_retcode MNG_DECL mng_setcb_processunknown(mng_handle        hHandle,
-                                                      mng_processunknown fProc);
 MNG_EXT mng_retcode MNG_DECL mng_setcb_processterm   (mng_handle        hHandle,
                                                       mng_processterm   fProc);
+MNG_EXT mng_retcode MNG_DECL mng_setcb_processunknown(mng_handle        hHandle,
+                                                      mng_processunknown fProc);
 #endif
 
 /* callbacks for display processing */
@@ -679,6 +759,15 @@ MNG_EXT mng_retcode MNG_DECL mng_setcb_processarow   (mng_handle        hHandle,
 #endif /* MNG_APP_CMS */
 #endif /* MNG_SUPPORT_DISPLAY */
 
+/* release push data callback */
+/* used when the app pushes data into libmng (as opposed to libmng pulling it)
+   and relinquishes ownership of the pushed data-buffer, but *does* want to
+   release (free) the buffer itself once libmng has finished processing it */
+#ifdef MNG_SUPPORT_READ
+MNG_EXT mng_retcode MNG_DECL mng_setcb_releasedata   (mng_handle        hHandle,
+                                                      mng_releasedata   fProc);
+#endif
+
 /* ************************************************************************** */
 /* *                                                                        * */
 /* *  Callback get functions                                                * */
@@ -692,9 +781,16 @@ MNG_EXT mng_memfree       MNG_DECL mng_getcb_memfree       (mng_handle hHandle);
 #endif
 
 /* see _setcb_ */
+#ifdef MNG_SUPPORT_READ
+MNG_EXT mng_releasedata   MNG_DECL mng_getcb_releasedata   (mng_handle hHandle);
+#endif
+
+/* see _setcb_ */
 #if defined(MNG_SUPPORT_READ) || defined(MNG_WRITE_SUPPORT)
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
 MNG_EXT mng_openstream    MNG_DECL mng_getcb_openstream    (mng_handle hHandle);
 MNG_EXT mng_closestream   MNG_DECL mng_getcb_closestream   (mng_handle hHandle);
+#endif
 #endif
 
 /* see _setcb_ */
@@ -808,10 +904,41 @@ MNG_EXT mng_retcode MNG_DECL mng_set_cacheplayback   (mng_handle        hHandle,
 MNG_EXT mng_retcode MNG_DECL mng_set_doprogressive   (mng_handle        hHandle,
                                                       mng_bool          bDoProgressive);
 
+/* Indicates existence and required checking of the CRC in input streams,
+   and generation in output streams */
+/* !!!! Use this ONLY if you know what you are doing !!!! */
+/* The value is a combination of the following flags:
+   0x0000001 = CRC is present in the input stream
+   0x0000002 = CRC must be generated in the output stream
+   0x0000010 = CRC should be checked for ancillary chunks
+   0x0000020 = a faulty CRC for ancillary chunks generates a warning only
+   0x0000040 = a faulty CRC for ancillary chunks generates an error
+   0x0000100 = CRC should be checked for critical chunks
+   0x0000200 = a faulty CRC for critical chunks generates a warning only
+   0x0000400 = a faulty CRC for critical chunks generates an error
+
+   The default is 0x00000533 = CRC present in input streams; should be checked;
+                               warning for ancillary chunks; error for critical
+                               chunks; generate CRC for output streams
+
+   Note that some combinations are meaningless; eg. if the CRC is not present
+   it won't do any good to turn the checking flags on; if a checking flag
+   is off, it doesn't do any good to ask for generation of warnings or errors.
+   Also libmng will generate either an error or a warning, not both,
+   so if you specify both the default will be to generate an error!
+   The only useful combinations for input are 331, 551, 351, 531, 0, 301, 501
+   and optionally 031 and 051, but only checking ancillary chunks and not
+   critical chunks is generally not a very good idea!!!
+   If you've also writing these values should be combined with 0x02 if
+   CRC's are required in the output stream
+   */
+MNG_EXT mng_retcode MNG_DECL mng_set_crcmode         (mng_handle        hHandle,
+                                                      mng_uint32        iCrcmode);
+
 /* Color-management necessaries */
 /*
     *************************************************************************
-                  !!!!!!!! THIS BIT IS IMPORTANT !!!!!!!!!
+                 !!!!!!!! THIS NEXT BIT IS IMPORTANT !!!!!!!!!
     *************************************************************************
 
     If you have defined MNG_FULL_CMS (and are using lcms), you will have to
@@ -825,7 +952,7 @@ MNG_EXT mng_retcode MNG_DECL mng_set_doprogressive   (mng_handle        hHandle,
     (eg. Windows, Linux and some others)
 
     If you are compiling for a sRGB compliant system you probably won't have
-    to do anything special. (unless you want to ofcourse)
+    to do anything special. (unless you want to of course)
 
     If you are compiling for a non-sRGB compliant system
     (eg. SGI, Mac, Next, others...)
@@ -843,7 +970,7 @@ MNG_EXT mng_retcode MNG_DECL mng_set_doprogressive   (mng_handle        hHandle,
     http://www.littlecms.com for more info.
 
     *************************************************************************
-                  !!!!!!!! THIS BIT IS IMPORTANT !!!!!!!!!
+                 !!!!!!!! THE BIT ABOVE IS IMPORTANT !!!!!!!!!
     *************************************************************************
 */
 /* mng_set_srgb tells libmng if it's running on a sRGB compliant system or not
@@ -873,8 +1000,8 @@ MNG_EXT mng_retcode MNG_DECL mng_set_srgbprofile2    (mng_handle        hHandle,
 MNG_EXT mng_retcode MNG_DECL mng_set_srgbimplicit    (mng_handle        hHandle);
 #endif
 
+#if defined(MNG_FULL_CMS) || defined(MNG_GAMMA_ONLY) || defined(MNG_APP_CMS)
 /* Gamma settings */
-/* only used if you #define MNG_FULL_CMS or #define MNG_GAMMA_ONLY */
 /* ... blabla (explain gamma processing a little; eg. formula & stuff) ... */
 MNG_EXT mng_retcode MNG_DECL mng_set_viewgamma       (mng_handle        hHandle,
                                                       mng_float         dGamma);
@@ -887,6 +1014,7 @@ MNG_EXT mng_retcode MNG_DECL mng_set_viewgammaint    (mng_handle        hHandle,
 MNG_EXT mng_retcode MNG_DECL mng_set_displaygammaint (mng_handle        hHandle,
                                                       mng_uint32        iGamma);
 MNG_EXT mng_retcode MNG_DECL mng_set_dfltimggammaint (mng_handle        hHandle,
+#endif
                                                       mng_uint32        iGamma);
 
 #ifndef MNG_SKIP_MAXCANVAS
@@ -1050,6 +1178,9 @@ MNG_EXT mng_bool    MNG_DECL mng_get_cacheplayback   (mng_handle        hHandle)
 
 /* see _set_ */
 MNG_EXT mng_bool    MNG_DECL mng_get_doprogressive   (mng_handle        hHandle);
+
+/* see _set_ */
+MNG_EXT mng_uint32  MNG_DECL mng_get_crcmode         (mng_handle        hHandle);
 
 /* see _set_ */
 #if defined(MNG_SUPPORT_DISPLAY) && defined(MNG_FULL_CMS)
@@ -2311,13 +2442,17 @@ MNG_EXT mng_retcode MNG_DECL mng_updatemngsimplicity (mng_handle        hHandle,
 
 #define MNG_CANVAS_RGB8      0x00000000L
 #define MNG_CANVAS_RGBA8     0x00001000L
+#define MNG_CANVAS_RGBA8_PM  0x00009000L
 #define MNG_CANVAS_ARGB8     0x00003000L
+#define MNG_CANVAS_ARGB8_PM  0x0000B000L
 #define MNG_CANVAS_RGB8_A8   0x00005000L
 #define MNG_CANVAS_BGR8      0x00000001L
 #define MNG_CANVAS_BGRX8     0x00010001L
 #define MNG_CANVAS_BGRA8     0x00001001L
-#define MNG_CANVAS_BGRA8PM   0x00009001L
+#define MNG_CANVAS_BGRA8PM   0x00009001L         /* backward compatibility */
+#define MNG_CANVAS_BGRA8_PM  0x00009001L
 #define MNG_CANVAS_ABGR8     0x00003001L
+#define MNG_CANVAS_ABGR8_PM  0x0000B001L
 #define MNG_CANVAS_RGB16     0x00000100L         /* not supported yet */
 #define MNG_CANVAS_RGBA16    0x00001100L         /* not supported yet */
 #define MNG_CANVAS_ARGB16    0x00003100L         /* not supported yet */
@@ -2333,6 +2468,11 @@ MNG_EXT mng_retcode MNG_DECL mng_updatemngsimplicity (mng_handle        hHandle,
 #define MNG_CANVAS_DX15      0x00000003L         /* not supported yet */
 #define MNG_CANVAS_DX16      0x00000004L         /* not supported yet */
 
+#define MNG_CANVAS_RGB565    0x00000005L
+#define MNG_CANVAS_RGBA565   0x00001005L
+#define MNG_CANVAS_BGR565    0x00000006L
+#define MNG_CANVAS_BGRA565   0x00001006L
+
 #define MNG_CANVAS_PIXELTYPE(C)  (C & 0x000000FFL)
 #define MNG_CANVAS_BITDEPTH(C)   (C & 0x00000100L)
 #define MNG_CANVAS_HASALPHA(C)   (C & 0x00001000L)
@@ -2346,6 +2486,8 @@ MNG_EXT mng_retcode MNG_DECL mng_updatemngsimplicity (mng_handle        hHandle,
 #define MNG_CANVAS_GRAY(C)       (MNG_CANVAS_PIXELTYPE (C) == 2)
 #define MNG_CANVAS_DIRECTX15(C)  (MNG_CANVAS_PIXELTYPE (C) == 3)
 #define MNG_CANVAS_DIRECTX16(C)  (MNG_CANVAS_PIXELTYPE (C) == 4)
+#define MNG_CANVAS_RGB_565(C)    (MNG_CANVAS_PIXELTYPE (C) == 5)
+#define MNG_CANVAS_BGR_565(C)    (MNG_CANVAS_PIXELTYPE (C) == 6)
 #define MNG_CANVAS_8BIT(C)       (!MNG_CANVAS_BITDEPTH (C))
 #define MNG_CANVAS_16BIT(C)      (MNG_CANVAS_BITDEPTH (C))
 #define MNG_CANVAS_PIXELFIRST(C) (!MNG_CANVAS_ALPHAFIRST (C))
@@ -2669,6 +2811,30 @@ MNG_EXT mng_retcode MNG_DECL mng_updatemngsimplicity (mng_handle        hHandle,
 #define MNG_TYPE_TEXT 0
 #define MNG_TYPE_ZTXT 1
 #define MNG_TYPE_ITXT 2
+
+/* ************************************************************************** */
+/* *                                                                        * */
+/* *  CRC processing masks                                                  * */
+/* *                                                                        * */
+/* ************************************************************************** */
+
+#define MNG_CRC_INPUT              0x0000000f
+#define MNG_CRC_INPUT_NONE         0x00000000
+#define MNG_CRC_INPUT_PRESENT      0x00000001
+#define MNG_CRC_OUTPUT             0x000000f0
+#define MNG_CRC_OUTPUT_NONE        0x00000000
+#define MNG_CRC_OUTPUT_GENERATE    0x00000020
+#define MNG_CRC_OUTPUT_DUMMY       0x00000040
+#define MNG_CRC_ANCILLARY          0x00000f00
+#define MNG_CRC_ANCILLARY_IGNORE   0x00000000
+#define MNG_CRC_ANCILLARY_DISCARD  0x00000100
+#define MNG_CRC_ANCILLARY_WARNING  0x00000200
+#define MNG_CRC_ANCILLARY_ERROR    0x00000300
+#define MNG_CRC_CRITICAL           0x0000f000
+#define MNG_CRC_CRITICAL_IGNORE    0x00000000
+#define MNG_CRC_CRITICAL_WARNING   0x00002000
+#define MNG_CRC_CRITICAL_ERROR     0x00003000
+#define MNG_CRC_DEFAULT            0x00002121
 
 /* ************************************************************************** */
 

@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_data.h             copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_data.h             copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.8                                                      * */
 /* *                                                                        * */
 /* * purpose   : main data structure definition                             * */
 /* *                                                                        * */
@@ -131,9 +131,19 @@
 /* *             1.0.6 - 07/05/2003 - G. R-P                                * */
 /* *             - optionally use zlib's crc32() function                   * */
 /* *             1.0.6 - 07/29/2003 - G.R-P                                 * */
-/* *             - added conditionals around PAST chunk support             * */
+/* *             - added SKIPCHUNK conditionals around PAST chunk support   * */
 /* *             1.0.6 - 08/17/2003 - G.R-P                                 * */
 /* *             - added iPNGdepth member to pData structure                * */
+/* *                                                                        * */
+/* *             1.0.7 - 03/10/2004 - G.R-P                                 * */
+/* *             - added conditionals around openstream/closestream         * */
+/* *             1.0.7 - 03/24/2004 - G.R-P                                 * */
+/* *             - added more SKIPCHUNK conditionals                        * */
+/* *                                                                        * */
+/* *             1.0.8 - 04/02/2004 - G.Juyn                                * */
+/* *             - added CRC existence & checking flags                     * */
+/* *             1.0.8 - 04/10/2004 - G.Juyn                                * */
+/* *             - added data-push mechanisms for specialized decoders      * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -203,6 +213,7 @@ typedef struct mng_savedata_struct {
 
            mng_uint32        iGlobalGamma;       /* global gAMA fields */
 
+#ifndef MNG_SKIPCHUNK_cHRM
            mng_uint32        iGlobalWhitepointx; /* global cHRM fields */
            mng_uint32        iGlobalWhitepointy;
            mng_uint32        iGlobalPrimaryredx;
@@ -211,6 +222,7 @@ typedef struct mng_savedata_struct {
            mng_uint32        iGlobalPrimarygreeny;
            mng_uint32        iGlobalPrimarybluex;
            mng_uint32        iGlobalPrimarybluey;
+#endif
 
            mng_uint8         iGlobalRendintent;  /* global sRGB fields */
 
@@ -225,6 +237,22 @@ typedef struct mng_savedata_struct {
         } mng_savedata;
 
 typedef mng_savedata * mng_savedatap;
+
+/* ************************************************************************** */
+/* *                                                                        * */
+/* * Internal buffer structure for data push mechanisms                     * */
+/* *                                                                        * */
+/* ************************************************************************** */
+
+typedef struct {
+           mng_ptr           pNext;              /* for linked list */
+           mng_ptr           pData;              /* used for chunks & data */
+           mng_uint32        iLength;
+           mng_bool          bOwned;
+           mng_uint8p        pDatanext;          /* only used for data */
+           mng_uint32        iRemaining;
+        } mng_pushdata;
+typedef mng_pushdata * mng_pushdatap;
 
 /* ************************************************************************** */
 /* *                                                                        * */
@@ -252,7 +280,7 @@ typedef struct mng_data_struct {
            mng_uint32        iSimplicity;
            mng_uint8         iAlphadepth;        /* indicates expected alpha-depth */
 
-           mng_uint32        iImagelevel;        /* level an image inside a stream */
+           mng_uint32        iImagelevel;        /* level of image inside a stream */
 
            mng_uint32        iCanvasstyle;       /* layout of the drawing-canvas */
            mng_uint32        iBkgdstyle;         /* layout of the background-canvas */
@@ -284,7 +312,8 @@ typedef struct mng_data_struct {
            mng_bool          bStorechunks;       /* switch for storing chunkdata */
            mng_bool          bSectionbreaks;     /* indicate NEEDSECTIONWAIT breaks */
            mng_bool          bCacheplayback;     /* switch to cache playback info */
-           mng_bool          bDoProgressive;     /* progressive refresh for large images */ 
+           mng_bool          bDoProgressive;     /* progressive refresh for large images */
+           mng_uint32        iCrcmode;           /* CRC existence & checking flags */
 
            mng_speedtype     iSpeed;             /* speed-modifier for animations */
 
@@ -299,8 +328,11 @@ typedef struct mng_data_struct {
 
            mng_memalloc      fMemalloc;          /* callback pointers */
            mng_memfree       fMemfree;           /* initially nulled */
+           mng_releasedata   fReleasedata;
+#ifndef MNG_NO_OPEN_CLOSE_STREAM
            mng_openstream    fOpenstream;
            mng_closestream   fClosestream;
+#endif
            mng_readdata      fReaddata;
            mng_writedata     fWritedata;
            mng_errorproc     fErrorproc;
@@ -417,12 +449,17 @@ typedef struct mng_data_struct {
            mng_uint32        iChunklen;          /* chunk length */
            mng_uint8p        pReadbufnext;       /* 32K+ suspension-processing */
            mng_uint8p        pLargebufnext;
+
+           mng_pushdatap     pFirstpushchunk;    /* variables for push mechanisms */
+           mng_pushdatap     pLastpushchunk;
+           mng_pushdatap     pFirstpushdata;
+           mng_pushdatap     pLastpushdata;
 #endif /* MNG_SUPPORT_READ */
 
 #ifdef MNG_SUPPORT_WRITE
            mng_bool          bCreating;          /* create/write processing variables */
            mng_bool          bWriting;
-           mng_chunkid       iFirstchunkadded;           
+           mng_chunkid       iFirstchunkadded;
            mng_uint32        iWritebufsize;
            mng_uint8p        pWritebuf;
 #endif
@@ -593,6 +630,7 @@ typedef struct mng_data_struct {
            mng_uint32        iBackimgwidth;
            mng_uint32        iBackimgheight;
 
+#ifndef MNG_SKIPCHUNK_FRAM
            mng_uint8         iFRAMmode;          /* FRAM fields (global) */
            mng_uint32        iFRAMdelay;
            mng_uint32        iFRAMtimeout;
@@ -611,13 +649,16 @@ typedef struct mng_data_struct {
            mng_int32         iFrameclipt;
            mng_int32         iFrameclipb;
 
-           mng_uint32        iNextdelay;         /* delay for *after* next image */
+           mng_uint32        iNextdelay;         /* delay *after* next image */
+#endif
 
-           mng_uint8         iSHOWmode;          /* SAVE fields */
+#ifndef MNG_SKIPCHUNK_SHOW
+           mng_uint8         iSHOWmode;          /* SHOW fields */
            mng_uint16        iSHOWfromid;
            mng_uint16        iSHOWtoid;
            mng_uint16        iSHOWnextid;
            mng_int16         iSHOWskip;
+#endif
 
            mng_uint32        iGlobalPLTEcount;   /* global PLTE fields */
            mng_rgbpaltab     aGlobalPLTEentries;
@@ -627,6 +668,7 @@ typedef struct mng_data_struct {
 
            mng_uint32        iGlobalGamma;       /* global gAMA fields */
 
+#ifndef MNG_SKIPCHUNK_cHRM
            mng_uint32        iGlobalWhitepointx; /* global cHRM fields */
            mng_uint32        iGlobalWhitepointy;
            mng_uint32        iGlobalPrimaryredx;
@@ -635,11 +677,14 @@ typedef struct mng_data_struct {
            mng_uint32        iGlobalPrimarygreeny;
            mng_uint32        iGlobalPrimarybluex;
            mng_uint32        iGlobalPrimarybluey;
+#endif
 
            mng_uint8         iGlobalRendintent;  /* global sRGB fields */
 
+#ifndef MNG_SKIPCHUNK_iCCP
            mng_uint32        iGlobalProfilesize; /* global iCCP fields */
            mng_ptr           pGlobalProfile;
+#endif
 
            mng_uint16        iGlobalBKGDred;     /* global bKGD fields */
            mng_uint16        iGlobalBKGDgreen;
@@ -661,6 +706,7 @@ typedef struct mng_data_struct {
            mng_fptr          fDeltareplacerow;
            mng_fptr          fDeltaputrow;
 
+#ifndef MNG_SKIPCHUNK_PROM
            mng_fptr          fPromoterow;        /* internal PROM fields */
            mng_fptr          fPromBitdepth;
            mng_ptr           pPromBuf;
@@ -670,10 +716,13 @@ typedef struct mng_data_struct {
            mng_uint32        iPromWidth;
            mng_ptr           pPromSrc;
            mng_ptr           pPromDst;
+#endif
 
+#ifndef MNG_SKIPCHUNK_MAGN
            mng_uint16        iMAGNfromid;
            mng_uint16        iMAGNcurrentid;
            mng_uint16        iMAGNtoid;
+#endif
 
 #ifndef MNG_SKIPCHUNK_PAST
            mng_uint16        iPASTid;

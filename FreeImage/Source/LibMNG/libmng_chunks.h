@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_chunks.h           copyright (c) 2000-2003 G.Juyn   * */
-/* * version   : 1.0.6                                                      * */
+/* * file      : libmng_chunks.h           copyright (c) 2000-2004 G.Juyn   * */
+/* * version   : 1.0.7                                                      * */
 /* *                                                                        * */
 /* * purpose   : Chunk structures (definition)                              * */
 /* *                                                                        * */
@@ -49,6 +49,9 @@
 /* *               added MNG_SKIPCHUNK_cHNK footprint optimizations         * */
 /* *             1.0.6 - 07/29/2003 - G.R-P                                 * */
 /* *             - added conditionals around PAST chunk support             * */
+/* *                                                                        * */
+/* *             1.0.7 - 03/24/2004 - G.R-P                                 * */
+/* *             - added conditional around MNG_NO_DELTA_PNG support        * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -685,6 +688,8 @@ typedef mng_jsep * mng_jsepp;
 
 /* ************************************************************************** */
 
+#ifndef MNG_NO_DELTA_PNG
+
 typedef struct {                       /* DHDR */
            mng_chunk_header  sHeader;
            mng_uint16        iObjectid;
@@ -778,6 +783,7 @@ typedef struct mng_ordr_struct {       /* ORDR */
         } mng_ordr;
 typedef mng_ordr * mng_ordrp;
 #endif
+#endif /* MNG_NO_DELTA_PNG */
 
 /* ************************************************************************** */
 
