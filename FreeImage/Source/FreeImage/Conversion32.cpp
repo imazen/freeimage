@@ -34,9 +34,9 @@ FreeImage_ConvertLine1To32(BYTE *target, BYTE *source, int width_in_pixels, RGBQ
 	for (int cols = 0; cols < width_in_pixels; cols++) {
 		int index = (source[cols>>3] & (0x80 >> (cols & 0x07))) != 0 ? 1 : 0;
 
-		target[FIRGBA_RED] = palette[index].rgbBlue;
+		target[FIRGBA_BLUE] = palette[index].rgbBlue;
 		target[FIRGBA_GREEN] = palette[index].rgbGreen;
-		target[FIRGBA_BLUE] = palette[index].rgbRed;
+		target[FIRGBA_RED] = palette[index].rgbRed;
 		target[FIRGBA_ALPHA] = 0xff;
 		target += 4;
 	}	
@@ -49,15 +49,15 @@ FreeImage_ConvertLine4To32(BYTE *target, BYTE *source, int width_in_pixels, RGBQ
 
 	for (int cols = 0 ; cols < width_in_pixels ; ++cols) {
 		if (low_nibble) {
-			target[FIRGBA_RED] = palette[LOWNIBBLE(source[x])].rgbBlue;
+			target[FIRGBA_BLUE] = palette[LOWNIBBLE(source[x])].rgbBlue;
 			target[FIRGBA_GREEN] = palette[LOWNIBBLE(source[x])].rgbGreen;
-			target[FIRGBA_BLUE] = palette[LOWNIBBLE(source[x])].rgbRed;
+			target[FIRGBA_RED] = palette[LOWNIBBLE(source[x])].rgbRed;
 
 			x++;
 		} else {
-			target[FIRGBA_RED] = palette[HINIBBLE(source[x]) >> 4].rgbBlue;
+			target[FIRGBA_BLUE] = palette[HINIBBLE(source[x]) >> 4].rgbBlue;
 			target[FIRGBA_GREEN] = palette[HINIBBLE(source[x]) >> 4].rgbGreen;
-			target[FIRGBA_BLUE] = palette[HINIBBLE(source[x]) >> 4].rgbRed;
+			target[FIRGBA_RED] = palette[HINIBBLE(source[x]) >> 4].rgbRed;
 		}
 
 		low_nibble = !low_nibble;
@@ -70,9 +70,9 @@ FreeImage_ConvertLine4To32(BYTE *target, BYTE *source, int width_in_pixels, RGBQ
 void DLL_CALLCONV
 FreeImage_ConvertLine8To32(BYTE *target, BYTE *source, int width_in_pixels, RGBQUAD *palette) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[FIRGBA_RED] = palette[source[cols]].rgbBlue;
+		target[FIRGBA_BLUE] = palette[source[cols]].rgbBlue;
 		target[FIRGBA_GREEN] = palette[source[cols]].rgbGreen;
-		target[FIRGBA_BLUE] = palette[source[cols]].rgbRed;
+		target[FIRGBA_RED] = palette[source[cols]].rgbRed;
 		target[FIRGBA_ALPHA] = 0xff;
 		target += 4;
 	}
