@@ -58,7 +58,7 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, DWORD uDstSize, DWORD uSrc
 
 	for(u = 0; u < m_LineLength; u++) {
 		// scan through line of contributions
-		double dCenter = (double)u / dScale;   // reverse mapping
+		double dCenter = (double)u / dScale + dOffset;   // reverse mapping
 		// find the significant edge points that affect the pixel
 		int iLeft = MAX (0, (int)floor (dCenter - dWidth)); 
 		int iRight = MIN ((int)ceil (dCenter + dWidth), int(uSrcSize) - 1); 
@@ -79,7 +79,7 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, DWORD uDstSize, DWORD uSrc
 		double dTotalWeight = 0.0;  // zero sum of weights
 		for(iSrc = iLeft; iSrc <= iRight; iSrc++) {
 			// calculate weights
-			double weight = dFScale * pFilter->Filter(dFScale * (dCenter - (double)iSrc + dOffset));
+			double weight = dFScale * pFilter->Filter(dFScale * (dCenter - (double)iSrc));
 			m_WeightTable[u].Weights[iSrc-iLeft] = weight;
 			dTotalWeight += weight;
 		}
