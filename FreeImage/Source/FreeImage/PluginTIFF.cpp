@@ -653,21 +653,21 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					if (samplesperpixel == 4) {
 						for (x = 0; x < width; x++) {
-							bits[0] = (BYTE)TIFFGetB(row[x]);
-							bits[1] = (BYTE)TIFFGetG(row[x]);
-							bits[2] = (BYTE)TIFFGetR(row[x]);
-							bits[3] = (BYTE)TIFFGetA(row[x]);
+							bits[FIRGBA_BLUE] = (BYTE)TIFFGetB(row[x]);
+							bits[FIRGBA_GREEN] = (BYTE)TIFFGetG(row[x]);
+							bits[FIRGBA_RED] = (BYTE)TIFFGetR(row[x]);
+							bits[FIRGBA_ALPHA] = (BYTE)TIFFGetA(row[x]);
 
-							if (bits[3] != 0)
+							if (bits[FIRGBA_ALPHA] != 0)
 								has_alpha = TRUE;								
 
 							bits += 4;
 						}
 					} else {
 						for (x = 0; x < width; x++) {
-							bits[0] = (BYTE)TIFFGetB(row[x]);
-							bits[1] = (BYTE)TIFFGetG(row[x]);
-							bits[2] = (BYTE)TIFFGetR(row[x]);
+							bits[FIRGB_BLUE] = (BYTE)TIFFGetB(row[x]);
+							bits[FIRGB_GREEN] = (BYTE)TIFFGetG(row[x]);
+							bits[FIRGB_RED] = (BYTE)TIFFGetR(row[x]);
 
 							bits += 3;
 						}
@@ -1018,6 +1018,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 						memcpy(buffer, FreeImage_GetScanLine(dib, height - y - 1), pitch);
 
+#ifndef FREEIMAGE_BIGENDIAN
 						if (photometric != PHOTOMETRIC_SEPARATED) {
 							// TIFFs store color data RGB(A) instead of BGR(A)
 		
@@ -1028,6 +1029,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 								pBuf += samplesperpixel;
 							}
 						}
+#endif
 						// write the scanline to disc
 
 						TIFFWriteScanline(out, buffer, y, 0);
