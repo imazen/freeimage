@@ -22,7 +22,8 @@ Month Day, 2004 - 3.5.0
 * [Riley McNiff] fixed a bug with FreeImage_SetPixelIndex and 4-bit images
 * [Petr Pytelka] fixed returned value in FreeImage_CloseMultiBitmap
 * [Petr Pytelka] fixed index of new page in FreeImage_InsertPage
-
+* [Aaron Shumate] fixed a minor bug in PNG plugin
+* [Aaron Shumate] fixed a bug in IFF plugin
 
 July 8th, 2004 - 3.4.0
 ! [Jim Keir] improved FreeImage_FlipVertical function
