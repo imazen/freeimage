@@ -42,6 +42,14 @@ int main(int argc, char *argv[]) {
 	unsigned width  = 512;
 	unsigned height = 512;
 
+#if defined(_DEBUG) && defined(WIN32)
+	// check for memory leaks at program exit (after the 'return 0')
+	// through a call to _CrtDumpMemoryLeaks 
+	// note that in debug mode, objects allocated with the new operator 
+	// may be destroyed *after* the end of the main function. 
+	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF|_CRTDBG_ALLOC_MEM_DF);
+#endif
+
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)
 	FreeImage_Initialise();
 #endif
@@ -67,9 +75,7 @@ int main(int argc, char *argv[]) {
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)
 	FreeImage_DeInitialise();
 #endif
-#if defined(_DEBUG) && defined(WIN32)
-    _CrtDumpMemoryLeaks();
-#endif
+
 	return 0;
 }
 
