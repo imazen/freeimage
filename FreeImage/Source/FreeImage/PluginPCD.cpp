@@ -180,14 +180,16 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		io->read_proc(cbcr, width, 1, handle);
 
 		for (int i = 0; i < 2; ++i) {
+			BYTE *img = FreeImage_GetScanLine(dib, start_scan_line);
 			for (int x = 0; x < width; ++x) {
 				int r, g, b;
 
 				YUV2RGB(yl[i][x], cbcr[x / 2], cbcr[(width / 2) + (x / 2)], r, g, b);
 
-				*(FreeImage_GetScanLine(dib, start_scan_line) + (x * 3) + 0) = b;
-				*(FreeImage_GetScanLine(dib, start_scan_line) + (x * 3) + 1) = g;
-				*(FreeImage_GetScanLine(dib, start_scan_line) + (x * 3) + 2) = r;
+				img[FI_RGBA_BLUE] = b;
+				img[FI_RGBA_GREEN] = g;
+				img[FI_RGBA_RED] = r;
+				img += 3;
 			}
 
 			start_scan_line += scan_line_add;

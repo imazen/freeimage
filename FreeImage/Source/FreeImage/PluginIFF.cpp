@@ -51,19 +51,18 @@ typedef struct {
 #pragma pack()
 #endif
 
-// ----------------------------------------------------------
-
-static BOOL big_endian = TRUE;
-
-// ----------------------------------------------------------
-
-static WORD swapWORD( WORD n ) {
-	return big_endian ? (n >> 8) | (n << 8) : n;
+#ifndef FREEIMAGE_BIGENDIAN
+static void
+SwapHeader(BMHD *header) {
+	SwapShort(&header->w);
+	SwapShort(&header->h);
+	SwapShort(&header->x);
+	SwapShort(&header->y);
+	SwapShort(&header->transparentColor);
+	SwapShort(&header->pageWidth);
+	SwapShort(&header->pageHeight);
 }
-
-static DWORD swapDWORD( DWORD n ){
-	return big_endian ? (n >> 24) | (n << 24) | ((n >> 8) & 0xff00) | ((n << 8) & 0xff0000) : n;
-}
+#endif
 
 // ----------------------------------------------------------
 
@@ -157,16 +156,22 @@ MimeType() {
 
 static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {
-	unsigned type = 0;
+	DWORD type = 0;
 
 	io->read_proc(&type, 4, 1, handle);
+#ifndef FREEIMAGE_BIGENDIAN
+	SwapLong(&type);
+#endif
 
-	if (swapDWORD(type) != ID_FORM)
+	if(type != ID_FORM)
 		return FALSE;
 		
 	io->read_proc(&type, 4, 1, handle);
+#ifndef FREEIMAGE_BIGENDIAN
+	SwapLong(&type);
+#endif
 
-	return ((swapDWORD(type) == ID_ILBM) || (swapDWORD(type) == ID_PBM));
+	return (type == ID_ILBM) || (type == ID_PBM);
 }
 
 
@@ -187,20 +192,27 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	if (handle != NULL) {
 		FIBITMAP *dib = 0;
 
-		unsigned type, size;
+		DWORD type, size;
 
 		io->read_proc(&type, 4, 1, handle);
+#ifndef FREEIMAGE_BIGENDIAN
+		SwapLong(&type);
+#endif
 
-		if (swapDWORD(type) != ID_FORM)
+		if(type != ID_FORM)
 			return NULL;
 
-		io->read_proc( &size,4,1,handle );
-
-		size = swapDWORD(size);
+		io->read_proc(&size, 4, 1, handle);
+#ifndef FREEIMAGE_BIGENDIAN
+		SwapLong(&size);
+#endif
 
 		io->read_proc(&type, 4, 1, handle);
+#ifndef FREEIMAGE_BIGENDIAN
+		SwapLong(&type);
+#endif
 
-		if ((swapDWORD(type) != ID_ILBM) && (swapDWORD(type) != ID_PBM))
+		if((type != ID_ILBM) && (type != ID_PBM))
 			return NULL;
 
 		size -= 4;
@@ -208,13 +220,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		unsigned width = 0, height = 0, planes = 0, depth = 0, comp = 0;
 
 		while (size) {
-			unsigned ch_type,ch_size;
+			DWORD ch_type,ch_size;
 
 			io->read_proc(&ch_type, 4, 1, handle);
-			ch_type = swapDWORD(ch_type);
+#ifndef FREEIMAGE_BIGENDIAN
+			SwapLong(&ch_type);
+#endif
 
 			io->read_proc(&ch_size,4,1,handle );
-			ch_size = swapDWORD(ch_size);
+#ifndef FREEIMAGE_BIGENDIAN
+			SwapLong(&ch_size);
+#endif
 
 			unsigned ch_end = io->tell_proc(handle) + ch_size;
 
@@ -225,9 +241,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				BMHD bmhd;
 
 				io->read_proc(&bmhd, sizeof(bmhd), 1, handle);
+#ifndef FREEIMAGE_BIGENDIAN
+				SwapHeader(&bmhd);
+#endif
 
-				width = swapWORD(bmhd.w);
-				height = swapWORD(bmhd.h);
+				width = bmhd.w;
+				height = bmhd.h;
 				planes = bmhd.nPlanes;
 				comp = bmhd.compression;
 
@@ -256,7 +275,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if (!dib)
 					return NULL;
 
-				if (swapDWORD(type) == ID_PBM) {
+				if (type == ID_PBM) {
 					// NON INTERLACED (LBM)
 
 					unsigned line = FreeImage_GetLine(dib) + 1 & ~1;
@@ -352,13 +371,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							}
 						}
 
+#ifndef FREEIMAGE_BIGENDIAN
 						if (depth == 24) {
 							for (unsigned x = 0; x < width; ++x){
-								char t = dest[x * 3];
-								dest[x * 3] = dest[x * 3 + 2];
-								dest[x * 3 + 2] = t;
+								INPLACESWAP(dest[x * 3],dest[x * 3 + 2]);
 							}
 						}
+#endif
 					}
 
 					free(src);

@@ -105,6 +105,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// read the cut header
 
 		io->read_proc(&header, 1, sizeof(CUTHEADER), handle);
+#ifdef FREEIMAGE_BIGENDIAN
+		SwapShort((WORD *)&header.width);
+		SwapShort((WORD *)&header.height);
+#endif
 
 		if ((header.width == 0) || (header.height == 0))
 			return NULL;
@@ -127,9 +131,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		BYTE *bits = FreeImage_GetScanLine(dib, header.height - 1);
 
-		int i = 0, k = 0, count = 0, run = 0;
+		int i = 0, k = 0;
 		int pitch = FreeImage_GetPitch(dib);
 		int size = header.width * header.height;
+		BYTE count = 0, run = 0;
 
 		while (i < size) {
 			io->read_proc(&count, 1, sizeof(BYTE), handle);
@@ -140,7 +145,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				// paint shop pro adds two useless bytes here...
 
-				io->read_proc(&count, 2, sizeof(BYTE), handle);
+				io->read_proc(&count, 1, sizeof(BYTE), handle);
+				io->read_proc(&count, 1, sizeof(BYTE), handle);
 
 				continue;
 			}
