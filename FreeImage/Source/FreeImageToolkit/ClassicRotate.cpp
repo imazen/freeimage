@@ -38,8 +38,6 @@
 
 #define RBLOCK		64	// image blocks of RBLOCK*RBLOCK pixels
 
-#define INTERP(p, w) BYTE(((WORD)p * w) >> 8)
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Prototypes definition
 
@@ -64,157 +62,73 @@ Limited to 45 degree skewing only. Filters two adjacent pixels.
 */
 static void 
 HorizontalSkew(FIBITMAP *src, FIBITMAP *dst, int row, int iOffset, BYTE Weight) {
-	int i;
-
-	int bpp = FreeImage_GetBPP(src);
+	int i, j, iXPos;
 
 	int src_width  = FreeImage_GetWidth(src);
 	int src_height = FreeImage_GetHeight(src);
 	int dst_width  = FreeImage_GetWidth(dst);
 	int dst_height = FreeImage_GetHeight(dst);
 
-	switch(bpp) {
+	switch(FreeImage_GetBPP(src)) {
 		case 8:
-		{
-			BYTE *src_bits = NULL, *dst_bits = NULL;
-			BYTE pxlSrc, pxlLeft, pxlOldLeft;
-
-			// Fill gap left of skew with background
-			dst_bits = FreeImage_GetScanLine(dst, row);
-			for(i = 0; i < iOffset; i++) {
-				dst_bits[i] = 0;
-			}
-
-			src_bits = FreeImage_GetScanLine(src, row);
-			dst_bits = FreeImage_GetScanLine(dst, row);
-
-			pxlOldLeft = 0;
-
-			for(i = 0; i < src_width; i++) {
-				// Loop through row pixels
-				pxlSrc = src_bits[i];
-				// Calculate weights
-				pxlLeft = INTERP(pxlSrc, Weight);
-				// Check boundaries 
-				if((i + iOffset >= 0) && (i + iOffset < dst_width)) {
-					// Update left over on source
-					pxlSrc = pxlSrc - (pxlLeft - pxlOldLeft);
-					dst_bits[i + iOffset] = pxlSrc;
-				}
-				// Save leftover for next pixel in scan
-				pxlOldLeft = pxlLeft;
-			}
-			// Go to rightmost point of skew
-			i = src_width + iOffset;  
-			if(i < dst_width) {
-				// If still in image bounds, put leftovers there
-				dst_bits[i] = pxlOldLeft;
-			}
-			while(++i < dst_width) {
-				// Clear to the right of the skewed line with background
-				dst_bits[i] = 0;
-			}
-		}
-		break;
-
 		case 24:
-		{
-			RGBTRIPLE *src_bits = NULL, *dst_bits = NULL;
-			RGBTRIPLE pxlSrc, pxlLeft, pxlOldLeft;
-
-			// Fill gap left of skew with background
-			dst_bits = (RGBTRIPLE*)FreeImage_GetScanLine(dst, row);
-			for(i = 0; i < iOffset; i++) {
-				memset(&dst_bits[i], 0, sizeof(RGBTRIPLE));
-			}
-
-			src_bits = (RGBTRIPLE*)FreeImage_GetScanLine(src, row);
-			dst_bits = (RGBTRIPLE*)FreeImage_GetScanLine(dst, row);
-
-			memset(&pxlOldLeft, 0, sizeof(RGBTRIPLE));
-
-			for(i = 0; i < src_width; i++) {
-				// Loop through row pixels
-				memcpy(&pxlSrc, &src_bits[i], sizeof(RGBTRIPLE));
-				// Calculate weights
-				pxlLeft.rgbtBlue  = INTERP(pxlSrc.rgbtBlue, Weight);
-				pxlLeft.rgbtGreen = INTERP(pxlSrc.rgbtGreen, Weight);
-				pxlLeft.rgbtRed   = INTERP(pxlSrc.rgbtRed, Weight);
-				// Check boundaries 
-				if((i + iOffset >= 0) && (i + iOffset < dst_width)) {
-					// Update left over on source
-					pxlSrc.rgbtBlue  = pxlSrc.rgbtBlue  - (pxlLeft.rgbtBlue  - pxlOldLeft.rgbtBlue);
-					pxlSrc.rgbtGreen = pxlSrc.rgbtGreen - (pxlLeft.rgbtGreen - pxlOldLeft.rgbtGreen);
-					pxlSrc.rgbtRed   = pxlSrc.rgbtRed   - (pxlLeft.rgbtRed   - pxlOldLeft.rgbtRed);
-					memcpy(&dst_bits[i + iOffset], &pxlSrc, sizeof(RGBTRIPLE));
-				}
-				// Save leftover for next pixel in scan
-				memcpy(&pxlOldLeft, &pxlLeft, sizeof(RGBTRIPLE));
-			}
-			// Go to rightmost point of skew
-			i = src_width + iOffset; 
-			if(i < dst_width) {
-				// If still in image bounds, put leftovers there
-				memcpy(&dst_bits[i], &pxlOldLeft, sizeof(RGBTRIPLE));
-			}
-			while(++i < dst_width) {
-				// Clear to the right of the skewed line with background
-				memset(&dst_bits[i], 0, sizeof(RGBTRIPLE));
-			}
-		}
-		break;
-
 		case 32:
 		{
-			RGBQUAD *src_bits = NULL, *dst_bits = NULL;
-			RGBQUAD pxlSrc, pxlLeft, pxlOldLeft;
+			BYTE pxlSrc[4], pxlLeft[4], pxlOldLeft[4];	// 4 = 32-bit max
 
-			// Fill gap left of skew with background
-			dst_bits = (RGBQUAD*)FreeImage_GetScanLine(dst, row);
-			for(i = 0; i < iOffset; i++) {
-				memset(&dst_bits[i], 0, sizeof(RGBQUAD));
+			// calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+			unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+
+			BYTE *src_bits = FreeImage_GetScanLine(src, row);
+			BYTE *dst_bits = FreeImage_GetScanLine(dst, row);
+
+			// fill gap left of skew with background
+			if(iOffset > 0) {
+				memset(dst_bits, 0, iOffset * bytespp);
 			}
-
-			src_bits = (RGBQUAD*)FreeImage_GetScanLine(src, row);
-			dst_bits = (RGBQUAD*)FreeImage_GetScanLine(dst, row);
-
-			memset(&pxlOldLeft, 0, sizeof(RGBQUAD));
-
+			memset(&pxlOldLeft[0], 0, bytespp);
+			
 			for(i = 0; i < src_width; i++) {
-				// Loop through row pixels
-				memcpy(&pxlSrc, &src_bits[i], sizeof(RGBQUAD));
-				// Calculate weights
-				pxlLeft.rgbBlue     = INTERP(pxlSrc.rgbBlue, Weight);
-				pxlLeft.rgbGreen    = INTERP(pxlSrc.rgbGreen, Weight);
-				pxlLeft.rgbRed      = INTERP(pxlSrc.rgbRed, Weight);
-				pxlLeft.rgbReserved = INTERP(pxlSrc.rgbReserved, Weight);
-				// Check boundaries 
-				if((i + iOffset >= 0) && (i + iOffset < dst_width)) {
-					// Update left over on source
-					pxlSrc.rgbBlue     = pxlSrc.rgbBlue     - (pxlLeft.rgbBlue     - pxlOldLeft.rgbBlue);
-					pxlSrc.rgbGreen    = pxlSrc.rgbGreen    - (pxlLeft.rgbGreen    - pxlOldLeft.rgbGreen);
-					pxlSrc.rgbRed      = pxlSrc.rgbRed      - (pxlLeft.rgbRed      - pxlOldLeft.rgbRed);
-					pxlSrc.rgbReserved = pxlSrc.rgbReserved - (pxlLeft.rgbReserved - pxlOldLeft.rgbReserved);
-					memcpy(&dst_bits[i + iOffset], &pxlSrc, sizeof(RGBQUAD));
+				// loop through row pixels
+				memcpy(&pxlSrc[0], src_bits, bytespp);
+				// calculate weights
+				for(j = 0; j < bytespp; j++) {
+					pxlLeft[j] = BYTE(((WORD)pxlSrc[j] * Weight) / 256);
 				}
-				// Save leftover for next pixel in scan
-				memcpy(&pxlOldLeft, &pxlLeft, sizeof(RGBQUAD));
-			}
-			// Go to rightmost point of skew
-			i = src_width + iOffset; 
-			if(i < dst_width) {
+				// check boundaries 
+				iXPos = i + iOffset;
+				if((iXPos >= 0) && (iXPos < dst_width)) {
+					// update left over on source
+					for(j = 0; j < bytespp; j++) {
+						pxlSrc[j] = pxlSrc[j] - (pxlLeft[j] - pxlOldLeft[j]);
+					}
+					memcpy(&dst_bits[iXPos*bytespp], &pxlSrc[0], bytespp);
+				}
+				// save leftover for next pixel in scan
+				memcpy(&pxlOldLeft[0], &pxlLeft[0], bytespp);
+
+				// next pixel in scan
+				src_bits += bytespp;
+			}			
+
+			// go to rightmost point of skew
+			iXPos = src_width + iOffset; 
+			
+			if(iXPos < dst_width) {
+				dst_bits = FreeImage_GetScanLine(dst, row) + iXPos * bytespp;
+
 				// If still in image bounds, put leftovers there
-				memcpy(&dst_bits[i], &pxlOldLeft, sizeof(RGBQUAD));
-			}
-			while(++i < dst_width) {
-				// Clear to the right of the skewed line with background
-				memset(&dst_bits[i], 0, sizeof(RGBQUAD));
+				memcpy(dst_bits, &pxlOldLeft[0], bytespp);
+
+				// clear to the right of the skewed line with background
+				dst_bits += bytespp;
+				memset(dst_bits, 0, bytespp * (dst_width - iXPos - 1));
 			}
 		}
 		break;
+
 	}
 }
-
 /**
 Skews a column vertically (with filtered weights). 
 Limited to 45 degree skewing only. Filters two adjacent pixels.
@@ -226,162 +140,80 @@ Limited to 45 degree skewing only. Filters two adjacent pixels.
 */
 static void 
 VerticalSkew(FIBITMAP *src, FIBITMAP *dst, int col, int iOffset, BYTE Weight) {
-	int i;
-
-	int bpp = FreeImage_GetBPP(src);
+	int i, j, iYPos;
 
 	int src_width  = FreeImage_GetWidth(src);
 	int src_height = FreeImage_GetHeight(src);
 	int dst_width  = FreeImage_GetWidth(dst);
 	int dst_height = FreeImage_GetHeight(dst);
 
-	int iYPos = 0;
-
-	switch(bpp) {
+	switch(FreeImage_GetBPP(src)) {
 		case 8:
-		{
-			BYTE *src_bits = NULL, *dst_bits = NULL;
-			BYTE pxlSrc, pxlLeft, pxlOldLeft;
-
-			// Fill gap above skew with background
-			for(i = 0; i < iOffset; i++) {
-				dst_bits = FreeImage_GetScanLine(dst, i);
-				dst_bits[col] = 0;
-			}
-
-			pxlOldLeft = 0;
-
-			for(i = 0; i < src_height; i++) {
-				src_bits = FreeImage_GetScanLine(src, i);
-				// Loop through column pixels
-				pxlSrc = src_bits[col];
-				// Calculate weights
-				pxlLeft = INTERP(pxlSrc, Weight);
-				// Check boundaries
-				iYPos = i + iOffset;
-				if((iYPos >= 0) && (iYPos < dst_height)) {
-					// Update left over on source
-					pxlSrc = pxlSrc - (pxlLeft - pxlOldLeft);
-					dst_bits = FreeImage_GetScanLine(dst, iYPos);
-					dst_bits[col] = pxlSrc;
-				}
-				// Save leftover for next pixel in scan
-				pxlOldLeft = pxlLeft;
-			}
-			// Go to bottom point of skew
-			i = src_height + iOffset;
-			if(i < dst_height) {
-				// If still in image bounds, put leftovers there
-				dst_bits = FreeImage_GetScanLine(dst, i);
-				dst_bits[col] = pxlOldLeft;
-			}
-			while(++i < dst_height) {
-				// Clear below skewed line with background
-				dst_bits = FreeImage_GetScanLine(dst, i);
-				dst_bits[col] = 0;
-			}
-		}
-		break;
-
 		case 24:
-		{
-			RGBTRIPLE *src_bits = NULL, *dst_bits = NULL;
-			RGBTRIPLE pxlSrc, pxlLeft, pxlOldLeft;
-
-			// Fill gap above skew with background
-			for(i = 0; i < iOffset; i++) {
-				dst_bits = (RGBTRIPLE*)FreeImage_GetScanLine(dst, i);
-				memset(&dst_bits[col], 0, sizeof(RGBTRIPLE));
-			}
-
-			memset(&pxlOldLeft, 0, sizeof(RGBTRIPLE));
-
-			for(i = 0; i < src_height; i++) {
-				src_bits = (RGBTRIPLE*)FreeImage_GetScanLine(src, i);
-				// Loop through column pixels
-				memcpy(&pxlSrc, &src_bits[col], sizeof(RGBTRIPLE));				
-				// Calculate weights
-				pxlLeft.rgbtBlue  = INTERP(pxlSrc.rgbtBlue, Weight);
-				pxlLeft.rgbtGreen = INTERP(pxlSrc.rgbtGreen, Weight);
-				pxlLeft.rgbtRed   = INTERP(pxlSrc.rgbtRed, Weight);
-				// Check boundaries
-				iYPos = i + iOffset;
-				if((iYPos >= 0) && (iYPos < dst_height)) {
-					// Update left over on source
-					pxlSrc.rgbtBlue  = pxlSrc.rgbtBlue  - (pxlLeft.rgbtBlue  - pxlOldLeft.rgbtBlue);
-					pxlSrc.rgbtGreen = pxlSrc.rgbtGreen - (pxlLeft.rgbtGreen - pxlOldLeft.rgbtGreen);
-					pxlSrc.rgbtRed   = pxlSrc.rgbtRed   - (pxlLeft.rgbtRed   - pxlOldLeft.rgbtRed);
-					dst_bits = (RGBTRIPLE*)FreeImage_GetScanLine(dst, iYPos);
-					memcpy(&dst_bits[col], &pxlSrc, sizeof(RGBTRIPLE));
-				}
-				// Save leftover for next pixel in scan
-				memcpy(&pxlOldLeft, &pxlLeft, sizeof(RGBTRIPLE));
-			}
-			// Go to bottom point of skew
-			i = src_height + iOffset;
-			if(i < dst_height) {
-				// If still in image bounds, put leftovers there
-				dst_bits = (RGBTRIPLE*)FreeImage_GetScanLine(dst, i);
-				memcpy(&dst_bits[col], &pxlOldLeft, sizeof(RGBTRIPLE));
-			}
-			while(++i < dst_height) {
-				// Clear below skewed line with background
-				dst_bits = (RGBTRIPLE*)FreeImage_GetScanLine(dst, i);
-				memset(&dst_bits[col], 0, sizeof(RGBTRIPLE));
-			}
-		}
-		break;
-
 		case 32:
 		{
-			RGBQUAD *src_bits = NULL, *dst_bits = NULL;
-			RGBQUAD pxlSrc, pxlLeft, pxlOldLeft;
+			BYTE pxlSrc[4], pxlLeft[4], pxlOldLeft[4];	// 4 = 32-bit max
 
-			// Fill gap above skew with background
-			for(i = 0; i < iOffset; i++) {
-				dst_bits = (RGBQUAD*)FreeImage_GetScanLine(dst, i);
-				memset(&dst_bits[col], 0, sizeof(RGBQUAD));
+			// calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+			unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+
+			unsigned src_pitch = FreeImage_GetPitch(src);
+			unsigned dst_pitch = FreeImage_GetPitch(dst);
+			unsigned index = col * bytespp;
+
+			BYTE *src_bits = FreeImage_GetBits(src) + index;
+			BYTE *dst_bits = FreeImage_GetBits(dst) + index;
+
+			// fill gap above skew with background
+			if(iOffset > 0) {
+				for(i = 0; i < iOffset; i++) {
+					memset(dst_bits, 0, bytespp);
+					dst_bits += dst_pitch;
+				}
 			}
-
-			memset(&pxlOldLeft, 0, sizeof(RGBQUAD));
+			memset(&pxlOldLeft[0], 0, bytespp);
 
 			for(i = 0; i < src_height; i++) {
-				src_bits = (RGBQUAD*)FreeImage_GetScanLine(src, i);
-				// Loop through column pixels
-				memcpy(&pxlSrc, &src_bits[col], sizeof(RGBQUAD));				
-				// Calculate weights
-				pxlLeft.rgbBlue     = INTERP(pxlSrc.rgbBlue, Weight);
-				pxlLeft.rgbGreen    = INTERP(pxlSrc.rgbGreen, Weight);
-				pxlLeft.rgbRed      = INTERP(pxlSrc.rgbRed, Weight);
-				pxlLeft.rgbReserved = INTERP(pxlSrc.rgbReserved, Weight);
-				// Check boundaries
+				// loop through column pixels
+				memcpy(&pxlSrc[0], src_bits, bytespp);				
+				// calculate weights
+				for(j = 0; j < bytespp; j++) {
+					pxlLeft[j] = BYTE(((WORD)pxlSrc[j] * Weight) / 256);
+				}
+				// check boundaries
 				iYPos = i + iOffset;
 				if((iYPos >= 0) && (iYPos < dst_height)) {
-					// Update left over on source
-					pxlSrc.rgbBlue     = pxlSrc.rgbBlue     - (pxlLeft.rgbBlue     - pxlOldLeft.rgbBlue);
-					pxlSrc.rgbGreen    = pxlSrc.rgbGreen    - (pxlLeft.rgbGreen    - pxlOldLeft.rgbGreen);
-					pxlSrc.rgbRed      = pxlSrc.rgbRed      - (pxlLeft.rgbRed      - pxlOldLeft.rgbRed);
-					pxlSrc.rgbReserved = pxlSrc.rgbReserved - (pxlLeft.rgbReserved - pxlOldLeft.rgbReserved);
-					dst_bits = (RGBQUAD*)FreeImage_GetScanLine(dst, iYPos);
-					memcpy(&dst_bits[col], &pxlSrc, sizeof(RGBQUAD));
+					// update left over on source
+					for(j = 0; j < bytespp; j++) {
+						pxlSrc[j] = pxlSrc[j] - (pxlLeft[j] - pxlOldLeft[j]);
+					}
+					dst_bits = FreeImage_GetScanLine(dst, iYPos) + index;
+					memcpy(dst_bits, &pxlSrc[0], bytespp);
 				}
-				// Save leftover for next pixel in scan
-				memcpy(&pxlOldLeft, &pxlLeft, sizeof(RGBQUAD));
+				// save leftover for next pixel in scan
+				memcpy(&pxlOldLeft[0], &pxlLeft[0], bytespp);
+
+				// next pixel in scan
+				src_bits += src_pitch;
 			}
-			// Go to bottom point of skew
-			i = src_height + iOffset;
-			if(i < dst_height) {
-				// If still in image bounds, put leftovers there
-				dst_bits = (RGBQUAD*)FreeImage_GetScanLine(dst, i);
-				memcpy(&dst_bits[col], &pxlOldLeft, sizeof(RGBQUAD));
-			}
-			while(++i < dst_height) {
-				// Clear below skewed line with background
-				dst_bits = (RGBQUAD*)FreeImage_GetScanLine(dst, i);
-				memset(&dst_bits[col], 0, sizeof(RGBQUAD));
+			// go to bottom point of skew
+			iYPos = src_height + iOffset;
+
+			if(iYPos < dst_height) {
+				dst_bits = FreeImage_GetScanLine(dst, iYPos) + index;
+
+				// if still in image bounds, put leftovers there				
+				memcpy(dst_bits, &pxlOldLeft[0], bytespp);
+
+				// clear below skewed line with background
+				while(++iYPos < dst_height) {					
+					dst_bits += dst_pitch;
+					memset(dst_bits, 0, bytespp);
+				}
 			}
 		}
 		break;
+
 	}
 } 
 
@@ -411,9 +243,9 @@ Rotate90(FIBITMAP *src) {
 	int src_pitch  = FreeImage_GetPitch(src);
 	int dst_pitch  = FreeImage_GetPitch(dst);
 
-	// speedy rotate for BW images
 	if(bpp == 1) {
-		
+		// speedy rotate for BW images
+
 		BYTE *sbits, *dbits, *dbitsmax, bitpos, *nrow, *srcdisp;
 		div_t div_r;
 
@@ -440,10 +272,8 @@ Rotate90(FIBITMAP *src) {
 				}
 			}
 		}
-
-	} // 1-bit case
-
-	else {
+	}
+	else if((bpp == 8) || (bpp == 24) || (bpp == 32)) {
 		// anything other than BW :
 		// This optimized version of rotation rotates image by smaller blocks. It is quite
 		// a bit faster than obvious algorithm, because it produces much less CPU cache misses.
@@ -451,77 +281,34 @@ Rotate90(FIBITMAP *src) {
 		// CPUs (tested on Athlon XP and Celeron D). Larger value (if CPU has enough cache) will increase
 		// speed somehow, but once you drop out of CPU's cache, things will slow down drastically.
 		// For older CPUs with less cache, lower value would yield better results.
-		
+
 		int xs, ys;                            // x-segment and y-segment
 		BYTE *bsrc  = FreeImage_GetBits(src);  // source pixels
 		BYTE *bdest = FreeImage_GetBits(dst);  // destination pixels
 
-		if(bpp == 8) {
-			// 8-bit greyscale image
-			for(xs = 0; xs < dst_width; xs += RBLOCK) {    // for all image blocks of RBLOCK*RBLOCK pixels
-				for(ys = 0; ys < dst_height; ys += RBLOCK) {
-					for(y = ys; y < MIN(dst_height, ys + RBLOCK); y++) {		// do rotation
-						y2 = dst_height - y - 1;
-						for(x = xs; x < MIN(dst_width, xs + RBLOCK); x++) {
-							// point to src pixel at (y2, x)
-							BYTE *src_bits = bsrc + (x * src_pitch + y2);
-							// point to dst pixel at (x, y)
-							BYTE *dst_bits = bdest + (y * dst_pitch + x);
-							// dst.SetPixelIndex(x, y, src.GetPixelIndex(y2, x));
-							*dst_bits = *src_bits;
-						}
-					}
-				}
-			}
+		// calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+		unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
-		}	
-		else if(bpp == 24) {
-			// 24-bit RGB image
-			for(xs = 0; xs < dst_width; xs += RBLOCK) {    // for all image blocks of RBLOCK*RBLOCK pixels
-				for(ys = 0; ys < dst_height; ys += RBLOCK) {
-					for(y = ys; y < MIN(dst_height, ys + RBLOCK); y++) {    // do rotation
-						y2 = dst_height - y - 1;
-						// point to src pixel at (y2, xs)
-						BYTE *src_bits = bsrc + (xs * src_pitch) + (y2 * 3);
-						// point to dst pixel at (xs, y)
-						BYTE *dst_bits = bdest + (y * dst_pitch) + (xs * 3);
-						for (x = xs; x < MIN(dst_width, xs + RBLOCK); x++) {
-							// dst.SetPixelColor(x, y, src.GetPixelColor(y2, x));
-							dst_bits[FI_RGBA_BLUE]  = src_bits[FI_RGBA_BLUE];
-							dst_bits[FI_RGBA_GREEN] = src_bits[FI_RGBA_GREEN];
-							dst_bits[FI_RGBA_RED]   = src_bits[FI_RGBA_RED];
-							dst_bits += 3;
-							src_bits += src_pitch;
+		for(xs = 0; xs < dst_width; xs += RBLOCK) {    // for all image blocks of RBLOCK*RBLOCK pixels
+			for(ys = 0; ys < dst_height; ys += RBLOCK) {
+				for(y = ys; y < MIN(dst_height, ys + RBLOCK); y++) {    // do rotation
+					y2 = dst_height - y - 1;
+					// point to src pixel at (y2, xs)
+					BYTE *src_bits = bsrc + (xs * src_pitch) + (y2 * bytespp);
+					// point to dst pixel at (xs, y)
+					BYTE *dst_bits = bdest + (y * dst_pitch) + (xs * bytespp);
+					for (x = xs; x < MIN(dst_width, xs + RBLOCK); x++) {
+						// dst.SetPixel(x, y, src.GetPixel(y2, x));
+						for(int j = 0; j < bytespp; j++) {
+							dst_bits[j] = src_bits[j];
 						}
+						dst_bits += bytespp;
+						src_bits += src_pitch;
 					}
 				}
 			}
 		}
-		else if(bpp == 32) {
-			// 32-bit RGB image
-			for(xs = 0; xs < dst_width; xs += RBLOCK) {    // for all image blocks of RBLOCK*RBLOCK pixels
-				for(ys = 0; ys < dst_height; ys += RBLOCK) {
-					for(y = ys; y < MIN(dst_height, ys + RBLOCK); y++) {    // do rotation
-						y2 = dst_height - y - 1;
-						// point to src pixel at (y2, xs)
-						BYTE *src_bits = bsrc + (xs * src_pitch) + (y2 * 4);
-						// point to dst pixel at (xs, y)
-						BYTE *dst_bits = bdest + (y * dst_pitch) + (xs * 4);
-						for (x = xs; x < MIN(dst_width, xs + RBLOCK); x++) {
-							// dst.SetPixelColor(x, y, src.GetPixelColor(y2, x));
-							dst_bits[FI_RGBA_BLUE]  = src_bits[FI_RGBA_BLUE];
-							dst_bits[FI_RGBA_GREEN] = src_bits[FI_RGBA_GREEN];
-							dst_bits[FI_RGBA_RED]   = src_bits[FI_RGBA_RED];
-							dst_bits[FI_RGBA_ALPHA] = src_bits[FI_RGBA_ALPHA];
-							dst_bits += 4;
-							src_bits += src_pitch;
-						}
-					}
-				}
-			}
-		}
-
-	} // 8-, 24-, 32-bit cases
+	}
 
 	return dst;
 }
@@ -546,45 +333,36 @@ Rotate180(FIBITMAP *src) {
 	FIBITMAP *dst = FreeImage_Allocate(dst_width, dst_height, bpp);
 	if(NULL == dst) return NULL;
 
-	switch(bpp) {
-		case 1:
-		{
-			for(int y = 0; y < src_height; y++) {
-				BYTE *src_bits = FreeImage_GetScanLine(src, y);
-				BYTE *dst_bits = FreeImage_GetScanLine(dst, dst_height - y - 1);
-				for(int x = 0; x < src_width; x++) {
-					// get bit at (x, y)
-					k = (src_bits[x >> 3] & (0x80 >> (x & 0x07))) != 0;
-					// set bit at (dst_width - x - 1, dst_height - y - 1)
-					pos = dst_width - x - 1;
-					k ? dst_bits[pos >> 3] |= (0x80 >> (pos & 0x7)) : dst_bits[pos >> 3] &= (0xFF7F >> (pos & 0x7));
-				}
+	if(bpp == 1) {
+		for(int y = 0; y < src_height; y++) {
+			BYTE *src_bits = FreeImage_GetScanLine(src, y);
+			BYTE *dst_bits = FreeImage_GetScanLine(dst, dst_height - y - 1);
+			for(int x = 0; x < src_width; x++) {
+				// get bit at (x, y)
+				k = (src_bits[x >> 3] & (0x80 >> (x & 0x07))) != 0;
+				// set bit at (dst_width - x - 1, dst_height - y - 1)
+				pos = dst_width - x - 1;
+				k ? dst_bits[pos >> 3] |= (0x80 >> (pos & 0x7)) : dst_bits[pos >> 3] &= (0xFF7F >> (pos & 0x7));
 			}
 		}
-		break;
+	}
+	else if((bpp == 8) || (bpp == 24) || (bpp == 32)) {
+		 // Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+		int bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
-		case 8:
-		case 24:
-		case 32:
-		{
-			 // Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
-			int bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
-
-			for(y = 0; y < src_height; y++) {
-				BYTE *src_bits = FreeImage_GetScanLine(src, y);
-				BYTE *dst_bits = FreeImage_GetScanLine(dst, dst_height - y - 1) + (dst_width - 1) * bytespp;
-				for(x = 0; x < src_width; x++) {
-					// get pixel at (x, y)
-					// set pixel at (dst_width - x - 1, dst_height - y - 1)
-					for(k = 0; k < bytespp; k++) {
-						dst_bits[k] = src_bits[k];
-					}					
-					src_bits += bytespp;
-					dst_bits -= bytespp;
-				}
+		for(y = 0; y < src_height; y++) {
+			BYTE *src_bits = FreeImage_GetScanLine(src, y);
+			BYTE *dst_bits = FreeImage_GetScanLine(dst, dst_height - y - 1) + (dst_width - 1) * bytespp;
+			for(x = 0; x < src_width; x++) {
+				// get pixel at (x, y)
+				// set pixel at (dst_width - x - 1, dst_height - y - 1)
+				for(k = 0; k < bytespp; k++) {
+					dst_bits[k] = src_bits[k];
+				}					
+				src_bits += bytespp;
+				dst_bits -= bytespp;
 			}
 		}
-		break;
 	}
 
 	return dst;
@@ -615,9 +393,9 @@ Rotate270(FIBITMAP *src) {
 	// get src and dst scan width
 	int src_pitch  = FreeImage_GetPitch(src);
 	int dst_pitch  = FreeImage_GetPitch(dst);
-
-	// speedy rotate for BW images
+	
 	if(bpp == 1) {
+		// speedy rotate for BW images
 		
 		BYTE *sbits, *dbits, *dbitsmax, bitpos, *nrow, *srcdisp;
 		div_t div_r;
@@ -647,9 +425,8 @@ Rotate270(FIBITMAP *src) {
 			}
 		}
 
-	} // 1-bit case
-
-	else {
+	} 
+	else if((bpp == 8) || (bpp == 24) || (bpp == 32)) {
 		// anything other than BW :
 		// This optimized version of rotation rotates image by smaller blocks. It is quite
 		// a bit faster than obvious algorithm, because it produces much less CPU cache misses.
@@ -657,77 +434,34 @@ Rotate270(FIBITMAP *src) {
 		// CPUs (tested on Athlon XP and Celeron D). Larger value (if CPU has enough cache) will increase
 		// speed somehow, but once you drop out of CPU's cache, things will slow down drastically.
 		// For older CPUs with less cache, lower value would yield better results.
-		
+
 		int xs, ys;                            // x-segment and y-segment
 		BYTE *bsrc  = FreeImage_GetBits(src);  // source pixels
 		BYTE *bdest = FreeImage_GetBits(dst);  // destination pixels
 
-		if(bpp == 8) {
-			// 8-bit greyscale image
-			for(xs = 0; xs < dst_width; xs += RBLOCK) {    // for all image blocks of RBLOCK*RBLOCK pixels
-				for(ys = 0; ys < dst_height; ys += RBLOCK) {
-					for(x = xs; x < MIN(dst_width, xs + RBLOCK); x++) {		// do rotation
-						x2 = dst_width - x - 1;
-						for(y = ys; y < MIN(dst_height, ys + RBLOCK); y++) {
-							// point to src pixel at (y, x2)
-							BYTE *src_bits = bsrc + (x2 * src_pitch + y);
-							// point to dst pixel at (x, y)
-							BYTE *dst_bits = bdest + (y * dst_pitch + x);
-							// dst.SetPixelIndex(x, y, src.GetPixelIndex(y, x2));
-							*dst_bits = *src_bits;
-						}
-					}
-				}
-			}
+		// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+		int bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
-		}	
-		else if(bpp == 24) {
-			// 24-bit RGB image
-			for(xs = 0; xs < dst_width; xs += RBLOCK) {    // for all image blocks of RBLOCK*RBLOCK pixels
-				for(ys = 0; ys < dst_height; ys += RBLOCK) {
-					for(x = xs; x < MIN(dst_width, xs + RBLOCK); x++) {    // do rotation
-						x2 = dst_width - x - 1;
-						// point to src pixel at (ys, x2)
-						BYTE *src_bits = bsrc + (x2 * src_pitch) + (ys * 3);
-						// point to dst pixel at (x, ys)
-						BYTE *dst_bits = bdest + (ys * dst_pitch) + (x * 3);
-						for (y = ys; y < MIN(dst_height, ys + RBLOCK); y++) {
-							// dst.SetPixelColor(x, y, src.GetPixelColor(y, x2));
-							dst_bits[FI_RGBA_BLUE]  = src_bits[FI_RGBA_BLUE];
-							dst_bits[FI_RGBA_GREEN] = src_bits[FI_RGBA_GREEN];
-							dst_bits[FI_RGBA_RED]   = src_bits[FI_RGBA_RED];
-							src_bits += 3;
-							dst_bits += dst_pitch;
+		for(xs = 0; xs < dst_width; xs += RBLOCK) {    // for all image blocks of RBLOCK*RBLOCK pixels
+			for(ys = 0; ys < dst_height; ys += RBLOCK) {
+				for(x = xs; x < MIN(dst_width, xs + RBLOCK); x++) {    // do rotation
+					x2 = dst_width - x - 1;
+					// point to src pixel at (ys, x2)
+					BYTE *src_bits = bsrc + (x2 * src_pitch) + (ys * bytespp);
+					// point to dst pixel at (x, ys)
+					BYTE *dst_bits = bdest + (ys * dst_pitch) + (x * bytespp);
+					for (y = ys; y < MIN(dst_height, ys + RBLOCK); y++) {
+						// dst.SetPixel(x, y, src.GetPixel(y, x2));
+						for(int j = 0; j < bytespp; j++) {
+							dst_bits[j] = src_bits[j];
 						}
+						src_bits += bytespp;
+						dst_bits += dst_pitch;
 					}
 				}
 			}
 		}
-		else if(bpp == 32) {
-			// 32-bit RGB image
-			for(xs = 0; xs < dst_width; xs += RBLOCK) {    // for all image blocks of RBLOCK*RBLOCK pixels
-				for(ys = 0; ys < dst_height; ys += RBLOCK) {
-					for(x = xs; x < MIN(dst_width, xs + RBLOCK); x++) {    // do rotation
-						x2 = dst_width - x - 1;
-						// point to src pixel at (ys, x2)
-						BYTE *src_bits = bsrc + (x2 * src_pitch) + (ys * 4);
-						// point to dst pixel at (x, ys)
-						BYTE *dst_bits = bdest + (ys * dst_pitch) + (x * 4);
-						for (y = ys; y < MIN(dst_height, ys + RBLOCK); y++) {
-							// dst.SetPixelColor(x, y, src.GetPixelColor(y, x2));
-							dst_bits[FI_RGBA_BLUE]  = src_bits[FI_RGBA_BLUE];
-							dst_bits[FI_RGBA_GREEN] = src_bits[FI_RGBA_GREEN];
-							dst_bits[FI_RGBA_RED]   = src_bits[FI_RGBA_RED];
-							dst_bits[FI_RGBA_ALPHA] = src_bits[FI_RGBA_ALPHA];
-							src_bits += 4;
-							dst_bits += dst_pitch;
-						}
-					}
-				}
-			}
-		}
-
-	} // 8-, 24-, 32-bit cases
+	}
 
 	return dst;
 }
@@ -969,7 +703,7 @@ FreeImage_RotateClassic(FIBITMAP *dib, double angle) {
 			if(!dst) throw(1);
 			
 			if(bpp == 8) {
-				// buid a greyscale palette			
+				// build a greyscale palette			
 				RGBQUAD *dst_pal = FreeImage_GetPalette(dst);
 				for(int i = 0; i < 256; i++) {
 					dst_pal[i].rgbRed = dst_pal[i].rgbGreen = dst_pal[i].rgbBlue = (BYTE)i;
