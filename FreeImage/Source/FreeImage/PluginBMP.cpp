@@ -345,7 +345,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 					dib = FreeImage_Allocate(width, height, bit_count, bitfields[2], bitfields[1], bitfields[0]);
 				} else {
-					dib = FreeImage_Allocate(width, height, bit_count, 0x1F, 0x3E0, 0x7C00);
+					dib = FreeImage_Allocate(width, height, bit_count, FI16_555_RED_MASK, FI16_555_GREEN_MASK, FI16_555_BLUE_MASK);
 				}
 
 				if (dib == NULL)
@@ -370,7 +370,11 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 					dib = FreeImage_Allocate(width, height, bit_count, bitfields[2], bitfields[1], bitfields[0]);
 				} else {
-					dib = FreeImage_Allocate(width, height, bit_count, 0xFF, 0xFF00, 0xFF0000);
+					if( bit_count == 32 ) {
+						dib = FreeImage_Allocate(width, height, bit_count, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+					} else {
+						dib = FreeImage_Allocate(width, height, bit_count, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+					}
 				}
 
 				if (dib == NULL)
@@ -670,7 +674,7 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 
 					dib = FreeImage_Allocate(width, height, bit_count, bitfields[2], bitfields[1], bitfields[0]);
 				} else {
-					dib = FreeImage_Allocate(width, height, bit_count, 0x1F, 0x3E0, 0x7C00);
+					dib = FreeImage_Allocate(width, height, bit_count, FI16_555_RED_MASK, FI16_555_GREEN_MASK, FI16_555_BLUE_MASK);
 				}
 
 				if (dib == NULL)
@@ -691,7 +695,11 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 			case 24 :
 			case 32 :
 			{
-				dib = FreeImage_Allocate(width, height, bit_count, 0xFF, 0xFF00, 0xFF0000);
+				if( bit_count == 32 ) {
+					dib = FreeImage_Allocate(width, height, bit_count, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+				} else {
+					dib = FreeImage_Allocate(width, height, bit_count, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				}
 
 				if (dib == NULL)
 					throw "DIB allocation failed";
@@ -796,7 +804,7 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 
 			case 16 :
 			{
-				dib = FreeImage_Allocate(width, height, bit_count, 0x1F, 0x3E0, 0x7C00);
+				dib = FreeImage_Allocate(width, height, bit_count, FI16_555_RED_MASK, FI16_555_GREEN_MASK, FI16_555_BLUE_MASK);
 
 				if (dib == NULL)
 					throw "DIB allocation failed";						
@@ -813,7 +821,11 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 			case 24 :
 			case 32 :
 			{
-				dib = FreeImage_Allocate(width, height, bit_count, 0xFF, 0xFF00, 0xFF0000);
+				if( bit_count == 32 ) {
+					dib = FreeImage_Allocate(width, height, bit_count, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+				} else {
+					dib = FreeImage_Allocate(width, height, bit_count, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				}
 
 				if (dib == NULL)
 					throw "DIB allocation failed";						

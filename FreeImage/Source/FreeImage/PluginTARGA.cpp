@@ -286,9 +286,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							{
 								WORD *rgb555 = (WORD*)&cmap[0];
 								for (count = header.cm_first_entry; count < header.cm_length; count++) {						
-									palette[count].rgbRed = (((*rgb555 & 0x7C00) >> 10) * 0xFF) / 0x1F;
-									palette[count].rgbGreen = (((*rgb555 & 0x3E0) >> 5) * 0xFF) / 0x1F;
-									palette[count].rgbBlue = ((*rgb555 & 0x1F) * 0xFF) / 0x1F;
+									palette[count].rgbRed = (((*rgb555 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+									palette[count].rgbGreen = (((*rgb555 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+									palette[count].rgbBlue = (((*rgb555 & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
 									rgb555++;
 								}
 							}
@@ -444,11 +444,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					if (TARGA_LOAD_RGB888 & flags) {
 						pixel_bits = 24;
 
-						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, 0xFF, 0xFF00, 0xFF0000);
+						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
 					} else {			
 						pixel_bits = 16;
 
-						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, 0x1F, 0x3E0, 0x7C00);
+						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FI16_555_RED_MASK, FI16_555_GREEN_MASK, FI16_555_BLUE_MASK);
 					}
 
 					if (dib == NULL)
@@ -490,9 +490,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									io->read_proc(&pixel, sizeof(WORD), 1, handle);
 								
 									if (TARGA_LOAD_RGB888 & flags) {
-										bits[x + 0] = ((pixel & 0x1F) * 0xFF) / 0x1F;
-										bits[x + 1] = (((pixel & 0x3E0) >> 5) * 0xFF) / 0x1F;
-										bits[x + 2] = (((pixel & 0x7C00) >> 10) * 0xFF) / 0x1F;
+										bits[x + 0] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+										bits[x + 1] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+										bits[x + 2] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
 									} else {
 										*reinterpret_cast<WORD*>(bits + x) = 0x7FFF & pixel;
 									}
@@ -530,9 +530,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								
 									for (int ix = 0; ix < rle; ix++) {
 										if (TARGA_LOAD_RGB888 & flags) {
-											bits[x + 0] = ((pixel & 0x1F) * 0xFF) / 0x1F;
-											bits[x + 1] = (((pixel & 0x3E0) >> 5) * 0xFF) / 0x1F;
-											bits[x + 2] = (((pixel & 0x7C00) >> 10) * 0xFF) / 0x1F;
+											bits[x + 0] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+											bits[x + 1] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+											bits[x + 2] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
 										} else {
 											*reinterpret_cast<WORD *>(bits + x) = 0x7FFF & pixel;
 										}
@@ -554,9 +554,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 										io->read_proc(&pixel, sizeof(WORD), 1, handle);
 
 										if (TARGA_LOAD_RGB888 & flags) {
-											bits[x + 0] = ((pixel & 0x1F) * 0xFF) / 0x1F;
-											bits[x + 1] = (((pixel & 0x3E0) >> 5) * 0xFF) / 0x1F;
-											bits[x + 2] = (((pixel & 0x7C00) >> 10) * 0xFF) / 0x1F;
+											bits[x + 0] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+											bits[x + 1] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+											bits[x + 2] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
 										} else {
 											*reinterpret_cast<WORD*>(bits + x) = 0x7FFF & pixel;
 										}
@@ -588,7 +588,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				case 24 :
 				{
-					dib = FreeImage_Allocate(header.is_width, header.is_height, 24, 0xFF, 0xFF00, 0xFF0000);
+					dib = FreeImage_Allocate(header.is_width, header.is_height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
 
 					if (dib == 0)
 						throw "DIB allocation failed";					
@@ -774,7 +774,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					// Allocate the DIB
 
-					dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, 0xFF, 0xFF00, 0xFF0000);
+					if( pixel_bits == 24 ) {
+						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+					} else {
+						dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+					}
 					
 					if (dib == 0)
 						throw "DIB allocation failed";					

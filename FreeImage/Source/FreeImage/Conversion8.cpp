@@ -61,9 +61,9 @@ FreeImage_ConvertLine16To8_555(BYTE *target, BYTE *source, int width_in_pixels) 
 	WORD *bits = (WORD *)source;
 
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[cols] = GREY((((bits[cols] & 0x7C00) >> 10) * 0xFF) / 0x1F,
-			                (((bits[cols] & 0x3E0) >> 5) * 0xFF) / 0x1F,
-							((bits[cols] & 0x1F) * 0xFF) / 0x1F);
+		target[cols] = GREY((((bits[cols] & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F,
+			                (((bits[cols] & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F,
+							(((bits[cols] & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F);
 	}
 }
 
@@ -72,15 +72,15 @@ FreeImage_ConvertLine16To8_565(BYTE *target, BYTE *source, int width_in_pixels) 
 	WORD *bits = (WORD *)source;
 
 	for (int cols = 0; cols < width_in_pixels; cols++)
-		target[cols] = GREY((((bits[cols] & 0xF800) >> 11) * 0xFF) / 0x1F,
-			        (((bits[cols] & 0x7E0) >> 5) * 0xFF) / 0x3F,
-					((bits[cols] & 0x1F) * 0xFF) / 0x1F);	
+		target[cols] = GREY((((bits[cols] & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) * 0xFF) / 0x1F,
+			        (((bits[cols] & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) * 0xFF) / 0x3F,
+					(((bits[cols] & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) * 0xFF) / 0x1F);	
 }
 
 void DLL_CALLCONV
 FreeImage_ConvertLine24To8(BYTE *target, BYTE *source, int width_in_pixels) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[cols] = GREY(source[2], source[1], source[0]);
+		target[cols] = GREY(source[FIRGB_RED], source[FIRGB_GREEN], source[FIRGB_BLUE]);
 
 		source += 3;
 	}
@@ -89,7 +89,7 @@ FreeImage_ConvertLine24To8(BYTE *target, BYTE *source, int width_in_pixels) {
 void DLL_CALLCONV
 FreeImage_ConvertLine32To8(BYTE *target, BYTE *source, int width_in_pixels) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[cols] = GREY(source[2], source[1], source[0]);
+		target[cols] = GREY(source[FIRGBA_RED], source[FIRGBA_GREEN], source[FIRGBA_BLUE]);
 
 		source += 4;
 	}
@@ -182,10 +182,10 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 				// Expand and copy the bitmap data
 
 				for (int rows = 0; rows < height; rows++) {
-					if ((FreeImage_GetRedMask(dib) == 0x1F) && (FreeImage_GetGreenMask(dib) == 0x3E0) && (FreeImage_GetBlueMask(dib) == 0x7C00)) {
-						FreeImage_ConvertLine16To8_555(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-					} else {
+					if ((FreeImage_GetRedMask(dib) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dib) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dib) == FI16_565_BLUE_MASK)) {
 						FreeImage_ConvertLine16To8_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
+					} else {
+						FreeImage_ConvertLine16To8_555(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
 					}
 				}
 				

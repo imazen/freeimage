@@ -505,7 +505,7 @@ BOOL fipImage::combineChannels(fipImage& red, fipImage& green, fipImage& blue) {
 	if(!_dib) {
 		int width = red.getWidth();
 		int height = red.getHeight();
-		_dib = FreeImage_Allocate(width, height, 24, 0xFF, 0xFF00, 0xFF0000);
+		_dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
 	}
 
 	if(_dib) {

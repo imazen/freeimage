@@ -104,7 +104,7 @@ FreeImage_Rescale(FIBITMAP *src, int dst_width, int dst_height, FREE_IMAGE_FILTE
 
 				if(!dst) {
 					// allocate dst image
-					dst = FreeImage_Allocate(dst_width, dst_height, bpp, 0xFF, 0xFF00, 0xFF0000);
+					dst = FreeImage_Allocate(dst_width, dst_height, bpp, FreeImage_GetRedMask(src), FreeImage_GetGreenMask(src), FreeImage_GetBlueMask(src));
 					if(!dst) throw(1);
 				}
 				// insert channel to destination dib

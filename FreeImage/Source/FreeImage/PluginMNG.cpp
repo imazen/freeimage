@@ -77,7 +77,7 @@ mng_bool
 mymngprocessheader(mng_handle mng, mng_uint32 width, mng_uint32 height) {
 	// allocate a bitmap with the given dimensions
 
-	((mngstuff *)mng_get_userdata(mng))->bitmap = FreeImage_Allocate(width, height, 24, 0xFF, 0xFF00, 0xFF0000);
+	((mngstuff *)mng_get_userdata(mng))->bitmap = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
 
 	// tell the mng decoder about our bit-depth choice
 

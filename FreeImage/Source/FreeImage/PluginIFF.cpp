@@ -236,9 +236,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				depth = planes > 8 ? 24 : 8;
 
-				unsigned mask = planes > 8 ? 0xff : 0;
-
-				dib = FreeImage_Allocate(width, height, depth, mask << 16, mask << 8, mask);
+				if( depth == 24 ) {
+					dib = FreeImage_Allocate(width, height, depth, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+				} else {
+					dib = FreeImage_Allocate(width, height, depth);
+				}
 			} else if (ch_type == ID_CMAP) {
 				if (!dib)
 					return NULL;

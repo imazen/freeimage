@@ -212,7 +212,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			case '3':
 			case '6':
-				dib = FreeImage_Allocate(width, height, 24, 0xFF, 0xFF00, 0xFF0000);
+				dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
 				break;
 		}
 

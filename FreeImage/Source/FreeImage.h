@@ -153,6 +153,28 @@ typedef struct tagRGBTRIPLE {
 #pragma pack()
 #endif // WIN32
 
+typedef struct tagBITMAPINFOHEADER{
+  DWORD biSize;
+  LONG  biWidth; 
+  LONG  biHeight; 
+  WORD  biPlanes; 
+  WORD  biBitCount;
+  DWORD biCompression; 
+  DWORD biSizeImage; 
+  LONG  biXPelsPerMeter; 
+  LONG  biYPelsPerMeter; 
+  DWORD biClrUsed; 
+  DWORD biClrImportant;
+} BITMAPINFOHEADER, *PBITMAPINFOHEADER; 
+
+typedef struct tagBITMAPINFO { 
+  BITMAPINFOHEADER bmiHeader; 
+  RGBQUAD          bmiColors[1];
+} BITMAPINFO, *PBITMAPINFO;
+
+//#endif // __GNUC__
+#endif // _WINDOWS_
+
 // Indexes for byte arrays - These coincide with RGBQUAD and RGBTRIPLE
 #ifdef FREEIMAGE_BIGENDIAN
 #define FIRGBA_RED		0
@@ -205,28 +227,6 @@ typedef struct tagRGBTRIPLE {
 #define FI16_565_RED_SHIFT		11
 #define FI16_565_GREEN_SHIFT	5
 #define FI16_565_BLUE_SHIFT		0
-
-typedef struct tagBITMAPINFOHEADER{
-  DWORD biSize;
-  LONG  biWidth; 
-  LONG  biHeight; 
-  WORD  biPlanes; 
-  WORD  biBitCount;
-  DWORD biCompression; 
-  DWORD biSizeImage; 
-  LONG  biXPelsPerMeter; 
-  LONG  biYPelsPerMeter; 
-  DWORD biClrUsed; 
-  DWORD biClrImportant;
-} BITMAPINFOHEADER, *PBITMAPINFOHEADER; 
-
-typedef struct tagBITMAPINFO { 
-  BITMAPINFOHEADER bmiHeader; 
-  RGBQUAD          bmiColors[1];
-} BITMAPINFO, *PBITMAPINFO;
-
-//#endif // __GNUC__
-#endif // _WINDOWS_
 
 // ICC profile support ------------------------------------------------------
 

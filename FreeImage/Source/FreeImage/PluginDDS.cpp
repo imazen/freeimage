@@ -442,7 +442,7 @@ LoadDXT (int type, DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int 
 	int height = (int)desc.dwHeight;
 
 	// allocate a 32-bit dib
-	FIBITMAP *dib = FreeImage_Allocate (width, height, 32, 0x000000FF, 0x0000FF00, 0x00FF0000);
+	FIBITMAP *dib = FreeImage_Allocate (width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
 	if (dib == NULL)
 		return NULL;
 

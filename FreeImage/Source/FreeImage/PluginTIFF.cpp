@@ -368,16 +368,20 @@ static FIBITMAP* CreateImageType(FREE_IMAGE_TYPE fit, int width, int height, uin
 			}
 			else if(samplesperpixel = 3) {
 				// 48-bit RGB -> convert to 24-bit RGB
-				dib = FreeImage_Allocate(width, height, 24, 0xFF, 0xFF00, 0xFF0000);
+				dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
 			}
 		}
 		else if(bpp == 16) {
 			// 16-bit RGB -> expect it to be 565
-			dib = FreeImage_Allocate(width, height, bpp, 0x1F, 0x7E0, 0xF800);
+			dib = FreeImage_Allocate(width, height, bpp, FI16_565_RED_MASK, FI16_565_GREEN_MASK, FI16_565_BLUE_MASK);
 		}
-		else if((bpp == 24) || (bpp == 32)) {
-			// BGR(A)
-			dib = FreeImage_Allocate(width, height, bpp, 0xFF, 0xFF00, 0xFF0000);
+		else if(bpp == 24) {
+			// BGR
+			dib = FreeImage_Allocate(width, height, bpp, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+		}
+		else if(bpp == 32) {
+			// BGRA
+			dib = FreeImage_Allocate(width, height, bpp, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
 		}
 		else {
 			// anything else <= 8-bit

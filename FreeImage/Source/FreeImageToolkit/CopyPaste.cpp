@@ -130,13 +130,13 @@ Combine16_555(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) 
 
 				// convert 16-bit colors to 24-bit
 
-				color_s.rgbtRed = ((*tmp1 & 0x7C00) >> 10) << 3;
-				color_s.rgbtGreen = ((*tmp1 & 0x3E0) >> 4) << 2;
-				color_s.rgbtBlue = (*tmp1 & 0x1F) << 3;
+				color_s.rgbtRed = ((*tmp1 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) << 3;
+				color_s.rgbtGreen = ((*tmp1 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) << 3;
+				color_s.rgbtBlue = ((*tmp1 & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) << 3;
 
-				color_t.rgbtRed = ((*tmp2 & 0x7C00) >> 10) << 3;
-				color_t.rgbtGreen = ((*tmp2 & 0x3E0) >> 4) << 2;
-				color_t.rgbtBlue = (*tmp2 & 0x1F) << 3;
+				color_t.rgbtRed = ((*tmp2 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) << 3;
+				color_t.rgbtGreen = ((*tmp2 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) << 3;
+				color_t.rgbtBlue = ((*tmp2 & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) << 3;
 
 				// alpha blend
 
@@ -190,13 +190,13 @@ Combine16_565(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) 
 
 				// convert 16-bit colors to 24-bit
 
-				color_s.rgbtRed = ((*tmp1 & 0xF800) >> 11) << 3;
-				color_s.rgbtGreen = ((*tmp1 & 0x7E0) >> 5) << 2;
-				color_s.rgbtBlue = (*tmp1 & 0x1F) << 3;
+				color_s.rgbtRed = ((*tmp1 & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) << 3;
+				color_s.rgbtGreen = ((*tmp1 & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) << 2;
+				color_s.rgbtBlue = ((*tmp1 & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) << 3;
 
-				color_t.rgbtRed = ((*tmp2 & 0xF800) >> 11) << 3;
-				color_t.rgbtGreen = ((*tmp2 & 0x7E0) >> 5) << 2;
-				color_t.rgbtBlue = (*tmp2 & 0x1F) << 3;
+				color_t.rgbtRed = ((*tmp2 & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) << 3;
+				color_t.rgbtGreen = ((*tmp2 & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) << 2;
+				color_t.rgbtBlue = ((*tmp2 & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) << 3;
 
 				// alpha blend
 
@@ -338,7 +338,7 @@ FreeImage_Copy(FIBITMAP *src, int left, int top, int right, int bottom) {
 	unsigned bpp = FreeImage_GetBPP(src);
 	int dst_width = (right - left);
 	int dst_height = (bottom - top);
-	FIBITMAP *dst = FreeImage_Allocate(dst_width, dst_height, bpp, 0xFF, 0xFF00, 0xFF0000);
+	FIBITMAP *dst = FreeImage_Allocate(dst_width, dst_height, bpp, FreeImage_GetRedMask(src), FreeImage_GetGreenMask(src), FreeImage_GetBlueMask(src));
 
 	// get the dimensions
 	int dst_line = FreeImage_GetLine(dst);
@@ -456,7 +456,7 @@ FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha) {
 	unsigned bpp_dst = FreeImage_GetBPP(dst);
 	BOOL isRGB565 = FALSE;
 
-	if ((FreeImage_GetRedMask(dst) == 0x1F) && (FreeImage_GetGreenMask(dst) == 0x7E0) && (FreeImage_GetBlueMask(dst) == 0xF800)) {
+	if ((FreeImage_GetRedMask(dst) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dst) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dst) == FI16_565_BLUE_MASK)) {
 		isRGB565 = TRUE;
 	} else {
 		// includes case where all the masks are 0

@@ -151,7 +151,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 	// allocate the dib and write out the header
 
-	FIBITMAP *dib = FreeImage_Allocate(width, height, bpp, 0xFF, 0xFF00, 0xFF0000);
+	FIBITMAP *dib = FreeImage_Allocate(width, height, bpp, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
 	
 	// check if the PCD is bottom-up
 

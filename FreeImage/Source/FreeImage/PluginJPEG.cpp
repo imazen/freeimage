@@ -437,7 +437,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// step 4b: allocate dib and init header
 
-			dib = FreeImage_Allocate(cinfo.image_width, cinfo.image_height, 8 * cinfo.num_components, 0xFF, 0xFF00, 0xFF0000);
+			dib = FreeImage_Allocate(cinfo.image_width, cinfo.image_height, 8 * cinfo.num_components, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
 
 			if (cinfo.num_components == 1) {
 				RGBQUAD *colors = FreeImage_GetPalette(dib);

@@ -32,7 +32,7 @@
 
 #define CONVERTTO16(from) \
 	case 16 : \
-		if ((red_mask == 0x7C00) && (green_mask == 0x3E0) && (blue_mask == 0x1F)) { \
+		if ((red_mask == FI16_555_RED_MASK) && (green_mask == FI16_555_GREEN_MASK) && (blue_mask == FI16_555_BLUE_MASK)) { \
 			FreeImage_ConvertLine##from##To16_555(bits, scanline, FreeImage_GetWidth(dib)); \
 		} else { \
 			FreeImage_ConvertLine##from##To16_565(bits, scanline, FreeImage_GetWidth(dib)); \
@@ -41,7 +41,7 @@
 
 #define CONVERTTO16WITHPALETTE(from) \
 	case 16 : \
-		if ((red_mask == 0x7C00) && (green_mask == 0x3E0) && (blue_mask == 0x1F)) { \
+		if ((red_mask == FI16_555_RED_MASK) && (green_mask == FI16_555_GREEN_MASK) && (blue_mask == FI16_555_BLUE_MASK)) { \
 			FreeImage_ConvertLine##from##To16_555(bits, scanline, FreeImage_GetWidth(dib), FreeImage_GetPalette(dib)); \
 		} else { \
 			FreeImage_ConvertLine##from##To16_565(bits, scanline, FreeImage_GetWidth(dib), FreeImage_GetPalette(dib)); \
@@ -106,14 +106,14 @@ FreeImage_ConvertToRawBits(BYTE *bits, FIBITMAP *dib, int pitch, unsigned bpp, u
 			if ((bpp == 16) && (FreeImage_GetBPP(dib) == 16)) {
 				// convert 555 to 565 or vice versa
 
-				if ((red_mask == 0x7C00) && (green_mask == 0x3E0) && (blue_mask == 0x1F)) {
-					if ((FreeImage_GetRedMask(dib) == 0x1F) && (FreeImage_GetGreenMask(dib) == 0x7E0) && (FreeImage_GetBlueMask(dib) == 0xF800)) {
+				if ((red_mask == FI16_555_RED_MASK) && (green_mask == FI16_555_GREEN_MASK) && (blue_mask == FI16_555_BLUE_MASK)) {
+					if ((FreeImage_GetRedMask(dib) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dib) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dib) == FI16_565_BLUE_MASK)) {
 						FreeImage_ConvertLine16_565_To16_555(bits, scanline, FreeImage_GetWidth(dib));
 					} else {
 						memcpy(bits, scanline, FreeImage_GetLine(dib));
 					}
 				} else {
-					if ((FreeImage_GetRedMask(dib) == 0x1F) && (FreeImage_GetGreenMask(dib) == 0x3E0) && (FreeImage_GetBlueMask(dib) == 0x7C00)) {
+					if ((FreeImage_GetRedMask(dib) == FI16_555_RED_MASK) && (FreeImage_GetGreenMask(dib) == FI16_555_GREEN_MASK) && (FreeImage_GetBlueMask(dib) == FI16_555_BLUE_MASK)) {
 						FreeImage_ConvertLine16_555_To16_565(bits, scanline, FreeImage_GetWidth(dib));
 					} else {
 						memcpy(bits, scanline, FreeImage_GetLine(dib));

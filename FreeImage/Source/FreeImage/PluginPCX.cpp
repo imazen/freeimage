@@ -326,7 +326,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			WORD bitcount = header.bpp * header.planes;
 
 			if (bitcount == 24)
-				dib = FreeImage_Allocate(width, height, bitcount, 0xFF, 0xFF00, 0xFF0000);
+				dib = FreeImage_Allocate(width, height, bitcount, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
 			else
 				dib = FreeImage_Allocate(width, height, bitcount);			
 

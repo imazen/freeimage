@@ -67,7 +67,7 @@ FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP
 	RGBQUAD bkc;	// background color
 
 	// allocate the composite image
-	FIBITMAP *composite = FreeImage_Allocate(width, height, 24, 0xFF, 0xFF00, 0xFF0000);
+	FIBITMAP *composite = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
 	if(!composite) return NULL;
 
 	// get the palette

@@ -193,7 +193,7 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 
 	// Create the destination bitmap
 
-	FIBITMAP *dib = FreeImage_Allocate(width, height, 32, 0xFF, 0xFF00, 0xFF0000);
+	FIBITMAP *dib = FreeImage_Allocate(width, height, 32, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
 
 	// finally, read the image data.
 

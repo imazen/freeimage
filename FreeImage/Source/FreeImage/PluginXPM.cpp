@@ -613,7 +613,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
         // allocate and fill the dib with image data
 
         if (ncolors < 0) {
-			dib = FreeImage_Allocate(width, height, 24, 0xFF, 0xFF00, 0xFF0000);
+			dib = FreeImage_Allocate(width, height, 24, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
 		} else {
 			dib = FreeImage_Allocate(width, height, 8);
 		}

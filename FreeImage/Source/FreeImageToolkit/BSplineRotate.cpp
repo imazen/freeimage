@@ -663,7 +663,11 @@ FreeImage_RotateEx(FIBITMAP *dib, double angle, double x_shift, double y_shift, 
 			// allocate dst image
 			int width  = FreeImage_GetWidth(dib);
 			int height = FreeImage_GetHeight(dib);
-			dst = FreeImage_Allocate(width, height, bpp, 0xFF, 0xFF00, 0xFF0000);
+			if( bpp == 24 ) {
+				dst = FreeImage_Allocate(width, height, bpp, FIRGB_RED_MASK, FIRGB_GREEN_MASK, FIRGB_BLUE_MASK);
+			} else {
+				dst = FreeImage_Allocate(width, height, bpp, FIRGBA_RED_MASK, FIRGBA_GREEN_MASK, FIRGBA_BLUE_MASK);
+			}
 			if(!dst) throw(1);
 
 			// allocate a temporary 8-bit dib (no need to build a palette)
