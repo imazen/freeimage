@@ -14,6 +14,7 @@ Month day, 2005 - 3.5.4
 + [Herve Drolon] added support for CMYK JPEG on loading
 + [Petr Supina] added 16-bytes alignment to FIBITMAP palette and pixels starting address
 + [Petr Supina] added support for MMX/SSE2 code in LibJPEG (based on Mozilla/Firefox code)
++ [Herve Drolon] added TIFF_JPEG compression flag to the TIFF plugin
 * [Detlev Vendt] fixed PluginPNG not being thread safe
 * [Herve Drolon] fixed compiler warning C4018 occuring with VS.Net 2003
 
