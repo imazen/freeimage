@@ -36,7 +36,9 @@ FreeImage_FlipHorizontal(FIBITMAP *src) {
 	unsigned line   = FreeImage_GetLine(src);
 	unsigned height	= FreeImage_GetHeight(src);
 
-	BYTE *new_bits = (BYTE*)malloc(line * sizeof(BYTE));
+	// copy between aligned memories
+	BYTE *new_bits = (BYTE*)FreeImage_Aligned_Malloc(line * sizeof(BYTE), FIBITMAP_ALIGNMENT);
+	if (!new_bits) return FALSE;
 
 	// mirror the buffer
 
@@ -73,26 +75,14 @@ FreeImage_FlipHorizontal(FIBITMAP *src) {
 				break;
 			}
 
-			case 8 :
-			{
-				for(unsigned c = 0; c < line; c += sizeof(BYTE)) {
-					memcpy(bits + c, new_bits + line - c - sizeof(BYTE), sizeof(BYTE));
-				}
-
-				break;
-			}
-
-			case 16 :
-			{
-				for(unsigned c = 0; c < line; c += sizeof(WORD)) {
-					memcpy(bits + c, new_bits + line - c - sizeof(WORD), sizeof(WORD));						
-				}
-
-				break;
-			}
-
+			case 8:
+			case 16:
 			case 24 :
 			case 32 :
+			case 48:
+			case 64:
+			case 96:
+			case 128:
 			{
 				int bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
@@ -106,7 +96,7 @@ FreeImage_FlipHorizontal(FIBITMAP *src) {
 		}
 	}
 
-	free(new_bits);
+	FreeImage_Aligned_Free(new_bits);
 
 	return TRUE;
 }
@@ -128,23 +118,27 @@ FreeImage_FlipVertical(FIBITMAP *src) {
 	unsigned pitch  = FreeImage_GetPitch(src);
 	unsigned height = FreeImage_GetHeight(src);
 
-	Mid = (BYTE*)malloc(pitch * sizeof(BYTE));
+	// copy between aligned memories
+	Mid = (BYTE*)FreeImage_Aligned_Malloc(pitch * sizeof(BYTE), FIBITMAP_ALIGNMENT);
 	if (!Mid) return FALSE;
 
 	From = FreeImage_GetBits(src);
+	
+	unsigned line_s = 0;
+	unsigned line_t = (height-1) * pitch;
 
 	for(unsigned y = 0; y < height/2; y++) {
-
-		unsigned line_s = y * pitch;
-		unsigned line_t = (height-y-1) * pitch;
 
 		memcpy(Mid, From + line_s, pitch);
 		memcpy(From + line_s, From + line_t, pitch);
 		memcpy(From + line_t, Mid, pitch);
 
+		line_s += pitch;
+		line_t -= pitch;
+
 	}
 
-	free(Mid);
+	FreeImage_Aligned_Free(Mid);
 
 	return TRUE;
 }
