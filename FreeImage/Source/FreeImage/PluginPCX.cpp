@@ -522,15 +522,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					WORD x;
 
 					for (x = 0; x < width; x++)
-						bits[x * 3 + FIRGB_RED] = pline[x];						
+						bits[x * 3 + FI_RGBA_RED] = pline[x];						
 					pline += header.bytes_per_line;
 
 					for (x = 0; x < width; x++)
-						bits[x * 3 + FIRGB_GREEN] = pline[x];						
+						bits[x * 3 + FI_RGBA_GREEN] = pline[x];						
 					pline += header.bytes_per_line;
 
 					for (x = 0; x < width; x++)
-						bits[x * 3 + FIRGB_BLUE] = pline[x];						
+						bits[x * 3 + FI_RGBA_BLUE] = pline[x];						
 					pline += header.bytes_per_line;
 
 					bits -= pitch;

@@ -185,10 +185,10 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 	const struct ChannelInfo {
 		int	ofs, deflt;
 	} Channel[4] = {
-		{  FIRGBA_RED,   0 },	// red
-		{  FIRGBA_GREEN, 0 },	// green
-		{  FIRGBA_BLUE,  0 },	// blue
-		{  FIRGBA_ALPHA, 255 }	// alpha
+		{  FI_RGBA_RED,   0 },	// red
+		{  FI_RGBA_GREEN, 0 },	// green
+		{  FI_RGBA_BLUE,  0 },	// blue
+		{  FI_RGBA_ALPHA, 255 }	// alpha
 	};
 
 	// Create the destination bitmap
