@@ -542,7 +542,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		RGBQUAD *pal = NULL;	// pointer to dib palette
 		uint32 iccSize = 0;		// ICC profile length
 		void *iccBuf = NULL;	// ICC profile data
-    
+		BOOL has_alpha = FALSE;    
+
 		try {			
 			tif = (TIFF *)data;
 
@@ -571,15 +572,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if((photometric == PHOTOMETRIC_SEPARATED) && (bitspersample == 16))
 				throw "Unable to handle 16-bit CMYK TIFF";
 
-			if(samplesperpixel > 4) {
-				// generate a warning
-				FreeImage_OutputMessageProc(s_format_id, "Warning: %d additional alpha channel(s) ignored", samplesperpixel-4);
-				// ignore Photoshop additional alpha channels
-				samplesperpixel = 4;
-				// load as a RGBA file (ignore possible CMYK flag)
-				flags = TIFF_DEFAULT;
-			}
-
 			// ---------------------------------------------------------------------------------
 
 			// get image data type
@@ -602,11 +594,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// apropriate color management system. Works with non-tiled TIFFs.
 
 			if (photometric == PHOTOMETRIC_SEPARATED &&	
-				((flags & TIFF_CMYK) == TIFF_CMYK) && !TIFFIsTiled(tif))
+				(((flags & TIFF_CMYK) == TIFF_CMYK) || samplesperpixel > 4) && 
+				!TIFFIsTiled(tif))
 				isRGB = false;
 
 			if (isRGB) {
-
 				// Read the whole image into one big RGBA buffer and then 
 				// convert it to a DIB. This is using the traditional
 				// TIFFReadRGBAImage() API that we trust.
@@ -623,7 +615,22 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					return NULL;
 				}
 
-				// create a new DIB
+				// TIFFReadRGBAImage always deliveres 3 or 4 samples per pixel images
+				// (RGB or RGBA, see below). Cut-off possibly present channels (additional 
+				// alpha channels) from e.g. Photoshop. Any CMYK(A..) is now treated as RGB,
+				// any additional alpha channel on RGB(AA..) is lost on conversion to RGB(A)
+
+				if(samplesperpixel > 4) {
+					FreeImage_OutputMessageProc(s_format_id, "Warning: %d additional alpha channel(s) ignored", samplesperpixel-4);
+					samplesperpixel = 4;
+				}
+
+				// create a new DIB (take care of different samples-per-pixel in case 
+				// of converted CMYK image (RGB conversion is on sample per pixel less)
+
+				if (photometric == PHOTOMETRIC_SEPARATED && samplesperpixel == 4) {
+					samplesperpixel = 3;
+				}
 
 				dib = CreateImageType(image_type, width, height, bitspersample, samplesperpixel);
 				if (dib == NULL) {
@@ -659,7 +666,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// We use macros for extracting components from the packed ABGR 
 				// form returned by TIFFReadRGBAImage.
 
-				BOOL has_alpha = FALSE;
 				uint32 *row = &raster[0];
 
 				for (y = 0; y < height; y++) {
@@ -690,20 +696,26 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					row += width;
 				}
 
-				FreeImage_SetTransparent(dib, has_alpha);
-
 				_TIFFfree(raster);
 
 			} else {
-				// calculate the line + pitch
 
-				int line = CalculateLine(width, bitspersample * samplesperpixel);
-				int pitch = CalculatePitch(line);
+				// At this place, samplesperpixel could be > 4, esp. when a CMYK(A) format
+				// is recognized. Where all other formats are handled straight-forward, this
+				// format has to be handled special 
+
+				BOOL isCMYKA = (photometric == PHOTOMETRIC_SEPARATED && samplesperpixel > 4);
+				uint16 spp = min(samplesperpixel, 4);
+
+				// calculate the line + pitch (separate for scr & dest)
+
+				int line  = CalculateLine(width, bitspersample * samplesperpixel);
+				int pitch = CalculatePitch(CalculateLine(width, bitspersample * spp));
 
 				// create a new DIB
 				// ----------------
 
-				dib = CreateImageType(image_type, width, height, bitspersample, samplesperpixel);
+				dib = CreateImageType(image_type, width, height, bitspersample, spp);
 				if (dib == NULL) {
 					throw "No space for DIB image";
 				}
@@ -809,12 +821,37 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						free(buf);
 						throw "Parsing error";
 					} else {
-						// color/greyscale picture (1-, 4-, 8-bit) or special type (int, long, double, ...)
-						// ... just copy
 
+						// color/greyscale picture (1-, 4-, 8-bit) or special type (int, long, double, ...)
+						// ... just copy (unless it's an CMYKA picture)
+	
 						for (int l = 0; l < nrow; l++) {
 							bits -= pitch;
-							memcpy(bits, buf + l * line, line);
+
+							if (!isCMYKA) {
+								memcpy(bits, buf + l * line, line);
+							} else {
+
+								// Here we know: samples-per-pixel was >= 5 on CMYKA picture
+								// This should be converted to RGBA or CMYK, depending on 
+								// TIFF_CMYK is given. The resulting image always has 32bpp.
+
+								BYTE *p = bits, *b = buf + l * line, k;
+								for (x = 0; x < line / samplesperpixel; x++) {
+									if ((flags & TIFF_CMYK) == TIFF_CMYK) {
+										memcpy(p, b, spp);
+									} else {
+										k = 255 - b[3];
+										p[FI_RGBA_RED]	 = (k*(255-b[0]))/255;
+										p[FI_RGBA_GREEN] = (k*(255-b[1]))/255;
+										p[FI_RGBA_BLUE]	 = (k*(255-b[2]))/255;
+										if ((p[FI_RGBA_ALPHA] = b[4]) != 0)
+											has_alpha = TRUE;								
+									}
+									b += samplesperpixel;
+									p += spp;
+								}
+							}
 						}
 					}
 				}
@@ -828,6 +865,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// copy ICC profile data (must be done after FreeImage_Allocate)
 
 			FreeImage_CreateICCProfile(dib, iccBuf, iccSize);
+
+			FreeImage_SetTransparent(dib, has_alpha);
 
 			return (FIBITMAP *)dib;
 
