@@ -377,7 +377,8 @@ jpeg_freeimage_dst (j_compress_ptr cinfo, fi_handle outfile, FreeImageIO *io) {
 */
 static BOOL 
 jpeg_read_comment(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
-	int i, count;
+	int count;
+	size_t i;
 	size_t length = datalen;
 	BYTE *profile = (BYTE*)dataptr;
 
@@ -491,7 +492,7 @@ jpeg_read_xmp_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) 
 		tag.count =  length;
 		tag.type = FIDT_ASCII;
 		char *value = (char*)malloc((length + 1) * sizeof(char));
-		for(int i = 0; i < length; i++) {
+		for(size_t i = 0; i < length; i++) {
 			value[i] = (char)profile[i];
 		}
 		value[length] = '\0';
@@ -617,7 +618,7 @@ jpeg_write_xmp_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 		BYTE *profile = (BYTE*)malloc((tag_xmp->length + xmp_header_size) * sizeof(BYTE));
 		memcpy(profile, xmp_signature, xmp_header_size);
 
-		for(long i = 0; i < tag_xmp->length; i += 65504L) {
+		for(DWORD i = 0; i < tag_xmp->length; i += 65504L) {
 			unsigned length = MIN((long)(tag_xmp->length - i), 65504L);
 			
 			memcpy(profile + xmp_header_size, (BYTE*)tag_xmp->value + i, length);

@@ -358,7 +358,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		std::map<DWORD,std::string> color2chrs;
 
 		//loop thru entire dib, if new color, inc num_colors and add to both maps
-		unsigned int num_colors = 0;
+		int num_colors = 0;
 		for(y = 0; y < height; y++ ) {
 			BYTE *line = FreeImage_GetScanLine(dib, height - y - 1);
 			for(x = 0; x < width; x++ ) {

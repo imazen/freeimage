@@ -9,7 +9,10 @@ Month day, 2005 - 3.5.4
 ! [Herve Drolon] improved the speed of FreeImage_Rescale
 ! [Herve Drolon] improved FreeImage_RotateClassic (more compact code, a little faster)
 + [Detlev Vendt] added LZW support to PluginGIF:Save
++ [Herve Drolon] added VS.Net 2003 project files
++ [Herve Drolon] added VERSIONINFO resource to the DLL
 * [Detlev Vendt] fixed PluginPNG not being thread safe
+* [Herve Drolon] fixed compiler warning C4018 occuring with VS.Net 2003
 
 December 29, 2004 - 3.5.3
 ! FreeImage now uses ZLib 1.2.2

@@ -118,7 +118,7 @@ tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 
 			if(TIFFGetField(tif, fieldInfo->field_tag, &params)) {
 				tag.type = (FREE_IMAGE_MDTYPE)fieldInfo->field_type;
-				tag.id = fieldInfo->field_tag;
+				tag.id = (WORD)fieldInfo->field_tag;
 				tag.key = (char*)tag_lib.getTagFieldName(TagLib::GEOTIFF, tag.id);
 				tag.description = (char*)tag_lib.getTagDescription(TagLib::GEOTIFF, tag.id);
 				tag.length = strlen(params) + 1;
@@ -132,7 +132,7 @@ tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 
 			if(TIFFGetField(tif, fieldInfo->field_tag, &tag_count, &data)) {
 				tag.type = (FREE_IMAGE_MDTYPE)fieldInfo->field_type;
-				tag.id = fieldInfo->field_tag;
+				tag.id = (WORD)fieldInfo->field_tag;
 				tag.key = (char*)tag_lib.getTagFieldName(TagLib::GEOTIFF, tag.id);
 				tag.description = (char*)tag_lib.getTagDescription(TagLib::GEOTIFF, tag.id);
 				tag.length = FreeImage_TagDataWidth(tag.type) * tag_count;
@@ -158,7 +158,7 @@ tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 		const TIFFFieldInfo *fieldInfo = &xtiffFieldInfo[i];
 
 		FITAG *tag = NULL;
-		const char *key = tag_lib.getTagFieldName(TagLib::GEOTIFF, fieldInfo->field_tag);
+		const char *key = tag_lib.getTagFieldName(TagLib::GEOTIFF, (WORD)fieldInfo->field_tag);
 
 		if(FreeImage_GetMetadata(FIMD_GEOTIFF, dib, key, &tag)) {
 			if(tag->type == FIDT_ASCII) {

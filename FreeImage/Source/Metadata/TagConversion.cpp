@@ -37,7 +37,7 @@ static const char*
 ConvertAnyTag(FITAG *tag) {
 	char format[MAX_TEXT_EXTENT];
 	static std::string buffer;
-	int i;
+	DWORD i;
 
 	if(!tag)
 		return NULL;
@@ -270,7 +270,7 @@ ConvertExifTag(FITAG *tag) {
 		{
 			char *componentStrings[7] = {"", "Y", "Cb", "Cr", "R", "G", "B"};
 			BYTE *pvalue = (BYTE*)tag->value;
-			for(int i = 0; i < MIN((DWORD)4, tag->count); i++) {
+			for(DWORD i = 0; i < MIN((DWORD)4, tag->count); i++) {
 				int j = pvalue[i];
 				if(j > 0 && j < 7)
 					buffer += componentStrings[j];

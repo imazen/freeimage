@@ -47,7 +47,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 	TagLib& tag_lib = TagLib::instance();
 
     // find start of the BIM portion of the binary data
-    int offset = 0;
+    size_t offset = 0;
 	while(offset < length - 1) {
 		if((profile[offset] == 0x1C) && (profile[offset+1] == 0x02))
 			break;
@@ -112,7 +112,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 			{
 				// string
 				tag.type = FIDT_ASCII;
-				for(int i = 0; i < tag.length; i++) {
+				for(DWORD i = 0; i < tag.length; i++) {
 					iptc_value[i] = profile[offset + i];
 				}
 				iptc_value[tag.length] = '\0';

@@ -623,7 +623,7 @@ tiff_read_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
 		tag.count = tag.length;
 		tag.type = FIDT_ASCII;
 		char *value = (char*)malloc((profile_size + 1) * sizeof(char));
-		for(int i = 0; i < profile_size; i++) {
+		for(uint32 i = 0; i < profile_size; i++) {
 			value[i] = (char)profile[i];
 		}
 		value[profile_size] = '\0';
@@ -1127,7 +1127,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 								BYTE *p = bits, *b = buf + l * line;
 
-								for(x = 0; x < line / samplesperpixel; x++) {
+								for(x = 0; x < (uint32)(line / samplesperpixel); x++) {
 									// copy the 8-bit layer
 									*p = b[0];
 									// convert the 8-bit alpha layer to a trns table
@@ -1150,7 +1150,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 								BYTE *p = bits, *b = buf + l * line, k;
 
-								for (x = 0; x < line / samplesperpixel; x++) {
+								for (x = 0; x < (uint32)(line / samplesperpixel); x++) {
 									if ((flags & TIFF_CMYK) == TIFF_CMYK) {
 										memcpy(p, b, spp);
 									} else {

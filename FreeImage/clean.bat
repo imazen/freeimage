@@ -38,5 +38,6 @@ del *.exp /s /q
 del *.ilk /s /q
 del *.idb /s /q
 del *.aps /s /q
+del *.suo /s /q /a:h
 del *.o /s /q
 

@@ -548,7 +548,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					for(y = 0; y < height; y++) {
 						bits = FreeImage_GetBits(dib) + (height - 1 - y) * pitch;
 
-						for(x = 0; x < FreeImage_GetLine(dib); x++)
+						for(x = 0; x < (int)FreeImage_GetLine(dib); x++)
 							io->write_proc(&bits[x], 1, 1, handle);
 					}
 				} else  {
@@ -557,7 +557,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					for (y = 0; y < height; y++) {
 						bits = FreeImage_GetBits(dib) + (height - 1 - y) * pitch;
 
-						for (x = 0; x < FreeImage_GetLine(dib) * 8; x++)	{
+						for (x = 0; x < (int)FreeImage_GetLine(dib) * 8; x++)	{
 							color = (bits[x>>3] & (0x80 >> (x & 0x07))) != 0;
 
 							sprintf(buffer, "%c ", color ? '1':'0');

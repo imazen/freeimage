@@ -238,13 +238,13 @@ void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned
 							int weight = weightsTable.getWeight(x, i-iLeft);
 							
 							index = i * bytespp;
-							for (int j = 0; j < bytespp; j++) {
+							for (unsigned j = 0; j < bytespp; j++) {
 								value[j] += (weight * (int)src_bits[index++]); 
 							}
 						} 
 
 						// clamp and place result in destination pixel
-						for (int j = 0; j < bytespp; j++) {
+						for (unsigned j = 0; j < bytespp; j++) {
 							int pixel   = (value[j] + 128) / 256;
 							dst_bits[j] = (BYTE)((pixel < 0) ? 0 : ((pixel > 255) ? 255 : pixel));
 						}
@@ -303,7 +303,7 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 							// scan between boundaries
 							// accumulate weighted effect of each neighboring pixel
 							int weight = weightsTable.getWeight(y, i-iLeft);							
-							for (int j = 0; j < bytespp; j++) {
+							for (unsigned j = 0; j < bytespp; j++) {
 								value[j] += (weight * (int)src_bits[j]);
 							}
 
@@ -311,7 +311,7 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 						}
 
 						// clamp and place result in destination pixel
-						for (int j = 0; j < bytespp; j++) {
+						for (unsigned j = 0; j < bytespp; j++) {
 							int pixel   = (value[j] + 128) / 256;
 							dst_bits[j] = (BYTE)((pixel < 0) ? 0 : ((pixel > 255) ? 255 : pixel));
 						}

@@ -62,7 +62,8 @@ Limited to 45 degree skewing only. Filters two adjacent pixels.
 */
 static void 
 HorizontalSkew(FIBITMAP *src, FIBITMAP *dst, int row, int iOffset, BYTE Weight) {
-	int i, j, iXPos;
+	int i, j;
+	int iXPos;
 
 	int src_width  = FreeImage_GetWidth(src);
 	int src_height = FreeImage_GetHeight(src);
@@ -77,7 +78,7 @@ HorizontalSkew(FIBITMAP *src, FIBITMAP *dst, int row, int iOffset, BYTE Weight) 
 			BYTE pxlSrc[4], pxlLeft[4], pxlOldLeft[4];	// 4 = 32-bit max
 
 			// calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
-			unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+			int bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
 			BYTE *src_bits = FreeImage_GetScanLine(src, row);
 			BYTE *dst_bits = FreeImage_GetScanLine(dst, row);
@@ -155,7 +156,7 @@ VerticalSkew(FIBITMAP *src, FIBITMAP *dst, int col, int iOffset, BYTE Weight) {
 			BYTE pxlSrc[4], pxlLeft[4], pxlOldLeft[4];	// 4 = 32-bit max
 
 			// calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
-			unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+			int bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
 			unsigned src_pitch = FreeImage_GetPitch(src);
 			unsigned dst_pitch = FreeImage_GetPitch(dst);
@@ -287,7 +288,7 @@ Rotate90(FIBITMAP *src) {
 		BYTE *bdest = FreeImage_GetBits(dst);  // destination pixels
 
 		// calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
-		unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+		int bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
 		for(xs = 0; xs < dst_width; xs += RBLOCK) {    // for all image blocks of RBLOCK*RBLOCK pixels
 			for(ys = 0; ys < dst_height; ys += RBLOCK) {

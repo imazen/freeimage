@@ -507,7 +507,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			if (FreeImage_GetPalette(icon_dib) != NULL) {
 				RGBQUAD *pal = FreeImage_GetPalette(icon_dib);
 				FILE_BGRA bgra;
-				for( int i = 0; i < FreeImage_GetColorsUsed(icon_dib); i++ ) {
+				for(unsigned i = 0; i < FreeImage_GetColorsUsed(icon_dib); i++) {
 					bgra.b = pal[i].rgbBlue;
 					bgra.g = pal[i].rgbGreen;
 					bgra.r = pal[i].rgbRed;

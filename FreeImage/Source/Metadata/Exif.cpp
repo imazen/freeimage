@@ -254,10 +254,10 @@ processCanonMakerNoteTag(FIBITMAP *dib, FITAG & tag) {
         int subTagTypeBase = 0xC100;
 
         // we intentionally skip the first array member
-        for (int i = 1; i < tag.count; i++) {
+        for (DWORD i = 1; i < tag.count; i++) {
 			memset(&canonTag, 0, sizeof(FITAG));
 
-			canonTag.id = subTagTypeBase + i;
+			canonTag.id = subTagTypeBase + (WORD)i;
 			canonTag.type = FIDT_SHORT;
 			canonTag.count = 1;
 			canonTag.length = 2;
@@ -281,10 +281,10 @@ processCanonMakerNoteTag(FIBITMAP *dib, FITAG & tag) {
         int subTagTypeBase = 0xC400;
 
         // we intentionally skip the first array member
-        for (int i = 1; i < tag.count; i++) {
+        for (DWORD i = 1; i < tag.count; i++) {
 			memset(&canonTag, 0, sizeof(FITAG));
 
-			canonTag.id = subTagTypeBase + i;
+			canonTag.id = subTagTypeBase + (WORD)i;
 			canonTag.type = FIDT_SHORT;
 			canonTag.count = 1;
 			canonTag.length = 2;
@@ -319,7 +319,8 @@ Process a standard Exif tag
 */
 static void 
 processExifTag(FIBITMAP *dib, FITAG & tag, char *pval, BOOL msb_order, TagLib::MDMODEL md_model) {
-	int n, i;
+	int n;
+	DWORD i;
 
 	// allocate a buffer to store the tag value
 	BYTE *exif_value = (BYTE*)malloc(tag.length * sizeof(BYTE));
