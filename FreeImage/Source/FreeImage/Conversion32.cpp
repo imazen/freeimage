@@ -103,7 +103,7 @@ FreeImage_ConvertLine16To32_565(BYTE *target, BYTE *source, int width_in_pixels)
 		target += 4;
 	}
 }
-
+/*
 void DLL_CALLCONV
 FreeImage_ConvertLine24To32(BYTE *target, BYTE *source, int width_in_pixels) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
@@ -112,7 +112,23 @@ FreeImage_ConvertLine24To32(BYTE *target, BYTE *source, int width_in_pixels) {
 		source += 3;
 	}
 }
-
+*/
+/**
+This unoptimized version of the conversion function avoid an undetermined bug with VC++ SP6. 
+The bug occurs in release mode only, when the image height is equal to 537 
+(try e.g. a size of 432x537 to reproduce the bug with the optimized function).
+*/
+void DLL_CALLCONV
+FreeImage_ConvertLine24To32(BYTE *target, BYTE *source, int width_in_pixels) {
+	for (int cols = 0; cols < width_in_pixels; cols++) {
+		target[FI_RGBA_RED]   = source[FI_RGBA_RED];
+		target[FI_RGBA_GREEN] = source[FI_RGBA_GREEN];
+		target[FI_RGBA_BLUE]  = source[FI_RGBA_BLUE];
+		target[FI_RGBA_ALPHA] = 0xFF;
+		target += 4;
+		source += 3;
+	}
+}
 // ----------------------------------------------------------
 
 static void DLL_CALLCONV
