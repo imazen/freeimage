@@ -96,21 +96,37 @@ public:
 
 	/**@name Creation & Destruction */
 	//@{	
-	/// Constructor
+	/**
+	Constructor
+	@see FreeImage_AllocateT
+	*/
 	fipImage(FREE_IMAGE_TYPE image_type = FIT_BITMAP, WORD width = 0, WORD height = 0, WORD bpp = 0);
 	/// Destructor
 	~fipImage();
-	/// Image allocator
+	/**
+	Image allocator
+	@see FreeImage_AllocateT
+	*/
 	BOOL setSize(FREE_IMAGE_TYPE image_type, WORD width, WORD height, WORD bpp, unsigned red_mask = 0, unsigned green_mask = 0, unsigned blue_mask = 0);
 	//@}
 
 	/**@name Copying */
 	//@{	
-	/// Copy constructor
+	/**
+	Copy constructor
+	@see FreeImage_Clone
+	*/
 	fipImage(const fipImage& src);
-	/// Copy constructor
+	/**
+	Copy constructor
+	@see FreeImage_Clone
+	*/
 	fipImage& operator=(const fipImage& src);
-	/// Assignement operator
+	/**
+	<b>Assignement operator</b><br>
+	Copy the input pointer and manage its destruction
+	@see operator FIBITMAP*
+	*/
 	fipImage& operator=(FIBITMAP *dib);
 
 
@@ -124,6 +140,7 @@ public:
 	@param right Specifies the right position of the cropped rectangle. 
 	@param bottom Specifies the bottom position of the cropped rectangle. 
 	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_Copy
 	*/
 	BOOL copySubImage(fipImage& dst, int left, int top, int right, int bottom);
 
@@ -138,6 +155,7 @@ public:
 	@param alpha Alpha blend factor. The source and destination images are alpha blended if 
 	alpha = 0..255. If alpha > 255, then the source image is combined to the destination image.
 	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_Paste
 	*/
 	BOOL pasteSubImage(fipImage& src, int left, int top, int alpha = 256);
 
@@ -152,7 +170,7 @@ public:
 	@param lpszPathName Path and file name of the image to load.
 	@param flag The signification of this flag depends on the image to be read.
 	@return Returns TRUE if successful, FALSE otherwise.
-	@see FreeImage.h, FreeImage documentation
+	@see FreeImage_Load, FreeImage documentation
 	*/
 	BOOL load(const char* lpszPathName, int flag = 0);
 
@@ -162,7 +180,7 @@ public:
 	@param handle FreeImage fi_handle
 	@param flag The signification of this flag depends on the image to be read.
 	@return Returns TRUE if successful, FALSE otherwise.
-	@see FreeImage.h, FreeImage documentation
+	@see FreeImage_LoadFromHandle, FreeImage documentation
 	*/
 	BOOL loadFromHandle(FreeImageIO *io, fi_handle handle, int flag = 0);
 
@@ -180,7 +198,7 @@ public:
 	@param lpszPathName Path and file name of the image to save.
 	@param flag The signification of this flag depends on the image to be saved.
 	@return Returns TRUE if successful, FALSE otherwise.
-	@see FreeImage.h, FreeImage documentation
+	@see FreeImage_Save, FreeImage documentation
 	*/
 	BOOL save(const char* lpszPathName, int flag = 0);
 
@@ -191,7 +209,7 @@ public:
 	@param handle FreeImage fi_handle
 	@param flag The signification of this flag depends on the image to be saved.
 	@return Returns TRUE if successful, FALSE otherwise.
-	@see FreeImage.h, FreeImage documentation
+	@see FreeImage_SaveToHandle, FreeImage documentation
 	*/
 	BOOL saveToHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flag = 0);
 
@@ -218,10 +236,16 @@ public:
 	*/
 	FREE_IMAGE_TYPE getImageType();
 
-	/// Returns the image width in pixels
+	/**
+	Returns the image width in pixels
+	@see FreeImage_GetWidth
+	*/
 	WORD getWidth();
 	
-	/// Returns the image height in pixels
+	/**
+	Returns the image height in pixels
+	@see FreeImage_GetHeight
+	*/
 	WORD getHeight();
 	
 	/**
@@ -247,62 +271,94 @@ public:
 	/// Returns TRUE if the image is allocated, FALSE otherwise
 	BOOL  isValid();
 
-	/// Returns a pointer to the bitmap's BITMAPINFO header. 
+	/**
+	Returns a pointer to the bitmap's BITMAPINFO header. 
+	@see FreeImage_GetInfo
+	*/
 	BITMAPINFO* getInfo();
 
-	/// Returns a pointer to the bitmap's BITMAPINFOHEADER. 
+	/**
+	Returns a pointer to the bitmap's BITMAPINFOHEADER. 
+	@see FreeImage_GetInfoHeader
+	*/
     BITMAPINFOHEADER* getInfoHeader();
 
 	/**
 	Returns the size of the bitmap in bytes. 
 	The size of the bitmap is the BITMAPINFOHEADER + the size of the palette + the size of the bitmap data. 
+	@see FreeImage_GetDIBSize
 	*/
 	LONG getImageSize();
 	
 	/**
 	Returns the bitdepth of the bitmap. <br>
 	When the image type is FIT_BITMAP, valid bitdepth can be 1, 4, 8, 16, 24 or 32.
-	@see getImageType
+	@see FreeImage_GetBPP, getImageType
 	*/
 	WORD getBitsPerPixel();
 
 	/**
 	Returns the width of the bitmap in bytes.<br>
 	<b>This is not the size of the scanline</b>.
-	@see getScanWidth
+	@see FreeImage_GetLine, getScanWidth
 	*/
 	WORD getLine();
 
-	/// Returns the bitmap resolution along the X axis, in pixels / cm
+	/**
+	Returns the bitmap resolution along the X axis, in pixels / cm
+	@see FreeImage_GetDotsPerMeterX
+	*/
 	WORD getHorizontalResolution();
 	
-	/// Returns the bitmap resolution along the Y axis, in pixels / cm
+	/**
+	Returns the bitmap resolution along the Y axis, in pixels / cm
+	@see FreeImage_GetDotsPerMeterY
+	*/
 	WORD getVerticalResolution();
 
-	/// set the bitmap resolution along the X axis, in pixels / cm
+	/**
+	set the bitmap resolution along the X axis, in pixels / cm
+	@see FreeImage_GetInfoHeader
+	*/
 	void setHorizontalResolution(LONG value);
 	
-	/// set the bitmap resolution along the Y axis, in pixels / cm
+	/**
+	set the bitmap resolution along the Y axis, in pixels / cm
+	@see FreeImage_GetInfoHeader
+	*/
 	void setVerticalResolution(LONG value);
 	//@}
 
 	/**@name Palette operations */
 	//@{
-	/// Returns a pointer to the bitmap's palette. If the bitmap doesn't have a palette, getPalette returns NULL. 
+	/**
+	Returns a pointer to the bitmap's palette. If the bitmap doesn't have a palette, getPalette returns NULL. 
+	@see FreeImage_GetPalette
+	*/
 	RGBQUAD* getPalette();
 	
-	/// Returns the palette size in bytes.
+	/**
+	Returns the palette size in <b>bytes</b>.
+	@see FreeImage_GetColorsUsed
+	*/
 	WORD getPaletteSize();
 
-	/// Retrieves the number of colours used in the bitmap. If the bitmap is non-palletised, 0 is returned. 
+	/**
+	Retrieves the number of colours used in the bitmap. If the bitmap is non-palletised, 0 is returned. 
+	@see FreeImage_GetColorsUsed
+	*/
 	WORD getColorsUsed();
 
-	/** @brief Investigates the colour type of the bitmap.
-		@see FREE_IMAGE_COLOR_TYPE
+	/** 
+	Investigates the colour type of the bitmap.
+	@see FreeImage_GetColorType, FREE_IMAGE_COLOR_TYPE
 	*/
 	FREE_IMAGE_COLOR_TYPE getColorType();
 
-	/// Returns TRUE if the bitmap is a 8-bit bitmap with a greyscale palette, FALSE otherwise
+	/**
+	Returns TRUE if the bitmap is a 8-bit bitmap with a greyscale palette, FALSE otherwise
+	@see FreeImage_GetBPP, FreeImage_GetColorType
+	*/
 	BOOL isGrayscale();
 	//@}
 
@@ -331,6 +387,7 @@ public:
 	@param y Pixel position in vertical direction
 	@param value Pixel index (returned value)
 	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_GetPixelIndex
 	*/
 	BOOL getPixelIndex(unsigned x, unsigned y, BYTE *value);
 
@@ -339,6 +396,7 @@ public:
 	@param y Pixel position in vertical direction
 	@param value Pixel color (returned value)
 	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_GetPixelColor
 	*/
 	BOOL getPixelColor(unsigned x, unsigned y, RGBQUAD *value);
 
@@ -347,6 +405,7 @@ public:
 	@param y Pixel position in vertical direction
 	@param value Pixel index
 	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_SetPixelIndex
 	*/
 	BOOL setPixelIndex(unsigned x, unsigned y, BYTE *value);
 
@@ -355,6 +414,7 @@ public:
 	@param y Pixel position in vertical direction
 	@param value Pixel color
 	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_SetPixelColor
 	*/
 	BOOL setPixelColor(unsigned x, unsigned y, RGBQUAD *value);
 
@@ -364,47 +424,62 @@ public:
 	 *  Bitmaps are always loaded in their default bit depth. If you want the bitmap to be stored in another bit depth, the class provides several conversion functions.
 	 */
 	//@{	
-	/** @brief Converts an image to a type supported by FreeImage.
-		@param image_type New image type
-		@param scale_linear TRUE if image pixels must be scaled linearly when converting to a standard bitmap
-		@return Returns TRUE if successfull, FALSE otherwise. 
-		@see FreeImage_ConvertToType, FreeImage_ConvertToStandardType
+	/** 
+	Converts an image to a type supported by FreeImage.
+	@param image_type New image type
+	@param scale_linear TRUE if image pixels must be scaled linearly when converting to a standard bitmap
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertToType, FreeImage_ConvertToStandardType
 	*/
 	BOOL convertToType(FREE_IMAGE_TYPE image_type, BOOL scale_linear = TRUE);
 
-	/** @brief Converts the bitmap to 1 bit using a threshold T.
-		@param T Threshold value in [0..255]
-		@return Returns TRUE if successfull, FALSE otherwise. 
+	/** 
+	Converts the bitmap to 1 bit using a threshold T.
+	@param T Threshold value in [0..255]
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_Threshold
 	*/
 	BOOL threshold(BYTE T);
 	
-	/** @brief Converts the bitmap to 4 bits. Unless the bitmap is a 1-bit palettized bitmap, colour values are converted to greyscale.
-		@return Returns TRUE if successfull, FALSE otherwise. 
+	/** 
+	Converts the bitmap to 4 bits. Unless the bitmap is a 1-bit palettized bitmap, colour values are converted to greyscale.
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertTo4Bits
 	*/
 	BOOL convertTo4Bits();
 
-	/** @brief Converts the bitmap to 8 bits. If the bitmap is 24 or 32-bit RGB, the colour values are converted to greyscale.
-		@return Returns TRUE if successfull, FALSE otherwise. 
+	/** 
+	Converts the bitmap to 8 bits. If the bitmap is 24 or 32-bit RGB, the colour values are converted to greyscale.
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertTo8Bits
 	*/
 	BOOL convertTo8Bits();
 
-	/** @brief Converts the bitmap to 16 bits. The resulting bitmap has a layout of 5 bits red, 5 bits green, 5 bits blue and 1 unused bit. 
-		@return Returns TRUE if successfull, FALSE otherwise. 
+	/** 
+	Converts the bitmap to 16 bits. The resulting bitmap has a layout of 5 bits red, 5 bits green, 5 bits blue and 1 unused bit. 
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertTo16Bits555
 	*/
 	BOOL convertTo16Bits555();
 	
-	/** @brief Converts the bitmap to 16 bits. The resulting bitmap has a layout of 5 bits red, 6 bits green and 5 bits blue. 
-		@return Returns TRUE if successfull, FALSE otherwise. 
+	/** 
+	Converts the bitmap to 16 bits. The resulting bitmap has a layout of 5 bits red, 6 bits green and 5 bits blue. 
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertTo16Bits565
 	*/
 	BOOL convertTo16Bits565();
 	
-	/** @brief Converts the bitmap to 24 bits. 
-		@return Returns TRUE if successfull, FALSE otherwise. 
+	/** 
+	Converts the bitmap to 24 bits. 
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertTo24Bits
 	*/
 	BOOL convertTo24Bits();
 	
-	/** @brief Converts the bitmap to 32 bits. 
-		@return Returns TRUE if successfull, FALSE otherwise. 
+	/** 
+	Converts the bitmap to 32 bits. 
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertTo32Bits
 	*/
 	BOOL convertTo32Bits();
 
@@ -421,15 +496,15 @@ public:
 	    The quantize parameter specifies which colour reduction algorithm should be used.
 		@param algorithm Color quantization algorithm to use.
 		@return Returns TRUE if successfull, FALSE otherwise. 
-		@see FREE_IMAGE_QUANTIZE
+		@see FreeImage_ColorQuantize, FREE_IMAGE_QUANTIZE
 	*/
 	BOOL colorQuantize(FREE_IMAGE_QUANTIZE algorithm);
 
-	/** @brief Converts a 8-bit image to a monochrome image using a dithering algorithm.
-
-		@param algorithm Dithering algorithm to use.
-		@return Returns TRUE if successfull, FALSE otherwise. 
-		@see FREE_IMAGE_DITHER
+	/** 
+	Converts a 8-bit image to a monochrome image using a dithering algorithm.
+	@param algorithm Dithering algorithm to use.
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_Dither, FREE_IMAGE_DITHER
 	*/
 	BOOL dither(FREE_IMAGE_DITHER algorithm);
 	//@}
@@ -444,24 +519,21 @@ public:
 	BOOL isTransparent();
 
 	/**
-	@brief 8-bit transparency : get the number of transparent colors.
-
+	8-bit transparency : get the number of transparent colors.
 	@return Returns the number of transparent colors in a palletised bitmap.
 	@see FreeImage_GetTransparencyCount
 	*/
 	unsigned getTransparencyCount();
 
 	/**
-	@brief 8-bit transparency : get the bitmap’s transparency table.
-
+	8-bit transparency : get the bitmap’s transparency table.
 	@return Returns a pointer to the bitmap’s transparency table.
 	@see FreeImage_GetTransparencyTable
 	*/
 	BYTE* getTransparencyTable();
 
 	/** 
-	@brief 8-bit transparency : set the bitmap’s transparency table.
-
+	8-bit transparency : set the bitmap’s transparency table.
 	@see FreeImage_SetTransparencyTable
 	*/
 	void setTransparencyTable(BYTE *table, int count);
@@ -518,6 +590,7 @@ public:
 	@param BlueChannel Output blue channel.
 	@return Returns FALSE if the dib isn't a valid image, if it's not a 24-bit image or if 
 	one of the output channel can't be allocated. Returns TRUE otherwise.
+	@see FreeImage_GetChannel
 	*/
 	BOOL splitChannels(fipImage& RedChannel, fipImage& GreenChannel, fipImage& BlueChannel);
 
@@ -526,14 +599,15 @@ public:
 	@param green Input green channel.
 	@param blue Input blue channel.
 	@return Returns FALSE if the dib can't be allocated, if the input channels are not 8-bit images. Returns TRUE otherwise.
+	@see FreeImage_SetChannel
 	*/
 	BOOL combineChannels(fipImage& red, fipImage& green, fipImage& blue);
 	//@}
 
 	/**@name Rotation and flipping */
 	//@{	
-	/** @brief Image translation and rotation using B-Splines.
-
+	/** 
+	Image translation and rotation using B-Splines.
 	@param angle Image rotation angle, in degree
 	@param x_shift Image horizontal shift
 	@param y_shift Image vertical shift
@@ -541,27 +615,37 @@ public:
 	@param y_origin Origin of the y-axis
 	@param use_mask Whether or not to mask the image. Image mirroring is applied when use_mask is set to FALSE
 	@return Returns the translated & rotated dib if successful, returns NULL otherwise
+	@see FreeImage_RotateEx
 	*/
 	BOOL rotateEx(double angle, double x_shift, double y_shift, double x_origin, double y_origin, BOOL use_mask);
 
-	/** @brief Image rotation by means of three shears.
-
+	/** 
+	Image rotation by means of three shears.
 	@param angle Image rotation angle, in degree
-	@return Returns the translated & rotated dib if successful, returns NULL otherwise
+	@return Returns rotated dib if successful, returns NULL otherwise
+	@see FreeImage_RotateClassic
 	*/
 	BOOL rotate(double angle);
 
-	/// Flip the image horizontally along the vertical axis
+	/**
+	Flip the image horizontally along the vertical axis
+	@see FreeImage_FlipHorizontal
+	*/
 	BOOL flipHorizontal();
 
-	/// Flip the image vertically along the horizontal axis
+	/**
+	Flip the image vertically along the horizontal axis
+	@see FreeImage_FlipVertical
+	*/
 	BOOL flipVertical();
 	//@}
 
 	/**@name Color manipulation routines */
 	//@{	
-	/** @brief Inverts each pixel data.
+	/** 
+	Inverts each pixel data.
 	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_Invert
 	*/
 	BOOL invert();
 	
@@ -576,7 +660,7 @@ public:
 	@param LUT Lookup table. <b>The size of 'LUT' is assumed to be 256.</b>
 	@param channel The color channel to be processed (only used with 24 & 32-bit DIB).
 	@return Returns TRUE if the operation was successful, FALSE otherwise
-	@see FREE_IMAGE_COLOR_CHANNEL
+	@see FreeImage_AdjustCurve, FREE_IMAGE_COLOR_CHANNEL
 	*/
 	BOOL adjustCurve(BYTE *LUT, FREE_IMAGE_COLOR_CHANNEL channel);
 
@@ -584,7 +668,7 @@ public:
 	@param gamma Gamma value to use. A value of 1.0 leaves the image alone, 
 	less than one darkens it, and greater than one lightens it.
 	@return Returns TRUE if the operation was successful, FALSE otherwise
-	@see adjustCurve
+	@see FreeImage_AdjustGamma, adjustCurve
 	*/
 	BOOL adjustGamma(double gamma);
 
@@ -593,7 +677,7 @@ public:
 	A value 0 means no change, less than 0 will make the image darker 
 	and greater than 0 will make the image brighter.
 	@return Returns TRUE if the operation was succesful, FALSE otherwise
-	@see adjustCurve
+	@see FreeImage_AdjustBrightness, adjustCurve
 	*/
 	BOOL adjustBrightness(double percentage);
 
@@ -602,7 +686,7 @@ public:
 	A value 0 means no change, less than 0 will decrease the contrast 
 	and greater than 0 will increase the contrast of the image.
 	@return Returns TRUE if the operation was succesfull, FALSE otherwise
-	@see adjustCurve
+	@see FreeImage_AdjustContrast, adjustCurve
 	*/
 	BOOL adjustContrast(double percentage);
 
@@ -614,6 +698,7 @@ public:
 	@param histo pointer to an histogram array. <b>Size of this array is assumed to be 256</b>.
 	@param channel Color channel to use
 	@return Returns TRUE if the operation was succesfull, FALSE otherwise
+	@see FreeImage_GetHistogram
 	*/
 	BOOL getHistogram(DWORD *histo, FREE_IMAGE_COLOR_CHANNEL channel = FICC_BLACK);
 	//@}
@@ -627,7 +712,7 @@ public:
 	@param new_height New image height
 	@param filter The filter parameter specifies which resampling filter should be used.
 	@return Returns TRUE if the operation was successful, FALSE otherwise
-	@see FREE_IMAGE_FILTER
+	@see FreeImage_Rescale, FREE_IMAGE_FILTER
 	*/
 	BOOL rescale(WORD new_width, WORD new_height, FREE_IMAGE_FILTER filter);
 	//@}
@@ -876,6 +961,7 @@ public:
 	@param create_new When TRUE, it means that a new bitmap will be created rather than an existing one being opened
 	@param read_only When TRUE the bitmap is opened read-only
 	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_OpenMultiBitmap
 	*/
 	BOOL open(const char* lpszPathName, BOOL create_new, BOOL read_only);
 
@@ -883,15 +969,20 @@ public:
 	Close a file stream
 	@param flags Save flags. The signification of this flag depends on the image to be saved.
 	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_CloseMultiBitmap
 	*/
 	BOOL close(int flags = 0);
 
-	/// Returns the number of pages currently available in the multi-paged bitmap
+	/**
+	Returns the number of pages currently available in the multi-paged bitmap
+	@see FreeImage_GetPageCount
+	*/
 	int getPageCount();
 
 	/**
 	Appends a new page to the end of the bitmap
 	@param image Image to append
+	@see FreeImage_AppendPage
 	*/
 	void appendPage(fipImage& image);
 
@@ -899,12 +990,14 @@ public:
 	Inserts a new page before the given position in the bitmap
 	@param page Page number. Page has to be a number smaller than the current number of pages available in the bitmap.
 	@param image Image to insert
+	@see FreeImage_InsertPage
 	*/
 	void insertPage(int page, fipImage& image);
 
 	/**
 	Deletes the page on the given position
 	@param page Page number
+	@see FreeImage_DeletePage
 	*/
 	void deletePage(int page);
 
@@ -913,6 +1006,7 @@ public:
 	@param target Target page position
 	@param source Source page position
 	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_MovePage
 	*/
 	BOOL movePage(int target, int source);
 
@@ -931,6 +1025,7 @@ public:
 	</pre>
 	@param page Page number
 	@return Returns the page if successful, returns NULL otherwise
+	@see FreeImage_LockPage
 	*/
 	FIBITMAP* lockPage(int page);
 
@@ -938,6 +1033,7 @@ public:
 	Unlocks a previously locked page and gives it back to the multi-page engine
 	@param image Page to unlock
 	@param changed When TRUE, the page is marked changed and the new page data is applied in the multi-page bitmap.
+	@see FreeImage_UnlockPage
 	*/
 	void unlockPage(fipImage& image, BOOL changed);
 
@@ -947,6 +1043,7 @@ public:
 	You can then allocate the array of the desired size and call 
 	getLockedPageNumbers again to populate the array.
 	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_GetLockedPageNumbers
 	*/
 	BOOL getLockedPageNumbers(int *pages, int *count);
 };
