@@ -20,6 +20,7 @@ rd Source\Zlib\Debug /s /q
 rd Source\Zlib\Release /s /q
 rd TestAPI\Debug /s /q
 rd TestAPI\Release /s /q
+del Dist\FreeImage.h
 del *.pch /s /q
 del *.ncb /s /q
 del *.opt /s /q
@@ -36,5 +37,6 @@ del *.lib /s /q
 del *.exp /s /q
 del *.ilk /s /q
 del *.idb /s /q
+del *.aps /s /q
 del *.o /s /q
 

@@ -311,6 +311,10 @@ SOURCE=.\Source\FreeImage\FreeImage.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\FreeImage.rc
+# End Source File
+# Begin Source File
+
 SOURCE=.\Source\FreeImage\FreeImageC.c
 # End Source File
 # Begin Source File
