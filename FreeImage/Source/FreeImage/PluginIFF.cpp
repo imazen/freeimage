@@ -4,6 +4,7 @@
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
 // - Mark Sibly (marksibly@blitzbasic.com)
+// - Aaron Shumate (trek@startreker.com)
 //
 // This file is part of FreeImage 3
 //
@@ -389,6 +390,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					return dib;
 				}
+			}
+
+			// Every odd-length chunk is followed by a 0 pad byte.  This pad
+			//  byte is not counted in ch_size.
+			if (ch_size & 1) {
+				ch_size++;
+				ch_end++;
 			}
 
 			io->seek_proc(handle, ch_end - io->tell_proc(handle), SEEK_CUR);
