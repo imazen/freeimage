@@ -472,6 +472,8 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define TIFF_DEFLATE        0x0200  // save using DEFLATE compression (a.k.a. ZLIB compression)
 #define TIFF_ADOBE_DEFLATE  0x0400  // save using ADOBE DEFLATE compression
 #define TIFF_NONE           0x0800  // save without any compression
+#define TIFF_CCITTFAX3		0x1000  // save using CCITT Group 3 fax encoding
+#define TIFF_CCITTFAX4		0x2000  // save using CCITT Group 4 fax encoding
 #define WBMP_DEFAULT        0
 #define XBM_DEFAULT			0
 #define XPM_DEFAULT			0
@@ -554,7 +556,7 @@ DLL_API FREE_IMAGE_FORMAT DLL_CALLCONV FreeImage_GetFileTypeFromHandle(FreeImage
 
 DLL_API FREE_IMAGE_TYPE DLL_CALLCONV FreeImage_GetImageType(FIBITMAP *dib);
 
-// FreeImage helpers routines -----------------------------------------------
+// FreeImage helper routines ------------------------------------------------
 
 DLL_API BOOL DLL_CALLCONV FreeImage_IsLittleEndian();
 DLL_API BOOL DLL_CALLCONV FreeImage_LookupX11Color(const char *szColor, BYTE *nRed, BYTE *nGreen, BYTE *nBlue);

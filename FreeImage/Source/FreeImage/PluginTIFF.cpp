@@ -956,34 +956,40 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		// compression
 
-		switch(bitspersample) {
-			case 1 :
-				compression = COMPRESSION_CCITTFAX4;
-				break;
+		if ((flags & TIFF_PACKBITS) == TIFF_PACKBITS)
+			compression = COMPRESSION_PACKBITS;
+		else if ((flags & TIFF_DEFLATE) == TIFF_DEFLATE)
+			compression = COMPRESSION_DEFLATE;
+		else if ((flags & TIFF_ADOBE_DEFLATE) == TIFF_ADOBE_DEFLATE)
+			compression = COMPRESSION_ADOBE_DEFLATE;
+		else if ((flags & TIFF_NONE) == TIFF_NONE)
+			compression = COMPRESSION_NONE;
+		else if ((flags & TIFF_CCITTFAX3) == TIFF_CCITTFAX3)
+			compression = COMPRESSION_CCITTFAX3;
+		else if ((flags & TIFF_CCITTFAX4) == TIFF_CCITTFAX4)
+			compression = COMPRESSION_CCITTFAX4;
+		else {
+			// default compression scheme
 
-			case 4 :
-			case 8 :
-			case 16 :
-			case 24 :
-			case 32 :
-			case 64 :
-			case 128:
-				compression = COMPRESSION_PACKBITS;
+			switch(bitspersample) {
+				case 1 :
+					compression = COMPRESSION_CCITTFAX4;
+					break;
 
-				if ((flags & TIFF_PACKBITS) == TIFF_PACKBITS)
+				case 4 :
+				case 8 :
+				case 16 :
+				case 24 :
+				case 32 :
+				case 64 :
+				case 128:
 					compression = COMPRESSION_PACKBITS;
-				else if ((flags & TIFF_DEFLATE) == TIFF_DEFLATE)
-					compression = COMPRESSION_DEFLATE;
-				else if ((flags & TIFF_ADOBE_DEFLATE) == TIFF_ADOBE_DEFLATE)
-					compression = COMPRESSION_ADOBE_DEFLATE;
-				else if ((flags & TIFF_NONE) == TIFF_NONE)
+					break;
+
+				default :
 					compression = COMPRESSION_NONE;
-
-				break;
-
-			default :
-				compression = COMPRESSION_NONE;
-				break;
+					break;
+			}
 		}
 
 		TIFFSetField(out, TIFFTAG_COMPRESSION, compression);
