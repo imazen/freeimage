@@ -340,13 +340,13 @@ CreateImageType(FREE_IMAGE_TYPE fit, int width, int height, uint16 bitspersample
 				// 16-bit greyscale -> convert to 8-bit
 				dib = FreeImage_Allocate(width, height, 8);
 			}
-			else if(samplesperpixel = 3) {
+			else if(samplesperpixel == 3) {
 				// 48-bit RGB -> convert to 24-bit RGB
 				dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 			}
 		}
 		else if(bpp == 16) {
-			if((samplesperpixel = 2) && (bitspersample == 8)) {
+			if((samplesperpixel == 2) && (bitspersample == 8)) {
 				// 8-bit indexed + 8-bit alpha channel -> convert to 8-bit transparent
 				dib = FreeImage_Allocate(width, height, 8);
 			} else {
@@ -1004,7 +1004,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// When samplesperpixel = 2 and bitspersample = 8, set the image as a
 				// 8-bit indexed image + 8-bit alpha layer image
 				// and convert to a 8-bit image with a transparency table
-				BOOL is8BitTrns = (photometric == PHOTOMETRIC_PALETTE) && (samplesperpixel == 2) && (bitspersample = 8);
+				BOOL is8BitTrns = (photometric == PHOTOMETRIC_PALETTE) && (samplesperpixel == 2) && (bitspersample == 8);
 
 				// create a new DIB
 				// ----------------
