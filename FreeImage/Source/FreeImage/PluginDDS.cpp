@@ -397,6 +397,11 @@ LoadRGB (DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int page, int 
 		desc.ddpfPixelFormat.dwGBitMask, desc.ddpfPixelFormat.dwBBitMask);
 	if (dib == NULL)
 		return NULL;
+
+#ifdef FREEIMAGE_BIGENDIAN
+		// Calculate the number of bytes per pixel (3 for 24-bit or 4 for 32-bit)
+		int bytespp = FreeImage_GetLine(dib) / FreeImage_GetWidth(dib);
+#endif
 	
 	// read the file
 	int line   = CalculateLine(width, bpp);
@@ -407,9 +412,9 @@ LoadRGB (DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int page, int 
 		io->read_proc (pixels, 1, line, handle);
 		io->seek_proc (handle, delta, SEEK_CUR);
 #ifdef FREEIMAGE_BIGENDIAN
-		for(int x = 0; x < width; x++) {
+ 		for(int x = 0; x < width; x++) {
 			INPLACESWAP(pixels[FI_RGBA_RED],pixels[FI_RGBA_BLUE]);
-			pixels += 4;
+			pixels += bytespp;
 		}
 #endif
 	}
