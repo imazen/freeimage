@@ -6,9 +6,9 @@ What's New for FreeImage
 + : added
 
 Month day, 2005 - 3.6.2
++ [Detlev Vendt] added FreeImage_ZLibGUnzip
 
 February 20, 2005 - 3.6.1
-+ [Detlev Vendt] added FreeImage_ZLibGUnzip
 * [Ryan Rubley] fixed a memory leak in the metadata API
 * [luedi] improved the robustness of FIBITMAP allocations
 
