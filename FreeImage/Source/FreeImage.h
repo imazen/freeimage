@@ -51,11 +51,10 @@
 
 // Compiler options ---------------------------------------------------------
 
-#if defined(FREEIMAGE_LIB) || !defined(WIN32)
+#if defined(FREEIMAGE_LIB) || !(defined(WIN32) || defined(__WIN32__))
 #define DLL_API
 #define DLL_CALLCONV
 #else
-#define WIN32_LEAN_AND_MEAN
 
 #ifdef __MINGW32__		// prevents a bug in mingw32
 #include <windows.h>
@@ -82,6 +81,11 @@
 	defined(__APPLE__)
 #define FREEIMAGE_BIGENDIAN
 #endif // BYTE_ORDER
+
+// Ensure 4-byte enums if we're using Borland C++ compilers
+#if defined(__BORLANDC__)
+#pragma option push -b
+#endif
 
 // For C compatility --------------------------------------------------------
 
@@ -129,7 +133,7 @@ typedef unsigned short WORD;
 typedef unsigned long DWORD;
 typedef long LONG;
 
-#ifdef WIN32
+#if (defined(WIN32) || defined(__WIN32__))
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -160,7 +164,7 @@ typedef struct tagRGBTRIPLE {
 #endif // FREEIMAGE_BIGENDIAN
 } RGBTRIPLE;
 
-#ifdef WIN32
+#if (defined(WIN32) || defined(__WIN32__))
 #pragma pack(pop)
 #else
 #pragma pack()
@@ -437,7 +441,7 @@ typedef unsigned (DLL_CALLCONV *FI_WriteProc) (void *buffer, unsigned size, unsi
 typedef int (DLL_CALLCONV *FI_SeekProc) (fi_handle handle, long offset, int origin);
 typedef long (DLL_CALLCONV *FI_TellProc) (fi_handle handle);
 
-#ifdef WIN32
+#if (defined(WIN32) || defined(__WIN32__))
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -450,7 +454,7 @@ FI_STRUCT(FreeImageIO) {
     FI_TellProc  tell_proc;     // pointer to the function used to aquire the current position
 };
 
-#ifdef WIN32
+#if (defined(WIN32) || defined(__WIN32__))
 #pragma pack(pop)
 #else
 #pragma pack()
@@ -806,6 +810,11 @@ DLL_API FIBITMAP *DLL_CALLCONV FreeImage_Copy(FIBITMAP *dib, int left, int top, 
 DLL_API BOOL DLL_CALLCONV FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha);
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg FI_DEFAULT(FALSE), RGBQUAD *appBkColor FI_DEFAULT(NULL), FIBITMAP *bg FI_DEFAULT(NULL));
 
+
+// restore the borland-specific enum size option
+#if defined(__BORLANDC__)
+#pragma option pop
+#endif
 
 #ifdef __cplusplus
 }
