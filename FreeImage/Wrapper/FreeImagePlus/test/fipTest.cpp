@@ -49,10 +49,10 @@ BOOL testMemoryFileHandle(char *lpszPathName) {
 	BOOL bOK = FALSE;
 
 	// create a fipMemory object
-	fipMemoryIO memIO(lpszPathName);
+	fipMemoryIO memIO;
 
 	// load image from lpszPathName
-	fipMemoryIO loadFile(lpszPathName);
+	memIO.loadFile(lpszPathName);
 
 	// load image from the memory buffer
 	fipImage Image;
@@ -72,20 +72,21 @@ BOOL testInternetHandle(char *lpszURL, char *lpszLocalName) {
 	fipInternetIO inetIO;
 
 	// download image file to the memory buffer
-	bOK = inetIO.loadImage(lpszURL);
+	bOK = inetIO.downloadFile(lpszURL);
 	
-	// load image from this IO buffer 
-	fipImage image;
-	bOK &= image.loadFromHandle(&inetIO, (fi_handle)&inetIO, 0);
+	if(bOK) {
+		// load image from this IO buffer 
+		fipImage image;
+		bOK &= image.loadFromHandle(&inetIO, (fi_handle)&inetIO, 0);
 
-	// save image
-	if(inetIO.getFileType() == FIF_JPEG) {
-		// preserve JPEG quality
-		bOK &= image.save(lpszLocalName, JPEG_QUALITYSUPERB);
-	} else {
-		bOK &= image.save(lpszLocalName, 0);
+		// save image
+		if(inetIO.getFileType() == FIF_JPEG) {
+			// preserve JPEG quality
+			bOK &= image.save(lpszLocalName, JPEG_QUALITYSUPERB);
+		} else {
+			bOK &= image.save(lpszLocalName, 0);
+		}
 	}
-
 	return bOK;
 }
 
