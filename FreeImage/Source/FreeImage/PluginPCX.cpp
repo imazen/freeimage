@@ -280,20 +280,15 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 
 	The Load function has the following parameters:
 
-    The first parameter (FreeImage *freeimage) is a structure providing function
-	pointers in order to access FreeImage's internal bitmap handling functions.
-	Plugins never 'talk' to the main DLL directly, because that would make the design
-	of particularly external plugins very difficult and error phrone.
-
-    The second parameter (FreeImageIO *io) is a structure providing
+    The first parameter (FreeImageIO *io) is a structure providing
 	function pointers in order to make use of FreeImage's IO redirection. Using
 	FreeImage's file i/o functions instead of standard ones it is garantueed
 	that all bitmap types, both current and future ones, can be loaded from
-	memory, file cabinets, the internet and more. The third parameter (fi_handle handle)
+	memory, file cabinets, the internet and more. The second parameter (fi_handle handle)
 	is a companion of FreeImageIO and can be best compared with the standard FILE* type,
 	in a generalized form.
 
-	The fourth parameter (int page) indicates wether we will be loading a certain page
+	The third parameter (int page) indicates wether we will be loading a certain page
 	in the bitmap or if we will load the default one. This parameter is only used if
 	the plugin supports multi-paged bitmaps, e.g. cabinet bitmaps that contain a series
 	of images or pages. If the plugin does support multi-paging, the page parameter
@@ -301,7 +296,7 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 	load the default page. If the plugin does not support multi-paging,
 	the page parameter is always -1.
 	
-	The fifth parameter (int flags) manipulates the load function to load a bitmap
+	The fourth parameter (int flags) manipulates the load function to load a bitmap
 	in a certain way. Every plugin has a different flag parameter with different meanings.
 
 	The last parameter (void *data) can contain a special data block used when
