@@ -27,6 +27,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+
 
 // Some useful tools
 // ==========================================================
@@ -42,6 +45,10 @@ BOOL testAllocateCloneUnloadType(FREE_IMAGE_TYPE image_type, unsigned width, uns
 void testImageType(unsigned width, unsigned height);
 void testImageTypeTIFF(unsigned width, unsigned height);
 
+// IO test suite
+// ==========================================================
+
+void testMemIO(const char *lpszPathName);
 
 
 #endif // TEST_FREEIMAGE_API_H

@@ -2,6 +2,7 @@ Release Notes
 --------------
 This version of the library has been tested under the following OS:
 - RedHat Linux 7.3, 8.0 and 9.0
+- Fedora Core 2
 - SuSE Linux Enterprise 8 and SuSE 9.0.
 You *do not* need to have any other third party library (libjpeg, libpng, libtiff, libmng and zlib) 
 installed on your /usr/lib directory in order to compile and use the library. 

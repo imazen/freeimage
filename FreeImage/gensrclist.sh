@@ -3,7 +3,7 @@
 DIRLIST=". Source Source/FreeImageToolkit Source/LibGIF Source/LibJPEG Source/LibMNG Source/LibPNG Source/LibTIFF Source/ZLib"
 
 echo "VER_MAJOR = 3" > Makefile.srcs
-echo "VER_MINOR = 4.0" >> Makefile.srcs
+echo "VER_MINOR = 5.0" >> Makefile.srcs
 
 echo -n "SRCS = " >> Makefile.srcs
 for DIR in $DIRLIST; do

@@ -3,7 +3,7 @@
 DIRLIST=". Source Source/FreeImageToolkit Source/LibGIF Source/LibJPEG Source/LibMNG Source/LibPNG Source/LibTIFF Source/ZLib Wrapper/FreeImagePlus"
 
 echo "VER_MAJOR = 3" > fipMakefile.srcs
-echo "VER_MINOR = 4.0" >> fipMakefile.srcs
+echo "VER_MINOR = 5.0" >> fipMakefile.srcs
 
 echo -n "SRCS = " >> fipMakefile.srcs
 for DIR in $DIRLIST; do

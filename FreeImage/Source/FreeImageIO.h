@@ -28,6 +28,21 @@
 
 // ----------------------------------------------------------
 
+FI_STRUCT (FIMEMORYHEADER) {
+	/// remember to delete the buffer
+	BOOL delete_me;
+	/// file length
+	long filelen;
+	/// buffer size
+	long datalen;
+	/// current position
+	long curpos;
+	/// start buffer address
+	void *data;
+};
+
 void SetDefaultIO(FreeImageIO *io);
+
+void SetMemoryIO(FreeImageIO *io);
 
 #endif // !FREEIMAGEIO_H

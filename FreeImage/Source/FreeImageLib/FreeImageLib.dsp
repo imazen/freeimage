@@ -265,6 +265,10 @@ SOURCE=..\FreeImage\GetType.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\FreeImage\MemoryIO.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\FreeImage\PixelAccess.cpp
 # End Source File
 # End Group
