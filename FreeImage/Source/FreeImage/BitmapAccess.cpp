@@ -89,8 +89,6 @@ void FreeImage_Aligned_Free(void* mem) {
 	free((void*)*((int*)mem - 1));
 }
 
-#define FIBITMAP_ALIGNMENT	16	// We will use a 16 bytes alignment boundary
-
 // ----------------------------------------------------------
 //  DIB information functions
 // ----------------------------------------------------------
