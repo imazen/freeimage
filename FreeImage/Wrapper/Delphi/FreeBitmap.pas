@@ -808,12 +808,15 @@ end;
 
 function TFreeBitmap.Rotate(Angle: Double): Boolean;
 var
+  Bpp: Integer;
   Rotated: PFIBITMAP;
 begin
   Result := False;
   if FDib <> nil then
   begin
-    if FreeImage_GetBPP(FDib) >= 8 then
+    Bpp := FreeImage_GetBPP(FDib);
+
+    if (Bpp = 1) or (Bpp >= 8) then
     begin
       Rotated := FreeImage_RotateClassic(FDib, Angle);
       Result := Replace(Rotated);
