@@ -10,6 +10,7 @@ Month Day, 2004 - 3.2.2
 + [Ryan Rubley] rewrote XPM plugin (better load support) and added save support
 + [Ryan Rubley] added ICO_MAKEALPHA flag to ICO plugin
 + [Ryan Rubley] Set/GetPixelColor now works with 16-bit pixels (555 or 565)
+* [Herve Drolon] fixed a bug with loading of 8-bit and 16-bit PNG with a 8-bit alpha channel
 
 March 16, 2004 - 3.2.1
 ! [Volker Gärtner] improved the DDS plugin
