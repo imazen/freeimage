@@ -60,12 +60,10 @@ struct BlockContinueus : public BlockTypeS {
 struct BlockReference : public BlockTypeS {
 	int       m_reference;
 	int       m_size;
-	int       m_uncompressed_size;
 
-	BlockReference(int r, int size, int unsize) : BlockTypeS(BLOCK_REFERENCE),
+	BlockReference(int r, int size) : BlockTypeS(BLOCK_REFERENCE),
 	m_reference(r),
-	m_size(size),
-	m_uncompressed_size(unsize) {
+	m_size(size) {
 	}
 };
 
@@ -495,8 +493,6 @@ FreeImage_AppendPage(FIMULTIBITMAP *bitmap, FIBITMAP *data) {
 			DWORD compressed_size = 0;
 			BYTE *compressed_data = NULL;
 
-			DWORD size = FreeImage_GetFreeImageHeaderSize() + FreeImage_GetDIBSize(data);
-
 			// compress the bitmap data
 
 			// open a memory handle
@@ -510,7 +506,7 @@ FreeImage_AppendPage(FIMULTIBITMAP *bitmap, FIBITMAP *data) {
 
 			int ref = header->m_cachefile->writeFile(compressed_data, compressed_size);
 
-			BlockReference *block = new BlockReference(ref, compressed_size, size);
+			BlockReference *block = new BlockReference(ref, compressed_size);
 
 			// get rid of the compressed data
 
@@ -535,8 +531,6 @@ FreeImage_InsertPage(FIMULTIBITMAP *bitmap, int page, FIBITMAP *data) {
 				DWORD compressed_size = 0;
 				BYTE *compressed_data = NULL;
 
-				DWORD size = FreeImage_GetFreeImageHeaderSize() + FreeImage_GetDIBSize(data);
-
 				// compress the bitmap data
 
 				// open a memory handle
@@ -555,11 +549,11 @@ FreeImage_InsertPage(FIMULTIBITMAP *bitmap, int page, FIBITMAP *data) {
 				if (page > 0) {
 					BlockListIterator block_source = FreeImage_FindBlock(bitmap, page);
 
-					BlockReference *block = new BlockReference(ref, compressed_size, size);
+					BlockReference *block = new BlockReference(ref, compressed_size);
 
 					header->m_blocks.insert(block_source, (BlockTypeS *)block);
 				} else {
-					BlockReference *block = new BlockReference(ref, compressed_size, size);
+					BlockReference *block = new BlockReference(ref, compressed_size);
 
 					header->m_blocks.push_front((BlockTypeS *)block);
 				}
@@ -670,8 +664,6 @@ FreeImage_UnlockPage(FIMULTIBITMAP *bitmap, FIBITMAP *page, BOOL changed) {
 				DWORD compressed_size = 0;
 				BYTE *compressed_data = NULL;
 
-				DWORD size = FreeImage_GetFreeImageHeaderSize() + FreeImage_GetDIBSize(page);
-
 				// open a memory handle
 				FIMEMORY *hmem = FreeImage_OpenMemory();
 				// save the page to memory
@@ -688,7 +680,7 @@ FreeImage_UnlockPage(FIMULTIBITMAP *bitmap, FIBITMAP *page, BOOL changed) {
 
 						delete (*i);
 
-						*i = (BlockTypeS *)new BlockReference(iPage, compressed_size, size);
+						*i = (BlockTypeS *)new BlockReference(iPage, compressed_size);
 
 						break;
 					}
@@ -703,7 +695,7 @@ FreeImage_UnlockPage(FIMULTIBITMAP *bitmap, FIBITMAP *page, BOOL changed) {
 
 						int iPage = header->m_cachefile->writeFile(compressed_data, compressed_size);
 
-						*i = (BlockTypeS *)new BlockReference(iPage, compressed_size, size);
+						*i = (BlockTypeS *)new BlockReference(iPage, compressed_size);
 
 						break;
 					}
