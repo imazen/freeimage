@@ -446,7 +446,7 @@ LoadDXT_Helper (FreeImageIO *io, fi_handle handle, int page, int flags, void *da
 
 	if (height >= 4) {
 		for (; y < height; y += 4) {
-			io->read_proc (input_buffer, sizeof (INFO::Block), inputLine, handle);
+			io->read_proc (input_buffer, sizeof (typename INFO::Block), inputLine, handle);
 			// TODO: probably need some endian work here
 			BYTE *pbSrc = (BYTE *)input_buffer;
 			BYTE *pbDst = FreeImage_GetScanLine (dib, height - y - 1);
@@ -464,7 +464,7 @@ LoadDXT_Helper (FreeImageIO *io, fi_handle handle, int page, int flags, void *da
 		}
 	}
 	if (heightRest)	{
-		io->read_proc (input_buffer, sizeof (INFO::Block), inputLine, handle);
+		io->read_proc (input_buffer, sizeof (typename INFO::Block), inputLine, handle);
 		// TODO: probably need some endian work here
 		BYTE *pbSrc = (BYTE *)input_buffer;
 		BYTE *pbDst = FreeImage_GetScanLine (dib, height - y - 1);

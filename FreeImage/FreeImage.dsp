@@ -288,6 +288,10 @@ SOURCE=.\Source\Metadata\TagConversion.cpp
 
 SOURCE=.\Source\Metadata\TagLib.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=.\Source\Metadata\XTIFF.cpp
+# End Source File
 # End Group
 # Begin Source File
 

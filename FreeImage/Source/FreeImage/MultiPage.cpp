@@ -40,28 +40,27 @@ enum BlockType { BLOCK_CONTINUEUS, BLOCK_REFERENCE };
 
 struct BlockTypeS {
 	BlockType m_type;
+
+	BlockTypeS(BlockType type) : m_type(type) {
+	}
 };
 
-struct BlockContinueus {
-	BlockType m_type;
+struct BlockContinueus : public BlockTypeS {
 	int       m_start;
 	int       m_end;
 
-	BlockContinueus(int s, int e) :
-	m_type(BLOCK_CONTINUEUS),
+	BlockContinueus(int s, int e) : BlockTypeS(BLOCK_CONTINUEUS),
 	m_start(s),
 	m_end(e) {
 	}	
 };
 
-struct BlockReference {
-	BlockType m_type;
+struct BlockReference : public BlockTypeS {
 	int       m_reference;
 	int       m_size;
 	int       m_uncompressed_size;
 
-	BlockReference(int r, int size, int unsize) :
-	m_type(BLOCK_REFERENCE),
+	BlockReference(int r, int size, int unsize) : BlockTypeS(BLOCK_REFERENCE),
 	m_reference(r),
 	m_size(size),
 	m_uncompressed_size(unsize) {

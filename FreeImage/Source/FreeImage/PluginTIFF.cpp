@@ -39,6 +39,18 @@
 
 #include "../Metadata/FreeImageTag.h"
 
+// ----------------------------------------------------------
+//   geotiff interface (see XTIFF.cpp)
+// ----------------------------------------------------------
+
+// Extended TIFF Directory GEO Tag Support
+void XTIFFInitialize();
+
+// GeoTIFF profile
+void tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib);
+void tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib);
+
+
 // ==========================================================
 // Plugin Interface
 // ==========================================================
@@ -97,6 +109,11 @@ TIFF *
 TIFFFdOpen(thandle_t handle, const char *name, const char *mode) {
 	TIFF *tif;
 
+    // Set up the callback for extended TIFF directory tag support
+	// (see XTIFF.cpp)
+    XTIFFInitialize();	
+	
+	// Open the file; the callback will set everything up
 	tif = TIFFClientOpen(name, mode, handle,
 	    _tiffReadProc, _tiffWriteProc, _tiffSeekProc, _tiffCloseProc,
 	    _tiffSizeProc, _tiffMapProc, _tiffUnmapProc);
@@ -115,6 +132,10 @@ TIFF*
 TIFFOpen(const char* name, const char* mode) {
 	return 0;
 }
+
+// ----------------------------------------------------------
+//   TIFF library FreeImage-specific routines.
+// ----------------------------------------------------------
 
 tdata_t
 _TIFFmalloc(tsize_t s) {
@@ -654,7 +675,10 @@ ReadMetadata(TIFF *tiff, FIBITMAP *dib) {
 	tiff_read_xmp_profile(tiff, dib);
 
 	// Exif-TIFF (does not work)
-	//tiff_read_exif_profile(tiff, dib);
+	tiff_read_exif_profile(tiff, dib);
+
+	// GeoTIFF
+	tiff_read_geotiff_profile(tiff, dib);
 }
 
 // ----------------------------------------------------------
@@ -688,6 +712,9 @@ WriteMetadata(TIFF *tiff, FIBITMAP *dib) {
 
 	// Adobe XMP
 	tiff_write_xmp_profile(tiff, dib);
+
+	// GeoTIFF tags
+	tiff_write_geotiff_profile(tiff, dib);
 }
 
 // ==========================================================

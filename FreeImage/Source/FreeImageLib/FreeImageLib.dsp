@@ -278,6 +278,10 @@ SOURCE=..\Metadata\TagConversion.cpp
 
 SOURCE=..\Metadata\TagLib.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=..\Metadata\XTIFF.cpp
+# End Source File
 # End Group
 # Begin Source File
 

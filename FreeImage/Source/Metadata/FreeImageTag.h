@@ -221,6 +221,23 @@
 #define TAG_TIME_CREATED					0x023C
 #define TAG_ORIGINATING_PROGRAM				0x0241
 
+// ==========================================================
+// GeoTIFF tags
+// ==========================================================
+
+// tags 33550 is a private tag registered to SoftDesk, Inc
+#define TIFFTAG_GEOPIXELSCALE		33550
+// tags 33920-33921 are private tags registered to Intergraph, Inc
+#define TIFFTAG_INTERGRAPH_MATRIX	33920
+#define TIFFTAG_GEOTIEPOINTS		33922
+// tags 34263-34264 are private tags registered to NASA-JPL Carto Group
+#define TIFFTAG_JPL_CARTO_IFD		34263
+#define TIFFTAG_GEOTRANSMATRIX		34264    /* New Matrix Tag replaces 33920 */
+// tags 34735-3438 are private tags registered to SPOT Image, Inc
+#define TIFFTAG_GEOKEYDIRECTORY		34735
+#define TIFFTAG_GEODOUBLEPARAMS		34736
+#define TIFFTAG_GEOASCIIPARAMS		34737
+
 // --------------------------------------------------------------------------
 // Helper functions to deal with the FITAG structure
 // --------------------------------------------------------------------------
@@ -289,7 +306,8 @@ public:
 		EXIF_MAKERNOTE_OLYMPUS,
 		EXIF_MAKERNOTE_PANASONIC,
 		EXIF_MAKERNOTE_PENTAX,
-		IPTC
+		IPTC,
+		GEOTIFF
 	};
 
 private:
@@ -385,6 +403,9 @@ BOOL jpeg_read_exif_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int dat
 
 // JPEG / TIFF IPTC profile
 BOOL read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen);
+
+// Extended TIFF Directory GEO Tag Support
+//void XTIFFInitialize();
 
 #if defined(__cplusplus)
 }

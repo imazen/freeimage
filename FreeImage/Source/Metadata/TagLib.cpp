@@ -498,6 +498,24 @@ static TagInfo
   };
 
 // --------------------------------------------------------------------------
+// GeoTIFF tags definition
+// --------------------------------------------------------------------------
+
+static TagInfo
+  geotiff_tag_table[] =
+  {
+    {  0x830E, (char *) "GeoPixelScale", (char *) NULL},
+    {  0x8480, (char *) "Intergraph TransformationMatrix", (char *) NULL},
+    {  0x8482, (char *) "GeoTiePoints", (char *) NULL},
+    {  0x85D7, (char *) "JPL Carto IFD offset", (char *) NULL},
+    {  0x85D8, (char *) "GeoTransformationMatrix", (char *) NULL},
+    {  0x87AF, (char *) "GeoKeyDirectory", (char *) NULL},
+    {  0x87B0, (char *) "GeoDoubleParams", (char *) NULL},
+    {  0x87B1, (char *) "GeoASCIIParams", (char *) NULL},
+    {  0x0000, (char *) NULL, (char *) NULL}
+  };
+
+// --------------------------------------------------------------------------
 // TagLib class definition
 // --------------------------------------------------------------------------
 
@@ -530,6 +548,9 @@ TagLib::TagLib() {
 
 	// IPTC/NAA
 	addMetadataModel(TagLib::IPTC, iptc_tag_table);
+
+	// GeoTIFF
+	addMetadataModel(TagLib::GEOTIFF, geotiff_tag_table);
 }
 
 BOOL TagLib::addMetadataModel(MDMODEL md_model, TagInfo *tag_table) {
@@ -635,6 +656,9 @@ TagLib::getFreeImageModel(MDMODEL model) {
 
 		case IPTC:
 			return FIMD_IPTC;
+
+		case GEOTIFF:
+			return FIMD_GEOTIFF;
 	}
 
 	return FIMD_NODATA;
