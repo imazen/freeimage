@@ -702,7 +702,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// format has to be handled special 
 
 				BOOL isCMYKA = (photometric == PHOTOMETRIC_SEPARATED && samplesperpixel > 4);
-				uint16 spp = min(samplesperpixel, 4);
+				uint16 spp = (samplesperpixel < 4) ? samplesperpixel : 4;
 
 				// calculate the line + pitch (separate for scr & dest)
 

@@ -4,6 +4,9 @@ Option Explicit
 Const unix As Long = 1
 Const linux As Long = 1
 Const i386 As Long = 1
+Const FREEIMAGE_MAJOR_VERSION As Long = 3
+Const FREEIMAGE_MINOR_VERSION As Long = 4
+Const FREEIMAGE_RELEASE_SERIAL As Long = 0
 Const SEEK_SET As Long = 0
 Const SEEK_CUR As Long = 1
 Const SEEK_END As Long = 2
@@ -37,6 +40,7 @@ Const BMP_DEFAULT As Long = 0
 Const BMP_SAVE_RLE As Long = 1
 Const CUT_DEFAULT As Long = 0
 Const DDS_DEFAULT As Long = 0
+Const GIF_DEFAULT As Long = 0
 Const ICO_DEFAULT As Long = 0
 Const ICO_MAKEALPHA As Long = 1
 Const IFF_DEFAULT As Long = 0
@@ -71,6 +75,9 @@ Const TIFF_PACKBITS As Long = &H0100
 Const TIFF_DEFLATE As Long = &H0200
 Const TIFF_ADOBE_DEFLATE As Long = &H0400
 Const TIFF_NONE As Long = &H0800
+Const TIFF_CCITTFAX3 As Long = &H1000
+Const TIFF_CCITTFAX4 As Long = &H2000
+Const TIFF_LZW As Long = &H4000
 Const WBMP_DEFAULT As Long = 0
 Const XBM_DEFAULT As Long = 0
 Const XPM_DEFAULT As Long = 0
@@ -103,6 +110,7 @@ Public Enum FREE_IMAGE_FORMAT
 	FIF_XBM = 22
 	FIF_XPM = 23
 	FIF_DDS = 24
+	FIF_GIF = 25
 End Enum
 Public Enum FREE_IMAGE_TYPE
 	FIT_UNKNOWN = 0
@@ -268,6 +276,8 @@ Public Declare Function FreeImage_GetFileType Lib "FreeImage.dll" Alias "_FreeIm
 Public Declare Function FreeImage_GetFileTypeFromHandle Lib "FreeImage.dll" Alias "_FreeImage_GetFileTypeFromHandle@12" (ByVal io As Long, ByVal handle As Long, Optional ByVal size As Long = 0) As FREE_IMAGE_FORMAT
 Public Declare Function FreeImage_GetImageType Lib "FreeImage.dll" Alias "_FreeImage_GetImageType@4" (ByVal dib As Long) As FREE_IMAGE_TYPE
 Public Declare Function FreeImage_IsLittleEndian Lib "FreeImage.dll" Alias "_FreeImage_IsLittleEndian@0" () As Long
+Public Declare Function FreeImage_LookupX11Color Lib "FreeImage.dll" Alias "_FreeImage_LookupX11Color@16" (ByVal szColor As String, ByRef nRed As Long, ByRef nGreen As Long, ByRef nBlue As Long) As Long
+Public Declare Function FreeImage_LookupSVGColor Lib "FreeImage.dll" Alias "_FreeImage_LookupSVGColor@16" (ByVal szColor As String, ByRef nRed As Long, ByRef nGreen As Long, ByRef nBlue As Long) As Long
 Public Declare Function FreeImage_GetBits Lib "FreeImage.dll" Alias "_FreeImage_GetBits@4" (ByVal dib As Long) As Long
 Public Declare Function FreeImage_GetScanLine Lib "FreeImage.dll" Alias "_FreeImage_GetScanLine@8" (ByVal dib As Long, ByVal scanline As Long) As Long
 Public Declare Function FreeImage_GetPixelIndex Lib "FreeImage.dll" Alias "_FreeImage_GetPixelIndex@16" (ByVal dib As Long, ByVal x As Long, ByVal y As Long, ByRef value As Long) As Long
