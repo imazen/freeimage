@@ -19,6 +19,15 @@ Month Day, 2004 - 3.5.0
 +                added FreeImage_AcquireMemory
 +                added FreeImage_GetFileTypeFromMemory
 + [Petr Pytelka] added FreeImage_GetFIFMimeType to the plugins function list
++ [Herve Drolon] added ICC profile support to JPEG plugin
++ [Herve Drolon] added support for metadata (see below)
++                added FreeImage_SetMetadata
++                added FreeImage_GetMetadata
++                added FreeImage_GetMetadataCount
++                added FreeImage_TagToString
++                added FreeImage_FindFirstMetadata
++                added FreeImage_FindNextMetadata
++                added FreeImage_FindCloseMetadata
 * [Riley McNiff] fixed a bug with FreeImage_SetPixelIndex and 4-bit images
 * [Petr Pytelka] fixed returned value in FreeImage_CloseMultiBitmap
 * [Petr Pytelka] fixed index of new page in FreeImage_InsertPage

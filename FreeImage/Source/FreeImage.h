@@ -367,6 +367,65 @@ FI_ENUM(FREE_IMAGE_COLOR_CHANNEL) {
 	FICC_PHASE	= 9		// Complex images: use phase
 };
 
+// Metadata support ---------------------------------------------------------
+
+/**
+  Tag data type information (based on TIFF specifications)
+
+  Note: RATIONALs are the ratio of two 32-bit integer values.
+*/
+FI_ENUM(FREE_IMAGE_MDTYPE) {
+	FIDT_NOTYPE		= 0,	// placeholder 
+	FIDT_BYTE		= 1,	// 8-bit unsigned integer 
+	FIDT_ASCII		= 2,	// 8-bit bytes w/ last byte null 
+	FIDT_SHORT		= 3,	// 16-bit unsigned integer 
+	FIDT_LONG		= 4,	// 32-bit unsigned integer 
+	FIDT_RATIONAL	= 5,	// 64-bit unsigned fraction 
+	FIDT_SBYTE		= 6,	// 8-bit signed integer 
+	FIDT_UNDEFINED	= 7,	// 8-bit untyped data 
+	FIDT_SSHORT		= 8,	// 16-bit signed integer 
+	FIDT_SLONG		= 9,	// 32-bit signed integer 
+	FIDT_SRATIONAL	= 10,	// 64-bit signed fraction 
+	FIDT_FLOAT		= 11,	// 32-bit IEEE floating point 
+	FIDT_DOUBLE		= 12,	// 64-bit IEEE floating point 
+	FIDT_IFD		= 13	// 32-bit unsigned integer (offset) 
+};
+
+/**
+  Metadata models supported by FreeImage
+*/
+FI_ENUM(FREE_IMAGE_MDMODEL) {
+	FIMD_NODATA			= -1,
+	FIMD_COMMENTS		= 0,	// single comment or keywords
+	FIMD_EXIF_MAIN		= 1,	// Exif-TIFF metadata
+	FIMD_EXIF_EXIF		= 2,	// Exif-specific metadata
+	FIMD_EXIF_GPS		= 3,	// Exif GPS metadata
+	FIMD_EXIF_MAKERNOTE = 4,	// Exif maker note metadata
+	FIMD_EXIF_INTEROP	= 5,	// Exif interoperability metadata
+	FIMD_IPTC			= 6,	// IPTC/NAA metadata
+	FIMD_XMP			= 7,	// Abobe XMP metadata
+	FIMD_GEOTIFF		= 8,	// GeoTIFF metadata (to be implemented)
+	FIMD_CUSTOM			= 9		// Used to attach other metadata types to a dib
+};
+
+/**
+  Handle to a metadata model
+*/
+FI_STRUCT (FIMETADATA) { void *data; };
+
+/**
+  Metadata attribute
+*/
+FI_STRUCT (FITAG) { 
+	char *key;			// tag field name
+	char *description;	// tag description
+	WORD id;			// tag ID
+	WORD type;			// tag data type (see FREE_IMAGE_MDTYPE)
+	DWORD count;		// number of components (in 'tag data types' units)
+	DWORD length;		// value length in bytes
+	void *value;		// tag value
+};
+
 // File IO routines ---------------------------------------------------------
 
 #ifndef FREEIMAGE_IO
@@ -695,6 +754,25 @@ DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE
 
 DLL_API DWORD DLL_CALLCONV FreeImage_ZLibCompress(BYTE *target, DWORD target_size, BYTE *source, DWORD source_size);
 DLL_API DWORD DLL_CALLCONV FreeImage_ZLibUncompress(BYTE *target, DWORD target_size, BYTE *source, DWORD source_size);
+
+// --------------------------------------------------------------------------
+// Metadata routines --------------------------------------------------------
+// --------------------------------------------------------------------------
+
+// iterator
+DLL_API FIMETADATA *DLL_CALLCONV FreeImage_FindFirstMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, FITAG **tag);
+DLL_API BOOL DLL_CALLCONV FreeImage_FindNextMetadata(FIMETADATA *mdhandle, FITAG **tag);
+DLL_API void DLL_CALLCONV FreeImage_FindCloseMetadata(FIMETADATA *mdhandle);
+
+// setter and getter
+DLL_API BOOL DLL_CALLCONV FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, FITAG *tag);
+DLL_API BOOL DLL_CALLCONV FreeImage_GetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, FITAG **tag);
+
+// helpers
+DLL_API unsigned DLL_CALLCONV FreeImage_GetMetadataCount(FREE_IMAGE_MDMODEL model, FIBITMAP *dib);
+
+// tag to C string conversion
+DLL_API const char* DLL_CALLCONV FreeImage_TagToString(FREE_IMAGE_MDMODEL model, FITAG *tag, char *Make FI_DEFAULT(NULL));
 
 // --------------------------------------------------------------------------
 // Image manipulation toolkit -----------------------------------------------

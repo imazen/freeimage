@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DIRLIST=". Source Source/FreeImageToolkit Source/LibGIF Source/LibJPEG Source/LibMNG Source/LibPNG Source/LibTIFF Source/ZLib"
+DIRLIST=". Source Source/Metadata Source/FreeImageToolkit Source/LibGIF Source/LibJPEG Source/LibMNG Source/LibPNG Source/LibTIFF Source/ZLib"
 
 echo "VER_MAJOR = 3" > Makefile.srcs
 echo "VER_MINOR = 5.0" >> Makefile.srcs

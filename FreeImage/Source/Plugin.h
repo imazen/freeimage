@@ -20,7 +20,7 @@
 // Use at your own risk!
 // ==========================================================
 
-#pragma warning (disable : 4786)
+#pragma warning (disable : 4786) // identifier was truncated to 'number' characters
 
 #ifndef PLUGIN_H
 #define PLUGIN_H

@@ -41,6 +41,8 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <stack>
+#include <sstream>
 
 // ==========================================================
 //   File I/O structs

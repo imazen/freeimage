@@ -22,7 +22,7 @@
 #ifndef DEPRECATIONMGR_H
 #define DEPRECATIONMGR_H
 
-#pragma warning(disable : 4786 )  
+#pragma warning(disable : 4786 )  // identifier was truncated to 'number' characters
 
 #include "Utilities.h"
 

@@ -23,6 +23,8 @@
 // Use at your own risk!
 // ==========================================================
 
+#pragma warning (disable : 4786) // identifier was truncated to 'number' characters
+
 #ifdef unix
 #undef unix
 #endif
@@ -34,6 +36,8 @@
 
 #include "FreeImage.h"
 #include "Utilities.h"
+
+#include "../Metadata/FreeImageTag.h"
 
 // ==========================================================
 // Plugin Interface
@@ -155,6 +159,7 @@ TIFFErrorHandler _TIFFwarningHandler = msdosWarningHandler;
 static void
 msdosErrorHandler(const char* module, const char* fmt, va_list ap) {
 	/*
+	// use this for diagnostic only (do not use otherwise, even in DEBUG mode)
 	if (module != NULL) {
 		char msg[1024];
 		vsprintf(msg, fmt, ap);
@@ -185,8 +190,11 @@ CheckColormap(int n, uint16* r, uint16* g, uint16* b) {
     return 8;
 }
 
+/**
+Get the TIFFTAG_PHOTOMETRIC value from the dib
+*/
 static uint16
-CheckPhotometric(FIBITMAP *dib, uint16 bitsperpixel) {
+GetPhotometric(FIBITMAP *dib, uint16 bitsperpixel) {
 	RGBQUAD *rgb;
 	uint16 i;
 
@@ -239,6 +247,48 @@ CheckPhotometric(FIBITMAP *dib, uint16 bitsperpixel) {
 	}
 
 	return PHOTOMETRIC_MINISBLACK;
+}
+
+/**
+Get the resolution from the TIFF and fill the dib with universal units
+*/
+static void 
+GetResolution(TIFF *tiff, FIBITMAP *dib) {
+	float fResX = 300.0;
+	float fResY = 300.0;
+	uint16 resUnit = RESUNIT_INCH;
+
+	TIFFGetField(tiff, TIFFTAG_RESOLUTIONUNIT, &resUnit);
+	TIFFGetField(tiff, TIFFTAG_XRESOLUTION, &fResX);
+	TIFFGetField(tiff, TIFFTAG_YRESOLUTION, &fResY);
+
+	BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
+
+	if (resUnit == RESUNIT_INCH) {
+		pInfoHeader->biXPelsPerMeter = (int) (fResX/0.0254000 + 0.5);
+		pInfoHeader->biYPelsPerMeter = (int) (fResY/0.0254000 + 0.5);
+	} else if(resUnit == RESUNIT_CENTIMETER) {
+		pInfoHeader->biXPelsPerMeter = (int) (fResX*100.0 + 0.5);
+		pInfoHeader->biYPelsPerMeter = (int) (fResY*100.0 + 0.5);
+	}
+}
+
+/**
+Set the resolution to the TIFF using english units
+*/
+static void 
+SetResolution(TIFF *tiff, FIBITMAP *dib) {
+	double res;
+
+	BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
+
+	TIFFSetField(tiff, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
+
+	res = (unsigned long) (0.5 + 0.0254 * pInfoHeader->biXPelsPerMeter); // rounded ! (99,9998 -> 100)
+	TIFFSetField(tiff, TIFFTAG_XRESOLUTION, res);
+
+	res = (unsigned long) (0.5 + 0.0254 * pInfoHeader->biYPelsPerMeter);
+	TIFFSetField(tiff, TIFFTAG_YRESOLUTION, res);
 }
 
 /** 
@@ -502,6 +552,144 @@ SetCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint16 
 }
 
 // ==========================================================
+// TIFF metadata routines
+// ==========================================================
+
+/**
+	Read the TIFFTAG_RICHTIFFIPTC tag (IPTC/NAA or Adobe Photoshop profile)
+*/
+static BOOL 
+tiff_read_iptc_profile(TIFF *tiff, FIBITMAP *dib) {
+	BYTE *profile = NULL;
+	uint32 profile_size = 0;
+
+    if(TIFFGetField(tiff,TIFFTAG_RICHTIFFIPTC, &profile_size, &profile) == 1) {
+        if (TIFFIsByteSwapped(tiff) != 0)
+			TIFFSwabArrayOfLong((uint32 *) profile, (unsigned long)profile_size);
+
+		return read_iptc_profile(dib, profile, 4 * profile_size);
+	}
+
+	return FALSE;
+}
+
+/**
+	Read the TIFFTAG_XMLPACKET tag (XMP profile)
+	@param dib Input FIBITMAP
+	@param tiff LibTIFF TIFF handle
+	@return Returns TRUE if successful, FALSE otherwise
+*/
+static BOOL  
+tiff_read_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
+	BYTE *profile = NULL;
+	uint32 profile_size = 0;
+
+	if (TIFFGetField(tiff, TIFFTAG_XMLPACKET, &profile_size, &profile) == 1) {
+		// create a tag
+		FITAG tag;
+		memset(&tag, 0, sizeof(FITAG));
+
+		tag.id = TIFFTAG_XMLPACKET;	// 700
+		tag.key = g_TagLib_XMPFieldName;
+		tag.length = profile_size;
+		tag.count = tag.length;
+		tag.type = FIDT_ASCII;
+		char *value = (char*)malloc((profile_size + 1) * sizeof(char));
+		for(int i = 0; i < profile_size; i++) {
+			value[i] = (char)profile[i];
+		}
+		value[profile_size] = '\0';
+		tag.value = value;
+
+		// store the tag
+		FreeImage_SetMetadata(FIMD_XMP, dib, tag.key, &tag);
+
+		free(value);
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+/**
+	Read the Exif profile embedded in a TIFF
+	@param dib Input FIBITMAP
+	@param tiff LibTIFF TIFF handle
+	@return Returns TRUE if successful, FALSE otherwise
+*/
+static BOOL 
+tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib) {
+	#define TIFFTAG_EXIFIFD	34665	// Offset to private IFD holding Exif Tags
+
+	short tag_count;
+	void* data;
+	
+	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &tag_count, &data)) {
+		uint32 offset = *(uint32*)data;
+
+		// don't know where to go from here ...
+		// the following doesn't work because there's no image data in the exif IFD
+		/*
+		if(!TIFFSetSubDirectory(tiff, offset))
+			return FALSE;
+		*/
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+/**
+Read TIFF special profiles
+*/
+static void 
+ReadMetadata(TIFF *tiff, FIBITMAP *dib) {
+
+	// IPTC/NAA
+	tiff_read_iptc_profile(tiff, dib);
+
+	// Adobe XMP
+	tiff_read_xmp_profile(tiff, dib);
+
+	// Exif-TIFF (does not work)
+	//tiff_read_exif_profile(tiff, dib);
+}
+
+// ----------------------------------------------------------
+
+/**
+	Write the TIFFTAG_XMLPACKET tag (XMP profile)
+	@param dib Input FIBITMAP
+	@param tiff LibTIFF TIFF handle
+	@return Returns TRUE if successful, FALSE otherwise
+*/
+static BOOL  
+tiff_write_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
+	FITAG *tag_xmp = NULL;
+	FreeImage_GetMetadata(FIMD_XMP, dib, g_TagLib_XMPFieldName, &tag_xmp);
+
+	if(tag_xmp && (NULL != tag_xmp->value)) {
+		
+		TIFFSetField(tiff, TIFFTAG_XMLPACKET, (uint32)tag_xmp->length, (BYTE*)tag_xmp->value);
+
+		return TRUE;		
+	}
+
+	return FALSE;
+}
+
+/**
+Write TIFF special profiles
+*/
+static void 
+WriteMetadata(TIFF *tiff, FIBITMAP *dib) {
+
+	// Adobe XMP
+	tiff_write_xmp_profile(tiff, dib);
+}
+
+// ==========================================================
 // Plugin Implementation
 // ==========================================================
 
@@ -730,25 +918,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					throw "DIB allocation failed";
 				}
 				
-				// fill in the metrics (english or universal)
+				// fill in the resolution (english or universal)
 
-				float fResX = 300.0;
-				float fResY = 300.0;
-				uint16 resUnit = RESUNIT_INCH;
-
-				TIFFGetField(tif, TIFFTAG_RESOLUTIONUNIT, &resUnit);
-				TIFFGetField(tif, TIFFTAG_XRESOLUTION, &fResX);
-				TIFFGetField(tif, TIFFTAG_YRESOLUTION, &fResY);
-
-				BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-
-				if (resUnit == RESUNIT_INCH) {
-					pInfoHeader->biXPelsPerMeter = (int) (fResX/0.0254000 + 0.5);
-					pInfoHeader->biYPelsPerMeter = (int) (fResY/0.0254000 + 0.5);
-				} else if(resUnit == RESUNIT_CENTIMETER) {
-					pInfoHeader->biXPelsPerMeter = (int) (fResX*100.0 + 0.5);
-					pInfoHeader->biYPelsPerMeter = (int) (fResY*100.0 + 0.5);
-				}
+				GetResolution(tif, dib);
 
 				// read the raster lines and save them in the DIB
 				// with RGB mode, we have to change the order of the 3 samples RGB
@@ -809,25 +981,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					throw "No space for DIB image";
 				}
 
-				// fill metrics
+				// fill in the resolution (english or universal)
 
-				float fResX = 300.0;
-				float fResY = 300.0;
-				uint16 resUnit = RESUNIT_INCH;
-
-				TIFFGetField(tif, TIFFTAG_RESOLUTIONUNIT, &resUnit);
-				TIFFGetField(tif, TIFFTAG_XRESOLUTION, &fResX);
-				TIFFGetField(tif, TIFFTAG_YRESOLUTION, &fResY);
-
-				if (resUnit == RESUNIT_INCH) {
-					BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-					pInfoHeader->biXPelsPerMeter = (int) (fResX/0.0254000 + 0.5);
-					pInfoHeader->biYPelsPerMeter = (int) (fResY/0.0254000 + 0.5);
-				} else if (resUnit == RESUNIT_CENTIMETER) {
-					BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-					pInfoHeader->biXPelsPerMeter = (int) (fResX * 100.0 + 0.5);
-					pInfoHeader->biYPelsPerMeter = (int) (fResY * 100.0 + 0.5);
-				}
+				GetResolution(tif, dib);
 
 				// set up the colormap based on photometric	
 
@@ -1048,7 +1204,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			samplesperpixel = ((bitsperpixel == 24) ? 3 : ((bitsperpixel == 32) ? 4 : 1));
 			bitspersample = bitsperpixel / samplesperpixel;
-			photometric	= CheckPhotometric(dib, bitsperpixel);
+			photometric	= GetPhotometric(dib, bitsperpixel);
 
 			if((bitsperpixel == 8) && FreeImage_IsTransparent(dib)) {
 				// 8-bit transparent picture : convert later to 8-bit + 8-bit alpha
@@ -1104,14 +1260,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		// handle metrics
 
-		BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-		TIFFSetField(out, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
-
-		double res = (unsigned long) (0.5 + 0.0254 * pInfoHeader->biXPelsPerMeter); // rounded ! (99,9998 -> 100)
-		TIFFSetField(out, TIFFTAG_XRESOLUTION, res);
-		
-		res = (unsigned long) (0.5 + 0.0254 * pInfoHeader->biYPelsPerMeter);
-		TIFFSetField(out, TIFFTAG_YRESOLUTION, res);
+		SetResolution(out, dib);
 
 		// multi-paging
 

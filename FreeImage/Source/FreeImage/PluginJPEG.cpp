@@ -7,6 +7,7 @@
 // - Jan L. Nauta (jln@magentammt.com)
 // - Markus Loibl (markus.loibl@epost.de)
 // - Karl-Heinz Bussian (khbussian@moss.de)
+// - Hervé Drolon (drolon@infonie.fr)
 //
 // This file is part of FreeImage 3
 //
@@ -23,114 +24,123 @@
 // Use at your own risk!
 // ==========================================================
 
-#include "FreeImage.h"
-#include "Utilities.h"
+#pragma warning (disable : 4786) // identifier was truncated to 'number' characters
 
 extern "C" {
 #define XMD_H
 #undef FAR
 #include <setjmp.h>
-#include "../LibJPEG/jpeglib.h"
-}
-
-// ==========================================================
-//   JPEG LOAD/SAVE MODULE
-// ==========================================================
-
-#define INPUT_BUF_SIZE  4096	/* choose an efficiently fread'able size */
-#define OUTPUT_BUF_SIZE 4096    /* choose an efficiently fwrite'able size */
-typedef struct my_error_mgr * my_error_ptr;
-
-// ----------------------------------------------------------
-//   Constants + headers
-// ----------------------------------------------------------
-
-METHODDEF(void)
-jpeg_error_exit (j_common_ptr cinfo) {
-	(*cinfo->err->output_message)(cinfo);
-
-	jpeg_destroy(cinfo);
-
-	throw FIF_JPEG;
-}
-
-METHODDEF(void)
-jpeg_output_message (j_common_ptr cinfo) {
-	char buffer[JMSG_LENGTH_MAX];
-
-	(*cinfo->err->format_message)(cinfo, buffer);
-	FreeImage_OutputMessageProc(FIF_JPEG, buffer);
-}
-
-//===========================================================
-/*
- * jdatasrc.c
- *
- * Copyright (C) 1994-1996, Thomas G. Lane.
- * This file is part of the Independent JPEG Group's software.
- * For conditions of distribution and use, see the accompanying README file.
- *
- * This file contains decompression data source routines for the case of
- * reading JPEG data from a file (or any stdio stream).  While these routines
- * are sufficient for most applications, some will want to use a different
- * source manager.
- * IMPORTANT: we assume that fread() will correctly transcribe an array of
- * JOCTETs from 8-bit-wide elements on external storage.  If char is wider
- * than 8 bits on your machine, you may need to do some tweaking.
- */
 
 #include "../LibJPEG/jinclude.h"
 #include "../LibJPEG/jpeglib.h"
 #include "../LibJPEG/jerror.h"
-
-// Expanded data source object for stdio input --------------
-
-struct my_error_mgr {
-	struct jpeg_error_mgr pub;	/* "public" fields */
-
-	jmp_buf setjmp_buffer;	/* for return to caller */
-};
-
-// ----------------------------------------------------------
-
-typedef struct {
-	struct jpeg_source_mgr pub;	/* public fields */
-
-	fi_handle infile;		/* source stream */
-	FreeImageIO *m_io;
-
-	JOCTET * buffer;		/* start of buffer */
-	boolean start_of_file;	/* have we gotten any data yet? */
-} my_source_mgr;
-
-typedef struct {
-	struct jpeg_destination_mgr pub;	/* public fields */
-
-	fi_handle outfile;		/* destination stream */
-	FreeImageIO *m_io;
-
-	JOCTET * buffer;		/* start of buffer */
-} my_destination_mgr;
-
-// ----------------------------------------------------------
-
-typedef my_source_mgr * freeimage_src_ptr;
-typedef my_destination_mgr * freeimage_dst_ptr;
-
-// ----------------------------------------------------------
-
-METHODDEF(void)
-init_source (j_decompress_ptr cinfo) {
-	freeimage_src_ptr src = (freeimage_src_ptr) cinfo->src;
-
-	/* We reset the empty-input-file flag for each image,
- 	 * but we don't clear the input buffer.
-	 * This is correct behavior for reading a series of images from one source.
-	*/
-
-	src->start_of_file = TRUE;
 }
 
+#include "FreeImage.h"
+#include "Utilities.h"
+
+#include "../Metadata/FreeImageTag.h"
+
+
+// ==========================================================
+// Plugin Interface
+// ==========================================================
+
+static int s_format_id;
+
+// ----------------------------------------------------------
+//   Constant declarations
+// ----------------------------------------------------------
+
+#define INPUT_BUF_SIZE  4096	// choose an efficiently fread'able size 
+#define OUTPUT_BUF_SIZE 4096    // choose an efficiently fwrite'able size
+
+#define EXIF_MARKER		(JPEG_APP0+1)	// EXIF marker / Adobe XMP marker
+#define ICC_MARKER		(JPEG_APP0+2)	// ICC profile marker
+#define IPTC_MARKER		(JPEG_APP0+13)	// IPTC marker / BIM marker 
+
+// ----------------------------------------------------------
+//   Typedef declarations
+// ----------------------------------------------------------
+
+typedef struct tagErrorManager {
+	/// "public" fields
+	struct jpeg_error_mgr pub;
+	/// for return to caller
+	jmp_buf setjmp_buffer;
+} ErrorManager;
+
+typedef struct tagSourceManager {
+	/// public fields
+	struct jpeg_source_mgr pub;
+	/// source stream
+	fi_handle infile;
+	FreeImageIO *m_io;
+	/// start of buffer
+	JOCTET * buffer;
+	/// have we gotten any data yet ?
+	boolean start_of_file;
+} SourceManager;
+
+typedef struct tagDestinationManager {
+	/// public fields
+	struct jpeg_destination_mgr pub;
+	/// destination stream
+	fi_handle outfile;
+	FreeImageIO *m_io;
+	/// start of buffer
+	JOCTET * buffer;
+} DestinationManager;
+
+typedef SourceManager*		freeimage_src_ptr;
+typedef DestinationManager* freeimage_dst_ptr;
+typedef ErrorManager*		freeimage_error_ptr;
+
+// ----------------------------------------------------------
+//   Error handling
+// ----------------------------------------------------------
+
+/**
+	Receives control for a fatal error.  Information sufficient to
+	generate the error message has been stored in cinfo->err; call
+	output_message to display it.  Control must NOT return to the caller;
+	generally this routine will exit() or longjmp() somewhere.
+*/
+METHODDEF(void)
+jpeg_error_exit (j_common_ptr cinfo) {
+	// always display the message
+	(*cinfo->err->output_message)(cinfo);
+	
+	// let the memory manager delete any temp files before we die
+	jpeg_destroy(cinfo);
+	
+	throw s_format_id;
+}
+
+/**
+	Actual output of any JPEG message.  Note that this method does not know
+	how to generate a message, only where to send it.
+*/
+METHODDEF(void)
+jpeg_output_message (j_common_ptr cinfo) {
+	char buffer[JMSG_LENGTH_MAX];
+
+	// create the message
+	(*cinfo->err->format_message)(cinfo, buffer);
+	// send it to user's message proc
+	FreeImage_OutputMessageProc(s_format_id, buffer);
+}
+
+// ----------------------------------------------------------
+//   Destination manager
+// ----------------------------------------------------------
+
+/**
+	Initialize destination.  This is called by jpeg_start_compress()
+	before any data is actually written. It must initialize
+	next_output_byte and free_in_buffer. free_in_buffer must be
+	initialized to a positive value.
+*/
 METHODDEF(void)
 init_destination (j_compress_ptr cinfo) {
 	freeimage_dst_ptr dest = (freeimage_dst_ptr) cinfo->dest;
@@ -143,41 +153,83 @@ init_destination (j_compress_ptr cinfo) {
 	dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
 
+/**
+	This is called whenever the buffer has filled (free_in_buffer
+	reaches zero). In typical applications, it should write out the
+	*entire* buffer (use the saved start address and buffer length;
+	ignore the current state of next_output_byte and free_in_buffer).
+	Then reset the pointer & count to the start of the buffer, and
+	return TRUE indicating that the buffer has been dumped.
+	free_in_buffer must be set to a positive value when TRUE is
+	returned.  A FALSE return should only be used when I/O suspension is
+	desired.
+*/
+METHODDEF(boolean)
+empty_output_buffer (j_compress_ptr cinfo) {
+	freeimage_dst_ptr dest = (freeimage_dst_ptr) cinfo->dest;
+
+	if (dest->m_io->write_proc(dest->buffer, 1, OUTPUT_BUF_SIZE, dest->outfile) != OUTPUT_BUF_SIZE)
+		throw(cinfo, JERR_FILE_WRITE);
+
+	dest->pub.next_output_byte = dest->buffer;
+	dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
+
+	return TRUE;
+}
+
+/**
+	Terminate destination --- called by jpeg_finish_compress() after all
+	data has been written.  In most applications, this must flush any
+	data remaining in the buffer.  Use either next_output_byte or
+	free_in_buffer to determine how much data is in the buffer.
+*/
+METHODDEF(void)
+term_destination (j_compress_ptr cinfo) {
+	freeimage_dst_ptr dest = (freeimage_dst_ptr) cinfo->dest;
+
+	size_t datacount = OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
+
+	// write any data remaining in the buffer
+
+	if (datacount > 0) {
+		if (dest->m_io->write_proc(dest->buffer, 1, datacount, dest->outfile) != datacount)
+		  throw(cinfo, JERR_FILE_WRITE);
+	}
+}
+
+// ----------------------------------------------------------
+//   Source manager
 // ----------------------------------------------------------
 
-/*
- * Fill the input buffer --- called whenever buffer is emptied.
- *
- * In typical applications, this should read fresh data into the buffer
- * (ignoring the current state of next_input_byte & bytes_in_buffer),
- * reset the pointer & count to the start of the buffer, and return TRUE
- * indicating that the buffer has been reloaded.  It is not necessary to
- * fill the buffer entirely, only to obtain at least one more byte.
- *
- * There is no such thing as an EOF return.  If the end of the file has been
- * reached, the routine has a choice of throw() or inserting fake data into
- * the buffer.  In most cases, generating a warning message and inserting a
- * fake EOI marker is the best course of action --- this will allow the
- * decompressor to output however much of the image is there.  However,
- * the resulting error message is misleading if the real problem is an empty
- * input file, so we handle that case specially.
- *
- * In applications that need to be able to suspend compression due to input
- * not being available yet, a FALSE return indicates that no more data can be
- * obtained right now, but more may be forthcoming later.  In this situation,
- * the decompressor will return to its caller (with an indication of the
- * number of scanlines it has read, if any).  The application should resume
- * decompression after it has loaded more data into the input buffer.  Note
- * that there are substantial restrictions on the use of suspension --- see
- * the documentation.
- *
- * When suspending, the decompressor will back up to a convenient restart point
- * (typically the start of the current MCU). next_input_byte & bytes_in_buffer
- * indicate where the restart point will be if the current call returns FALSE.
- * Data beyond this point must be rescanned after resumption, so move it to
- * the front of the buffer rather than discarding it.
- */
+/**
+	Initialize source.  This is called by jpeg_read_header() before any
+	data is actually read. Unlike init_destination(), it may leave
+	bytes_in_buffer set to 0 (in which case a fill_input_buffer() call
+	will occur immediately).
+*/
+METHODDEF(void)
+init_source (j_decompress_ptr cinfo) {
+	freeimage_src_ptr src = (freeimage_src_ptr) cinfo->src;
 
+	/* We reset the empty-input-file flag for each image,
+ 	 * but we don't clear the input buffer.
+	 * This is correct behavior for reading a series of images from one source.
+	*/
+
+	src->start_of_file = TRUE;
+}
+
+/**
+	This is called whenever bytes_in_buffer has reached zero and more
+	data is wanted.  In typical applications, it should read fresh data
+	into the buffer (ignoring the current state of next_input_byte and
+	bytes_in_buffer), reset the pointer & count to the start of the
+	buffer, and return TRUE indicating that the buffer has been reloaded.
+	It is not necessary to fill the buffer entirely, only to obtain at
+	least one more byte.  bytes_in_buffer MUST be set to a positive value
+	if TRUE is returned.  A FALSE return should only be used when I/O
+	suspension is desired.
+*/
 METHODDEF(boolean)
 fill_input_buffer (j_decompress_ptr cinfo) {
 	freeimage_src_ptr src = (freeimage_src_ptr) cinfo->src;
@@ -205,31 +257,16 @@ fill_input_buffer (j_decompress_ptr cinfo) {
 	return TRUE;
 }
 
-METHODDEF(boolean)
-empty_output_buffer (j_compress_ptr cinfo) {
-	freeimage_dst_ptr dest = (freeimage_dst_ptr) cinfo->dest;
-
-	if (dest->m_io->write_proc(dest->buffer, 1, OUTPUT_BUF_SIZE, dest->outfile) != OUTPUT_BUF_SIZE)
-		throw(cinfo, JERR_FILE_WRITE);
-
-	dest->pub.next_output_byte = dest->buffer;
-	dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
-
-	return TRUE;
-}
-
-/*
- * Skip data --- used to skip over a potentially large amount of
- * uninteresting data (such as an APPn marker).
- *
- * Writers of suspendable-input applications must note that skip_input_data
- * is not granted the right to give a suspension return.  If the skip extends
- * beyond the data currently in the buffer, the buffer can be marked empty so
- * that the next read will cause a fill_input_buffer call that can suspend.
- * Arranging for additional bytes to be discarded before reloading the input
- * buffer is the application writer's problem.
- */
-
+/**
+	Skip num_bytes worth of data.  The buffer pointer and count should
+	be advanced over num_bytes input bytes, refilling the buffer as
+	needed. This is used to skip over a potentially large amount of
+	uninteresting data (such as an APPn marker). In some applications
+	it may be possible to optimize away the reading of the skipped data,
+	but it's not clear that being smart is worth much trouble; large
+	skips are uncommon.  bytes_in_buffer may be zero on return.
+	A zero or negative skip count should be treated as a no-op.
+*/
 METHODDEF(void)
 skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
 	freeimage_src_ptr src = (freeimage_src_ptr) cinfo->src;
@@ -255,40 +292,28 @@ skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
 	}
 }
 
-/*
- * Terminate source --- called by jpeg_finish_decompress
- * after all data has been read.  Often a no-op.
- *
- * NB: *not* called by jpeg_abort or jpeg_destroy; surrounding
- * application must deal with any cleanup that should happen even
- * for error exit.
- */
+/**
+	Terminate source --- called by jpeg_finish_decompress
+	after all data has been read.  Often a no-op.
 
+	NB: *not* called by jpeg_abort or jpeg_destroy; surrounding
+	application must deal with any cleanup that should happen even
+	for error exit.
+*/
 METHODDEF(void)
 term_source (j_decompress_ptr cinfo) {
-  /* no work necessary here */
+  // no work necessary here
 }
 
-METHODDEF(void)
-term_destination (j_compress_ptr cinfo) {
-	freeimage_dst_ptr dest = (freeimage_dst_ptr) cinfo->dest;
+// ----------------------------------------------------------
+//   Source manager & Destination manager setup
+// ----------------------------------------------------------
 
-	size_t datacount = OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
-
-	/* Write any data remaining in the buffer */
-
-	if (datacount > 0) {
-		if (dest->m_io->write_proc(dest->buffer, 1, datacount, dest->outfile) != datacount)
-		  throw(cinfo, JERR_FILE_WRITE);
-	}
-}
-
-/*
- * Prepare for input from a stdio stream.
- * The caller must have already opened the stream, and is responsible
- * for closing it after finishing decompression.
- */
-
+/**
+	Prepare for input from a stdio stream.
+	The caller must have already opened the stream, and is responsible
+	for closing it after finishing decompression.
+*/
 GLOBAL(void)
 jpeg_freeimage_src (j_decompress_ptr cinfo, fi_handle infile, FreeImageIO *io) {
 	freeimage_src_ptr src;
@@ -297,7 +322,7 @@ jpeg_freeimage_src (j_decompress_ptr cinfo, fi_handle infile, FreeImageIO *io) {
 
 	if (cinfo->src == NULL) {
 		cinfo->src = (struct jpeg_source_mgr *) (*cinfo->mem->alloc_small)
-			((j_common_ptr) cinfo, JPOOL_PERMANENT, SIZEOF(my_source_mgr));
+			((j_common_ptr) cinfo, JPOOL_PERMANENT, SIZEOF(SourceManager));
 
 		src = (freeimage_src_ptr) cinfo->src;
 
@@ -311,21 +336,26 @@ jpeg_freeimage_src (j_decompress_ptr cinfo, fi_handle infile, FreeImageIO *io) {
 	src->pub.init_source = init_source;
 	src->pub.fill_input_buffer = fill_input_buffer;
 	src->pub.skip_input_data = skip_input_data;
-	src->pub.resync_to_restart = jpeg_resync_to_restart; /* use default method */
+	src->pub.resync_to_restart = jpeg_resync_to_restart; // use default method 
 	src->pub.term_source = term_source;
 	src->infile = infile;
 	src->m_io = io;
-	src->pub.bytes_in_buffer = 0; /* forces fill_input_buffer on first read */
-	src->pub.next_input_byte = NULL; /* until buffer loaded */
+	src->pub.bytes_in_buffer = 0;		// forces fill_input_buffer on first read 
+	src->pub.next_input_byte = NULL;	// until buffer loaded 
 }
 
+/**
+	Prepare for output to a stdio stream.
+	The caller must have already opened the stream, and is responsible
+	for closing it after finishing compression.
+*/
 GLOBAL(void)
 jpeg_freeimage_dst (j_compress_ptr cinfo, fi_handle outfile, FreeImageIO *io) {
 	freeimage_dst_ptr dest;
 
 	if (cinfo->dest == NULL) {
 		cinfo->dest = (struct jpeg_destination_mgr *)(*cinfo->mem->alloc_small)
-			((j_common_ptr) cinfo, JPOOL_PERMANENT, SIZEOF(my_destination_mgr));
+			((j_common_ptr) cinfo, JPOOL_PERMANENT, SIZEOF(DestinationManager));
 	}
 
 	dest = (freeimage_dst_ptr) cinfo->dest;
@@ -336,11 +366,287 @@ jpeg_freeimage_dst (j_compress_ptr cinfo, fi_handle outfile, FreeImageIO *io) {
 	dest->m_io = io;
 }
 
-// ==========================================================
-// Plugin Interface
-// ==========================================================
+// ----------------------------------------------------------
+//   Special markers read functions
+// ----------------------------------------------------------
 
-static int s_format_id;
+/**
+	Read JPEG_COM marker (comment)
+*/
+static BOOL 
+jpeg_read_comment(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
+	int i, count;
+	size_t length = datalen;
+	BYTE *profile = (BYTE*)dataptr;
+
+	// read the comment
+	char *value = (char*)malloc((length + 1) * sizeof(char));
+	memcpy(value, profile, length);
+	for(i = 0, count = 0; i < length; i++) {
+		if(isprint(profile[i])) {
+			value[count++] = profile[i];
+		}
+	}
+	value[count] = '\0';
+
+	// create a tag
+	FITAG tag;
+	memset(&tag, 0, sizeof(FITAG));
+
+	tag.id = JPEG_COM;
+	tag.key = "Comment";
+	tag.length = count;
+	tag.count = count;
+	tag.type = FIDT_ASCII;
+	tag.value = value;
+
+	// store the tag
+	FreeImage_SetMetadata(FIMD_COMMENTS, dib, tag.key, &tag);
+
+	free(value);
+
+	return TRUE;
+}
+
+/** 
+	Read JPEG_APP2 marker (ICC profile)
+*/
+static BOOL 
+jpeg_read_icc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
+    // marker identifying string "ICC_PROFILE" (null-terminated)
+	BYTE icc_signature[12] = { 0x49, 0x43, 0x43, 0x5F, 0x50, 0x52, 0x4F, 0x46, 0x49, 0x4C, 0x45, 0x00 };
+
+	size_t length = datalen;
+	BYTE *profile = (BYTE*)dataptr;
+
+	// verify the identifying string
+	if(length >= 14) {
+		if(memcmp(icc_signature, profile, sizeof(icc_signature)) != 0) {
+			// not a ICC profile, return
+			return FALSE;
+		}
+		// sequence number
+		int seq_no = profile[12];
+		// number of markers
+		int num_markers = profile[13];
+		if((seq_no <= 0) || (seq_no > num_markers)) {
+			// bogus sequence number
+			return FALSE;
+		}
+	} else {
+		return FALSE;
+	}
+
+	// skip non-profile data in APP2 marker
+	profile += 14;
+	length  -= 14;
+
+	// copy ICC profile data
+	FreeImage_CreateICCProfile(dib, profile, length);
+
+	return TRUE;
+}
+
+/**
+	Read JPEG_APPD marker (IPTC or Adobe Photoshop profile)
+*/
+BOOL 
+jpeg_read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
+	return read_iptc_profile(dib, dataptr, datalen);
+}
+
+/**
+	Read JPEG_APP1 marker (XMP profile)
+	@param dib Input FIBITMAP
+	@param dataptr Pointer to the APP1 marker
+	@param datalen APP1 marker length
+	@return Returns TRUE if successful, FALSE otherwise
+*/
+static BOOL  
+jpeg_read_xmp_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
+	// marker identifying string for XMP (null terminated)
+	char *xmp_signature = "http://ns.adobe.com/xap/1.0/";
+
+	size_t length = datalen;
+	BYTE *profile = (BYTE*)dataptr;
+
+	// verify the identifying string
+
+	if(memcmp(xmp_signature, profile, strlen(xmp_signature)) == 0) {
+		// XMP profile
+
+		size_t offset = strlen(xmp_signature) + 1;
+		profile += offset;
+		length  -= offset;
+
+		// create a tag
+		FITAG tag;
+		memset(&tag, 0, sizeof(FITAG));
+
+		tag.id = (JPEG_APP0+1);	// 0xFFE1
+		tag.key = g_TagLib_XMPFieldName;
+		tag.length = length;
+		tag.count =  length;
+		tag.type = FIDT_ASCII;
+		char *value = (char*)malloc((length + 1) * sizeof(char));
+		for(int i = 0; i < length; i++) {
+			value[i] = (char)profile[i];
+		}
+		value[length] = '\0';
+		tag.value = value;
+
+		// store the tag
+		FreeImage_SetMetadata(FIMD_XMP, dib, tag.key, &tag);
+
+		free(value);
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+/**
+	Read JPEG special markers
+*/
+static BOOL 
+read_markers(j_decompress_ptr cinfo, FIBITMAP *dib) {
+	jpeg_saved_marker_ptr marker;
+
+	for(marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
+		switch(marker->marker) {
+			case JPEG_COM:
+				// JPEG comment
+				jpeg_read_comment(dib, marker->data, marker->data_length);
+				break;
+			case EXIF_MARKER:
+				// Exif or Adobe XMP profile
+				jpeg_read_exif_profile(dib, marker->data, marker->data_length);
+				jpeg_read_xmp_profile(dib, marker->data, marker->data_length);
+				break;
+			case ICC_MARKER:
+				// ICC profile
+				jpeg_read_icc_profile(dib, marker->data, marker->data_length);
+				break;
+			case IPTC_MARKER:
+				// IPTC/NAA or Adobe Photoshop profile
+				jpeg_read_iptc_profile(dib, marker->data, marker->data_length);
+				break;
+		}
+	}
+
+	return TRUE;
+}
+
+// ----------------------------------------------------------
+//   Special markers write functions
+// ----------------------------------------------------------
+
+/**
+	Write JPEG_COM marker (comment)
+*/
+static BOOL 
+jpeg_write_comment(j_compress_ptr cinfo, FIBITMAP *dib) {
+	FITAG *tag = NULL;
+
+	// write user comment as a JPEG_COM marker
+	FreeImage_GetMetadata(FIMD_COMMENTS, dib, "Comment", &tag);
+	if(tag && (NULL != tag->value)) {
+		for(long i = 0; i < (long)strlen((char*)tag->value); i+= 65533L) {
+			jpeg_write_marker(cinfo, JPEG_COM, (BYTE*)tag->value + i, MIN((long)strlen((char*)tag->value + i), 65533L));
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/** 
+	Write JPEG_APP2 marker (ICC profile)
+*/
+static BOOL 
+jpeg_write_icc_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
+    // marker identifying string "ICC_PROFILE" (null-terminated)
+	BYTE icc_signature[12] = { 0x49, 0x43, 0x43, 0x5F, 0x50, 0x52, 0x4F, 0x46, 0x49, 0x4C, 0x45, 0x00 };
+
+	FIICCPROFILE *iccProfile = FreeImage_GetICCProfile(dib);
+
+	if (iccProfile->size && iccProfile->data) {
+		// ICC signature is 'ICC_PROFILE' + 2 bytes
+		unsigned icc_header_size = 14;
+
+		BYTE *profile = (BYTE*)malloc((iccProfile->size + icc_header_size) * sizeof(BYTE));
+		memcpy(profile, icc_signature, 12);
+
+		for(long i = 0; i < (long)iccProfile->size; i += 65519L) {
+			unsigned length = MIN((long)(iccProfile->size - i), 65519L);
+			// sequence number
+			profile[12] = (BYTE) ((i / 65519L) + 1);
+			// number of markers
+			profile[13] = (BYTE) (iccProfile->size / 65519L + 1);
+
+			memcpy(profile + icc_header_size, (BYTE*)iccProfile->data + i, length);
+			jpeg_write_marker(cinfo, ICC_MARKER, profile, (length + icc_header_size));
+        }
+
+		free(profile);
+
+		return TRUE;		
+	}
+	
+	return FALSE;
+}
+
+/** 
+	Write JPEG_APP1 marker (XMP profile)
+	@return Returns TRUE if successful, FALSE otherwise
+*/
+static BOOL  
+jpeg_write_xmp_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
+	// marker identifying string for XMP (null terminated)
+	char *xmp_signature = "http://ns.adobe.com/xap/1.0/";
+
+	FITAG *tag_xmp = NULL;
+	FreeImage_GetMetadata(FIMD_XMP, dib, g_TagLib_XMPFieldName, &tag_xmp);
+
+	if(tag_xmp && (NULL != tag_xmp->value)) {
+		// XMP signature is 29 bytes long
+		unsigned xmp_header_size = strlen(xmp_signature) + 1;
+
+		BYTE *profile = (BYTE*)malloc((tag_xmp->length + xmp_header_size) * sizeof(BYTE));
+		memcpy(profile, xmp_signature, xmp_header_size);
+
+		for(long i = 0; i < tag_xmp->length; i += 65504L) {
+			unsigned length = MIN((long)(tag_xmp->length - i), 65504L);
+			
+			memcpy(profile + xmp_header_size, (BYTE*)tag_xmp->value + i, length);
+			jpeg_write_marker(cinfo, (JPEG_APP0+1), profile, (length + xmp_header_size));
+		}
+
+		free(profile);
+
+		return TRUE;		
+	}
+
+	return FALSE;
+}
+
+/**
+	Write JPEG special markers
+*/
+static BOOL 
+write_markers(j_compress_ptr cinfo, FIBITMAP *dib) {
+
+	// write user comment as a JPEG_COM marker
+	jpeg_write_comment(cinfo, dib);
+
+	// write ICC profile
+	jpeg_write_icc_profile(cinfo, dib);
+
+	// write Adobe XMP profile
+	jpeg_write_xmp_profile(cinfo, dib);
+
+	return TRUE;
+}
 
 // ==========================================================
 // Plugin Implementation
@@ -394,6 +700,11 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 	return (type == FIT_BITMAP) ? TRUE : FALSE;
 }
 
+static BOOL DLL_CALLCONV
+SupportsICCProfiles() {
+	return TRUE;
+}
+
 // ----------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
@@ -402,10 +713,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		FIBITMAP *dib = NULL;
 
 		try {
-			// remember the start position for EXIF reading later
-
-			long start_pos = io->tell_proc(handle);
-
 			// set up the jpeglib structures
 
 			struct jpeg_decompress_struct cinfo;
@@ -420,9 +727,16 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			jpeg_create_decompress(&cinfo);
 
-			// step 2: specify data source (eg, a handle)
+			// step 2a: specify data source (eg, a handle)
 
 			jpeg_freeimage_src(&cinfo, handle, io);
+
+			// step 2b: save special markers for later reading
+			
+			jpeg_save_markers(&cinfo, JPEG_COM, 0xFFFF);
+			for(int m = 0; m < 16; m++) {
+				jpeg_save_markers(&cinfo, JPEG_APP0 + m, 0xFFFF);
+			}
 
 			// step 3: read handle parameters with jpeg_read_header()
 
@@ -494,11 +808,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 #endif
 
-			// step 7: finish decompression
+			// step 7: read special markers
+
+			read_markers(&cinfo, dib);
+
+			// step 8: finish decompression
 
 			jpeg_finish_decompress(&cinfo);
 
-			// step 8: release JPEG decompression object
+			// step 9: release JPEG decompression object
 
 			jpeg_destroy_decompress(&cinfo);
 
@@ -544,15 +862,15 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			jerr.error_exit     = jpeg_error_exit;
 			jerr.output_message = jpeg_output_message;
 
-			/* Now we can initialize the JPEG compression object. */
+			// Now we can initialize the JPEG compression object
 
 			jpeg_create_compress(&cinfo);
 
-			/* Step 2: specify data destination (eg, a file) */
+			// Step 2: specify data destination (eg, a file)
 
 			jpeg_freeimage_dst(&cinfo, handle, io);
 
-			/* Step 3: set parameters for compression */
+			// Step 3: set parameters for compression 
 
 			cinfo.image_width = FreeImage_GetWidth(dib);
 			cinfo.image_height = FreeImage_GetHeight(dib);
@@ -605,11 +923,15 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			jpeg_set_quality(&cinfo, quality, TRUE); /* limit to baseline-JPEG values */
 
-			/* Step 5: Start compressor */
+			// Step 5: Start compressor 
 
 			jpeg_start_compress(&cinfo, TRUE);
 
-			/* Step 6: while (scan lines remain to be written) */
+			// Step 6: Write special markers
+
+			write_markers(&cinfo, dib);
+
+			// Step 7: while (scan lines remain to be written) 
 
 			if(color_type == FIC_RGB) {
 				// 24-bit RGB image : need to swap red and blue channels
@@ -689,11 +1011,11 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				free(target);
 			}
 
-			/* Step 7: Finish compression */
+			// Step 8: Finish compression 
 
 			jpeg_finish_compress(&cinfo);
 
-			/* Step 8: release JPEG compression object */
+			// Step 9: release JPEG compression object 
 
 			jpeg_destroy_compress(&cinfo);
 
@@ -732,5 +1054,5 @@ InitJPEG(Plugin *plugin, int format_id) {
 	plugin->mime_proc = MimeType;
 	plugin->supports_export_bpp_proc = SupportsExportDepth;
 	plugin->supports_export_type_proc = SupportsExportType;
-	plugin->supports_icc_profiles_proc = NULL;	// not implemented yet;
+	plugin->supports_icc_profiles_proc = SupportsICCProfiles;
 }

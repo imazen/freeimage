@@ -243,6 +243,34 @@ SOURCE=..\FreeImage\MultiPage.cpp
 SOURCE=..\FreeImage\ZLibInterface.cpp
 # End Source File
 # End Group
+# Begin Group "Metadata"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\Metadata\Exif.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\Metadata\FIRational.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\Metadata\FreeImageTag.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\Metadata\IPTC.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\Metadata\TagConversion.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\Metadata\TagLib.cpp
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=..\FreeImage\BitmapAccess.cpp
@@ -285,11 +313,19 @@ SOURCE=..\DeprecationManager\DeprecationMgr.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\Metadata\FIRational.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\FreeImage.h
 # End Source File
 # Begin Source File
 
 SOURCE=..\FreeImageIO.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Metadata\FreeImageTag.h
 # End Source File
 # Begin Source File
 
@@ -348,10 +384,6 @@ SOURCE=..\FreeImageToolkit\Resize.cpp
 SOURCE=..\FreeImageToolkit\Resize.h
 # End Source File
 # End Group
-# Begin Source File
-
-SOURCE=..\..\KnownBugs.txt
-# End Source File
 # Begin Source File
 
 SOURCE=..\..\Whatsnew.txt

@@ -22,8 +22,12 @@
 // Use at your own risk!
 // ==========================================================
 
+#pragma warning (disable : 4786) // identifier was truncated to 'number' characters
+
 #include "FreeImage.h"
 #include "Utilities.h"
+
+#include "../Metadata/FreeImageTag.h"
 
 // ----------------------------------------------------------
 
@@ -67,6 +71,101 @@ error_handler(struct png_struct_def *, const char *error) {
 
 static void
 warning_handler(struct png_struct_def *, const char *warning) {
+}
+
+// ==========================================================
+// Metadata routines
+// ==========================================================
+
+static BOOL 
+ReadMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
+	// XMP keyword
+	char *g_png_xmp_keyword = "XML:com.adobe.xmp";
+
+	png_textp text_ptr = NULL;
+	int num_text = 0;
+
+	// iTXt/tEXt/zTXt chuncks
+	if(png_get_text(png_ptr, info_ptr, &text_ptr, &num_text) > 0) {
+		for(int i = 0; i < num_text; i++) {
+			FITAG tag;
+			memset(&tag, 0, sizeof(FITAG));
+
+			tag.length = MAX(text_ptr[i].text_length, text_ptr[i].itxt_length);
+			tag.count = tag.length;
+			tag.type = FIDT_ASCII;
+			tag.value = (char*)text_ptr[i].text;
+
+			if(strcmp(text_ptr[i].key, g_png_xmp_keyword) == 0) {
+				// store the tag as XMP
+				tag.key = g_TagLib_XMPFieldName;
+				FreeImage_SetMetadata(FIMD_XMP, dib, tag.key, &tag);
+			} else {
+				// store the tag as a comment
+				tag.key = text_ptr[i].key;
+				FreeImage_SetMetadata(FIMD_COMMENTS, dib, tag.key, &tag);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL 
+WriteMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
+	// XMP keyword
+	char *g_png_xmp_keyword = "XML:com.adobe.xmp";
+
+	FITAG *tag = NULL;
+	FIMETADATA *mdhandle = NULL;
+	BOOL bResult = TRUE;
+
+	png_text text_metadata;
+	int num_text = 0;
+
+	// set the 'Comments' metadata as iTXt chuncks
+
+	mdhandle = FreeImage_FindFirstMetadata(FIMD_COMMENTS, dib, &tag);
+
+	if(mdhandle) {
+		do {
+			memset(&text_metadata, 0, sizeof(png_text));
+			text_metadata.compression = 1;			 // iTXt, none
+			text_metadata.key = tag->key;			 // keyword, 1-79 character description of "text"
+			text_metadata.text = (char*)tag->value;	 // comment, may be an empty string (ie "")
+			text_metadata.text_length = tag->length; // length of the text string
+			text_metadata.itxt_length = tag->length; // length of the itxt string
+			text_metadata.lang = 0;					 // language code, 0-79 characters or a NULL pointer
+			text_metadata.lang_key = 0;				 // keyword translated UTF-8 string, 0 or more chars or a NULL pointer
+
+			// set the tag 
+			png_set_text(png_ptr, info_ptr, &text_metadata, 1);
+
+		} while(FreeImage_FindNextMetadata(mdhandle, &tag));
+
+		FreeImage_FindCloseMetadata(mdhandle);
+		bResult &= TRUE;
+	}
+
+	// set the 'XMP' metadata as iTXt chuncks
+	tag = NULL;
+	FreeImage_GetMetadata(FIMD_XMP, dib, g_TagLib_XMPFieldName, &tag);
+	if(tag && tag->length) {
+		memset(&text_metadata, 0, sizeof(png_text));
+		text_metadata.compression = 1;			 // iTXt, none
+		text_metadata.key = g_png_xmp_keyword;	 // keyword, 1-79 character description of "text"
+		text_metadata.text = (char*)tag->value;	 // comment, may be an empty string (ie "")
+		text_metadata.text_length = tag->length; // length of the text string
+		text_metadata.itxt_length = tag->length; // length of the itxt string
+		text_metadata.lang = 0;					 // language code, 0-79 characters or a NULL pointer
+		text_metadata.lang_key = 0;				 // keyword translated UTF-8 string, 0 or more chars or a NULL pointer
+
+		// set the tag 
+		png_set_text(png_ptr, info_ptr, &text_metadata, 1);
+		bResult &= TRUE;
+	}
+
+	return bResult;
 }
 
 // ==========================================================
@@ -447,7 +546,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 
 			// read the rest of the file, getting any additional chunks in info_ptr
+
 			png_read_end(png_ptr, info_ptr);
+
+			// get possible metadata (it can be located both before and after the image data)
+
+			ReadMetadata(png_ptr, info_ptr, dib);
 
 			if (png_ptr) {
 				// clean up after the read, and free any memory allocated - REQUIRED
@@ -628,6 +732,10 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			if (iccProfile->size && iccProfile->data) {
 				png_set_iCCP(png_ptr, info_ptr, "Embedded Profile", 0, (png_charp)iccProfile->data, iccProfile->size);
 			}
+
+			// write metadata
+
+			WriteMetadata(png_ptr, info_ptr, dib);
 
 			// Optional gamma chunk is strongly suggested if you have any guess
 			// as to the correct gamma of the image.

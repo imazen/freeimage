@@ -19,6 +19,7 @@ LIBRARIES = -lstdc++
 MODULES = $(SRCS:.c=.o)
 MODULES := $(MODULES:.cpp=.o)
 CFLAGS = $(COMPILERFLAGS) $(INCLUDE)
+CPPFLAGS = $(COMPILERFLAGS)  -Wno-ctor-dtor-privacy $(INCLUDE)
 
 TARGET  = freeimage
 STATICLIB = lib$(TARGET).a
@@ -45,7 +46,7 @@ FreeImage: $(STATICLIB) $(SHAREDLIB)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .cpp.o:
-	$(CPP) $(CFLAGS) -c $< -o $@
+	$(CPP) $(CPPFLAGS) -c $< -o $@
 
 $(STATICLIB): $(MODULES)
 	$(AR) r $@ $(MODULES)
