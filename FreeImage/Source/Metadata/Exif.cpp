@@ -480,8 +480,11 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 			FreeImage_SetTagID(tag, ReadUint16(msb_order, pde));
 			// get the tag format
 			WORD tag_type = (WORD)ReadUint16(msb_order, pde + 2);
-			if((tag_type - 1) >= EXIF_NUM_FORMATS)
+            if((tag_type - 1) >= EXIF_NUM_FORMATS) {
+                // delete the tag (not free'd after)
+			    FreeImage_DeleteTag(tag);
 				break;
+            }
 			FreeImage_SetTagType(tag, (FREE_IMAGE_MDTYPE)tag_type);
 
 			// get number of components
