@@ -28,7 +28,7 @@ This code was taken and adapted from the following reference :
 [1] Philippe Thévenaz, Spline interpolation, a C source code 
 implementation. http://bigwww.epfl.ch/thevenaz/
 
-It implements ideas described in the folowing papers : 
+It implements ideas described in the following papers : 
 
 [2] Unser M., Splines: A Perfect Fit for Signal and Image Processing. 
 IEEE Signal Processing Magazine, vol. 16, no. 6, pp. 22-38, November 1999. 
