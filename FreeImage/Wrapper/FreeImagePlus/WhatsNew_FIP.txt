@@ -1,0 +1,52 @@
+What's New for FreeImagePlus
+
+* : fixed
+- : removed
+! : changed
++ : added
+
+March, 17th, 2004
+[Herve Drolon]
+! fipImage::setSize now accepts color masks
+* fixed fipWinImage::copyFromHandle not working with DIB having color masks
+
+February 11th, 2004
+[Herve Drolon]
+- removed fipImage::getRedChannel
+- removed fipImage::getGreenChannel
+- removed fipImage::getBlueChannel
+- removed fipImage::getAlphaChannel
+- removed fipImage::setAlphaChannel
++ added fipImage::setChannel
++ added fipImage::isTransparent
++ added fipImage::getTransparencyCount
++ added fipImage::getTransparencyTable
++ added fipImage::setTransparencyTable
++ added fipImage::hasFileBkColor
++ added fipImage::getFileBkColor
++ added fipImage::setFileBkColor
++ added fipWinImage::drawEx
+! fipWinImage::draw now works with transparent images
+
+January 26th, 2004
+[Herve Drolon]
++ added fipMemoryIO
++ added fipInternetIO (WIN32 only)
++ added fipImage::getImageType
++ added fipImage::convertToType
++ added fipWinImage::copyToClipboard
++ added fipWinImage::pasteFromClipboard
++ added fipWinImage::captureWindow
+
+! changed fipImage constructor
+! fipWinImage::copyFromHandle now returns a BOOL
+! fipWinImage::copyFromBitmap now returns a BOOL
+
+November 2, 2003
++ [Herve Drolon] added fipImage::getScanLine
+
+October 20, 2003
+* [Dennis Lim] fixed a bug in fipImage constructor
+! [Herve Drolon] fixed a bug with fipImage::saveToHandle prototype
+
+September 8th 2003 - Wrapper for FreeImage 3.0.0

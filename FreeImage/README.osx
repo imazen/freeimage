@@ -1,0 +1,27 @@
+Release Notes
+--------------
+This version of the library has been tested under OSX 10.2 using gcc 3.3.
+
+While the makefiles will make a .dylib and a .a, it is recommended to simply staticly link with the .a file.
+
+Herve Drolon
+FreeImage Project Manager
+
+Installation
+------------
+The installation process is as simple as this : 
+1) Enter the FreeImage directory
+2) Build the distribution : 
+make osx
+
+Troubleshooting : Errors when compiling LibTIFF
+-----------------------------------------------
+It seems that the new LibTIFF 3.6.1 requires a configuration in order to work on any platform. 
+If you encounter errors when compiling LibTIFF (or if you use a Big Endian platform), then you 
+will need to do the following : 
+
+1) download LibTIFF 3.6.1 from http://www.libtiff.org/ and unzip the distribution in a directory
+2) enter the tiff-v3.6.1\ directory and run the following command : 
+./configure
+3) copy the file "tiff-v3.6.1\libtiff\port.h" to "FreeImage\Source\LibTIFF\"
+4) go to the normal FreeImage installation process
