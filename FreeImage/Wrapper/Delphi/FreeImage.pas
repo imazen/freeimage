@@ -757,7 +757,7 @@ function FreeImage_ConvertToStandardType(src: PFIBITMAP;
 
 function FreeImage_ConvertToType(src: PFIBITMAP; dst_type: FREE_IMAGE_TYPE;
   scale_linear: Boolean = True): PFIBITMAP; stdcall;
-  external FIDLL name '_FreeImage_ConvertToType@16';
+  external FIDLL name '_FreeImage_ConvertToType@12';
 
 
 
