@@ -53,7 +53,7 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, DWORD uDstSize, DWORD uSrc
 	m_WeightTable = (Contribution*)malloc(m_LineLength * sizeof(Contribution));
 	for(u = 0 ; u < m_LineLength ; u++) {
 		// allocate contributions for every pixel
-		m_WeightTable[u].Weights = (int*)malloc(m_WindowSize * sizeof(int));
+		m_WeightTable[u].Weights = (double*)malloc(m_WindowSize * sizeof(double));
 	}
 
 	// offset for discrete to continuous coordinate conversion
@@ -80,10 +80,10 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, DWORD uDstSize, DWORD uSrc
 		m_WeightTable[u].Right = iRight;
 
 		int iSrc = 0;
-		int dTotalWeight = 0;  // zero sum of weights
+		double dTotalWeight = 0;  // zero sum of weights
 		for(iSrc = iLeft; iSrc <= iRight; iSrc++) {
 			// calculate weights
-			int weight = (int)( dFScale * pFilter->Filter(dFScale * (dCenter - (double)iSrc)) * 256 );
+			double weight = dFScale * pFilter->Filter(dFScale * (dCenter - (double)iSrc));
 			m_WeightTable[u].Weights[iSrc-iLeft] = weight;
 			dTotalWeight += weight;
 		}
@@ -91,8 +91,7 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, DWORD uDstSize, DWORD uSrc
 			// normalize weight of neighbouring points
 			for(iSrc = iLeft; iSrc <= iRight; iSrc++) {
 				// normalize point
-				int weight = (m_WeightTable[u].Weights[iSrc-iLeft] * 256) / dTotalWeight;
-				m_WeightTable[u].Weights[iSrc-iLeft] = weight; 
+				m_WeightTable[u].Weights[iSrc-iLeft] /= dTotalWeight; 
 			}
 			// simplify the filter, discarding null weights at the right
 			iSrc = iRight - iLeft;
@@ -228,25 +227,24 @@ void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned
 
 					for(unsigned x = 0; x < dst_width; x++) {
 						// loop through row
-						int value[4] = {0, 0, 0, 0};					// 4 = 32bpp max
+						double value[4] = {0, 0, 0, 0};					// 4 = 32bpp max
 						int iLeft = weightsTable.getLeftBoundary(x);    // retrieve left boundary
 						int iRight = weightsTable.getRightBoundary(x);  // retrieve right boundary
 
 						for(int i = iLeft; i <= iRight; i++) {
 							// scan between boundaries
 							// accumulate weighted effect of each neighboring pixel
-							int weight = weightsTable.getWeight(x, i-iLeft);
+							double weight = weightsTable.getWeight(x, i-iLeft);
 							
 							index = i * bytespp;
 							for (unsigned j = 0; j < bytespp; j++) {
-								value[j] += (weight * (int)src_bits[index++]); 
+								value[j] += (weight * (double)src_bits[index++]); 
 							}
 						} 
 
 						// clamp and place result in destination pixel
 						for (unsigned j = 0; j < bytespp; j++) {
-							int pixel   = (value[j] + 128) / 256;
-							dst_bits[j] = (BYTE)((pixel < 0) ? 0 : ((pixel > 255) ? 255 : pixel));
+							dst_bits[j] = (BYTE)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)255);
 						}
 
 						dst_bits += bytespp;
@@ -293,7 +291,7 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 					// scale each column
 					for(unsigned y = 0; y < dst_height; y++) {
 						// loop through column
-						int value[4] = {0, 0, 0, 0};					// 4 = 32bpp max
+						double value[4] = {0, 0, 0, 0};					// 4 = 32bpp max
 						int iLeft = weightsTable.getLeftBoundary(y);    // retrieve left boundary
 						int iRight = weightsTable.getRightBoundary(y);  // retrieve right boundary
 
@@ -302,9 +300,9 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 						for(int i = iLeft; i <= iRight; i++) {
 							// scan between boundaries
 							// accumulate weighted effect of each neighboring pixel
-							int weight = weightsTable.getWeight(y, i-iLeft);							
+							double weight = weightsTable.getWeight(y, i-iLeft);							
 							for (unsigned j = 0; j < bytespp; j++) {
-								value[j] += (weight * (int)src_bits[j]);
+								value[j] += (weight * (double)src_bits[j]);
 							}
 
 							src_bits += src_pitch;
@@ -312,8 +310,7 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 
 						// clamp and place result in destination pixel
 						for (unsigned j = 0; j < bytespp; j++) {
-							int pixel   = (value[j] + 128) / 256;
-							dst_bits[j] = (BYTE)((pixel < 0) ? 0 : ((pixel > 255) ? 255 : pixel));
+							dst_bits[j] = (BYTE)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)255);
 						}
 
 						dst_bits += dst_pitch;

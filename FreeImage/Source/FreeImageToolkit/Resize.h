@@ -39,7 +39,7 @@ class CWeightsTable
 */
 typedef struct {
 	/// Normalized weights of neighboring pixels
-	int *Weights;
+	double *Weights;
 	/// Bounds of source pixels window
 	int Left, Right;   
 } Contribution;  
@@ -73,7 +73,7 @@ public:
 	@param src_pos Pixel position in source line buffer
 	@return Returns the filter weight
 	*/
-	int getWeight(int dst_pos, int src_pos) {
+	double getWeight(int dst_pos, int src_pos) {
 		return m_WeightTable[dst_pos].Weights[src_pos];
 	}
 
