@@ -704,7 +704,7 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 											
 											// align run length to even number of bytes 
 
-											if (status_byte & 1 == 1)
+											if ((status_byte & 1) == 1)
 												io->read_proc(&second_byte, sizeof(BYTE), 1, handle);												
 
 											bits += status_byte;

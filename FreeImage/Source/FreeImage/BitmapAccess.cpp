@@ -340,7 +340,7 @@ FreeImage_GetBackgroundColor(FIBITMAP *dib, RGBQUAD *bkcolor) {
 			// get the background index
 			if(FreeImage_GetBPP(dib) == 8) {
 				RGBQUAD *pal = FreeImage_GetPalette(dib);
-				for(int i = 0; i < FreeImage_GetColorsUsed(dib); i++) {
+				for(unsigned i = 0; i < FreeImage_GetColorsUsed(dib); i++) {
 					if(bkgnd_color->rgbRed == pal[i].rgbRed) {
 						if(bkgnd_color->rgbGreen == pal[i].rgbGreen) {
 							if(bkgnd_color->rgbBlue == pal[i].rgbBlue) {

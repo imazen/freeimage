@@ -68,7 +68,7 @@ FreeImage_Invert(FIBITMAP *src) {
 		case 24 :
 		case 32 :
 		{
-			int bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+			unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
 			for(y = 0; y < FreeImage_GetHeight(src); y++) {
 				bits =  FreeImage_GetScanLine(src, y);
@@ -234,9 +234,9 @@ FreeImage_AdjustGamma(FIBITMAP *src, double gamma) {
 	// Build the lookup table
 
 	double exponent = 1 / gamma;
-	double v = 255 * pow(255, -exponent);
+	double v = 255.0 * pow(255.0, -exponent);
 	for(int i = 0; i < 256; i++) {
-		double color = pow(i, exponent) * v;
+		double color = pow((double)i, exponent) * v;
 		if(color > 255)
 			color = 255;
 		LUT[i] = (BYTE)floor(color + 0.5);

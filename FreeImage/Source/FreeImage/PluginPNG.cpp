@@ -265,9 +265,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			RGBQUAD rgbBkColor;
 
 			if (png_get_bKGD(png_ptr, info_ptr, &image_background)) {
-				rgbBkColor.rgbRed      = image_background->red;
-				rgbBkColor.rgbGreen    = image_background->green;
-				rgbBkColor.rgbBlue     = image_background->blue;
+				rgbBkColor.rgbRed      = (BYTE)image_background->red;
+				rgbBkColor.rgbGreen    = (BYTE)image_background->green;
+				rgbBkColor.rgbBlue     = (BYTE)image_background->blue;
 				rgbBkColor.rgbReserved = 0;
 			}
 

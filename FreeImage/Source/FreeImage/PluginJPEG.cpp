@@ -483,10 +483,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 #ifndef FREEIMAGE_BIGENDIAN
 			if(cinfo.num_components == 3) {
-				for(int y = 0; y < FreeImage_GetHeight(dib); y++) {
+				for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
 					BYTE *target = FreeImage_GetScanLine(dib, y);
 					BYTE *target_p = target;
-					for(int x = 0; x < FreeImage_GetWidth(dib); x++) {
+					for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
 						INPLACESWAP(target_p[0], target_p[2]);
 						target_p += 3;
 					}
@@ -622,7 +622,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 #ifndef FREEIMAGE_BIGENDIAN
 					// swap R and B channels
 					BYTE *target_p = target;
-					for(int x = 0; x < cinfo.image_width; x++) {
+					for(unsigned x = 0; x < cinfo.image_width; x++) {
 						INPLACESWAP(target_p[0], target_p[2]);
 						target_p += 3;
 					}
@@ -658,14 +658,14 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			}
 			else if(color_type == FIC_MINISWHITE) {
 				// reverse 8-bit greyscale image, so reverse grey value on the fly
-				int i;
+				unsigned i;
 				BYTE reverse[256];
 				BYTE *target = (BYTE *)malloc(cinfo.image_width);
 				if (target == NULL)
 					throw "no memory to allocate intermediate scanline buffer";
 
 				for(i = 0; i < 256; i++) {
-					reverse[i] = 255 - i;
+					reverse[i] = (BYTE)(255 - i);
 				}
 
 				while(cinfo.next_scanline < cinfo.image_height) {

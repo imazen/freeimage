@@ -468,8 +468,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			// convert internal format to ICONDIRENTRY
 			bmih = FreeImage_GetInfoHeader(icon_dib);
-			icon_list[k].bWidth			= bmih->biWidth;
-			icon_list[k].bHeight		= bmih->biHeight;
+			icon_list[k].bWidth			= (BYTE)bmih->biWidth;
+			icon_list[k].bHeight		= (BYTE)bmih->biHeight;
 			icon_list[k].bReserved		= 0;
 			icon_list[k].wPlanes		= bmih->biPlanes;
 			icon_list[k].wBitCount		= bmih->biBitCount;
