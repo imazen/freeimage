@@ -34,9 +34,9 @@ FreeImage_ConvertLine1To24(BYTE *target, BYTE *source, int width_in_pixels, RGBQ
 	for (int cols = 0; cols < width_in_pixels; cols++) {
 		BYTE index = (source[cols >> 3] & (0x80 >> (cols & 0x07))) != 0 ? 1 : 0;
 
-		target[FIRGB_BLUE] = palette[index].rgbBlue;
-		target[FIRGB_GREEN] = palette[index].rgbGreen;
-		target[FIRGB_RED] = palette[index].rgbRed;
+		target[FI_RGBA_BLUE] = palette[index].rgbBlue;
+		target[FI_RGBA_GREEN] = palette[index].rgbGreen;
+		target[FI_RGBA_RED] = palette[index].rgbRed;
 
 		target += 3;
 	}
@@ -49,15 +49,15 @@ FreeImage_ConvertLine4To24(BYTE *target, BYTE *source, int width_in_pixels, RGBQ
 
 	for (int cols = 0; cols < width_in_pixels; ++cols ) {
 		if (low_nibble) {
-			target[FIRGB_BLUE] = palette[LOWNIBBLE(source[x])].rgbBlue;
-			target[FIRGB_GREEN] = palette[LOWNIBBLE(source[x])].rgbGreen;
-			target[FIRGB_RED] = palette[LOWNIBBLE(source[x])].rgbRed;
+			target[FI_RGBA_BLUE] = palette[LOWNIBBLE(source[x])].rgbBlue;
+			target[FI_RGBA_GREEN] = palette[LOWNIBBLE(source[x])].rgbGreen;
+			target[FI_RGBA_RED] = palette[LOWNIBBLE(source[x])].rgbRed;
 
 			x++;
 		} else {
-			target[FIRGB_BLUE] = palette[HINIBBLE(source[x]) >> 4].rgbBlue;
-			target[FIRGB_GREEN] = palette[HINIBBLE(source[x]) >> 4].rgbGreen;
-			target[FIRGB_RED] = palette[HINIBBLE(source[x]) >> 4].rgbRed;
+			target[FI_RGBA_BLUE] = palette[HINIBBLE(source[x]) >> 4].rgbBlue;
+			target[FI_RGBA_GREEN] = palette[HINIBBLE(source[x]) >> 4].rgbGreen;
+			target[FI_RGBA_RED] = palette[HINIBBLE(source[x]) >> 4].rgbRed;
 		}
 
 		low_nibble = !low_nibble;
@@ -69,9 +69,9 @@ FreeImage_ConvertLine4To24(BYTE *target, BYTE *source, int width_in_pixels, RGBQ
 void DLL_CALLCONV
 FreeImage_ConvertLine8To24(BYTE *target, BYTE *source, int width_in_pixels, RGBQUAD *palette) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[FIRGB_BLUE] = palette[source[cols]].rgbBlue;
-		target[FIRGB_GREEN] = palette[source[cols]].rgbGreen;
-		target[FIRGB_RED] = palette[source[cols]].rgbRed;
+		target[FI_RGBA_BLUE] = palette[source[cols]].rgbBlue;
+		target[FI_RGBA_GREEN] = palette[source[cols]].rgbGreen;
+		target[FI_RGBA_RED] = palette[source[cols]].rgbRed;
 
 		target += 3;
 	}
@@ -82,9 +82,9 @@ FreeImage_ConvertLine16To24_555(BYTE *target, BYTE *source, int width_in_pixels)
 	WORD *bits = (WORD *)source;
 
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[FIRGB_RED] = (((bits[cols] & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
-		target[FIRGB_GREEN] = (((bits[cols] & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-		target[FIRGB_BLUE] = (((bits[cols] & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+		target[FI_RGBA_RED] = (((bits[cols] & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+		target[FI_RGBA_GREEN] = (((bits[cols] & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+		target[FI_RGBA_BLUE] = (((bits[cols] & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
 
 		target += 3;
 	}
@@ -95,9 +95,9 @@ FreeImage_ConvertLine16To24_565(BYTE *target, BYTE *source, int width_in_pixels)
 	WORD *bits = (WORD *)source;
 
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[FIRGB_RED] = (((bits[cols] & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) * 0xFF) / 0x1F;
-		target[FIRGB_GREEN] = (((bits[cols] & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) * 0xFF) / 0x3F;
-		target[FIRGB_BLUE] = (((bits[cols] & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) * 0xFF) / 0x1F;
+		target[FI_RGBA_RED] = (((bits[cols] & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) * 0xFF) / 0x1F;
+		target[FI_RGBA_GREEN] = (((bits[cols] & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) * 0xFF) / 0x3F;
+		target[FI_RGBA_BLUE] = (((bits[cols] & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) * 0xFF) / 0x1F;
 
 		target += 3;
 	}
@@ -106,9 +106,9 @@ FreeImage_ConvertLine16To24_565(BYTE *target, BYTE *source, int width_in_pixels)
 void DLL_CALLCONV
 FreeImage_ConvertLine32To24(BYTE *target, BYTE *source, int width_in_pixels) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[FIRGB_BLUE] = source[FIRGBA_BLUE];
-		target[FIRGB_GREEN] = source[FIRGBA_GREEN];
-		target[FIRGB_RED] = source[FIRGBA_RED];
+		target[FI_RGBA_BLUE] = source[FI_RGBA_BLUE];
+		target[FI_RGBA_GREEN] = source[FI_RGBA_GREEN];
+		target[FI_RGBA_RED] = source[FI_RGBA_RED];
 
 		target += 3;
 		source += 4;

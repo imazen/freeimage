@@ -174,6 +174,10 @@ ReplaceExtension(char *result, const char *filename, const char *extension) {
 	memcpy(result + strlen(filename) + 1, extension, strlen(extension) + 1);
 }
 
+// ==========================================================
+//   Big Endian / Little Endian utility functions
+// ==========================================================
+
 inline void
 SwapShort(unsigned short *sp) {
 	unsigned char *cp = (unsigned char *)sp, t = cp[0]; cp[0] = cp[1]; cp[1] = t;

@@ -39,17 +39,17 @@ FreeImage_GetChannel(FIBITMAP *src, FREE_IMAGE_COLOR_CHANNEL channel) {
 		// select the channel to extract
 		switch(channel) {
 			case FICC_BLUE:
-				c = 0;
+				c = FI_RGBA_BLUE;
 				break;
 			case FICC_GREEN:
-				c = 1;
+				c = FI_RGBA_GREEN;
 				break;
 			case FICC_RED: 
-				c = 2;
+				c = FI_RGBA_RED;
 				break;
 			case FICC_ALPHA:
 				if(bpp != 32) return NULL;
-				c = 3;
+				c = FI_RGBA_ALPHA;
 				break;
 			default:
 				return NULL;
@@ -115,17 +115,17 @@ FreeImage_SetChannel(FIBITMAP *dst, FIBITMAP *src, FREE_IMAGE_COLOR_CHANNEL chan
 	// select the channel to modify
 	switch(channel) {
 		case FICC_BLUE:
-			c = 0;
+			c = FI_RGBA_BLUE;
 			break;
 		case FICC_GREEN:
-			c = 1;
+			c = FI_RGBA_GREEN;
 			break;
 		case FICC_RED: 
-			c = 2;
+			c = FI_RGBA_RED;
 			break;
 		case FICC_ALPHA:
 			if(dst_bpp != 32) return FALSE;
-			c = 3;
+			c = FI_RGBA_ALPHA;
 			break;
 		default:
 			return FALSE;

@@ -378,17 +378,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						if (isRGB) {
 							for (x = 0; x < header.width; x++) {
-								bits[FIRGB_RED] = *(bp++); // red
-								bits[FIRGB_GREEN] = *(bp++); // green
-								bits[FIRGB_BLUE] = *(bp++); // blue
+								bits[FI_RGBA_RED] = *(bp++);	// red
+								bits[FI_RGBA_GREEN] = *(bp++);	// green
+								bits[FI_RGBA_BLUE] = *(bp++);	// blue
 
 								bits += 3;
 							}
 						} else {
 							for (x = 0; x < header.width; x++) {
-								bits[FIRGB_RED] = *(bp + 2); // red
-								bits[FIRGB_GREEN] = *(bp + 1); // green
-								bits[FIRGB_BLUE] = *bp;       // blue
+								bits[FI_RGBA_RED] = *(bp + 2);	// red
+								bits[FI_RGBA_GREEN] = *(bp + 1);// green
+								bits[FI_RGBA_BLUE] = *bp;       // blue
 
 								bits += 3; bp += 3;
 							}
@@ -417,20 +417,20 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						if (isRGB) {
 							for (x = 0; x < header.width; x++) {
-								bits[FIRGBA_ALPHA] = *(bp++);	// alpha (why skip it?)
-								bits[FIRGBA_RED] = *(bp++);	// red
-								bits[FIRGBA_GREEN] = *(bp++);	// green
-								bits[FIRGBA_BLUE] = *(bp++);	// blue
+								bits[FI_RGBA_ALPHA] = *(bp++);	// alpha
+								bits[FI_RGBA_RED] = *(bp++);	// red
+								bits[FI_RGBA_GREEN] = *(bp++);	// green
+								bits[FI_RGBA_BLUE] = *(bp++);	// blue
 
 								bits += 4;
 							}
 						}
 						else {
 							for (x = 0; x < header.width; x++) {
-								bits[FIRGBA_RED] = *(bp + 3); // red
-								bits[FIRGBA_GREEN] = *(bp + 2); // green
-								bits[FIRGBA_BLUE] = *(bp + 1); // blue
-								bits[FIRGBA_ALPHA] = *bp;
+								bits[FI_RGBA_RED] = *(bp + 3);	// red
+								bits[FI_RGBA_GREEN] = *(bp + 2); // green
+								bits[FI_RGBA_BLUE] = *(bp + 1);	// blue
+								bits[FI_RGBA_ALPHA] = *bp;		// alpha
 
 								bits += 4;
 								bp += 4;

@@ -92,7 +92,7 @@ FreeImage_ConvertLine24To16_565(BYTE *target, BYTE *source, int width_in_pixels)
 	WORD *new_bits = (WORD *)target;
 
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		new_bits[cols] = RGB565(source[FIRGB_BLUE], source[FIRGB_GREEN], source[FIRGB_RED]);
+		new_bits[cols] = RGB565(source[FI_RGBA_BLUE], source[FI_RGBA_GREEN], source[FI_RGBA_RED]);
 
 		source += 3;
 	}
@@ -103,7 +103,7 @@ FreeImage_ConvertLine32To16_565(BYTE *target, BYTE *source, int width_in_pixels)
 	WORD *new_bits = (WORD *)target;
 
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		new_bits[cols] = RGB565(source[FIRGBA_BLUE], source[FIRGBA_GREEN], source[FIRGBA_RED]);
+		new_bits[cols] = RGB565(source[FI_RGBA_BLUE], source[FI_RGBA_GREEN], source[FI_RGBA_RED]);
 
 		source += 4;
 	}

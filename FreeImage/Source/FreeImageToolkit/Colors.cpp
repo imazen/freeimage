@@ -152,9 +152,9 @@ FreeImage_AdjustCurve(FIBITMAP *src, BYTE *LUT, FREE_IMAGE_COLOR_CHANNEL channel
 					for(y = 0; y < FreeImage_GetHeight(src); y++) {
 						bits =  FreeImage_GetScanLine(src, y);
 						for(x = 0; x < FreeImage_GetWidth(src); x++) {
-							bits[0] = LUT[ bits[0] ];	// B
-							bits[1] = LUT[ bits[1] ];	// G
-							bits[2] = LUT[ bits[2] ];	// R
+							bits[FI_RGBA_BLUE]	= LUT[ bits[FI_RGBA_BLUE] ];	// B
+							bits[FI_RGBA_GREEN] = LUT[ bits[FI_RGBA_GREEN] ];	// G
+							bits[FI_RGBA_RED]	= LUT[ bits[FI_RGBA_RED] ];		// R
 							
 							bits += bytespp;
 						}
@@ -165,7 +165,7 @@ FreeImage_AdjustCurve(FIBITMAP *src, BYTE *LUT, FREE_IMAGE_COLOR_CHANNEL channel
 					for(y = 0; y < FreeImage_GetHeight(src); y++) {
 						bits =  FreeImage_GetScanLine(src, y);
 						for(x = 0; x < FreeImage_GetWidth(src); x++) {
-							bits[0] = LUT[ bits[0] ];	// B
+							bits[FI_RGBA_BLUE] = LUT[ bits[FI_RGBA_BLUE] ];		// B
 							
 							bits += bytespp;
 						}
@@ -176,7 +176,7 @@ FreeImage_AdjustCurve(FIBITMAP *src, BYTE *LUT, FREE_IMAGE_COLOR_CHANNEL channel
 					for(y = 0; y < FreeImage_GetHeight(src); y++) {
 						bits =  FreeImage_GetScanLine(src, y);
 						for(x = 0; x < FreeImage_GetWidth(src); x++) {
-							bits[1] = LUT[ bits[1] ];	// G
+							bits[FI_RGBA_GREEN] = LUT[ bits[FI_RGBA_GREEN] ];	// G
 							
 							bits += bytespp;
 						}
@@ -187,7 +187,7 @@ FreeImage_AdjustCurve(FIBITMAP *src, BYTE *LUT, FREE_IMAGE_COLOR_CHANNEL channel
 					for(y = 0; y < FreeImage_GetHeight(src); y++) {
 						bits =  FreeImage_GetScanLine(src, y);
 						for(x = 0; x < FreeImage_GetWidth(src); x++) {
-							bits[2] = LUT[ bits[2] ];	// R
+							bits[FI_RGBA_RED] = LUT[ bits[FI_RGBA_RED] ];		// R
 							
 							bits += bytespp;
 						}
@@ -199,7 +199,7 @@ FreeImage_AdjustCurve(FIBITMAP *src, BYTE *LUT, FREE_IMAGE_COLOR_CHANNEL channel
 						for(y = 0; y < FreeImage_GetHeight(src); y++) {
 							bits =  FreeImage_GetScanLine(src, y);
 							for(x = 0; x < FreeImage_GetWidth(src); x++) {
-								bits[3] = LUT[ bits[3] ];	// A
+								bits[FI_RGBA_ALPHA] = LUT[ bits[FI_RGBA_ALPHA] ];	// A
 								
 								bits += bytespp;
 							}
@@ -344,7 +344,7 @@ FreeImage_GetHistogram(FIBITMAP *src, DWORD *histo, FREE_IMAGE_COLOR_CHANNEL cha
 				for(y = 0; y < height; y++) {
 					bits =  FreeImage_GetScanLine(src, y);
 					for(x = 0; x < width; x++) {
-						pixel = bits[2];	// R
+						pixel = bits[FI_RGBA_RED];	// R
 						histo[pixel]++;
 						bits += bytespp;
 					}
@@ -356,7 +356,7 @@ FreeImage_GetHistogram(FIBITMAP *src, DWORD *histo, FREE_IMAGE_COLOR_CHANNEL cha
 				for(y = 0; y < height; y++) {
 					bits =  FreeImage_GetScanLine(src, y);
 					for(x = 0; x < width; x++) {
-						pixel = bits[1];	// G
+						pixel = bits[FI_RGBA_GREEN];	// G
 						histo[pixel]++;
 						bits += bytespp;
 					}
@@ -368,7 +368,7 @@ FreeImage_GetHistogram(FIBITMAP *src, DWORD *histo, FREE_IMAGE_COLOR_CHANNEL cha
 				for(y = 0; y < height; y++) {
 					bits =  FreeImage_GetScanLine(src, y);
 					for(x = 0; x < width; x++) {
-						pixel = bits[0];	// B
+						pixel = bits[FI_RGBA_BLUE];	// B
 						histo[pixel]++;
 						bits += bytespp;
 					}
@@ -382,7 +382,7 @@ FreeImage_GetHistogram(FIBITMAP *src, DWORD *histo, FREE_IMAGE_COLOR_CHANNEL cha
 					bits =  FreeImage_GetScanLine(src, y);
 					for(x = 0; x < width; x++) {
 						// RGB to GREY conversion
-						pixel = GREY(bits[2], bits[1], bits[0]);
+						pixel = GREY(bits[FI_RGBA_RED], bits[FI_RGBA_GREEN], bits[FI_RGBA_BLUE]);
 						histo[pixel]++;
 						bits += bytespp;
 					}

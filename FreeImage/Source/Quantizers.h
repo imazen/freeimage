@@ -26,12 +26,12 @@
 
 ////////////////////////////////////////////////////////////////
 
-typedef unsigned char	uint8;
-typedef unsigned short	uint16;
-typedef unsigned long	uint32;
-typedef long			int32;
 
-typedef struct {
+class WuQuantizer
+{
+public:
+
+typedef struct tagBox {
     int r0;			 // min value, exclusive
     int r1;			 // max value, inclusive
     int g0;  
@@ -41,32 +41,29 @@ typedef struct {
     int vol;
 } Box;
 
-
-class WuQuantizer
-{
-  protected:
+protected:
     float *gm2;
-	int32 *wt, *mr, *mg, *mb;
-	uint16 *Qadd;
+	LONG *wt, *mr, *mg, *mb;
+	WORD *Qadd;
 
 	// DIB data
-	uint16 width, height;
-	uint16 pitch;
+	WORD width, height;
+	WORD pitch;
 	FIBITMAP *m_dib;
 
-  protected:
-    void Hist3D(int32 *vwt, int32 *vmr, int32 *vmg, int32 *vmb, float *m2) ;
-	void M3D(int32 *vwt, int32 *vmr, int32 *vmg, int32 *vmb, float *m2);
-	int32 Vol(Box *cube, int32 *mmt);
-	int32 Bottom(Box *cube, uint8 dir, int32 *mmt);
-	int32 Top(Box *cube, uint8 dir, int pos, int32 *mmt);
+protected:
+    void Hist3D(LONG *vwt, LONG *vmr, LONG *vmg, LONG *vmb, float *m2) ;
+	void M3D(LONG *vwt, LONG *vmr, LONG *vmg, LONG *vmb, float *m2);
+	LONG Vol(Box *cube, LONG *mmt);
+	LONG Bottom(Box *cube, BYTE dir, LONG *mmt);
+	LONG Top(Box *cube, BYTE dir, int pos, LONG *mmt);
 	float Var(Box *cube);
-	float Maximize(Box *cube, uint8 dir, int first, int last , int *cut,
-				   int32 whole_r, int32 whole_g, int32 whole_b, int32 whole_w);
+	float Maximize(Box *cube, BYTE dir, int first, int last , int *cut,
+				   LONG whole_r, LONG whole_g, LONG whole_b, LONG whole_w);
 	bool Cut(Box *set1, Box *set2);
-	void Mark(Box *cube, int label, uint8 *tag);
+	void Mark(Box *cube, int label, BYTE *tag);
 
-  public:
+public:
 	// Constructor - Input parameter: DIB 24-bit to be quantized
     WuQuantizer(FIBITMAP *dib);
 	// Destructor

@@ -63,13 +63,13 @@
 #endif // FREEIMAGE_EXPORTS
 #endif // FREEIMAGE_LIB || !WIN32
 
-//some versions of gcc may have BYTE_ORDER or __BYTE_ORDER defined
-//if your big endian system isn't being detected, add an OS specific check
+// Some versions of gcc may have BYTE_ORDER or __BYTE_ORDER defined
+// If your big endian system isn't being detected, add an OS specific check
 #if (defined(BYTE_ORDER) && BYTE_ORDER==BIG_ENDIAN) || \
 	(defined(__BYTE_ORDER) && __BYTE_ORDER==__BIG_ENDIAN) || \
 	defined(__APPLE__)
 #define FREEIMAGE_BIGENDIAN
-#endif
+#endif // BYTE_ORDER
 
 // For C compatility --------------------------------------------------------
 
@@ -109,7 +109,6 @@ FI_STRUCT (FIMULTIBITMAP) { void *data; };
 #define SEEK_END  2
 #endif
 
-//#ifndef __GNUC__
 typedef long BOOL;
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
@@ -131,7 +130,7 @@ typedef struct tagRGBQUAD {
   BYTE rgbBlue;
   BYTE rgbGreen;
   BYTE rgbRed;
-#endif
+#endif // FREEIMAGE_BIGENDIAN
   BYTE rgbReserved;
 } RGBQUAD;
 
@@ -144,7 +143,7 @@ typedef struct tagRGBTRIPLE {
   BYTE rgbtBlue;
   BYTE rgbtGreen;
   BYTE rgbtRed;
-#endif
+#endif // FREEIMAGE_BIGENDIAN
 } RGBTRIPLE;
 
 #ifdef WIN32
@@ -172,30 +171,28 @@ typedef struct tagBITMAPINFO {
   RGBQUAD          bmiColors[1];
 } BITMAPINFO, *PBITMAPINFO;
 
-//#endif // __GNUC__
 #endif // _WINDOWS_
 
-// Indexes for byte arrays - These coincide with RGBQUAD and RGBTRIPLE
-#ifdef FREEIMAGE_BIGENDIAN
-#define FIRGBA_RED		0
-#define FIRGBA_GREEN	1
-#define FIRGBA_BLUE		2
-#define FIRGBA_ALPHA	3
-#define FIRGB_RED		0
-#define FIRGB_GREEN		1
-#define FIRGB_BLUE		2
-#else
-#define FIRGBA_RED		2
-#define FIRGBA_GREEN	1
-#define FIRGBA_BLUE		0
-#define FIRGBA_ALPHA	3
-#define FIRGB_RED		2
-#define FIRGB_GREEN		1
-#define FIRGB_BLUE		0
-#endif
+// Indexes for byte arrays - These coincide with RGBQUAD and RGBTRIPLE ------
 
-// Masks for treating pixels as words of various sizes
+#ifndef FREEIMAGE_BIGENDIAN
+// Little Endian (Pentium / MS Windows, Linux) : BGRA order
+#define FI_RGBA_RED		2
+#define FI_RGBA_GREEN	1
+#define FI_RGBA_BLUE	0
+#define FI_RGBA_ALPHA	3
+#else
+// Big Endian (Motorola / Linux, other OS) : RGBA order
+#define FI_RGBA_RED		0
+#define FI_RGBA_GREEN	1
+#define FI_RGBA_BLUE	2
+#define FI_RGBA_ALPHA	3
+#endif // FREEIMAGE_BIGENDIAN
+
+// Masks for treating pixels as words of various sizes ----------------------
+
 // These 32bit masks coincide perfectly with the RGBQUAD struct
+
 #ifdef FREEIMAGE_BIGENDIAN
 #define FIRGBA_RED_MASK			0xFF000000
 #define FIRGBA_GREEN_MASK		0x00FF0000
@@ -206,15 +203,18 @@ typedef struct tagBITMAPINFO {
 #define FIRGBA_GREEN_MASK		0x0000FF00
 #define FIRGBA_BLUE_MASK		0x000000FF
 #define FIRGBA_ALPHA_MASK		0xFF000000
-#endif
+#endif // FREEIMAGE_BIGENDIAN
+
 #define FIRGBA_RGB_MASK			(FIRGBA_RED_MASK|FIRGBA_GREEN_MASK|FIRGBA_BLUE_MASK)
 
 // These 24bit masks would coincide nicely with RGBTRIPLE, if there were a 24bit int in C
+
 #define FIRGB_RED_MASK			0xFF0000
 #define FIRGB_GREEN_MASK		0x00FF00
 #define FIRGB_BLUE_MASK			0x0000FF
 
 // The 16bit masks also include a shift value, since each color element is not byte aligned
+
 #define FI16_555_RED_MASK		0x7C00
 #define FI16_555_GREEN_MASK		0x03E0
 #define FI16_555_BLUE_MASK		0x001F

@@ -80,7 +80,7 @@ FreeImage_ConvertLine16To8_565(BYTE *target, BYTE *source, int width_in_pixels) 
 void DLL_CALLCONV
 FreeImage_ConvertLine24To8(BYTE *target, BYTE *source, int width_in_pixels) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[cols] = GREY(source[FIRGB_RED], source[FIRGB_GREEN], source[FIRGB_BLUE]);
+		target[cols] = GREY(source[FI_RGBA_RED], source[FI_RGBA_GREEN], source[FI_RGBA_BLUE]);
 
 		source += 3;
 	}
@@ -89,7 +89,7 @@ FreeImage_ConvertLine24To8(BYTE *target, BYTE *source, int width_in_pixels) {
 void DLL_CALLCONV
 FreeImage_ConvertLine32To8(BYTE *target, BYTE *source, int width_in_pixels) {
 	for (int cols = 0; cols < width_in_pixels; cols++) {
-		target[cols] = GREY(source[FIRGBA_RED], source[FIRGBA_GREEN], source[FIRGBA_BLUE]);
+		target[cols] = GREY(source[FI_RGBA_RED], source[FI_RGBA_GREEN], source[FI_RGBA_BLUE]);
 
 		source += 4;
 	}

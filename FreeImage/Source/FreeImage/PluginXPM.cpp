@@ -2,8 +2,7 @@
 // XPM Loader and Writer
 //
 // Design and implementation by 
-// - Karl-Heinz Bussian (khbussian@moss.de)
-// - Hervé Drolon (drolon@infonie.fr)
+// - Ryan Rubley (ryan@lostreality.org)
 //
 // COVERED CODE IS PROVIDED UNDER THIS LICENSE ON AN "AS IS" BASIS, WITHOUT WARRANTY
 // OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, WITHOUT LIMITATION, WARRANTIES
@@ -18,6 +17,13 @@
 // Use at your own risk!
 // ==========================================================
 
+#pragma warning (disable : 4786) // identifier was truncated to 'number' characters
+
+// IMPLEMENTATION NOTES:
+// ------------------------
+// Initial design and implementation by 
+// - Karl-Heinz Bussian (khbussian@moss.de)
+// - Hervé Drolon (drolon@infonie.fr)
 // Completely rewritten from scratch by Ryan Rubley (ryan@lostreality.org)
 // in order to address the following major fixes:
 // * Supports any number of chars per pixel (not just 1 or 2)
@@ -1050,9 +1056,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				FILE_RGBA rgba = rawpal[chrs];
 
 				if( colors > 256 ) {
-					line[FIRGBA_BLUE] = rgba.b;
-					line[FIRGBA_GREEN] = rgba.g;
-					line[FIRGBA_RED] = rgba.r;
+					line[FI_RGBA_BLUE] = rgba.b;
+					line[FI_RGBA_GREEN] = rgba.g;
+					line[FI_RGBA_RED] = rgba.r;
 					line += 3;
 				} else {
 					*line = rgba.a;
@@ -1112,9 +1118,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				FILE_RGB rgb;
 				DWORDRGBA u;
 				if( bpp > 8 ) {
-					u.rgba.b = rgb.b = line[FIRGB_BLUE];
-					u.rgba.g = rgb.g = line[FIRGB_GREEN];
-					u.rgba.r = rgb.r = line[FIRGB_RED];
+					u.rgba.b = rgb.b = line[FI_RGBA_BLUE];
+					u.rgba.g = rgb.g = line[FI_RGBA_GREEN];
+					u.rgba.r = rgb.r = line[FI_RGBA_RED];
 					u.rgba.a = 0;
 					line += 3;
 				} else {
@@ -1163,9 +1169,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			for(x = 0; x < width; x++ ) {
 				DWORDRGBA u;
 				if( bpp > 8 ) {
-					u.rgba.b = line[FIRGB_BLUE];
-					u.rgba.g = line[FIRGB_GREEN];
-					u.rgba.r = line[FIRGB_RED];
+					u.rgba.b = line[FI_RGBA_BLUE];
+					u.rgba.g = line[FI_RGBA_GREEN];
+					u.rgba.r = line[FI_RGBA_RED];
 					u.rgba.a = 0;
 					line += 3;
 				} else {

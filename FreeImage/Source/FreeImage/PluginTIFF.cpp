@@ -653,21 +653,21 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					if (samplesperpixel == 4) {
 						for (x = 0; x < width; x++) {
-							bits[FIRGBA_BLUE] = (BYTE)TIFFGetB(row[x]);
-							bits[FIRGBA_GREEN] = (BYTE)TIFFGetG(row[x]);
-							bits[FIRGBA_RED] = (BYTE)TIFFGetR(row[x]);
-							bits[FIRGBA_ALPHA] = (BYTE)TIFFGetA(row[x]);
+							bits[FI_RGBA_BLUE]	= (BYTE)TIFFGetB(row[x]);
+							bits[FI_RGBA_GREEN] = (BYTE)TIFFGetG(row[x]);
+							bits[FI_RGBA_RED]	= (BYTE)TIFFGetR(row[x]);
+							bits[FI_RGBA_ALPHA] = (BYTE)TIFFGetA(row[x]);
 
-							if (bits[FIRGBA_ALPHA] != 0)
+							if (bits[FI_RGBA_ALPHA] != 0)
 								has_alpha = TRUE;								
 
 							bits += 4;
 						}
 					} else {
 						for (x = 0; x < width; x++) {
-							bits[FIRGB_BLUE] = (BYTE)TIFFGetB(row[x]);
-							bits[FIRGB_GREEN] = (BYTE)TIFFGetG(row[x]);
-							bits[FIRGB_RED] = (BYTE)TIFFGetR(row[x]);
+							bits[FI_RGBA_BLUE]	= (BYTE)TIFFGetB(row[x]);
+							bits[FI_RGBA_GREEN] = (BYTE)TIFFGetG(row[x]);
+							bits[FI_RGBA_RED]	= (BYTE)TIFFGetR(row[x]);
 
 							bits += 3;
 						}

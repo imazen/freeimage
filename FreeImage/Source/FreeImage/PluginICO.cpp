@@ -359,7 +359,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// bitmap has been loaded successfully!
 
 				// convert to 32bpp and generate an alpha channel
-				if( flags & ICO_MAKEALPHA ) {
+				if((flags & ICO_MAKEALPHA) == ICO_MAKEALPHA) {
 					FIBITMAP *dib32 = FreeImage_ConvertTo32Bits(dib);
 					FreeImage_Unload(dib);
 

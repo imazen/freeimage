@@ -23,6 +23,8 @@
 // January 2001: Adaptation of the Neural-Net Quantization Algorithm
 //               for the FreeImage 2 library
 //               Author: Hervé Drolon (drolon@infonie.fr)
+// March 2004:   Adaptation for the FreeImage 3 library (port to big endian processors)
+//               Author: Hervé Drolon (drolon@infonie.fr)
 ///////////////////////////////////////////////////////////////////////
 
 #include "FreeImage.h"
@@ -126,7 +128,7 @@ static void initnet(BYTE *thepic, DWORD len, int sample)
 	
 	for (i = 0; i < netsize; i++) {
 		p = network[i];
-		p[0] = p[1] = p[2] = (i << (netbiasshift+8))/netsize;
+		p[FI_RGBA_BLUE] = p[FI_RGBA_GREEN] = p[FI_RGBA_RED] = (i << (netbiasshift+8))/netsize;
 		freq[i] = intbias/netsize;	/* 1/netsize */
 		bias[i] = 0;
 	}
@@ -167,21 +169,21 @@ static void inxbuild()
 	for (i = 0; i < netsize; i++) {
 		p = network[i];
 		smallpos = i;
-		smallval = p[1];			// index on g
+		smallval = p[FI_RGBA_GREEN];			// index on g
 		// find smallest in i..netsize-1
 		for (j = i+1; j < netsize; j++) {
 			q = network[j];
-			if (q[1] < smallval) {	// index on g
+			if (q[FI_RGBA_GREEN] < smallval) {	// index on g
 				smallpos = j;
-				smallval = q[1];	// index on g
+				smallval = q[FI_RGBA_GREEN];	// index on g
 			}
 		}
 		q = network[smallpos];
 		// swap p (i) and q (smallpos) entries
 		if (i != smallpos) {
-			j = q[0];   q[0] = p[0];   p[0] = j;
-			j = q[1];   q[1] = p[1];   p[1] = j;
-			j = q[2];   q[2] = p[2];   p[2] = j;
+			j = q[FI_RGBA_BLUE];  q[FI_RGBA_BLUE]  = p[FI_RGBA_BLUE];  p[FI_RGBA_BLUE]  = j;
+			j = q[FI_RGBA_GREEN]; q[FI_RGBA_GREEN] = p[FI_RGBA_GREEN]; p[FI_RGBA_GREEN] = j;
+			j = q[FI_RGBA_RED];   q[FI_RGBA_RED]   = p[FI_RGBA_RED];   p[FI_RGBA_RED]   = j;
 			j = q[3];   q[3] = p[3];   p[3] = j;
 		}
 		// smallval entry is now in position i
@@ -216,19 +218,19 @@ static int inxsearch(int b, int g, int r)
 	while ((i < netsize) || (j >= 0)) {
 		if (i < netsize) {
 			p = network[i];
-			dist = p[1] - g;				// inx key
+			dist = p[FI_RGBA_GREEN] - g;				// inx key
 			if (dist >= bestd)
 				i = netsize;	// stop iter
 			else {
 				i++;
 				if (dist < 0)
 					dist = -dist;
-				a = p[0] - b;
+				a = p[FI_RGBA_BLUE] - b;
 				if (a < 0)
 					a = -a;
 				dist += a;
 				if (dist < bestd) {
-					a = p[2] - r;
+					a = p[FI_RGBA_RED] - r;
 					if (a<0)
 						a = -a;
 					dist += a;
@@ -241,19 +243,19 @@ static int inxsearch(int b, int g, int r)
 		}
 		if (j >= 0) {
 			p = network[j];
-			dist = g - p[1];			// inx key - reverse dif
+			dist = g - p[FI_RGBA_GREEN];			// inx key - reverse dif
 			if (dist >= bestd)
 				j = -1;	// stop iter
 			else {
 				j--;
 				if (dist < 0)
 					dist = -dist;
-				a = p[0] - b;
+				a = p[FI_RGBA_BLUE] - b;
 				if (a<0)
 					a = -a;
 				dist += a;
 				if (dist < bestd) {
-					a = p[2] - r;
+					a = p[FI_RGBA_RED] - r;
 					if (a<0)
 						a = -a;
 					dist += a;
@@ -292,14 +294,14 @@ static int contest(int b, int g, int r)
 
 	for (i = 0; i < netsize; i++) {
 		n = network[i];
-		dist = n[0] - b;
+		dist = n[FI_RGBA_BLUE] - b;
 		if (dist < 0)
 			dist = -dist;
-		a = n[1] - g;
+		a = n[FI_RGBA_GREEN] - g;
 		if (a < 0)
 			a = -a;
 		dist += a;
-		a = n[2] - r;
+		a = n[FI_RGBA_RED] - r;
 		if (a < 0)
 			a = -a;
 		dist += a;
@@ -330,11 +332,9 @@ static void altersingle(int alpha, int i, int b, int g, int r)
 	int *n;
 
 	n = network[i];				// alter hit neuron
-	*n -= (alpha * (*n - b)) / initalpha;
-	n++;
-	*n -= (alpha * (*n - g)) / initalpha;
-	n++;
-	*n -= (alpha * (*n - r)) / initalpha;
+	n[FI_RGBA_BLUE]	 -= (alpha * (n[FI_RGBA_BLUE]  - b)) / initalpha;
+	n[FI_RGBA_GREEN] -= (alpha * (n[FI_RGBA_GREEN] - g)) / initalpha;
+	n[FI_RGBA_RED]   -= (alpha * (n[FI_RGBA_RED]   - r)) / initalpha;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -356,20 +356,16 @@ static void alterneigh(int rad, int i, int b, int g, int r)
 		a = (*(++q));
 		if (j < hi) {
 			p = network[j];
-			*p -= (a * (*p - b)) / alpharadbias;
-			p++;
-			*p -= (a * (*p - g)) / alpharadbias;
-			p++;
-			*p -= (a * (*p - r)) / alpharadbias;
+			p[FI_RGBA_BLUE]  -= (a * (p[FI_RGBA_BLUE] - b)) / alpharadbias;
+			p[FI_RGBA_GREEN] -= (a * (p[FI_RGBA_GREEN] - g)) / alpharadbias;
+			p[FI_RGBA_RED]   -= (a * (p[FI_RGBA_RED] - r)) / alpharadbias;
 			j++;
 		}
 		if (k > lo) {
 			p = network[k];
-			*p -= (a * (*p - b)) / alpharadbias;
-			p++;
-			*p -= (a * (*p - g)) / alpharadbias;
-			p++;
-			*p -= (a * (*p - r)) / alpharadbias;
+			p[FI_RGBA_BLUE]  -= (a * (p[FI_RGBA_BLUE] - b)) / alpharadbias;
+			p[FI_RGBA_GREEN] -= (a * (p[FI_RGBA_GREEN] - g)) / alpharadbias;
+			p[FI_RGBA_RED]   -= (a * (p[FI_RGBA_RED] - r)) / alpharadbias;
 			k--;
 		}
 	}
@@ -419,9 +415,9 @@ static void learn()
 	
 	i = 0;
 	while (i < samplepixels) {
-		b = p[0] << netbiasshift;
-		g = p[1] << netbiasshift;
-		r = p[2] << netbiasshift;
+		b = p[FI_RGBA_BLUE] << netbiasshift;
+		g = p[FI_RGBA_GREEN] << netbiasshift;
+		r = p[FI_RGBA_RED] << netbiasshift;
 		j = contest(b,g,r);
 
 		altersingle(alpha,j,b,g,r);
@@ -500,9 +496,9 @@ NNQuantizer(FIBITMAP *dib, int sampling)
 	RGBQUAD *new_pal = FreeImage_GetPalette(new_dib);
 
     for (int j = 0; j < netsize; j++) {
-		new_pal[j].rgbBlue  = (BYTE)network[j][0];
-		new_pal[j].rgbGreen = (BYTE)network[j][1];
-		new_pal[j].rgbRed	= (BYTE)network[j][2];
+		new_pal[j].rgbBlue  = (BYTE)network[j][FI_RGBA_BLUE];
+		new_pal[j].rgbGreen = (BYTE)network[j][FI_RGBA_GREEN];
+		new_pal[j].rgbRed	= (BYTE)network[j][FI_RGBA_RED];
 	}
 
 	inxbuild();
@@ -514,7 +510,7 @@ NNQuantizer(FIBITMAP *dib, int sampling)
 		BYTE *bits = FreeImage_GetScanLine(dib, rows);
 
 		for (WORD cols = 0; cols < FreeImage_GetWidth(dib); cols++) {
-			new_bits[cols] = (BYTE)inxsearch(bits[0], bits[1], bits[2]);
+			new_bits[cols] = (BYTE)inxsearch(bits[FI_RGBA_BLUE], bits[FI_RGBA_GREEN], bits[FI_RGBA_RED]);
 
 			bits += 3;
 		}

@@ -5,6 +5,12 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month Day, 2004 - 3.2.2
+! [Ryan Rubley] FreeImage has been ported to MacOSX and should also work on other big endian processors
++ [Ryan Rubley] rewrote XPM plugin (better load support) and added save support
++ [Ryan Rubley] added ICO_MAKEALPHA flag to ICO plugin
++ [Ryan Rubley] Set/GetPixelColor now works with 16-bit pixels (555 or 565)
+
 March 16, 2004 - 3.2.1
 ! [Volker Gärtner] improved the DDS plugin
 ! [Herve Drolon] FreeImage_Rescale now works on 8-, 24- and 32-bit images

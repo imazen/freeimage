@@ -512,9 +512,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 #endif
 								
 									if (TARGA_LOAD_RGB888 & flags) {
-										bits[x + FIRGB_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
-										bits[x + FIRGB_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-										bits[x + FIRGB_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+										bits[x + FI_RGBA_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+										bits[x + FI_RGBA_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+										bits[x + FI_RGBA_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
 									} else {
 										*reinterpret_cast<WORD*>(bits + x) = 0x7FFF & pixel;
 									}
@@ -555,9 +555,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								
 									for (int ix = 0; ix < rle; ix++) {
 										if (TARGA_LOAD_RGB888 & flags) {
-											bits[x + FIRGB_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
-											bits[x + FIRGB_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-											bits[x + FIRGB_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FI_RGBA_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FI_RGBA_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FI_RGBA_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
 										} else {
 											*reinterpret_cast<WORD *>(bits + x) = 0x7FFF & pixel;
 										}
@@ -582,9 +582,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 #endif
 
 										if (TARGA_LOAD_RGB888 & flags) {
-											bits[x + FIRGB_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
-											bits[x + FIRGB_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-											bits[x + FIRGB_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FI_RGBA_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FI_RGBA_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FI_RGBA_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
 										} else {
 											*reinterpret_cast<WORD*>(bits + x) = 0x7FFF & pixel;
 										}
@@ -634,9 +634,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									for (int x = 0; x < line; x += 3) {
 										io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
 
-										bits[x + FIRGB_BLUE] = bgr.b;
-										bits[x + FIRGB_GREEN] = bgr.g;
-										bits[x + FIRGB_RED] = bgr.r;
+										bits[x + FI_RGBA_BLUE]	= bgr.b;
+										bits[x + FI_RGBA_GREEN] = bgr.g;
+										bits[x + FI_RGBA_RED]	= bgr.r;
 									}
 								}
 							else
@@ -646,9 +646,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									for (int x = 0; x < line; x += 3) {
 										io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
 
-										bits[x + FIRGB_BLUE] = bgr.b;
-										bits[x + FIRGB_GREEN] = bgr.g;
-										bits[x + FIRGB_RED] = bgr.r;
+										bits[x + FI_RGBA_BLUE]	= bgr.b;
+										bits[x + FI_RGBA_GREEN] = bgr.g;
+										bits[x + FI_RGBA_RED]	= bgr.r;
 									}
 								}
 
@@ -679,10 +679,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 										io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
 										for (int ix = 0; ix < rle; ix++) {
-											bits[x + FIRGBA_BLUE] = bgra.b;
-											bits[x + FIRGBA_GREEN] = bgra.g;
-											bits[x + FIRGBA_RED] = bgra.r;
-											bits[x + FIRGBA_ALPHA] = bgra.a;
+											bits[x + FI_RGBA_BLUE]	= bgra.b;
+											bits[x + FI_RGBA_GREEN] = bgra.g;
+											bits[x + FI_RGBA_RED]	= bgra.r;
+											bits[x + FI_RGBA_ALPHA] = bgra.a;
 											x += 4;
 
 											if (x >= line) {
@@ -706,10 +706,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 											io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
-											bits[x + FIRGBA_BLUE] = bgra.b;
-											bits[x + FIRGBA_GREEN] = bgra.g;
-											bits[x + FIRGBA_RED] = bgra.r;
-											bits[x + FIRGBA_ALPHA] = bgra.a;
+											bits[x + FI_RGBA_BLUE]	= bgra.b;
+											bits[x + FI_RGBA_GREEN] = bgra.g;
+											bits[x + FI_RGBA_RED]	= bgra.r;
+											bits[x + FI_RGBA_ALPHA] = bgra.a;
 											x += 4;
 											
 											if (x >= line) {
@@ -739,9 +739,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 										io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
 
 										for (int ix = 0; ix < rle; ix++) {
-											bits[x + FIRGB_BLUE] = bgr.b;
-											bits[x + FIRGB_GREEN] = bgr.g;
-											bits[x + FIRGB_RED] = bgr.r;
+											bits[x + FI_RGBA_BLUE]	= bgr.b;
+											bits[x + FI_RGBA_GREEN] = bgr.g;
+											bits[x + FI_RGBA_RED]	= bgr.r;
 											x += 3;
 
 											if (x >= line) {
@@ -765,9 +765,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 											io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
 
-											bits[x + FIRGB_BLUE] = bgr.b;
-											bits[x + FIRGB_GREEN] = bgr.g;
-											bits[x + FIRGB_RED] = bgr.r;
+											bits[x + FI_RGBA_BLUE]	= bgr.b;
+											bits[x + FI_RGBA_GREEN]	= bgr.g;
+											bits[x + FI_RGBA_RED]	= bgr.r;
 											x += 3;
 											
 											if (x >= line) {
@@ -842,14 +842,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 											io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
 											if ((TARGA_LOAD_RGB888 & flags) != TARGA_LOAD_RGB888) {
-												bits[FIRGBA_BLUE] = bgra.b;
-												bits[FIRGBA_GREEN] = bgra.g;
-												bits[FIRGBA_RED] = bgra.r;
-												bits[FIRGBA_ALPHA] = bgra.a;
+												bits[FI_RGBA_BLUE]	= bgra.b;
+												bits[FI_RGBA_GREEN] = bgra.g;
+												bits[FI_RGBA_RED]	= bgra.r;
+												bits[FI_RGBA_ALPHA] = bgra.a;
 											} else {
-												bits[FIRGB_BLUE] = bgra.b;
-												bits[FIRGB_GREEN] = bgra.g;
-												bits[FIRGB_RED] = bgra.r;
+												bits[FI_RGBA_BLUE]	= bgra.b;
+												bits[FI_RGBA_GREEN] = bgra.g;
+												bits[FI_RGBA_RED]	= bgra.r;
 											}
 
 											bits += pixel_size;
@@ -865,14 +865,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 											io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
 											if ((TARGA_LOAD_RGB888 & flags) != TARGA_LOAD_RGB888) {
-												bits[FIRGBA_BLUE] = bgra.b;
-												bits[FIRGBA_GREEN] = bgra.g;
-												bits[FIRGBA_RED] = bgra.r;
-												bits[FIRGBA_ALPHA] = bgra.a;
+												bits[FI_RGBA_BLUE]	= bgra.b;
+												bits[FI_RGBA_GREEN] = bgra.g;
+												bits[FI_RGBA_RED]	= bgra.r;
+												bits[FI_RGBA_ALPHA] = bgra.a;
 											} else {
-												bits[FIRGB_BLUE] = bgra.b;
-												bits[FIRGB_GREEN] = bgra.g;
-												bits[FIRGB_RED] = bgra.r;
+												bits[FI_RGBA_BLUE]	= bgra.b;
+												bits[FI_RGBA_GREEN] = bgra.g;
+												bits[FI_RGBA_RED]	= bgra.r;
 											}
 
 											bits += pixel_size;
@@ -895,14 +895,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 										io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
 										if ((TARGA_LOAD_RGB888 & flags) != TARGA_LOAD_RGB888) {
-											bits[FIRGBA_BLUE] = bgra.b;
-											bits[FIRGBA_GREEN] = bgra.g;
-											bits[FIRGBA_RED] = bgra.r;
-											bits[FIRGBA_ALPHA] = bgra.a;
+											bits[FI_RGBA_BLUE]	= bgra.b;
+											bits[FI_RGBA_GREEN] = bgra.g;
+											bits[FI_RGBA_RED]	= bgra.r;
+											bits[FI_RGBA_ALPHA] = bgra.a;
 										} else {
-											bits[FIRGB_BLUE] = bgra.b;
-											bits[FIRGB_GREEN] = bgra.g;
-											bits[FIRGB_RED] = bgra.r;
+											bits[FI_RGBA_BLUE]	= bgra.b;
+											bits[FI_RGBA_GREEN]	= bgra.g;
+											bits[FI_RGBA_RED]	= bgra.r;
 										}
 
 										bits += pixel_size;
@@ -935,10 +935,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
 									for (int ix = 0; ix < rle; ix++) {
-										bits[x + FIRGBA_BLUE] = bgra.b;
-										bits[x + FIRGBA_GREEN] = bgra.g;
-										bits[x + FIRGBA_RED] = bgra.r;
-										bits[x + FIRGBA_ALPHA] = bgra.a;
+										bits[x + FI_RGBA_BLUE]	= bgra.b;
+										bits[x + FI_RGBA_GREEN] = bgra.g;
+										bits[x + FI_RGBA_RED]	= bgra.r;
+										bits[x + FI_RGBA_ALPHA] = bgra.a;
 										x += 4;
 
 										if (x >= line) {
@@ -962,10 +962,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 										io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
-										bits[x + FIRGBA_BLUE] = bgra.b;
-										bits[x + FIRGBA_GREEN] = bgra.g;
-										bits[x + FIRGBA_RED] = bgra.r;
-										bits[x + FIRGBA_ALPHA] = bgra.a;
+										bits[x + FI_RGBA_BLUE]	= bgra.b;
+										bits[x + FI_RGBA_GREEN] = bgra.g;
+										bits[x + FI_RGBA_RED]	= bgra.r;
+										bits[x + FI_RGBA_ALPHA] = bgra.a;
 										x += 4;
 											
 										if (x >= line) {

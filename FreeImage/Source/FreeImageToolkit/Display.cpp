@@ -121,11 +121,11 @@ FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP
 			}
 			else if(bpp == 32) {
 				// get the foreground color
-				fgc.rgbBlue  = fg_bits[0];
-				fgc.rgbGreen = fg_bits[1];
-				fgc.rgbRed   = fg_bits[2];
+				fgc.rgbBlue  = fg_bits[FI_RGBA_BLUE];
+				fgc.rgbGreen = fg_bits[FI_RGBA_GREEN];
+				fgc.rgbRed   = fg_bits[FI_RGBA_RED];
 				// get the alpha
-				alpha = fg_bits[3];
+				alpha = fg_bits[FI_RGBA_ALPHA];
 			}
 
 			// background color
@@ -133,9 +133,9 @@ FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP
 			if(!bHasBkColor) {
 				if(bg) {
 					// get the background color from the background image
-					bkc.rgbBlue  = bg_bits[0];
-					bkc.rgbGreen = bg_bits[1];
-					bkc.rgbRed   = bg_bits[2];
+					bkc.rgbBlue  = bg_bits[FI_RGBA_BLUE];
+					bkc.rgbGreen = bg_bits[FI_RGBA_GREEN];
+					bkc.rgbRed   = bg_bits[FI_RGBA_RED];
 				}
 				else {
 					// use a checkerboard pattern
@@ -151,22 +151,22 @@ FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP
 
 			if(alpha == 0) {
 				// output = background
-				cp_bits[0] = bkc.rgbBlue;
-				cp_bits[1] = bkc.rgbGreen;
-				cp_bits[2] = bkc.rgbRed;
+				cp_bits[FI_RGBA_BLUE] = bkc.rgbBlue;
+				cp_bits[FI_RGBA_GREEN] = bkc.rgbGreen;
+				cp_bits[FI_RGBA_RED] = bkc.rgbRed;
 			}
 			else if(alpha == 255) {
 				// output = foreground
-				cp_bits[0] = fgc.rgbBlue;
-				cp_bits[1] = fgc.rgbGreen;
-				cp_bits[2] = fgc.rgbRed;
+				cp_bits[FI_RGBA_BLUE] = fgc.rgbBlue;
+				cp_bits[FI_RGBA_GREEN] = fgc.rgbGreen;
+				cp_bits[FI_RGBA_RED] = fgc.rgbRed;
 			}
 			else {
 				// output = alpha * foreground + (1-alpha) * background
 				not_alpha = (BYTE)~alpha;
-				cp_bits[0] = (BYTE)((alpha * (WORD)fgc.rgbBlue  + not_alpha * (WORD)bkc.rgbBlue) >> 8);
-				cp_bits[1] = (BYTE)((alpha * (WORD)fgc.rgbGreen + not_alpha * (WORD)bkc.rgbGreen) >> 8);
-				cp_bits[2] = (BYTE)((alpha * (WORD)fgc.rgbRed   + not_alpha * (WORD)bkc.rgbRed) >> 8);
+				cp_bits[FI_RGBA_BLUE] = (BYTE)((alpha * (WORD)fgc.rgbBlue  + not_alpha * (WORD)bkc.rgbBlue) >> 8);
+				cp_bits[FI_RGBA_GREEN] = (BYTE)((alpha * (WORD)fgc.rgbGreen + not_alpha * (WORD)bkc.rgbGreen) >> 8);
+				cp_bits[FI_RGBA_RED] = (BYTE)((alpha * (WORD)fgc.rgbRed   + not_alpha * (WORD)bkc.rgbRed) >> 8);
 			}
 
 			fg_bits += bytespp;
