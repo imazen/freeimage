@@ -1128,7 +1128,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				{
 					FILE_BGRA bgra;
 					RGBQUAD *quad;
-					for(int x = 0; x < header.is_width; x++) {
+					for(unsigned x = 0; x < header.is_width; x++) {
 						quad = ((RGBQUAD *)bits) + x;
 						bgra.b = quad->rgbBlue;
 						bgra.g = quad->rgbGreen;
