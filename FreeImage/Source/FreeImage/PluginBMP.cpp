@@ -34,10 +34,15 @@ static const BYTE RLE_COMMAND     = 0;
 static const BYTE RLE_ENDOFLINE   = 0;
 static const BYTE RLE_ENDOFBITMAP = 1;
 static const BYTE RLE_DELTA       = 2;
+
+#ifndef __MINGW32__		// prevents a bug in mingw32
+
 static const BYTE BI_RGB          = 0;
 static const BYTE BI_RLE8         = 1;
 static const BYTE BI_RLE4         = 2;
 static const BYTE BI_BITFIELDS    = 3;
+
+#endif // __MINGW32__
 
 // ----------------------------------------------------------
 
@@ -47,6 +52,7 @@ static const BYTE BI_BITFIELDS    = 3;
 #pragma pack(1)
 #endif
 
+#ifndef __MINGW32__
 typedef struct tagBITMAPCOREHEADER {
   DWORD   bcSize;
   WORD    bcWidth;
@@ -54,6 +60,7 @@ typedef struct tagBITMAPCOREHEADER {
   WORD    bcPlanes;
   WORD    bcBitCnt;
 } BITMAPCOREHEADER, *PBITMAPCOREHEADER; 
+#endif //__MINGW32__
 
 typedef struct tagBITMAPINFOOS2_1X_HEADER {
   DWORD  biSize;
@@ -63,6 +70,7 @@ typedef struct tagBITMAPINFOOS2_1X_HEADER {
   WORD   biBitCount;
 } BITMAPINFOOS2_1X_HEADER, *PBITMAPINFOOS2_1X_HEADER; 
 
+#ifndef __MINGW32__
 typedef struct tagBITMAPFILEHEADER {
   WORD    bfType; 
   DWORD   bfSize;
@@ -70,6 +78,7 @@ typedef struct tagBITMAPFILEHEADER {
   WORD    bfReserved2;
   DWORD   bfOffBits; 
 } BITMAPFILEHEADER, *PBITMAPFILEHEADER;
+#endif //__MINGW32__
 
 #ifdef WIN32
 #pragma pack(pop)
