@@ -312,9 +312,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						bits = FreeImage_GetBits(dib) + (height - 1 - y) * pitch;
 
 						for (x = 0; x < width; x++) {
-							bits[2] = (BYTE)((255 * GetInt(io, handle)) / max);	// R
-							bits[1] = (BYTE)((255 * GetInt(io, handle)) / max);	// G
-							bits[0] = (BYTE)((255 * GetInt(io, handle)) / max);	// B
+							bits[FIRGB_RED] = (BYTE)((255 * GetInt(io, handle)) / max);	// R
+							bits[FIRGB_GREEN] = (BYTE)((255 * GetInt(io, handle)) / max);	// G
+							bits[FIRGB_BLUE] = (BYTE)((255 * GetInt(io, handle)) / max);	// B
 
 							bits += 3;
 						}
@@ -327,13 +327,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						for (x = 0; x < width; x++) {
 							io->read_proc(&level, 1, 1, handle); 
-							bits[2] = (BYTE)((255 * level) / max);	// R
+							bits[FIRGB_RED] = (BYTE)((255 * level) / max);	// R
 
 							io->read_proc(&level, 1, 1, handle);
-							bits[1] = (BYTE)((255 * level) / max);	// G
+							bits[FIRGB_GREEN] = (BYTE)((255 * level) / max);	// G
 
 							io->read_proc(&level, 1, 1, handle);
-							bits[0] = (BYTE)((255 * level) / max);	// B
+							bits[FIRGB_BLUE] = (BYTE)((255 * level) / max);	// B
 
 							bits += 3;
 						}
@@ -452,9 +452,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						BYTE *bits = buffer;
 
 						for (x = 0; x < width; x++) {
-							io->write_proc(&bits[2], 1, 1, handle);	// R
-							io->write_proc(&bits[1], 1, 1, handle);	// G
-							io->write_proc(&bits[0], 1, 1, handle);	// B
+							io->write_proc(&bits[FIRGB_RED], 1, 1, handle);	// R
+							io->write_proc(&bits[FIRGB_GREEN], 1, 1, handle);	// G
+							io->write_proc(&bits[FIRGB_BLUE], 1, 1, handle);	// B
 
 							bits += 3;
 						}
@@ -481,7 +481,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						for (x = 0; x < width; x++) {
 							char buffer[20];
 
-							sprintf(buffer, "%3d %3d %3d ", bits[2], bits[1], bits[0]);
+							sprintf(buffer, "%3d %3d %3d ", bits[FIRGB_RED], bits[FIRGB_GREEN], bits[FIRGB_BLUE]);
 
 							io->write_proc(&buffer, strlen(buffer), 1, handle);
 
