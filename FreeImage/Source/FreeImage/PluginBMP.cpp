@@ -461,7 +461,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 				if (pInfoHeader->biClrUsed > 0) {
 				    io->seek_proc(handle, pInfoHeader->biClrUsed * sizeof(RGBQUAD), SEEK_CUR);
 				} else if ((bih.biCompression != BI_BITFIELDS) && (bitmap_bits_offset > sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER))) {
-					io->seek_proc(handle, bitmap_bits_offset, SEEK_CUR);
+					io->seek_proc(handle, bitmap_bits_offset, SEEK_SET);
 				}
 
 				// read in the bitmap bits
