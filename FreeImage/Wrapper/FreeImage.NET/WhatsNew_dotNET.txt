@@ -1,0 +1,24 @@
+What's New for FreeImage.NET
+
+* : fixed
+- : removed
+! : changed
++ : added
+
+May 26th, 2004
+* [Andrew S. Townley] - Fixed bug reported by Jim Lightfoot regarding the return type of the GetChannel function.
++ [Andrew S. Townley] - Added definition of some missing functions
+! [Andrew S. Townley] - Reordered the definitions to match the C header
+
+May 18th, 2004
+! [Andrew S. Townley] - Changed the naming of the methods to be more C#/.NET like (dropped FreeImage_ prefix)
++ [Andrew S. Townley] - Batch file for building assembly with the command-line compiler
+* [Andrew S. Townley] - Added meaningful information to the assembly file
+
+November 10th, 2003
+* [anonymous] fixed a bug in BITMAPINFOHEADER declaration
+* [anonymous] fixed a bug in FreeImage_Clone declaration
++ [anonymous] added a sample c# freeimage drawing procedure
+
+October 20th 2003
++ [David Boland]  - Wrapper for FreeImage 3
