@@ -136,6 +136,22 @@ readline(FreeImageIO &io, fi_handle handle, BYTE *buffer, WORD length, BOOL rle,
 	return written;
 }
 
+#ifdef FREEIMAGE_BIGENDIAN
+static void
+SwapInfoHeader(PCXHEADER *header) {
+	SwapShort(&header->window[0]);
+	SwapShort(&header->window[1]);
+	SwapShort(&header->window[2]);
+	SwapShort(&header->window[3]);
+	SwapShort(&header->hdpi);
+	SwapShort(&header->vdpi);
+	SwapShort(&header->bytes_per_line);
+	SwapShort(&header->palette_info);
+	SwapShort(&header->h_screen_size);
+	SwapShort(&header->v_screen_size);
+}
+#endif
+
 // ==========================================================
 // Plugin Interface
 // ==========================================================
@@ -313,6 +329,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			PCXHEADER header;
 
 			io->read_proc(&header, sizeof(PCXHEADER), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+			SwapHeader(&header);
+#endif
 
 			// check PCX identifier
 
@@ -497,15 +516,22 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					readline(*io, handle, line, linelength, rle, ReadBuf, &ReadPos);
 
 					// convert the plane stream to BGR (RRRRGGGGBBBB -> BGRBGRBGRBGR)
+					// well, now with the FIRGB_x macros, on BIGENDIAN we convert to RGB
 
 					pline = line;
+					WORD x;
 
-					for (int plane = 2; plane >= 0; plane--) {
-						for (WORD x = 0; x < width; x++)
-							bits[x * 3 + plane] = pline[x];						
+					for (x = 0; x < width; x++)
+						bits[x * 3 + FIRGB_RED] = pline[x];						
+					pline += header.bytes_per_line;
 
-						pline += header.bytes_per_line;
-					}
+					for (x = 0; x < width; x++)
+						bits[x * 3 + FIRGB_GREEN] = pline[x];						
+					pline += header.bytes_per_line;
+
+					for (x = 0; x < width; x++)
+						bits[x * 3 + FIRGB_BLUE] = pline[x];						
+					pline += header.bytes_per_line;
 
 					bits -= pitch;
 				}
