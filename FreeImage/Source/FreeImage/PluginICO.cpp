@@ -111,6 +111,41 @@ CalculateImageOffset(std::vector<FIBITMAP*>& vPages, int nIndex ) {
     return dwSize;
 }
 
+#ifdef FREEIMAGE_BIGENDIAN
+static void
+SwapInfoHeader(BITMAPINFOHEADER *header) {
+	SwapLong(&header->biSize);
+	SwapLong((DWORD *)&header->biWidth);
+	SwapLong((DWORD *)&header->biHeight);
+	SwapShort(&header->biPlanes);
+	SwapShort(&header->biBitCount);
+	SwapLong(&header->biCompression);
+	SwapLong(&header->biSizeImage);
+	SwapLong((DWORD *)&header->biXPelsPerMeter);
+	SwapLong((DWORD *)&header->biYPelsPerMeter);
+	SwapLong(&header->biClrUsed);
+	SwapLong(&header->biClrImportant);
+}
+
+static void
+SwapIconHeader(ICONHEADER *header) {
+	SwapShort(&header->idReserved);
+	SwapShort(&header->idType);
+	SwapShort(&header->idCount);
+}
+
+static void
+SwapIconDirEntries(ICONDIRENTRY *ent, int num) {
+	while(num) {
+		SwapShort(&ent->wPlanes);
+		SwapShort(&ent->wBitCount);
+		SwapLong(&ent->dwBytesInRes);
+		SwapLong(&ent->dwImageOffset);
+		num--;
+		ent++;
+	}
+}
+#endif
 
 // ==========================================================
 // Plugin Interface
@@ -151,7 +186,10 @@ static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {
 	ICONHEADER icon_header;
 
-	io->read_proc(&icon_header, 1, sizeof(ICONHEADER), handle);
+	io->read_proc(&icon_header, sizeof(ICONHEADER), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+	SwapIconHeader(&icon_header);
+#endif
 
 	return ((icon_header.idReserved == 0) && (icon_header.idType == 1) && (icon_header.idCount > 0));
 }
@@ -186,6 +224,9 @@ Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 	if (read) {
 		// Read in the header
 		io->read_proc(lpIH, 1, sizeof(ICONHEADER), handle);
+#ifdef FREEIMAGE_BIGENDIAN
+	SwapIconHeader(lpIH);
+#endif
 
 		if(!(lpIH->idReserved == 0) || !(lpIH->idType == 1)) {
 			// Not an ICO file
@@ -239,16 +280,23 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			ICONDIRENTRY *icon_list = (ICONDIRENTRY*)malloc(icon_header->idCount * sizeof(ICONDIRENTRY));
 			io->seek_proc(handle, sizeof(ICONHEADER), SEEK_SET);
 			io->read_proc(icon_list, icon_header->idCount * sizeof(ICONDIRENTRY), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+			SwapIconDirEntries(icon_list, icon_header->idCount);
+#endif
 
 			// load the requested icon
 			if (page < icon_header->idCount) {
 				// seek to the start of the bitmap data for the icon
 				io->seek_proc(handle, 0, SEEK_SET);
 				io->seek_proc(handle, icon_list[page].dwImageOffset, SEEK_CUR);
+				free(icon_list);
 
 				// load the BITMAPINFOHEADER
 				BITMAPINFOHEADER bmih;
 				io->read_proc(&bmih, sizeof(BITMAPINFOHEADER), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+				SwapInfoHeader(&bmih);
+#endif
 
 				// allocate the bitmap
 				int width  = bmih.biWidth;
@@ -262,24 +310,94 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				dib = FreeImage_Allocate(width, height, bit_count);
 
 				if (dib == NULL) {
-					free(icon_list);
-
 					return NULL;
 				}
 
-				// read the palette data
-				io->read_proc(FreeImage_GetPalette(dib), CalculateUsedPaletteEntries(bit_count) * sizeof(RGBQUAD), 1, handle);
+				if( bmih.biBitCount <= 8 ) {
+					// read the palette data
+					io->read_proc(FreeImage_GetPalette(dib), CalculateUsedPaletteEntries(bit_count) * sizeof(RGBQUAD), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+					RGBQUAD *pal = FreeImage_GetPalette(dib);
+					for(int i = 0; i < CalculateUsedPaletteEntries(bit_count); i++) {
+						INPLACESWAP(pal[i].rgbRed, pal[i].rgbBlue);
+					}
+#endif
+				}
 
 				// read the icon
 				io->read_proc(FreeImage_GetBits(dib), height * pitch, 1, handle);
 
-				free(icon_list);
-
+#ifdef FREEIMAGE_BIGENDIAN
+				switch( bit_count ) {
+					case 16:
+					{
+						for(int y = 0; y < height; y++) {
+							WORD *pixel = (WORD *)FreeImage_GetScanLine(dib, y);
+							for(int x = 0; x < width; x++) {
+								SwapShort(pixel);
+								pixel++;
+							}
+						}
+						break;
+					}
+					case 24:
+					case 32:
+					{
+						for(int y = 0; y < height; y++) {
+							BYTE *pixel = FreeImage_GetScanLine(dib, y);
+							for(int x = 0; x < width; x++) {
+								INPLACESWAP(pixel[0], pixel[2]);
+								pixel += (bit_count>>3);
+							}
+						}
+						break;
+					}
+					default:
+						break;
+				}
+#endif
 				// bitmap has been loaded successfully!
 
+				// convert to 32bpp and generate an alpha channel
+				if( flags & ICO_MAKEALPHA ) {
+					FIBITMAP *dib32 = FreeImage_ConvertTo32Bits(dib);
+					FreeImage_Unload(dib);
+
+					if (dib32 == NULL) {
+						return NULL;
+					}
+
+					int width_and	= WidthBytes(width);
+					BYTE *bits		= FreeImage_GetBits(dib32);
+					BYTE *line_and	= (BYTE *)malloc(width_and);
+
+					if( line_and == NULL ) {
+						FreeImage_Unload(dib32);
+						return NULL;
+					}
+
+					//loop through each line of the AND-mask generating the alpha channel, invert XOR-mask
+					for(int y = 0; y < height; y++) {
+						RGBQUAD *quad = (RGBQUAD *)FreeImage_GetScanLine(dib32, y);
+						io->read_proc(line_and, width_and, 1, handle);
+						for(int x = 0; x < width; x++) {
+							quad->rgbReserved = (line_and[x>>3] & (0x80 >> (x & 0x07))) != 0 ? 0 : 0xFF;
+							if( quad->rgbReserved == 0 ) {
+								quad->rgbBlue ^= 0xFF;
+								quad->rgbGreen ^= 0xFF;
+								quad->rgbRed ^= 0xFF;
+							}
+							quad++;
+						}
+					}
+					free(line_and);
+
+					return dib32;
+				}
+
 				return (FIBITMAP *)dib;
-			}
-			else {
+			} else {
+				free(icon_list);
 				FreeImage_OutputMessageProc(s_format_id, "Page doesn't exist");
 			}
 		} else {
@@ -330,7 +448,13 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		// write the header
 		io->seek_proc(handle, 0, SEEK_SET);
+#ifdef FREEIMAGE_BIGENDIAN
+		SwapIconHeader(icon_header);
+#endif
 		io->write_proc(icon_header, sizeof(ICONHEADER), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+		SwapIconHeader(icon_header);
+#endif
 
 		// write all icons
 		// ...
@@ -357,6 +481,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			icon_list[k].dwBytesInRes	= CalculateImageSize(icon_dib);
 			icon_list[k].dwImageOffset = CalculateImageOffset(vPages, k);
 		}
+#ifdef FREEIMAGE_BIGENDIAN
+		SwapIconDirEntries(icon_list, icon_header->idCount);
+#endif
 		io->write_proc(icon_list, sizeof(ICONDIRENTRY) * icon_header->idCount, 1, handle);
 		free(icon_list);
 
@@ -367,13 +494,27 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			// write the BITMAPINFOHEADER
 			bmih = FreeImage_GetInfoHeader(icon_dib);
 			bmih->biHeight *= 2;	// height == xor + and mask
+#ifdef FREEIMAGE_BIGENDIAN
+			SwapInfoHeader(bmih);
+#endif
 			io->write_proc(bmih, sizeof(BITMAPINFOHEADER), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+			SwapInfoHeader(bmih);
+#endif
 			bmih->biHeight /= 2;
 
 			// write the palette data
-			RGBQUAD *pal = FreeImage_GetPalette(icon_dib);
-			int colors = FreeImage_GetColorsUsed(icon_dib);
-			io->write_proc(pal, colors * sizeof(RGBQUAD), 1, handle);
+			if (FreeImage_GetPalette(icon_dib) != NULL) {
+				RGBQUAD *pal = FreeImage_GetPalette(icon_dib);
+				FILE_BGRA bgra;
+				for( int i = 0; i < FreeImage_GetColorsUsed(icon_dib); i++ ) {
+					bgra.b = pal[i].rgbBlue;
+					bgra.g = pal[i].rgbGreen;
+					bgra.r = pal[i].rgbRed;
+					bgra.a = pal[i].rgbReserved;
+					io->write_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
+				}
+			}
 
 			// write the bits
 			int width		= bmih->biWidth;
@@ -385,8 +526,52 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			int size_and	= height * WidthBytes(width);
 
 			// XOR mask
-			BYTE *xor_mask = FreeImage_GetBits(icon_dib);
-			io->write_proc(xor_mask, size_xor, 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+			if (bit_count == 16) {
+				WORD pixel;
+				for(int y = 0; y < FreeImage_GetHeight(icon_dib); y++) {
+					BYTE *line = FreeImage_GetScanLine(icon_dib, y);
+					for(int x = 0; x < FreeImage_GetWidth(icon_dib); x++) {
+						pixel = ((WORD *)line)[x];
+						SwapShort(&pixel);
+						if (io->write_proc(&pixel, sizeof(WORD), 1, handle) != 1)
+							return FALSE;
+					}
+				}
+			} else if (bit_count == 24) {
+				FILE_BGR bgr;
+				for(int y = 0; y < FreeImage_GetHeight(icon_dib); y++) {
+					BYTE *line = FreeImage_GetScanLine(icon_dib, y);
+					for(int x = 0; x < FreeImage_GetWidth(icon_dib); x++) {
+						RGBTRIPLE *triple = ((RGBTRIPLE *)line)+x;
+						bgr.b = triple->rgbtBlue;
+						bgr.g = triple->rgbtGreen;
+						bgr.r = triple->rgbtRed;
+						if (io->write_proc(&bgr, sizeof(FILE_BGR), 1, handle) != 1)
+							return FALSE;
+					}
+				}
+			} else if (bit_count == 32) {
+				FILE_BGRA bgra;
+				for(int y = 0; y < FreeImage_GetHeight(icon_dib); y++) {
+					BYTE *line = FreeImage_GetScanLine(icon_dib, y);
+					for(int x = 0; x < FreeImage_GetWidth(icon_dib); x++) {
+						RGBQUAD *quad = ((RGBQUAD *)line)+x;
+						bgra.b = quad->rgbBlue;
+						bgra.g = quad->rgbGreen;
+						bgra.r = quad->rgbRed;
+						bgra.a = quad->rgbReserved;
+						if (io->write_proc(&bgra, sizeof(FILE_BGRA), 1, handle) != 1)
+							return FALSE;
+					}
+				}
+			} else {
+#endif
+				BYTE *xor_mask = FreeImage_GetBits(icon_dib);
+				io->write_proc(xor_mask, size_xor, 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+			}
+#endif
 			// empty AND mask
 			BYTE *and_mask = (BYTE*)malloc(size_and);
 			memset(and_mask, 0, size_and);

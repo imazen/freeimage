@@ -438,6 +438,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define CUT_DEFAULT         0
 #define DDS_DEFAULT			0
 #define ICO_DEFAULT         0
+#define ICO_MAKEALPHA		1		// convert to 32bpp and create an alpha channel from the AND-mask when loading
 #define IFF_DEFAULT         0
 #define JPEG_DEFAULT        0
 #define JPEG_FAST           1
