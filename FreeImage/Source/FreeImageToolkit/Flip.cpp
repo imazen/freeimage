@@ -4,6 +4,7 @@
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
 // - Hervé Drolon (drolon@infonie.fr)
+// - Jim Keir (jimkeir@users.sourceforge.net)
 //
 // This file is part of FreeImage 3
 //
@@ -115,31 +116,35 @@ Flip the image vertically along the horizontal axis.
 @param src Input image to be processed.
 @return Returns TRUE if successful, FALSE otherwise.
 */
+
 BOOL DLL_CALLCONV 
 FreeImage_FlipVertical(FIBITMAP *src) {
-	if (!src) return FALSE;
+	BYTE *From, *Mid;
 
-	// clone the src dib
-	FIBITMAP *clone = FreeImage_Clone(src);
-	if (!clone) return FALSE;
+	if (!src) return FALSE;
 
 	// swap the buffer
 
 	unsigned pitch  = FreeImage_GetPitch(src);
 	unsigned height = FreeImage_GetHeight(src);
 
-	int line_t = 0;
-	int line_s = height - 1;
+	Mid = (BYTE*)malloc(pitch * sizeof(BYTE));
+	if (!Mid) return FALSE;
 
-	for(unsigned y = 0 ; y < height ; y++) {
-		BYTE *bits_s = FreeImage_GetScanLine(clone, line_s--);
-		BYTE *bits_t = FreeImage_GetScanLine(src, line_t++);
+	From = FreeImage_GetBits(src);
 
-		memcpy(bits_t, bits_s, pitch);
+	for(unsigned y = 0; y < height/2; y++) {
+
+		unsigned line_s = y * pitch;
+		unsigned line_t = (height-y-1) * pitch;
+
+		memcpy(Mid, From + line_s, pitch);
+		memcpy(From + line_s, From + line_t, pitch);
+		memcpy(From + line_t, Mid, pitch);
+
 	}
 
-	FreeImage_Unload(clone);
-
+	free(Mid);
 
 	return TRUE;
 }
