@@ -101,6 +101,21 @@ typedef short JSAMPLE;
 
 typedef short JCOEF;
 
+/* Defines for MMX/SSE2 support. */
+
+#if defined(_M_IX86) && !defined(__GNUC__)	// disabled for AT&T
+#define HAVE_MMX_INTEL_MNEMONICS 
+
+/* SSE2 code appears broken for some cpus (bug 247437)
+	my comment: I read the discussion about that bug and it was disabled
+	because one guy sent a bugreport - incorrectly decoded jpeg.
+	No one else seems to have this problem = probably a hardware problem.
+	(He had a P4 Celeron)
+	PS: This code comes from Mozilla/Firefox.			-= BiShop =-
+*/
+#define HAVE_SSE2_INTEL_MNEMONICS
+#endif
+
 
 /* Compressed datastreams are represented as arrays of JOCTET.
  * These must be EXACTLY 8 bits wide, at least once they are written to
@@ -342,8 +357,10 @@ typedef int boolean;
  * as short on such a machine.  MULTIPLIER must be at least 16 bits wide.
  */
 
+#define int16 short
+
 #ifndef MULTIPLIER
-#define MULTIPLIER  int		/* type for fastest integer multiply */
+#define MULTIPLIER  int16		/* type for fastest integer multiply */
 #endif
 
 

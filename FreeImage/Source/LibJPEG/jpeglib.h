@@ -28,6 +28,11 @@
 #include "jmorecfg.h"		/* seldom changed options */
 
 
+#ifdef HAVE_MMX_INTEL_MNEMONICS
+	extern int MMXAvailable;
+#endif
+
+
 /* Version ID for the JPEG library.
  * Might be useful for tests like "#if JPEG_LIB_VERSION >= 60".
  */
