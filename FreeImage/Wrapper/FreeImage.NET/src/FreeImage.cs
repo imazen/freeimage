@@ -507,7 +507,7 @@ namespace FreeImageAPI
 
 
 		[DllImport("FreeImage.dll", EntryPoint="FreeImage_GetChannel")]
-		public static extern bool GetChannel(FIBITMAP dib, FI_COLOR_CHANNEL channel);
+		public static extern FIBITMAP GetChannel(FIBITMAP dib, FI_COLOR_CHANNEL channel);
 		
 		[DllImport("FreeImage.dll", EntryPoint="FreeImage_SetChannel")]
 		public static extern bool SetChannel(FIBITMAP dib, FIBITMAP dib8, FI_COLOR_CHANNEL channel);
