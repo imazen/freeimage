@@ -153,6 +153,8 @@ typedef struct tagRGBTRIPLE {
 #pragma pack()
 #endif // WIN32
 
+//indexes for byte arrays
+//these coincide with RGBQUAD and RGBTRIPLE
 #ifdef FREEIMAGE_BIGENDIAN
 #define FIRGBA_RED		0
 #define FIRGBA_GREEN	1
@@ -170,6 +172,31 @@ typedef struct tagRGBTRIPLE {
 #define FIRGB_GREEN		1
 #define FIRGB_BLUE		0
 #endif
+
+//masks for treating pixels as words of various sizes
+//the 32bit masks coincide perfectly with the RGBQUAD struct
+//the 24bit masks would coincide nicely with RGBTRIPLE, if there were a 24bit int in C
+#ifdef FREEIMAGE_BIGENDIAN
+#define FIRGBA_RED_MASK		0xFF000000
+#define FIRGBA_GREEN_MASK	0x00FF0000
+#define FIRGBA_BLUE_MASK	0x0000FF00
+#define FIRGBA_ALPHA_MASK	0x000000FF
+#else
+#define FIRGBA_RED_MASK		0x00FF0000
+#define FIRGBA_GREEN_MASK	0x0000FF00
+#define FIRGBA_BLUE_MASK	0x000000FF
+#define FIRGBA_ALPHA_MASK	0xFF000000
+#endif
+#define FIRGBA_RGB_MASK		(FIRGBA_RED_MASK|FIRGBA_GREEN_MASK|FIRGBA_BLUE_MASK)
+#define FIRGB_RED_MASK		0xFF0000
+#define FIRGB_GREEN_MASK	0x00FF00
+#define FIRGB_BLUE_MASK		0x0000FF
+#define FI16_555_RED_MASK	0x7C00
+#define FI16_555_GREEN_MASK	0x03E0
+#define FI16_555_BLUE_MASK	0x001F
+#define FI16_565_RED_MASK	0xF800
+#define FI16_565_GREEN_MASK	0x07E0
+#define FI16_565_BLUE_MASK	0x001F
 
 typedef struct tagBITMAPINFOHEADER{
   DWORD biSize;
