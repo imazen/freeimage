@@ -622,18 +622,19 @@ static BOOL
 tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib) {
 	#define TIFFTAG_EXIFIFD	34665	// Offset to private IFD holding Exif Tags
 
-	short tag_count;
-	void* data;
+	short tag_count = 0;
+	void* data = NULL;
 	
 	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &tag_count, &data)) {
+		// get the IFD offset
 		uint32 offset = *(uint32*)data;
 
 		// don't know where to go from here ...
 		// the following doesn't work because there's no image data in the exif IFD
-		/*
+		
 		if(!TIFFSetSubDirectory(tiff, offset))
 			return FALSE;
-		*/
+		
 		return TRUE;
 	}
 
@@ -1161,6 +1162,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			FreeImage_CreateICCProfile(dib, iccBuf, iccSize);			
 
+			// copy TIFF metadata (must be done after FreeImage_Allocate)
+
+			ReadMetadata(tif, dib);
+
 			return (FIBITMAP *)dib;
 
 		} catch (const char *message) {
@@ -1300,6 +1305,10 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		// compression
 
 		SetCompression(out, bitspersample, samplesperpixel, photometric, flags);
+
+		// metadata
+
+		WriteMetadata(out, dib);
 
 
 		// read the DIB lines from bottom to top
