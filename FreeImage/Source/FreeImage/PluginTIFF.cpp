@@ -154,13 +154,13 @@ TIFFErrorHandler _TIFFwarningHandler = msdosWarningHandler;
 
 static void
 msdosErrorHandler(const char* module, const char* fmt, va_list ap) {
-	
+	/*
 	if (module != NULL) {
 		char msg[1024];
 		vsprintf(msg, fmt, ap);
 		FreeImage_OutputMessageProc(s_format_id, "%s%s", module, msg);
 	}
-	
+	*/
 }
 
 TIFFErrorHandler _TIFFerrorHandler = msdosErrorHandler;
@@ -562,9 +562,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// check for unsupported formats
 			// ---------------------------------------------------------------------------------
-
-			if (compression == COMPRESSION_LZW)
-				throw "LZW compression is no longer supported due to Unisys patent enforcement";
 
 			if (compression == COMPRESSION_OJPEG)
 				throw "6.0 JPEG encoding is not supported";
@@ -1021,6 +1018,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			compression = COMPRESSION_CCITTFAX3;
 		else if ((flags & TIFF_CCITTFAX4) == TIFF_CCITTFAX4)
 			compression = COMPRESSION_CCITTFAX4;
+		else if ((flags & TIFF_LZW) == TIFF_LZW)
+			compression = COMPRESSION_LZW;
 		else {
 			// default compression scheme
 
@@ -1036,7 +1035,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				case 32 :
 				case 64 :
 				case 128:
-					compression = COMPRESSION_PACKBITS;
+					compression = COMPRESSION_LZW;
 					break;
 
 				default :

@@ -45,8 +45,8 @@
 // Version information ------------------------------------------------------
 
 #define FREEIMAGE_MAJOR_VERSION   3
-#define FREEIMAGE_MINOR_VERSION   3
-#define FREEIMAGE_RELEASE_SERIAL  1
+#define FREEIMAGE_MINOR_VERSION   4
+#define FREEIMAGE_RELEASE_SERIAL  0
 
 // Compiler options ---------------------------------------------------------
 
@@ -474,6 +474,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define TIFF_NONE           0x0800  // save without any compression
 #define TIFF_CCITTFAX3		0x1000  // save using CCITT Group 3 fax encoding
 #define TIFF_CCITTFAX4		0x2000  // save using CCITT Group 4 fax encoding
+#define TIFF_LZW			0x4000	// save using LZW compression
 #define WBMP_DEFAULT        0
 #define XBM_DEFAULT			0
 #define XPM_DEFAULT			0
