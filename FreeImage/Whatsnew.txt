@@ -8,6 +8,7 @@ What's New for FreeImage
 Month day, 2004 - 3.5.3
 + [Herve Drolon] added support for transparency saving in ICO plugin
 * [Nan Feng] fixed memory leak in FreeImage_DeleteTag (internal stuff)
+* [Nigel Stewart] added conditional #pragma with #ifdef _MSC_VER / #endif
 
 November 27th, 2004 - 3.5.2
 * [Herve Drolon] fixed a second bug in FreeImage_Clone function

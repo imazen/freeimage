@@ -10,7 +10,9 @@
  * optimizations.  Most users will not need to touch this file.
  */
 
-#pragma warning (disable : 4142)
+#ifdef _MSC_VER 
+#pragma warning (disable : 4142)	/* benign redefinition of type */
+#endif
 
 /*
  * Define BITS_IN_JSAMPLE as either
