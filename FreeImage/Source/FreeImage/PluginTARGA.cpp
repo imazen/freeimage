@@ -37,13 +37,6 @@
 #pragma pack(1)
 #endif
 
-typedef struct tagBGRAQUAD { 
-  BYTE bgraBlue; 
-  BYTE bgraGreen; 
-  BYTE bgraRed;
-  BYTE bgraAlpha;
-} BGRAQUAD; 
-
 typedef struct tagTGAHEADER {
 	BYTE id_length;				// ID length
 	BYTE color_map_type;		// color map type
@@ -101,6 +94,24 @@ Internal_GetScanLine(FIBITMAP *dib, int scanline, int flipvert) {
 		return FreeImage_GetScanLine(dib, FreeImage_GetHeight(dib) - scanline - 1);
 }
 
+#ifdef FREEIMAGE_BIGENDIAN
+static void
+SwapHeader(TGAHEADER *header) {
+	SwapShort(&header->cm_first_entry);
+	SwapShort(&header->cm_length);
+	SwapShort(&header->is_xorigin);
+	SwapShort(&header->is_yorigin);
+	SwapShort(&header->is_width);
+	SwapShort(&header->is_height);
+}
+
+static void
+SwapFooter(TGAFOOTER *footer) {
+	SwapLong(&footer->extension_offset);
+	SwapLong(&footer->developer_offset);
+}
+#endif
+
 // ==========================================================
 // Plugin Interface
 // ==========================================================
@@ -144,6 +155,10 @@ Validate(FreeImageIO *io, fi_handle handle) {
 	// try to read the header in a whole
 	if(io->read_proc(&header, sizeof(tagTGAHEADER), 1, handle) != 1)
 		return FALSE;
+
+#ifdef FREEIMAGE_BIGENDIAN
+	SwapHeader(&header);
+#endif
 
 	// The Color Map Type should be a 0 or a 1...
 	// NOTE: are other values possible?
@@ -241,10 +256,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			io->read_proc(&header, sizeof(tagTGAHEADER), 1, handle);
 
+#ifdef FREEIMAGE_BIGENDIAN
+			SwapHeader(&header);
+#endif
+
 			int line = CalculateLine(header.is_width, header.is_pixel_depth);
 			int pitch = CalculatePitch(line);
 			int alphabits = header.is_image_descriptor & 0x0f;
-			int fliphoriz = (header.is_image_descriptor & 0x10) ? 0 : 1;
+			int fliphoriz = (header.is_image_descriptor & 0x10) ? 0 : 1; //currently FreeImage improperly treats this as flipvert also
 			int flipvert = (header.is_image_descriptor & 0x20) ? 1 : 0;
 
 			// skip comment
@@ -296,12 +315,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 							case 24:
 							{
-								RGBTRIPLE *rgb = (RGBTRIPLE*)&cmap[0];
-								for (count = header.cm_first_entry; count < header.cm_length; count++) {						
-									palette[count].rgbBlue  = rgb->rgbtBlue;									
-									palette[count].rgbGreen = rgb->rgbtGreen;
-									palette[count].rgbRed   = rgb->rgbtRed;
-									rgb++;
+								FILE_BGR *bgr = (FILE_BGR*)&cmap[0];
+								for (count = header.cm_first_entry; count < header.cm_length; count++) {
+									palette[count].rgbBlue  = bgr->b;
+									palette[count].rgbGreen = bgr->g;
+									palette[count].rgbRed   = bgr->r;
+									bgr++;
 								}
 							}
 							break;
@@ -313,14 +332,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								// clear the transparency table
 								memset(trns, 0xFF, 256);
 
-								BGRAQUAD *quad = (BGRAQUAD*)&cmap[0];
+								FILE_BGRA *bgra = (FILE_BGRA*)&cmap[0];
 								for (count = header.cm_first_entry; count < header.cm_length; count++) {						
-									palette[count].rgbBlue  = quad->bgraBlue;									
-									palette[count].rgbGreen = quad->bgraGreen;
-									palette[count].rgbRed   = quad->bgraRed;
+									palette[count].rgbBlue  = bgra->b;									
+									palette[count].rgbGreen = bgra->g;
+									palette[count].rgbRed   = bgra->r;
 									// alpha
-									trns[count] = quad->bgraAlpha;
-									quad++;
+									trns[count] = bgra->a;
+									bgra++;
 								}
 
 								// set the tranparency table
@@ -361,7 +380,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						{
 							int x = 0;
 							int y = 0;
-							BYTE rle = 0;							
+							BYTE rle = 0;
 							BYTE *bits;
 							
 							if (fliphoriz)
@@ -412,7 +431,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 											y++;
 
 											if (y >= header.is_height)
-												goto done89;											
+												goto done89;
 											
 											if (fliphoriz)
 												bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
@@ -488,11 +507,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 								for (int x = 0; x < line; ) {
 									io->read_proc(&pixel, sizeof(WORD), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+									SwapShort(&pixel);
+#endif
 								
 									if (TARGA_LOAD_RGB888 & flags) {
-										bits[x + 0] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
-										bits[x + 1] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-										bits[x + 2] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+										bits[x + FIRGB_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+										bits[x + FIRGB_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+										bits[x + FIRGB_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
 									} else {
 										*reinterpret_cast<WORD*>(bits + x) = 0x7FFF & pixel;
 									}
@@ -527,12 +549,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									rle -= 127;
 
 									io->read_proc(&pixel, sizeof(WORD), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+									SwapShort(&pixel);
+#endif
 								
 									for (int ix = 0; ix < rle; ix++) {
 										if (TARGA_LOAD_RGB888 & flags) {
-											bits[x + 0] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
-											bits[x + 1] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-											bits[x + 2] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FIRGB_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FIRGB_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FIRGB_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
 										} else {
 											*reinterpret_cast<WORD *>(bits + x) = 0x7FFF & pixel;
 										}
@@ -552,11 +577,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 									for (int ix = 0; ix < rle; ix++) {
 										io->read_proc(&pixel, sizeof(WORD), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+										SwapShort(&pixel);
+#endif
 
 										if (TARGA_LOAD_RGB888 & flags) {
-											bits[x + 0] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
-											bits[x + 1] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-											bits[x + 2] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FIRGB_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FIRGB_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FIRGB_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
 										} else {
 											*reinterpret_cast<WORD*>(bits + x) = 0x7FFF & pixel;
 										}
@@ -598,21 +626,30 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					switch (header.image_type) {
 						case TGA_RGB:
 						{
+							FILE_BGR bgr;
 							if (fliphoriz)
 								for (unsigned count = header.is_height; count > 0; count--) {
-									BYTE *bits = bits = Internal_GetScanLine(dib, count-1, flipvert);
+									BYTE *bits = Internal_GetScanLine(dib, count-1, flipvert);
 
-									io->read_proc(bits, line, 1, handle);
+									for (int x = 0; x < line; x += 3) {
+										io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
 
-									bits += pitch;
+										bits[x + FIRGB_BLUE] = bgr.b;
+										bits[x + FIRGB_GREEN] = bgr.g;
+										bits[x + FIRGB_RED] = bgr.r;
+									}
 								}
 							else
 								for (unsigned count = 0; count < header.is_height; count++) {
-									BYTE *bits = bits = Internal_GetScanLine(dib, count, flipvert);
+									BYTE *bits = Internal_GetScanLine(dib, count, flipvert);
 
-									io->read_proc(bits, line, 1, handle);
+									for (int x = 0; x < line; x += 3) {
+										io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
 
-									bits += pitch;
+										bits[x + FIRGB_BLUE] = bgr.b;
+										bits[x + FIRGB_GREEN] = bgr.g;
+										bits[x + FIRGB_RED] = bgr.r;
+									}
 								}
 
 							break;
@@ -637,15 +674,16 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									if (rle>127) {
 										rle -= 127;
 
-										BGRAQUAD quad;
+										FILE_BGRA bgra;
 
-										io->read_proc(&quad, sizeof(BGRAQUAD), 1, handle);
+										io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
 										for (int ix = 0; ix < rle; ix++) {
-											bits[x++] = quad.bgraBlue;
-											bits[x++] = quad.bgraGreen;
-											bits[x++] = quad.bgraRed;
-											bits[x++] = quad.bgraAlpha;
+											bits[x + FIRGBA_BLUE] = bgra.b;
+											bits[x + FIRGBA_GREEN] = bgra.g;
+											bits[x + FIRGBA_RED] = bgra.r;
+											bits[x + FIRGBA_ALPHA] = bgra.a;
+											x += 4;
 
 											if (x >= line) {
 												x = 0;
@@ -664,14 +702,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 										rle++;
 
 										for (int ix = 0; ix < rle; ix++) {
-											BGRAQUAD quad;
+											FILE_BGRA bgra;
 
-											io->read_proc(&quad, sizeof(BGRAQUAD), 1, handle);
+											io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
-											bits[x++] = quad.bgraBlue;
-											bits[x++] = quad.bgraGreen;
-											bits[x++] = quad.bgraRed;
-											bits[x++] = quad.bgraAlpha;
+											bits[x + FIRGBA_BLUE] = bgra.b;
+											bits[x + FIRGBA_GREEN] = bgra.g;
+											bits[x + FIRGBA_RED] = bgra.r;
+											bits[x + FIRGBA_ALPHA] = bgra.a;
+											x += 4;
 											
 											if (x >= line) {
 												x = 0;
@@ -695,14 +734,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									if (rle>127) {
 										rle -= 127;
 
-										RGBTRIPLE triple;
+										FILE_BGR bgr;
 
-										io->read_proc(&triple, sizeof(RGBTRIPLE), 1, handle);
+										io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
 
 										for (int ix = 0; ix < rle; ix++) {
-											bits[x++] = triple.rgbtBlue;
-											bits[x++] = triple.rgbtGreen;
-											bits[x++] = triple.rgbtRed;
+											bits[x + FIRGB_BLUE] = bgr.b;
+											bits[x + FIRGB_GREEN] = bgr.g;
+											bits[x + FIRGB_RED] = bgr.r;
+											x += 3;
 
 											if (x >= line) {
 												x = 0;
@@ -721,13 +761,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 										rle++;
 
 										for (int ix = 0; ix < rle; ix++) {
-											RGBTRIPLE triple;		
+											FILE_BGR bgr;		
 
-											io->read_proc(&triple, sizeof(RGBTRIPLE), 1, handle);
+											io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
 
-											bits[x++] = triple.rgbtBlue;
-											bits[x++] = triple.rgbtGreen;
-											bits[x++] = triple.rgbtRed;
+											bits[x + FIRGB_BLUE] = bgr.b;
+											bits[x + FIRGB_GREEN] = bgr.g;
+											bits[x + FIRGB_RED] = bgr.r;
+											x += 3;
 											
 											if (x >= line) {
 												x = 0;
@@ -796,16 +837,20 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 										BYTE *bits = bits = Internal_GetScanLine(dib, count-1, flipvert);
 
 										for (unsigned cols = 0; cols < header.is_width; cols++) {
-											RGBQUAD rgb;
+											FILE_BGRA bgra;
 
-											io->read_proc(&rgb, sizeof(RGBQUAD), 1, handle);
+											io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
-											bits[0] = rgb.rgbBlue;
-											bits[1] = rgb.rgbGreen;
-											bits[2] = rgb.rgbRed;
-
-											if ((TARGA_LOAD_RGB888 & flags) != TARGA_LOAD_RGB888)
-												bits[3] = rgb.rgbReserved;											
+											if ((TARGA_LOAD_RGB888 & flags) != TARGA_LOAD_RGB888) {
+												bits[FIRGBA_BLUE] = bgra.b;
+												bits[FIRGBA_GREEN] = bgra.g;
+												bits[FIRGBA_RED] = bgra.r;
+												bits[FIRGBA_ALPHA] = bgra.a;
+											} else {
+												bits[FIRGB_BLUE] = bgra.b;
+												bits[FIRGB_GREEN] = bgra.g;
+												bits[FIRGB_RED] = bgra.r;
+											}
 
 											bits += pixel_size;
 										}
@@ -815,16 +860,20 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 										BYTE *bits = Internal_GetScanLine(dib, count, flipvert);
 
 										for (unsigned cols = 0; cols < header.is_width; cols++) {
-											RGBQUAD rgb;
+											FILE_BGRA bgra;
 
-											io->read_proc(&rgb, sizeof(RGBQUAD), 1, handle);
+											io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
-											bits[0] = rgb.rgbBlue;
-											bits[1] = rgb.rgbGreen;
-											bits[2] = rgb.rgbRed;
-
-											if ((TARGA_LOAD_RGB888 & flags) != TARGA_LOAD_RGB888)
-												bits[3] = rgb.rgbReserved;											
+											if ((TARGA_LOAD_RGB888 & flags) != TARGA_LOAD_RGB888) {
+												bits[FIRGBA_BLUE] = bgra.b;
+												bits[FIRGBA_GREEN] = bgra.g;
+												bits[FIRGBA_RED] = bgra.r;
+												bits[FIRGBA_ALPHA] = bgra.a;
+											} else {
+												bits[FIRGB_BLUE] = bgra.b;
+												bits[FIRGB_GREEN] = bgra.g;
+												bits[FIRGB_RED] = bgra.r;
+											}
 
 											bits += pixel_size;
 										}
@@ -841,16 +890,20 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 										bits = Internal_GetScanLine(dib, count, flipvert);
 
 									for (unsigned cols = 0; cols < header.is_width; cols++) {
-										RGBQUAD rgb;
+										FILE_BGRA bgra;
 
-										io->read_proc(&rgb, sizeof(RGBQUAD), 1, handle);
+										io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
-										bits[0] = rgb.rgbBlue;
-										bits[1] = rgb.rgbGreen;
-										bits[2] = rgb.rgbRed;
-
-										if ((TARGA_LOAD_RGB888 & flags) != TARGA_LOAD_RGB888)
-											bits[3] = rgb.rgbReserved;											
+										if ((TARGA_LOAD_RGB888 & flags) != TARGA_LOAD_RGB888) {
+											bits[FIRGBA_BLUE] = bgra.b;
+											bits[FIRGBA_GREEN] = bgra.g;
+											bits[FIRGBA_RED] = bgra.r;
+											bits[FIRGBA_ALPHA] = bgra.a;
+										} else {
+											bits[FIRGB_BLUE] = bgra.b;
+											bits[FIRGB_GREEN] = bgra.g;
+											bits[FIRGB_RED] = bgra.r;
+										}
 
 										bits += pixel_size;
 									}
@@ -877,15 +930,16 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								if (rle>127) {
 									rle -= 127;
 
-									BGRAQUAD quad;
+									FILE_BGRA bgra;
 
-									io->read_proc(&quad, sizeof(BGRAQUAD), 1, handle);
+									io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
 									for (int ix = 0; ix < rle; ix++) {
-										bits[x++] = quad.bgraBlue;
-										bits[x++] = quad.bgraGreen;
-										bits[x++] = quad.bgraRed;
-										bits[x++] = quad.bgraAlpha;
+										bits[x + FIRGBA_BLUE] = bgra.b;
+										bits[x + FIRGBA_GREEN] = bgra.g;
+										bits[x + FIRGBA_RED] = bgra.r;
+										bits[x + FIRGBA_ALPHA] = bgra.a;
+										x += 4;
 
 										if (x >= line) {
 											x = 0;
@@ -904,21 +958,22 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									rle++;
 
 									for (int ix = 0; ix < rle; ix++) {
-										BGRAQUAD quad;
+										FILE_BGRA bgra;
 
-										io->read_proc(&quad, sizeof(BGRAQUAD), 1, handle);
+										io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
 
-										bits[x++] = quad.bgraBlue;
-										bits[x++] = quad.bgraGreen;
-										bits[x++] = quad.bgraRed;
-										bits[x++] = quad.bgraAlpha;
+										bits[x + FIRGBA_BLUE] = bgra.b;
+										bits[x + FIRGBA_GREEN] = bgra.g;
+										bits[x + FIRGBA_RED] = bgra.r;
+										bits[x + FIRGBA_ALPHA] = bgra.a;
+										x += 4;
 											
 										if (x >= line) {
 											x = 0;
 											y++;
 
 											if (y >= header.is_height)
-												goto done3210;											
+												goto done3210;
 
 											if (fliphoriz)
 												bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
@@ -990,40 +1045,46 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		// write the header
 
+#ifdef FREEIMAGE_BIGENDIAN
+		SwapHeader(&header);
+#endif
 		io->write_proc(&header, sizeof(header), 1, handle);
+#ifdef FREEIMAGE_BIGENDIAN
+		SwapHeader(&header);
+#endif
 
 		// write the palette	
 
 		if (palette) {
 			if(FreeImage_IsTransparent(dib)) {
-				BGRAQUAD *rgba_pal = (BGRAQUAD*)malloc(header.cm_length * sizeof(BGRAQUAD));
+				FILE_BGRA *bgra_pal = (FILE_BGRA*)malloc(header.cm_length * sizeof(FILE_BGRA));
 
 				// get the transparency table
 				BYTE *trns = FreeImage_GetTransparencyTable(dib);
 
 				for(int i = 0; i < header.cm_length; i++) {
-					rgba_pal[i].bgraBlue  = palette[i].rgbBlue;
-					rgba_pal[i].bgraGreen = palette[i].rgbGreen;
-					rgba_pal[i].bgraRed   = palette[i].rgbRed;
-					rgba_pal[i].bgraAlpha = trns[i];
+					bgra_pal[i].b = palette[i].rgbBlue;
+					bgra_pal[i].g = palette[i].rgbGreen;
+					bgra_pal[i].r = palette[i].rgbRed;
+					bgra_pal[i].a = trns[i];
 				}
 
-				io->write_proc(rgba_pal, sizeof(BGRAQUAD), header.cm_length, handle);
+				io->write_proc(bgra_pal, sizeof(FILE_BGRA), header.cm_length, handle);
 
-				free(rgba_pal);
+				free(bgra_pal);
 
 			} else {
-				RGBTRIPLE *rgb_pal = (RGBTRIPLE*)malloc(header.cm_length * sizeof(RGBTRIPLE));
+				FILE_BGR *bgr_pal = (FILE_BGR*)malloc(header.cm_length * sizeof(FILE_BGR));
 
 				for(int i = 0; i < header.cm_length; i++) {
-					rgb_pal[i].rgbtBlue  = palette[i].rgbBlue;
-					rgb_pal[i].rgbtGreen = palette[i].rgbGreen;
-					rgb_pal[i].rgbtRed   = palette[i].rgbRed;
+					bgr_pal[i].b = palette[i].rgbBlue;
+					bgr_pal[i].g = palette[i].rgbGreen;
+					bgr_pal[i].r = palette[i].rgbRed;
 				}
 
-				io->write_proc(rgb_pal, sizeof(RGBTRIPLE), header.cm_length, handle);
+				io->write_proc(bgr_pal, sizeof(FILE_BGR), header.cm_length, handle);
 
-				free(rgb_pal);
+				free(bgr_pal);
 			}
 		}
 
@@ -1033,7 +1094,52 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		for (int i = 0; i < header.is_height; ++i) {
 			BYTE *bits = FreeImage_GetScanLine(dib, i);
-			io->write_proc(bits, line, 1, handle);
+			switch(bpp) {
+				case 8:
+				{
+					io->write_proc(bits, line, 1, handle);
+					break;
+				}
+				case 16:
+				{
+					WORD pixel;
+					for(int x = 0; x < line; ++x) {
+						pixel = ((WORD *)bits)[x];
+#ifdef FREEIMAGE_BIGENDIAN
+						SwapShort(&pixel);
+#endif
+						io->write_proc(&pixel, sizeof(WORD), 1, handle);
+					}
+					break;
+				}
+				case 24:
+				{
+					FILE_BGR bgr;
+					RGBTRIPLE *trip;
+					for(int x = 0; x < line; ++x) {
+						trip = ((RGBTRIPLE *)bits)+x;
+						bgr.b = trip->rgbtBlue;
+						bgr.g = trip->rgbtGreen;
+						bgr.r = trip->rgbtRed;
+						io->write_proc(&bgr, sizeof(FILE_BGR), 1, handle);
+					}
+					break;
+				}
+				case 32:
+				{
+					FILE_BGRA bgra;
+					RGBQUAD *quad;
+					for(int x = 0; x < line; ++x) {
+						quad = ((RGBQUAD *)bits)+x;
+						bgra.b = quad->rgbBlue;
+						bgra.g = quad->rgbGreen;
+						bgra.r = quad->rgbRed;
+						bgra.a = quad->rgbReserved;
+						io->write_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
+					}
+					break;
+				}
+			}
 		}
 
 		// write the TARGA signature
@@ -1043,6 +1149,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		footer.extension_offset = 0;
 		strcpy(footer.signature, "TRUEVISION-XFILE.");
 
+#ifdef FREEIMAGE_BIGENDIAN
+		SwapFooter(&footer);
+#endif
 		io->write_proc(&footer, sizeof(footer), 1, handle);
 
 		return TRUE;
