@@ -42,6 +42,10 @@ int main(int argc, char *argv[]) {
 	unsigned width  = 512;
 	unsigned height = 512;
 
+#if defined(FREEIMAGE_LIB) || !defined(WIN32)
+	FreeImage_Initialise();
+#endif
+
 	// initialize our own FreeImage error handler
 
 	FreeImage_SetOutputMessage(FreeImageErrorHandler);
@@ -57,6 +61,10 @@ int main(int argc, char *argv[]) {
 	// test loading / saving / converting image types using the TIFF plugin
 	testImageTypeTIFF(width, height);
 	
+#if defined(FREEIMAGE_LIB) || !defined(WIN32)
+	FreeImage_DeInitialise();
+#endif
+
 	return 0;
 }
 
