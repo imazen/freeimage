@@ -138,8 +138,9 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 			}
 		}
 		else {
-			// get the tag key
+			// get the tag key and description
 			tag.key = (char*)tag_lib.getTagFieldName(TagLib::IPTC, tag.id);
+			tag.description = (char*)tag_lib.getTagDescription(TagLib::IPTC, tag.id);
 
 			// store the tag
 			if(tag.key) {
@@ -160,6 +161,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 		tag.type = FIDT_ASCII;
 		tag.id = TAG_KEYWORDS;
 		tag.key = (char*)tag_lib.getTagFieldName(TagLib::IPTC, tag.id);
+		tag.description = (char*)tag_lib.getTagDescription(TagLib::IPTC, tag.id);
 		tag.length = Keywords.length();
 		tag.count = tag.length;
 		tag.value = (char*)Keywords.c_str();

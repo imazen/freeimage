@@ -117,7 +117,7 @@ public:
 	/**
 	@brief Copy a sub part of the current image and returns it as a fipImage object.
 
-	The bit depth of the bitmap must be equal to 8, 16, 24 or 32.
+	The bit depth of the bitmap must be equal to 1, 4, 8, 16, 24 or 32.
 	@param dst Output subimage
 	@param left Specifies the left position of the cropped rectangle. 
 	@param top Specifies the top position of the cropped rectangle. 
@@ -131,7 +131,7 @@ public:
 	@brief Alpha blend or combine a sub part image with the current image.
 
     The bit depth of dst bitmap must be greater than or equal to the bit depth of src. 
-	Upper promotion of src is done internally. Supported bit depth equals to 8, 16, 24 or 32.
+	Upper promotion of src is done internally. Supported bit depth equals to 4, 8, 16, 24 or 32.
 	@param src Source subimage
 	@param left Specifies the left position of the sub image. 
 	@param top Specifies the top position of the sub image. 
@@ -224,7 +224,10 @@ public:
 	/// Returns the image height in pixels
 	WORD getHeight();
 	
-	/// Returns the width of the bitmap in bytes rounded to the nearest DWORD.
+	/**
+	Returns the width of the bitmap in bytes rounded to the nearest DWORD.
+	@see FreeImage_GetPitch
+	*/
 	WORD getScanWidth();
 
 	/// Returns a pointer to the FIBITMAP data. Used for direct access from FREEIMAGE functions.
@@ -254,7 +257,11 @@ public:
 	*/
 	WORD getBitsPerPixel();
 
-	/// Returns the width of the bitmap in bytes. 
+	/**
+	Returns the width of the bitmap in bytes.<br>
+	<b>This is not the size of the scanline</b>.
+	@see getScanWidth
+	*/
 	WORD getLine();
 
 	/// Returns the bitmap resolution along the X axis, in pixels / cm
@@ -297,14 +304,16 @@ public:
 
 	It is up to you to interpret these bytes correctly, 
 	according to the results of FreeImage_GetBPP and 
-	GetRedMask, FreeImage_GetGreenMask and FreeImage_GetBlueMask.
+	GetRedMask, FreeImage_GetGreenMask and FreeImage_GetBlueMask.<br>
+	Use this function with getScanWidth to iterates through the pixels. 
 	@see FreeImage_GetBits
 	*/
 	BYTE* accessPixels();
 
 	/** @brief Returns a pointer to the start of the given scanline in the bitmap’s data-bits.
-		This pointer can be cast according to the result returned by getImageType.
-		@see FreeImage_GetScanLine
+		This pointer can be cast according to the result returned by getImageType.<br>
+		Use this function with getScanWidth to iterates through the pixels. 
+		@see FreeImage_GetScanLine, FreeImage documentation
 	*/
 	BYTE* getScanLine(WORD scanline);
 
