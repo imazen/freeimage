@@ -52,6 +52,9 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, DWORD uDstSize, DWORD uSrc
 		m_WeightTable[u].Weights = (double*)malloc(m_WindowSize * sizeof(double));
 	}
 
+	// offset for discrete to continuous coordinate conversion
+	double dOffset = (0.5 / dScale) - 0.5;
+
 
 	for(u = 0; u < m_LineLength; u++) {
 		// scan through line of contributions
@@ -76,7 +79,7 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, DWORD uDstSize, DWORD uSrc
 		double dTotalWeight = 0.0;  // zero sum of weights
 		for(iSrc = iLeft; iSrc <= iRight; iSrc++) {
 			// calculate weights
-			double weight = dFScale * pFilter->Filter(dFScale * (dCenter - (double)iSrc));
+			double weight = dFScale * pFilter->Filter(dFScale * (dCenter - (double)iSrc + dOffset));
 			m_WeightTable[u].Weights[iSrc-iLeft] = weight;
 			dTotalWeight += weight;
 		}
