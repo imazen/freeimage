@@ -195,7 +195,7 @@ FreeImage_AdjustCurve(FIBITMAP *src, BYTE *LUT, FREE_IMAGE_COLOR_CHANNEL channel
 					break;
 					
 				case FICC_ALPHA :
-					if(bpp = 32) {
+					if(32 == bpp) {
 						for(y = 0; y < FreeImage_GetHeight(src); y++) {
 							bits =  FreeImage_GetScanLine(src, y);
 							for(x = 0; x < FreeImage_GetWidth(src); x++) {

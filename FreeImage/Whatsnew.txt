@@ -9,6 +9,7 @@ Month day, 2004 - 3.3.1
 * [Herve Drolon] fixed a bug with loading of FAX TIFF images (introduced with LibTIFF 3.6.1)
 * [Herve Drolon] fixed a bug in Floyd-Steinberg dithering algorithm
 * [Herve Drolon] fixed a bug in Targa plugin save function
+* [Herve Drolon] fixed a bug in FreeImage_AdjustCurve function
 
 May 2, 2004 - 3.3.0
 ! [Ryan Rubley] FreeImage has been ported to MacOSX and should also work on other big endian processors
