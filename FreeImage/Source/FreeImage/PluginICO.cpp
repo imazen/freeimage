@@ -572,9 +572,105 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 #ifdef FREEIMAGE_BIGENDIAN
 			}
 #endif
-			// empty AND mask
+			// AND mask
 			BYTE *and_mask = (BYTE*)malloc(size_and);
-			memset(and_mask, 0, size_and);
+
+			if(FreeImage_IsTransparent(dib)) {
+
+				if(bit_count == 32) {
+					// create the AND mask from the alpha channel
+
+					int width_and  = WidthBytes(width);
+					BYTE *and_bits = and_mask;
+
+					// clear the mask
+					memset(and_mask, 0, size_and);
+
+					for(int y = 0; y < height; y++) {
+						RGBQUAD *bits = (RGBQUAD*)FreeImage_GetScanLine(dib, y);
+
+						for(int x = 0; x < width; x++) {
+							if(bits[x].rgbReserved != 0xFF) {
+								// set any transparent color to full transparency
+								and_bits[x >> 3] |= (0x80 >> (x & 0x7)); 
+							}
+						}
+
+						and_bits += width_and;
+					}
+				} 
+				else if(bit_count <= 8) {
+					// create the AND mask from the transparency table
+
+					BYTE *trns = FreeImage_GetTransparencyTable(dib);
+
+					int width_and  = WidthBytes(width);
+					BYTE *and_bits = and_mask;
+
+					// clear the mask
+					memset(and_mask, 0, size_and);
+
+					switch(FreeImage_GetBPP(dib)) {
+						case 1:
+						{
+							for(int y = 0; y < height; y++) {
+								BYTE *bits = (BYTE*)FreeImage_GetScanLine(dib, y);
+								for(int x = 0; x < width; x++) {
+									// get pixel at (x, y)
+									BYTE index = (bits[x >> 3] & (0x80 >> (x & 0x07))) != 0;
+									if(trns[index] != 0xFF) {
+										// set any transparent color to full transparency
+										and_bits[x >> 3] |= (0x80 >> (x & 0x7)); 
+									}
+								}
+								and_bits += width_and;
+							}
+						}
+						break;
+
+						case 4:
+						{
+							for(int y = 0; y < height; y++) {
+								BYTE *bits = (BYTE*)FreeImage_GetScanLine(dib, y);
+								for(int x = 0; x < width; x++) {
+									// get pixel at (x, y)
+									BYTE shift = (BYTE)((1 - x % 2) << 2);
+									BYTE index = (bits[x >> 1] & (0x0F << shift)) >> shift;
+									if(trns[index] != 0xFF) {
+										// set any transparent color to full transparency
+										and_bits[x >> 3] |= (0x80 >> (x & 0x7)); 
+									}
+								}
+								and_bits += width_and;
+							}
+						}
+						break;
+
+						case 8:
+						{
+							for(int y = 0; y < height; y++) {
+								BYTE *bits = (BYTE*)FreeImage_GetScanLine(dib, y);
+								for(int x = 0; x < width; x++) {
+									// get pixel at (x, y)
+									BYTE index = bits[x];
+									if(trns[index] != 0xFF) {
+										// set any transparent color to full transparency
+										and_bits[x >> 3] |= (0x80 >> (x & 0x7)); 
+									}
+								}
+								and_bits += width_and;
+							}
+						}
+						break;
+
+					}
+				}
+			}
+			else {
+				// empty AND mask
+				memset(and_mask, 0, size_and);
+			}
+
 			io->write_proc(and_mask, size_and, 1, handle);
 			free(and_mask);
 
