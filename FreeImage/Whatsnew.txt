@@ -22,6 +22,8 @@ Month day, 2004 - 3.4.0
 * [Herve Drolon] fixed a bug with TIFF files containing additional Photoshop alpha channels
 * [James Rossfeld] fixed a memory leak with some PSD images
 * [Herve Drolon] fixed a bug with saving of 32-bit non transparent PNG images
+* [Alexandr Zamaraev] fixed FreeImage not compiling with mingw32
+* [Herve Drolon] fixed FreeImage not compiling with VC.NET (pow function needs casts)
 
 May 2, 2004 - 3.3.0
 ! [Ryan Rubley] FreeImage has been ported to MacOSX and should also work on other big endian processors
