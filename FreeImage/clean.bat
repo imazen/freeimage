@@ -20,6 +20,11 @@ rd Source\Zlib\Debug /s /q
 rd Source\Zlib\Release /s /q
 rd TestAPI\Debug /s /q
 rd TestAPI\Release /s /q
+del TestAPI\blob.png
+del TestAPI\buffer.png
+del TestAPI\dump.png
+del TestAPI\TestImageType.tif
+del TestAPI\zoneplate.png
 del Dist\FreeImage.h
 del *.pch /s /q
 del *.ncb /s /q

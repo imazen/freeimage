@@ -135,9 +135,6 @@ typedef unsigned long DWORD;
 typedef long LONG;
 
 #if (defined(WIN32) || defined(__WIN32__))
-#if (defined(_DEBUG))
-#include <crtdbg.h>
-#endif
 #pragma pack(push, 1)
 #else
 #pragma pack(1)

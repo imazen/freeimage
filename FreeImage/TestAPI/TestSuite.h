@@ -30,6 +30,12 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
+#if (defined(WIN32) || defined(__WIN32__))
+#if (defined(_DEBUG))
+#include <crtdbg.h>
+#endif
+#endif // WIN32
+
 
 // Some useful tools
 // ==========================================================
