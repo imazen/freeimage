@@ -5,7 +5,7 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month Day, 2004 - 3.2.2
+Month Day, 2004 - 3.3.0
 ! [Ryan Rubley] FreeImage has been ported to MacOSX and should also work on other big endian processors
 + [Ryan Rubley] rewrote XPM plugin (better load support) and added save support
 + [Ryan Rubley] added ICO_MAKEALPHA flag to ICO plugin
@@ -13,6 +13,7 @@ Month Day, 2004 - 3.2.2
 * [Herve Drolon] fixed a bug with loading of 8-bit and 16-bit PNG with a 8-bit alpha channel
 * [Herve Drolon] fixed a bug in NN quantizer algorithm with handling of 4-byte boundary alignment.
 * [Herve Drolon] fixed a bug in PluginIFF Validate function
+* [Herve Drolon] fixed a minor bug in FreeImage_GetFIFFromFormat
 
 March 16, 2004 - 3.2.1
 ! [Volker Gärtner] improved the DDS plugin

@@ -630,43 +630,39 @@ FreeImage_GetFIFFromFilename(const char *filename) {
 		// look for the extension in the plugin table
 
 		for (int i = 0; i < FreeImage_GetFIFCount(); ++i) {
-			// compare the format id with the extension
 
-			if (FreeImage_stricmp(FreeImage_GetFormatFromFIF((FREE_IMAGE_FORMAT)i), extension) == 0) {
-				if (s_plugins->FindNodeFromFIF(i)->m_enabled) {
+			if (s_plugins->FindNodeFromFIF(i)->m_enabled) {
+
+				// compare the format id with the extension
+
+				if (FreeImage_stricmp(FreeImage_GetFormatFromFIF((FREE_IMAGE_FORMAT)i), extension) == 0) {
 					return (FREE_IMAGE_FORMAT)i;
 				} else {
-					return FIF_UNKNOWN;
-				}
-			} else {
-				// make a copy of the extension list and split it
+					// make a copy of the extension list and split it
 
-				char *copy = (char *)malloc(strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
-				memset(copy, 0, strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
-				memcpy(copy, FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i), strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)));
+					char *copy = (char *)malloc(strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
+					memset(copy, 0, strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
+					memcpy(copy, FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i), strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)));
 
-				// get the first token
+					// get the first token
 
-				char *token = strtok(copy, ",");
+					char *token = strtok(copy, ",");
 
-				while (token != NULL) {
-					if (FreeImage_stricmp(token, extension) == 0) {
-						free(copy);
+					while (token != NULL) {
+						if (FreeImage_stricmp(token, extension) == 0) {
+							free(copy);
 
-						if (s_plugins->FindNodeFromFIF(i)->m_enabled) {							
 							return (FREE_IMAGE_FORMAT)i;
-						} else {
-							return FIF_UNKNOWN;
 						}
+
+						token = strtok(NULL, ",");
 					}
 
-					token = strtok(NULL, ",");
-				}
+					// free the copy of the extension list
 
-				// free the copy of the extension list
-
-				free(copy);
-			}	
+					free(copy);
+				}	
+			}
 		}
 	}
 
