@@ -178,6 +178,7 @@ Validate(FreeImageIO *io, fi_handle handle) {
 	SwapLong(&type);
 #endif
 
+	// File format : ID_PBM = Packed Bitmap, ID_ILBM = Interleaved Bitmap
 	return (type == ID_ILBM) || (type == ID_PBM);
 }
 
@@ -197,7 +198,7 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	if (handle != NULL) {
-		FIBITMAP *dib = 0;
+		FIBITMAP *dib = NULL;
 
 		DWORD type, size;
 
@@ -241,7 +242,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			unsigned ch_end = io->tell_proc(handle) + ch_size;
 
-			if (ch_type == ID_BMHD) {
+			if (ch_type == ID_BMHD) {			// Bitmap Header
 				if (dib)
 					FreeImage_Unload(dib);
 
@@ -257,6 +258,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				planes = bmhd.nPlanes;
 				comp = bmhd.compression;
 
+				if(bmhd.masking & 1)
+					planes++;	// there is a mask ( 'stencil' )
+
 				if (planes > 8 && planes != 24)
 					return NULL;
 
@@ -267,7 +271,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				} else {
 					dib = FreeImage_Allocate(width, height, depth);
 				}
-			} else if (ch_type == ID_CMAP) {
+			} else if (ch_type == ID_CMAP) {	// Palette (Color Map)
 				if (!dib)
 					return NULL;
 
@@ -287,7 +291,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					unsigned line = FreeImage_GetLine(dib) + 1 & ~1;
 					
-					for (unsigned i = 0; i < FreeImage_GetHeight(dib); ++i) {
+					for (unsigned i = 0; i < FreeImage_GetHeight(dib); i++) {
 						BYTE *bits = FreeImage_GetScanLine(dib, FreeImage_GetHeight(dib) - i - 1);
 
 						if (comp == 1) {
@@ -329,40 +333,55 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					unsigned n_width=(width+15)&~15;
 					unsigned plane_size = n_width/8;
 					unsigned src_size = plane_size * planes;
-					unsigned char *src = (unsigned char*)malloc(src_size);
-					unsigned char *dest = FreeImage_GetBits(dib);
+					BYTE *src = (BYTE*)malloc(src_size);
+					BYTE *dest = FreeImage_GetBits(dib);
 
 					dest += FreeImage_GetPitch(dib) * height;
 
-					for (unsigned y = 0; y < height; ++y) {
+					for (unsigned y = 0; y < height; y++) {
 						dest -= FreeImage_GetPitch(dib);
 
 						// read all planes in one hit,
 						// 'coz PSP compresses across planes...
 
 						if (comp) {
-							for(unsigned x = 0; x < src_size;){
+							// unpacker algorithm
+
+							for(unsigned x = 0; x < src_size;) {
+								// read the next source byte into t
 								signed char t = 0;
-
 								io->read_proc(&t, 1, 1, handle);
-
+								
 								if (t >= 0) {
+									// t = [0..127] => copy the next t+1 bytes literally
 									unsigned size_to_read = t + 1;
 
-									io->read_proc(src + x, size_to_read, 1, handle);
-
-									x += size_to_read;
-								} else if (t != -128){
-									signed char b = 0;
-
+									if((size_to_read + x) > src_size) {
+										// sanity check for buffer overruns 
+										size_to_read = src_size - x;
+										io->read_proc(src + x, size_to_read, 1, handle);
+										x += (t + 1);
+									} else {
+										io->read_proc(src + x, size_to_read, 1, handle);
+										x += size_to_read;
+									}
+								} else if (t != -128) {
+									// t = [-1..-127]  => replicate the next byte -t+1 times
+									BYTE b = 0;
 									io->read_proc(&b, 1, 1, handle);
+									unsigned size_to_copy = (unsigned)(-(int)t + 1);
 
-									t =- t +1;
-
-									memset(src + x, b, t);
-
-									x += t;
+									if((size_to_copy + x) > src_size) {
+										// sanity check for buffer overruns 
+										size_to_copy = src_size - x;
+										memset(src + x, b, size_to_copy);
+										x += (unsigned)(-(int)t + 1);
+									} else {
+										memset(src + x, b, size_to_copy);
+										x += size_to_copy;
+									}
 								}
+								// t = -128 => noop
 							}
 						} else {
 							io->read_proc(src, src_size, 1, handle);
@@ -370,9 +389,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						// lazy planar->chunky...
 
-						for (unsigned x = 0; x < width; ++x) {
-							for (unsigned n = 0; n < planes; ++n) {
-								char bit = src[n * plane_size + (x / 8)] >> ((x^7) & 7);
+						for (unsigned x = 0; x < width; x++) {
+							for (unsigned n = 0; n < planes; n++) {
+								BYTE bit = src[n * plane_size + (x / 8)] >> ((x^7) & 7);
 
 								dest[x * pixel_size + (n / 8)] |= (bit & 1) << (n & 7);
 							}
@@ -381,7 +400,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 #ifndef FREEIMAGE_BIGENDIAN
 						if (depth == 24) {
 							for (unsigned x = 0; x < width; ++x){
-								INPLACESWAP(dest[x * 3],dest[x * 3 + 2]);
+								INPLACESWAP(dest[x * 3], dest[x * 3 + 2]);
 							}
 						}
 #endif
