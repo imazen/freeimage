@@ -5,6 +5,7 @@
 // - Floris van den Berg (flvdberg@wxs.nl)
 // - Rui Lopes (ruiglopes@yahoo.com)
 // - Detlev Vendt (detlev.vendt@brillit.de)
+// - Petr Pytelka (pyta@lightcomp.com)
 //
 // This file is part of FreeImage 3
 //
@@ -151,7 +152,7 @@ PluginList::FindNodeFromMime(const char *mime) {
 	for (map<int, PluginNode *>::iterator i = m_plugin_map.begin(); i != m_plugin_map.end(); ++i) {
 		const char *the_mime = ((*i).second->m_plugin->mime_proc != NULL) ? (*i).second->m_plugin->mime_proc() : "";
 
-		if (strcmp(the_mime, mime) == 0)
+		if ((the_mime != NULL) && (strcmp(the_mime, mime) == 0))
 			return (*i).second;		
 
 		count++;
@@ -238,8 +239,8 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 			s_plugins->AddNode(InitXBM);
 			s_plugins->AddNode(InitXPM);
 			s_plugins->AddNode(InitDDS);
-            s_plugins->AddNode(InitGIF);
-
+	        s_plugins->AddNode(InitGIF);
+			
 			// external plugin initialization
 
 #ifdef WIN32
@@ -344,18 +345,18 @@ FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handl
 		if (node != NULL) {
 			if (node->m_enabled) {
 				if(node->m_plugin->load_proc != NULL) {
-					FIBITMAP *bitmap = NULL;
+				FIBITMAP *bitmap = NULL;
 
-					void *data = FreeImage_Open(node, io, handle, TRUE);
+				void *data = FreeImage_Open(node, io, handle, TRUE);
 
-					bitmap = node->m_plugin->load_proc(io, handle, -1, flags, data);
+				bitmap = node->m_plugin->load_proc(io, handle, -1, flags, data);
 
-					FreeImage_Close(node, io, handle, data);
+				FreeImage_Close(node, io, handle, data);
 
-					return bitmap;
-				}
+				return bitmap;
 			}
 		}
+	}
 	}
 
 	return NULL;
@@ -387,18 +388,18 @@ FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FreeImageIO *io, fi
 		if (node) {
 			if (node->m_enabled) {
 				if(node->m_plugin->save_proc != NULL) {
-					BOOL result = FALSE;
+				BOOL result = FALSE;
 
-					void *data = FreeImage_Open(node, io, handle, FALSE);
+				void *data = FreeImage_Open(node, io, handle, FALSE);
 
-					result = node->m_plugin->save_proc(io, dib, handle, -1, flags, data);
+				result = node->m_plugin->save_proc(io, dib, handle, -1, flags, data);
 
-					FreeImage_Close(node, io, handle, data);
+				FreeImage_Close(node, io, handle, data);
 
-					return result;
-				}
+				return result;
 			}
 		}
+	}
 	}
 
 	return FALSE;
@@ -524,6 +525,17 @@ FreeImage_GetFormatFromFIF(FREE_IMAGE_FORMAT fif) {
 	return NULL;
 }
 
+const char * DLL_CALLCONV 
+FreeImage_GetFIFMimeType(FREE_IMAGE_FORMAT fif) {
+	if (s_plugins != NULL) {
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
+
+		return (node != NULL) ? (node->m_plugin != NULL) ? ( node->m_plugin->mime_proc != NULL )? node->m_plugin->mime_proc() : NULL : NULL : NULL;
+	}
+
+	return NULL;
+}
+
 const char * DLL_CALLCONV
 FreeImage_GetFIFExtensionList(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
@@ -634,35 +646,35 @@ FreeImage_GetFIFFromFilename(const char *filename) {
 
 			if (s_plugins->FindNodeFromFIF(i)->m_enabled) {
 
-				// compare the format id with the extension
+			// compare the format id with the extension
 
-				if (FreeImage_stricmp(FreeImage_GetFormatFromFIF((FREE_IMAGE_FORMAT)i), extension) == 0) {
+			if (FreeImage_stricmp(FreeImage_GetFormatFromFIF((FREE_IMAGE_FORMAT)i), extension) == 0) {
 					return (FREE_IMAGE_FORMAT)i;
 				} else {
-					// make a copy of the extension list and split it
+				// make a copy of the extension list and split it
 
-					char *copy = (char *)malloc(strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
-					memset(copy, 0, strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
-					memcpy(copy, FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i), strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)));
+				char *copy = (char *)malloc(strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
+				memset(copy, 0, strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
+				memcpy(copy, FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i), strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)));
 
-					// get the first token
+				// get the first token
 
-					char *token = strtok(copy, ",");
+				char *token = strtok(copy, ",");
 
-					while (token != NULL) {
-						if (FreeImage_stricmp(token, extension) == 0) {
-							free(copy);
+				while (token != NULL) {
+					if (FreeImage_stricmp(token, extension) == 0) {
+						free(copy);
 
 							return (FREE_IMAGE_FORMAT)i;
-						}
-
-						token = strtok(NULL, ",");
 					}
 
-					// free the copy of the extension list
+					token = strtok(NULL, ",");
+				}
 
-					free(copy);
-				}	
+				// free the copy of the extension list
+
+				free(copy);
+			}	
 			}
 		}
 	}

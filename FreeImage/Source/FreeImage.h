@@ -21,6 +21,7 @@
 // - Martin Weber (martweb@gmx.net)
 // - Matthias Wandel (mwandel@rim.net)
 // - Michal Novotny (michal@etc.cz)
+// - Petr Pytelka (pyta@lightcomp.com)
 // - Ryan Rubley (ryan@lostreality.org)
 // - Volker Gärtner (volkerg@gmx.at)
 //
@@ -55,6 +56,11 @@
 #define DLL_CALLCONV
 #else
 #define WIN32_LEAN_AND_MEAN
+
+#ifdef __MINGW32__		// prevents a bug in mingw32
+#include <windows.h>
+#endif // __MINGW32__
+
 #define DLL_CALLCONV __stdcall
 // The following ifdef block is the standard way of creating macros which make exporting 
 // from a DLL simpler. All files within this DLL are compiled with the FREEIMAGE_EXPORTS
@@ -548,7 +554,8 @@ DLL_API FREE_IMAGE_FORMAT DLL_CALLCONV FreeImage_GetFIFFromMime(const char *mime
 DLL_API const char *DLL_CALLCONV FreeImage_GetFormatFromFIF(FREE_IMAGE_FORMAT fif);
 DLL_API const char *DLL_CALLCONV FreeImage_GetFIFExtensionList(FREE_IMAGE_FORMAT fif);
 DLL_API const char *DLL_CALLCONV FreeImage_GetFIFDescription(FREE_IMAGE_FORMAT fif);
-DLL_API const char * DLL_CALLCONV FreeImage_GetFIFRegExpr(FREE_IMAGE_FORMAT fif);
+DLL_API const char *DLL_CALLCONV FreeImage_GetFIFRegExpr(FREE_IMAGE_FORMAT fif);
+DLL_API const char *DLL_CALLCONV FreeImage_GetFIFMimeType(FREE_IMAGE_FORMAT fif);
 DLL_API FREE_IMAGE_FORMAT DLL_CALLCONV FreeImage_GetFIFFromFilename(const char *filename);
 DLL_API BOOL DLL_CALLCONV FreeImage_FIFSupportsReading(FREE_IMAGE_FORMAT fif);
 DLL_API BOOL DLL_CALLCONV FreeImage_FIFSupportsWriting(FREE_IMAGE_FORMAT fif);
