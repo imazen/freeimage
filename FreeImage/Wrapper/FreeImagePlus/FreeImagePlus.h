@@ -230,7 +230,16 @@ public:
 	*/
 	WORD getScanWidth();
 
-	/// Returns a pointer to the FIBITMAP data. Used for direct access from FREEIMAGE functions.
+	/**
+	Returns a pointer to the FIBITMAP data. Used for direct access from FREEIMAGE functions.<br>
+	<b>Sample use</b> : <br>
+	<pre>
+	fipImage src, dst;
+	src.load("test.png");
+	dst = FreeImage_Invert(src);
+	</pre>
+	@see operator=(FIBITMAP *dib)
+	*/
 	operator FIBITMAP*() { 
 		return _dib; 
 	}
