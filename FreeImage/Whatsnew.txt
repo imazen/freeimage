@@ -10,6 +10,7 @@ Month Day, 2004 - 3.5.0
 ! FreeImage now uses libTIFF 3.7.0
 ! FreeImage now uses libMNG 1.0.8
 ! [Hervé Drolon] improved TIFF LZW compression using a predictor
+! [Detlev Vendt] FreeImagesPlus: corrected references to FreeImage.h and FreeImage.lib
 + [Herve Drolon] added support for loading/saving of 8-bit transparent TIFF
 + [Riley McNiff] added support for 4-bit dib in FreeImage_Paste
 + [Herve Drolon] added support for memory IO streams (see below)
