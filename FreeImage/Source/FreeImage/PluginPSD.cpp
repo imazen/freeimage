@@ -41,8 +41,8 @@
 		xxxp = xxxbits; \
 	}
 
-#define BP_SETVALUE(VALUE) \
-	*xxxp |= VALUE;
+#define BP_SETVALUE(VALUE, OFFSET) \
+	((unsigned char *)xxxp)[OFFSET] = VALUE;
 
 // ==========================================================
 // Internal functions
@@ -50,7 +50,7 @@
 
 static unsigned
 Read8(FreeImageIO *io, fi_handle handle) {
-	unsigned i = 0;
+	unsigned char i = 0;
 	io->read_proc(&i, 1, 1, handle);
 	return i;
 }
@@ -183,12 +183,12 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 	// some formatting information about the channels
 
 	const struct ChannelInfo {
-		int	shift, mask, deflt;
+		int	ofs, deflt;
 	} Channel[4] = {
-		{ 16, 0x00FF0000, 0 },	// red
-		{  8, 0x0000FF00, 0 },	// green
-		{  0, 0x000000FF, 0 },	// blue
-		{ 24, 0xFF000000, 255 }	// alpha
+		{  FIRGBA_RED,   0 },	// red
+		{  FIRGBA_GREEN, 0 },	// green
+		{  FIRGBA_BLUE,  0 },	// blue
+		{  FIRGBA_ALPHA, 255 }	// alpha
 	};
 
 	// Create the destination bitmap
@@ -204,7 +204,7 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 
 		// read the RLE data by channel
 
-		for (int channel = 0; channel < (channel_count > 4 ? 4 : channel_count); channel++) {
+		for (int channel = 0; channel < 4; channel++) {
 			const ChannelInfo &c = Channel[channel];
 
 			BP_START(dib, width, height)
@@ -212,10 +212,8 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 			if (channel >= channel_count) {
 				// fill this channel with default data.
 
-				unsigned def = (c.deflt << c.shift) & c.mask;
-
 				for (int i = 0; i < width * height; i++) {
-					BP_SETVALUE(def);
+					BP_SETVALUE(c.deflt, c.ofs);
 					BP_NEXT(dib, width, height)
 				}
 			} else {
@@ -235,7 +233,7 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 						count += len;
 
 						while (len) {
-							BP_SETVALUE(((Read8(io, handle) << c.shift) & c.mask));
+							BP_SETVALUE(Read8(io, handle), c.ofs);
 							BP_NEXT(dib, width, height)
 
 							len--;
@@ -248,10 +246,10 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 						len += 2;
 						count += len;
 
-						unsigned val = (Read8(io, handle) << c.shift) & c.mask;
+						unsigned val = Read8(io, handle);
 
 						while (len) {
-							BP_SETVALUE(val);
+							BP_SETVALUE(val, c.ofs);
 							BP_NEXT(dib, width, height)
 
 							len--;
@@ -272,17 +270,15 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 			if (channel > channel_count) {
 				// fill this channel with default data.
 
-				unsigned def = (c.deflt << c.shift) & c.mask;
-
 				for (int i = 0; i < width * height; i++) {
-					BP_SETVALUE(def);
+					BP_SETVALUE(c.deflt, c.ofs);
 					BP_NEXT(dib, width, height)
 				}
 			} else {
 				// read the data
 
 				for (int i = 0; i < width * height; i++) {
-					BP_SETVALUE((Read8(io, handle) << c.shift) & c.mask);
+					BP_SETVALUE(Read8(io, handle), c.ofs);
 					BP_NEXT(dib, width, height)
 				}
 			}
