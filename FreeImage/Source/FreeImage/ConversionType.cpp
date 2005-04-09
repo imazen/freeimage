@@ -193,6 +193,19 @@ CONVERT_TO_BYTE<long>			convertLongToByte;
 CONVERT_TO_BYTE<float>			convertFloatToByte;
 CONVERT_TO_BYTE<double>			convertDoubleToByte;
 
+// Convert from type X to type float
+CONVERT_TYPE<float, unsigned short>	convertUShortToFloat;
+CONVERT_TYPE<float, short>			convertShortToFloat;
+CONVERT_TYPE<float, unsigned long>	convertULongToFloat;
+CONVERT_TYPE<float, long>			convertLongToFloat;
+
+// Convert from type X to type double
+CONVERT_TYPE<double, unsigned short>	convertUShortToDouble;
+CONVERT_TYPE<double, short>				convertShortToDouble;
+CONVERT_TYPE<double, unsigned long>		convertULongToDouble;
+CONVERT_TYPE<double, long>				convertLongToDouble;
+CONVERT_TYPE<double, float>				convertFloatToDouble;
+
 // Convert from type X to type FICOMPLEX
 CONVERT_TO_COMPLEX<BYTE>			convertByteToComplex;
 CONVERT_TO_COMPLEX<unsigned short>	convertUShortToComplex;
@@ -323,8 +336,10 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_INT32:
 					break;
 				case FIT_FLOAT:
+					dst = convertUShortToFloat.convert(src, dst_type);
 					break;
 				case FIT_DOUBLE:
+					dst = convertUShortToDouble.convert(src, dst_type);
 					break;
 				case FIT_COMPLEX:
 					dst = convertUShortToComplex.convert(src);
@@ -341,8 +356,10 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_INT32:
 					break;
 				case FIT_FLOAT:
+					dst = convertShortToFloat.convert(src, dst_type);
 					break;
 				case FIT_DOUBLE:
+					dst = convertShortToDouble.convert(src, dst_type);
 					break;
 				case FIT_COMPLEX:
 					dst = convertShortToComplex.convert(src);
@@ -361,8 +378,10 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_INT32:
 					break;
 				case FIT_FLOAT:
+					dst = convertULongToFloat.convert(src, dst_type);
 					break;
 				case FIT_DOUBLE:
+					dst = convertULongToDouble.convert(src, dst_type);
 					break;
 				case FIT_COMPLEX:
 					dst = convertULongToComplex.convert(src);
@@ -381,8 +400,10 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_UINT32:
 					break;
 				case FIT_FLOAT:
+					dst = convertLongToFloat.convert(src, dst_type);
 					break;
 				case FIT_DOUBLE:
+					dst = convertLongToDouble.convert(src, dst_type);
 					break;
 				case FIT_COMPLEX:
 					dst = convertLongToComplex.convert(src);
@@ -403,6 +424,7 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_INT32:
 					break;
 				case FIT_DOUBLE:
+					dst = convertFloatToDouble.convert(src, dst_type);
 					break;
 				case FIT_COMPLEX:
 					dst = convertFloatToComplex.convert(src);
