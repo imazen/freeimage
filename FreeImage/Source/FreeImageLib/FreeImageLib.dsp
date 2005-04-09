@@ -136,6 +136,10 @@ SOURCE=..\FreeImage\Conversion8.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\FreeImage\ConversionRGBF.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\FreeImage\ConversionType.cpp
 # End Source File
 # Begin Source File

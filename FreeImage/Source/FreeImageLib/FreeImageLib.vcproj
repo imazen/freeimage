@@ -456,6 +456,9 @@ copy ..\FreeImage.h ..\..\Dist
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\FreeImage\ConversionRGBF.cpp">
+				</File>
+				<File
 					RelativePath="..\FreeImage\ConversionType.cpp">
 					<FileConfiguration
 						Name="Debug|Win32">
