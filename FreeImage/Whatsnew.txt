@@ -12,6 +12,7 @@ Month day, 2005 - 3.6.2
 + [Herve Drolon] FreeImage_FlipHorizontal & FreeImage_FlipVertical now work with any bitmap type
 + [Herve Drolon] added conversions to float and double in FreeImage_ConvertToType
 + [Herve Drolon] added FreeImage_ConvertToRGBF
++ [Herve Drolon] added support for 16-, 48- and 96-bit images to FreeImage_Rescale
 * [Herve Drolon] allowed loading of corrupted JPEG with a premature end of file
 * [Herve Drolon] fixed a memory leak with loading of exif JPEG images
 * [Detlev Vendt] changed some 'pointer-to-int' casts to 'pointer-to-long' for 64bit machines

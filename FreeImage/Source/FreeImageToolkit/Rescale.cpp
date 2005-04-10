@@ -78,7 +78,9 @@ FreeImage_Rescale(FIBITMAP *src, int dst_width, int dst_height, FREE_IMAGE_FILTE
 		}
 	}
 	else {
-		// normal case (8-bit greyscale, 24- or 32-bit images)
+		// normal case : 
+		// 8-bit greyscale, 24- or 32-bit RGB(A) images
+		// 16-bit greyscale, 48- or 96-bit RGB(A) images
 		dst = Engine.scale(src, dst_width, dst_height);
 	}
 

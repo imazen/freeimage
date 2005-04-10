@@ -135,10 +135,16 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 	DWORD src_width  = FreeImage_GetWidth(src); 
 	DWORD src_height = FreeImage_GetHeight(src);
 
+	unsigned redMask	= FreeImage_GetRedMask(src);
+	unsigned greenMask	= FreeImage_GetGreenMask(src);
+	unsigned blueMask	= FreeImage_GetBlueMask(src);
+
 	unsigned bpp = FreeImage_GetBPP(src);
 
+	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(src);
+
 	// allocate the dst image
-	FIBITMAP *dst = FreeImage_Allocate(dst_width, dst_height, bpp);
+	FIBITMAP *dst = FreeImage_AllocateT(image_type, dst_width, dst_height, bpp, redMask, greenMask, blueMask);
 	if(!dst) return NULL;
 
 	if(bpp == 8) {
@@ -157,7 +163,7 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 		// -------------
 
 		// allocate a temporary image
-		FIBITMAP *tmp = FreeImage_Allocate(dst_width, src_height, bpp);
+		FIBITMAP *tmp = FreeImage_AllocateT(image_type, dst_width, src_height, bpp, redMask, greenMask, blueMask);
 		if(!tmp) {
 			FreeImage_Unload(dst);
 			return NULL;
@@ -177,7 +183,7 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 		// -------------
 
 		// allocate a temporary image
-		FIBITMAP *tmp = FreeImage_Allocate(src_width, dst_height, bpp);
+		FIBITMAP *tmp = FreeImage_AllocateT(image_type, src_width, dst_height, bpp, redMask, greenMask, blueMask);
 		if(!tmp) {
 			FreeImage_Unload(dst);
 			return NULL;
@@ -211,15 +217,15 @@ void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned
 		// allocate and calculate the contributions
 		CWeightsTable weightsTable(m_pFilter, dst_width, src_width); 
 		
-		// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
-		unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
-
 		// step through rows
 		switch(FreeImage_GetBPP(src)) {
 			case 8:
 			case 24:
 			case 32:
 			{
+				// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+				unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+
 				for(unsigned y = 0; y < dst_height; y++) {
 					// scale each row 
 					BYTE *src_bits = FreeImage_GetScanLine(src, y);
@@ -252,6 +258,47 @@ void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned
 				}
 			}
 			break;
+
+			case 16:
+			case 48:
+			case 64:
+			{
+				// Calculate the number of words per pixel (1 for 16-bit, 3 for 48-bit or 4 for 96-bit)
+				unsigned wordspp = (FreeImage_GetLine(src) / FreeImage_GetWidth(src)) / sizeof(WORD);
+
+				for(unsigned y = 0; y < dst_height; y++) {
+					// scale each row 
+					WORD *src_bits = (WORD*)FreeImage_GetScanLine(src, y);
+					WORD *dst_bits = (WORD*)FreeImage_GetScanLine(dst, y);
+
+					for(unsigned x = 0; x < dst_width; x++) {
+						// loop through row
+						double value[4] = {0, 0, 0, 0};					// 4 = 64bpp max
+						int iLeft = weightsTable.getLeftBoundary(x);    // retrieve left boundary
+						int iRight = weightsTable.getRightBoundary(x);  // retrieve right boundary
+
+						for(int i = iLeft; i <= iRight; i++) {
+							// scan between boundaries
+							// accumulate weighted effect of each neighboring pixel
+							double weight = weightsTable.getWeight(x, i-iLeft);
+							
+							index = i * wordspp;
+							for (unsigned j = 0; j < wordspp; j++) {
+								value[j] += (weight * (double)src_bits[index++]); 
+							}
+						} 
+
+						// clamp and place result in destination pixel
+						for (unsigned j = 0; j < wordspp; j++) {
+							dst_bits[j] = (BYTE)MIN(MAX((WORD)0, (WORD)(value[j] + 0.5)), (WORD)0xFFFF);
+						}
+
+						dst_bits += wordspp;
+					} 
+				}
+			}
+			break;
+
 		}
 	}
 } 
@@ -270,8 +317,6 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 		// allocate and calculate the contributions
 		CWeightsTable weightsTable(m_pFilter, dst_height, src_height); 
 
-		// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
-		unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
 		// step through columns
 		switch(FreeImage_GetBPP(src)) {
@@ -279,6 +324,9 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 			case 24:
 			case 32:
 			{
+				// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+				unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+
 				unsigned src_pitch = FreeImage_GetPitch(src);
 				unsigned dst_pitch = FreeImage_GetPitch(dst);
 
@@ -318,6 +366,54 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 				}
 			}
 			break;
+
+			case 16:
+			case 48:
+			case 64:
+			{
+				// Calculate the number of words per pixel (1 for 16-bit, 3 for 48-bit or 4 for 96-bit)
+				unsigned wordspp = (FreeImage_GetLine(src) / FreeImage_GetWidth(src)) / sizeof(WORD);
+
+				unsigned src_pitch = FreeImage_GetPitch(src) / sizeof(WORD);
+				unsigned dst_pitch = FreeImage_GetPitch(dst) / sizeof(WORD);
+
+				for(unsigned x = 0; x < dst_width; x++) {
+					index = x * wordspp;
+
+					// work on column x in dst
+					WORD *dst_bits = (WORD*)FreeImage_GetBits(dst) + index;
+
+					// scale each column
+					for(unsigned y = 0; y < dst_height; y++) {
+						// loop through column
+						double value[4] = {0, 0, 0, 0};					// 4 = 64bpp max
+						int iLeft = weightsTable.getLeftBoundary(y);    // retrieve left boundary
+						int iRight = weightsTable.getRightBoundary(y);  // retrieve right boundary
+
+						WORD *src_bits = (WORD*)FreeImage_GetScanLine(src, iLeft) + index;
+
+						for(int i = iLeft; i <= iRight; i++) {
+							// scan between boundaries
+							// accumulate weighted effect of each neighboring pixel
+							double weight = weightsTable.getWeight(y, i-iLeft);							
+							for (unsigned j = 0; j < wordspp; j++) {
+								value[j] += (weight * (double)src_bits[j]);
+							}
+
+							src_bits += src_pitch;
+						}
+
+						// clamp and place result in destination pixel
+						for (unsigned j = 0; j < wordspp; j++) {
+							dst_bits[j] = (BYTE)MIN(MAX((WORD)0, (WORD)(value[j] + 0.5)), (WORD)0xFFFF);
+						}
+
+						dst_bits += dst_pitch;
+					}
+				}
+			}
+			break;
+
 		}
 	}
 } 
