@@ -394,6 +394,8 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 				// close the files
 
+				FreeImage_Close(header->node, header->io, (fi_handle)f, data); 
+
 				fclose(f);
 
 				if (header->handle) {

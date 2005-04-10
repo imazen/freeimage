@@ -57,6 +57,10 @@ void testImageTypeTIFF(unsigned width, unsigned height);
 
 void testMemIO(const char *lpszPathName);
 
+// Multipage test suite
+// ==========================================================
+
+void testBuildMPage(char *src_filename, char *dst_filename, FREE_IMAGE_FORMAT dst_fif);
 
 #endif // TEST_FREEIMAGE_API_H
 

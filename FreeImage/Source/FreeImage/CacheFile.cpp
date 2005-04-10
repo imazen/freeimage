@@ -65,6 +65,12 @@ CacheFile::close() {
 		delete block->data;
 		delete block;
 	}
+	while (!m_page_cache_mem.empty()) { 
+		Block *block = *m_page_cache_mem.begin(); 
+		m_page_cache_mem.pop_front(); 
+		delete block->data; 
+		delete block; 
+	} 
 
 	if (m_file) {
 		// close the file

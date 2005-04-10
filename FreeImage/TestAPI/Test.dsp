@@ -100,6 +100,10 @@ SOURCE=.\testMemIO.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\testMPage.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\testPlugins.cpp
 # End Source File
 # Begin Source File

@@ -57,6 +57,10 @@ int main(int argc, char *argv[]) {
 	// initialize our own FreeImage error handler
 	FreeImage_SetOutputMessage(FreeImageErrorHandler);
 
+	// test multipage creation
+	testBuildMPage("sample.png", "sample.ico", FIF_ICO);
+	testBuildMPage("sample.png", "sample.tif", FIF_TIFF);
+
 	// test memory IO
 	testMemIO("sample.png");
 

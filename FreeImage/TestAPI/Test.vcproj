@@ -196,6 +196,9 @@
 			</FileConfiguration>
 		</File>
 		<File
+			RelativePath=".\testMPage.cpp">
+		</File>
+		<File
 			RelativePath="testPlugins.cpp">
 			<FileConfiguration
 				Name="Release|Win32">
