@@ -61,7 +61,7 @@ install:
 	ldconfig
 
 clean:
-	rm -f core Dist/* u2dtmp* $(MODULES) $(STATICLIB) $(SHAREDLIB) $(LIBNAME)
+	rm -f core Dist/*.* u2dtmp* $(MODULES) $(STATICLIB) $(SHAREDLIB) $(LIBNAME)
 
 osx:
 	make -f Makefile.osx
