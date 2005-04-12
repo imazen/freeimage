@@ -381,7 +381,7 @@ void StringTable::ClearCompressorTable(void)
 	}
 	m_nextCode = m_endCode + 1;
 
-	m_prefix.clear();
+	m_prefix.erase();
 	m_codeSize = m_minCodeSize + 1;
 }
 
