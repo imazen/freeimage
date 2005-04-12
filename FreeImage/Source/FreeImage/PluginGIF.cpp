@@ -90,7 +90,6 @@ protected:
 	BYTE *m_buffer;
 	int m_bufferSize, m_bufferRealSize, m_bufferPos, m_bufferShift;
 
-	int StringTableCode(str &s);
 	void ClearCompressorTable(void);
 	void ClearDecompressorTable(void);
 };
@@ -370,16 +369,6 @@ void StringTable::Done(void)
 	m_done = true;
 }
 
-int StringTable::StringTableCode(str &s)
-{
-	for( int i = 0; i < m_nextCode; i++ ) {
-		if( m_strings[i] == s ) {
-			return i;
-		}
-	}
-	return MAX_LZW_CODE;
-}
-
 void StringTable::ClearCompressorTable(void)
 {
 	m_strmap.clear();
@@ -572,7 +561,7 @@ Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 		}
 	} else {
 		//Header
-		io->write_proc("GIF89a", 6, 1, handle);
+		io->write_proc((void *)"GIF89a", 6, 1, handle);
 	}
 
 	return info;
@@ -1147,7 +1136,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 #ifdef FREEIMAGE_BIGENDIAN
 				SwapShort(&w);
 #endif
-				io->write_proc("\x21\xFF\x0BNETSCAPE2.0\x03\x01", 16, 1, handle);
+				io->write_proc((void *)"\x21\xFF\x0BNETSCAPE2.0\x03\x01", 16, 1, handle);
 				io->write_proc(&w, 2, 1, handle);
 				b = 0;
 				io->write_proc(&b, 1, 1, handle);
@@ -1162,7 +1151,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					if( FreeImage_GetTagType(tag) == FIDT_ASCII ) {
 						int length = FreeImage_GetTagLength(tag) - 1;
 						char *value = (char *)FreeImage_GetTagValue(tag);
-						io->write_proc("\x21\xFE", 2, 1, handle);
+						io->write_proc((void *)"\x21\xFE", 2, 1, handle);
 						while( length > 0 ) {
 							b = length >= 255 ? 255 : length;
 							io->write_proc(&b, 1, 1, handle);
@@ -1191,7 +1180,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				}
 			}
 		}
-		io->write_proc("\x21\xF9\x04", 3, 1, handle);
+		io->write_proc((void *)"\x21\xF9\x04", 3, 1, handle);
 		b = ((disposal_method << 2) & GIF_PACKED_GCE_DISPOSAL);
 		if( have_transparent ) b |= GIF_PACKED_GCE_HAVETRANS;
 		io->write_proc(&b, 1, 1, handle);

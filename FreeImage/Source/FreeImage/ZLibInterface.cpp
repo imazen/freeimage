@@ -141,7 +141,7 @@ compression library.
 @see FreeImage_ZLibGZip
 */
 
-static char get_byte(z_stream *stream) {
+static int get_byte(z_stream *stream) {
     if (stream->avail_in <= 0) return EOF;
     stream->avail_in--;
     return *(stream->next_in)++;
