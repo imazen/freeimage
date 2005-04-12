@@ -52,6 +52,15 @@
 
 FIBITMAP * DLL_CALLCONV
 FreeImage_ColorQuantize(FIBITMAP *dib, FREE_IMAGE_QUANTIZE quantize) {
+	return FreeImage_ColorQuantizeEx(dib, quantize);
+}
+
+FIBITMAP * DLL_CALLCONV
+FreeImage_ColorQuantizeEx(FIBITMAP *dib, FREE_IMAGE_QUANTIZE quantize, int PaletteSize, int ReserveSize, RGBQUAD *ReservePalette) {
+	if( PaletteSize < 2 ) PaletteSize = 2;
+	if( PaletteSize > 256 ) PaletteSize = 256;
+	if( ReserveSize < 0 ) ReserveSize = 0;
+	if( ReserveSize > PaletteSize ) ReserveSize = PaletteSize;
 	if (dib) {
 		if (FreeImage_GetBPP(dib) == 24) {
 			switch(quantize) {
@@ -59,15 +68,15 @@ FreeImage_ColorQuantize(FIBITMAP *dib, FREE_IMAGE_QUANTIZE quantize) {
 				{
 					try {
 						WuQuantizer Q (dib);
-						return Q.Quantize();
+						return Q.Quantize(PaletteSize, ReserveSize, ReservePalette);
 					} catch (char *) {
 						return NULL;
 					}
 				}
 				case FIQ_NNQUANT :
 				{
-					NNQuantizer Q;
-					return Q.Quantize(dib, 1);
+					NNQuantizer Q(PaletteSize);
+					return Q.Quantize(dib, ReserveSize, ReservePalette, 1);
 				}
 			}
 		}

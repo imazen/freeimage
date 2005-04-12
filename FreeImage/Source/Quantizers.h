@@ -54,7 +54,7 @@ protected:
 	FIBITMAP *m_dib;
 
 protected:
-    void Hist3D(LONG *vwt, LONG *vmr, LONG *vmg, LONG *vmb, float *m2) ;
+    void Hist3D(LONG *vwt, LONG *vmr, LONG *vmg, LONG *vmb, float *m2, int ReserveSize, RGBQUAD *ReservePalette);
 	void M3D(LONG *vwt, LONG *vmr, LONG *vmg, LONG *vmb, float *m2);
 	LONG Vol(Box *cube, LONG *mmt);
 	LONG Bottom(Box *cube, BYTE dir, LONG *mmt);
@@ -71,7 +71,7 @@ public:
 	// Destructor
 	~WuQuantizer();
 	// Quantizer - Return value: quantized 8-bit (color palette) DIB
-	FIBITMAP* Quantize();
+	FIBITMAP* Quantize(int PaletteSize, int ReserveSize, RGBQUAD *ReservePalette);
 };
 
 
@@ -86,11 +86,11 @@ public:
 /** number of colours used: 
 	for 256 colours, fixed arrays need 8kb, plus space for the image
 */
-static const int netsize = 256;
+//static const int netsize = 256;
 
 /**@name network definitions */
 //@{
-static const int maxnetpos = (netsize - 1);
+//static const int maxnetpos = (netsize - 1);
 /// bias for colour values
 static const int netbiasshift = 4;
 /// no. of learning cycles
@@ -114,12 +114,12 @@ static const int betagamma = (intbias << (gammashift-betashift));
 /**@name defs for decreasing radius factor */
 //@{
 /// for 256 cols, radius starts
-static const int initrad = (netsize >> 3);
+//static const int initrad = (netsize >> 3);
 /// at 32.0 biased by 6 bits
 static const int radiusbiasshift = 6;
 static const int radiusbias = (((int)1) << radiusbiasshift);
 /// and decreases by a 
-static const int initradius	= (initrad * radiusbias);
+//static const int initradius	= (initrad * radiusbias);
 // factor of 1/30 each cycle
 static const int radiusdec = 30;
 //@}
@@ -157,20 +157,22 @@ protected:
 	/**@name network parameters */
 	//@{
 
+	int netsize, maxnetpos, initrad, initradius;
+
 	/// BGRc
 	typedef int pixel[4];
 	/// the network itself
-	pixel network[netsize];
+	pixel *network;
 
 	/// for network lookup - really 256
 	int netindex[256];
 
 	/// bias array for learning
-	int bias [netsize];
+	int *bias;
 	/// freq array for learning
-	int freq [netsize];
+	int *freq;
 	/// radpower for precomputation
-	int radpower[initrad];
+	int *radpower;
 	//@}
 
 protected:
@@ -206,10 +208,10 @@ protected:
 
 public:
 	/// Constructor
-	NNQuantizer() { }
+	NNQuantizer(int PaletteSize);
 
 	/// Destructor
-	~NNQuantizer() { }
+	~NNQuantizer();
 
 	/** Quantizer
 	@param dib input 24-bit dib to be quantized
@@ -217,7 +219,7 @@ public:
 	1 => slower (but better), 30 => faster. Default value is 1
 	@return returns the quantized 8-bit (color palette) DIB
 	*/
-	FIBITMAP* Quantize(FIBITMAP *dib, int sampling = 1);
+	FIBITMAP* Quantize(FIBITMAP *dib, int ReserveSize, RGBQUAD *ReservePalette, int sampling = 1);
 
 };
 

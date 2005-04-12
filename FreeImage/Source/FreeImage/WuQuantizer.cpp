@@ -97,7 +97,7 @@ WuQuantizer::~WuQuantizer() {
 
 // Build 3-D color histogram of counts, r/g/b, c^2
 void 
-WuQuantizer::Hist3D(LONG *vwt, LONG *vmr, LONG *vmg, LONG *vmb, float *m2) {
+WuQuantizer::Hist3D(LONG *vwt, LONG *vmr, LONG *vmg, LONG *vmb, float *m2, int ReserveSize, RGBQUAD *ReservePalette) {
 	int ind;
 	int inr, ing, inb, table[256];
 	int i;
@@ -121,6 +121,25 @@ WuQuantizer::Hist3D(LONG *vwt, LONG *vmr, LONG *vmg, LONG *vmb, float *m2) {
 			vmb[ind] += bits[FI_RGBA_BLUE];
 			m2[ind] += (float)(table[bits[FI_RGBA_RED]] + table[bits[FI_RGBA_GREEN]] + table[bits[FI_RGBA_BLUE]]);
 			bits += 3;
+		}
+	}
+
+	if( ReserveSize > 0 ) {
+		int max = 0;
+		for(i = 0; i < 35937; i++) {
+			if( vwt[ind] > max ) max = vwt[ind];
+		}
+		max++;
+		for(i = 0; i < ReserveSize; i++) {
+			inr = (ReservePalette[i].rgbRed >> 3) + 1;
+			ing = (ReservePalette[i].rgbGreen >> 3) + 1;
+			inb = (ReservePalette[i].rgbBlue >> 3) + 1;
+			ind = INDEX(inr, ing, inb);
+			wt[ind] = max;
+			mr[ind] = max * ReservePalette[i].rgbRed;
+			mg[ind] = max * ReservePalette[i].rgbGreen;
+			mb[ind] = max * ReservePalette[i].rgbBlue;
+			gm2[ind] = (float)max * (float)(table[ReservePalette[i].rgbRed] + table[ReservePalette[i].rgbGreen] + table[ReservePalette[i].rgbBlue]);
 		}
 	}
 }
@@ -401,13 +420,11 @@ WuQuantizer::Mark(Box *cube, int label, BYTE *tag) {
 }
 
 // Wu Quantization algorithm
-
 FIBITMAP *
-WuQuantizer::Quantize() {
+WuQuantizer::Quantize(int PaletteSize, int ReserveSize, RGBQUAD *ReservePalette) {
 	BYTE *tag = NULL;
 
 	try {
-		int PalSize = 256;	// Color look-up table size
 		Box	cube[MAXCOLOR];
 		int	next;
 		LONG i, weight;
@@ -416,7 +433,7 @@ WuQuantizer::Quantize() {
 		
 		// Compute 3D histogram
 
-		Hist3D(wt, mr, mg, mb, gm2);
+		Hist3D(wt, mr, mg, mb, gm2, ReserveSize, ReservePalette);
 
 		// Compute moments
 
@@ -426,7 +443,7 @@ WuQuantizer::Quantize() {
 		cube[0].r1 = cube[0].g1 = cube[0].b1 = 32;
 		next = 0;
 
-		for (i = 1; i < PalSize; i++) {
+		for (i = 1; i < PaletteSize; i++) {
 			if(Cut(&cube[next], &cube[i])) {
 				// volume test ensures we won't try to cut one-cell box
 				vv[next] = (cube[next].vol > 1) ? Var(&cube[next]) : 0;
@@ -445,9 +462,9 @@ WuQuantizer::Quantize() {
 			}
 
 			if (temp <= 0.0) {
-				  PalSize = i + 1;
+				  PaletteSize = i + 1;
 
-				  // Error: "Only got 'PalSize' boxes"
+				  // Error: "Only got 'PaletteSize' boxes"
 
 				  break;
 			}
@@ -474,19 +491,20 @@ WuQuantizer::Quantize() {
 		RGBQUAD *new_pal = FreeImage_GetPalette(new_dib);
 
 		tag = (BYTE*) malloc(33 * 33 * 33 * sizeof(BYTE));
+		memset(tag, 0, 33 * 33 * 33 * sizeof(BYTE));
 
 		if (tag == NULL) {
 			throw "Not enough memory";
 		}
 
-		for (k = 0; k < PalSize; k++) {
+		for (k = 0; k < PaletteSize ; k++) {
 			Mark(&cube[k], k, tag);
 			weight = Vol(&cube[k], wt);
 
 			if (weight) {
-				new_pal[k].rgbRed	= (BYTE)(Vol(&cube[k], mr) / weight);
-				new_pal[k].rgbGreen = (BYTE)(Vol(&cube[k], mg) / weight);
-				new_pal[k].rgbBlue	= (BYTE)(Vol(&cube[k], mb) / weight);
+				new_pal[k].rgbRed	= (BYTE)(((float)Vol(&cube[k], mr) / (float)weight) + 0.5f);
+				new_pal[k].rgbGreen = (BYTE)(((float)Vol(&cube[k], mg) / (float)weight) + 0.5f);
+				new_pal[k].rgbBlue	= (BYTE)(((float)Vol(&cube[k], mb) / (float)weight) + 0.5f);
 			} else {
 				// Error: bogus box 'k'
 

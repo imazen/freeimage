@@ -46,6 +46,37 @@
 
 // ----------------------------------------------------------------
 
+NNQuantizer::NNQuantizer(int PaletteSize)
+{
+	netsize = PaletteSize;
+	maxnetpos = netsize - 1;
+	initrad = netsize < 8 ? 1 : (netsize >> 3);
+	initradius = (initrad * radiusbias);
+
+	network = NULL;
+
+	network = (pixel *)malloc(netsize * sizeof(pixel));
+	bias = (int *)malloc(netsize * sizeof(int));
+	freq = (int *)malloc(netsize * sizeof(int));
+	radpower = (int *)malloc(initrad * sizeof(int));
+
+	if( !network || !bias || !freq || !radpower ) {
+		if(network) free(network);
+		if(bias) free(bias);
+		if(freq) free(freq);
+		if(radpower) free(radpower);
+		throw "Not enough memory";
+	}
+}
+
+NNQuantizer::~NNQuantizer()
+{
+	if(network) free(network);
+	if(bias) free(bias);
+	if(freq) free(freq);
+	if(radpower) free(radpower);
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // Initialise network in range (0,0,0) to (255,255,255) and set parameters
 // -----------------------------------------------------------------------
@@ -397,7 +428,7 @@ void NNQuantizer::learn(int sampling_factor) {
 // Quantizer
 // -----------
 
-FIBITMAP* NNQuantizer::Quantize(FIBITMAP *dib, int sampling) {
+FIBITMAP* NNQuantizer::Quantize(FIBITMAP *dib, int ReserveSize, RGBQUAD *ReservePalette, int sampling) {
 
 	if ((!dib) || (FreeImage_GetBPP(dib) != 24)) {
 		return NULL;
@@ -424,9 +455,21 @@ FIBITMAP* NNQuantizer::Quantize(FIBITMAP *dib, int sampling) {
 
 	// 3) Initialize the network and apply the learning algorithm
 
-	initnet();
-	learn(sampling);
-	unbiasnet();
+	if( netsize > ReserveSize ) {
+		netsize -= ReserveSize;
+		initnet();
+		learn(sampling);
+		unbiasnet();
+		netsize += ReserveSize;
+	}
+
+	// 3.5) Overwrite the last few palette entries with the reserved ones
+    for (int i = 0; i < ReserveSize; i++) {
+		network[netsize - ReserveSize + i][FI_RGBA_BLUE] = ReservePalette[i].rgbBlue;
+		network[netsize - ReserveSize + i][FI_RGBA_GREEN] = ReservePalette[i].rgbGreen;
+		network[netsize - ReserveSize + i][FI_RGBA_RED] = ReservePalette[i].rgbRed;
+		network[netsize - ReserveSize + i][3] = netsize - ReserveSize + i;
+	}
 
 	// 4) Allocate a new 8-bit DIB
 
