@@ -50,11 +50,13 @@ function vbpasstypesize(t,pts,   a)
 		t = "";
 	} else if(t=="char"||t=="unsigned char") {
 		t = "ByVal,Byte,4";
-	} else if(t=="char *"||t=="unsigned char *"||t=="const char *") {
+	} else if(t=="char *"||t=="unsigned char *"||t=="const char *"||t=="const char*") {
 		t = "ByVal,String,4";
+	} else if(t=="WORD") {
+		t = "ByVal,Integer,4";
 	} else if(t=="int"||t=="unsigned"||t=="unsigned int"||t=="long"||t=="unsigned long") {
 		t = "ByVal,Long,4";
-	} else if(t=="void *"||t=="int *"||t=="unsigned int *"||t=="long *"||t=="unsigned long *") {
+	} else if(t=="void *"||t=="const void *"||t=="int *"||t=="unsigned int *"||t=="long *"||t=="unsigned long *") {
 		t = "ByRef,Long,4";
 	} else if(t=="float") {
 		t = "ByVal,Single,4";
@@ -72,10 +74,12 @@ function vbpasstypesize(t,pts,   a)
 		t = "ByVal,Long,4";
 	} else if(t=="BYTE *"||t=="DWORD *") {
 		t = "ByRef,Long,4";
-	} else if(t=="FREE_IMAGE_FORMAT"||t=="FREE_IMAGE_TYPE"||t=="FREE_IMAGE_COLOR_TYPE"||t=="FREE_IMAGE_QUANTIZE"||t=="FREE_IMAGE_DITHER"||t=="FREE_IMAGE_FILTER"||t=="FREE_IMAGE_COLOR_CHANNEL") {
+	} else if(t=="FREE_IMAGE_FORMAT"||t=="FREE_IMAGE_TYPE"||t=="FREE_IMAGE_COLOR_TYPE"||t=="FREE_IMAGE_QUANTIZE"||t=="FREE_IMAGE_DITHER"||t=="FREE_IMAGE_FILTER"||t=="FREE_IMAGE_COLOR_CHANNEL"||t=="FREE_IMAGE_MDMODEL"||t=="FREE_IMAGE_MDTYPE") {
 		t = "ByVal," t ",4";
-	} else if(t=="FIBITMAP *"||t=="FIMULTIBITMAP *"||t=="RGBQUAD *"||t=="BITMAPINFO *"||t=="BITMAPINFOHEADER *"||t=="FIICCPROFILE *"||t=="FreeImageIO *"||t=="fi_handle") {
+	} else if(t=="FIBITMAP *"||t=="FIMULTIBITMAP *"||t=="RGBQUAD *"||t=="BITMAPINFO *"||t=="BITMAPINFOHEADER *"||t=="FIICCPROFILE *"||t=="FreeImageIO *"||t=="fi_handle"||t=="FITAG *"||t=="FIMEMORY *"||t=="FIMETADATA *") {
 		t = "ByVal,Long,4";
+	} else if(t=="BYTE **"||t=="FITAG **") {
+		t = "ByRef,Long,4";
 	} else if(t=="FI_InitProc"||t=="FreeImage_OutputMessageFunction") {
 		t = "ByVal,Long,4";
 	} else if(t~/V:.*/) {
