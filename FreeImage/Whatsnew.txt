@@ -19,6 +19,7 @@ Month day, 2005 - 3.6.2
 * [Ryan Rubley] fixed a memory leak in the multipage API
 + [Ryan Rubley] added FreeImage_ColorQuantizeEx
 + [Ryan Rubley] added FIMD_ANIMATION and FIDT_PALETTE
+! [Ryan Rubley] improved FreeImage_OpenMultiBitmap
 
 February 20, 2005 - 3.6.1
 * [Ryan Rubley] fixed a memory leak in the metadata API

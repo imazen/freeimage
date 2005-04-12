@@ -86,6 +86,8 @@ FI_STRUCT (MULTIBITMAPHEADER) {
 	BlockList m_blocks;
 	char *m_filename;
 	BOOL read_only;
+	FREE_IMAGE_FORMAT cache_fif;
+	int load_flags;
 };
 
 // =====================================================================
@@ -209,7 +211,7 @@ FreeImage_InternalGetPageCount(FIMULTIBITMAP *bitmap) {
 // =====================================================================
 
 FIMULTIBITMAP * DLL_CALLCONV
-FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL create_new, BOOL read_only, BOOL keep_cache_in_memory) {
+FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL create_new, BOOL read_only, BOOL keep_cache_in_memory, FREE_IMAGE_FORMAT cache_fif, int flags) {
 	// sanity check on the parameters
 
 	if (create_new)
@@ -255,6 +257,8 @@ FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL crea
 						header->changed = FALSE;						
 						header->read_only = read_only;
 						header->m_cachefile = NULL;
+						header->cache_fif = cache_fif == FIF_UNKNOWN ? fif : cache_fif;
+						header->load_flags = flags;
 
 						if (header) {
 							// store the MULTIBITMAPHEADER in the surrounding FIMULTIBITMAP structure
@@ -345,7 +349,7 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 								BlockContinueus *block = (BlockContinueus *)(*i);
 
 								for (int j = block->m_start; j <= block->m_end; j++) {
-									FIBITMAP *dib = header->node->m_plugin->load_proc(header->io, header->handle, j, 0, data_read);
+									FIBITMAP *dib = header->node->m_plugin->load_proc(header->io, header->handle, j, header->load_flags, data_read);
 
 									success = header->node->m_plugin->save_proc(header->io, dib, (fi_handle)f, count, flags, data);
 									count++;
@@ -369,7 +373,7 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 								// uncompress the data
 
 								FIMEMORY *hmem = FreeImage_OpenMemory(compressed_data, ref->m_size);
-								FIBITMAP *dib = FreeImage_LoadFromMemory(FIF_PNG, hmem, PNG_DEFAULT);
+								FIBITMAP *dib = FreeImage_LoadFromMemory(header->cache_fif, hmem, 0);
 								FreeImage_CloseMemory(hmem);
 
 								// get rid of the buffer
@@ -500,7 +504,7 @@ FreeImage_AppendPage(FIMULTIBITMAP *bitmap, FIBITMAP *data) {
 			// open a memory handle
 			FIMEMORY *hmem = FreeImage_OpenMemory();
 			// save the file to memory
-			FreeImage_SaveToMemory(FIF_PNG, data, hmem, PNG_DEFAULT);
+			FreeImage_SaveToMemory(header->cache_fif, data, hmem, 0);
 			// get the buffer from the memory stream
 			FreeImage_AcquireMemory(hmem, &compressed_data, &compressed_size);
 
@@ -538,7 +542,7 @@ FreeImage_InsertPage(FIMULTIBITMAP *bitmap, int page, FIBITMAP *data) {
 				// open a memory handle
 				FIMEMORY *hmem = FreeImage_OpenMemory();
 				// save the file to memory
-				FreeImage_SaveToMemory(FIF_PNG, data, hmem, PNG_DEFAULT);
+				FreeImage_SaveToMemory(header->cache_fif, data, hmem, 0);
 				// get the buffer from the memory stream
 				FreeImage_AcquireMemory(hmem, &compressed_data, &compressed_size);
 
@@ -623,7 +627,7 @@ FreeImage_LockPage(FIMULTIBITMAP *bitmap, int page) {
 		// load the bitmap data
 
 		if (data != NULL) {
-			FIBITMAP *dib = (header->node->m_plugin->load_proc != NULL) ? header->node->m_plugin->load_proc(header->io, header->handle, page, 0, data) : NULL;
+			FIBITMAP *dib = (header->node->m_plugin->load_proc != NULL) ? header->node->m_plugin->load_proc(header->io, header->handle, page, header->load_flags, data) : NULL;
 
 			// close the file
 
@@ -669,7 +673,7 @@ FreeImage_UnlockPage(FIMULTIBITMAP *bitmap, FIBITMAP *page, BOOL changed) {
 				// open a memory handle
 				FIMEMORY *hmem = FreeImage_OpenMemory();
 				// save the page to memory
-				FreeImage_SaveToMemory(FIF_PNG, page, hmem, PNG_DEFAULT);
+				FreeImage_SaveToMemory(header->cache_fif, page, hmem, 0);
 				// get the buffer from the memory stream
 				FreeImage_AcquireMemory(hmem, &compressed_data, &compressed_size);
 
