@@ -1,9 +1,9 @@
 #!/bin/sh
 
-DIRLIST=". Source Source/Metadata Source/FreeImageToolkit Source/LibGIF Source/LibJPEG Source/LibMNG Source/LibPNG Source/LibTIFF Source/ZLib"
+DIRLIST=". Source Source/Metadata Source/FreeImageToolkit Source/LibJPEG Source/LibMNG Source/LibPNG Source/LibTIFF Source/ZLib"
 
 echo "VER_MAJOR = 3" > Makefile.srcs
-echo "VER_MINOR = 6.1" >> Makefile.srcs
+echo "VER_MINOR = 7.0" >> Makefile.srcs
 
 echo -n "SRCS = " >> Makefile.srcs
 for DIR in $DIRLIST; do

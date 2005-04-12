@@ -6,8 +6,6 @@ rd Source\FreeImageLib\Debug /s /q
 rd Source\FreeImageLib\Release /s /q
 rd Source\Source\Release /s /q
 rd Source\Source\Debug /s /q
-rd Source\LibGIF\Debug /s /q
-rd Source\LibGIF\Release /s /q
 rd Source\LibJPEG\Debug /s /q
 rd Source\LibJPEG\Release /s /q
 rd Source\LibPNG\Debug /s /q

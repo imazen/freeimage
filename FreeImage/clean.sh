@@ -7,8 +7,6 @@ rm -rf Source/FreeImageLib/Debug
 rm -rf Source/FreeImageLib/Release
 rm -rf Source/Source/Release
 rm -rf Source/Source/Debug
-rm -rf Source/LibGIF/Debug
-rm -rf Source/LibGIF/Release
 rm -rf Source/LibJPEG/Debug
 rm -rf Source/LibJPEG/Release
 rm -rf Source/LibPNG/Debug
