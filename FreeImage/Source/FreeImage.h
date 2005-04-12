@@ -445,7 +445,8 @@ FI_ENUM(FREE_IMAGE_MDTYPE) {
 	FIDT_SRATIONAL	= 10,	// 64-bit signed fraction 
 	FIDT_FLOAT		= 11,	// 32-bit IEEE floating point 
 	FIDT_DOUBLE		= 12,	// 64-bit IEEE floating point 
-	FIDT_IFD		= 13	// 32-bit unsigned integer (offset) 
+	FIDT_IFD		= 13,	// 32-bit unsigned integer (offset) 
+	FIDT_PALETTE	= 14	// 32-bit RGBQUAD 
 };
 
 /**
@@ -462,7 +463,8 @@ FI_ENUM(FREE_IMAGE_MDMODEL) {
 	FIMD_IPTC			= 6,	// IPTC/NAA metadata
 	FIMD_XMP			= 7,	// Abobe XMP metadata
 	FIMD_GEOTIFF		= 8,	// GeoTIFF metadata
-	FIMD_CUSTOM			= 9		// Used to attach other metadata types to a dib
+	FIMD_ANIMATION		= 9,	// Animation metadata
+	FIMD_CUSTOM			= 10	// Used to attach other metadata types to a dib
 };
 
 /**

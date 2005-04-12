@@ -518,6 +518,26 @@ static TagInfo
   };
 
 // --------------------------------------------------------------------------
+// Animation tags definition
+// --------------------------------------------------------------------------
+
+static TagInfo
+  animation_tag_table[] =
+  {
+    {  0x0001, (char *) "LogicalWidth", (char *) "Logical width"},
+    {  0x0002, (char *) "LogicalHeight", (char *) "Logical height"},
+    {  0x0003, (char *) "GlobalPalette", (char *) "Global Palette"},
+    {  0x0004, (char *) "Loop", (char *) "loop"},
+    {  0x1001, (char *) "FrameLeft", (char *) "Frame left"},
+    {  0x1002, (char *) "FrameTop", (char *) "Frame top"},
+    {  0x1003, (char *) "NoLocalPalette", (char *) "No Local Palette"},
+    {  0x1004, (char *) "Interlaced", (char *) "Interlaced"},
+    {  0x1005, (char *) "FrameTime", (char *) "Frame display time"},
+    {  0x1006, (char *) "DisposalMethod", (char *) "Frame disposal method"},
+    {  0x0000, (char *) NULL, (char *) NULL}
+  };
+
+// --------------------------------------------------------------------------
 // TagLib class definition
 // --------------------------------------------------------------------------
 
@@ -553,6 +573,9 @@ TagLib::TagLib() {
 
 	// GeoTIFF
 	addMetadataModel(TagLib::GEOTIFF, geotiff_tag_table);
+
+	// Animation
+	addMetadataModel(TagLib::ANIMATION, animation_tag_table);
 }
 
 BOOL TagLib::addMetadataModel(MDMODEL md_model, TagInfo *tag_table) {
@@ -661,6 +684,9 @@ TagLib::getFreeImageModel(MDMODEL model) {
 
 		case GEOTIFF:
 			return FIMD_GEOTIFF;
+
+		case ANIMATION:
+			return FIMD_ANIMATION;
 	}
 
 	return FIMD_NODATA;

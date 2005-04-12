@@ -269,9 +269,9 @@ FreeImage_SetTagValue(FITAG *tag, const void *value) {
 
 int 
 FreeImage_TagDataWidth(WORD type) {
-	static int format_bytes[] = { 0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8 };
+	static int format_bytes[] = { 0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 4, 4 };
 
-	return (type < 13) ? format_bytes[type] : 0;
+	return (type < 15) ? format_bytes[type] : 0;
 }
 
 

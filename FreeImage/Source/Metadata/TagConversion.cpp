@@ -170,6 +170,30 @@ ConvertAnyTag(FITAG *tag) {
 			}
 			break;
 		}
+		case FIDT_IFD:		// N x 32-bit unsigned integer (offset) 
+		{
+			unsigned long *pvalue = (unsigned long *)FreeImage_GetTagValue(tag);
+
+			sprintf(format, "%p", pvalue[0]);
+			buffer += format;
+			for(i = 1; i < tag_count; i++) {
+				sprintf(format, " %p",	pvalue[i]);
+				buffer += format;
+			}
+			break;
+		}
+		case FIDT_PALETTE:	// N x 32-bit RGBQUAD 
+		{
+			RGBQUAD *pvalue = (RGBQUAD *)FreeImage_GetTagValue(tag);
+
+			sprintf(format, "(%d,%d,%d,%d)", pvalue[0].rgbRed, pvalue[0].rgbGreen, pvalue[0].rgbBlue, pvalue[0].rgbReserved);
+			buffer += format;
+			for(i = 1; i < tag_count; i++) {
+				sprintf(format, " (%d,%d,%d,%d)", pvalue[0].rgbRed, pvalue[0].rgbGreen, pvalue[0].rgbBlue, pvalue[0].rgbReserved);
+				buffer += format;
+			}
+			break;
+		}
 		case FIDT_ASCII:	// 8-bit bytes w/ last byte null 
 		case FIDT_UNDEFINED:// 8-bit untyped data 
 		default:
