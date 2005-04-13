@@ -146,12 +146,22 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 	// allocate the dst image
 	FIBITMAP *dst = FreeImage_AllocateT(image_type, dst_width, dst_height, bpp, redMask, greenMask, blueMask);
 	if(!dst) return NULL;
-
+	
 	if(bpp == 8) {
-		// build a greyscale palette
-		RGBQUAD *dst_pal = FreeImage_GetPalette(dst);
-		for(int i = 0; i < 256; i++) {
-			dst_pal[i].rgbRed = dst_pal[i].rgbGreen = dst_pal[i].rgbBlue = (BYTE)i;
+		if(FreeImage_GetColorType(src) == FIC_MINISWHITE) {
+			// build an inverted greyscale palette
+			RGBQUAD *dst_pal = FreeImage_GetPalette(dst);
+			for(int i = 0; i < 256; i++) {
+				dst_pal[i].rgbRed = dst_pal[i].rgbGreen =
+					dst_pal[i].rgbBlue = (BYTE)(255 - i);
+			}
+		} else {
+			// build a greyscale palette
+			RGBQUAD *dst_pal = FreeImage_GetPalette(dst);
+			for(int i = 0; i < 256; i++) {
+				dst_pal[i].rgbRed = dst_pal[i].rgbGreen =
+					dst_pal[i].rgbBlue = (BYTE)i;
+			}
 		}
 	}
 
