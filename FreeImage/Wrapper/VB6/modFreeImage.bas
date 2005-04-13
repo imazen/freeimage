@@ -83,12 +83,225 @@ Const WBMP_DEFAULT As Long = 0
 Const XBM_DEFAULT As Long = 0
 Const XPM_DEFAULT As Long = 0
 
+Public Enum FREE_IMAGE_FORMAT
+	FIF_UNKNOWN = -1
+	FIF_BMP = 0
+	FIF_ICO = 1
+	FIF_JPEG = 2
+	FIF_JNG = 3
+	FIF_KOALA = 4
+	FIF_LBM = 5
+	FIF_IFF = FIF_LBM
+	FIF_MNG = 6
+	FIF_PBM = 7
+	FIF_PBMRAW = 8
+	FIF_PCD = 9
+	FIF_PCX = 10
+	FIF_PGM = 11
+	FIF_PGMRAW = 12
+	FIF_PNG = 13
+	FIF_PPM = 14
+	FIF_PPMRAW = 15
+	FIF_RAS = 16
+	FIF_TARGA = 17
+	FIF_TIFF = 18
+	FIF_WBMP = 19
+	FIF_PSD = 20
+	FIF_CUT = 21
+	FIF_XBM = 22
+	FIF_XPM = 23
+	FIF_DDS = 24
+	FIF_GIF = 25
+End Enum
+Public Enum FREE_IMAGE_TYPE
+	FIT_UNKNOWN = 0
+	FIT_BITMAP = 1
+	FIT_UINT16 = 2
+	FIT_INT16 = 3
+	FIT_UINT32 = 4
+	FIT_INT32 = 5
+	FIT_FLOAT = 6
+	FIT_DOUBLE = 7
+	FIT_COMPLEX = 8
+	FIT_RGB16 = 9
+	FIT_RGBA16 = 10
+	FIT_RGBF = 11
+	FIT_RGBAF = 12
+End Enum
+Public Enum FREE_IMAGE_COLOR_TYPE
+	FIC_MINISWHITE = 0
+	FIC_MINISBLACK = 1
+	FIC_RGB = 2
+	FIC_PALETTE = 3
+	FIC_RGBALPHA = 4
+	FIC_CMYK = 5
+End Enum
+Public Enum FREE_IMAGE_QUANTIZE
+	FIQ_WUQUANT = 0
+	FIQ_NNQUANT = 1
+End Enum
+Public Enum FREE_IMAGE_DITHER
+	FID_FS = 0
+	FID_BAYER4x4 = 1
+	FID_BAYER8x8 = 2
+	FID_CLUSTER6x6 = 3
+	FID_CLUSTER8x8 = 4
+	FID_CLUSTER16x16 = 5
+End Enum
+Public Enum FREE_IMAGE_FILTER
+	FILTER_BOX = 0
+	FILTER_BICUBIC = 1
+	FILTER_BILINEAR = 2
+	FILTER_BSPLINE = 3
+	FILTER_CATMULLROM = 4
+	FILTER_LANCZOS3 = 5
+End Enum
+Public Enum FREE_IMAGE_COLOR_CHANNEL
+	FICC_RGB = 0
+	FICC_RED = 1
+	FICC_GREEN = 2
+	FICC_BLUE = 3
+	FICC_ALPHA = 4
+	FICC_BLACK = 5
+	FICC_REAL = 6
+	FICC_IMAG = 7
+	FICC_MAG = 8
+	FICC_PHASE = 9
+End Enum
+Public Enum FREE_IMAGE_MDTYPE
+	FIDT_NOTYPE = 0
+	FIDT_BYTE = 1
+	FIDT_ASCII = 2
+	FIDT_SHORT = 3
+	FIDT_LONG = 4
+	FIDT_RATIONAL = 5
+	FIDT_SBYTE = 6
+	FIDT_UNDEFINED = 7
+	FIDT_SSHORT = 8
+	FIDT_SLONG = 9
+	FIDT_SRATIONAL = 10
+	FIDT_FLOAT = 11
+	FIDT_DOUBLE = 12
+	FIDT_IFD = 13
+	FIDT_PALETTE = 14
+End Enum
+Public Enum FREE_IMAGE_MDMODEL
+	FIMD_NODATA = -1
+	FIMD_COMMENTS = 0
+	FIMD_EXIF_MAIN = 1
+	FIMD_EXIF_EXIF = 2
+	FIMD_EXIF_GPS = 3
+	FIMD_EXIF_MAKERNOTE = 4
+	FIMD_EXIF_INTEROP = 5
+	FIMD_IPTC = 6
+	FIMD_XMP = 7
+	FIMD_GEOTIFF = 8
+	FIMD_ANIMATION = 9
+	FIMD_CUSTOM = 10
+End Enum
 
+Public Type FIBITMAP
+	data As Long
+End Type
+Public Type FIMULTIBITMAP
+	data As Long
+End Type
+Public Type RGBQUAD
+	rgbBlue As Byte
+	rgbGreen As Byte
+	rgbRed As Byte
+	rgbReserved As Byte
+End Type
+Public Type RGBTRIPLE
+	rgbtBlue As Byte
+	rgbtGreen As Byte
+	rgbtRed As Byte
+End Type
+Public Type BITMAPINFOHEADER
+	biSize As Long
+	biWidth As Long
+	biHeight As Long
+	biPlanes As Integer
+	biBitCount As Integer
+	biCompression As Long
+	biSizeImage As Long
+	biXPelsPerMeter As Long
+	biYPelsPerMeter As Long
+	biClrUsed As Long
+	biClrImportant As Long
+End Type
+Public Type BITMAPINFO
+	bmiHeader As BITMAPINFOHEADER
+	bmiColors(0) As RGBQUAD
+End Type
+Public Type FIRGB16
+	red As Integer
+	green As Integer
+	blue As Integer
+End Type
+Public Type FIRGBA16
+	red As Integer
+	green As Integer
+	blue As Integer
+	alpha As Integer
+End Type
+Public Type FIRGBF
+	red As Long
+	green As Long
+	blue As Long
+End Type
+Public Type FIRGBAF
+	red As Long
+	green As Long
+	blue As Long
+	alpha As Long
+End Type
+Public Type FICOMPLEX
+	r As Double
+	i As Double
+End Type
+Public Type FIICCPROFILE
+	flags As Integer
+	size As Long
+	data As Long
+End Type
+Public Type FIMETADATA
+	data As Long
+End Type
+Public Type FITAG
+	data As Long
+End Type
+Public Type FreeImageIO
+	read_proc As Long
+	write_proc As Long
+	seek_proc As Long
+	tell_proc As Long
+End Type
+Public Type FIMEMORY
+	data As Long
+End Type
+Public Type Plugin
+	format_proc As Long
+	description_proc As Long
+	extension_proc As Long
+	regexpr_proc As Long
+	open_proc As Long
+	close_proc As Long
+	pagecount_proc As Long
+	pagecapability_proc As Long
+	load_proc As Long
+	save_proc As Long
+	validate_proc As Long
+	mime_proc As Long
+	supports_export_bpp_proc As Long
+	supports_export_type_proc As Long
+	supports_icc_profiles_proc As Long
+End Type
 
 Public Declare Sub FreeImage_Initialise Lib "FreeImage.dll" Alias "_FreeImage_Initialise@4" (Optional ByVal load_local_plugins_only As Long = 0)
 Public Declare Sub FreeImage_DeInitialise Lib "FreeImage.dll" Alias "_FreeImage_DeInitialise@0" ()
-Public Declare Function FreeImage_GetVersion Lib "FreeImage.dll" Alias "_FreeImage_GetVersion@0" () As String
-Public Declare Function FreeImage_GetCopyrightMessage Lib "FreeImage.dll" Alias "_FreeImage_GetCopyrightMessage@0" () As String
+Public Declare Function FreeImage_GetVersion Lib "FreeImage.dll" Alias "_FreeImage_GetVersion@0" () As Long
+Public Declare Function FreeImage_GetCopyrightMessage Lib "FreeImage.dll" Alias "_FreeImage_GetCopyrightMessage@0" () As Long
 Public Declare Sub FreeImage_OutputMessageProc Lib "FreeImage.dll" Alias "_FreeImage_OutputMessageProc@8" (ByVal fif As Long, ByVal fmt As String, ParamArray VarArgs() As Variant)
 Public Declare Sub FreeImage_SetOutputMessage Lib "FreeImage.dll" Alias "_FreeImage_SetOutputMessage@4" (ByVal omf As Long)
 Public Declare Function FreeImage_Allocate Lib "FreeImage.dll" Alias "_FreeImage_Allocate@24" (ByVal width As Long, ByVal height As Long, ByVal bpp As Long, Optional ByVal red_mask As Long = 0, Optional ByVal green_mask As Long = 0, Optional ByVal blue_mask As Long = 0) As Long
@@ -113,11 +326,11 @@ Public Declare Function FreeImage_SetPluginEnabled Lib "FreeImage.dll" Alias "_F
 Public Declare Function FreeImage_IsPluginEnabled Lib "FreeImage.dll" Alias "_FreeImage_IsPluginEnabled@4" (ByVal fif As FREE_IMAGE_FORMAT) As Long
 Public Declare Function FreeImage_GetFIFFromFormat Lib "FreeImage.dll" Alias "_FreeImage_GetFIFFromFormat@4" (ByVal format As String) As FREE_IMAGE_FORMAT
 Public Declare Function FreeImage_GetFIFFromMime Lib "FreeImage.dll" Alias "_FreeImage_GetFIFFromMime@4" (ByVal mime As String) As FREE_IMAGE_FORMAT
-Public Declare Function FreeImage_GetFormatFromFIF Lib "FreeImage.dll" Alias "_FreeImage_GetFormatFromFIF@4" (ByVal fif As FREE_IMAGE_FORMAT) As String
-Public Declare Function FreeImage_GetFIFExtensionList Lib "FreeImage.dll" Alias "_FreeImage_GetFIFExtensionList@4" (ByVal fif As FREE_IMAGE_FORMAT) As String
-Public Declare Function FreeImage_GetFIFDescription Lib "FreeImage.dll" Alias "_FreeImage_GetFIFDescription@4" (ByVal fif As FREE_IMAGE_FORMAT) As String
-Public Declare Function FreeImage_GetFIFRegExpr Lib "FreeImage.dll" Alias "_FreeImage_GetFIFRegExpr@4" (ByVal fif As FREE_IMAGE_FORMAT) As String
-Public Declare Function FreeImage_GetFIFMimeType Lib "FreeImage.dll" Alias "_FreeImage_GetFIFMimeType@4" (ByVal fif As FREE_IMAGE_FORMAT) As String
+Public Declare Function FreeImage_GetFormatFromFIF Lib "FreeImage.dll" Alias "_FreeImage_GetFormatFromFIF@4" (ByVal fif As FREE_IMAGE_FORMAT) As Long
+Public Declare Function FreeImage_GetFIFExtensionList Lib "FreeImage.dll" Alias "_FreeImage_GetFIFExtensionList@4" (ByVal fif As FREE_IMAGE_FORMAT) As Long
+Public Declare Function FreeImage_GetFIFDescription Lib "FreeImage.dll" Alias "_FreeImage_GetFIFDescription@4" (ByVal fif As FREE_IMAGE_FORMAT) As Long
+Public Declare Function FreeImage_GetFIFRegExpr Lib "FreeImage.dll" Alias "_FreeImage_GetFIFRegExpr@4" (ByVal fif As FREE_IMAGE_FORMAT) As Long
+Public Declare Function FreeImage_GetFIFMimeType Lib "FreeImage.dll" Alias "_FreeImage_GetFIFMimeType@4" (ByVal fif As FREE_IMAGE_FORMAT) As Long
 Public Declare Function FreeImage_GetFIFFromFilename Lib "FreeImage.dll" Alias "_FreeImage_GetFIFFromFilename@4" (ByVal filename As String) As FREE_IMAGE_FORMAT
 Public Declare Function FreeImage_FIFSupportsReading Lib "FreeImage.dll" Alias "_FreeImage_FIFSupportsReading@4" (ByVal fif As FREE_IMAGE_FORMAT) As Long
 Public Declare Function FreeImage_FIFSupportsWriting Lib "FreeImage.dll" Alias "_FreeImage_FIFSupportsWriting@4" (ByVal fif As FREE_IMAGE_FORMAT) As Long
@@ -235,8 +448,8 @@ Public Declare Function FreeImage_ZLibCRC32 Lib "FreeImage.dll" Alias "_FreeImag
 Public Declare Function FreeImage_CreateTag Lib "FreeImage.dll" Alias "_FreeImage_CreateTag@0" () As Long
 Public Declare Sub FreeImage_DeleteTag Lib "FreeImage.dll" Alias "_FreeImage_DeleteTag@4" (ByVal tag As Long)
 Public Declare Function FreeImage_CloneTag Lib "FreeImage.dll" Alias "_FreeImage_CloneTag@4" (ByVal tag As Long) As Long
-Public Declare Function FreeImage_GetTagKey Lib "FreeImage.dll" Alias "_FreeImage_GetTagKey@4" (ByVal tag As Long) As String
-Public Declare Function FreeImage_GetTagDescription Lib "FreeImage.dll" Alias "_FreeImage_GetTagDescription@4" (ByVal tag As Long) As String
+Public Declare Function FreeImage_GetTagKey Lib "FreeImage.dll" Alias "_FreeImage_GetTagKey@4" (ByVal tag As Long) As Long
+Public Declare Function FreeImage_GetTagDescription Lib "FreeImage.dll" Alias "_FreeImage_GetTagDescription@4" (ByVal tag As Long) As Long
 Public Declare Function FreeImage_GetTagID Lib "FreeImage.dll" Alias "_FreeImage_GetTagID@4" (ByVal tag As Long) As Integer
 Public Declare Function FreeImage_GetTagType Lib "FreeImage.dll" Alias "_FreeImage_GetTagType@4" (ByVal tag As Long) As FREE_IMAGE_MDTYPE
 Public Declare Function FreeImage_GetTagCount Lib "FreeImage.dll" Alias "_FreeImage_GetTagCount@4" (ByVal tag As Long) As Long
@@ -255,7 +468,7 @@ Public Declare Sub FreeImage_FindCloseMetadata Lib "FreeImage.dll" Alias "_FreeI
 Public Declare Function FreeImage_SetMetadata Lib "FreeImage.dll" Alias "_FreeImage_SetMetadata@16" (ByVal model As FREE_IMAGE_MDMODEL, ByVal dib As Long, ByVal key As String, ByVal tag As Long) As Long
 Public Declare Function FreeImage_GetMetadata Lib "FreeImage.dll" Alias "_FreeImage_GetMetadata@16" (ByVal model As FREE_IMAGE_MDMODEL, ByVal dib As Long, ByVal key As String, ByRef tag As Long) As Long
 Public Declare Function FreeImage_GetMetadataCount Lib "FreeImage.dll" Alias "_FreeImage_GetMetadataCount@8" (ByVal model As FREE_IMAGE_MDMODEL, ByVal dib As Long) As Long
-Public Declare Function FreeImage_TagToString Lib "FreeImage.dll" Alias "_FreeImage_TagToString@12" (ByVal model As FREE_IMAGE_MDMODEL, ByVal tag As Long, Optional ByVal Make As String = 0) As String
+Public Declare Function FreeImage_TagToString Lib "FreeImage.dll" Alias "_FreeImage_TagToString@12" (ByVal model As FREE_IMAGE_MDMODEL, ByVal tag As Long, Optional ByVal Make As String = 0) As Long
 Public Declare Function FreeImage_RotateClassic Lib "FreeImage.dll" Alias "_FreeImage_RotateClassic@12" (ByVal dib As Long, ByVal angle As Double) As Long
 Public Declare Function FreeImage_RotateEx Lib "FreeImage.dll" Alias "_FreeImage_RotateEx@48" (ByVal dib As Long, ByVal angle As Double, ByVal x_shift As Double, ByVal y_shift As Double, ByVal x_origin As Double, ByVal y_origin As Double, ByVal use_mask As Long) As Long
 Public Declare Function FreeImage_FlipHorizontal Lib "FreeImage.dll" Alias "_FreeImage_FlipHorizontal@4" (ByVal dib As Long) As Long

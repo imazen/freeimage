@@ -127,6 +127,9 @@ function vbpasstypesize(t,pts,   a)
 	printf(")");
 	if($1!="void") {
 		vbpasstypesize($1,pts);
+		if( pts[1] == "String" ) {
+			pts[1] = "Long";
+		}
 		printf(" As %s",pts[1]);
 	}
 	printf("\n");
