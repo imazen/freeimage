@@ -238,19 +238,24 @@
 #define TIFFTAG_GEODOUBLEPARAMS		34736
 #define TIFFTAG_GEOASCIIPARAMS		34737
 
+// ==========================================================
+// FreeImage Animation tags
+// ==========================================================
+
+#define ANIMTAG_LOGICALWIDTH	0x0001
+#define ANIMTAG_LOGICALHEIGHT	0x0002
+#define ANIMTAG_GLOBALPALETTE	0x0003
+#define ANIMTAG_LOOP			0x0004
+#define ANIMTAG_FRAMELEFT		0x1001
+#define ANIMTAG_FRAMETOP		0x1002
+#define ANIMTAG_NOLOCALPALETTE	0x1003
+#define ANIMTAG_INTERLACED		0x1004
+#define ANIMTAG_FRAMETIME		0x1005
+#define ANIMTAG_DISPOSALMETHOD	0x1006
+
 // --------------------------------------------------------------------------
 // Helper functions to deal with the FITAG structure
 // --------------------------------------------------------------------------
-
-/**
-Clone a FITAG structure
-*/
-//FITAG* FreeImage_CloneTag(const FITAG *tag);
-
-/**
-Free a FITAG structure
-*/
-//void FreeImage_DeleteTag(FITAG *tag);
 
 /** 
 Describes the tag format descriptor

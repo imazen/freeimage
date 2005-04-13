@@ -129,7 +129,8 @@ static int g_GifInterlaceIncrement[GIF_INTERLACE_PASSES] = {8, 8, 4, 2};
 // Helpers Functions
 // ==========================================================
 
-static BOOL FreeImage_SetMetadataEx(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, WORD id, FREE_IMAGE_MDTYPE type, DWORD count, DWORD length, const void *value)
+static BOOL 
+FreeImage_SetMetadataEx(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, WORD id, FREE_IMAGE_MDTYPE type, DWORD count, DWORD length, const void *value)
 {
 	BOOL bResult = FALSE;
 	FITAG *tag = FreeImage_CreateTag();
@@ -140,13 +141,21 @@ static BOOL FreeImage_SetMetadataEx(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, con
 		FreeImage_SetTagCount(tag, count);
 		FreeImage_SetTagLength(tag, length);
 		FreeImage_SetTagValue(tag, value);
+		if(model == FIMD_ANIMATION) {
+			TagLib& s = TagLib::instance();
+			// get the tag description
+			const char *description = s.getTagDescription(TagLib::ANIMATION, id);
+			FreeImage_SetTagDescription(tag, description);
+		}
+		// store the tag
 		bResult = FreeImage_SetMetadata(model, dib, key, tag);
 		FreeImage_DeleteTag(tag);
 	}
 	return bResult;
 }
 
-static BOOL FreeImage_GetMetadataEx(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, FREE_IMAGE_MDTYPE type, FITAG **tag)
+static BOOL 
+FreeImage_GetMetadataEx(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, FREE_IMAGE_MDTYPE type, FITAG **tag)
 {
 	if( FreeImage_GetMetadata(model, dib, key, tag) ) {
 		if( FreeImage_GetTagType(*tag) == type ) {
@@ -774,12 +783,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		io->read_proc(&packed, 1, 1, handle);
 		interlaced = (packed & GIF_PACKED_ID_INTERLACED) ? true : false;
 		no_local_palette = (packed & GIF_PACKED_ID_HAVELCT) ? false : true;
-		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameLeft", 0x1001, FIDT_SHORT, 1, 2, &left);
-		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameTop", 0x1002, FIDT_SHORT, 1, 2, &top);
+		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameLeft", ANIMTAG_FRAMELEFT, FIDT_SHORT, 1, 2, &left);
+		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameTop", ANIMTAG_FRAMETOP, FIDT_SHORT, 1, 2, &top);
 		b = no_local_palette ? 1 : 0;
-		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "NoLocalPalette", 0x1003, FIDT_BYTE, 1, 1, &b);
+		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "NoLocalPalette", ANIMTAG_NOLOCALPALETTE, FIDT_BYTE, 1, 1, &b);
 		b = interlaced ? 1 : 0;
-		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "Interlaced", 0x1004, FIDT_BYTE, 1, 1, &b);
+		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "Interlaced", ANIMTAG_INTERLACED, FIDT_BYTE, 1, 1, &b);
 
 		int bpp = 8;
 		if( (flags & GIF_LOAD256) == 0 ) {
@@ -888,8 +897,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			SwapShort(&logicalwidth);
 			SwapShort(&logicalheight);
 #endif
-			FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "LogicalWidth", 0x0001, FIDT_SHORT, 1, 2, &logicalwidth);
-			FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "LogicalHeight", 0x0002, FIDT_SHORT, 1, 2, &logicalheight);
+			FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "LogicalWidth", ANIMTAG_LOGICALWIDTH, FIDT_SHORT, 1, 2, &logicalwidth);
+			FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "LogicalHeight", ANIMTAG_LOGICALHEIGHT, FIDT_SHORT, 1, 2, &logicalheight);
 
 			//Global Color Table
 			if( info->global_color_table_offset != 0 ) {
@@ -903,7 +912,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					globalpalette[i].rgbReserved = 0;
 					i++;
 				}
-				FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "GlobalPalette", 0x0003, FIDT_PALETTE, info->global_color_table_size, info->global_color_table_size * 4, globalpalette);
+				FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "GlobalPalette", ANIMTAG_GLOBALPALETTE, FIDT_PALETTE, info->global_color_table_size, info->global_color_table_size * 4, globalpalette);
 				//background color
 				if( info->background_color < info->global_color_table_size ) {
 					FreeImage_SetBackgroundColor(dib, &globalpalette[info->background_color]);
@@ -933,7 +942,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 				}
 			}
-			FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "Loop", 0x0004, FIDT_LONG, 1, 4, &loop);
+			FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "Loop", ANIMTAG_LOOP, FIDT_LONG, 1, 4, &loop);
 
 			//Comment Extension
 			for( idx = 0; idx < info->comment_extension_offsets.size(); idx++ ) {
@@ -975,9 +984,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 			}
 		}
-		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameTime", 0x1005, FIDT_LONG, 1, 4, &delay_time);
+		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameTime", ANIMTAG_FRAMETIME, FIDT_LONG, 1, 4, &delay_time);
 		b = disposal_method;
-		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "DisposalMethod", 0x1006, FIDT_BYTE, 1, 1, &b);
+		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "DisposalMethod", ANIMTAG_DISPOSALMETHOD, FIDT_BYTE, 1, 1, &b);
 	} catch (const char *msg) {
 		if( dib != NULL ) {
 			FreeImage_Unload(dib);
