@@ -75,8 +75,12 @@ FreeImage_ColorQuantizeEx(FIBITMAP *dib, FREE_IMAGE_QUANTIZE quantize, int Palet
 				}
 				case FIQ_NNQUANT :
 				{
+					// sampling factor in range 1..30. 
+					// 1 => slower (but better), 30 => faster. Default value is 1
+					const int sampling = 1;
+
 					NNQuantizer Q(PaletteSize);
-					return Q.Quantize(dib, ReserveSize, ReservePalette, 1);
+					return Q.Quantize(dib, ReserveSize, ReservePalette, sampling);
 				}
 			}
 		}
