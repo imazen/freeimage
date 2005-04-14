@@ -344,7 +344,8 @@ FI_ENUM(FREE_IMAGE_FORMAT) {
 	FIF_XBM		= 22,
 	FIF_XPM		= 23,
 	FIF_DDS		= 24,
-	FIF_GIF     = 25
+	FIF_GIF     = 25,
+	FIF_HDR		= 26
 };
 
 /** Image type used in FreeImage.
@@ -567,6 +568,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define GIF_DEFAULT			0
 #define GIF_LOAD256			1		// Load the image as a 256 color image with ununsed palette entries, if it's 16 or 2 color
 #define GIF_PLAYBACK		2		// 'Play' the GIF to generate each frame (as 32bpp) instead of returning raw frame data when loading
+#define HDR_DEFAULT			0
 #define ICO_DEFAULT         0
 #define ICO_MAKEALPHA		1		// convert to 32bpp and create an alpha channel from the AND-mask when loading
 #define IFF_DEFAULT         0

@@ -18,6 +18,7 @@ Month day, 2005 - 3.7.0
 + [Ryan Rubley] added FIMD_ANIMATION and FIDT_PALETTE
 + [Ryan Rubley] added brand new PluginGIF with full animation multipage and metadata support
 + [Herve Drolon] added support for FIC_MINISWHITE 8-bit images to FreeImage_Rescale
++ [Herve Drolon] added HDR (High Dynamic Range) format (loader & writer)
 * [Herve Drolon] allowed loading of corrupted JPEG with a premature end of file
 * [Herve Drolon] fixed a memory leak with loading of exif JPEG images
 * [Detlev Vendt] changed some 'pointer-to-int' casts to 'pointer-to-long' for 64bit machines
