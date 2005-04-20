@@ -40,6 +40,7 @@ Const DDS_DEFAULT As Long = 0
 Const GIF_DEFAULT As Long = 0
 Const GIF_LOAD256 As Long = 1
 Const GIF_PLAYBACK As Long = 2
+Const HDR_DEFAULT As Long = 0
 Const ICO_DEFAULT As Long = 0
 Const ICO_MAKEALPHA As Long = 1
 Const IFF_DEFAULT As Long = 0
@@ -112,6 +113,7 @@ Public Enum FREE_IMAGE_FORMAT
 	FIF_XPM = 23
 	FIF_DDS = 24
 	FIF_GIF = 25
+	FIF_HDR = 26
 End Enum
 Public Enum FREE_IMAGE_TYPE
 	FIT_UNKNOWN = 0
