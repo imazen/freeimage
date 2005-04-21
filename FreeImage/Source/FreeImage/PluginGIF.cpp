@@ -783,12 +783,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		io->read_proc(&packed, 1, 1, handle);
 		interlaced = (packed & GIF_PACKED_ID_INTERLACED) ? true : false;
 		no_local_palette = (packed & GIF_PACKED_ID_HAVELCT) ? false : true;
-		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameLeft", ANIMTAG_FRAMELEFT, FIDT_SHORT, 1, 2, &left);
-		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameTop", ANIMTAG_FRAMETOP, FIDT_SHORT, 1, 2, &top);
-		b = no_local_palette ? 1 : 0;
-		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "NoLocalPalette", ANIMTAG_NOLOCALPALETTE, FIDT_BYTE, 1, 1, &b);
-		b = interlaced ? 1 : 0;
-		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "Interlaced", ANIMTAG_INTERLACED, FIDT_BYTE, 1, 1, &b);
 
 		int bpp = 8;
 		if( (flags & GIF_LOAD256) == 0 ) {
@@ -805,6 +799,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		if( dib == NULL ) {
 			throw "DIB allocated failed";
 		}
+
+		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameLeft", ANIMTAG_FRAMELEFT, FIDT_SHORT, 1, 2, &left);
+		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameTop", ANIMTAG_FRAMETOP, FIDT_SHORT, 1, 2, &top);
+		b = no_local_palette ? 1 : 0;
+		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "NoLocalPalette", ANIMTAG_NOLOCALPALETTE, FIDT_BYTE, 1, 1, &b);
+		b = interlaced ? 1 : 0;
+		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "Interlaced", ANIMTAG_INTERLACED, FIDT_BYTE, 1, 1, &b);
 
 		//Palette
 		RGBQUAD *pal = FreeImage_GetPalette(dib);
