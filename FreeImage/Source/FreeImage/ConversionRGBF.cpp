@@ -54,7 +54,7 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 			break;
 		case FIT_RGBF:
 			// RGBF type : clone the src
-			return FreeImage_Clone(src);
+			return FreeImage_Clone(dib);
 			break;
 		default:
 			return NULL;
