@@ -408,19 +408,23 @@ GetImageType(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel) {
 						fit = FIT_BITMAP;
 						break;
 					case 16:
-						// 8-bit + alpha or 16-bit RGB
-						if((samplesperpixel == 2) || (samplesperpixel == 3)) {
+						// 8-bit + alpha or 16-bit greyscale
+						if(samplesperpixel == 2) {
 							fit = FIT_BITMAP;
 						} else {
 							fit = FIT_UINT16;
 						}
 						break;
-
 					case 32:
 						if(samplesperpixel == 4) {
 							fit = FIT_BITMAP;
 						} else {
 							fit = FIT_UINT32;
+						}
+						break;
+					case 48:
+						if(samplesperpixel == 3) {
+							fit = FIT_RGB16;
 						}
 						break;
 				}
@@ -476,6 +480,13 @@ GetImageType(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel) {
 					break;
 			}
 		}
+		else if(samplesperpixel == 3) {
+			if(bpp == 48) fit = FIT_RGB16;
+		}
+		else if(samplesperpixel == 4) {
+			if(bpp == 96) fit = FIT_RGBA16;
+		}
+
 	}
 
     return fit;
@@ -492,6 +503,8 @@ SetImageType(TIFF *tiff, FREE_IMAGE_TYPE fit) {
 		case FIT_BITMAP:	// standard image: 1-, 4-, 8-, 16-, 24-, 32-bit
 		case FIT_UINT16:	// array of unsigned short	: unsigned 16-bit
 		case FIT_UINT32:	// array of unsigned long	: unsigned 32-bit
+		case FIT_RGB16:		// 48-bit RGB image			: 3 x 16-bit
+		case FIT_RGBA16:	// 64-bit RGBA image		: 4 x 16-bit
 			TIFFSetField(tiff, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
 			break;
 
@@ -502,6 +515,8 @@ SetImageType(TIFF *tiff, FREE_IMAGE_TYPE fit) {
 
 		case FIT_FLOAT:		// array of float	: 32-bit
 		case FIT_DOUBLE:	// array of double	: 64-bit
+		case FIT_RGBF:		// 96-bit RGB float image	: 3 x 32-bit IEEE floating point
+		case FIT_RGBAF:		// 128-bit RGBA float image	: 4 x 32-bit IEEE floating point
 			TIFFSetField(tiff, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
 			break;
 
@@ -554,6 +569,7 @@ SetCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint16 
 			case 16 :
 			case 24 :
 			case 32 :
+			case 48:
 			case 64 :
 			case 128:
 				compression = COMPRESSION_LZW;
@@ -578,7 +594,7 @@ SetCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint16 
 		// grayscale images do much better with differencing.
 
 		if((bitspersample == 8) || (bitspersample == 16)) {
-			if ((bitsperpixel >= 8) && (photometric != PHOTOMETRIC_PALETTE))
+			if ((bitsperpixel >= 8) && (photometric != PHOTOMETRIC_PALETTE) && (bitsperpixel != 48))
 				TIFFSetField(tiff, TIFFTAG_PREDICTOR, 2);
 			else
 				TIFFSetField(tiff, TIFFTAG_PREDICTOR, 1);
@@ -790,14 +806,15 @@ SupportsExportDepth(int depth) {
 static BOOL DLL_CALLCONV 
 SupportsExportType(FREE_IMAGE_TYPE type) {
 	return (
-		(type == FIT_BITMAP) ||
-		(type == FIT_UINT16) ||
-		(type == FIT_INT16)  ||
-		(type == FIT_UINT32) ||
-		(type == FIT_INT32)  ||
-		(type == FIT_FLOAT)  ||
-		(type == FIT_DOUBLE) ||
-		(type == FIT_COMPLEX)
+		(type == FIT_BITMAP)  ||
+		(type == FIT_UINT16)  ||
+		(type == FIT_INT16)   ||
+		(type == FIT_UINT32)  ||
+		(type == FIT_INT32)   ||
+		(type == FIT_FLOAT)   ||
+		(type == FIT_DOUBLE)  ||
+		(type == FIT_COMPLEX) || 
+		(type == FIT_RGB16)
 	);
 }
 
@@ -915,6 +932,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				(((flags & TIFF_CMYK) == TIFF_CMYK) || samplesperpixel > 4) && 
 				!TIFFIsTiled(tif))
 				isRGB = FALSE;
+
+			// load 48-bit RGB without conversion 
+			if((photometric == PHOTOMETRIC_RGB) && (image_type == FIT_RGB16))
+				isRGB = FALSE;
+
+			// ---------------------------------------------------------------------------------
 
 			if (isRGB) {
 				// Read the whole image into one big RGBA buffer and then 
@@ -1273,7 +1296,12 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					TIFFSetField(out, TIFFTAG_EXTRASAMPLES, 1, sampleinfo);
 				}
 			}
+		} else if(image_type == FIT_RGB16) {
+			// 48-bit RGB
 
+			samplesperpixel = 3;
+			bitspersample = bitsperpixel / samplesperpixel;
+			photometric	= PHOTOMETRIC_RGB;
 		} else {
 			// special image type (int, long, double, ...)
 
@@ -1446,6 +1474,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			switch(bitsperpixel) {
 				case 16:
 				case 32:
+				case 48:
 				case 64:
 				case 128:
 				{

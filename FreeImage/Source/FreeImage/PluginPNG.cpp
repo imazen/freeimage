@@ -241,7 +241,8 @@ static BOOL DLL_CALLCONV
 SupportsExportType(FREE_IMAGE_TYPE type) {
 	return (
 		(type == FIT_BITMAP) ||
-		(type == FIT_UINT16)
+		(type == FIT_UINT16) ||
+		(type == FIT_RGB16)
 	);
 }
 
@@ -320,12 +321,19 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			FREE_IMAGE_TYPE image_type = FIT_BITMAP;
 			if (bit_depth == 16) {
-				if (color_type == PNG_COLOR_TYPE_GRAY) {
+				if ((pixel_depth == 16) && (color_type == PNG_COLOR_TYPE_GRAY)) {
 					image_type = FIT_UINT16;
 #ifndef FREEIMAGE_BIGENDIAN
 					// turn on 16 bit byte swapping
 					png_set_swap(png_ptr);
 #endif
+				} 
+				else if ((pixel_depth == 48) && (color_type == PNG_COLOR_TYPE_RGB)) {
+					image_type = FIT_RGB16;
+#ifndef FREEIMAGE_BIGENDIAN
+					// turn on 16 bit byte swapping
+					png_set_swap(png_ptr);
+#endif		
 				} else {
 					// tell libpng to strip 16 bit/color files down to 8 bits/color
 					png_set_strip_16(png_ptr);
@@ -342,7 +350,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 #ifndef FREEIMAGE_BIGENDIAN
 					// flip the RGB pixels to BGR (or RGBA to BGRA)
 
-					png_set_bgr(png_ptr);
+					if(image_type == FIT_BITMAP)
+						png_set_bgr(png_ptr);
 #endif
 					break;
 
@@ -429,7 +438,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				case PNG_COLOR_TYPE_RGB:
 					png_set_invert_alpha(png_ptr);
 
-					dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+					if(image_type == FIT_BITMAP) {
+						dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+					} else {
+						dib = FreeImage_AllocateT(image_type, width, height, pixel_depth);
+					}
 					break;
 
 				case PNG_COLOR_TYPE_RGB_ALPHA :
@@ -665,12 +678,14 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			width = FreeImage_GetWidth(dib);
 			height = FreeImage_GetHeight(dib);
 			pixel_depth = FreeImage_GetBPP(dib);	
-			if(FreeImage_GetImageType(dib) == FIT_BITMAP) {
+
+			FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+			if(image_type == FIT_BITMAP) {
 				// standard image type
 				bit_depth = (pixel_depth > 8) ? 8 : pixel_depth;
 			} else {
-				// 16-bit greyscale
-				bit_depth = pixel_depth;
+				// 16-bit greyscale or 16-bit RGB
+				bit_depth = 16;
 			}
 
 
@@ -733,7 +748,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 #ifndef FREEIMAGE_BIGENDIAN
 					// flip BGR pixels to RGB
-					png_set_bgr(png_ptr);
+					if(image_type == FIT_BITMAP)
+						png_set_bgr(png_ptr);
 #endif
 					break;
 					
