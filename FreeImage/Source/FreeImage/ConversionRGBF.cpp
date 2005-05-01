@@ -86,9 +86,10 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 				BYTE   *src_pixel = (BYTE*)src_bits;
 				FIRGBF *dst_pixel = (FIRGBF*)dst_bits;
 				for(x = 0; x < width; x++) {
-					dst_pixel->red   = (float)(src_pixel[FI_RGBA_RED]);
-					dst_pixel->green = (float)(src_pixel[FI_RGBA_GREEN]);
-					dst_pixel->blue  = (float)(src_pixel[FI_RGBA_BLUE]);
+					// convert and scale to the range [0..1]
+					dst_pixel->red   = (float)(src_pixel[FI_RGBA_RED])   / 255;
+					dst_pixel->green = (float)(src_pixel[FI_RGBA_GREEN]) / 255;
+					dst_pixel->blue  = (float)(src_pixel[FI_RGBA_BLUE])  / 255;
 
 					src_pixel += bytespp;
 					dst_pixel += sizeof(FIRGBF);
@@ -109,9 +110,10 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 				FIRGBF  *dst_pixel = (FIRGBF*)  dst_bits;
 
 				for(x = 0; x < width; x++) {
-					dst_pixel[x].red   = (float)(src_pixel[x].red);
-					dst_pixel[x].green = (float)(src_pixel[x].green);
-					dst_pixel[x].blue  = (float)(src_pixel[x].blue);
+					// convert and scale to the range [0..1]
+					dst_pixel[x].red   = (float)(src_pixel[x].red)   / 65535;
+					dst_pixel[x].green = (float)(src_pixel[x].green) / 65535;
+					dst_pixel[x].blue  = (float)(src_pixel[x].blue)  / 65535;
 				}
 				src_bits += src_pitch;
 				dst_bits += dst_pitch;
