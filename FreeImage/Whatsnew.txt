@@ -28,6 +28,7 @@ Month day, 2005 - 3.7.0
 * [Ryan Rubley] updated VB6 wrapper generation for new functions
 * [Herve Drolon] fixed incorrect behavior when reading JPEG comments containing special characters
 * [Herve Drolon] fixed incorrect behavior when reading JPEG ICC profiles with a size greater than 64 KB
+* [Herve Drolon] fixed a bug in TIFF plugin when loading malformed multipage TIFF
 
 February 20, 2005 - 3.6.1
 * [Ryan Rubley] fixed a memory leak in the metadata API
