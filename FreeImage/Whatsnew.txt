@@ -26,6 +26,8 @@ Month day, 2005 - 3.7.0
 * [Detlev Vendt] changed some 'pointer-to-int' casts to 'pointer-to-long' for 64bit machines
 * [Ryan Rubley] fixed a memory leak in the multipage API
 * [Ryan Rubley] updated VB6 wrapper generation for new functions
+* [Herve Drolon] fixed incorrect behavior when reading JPEG comments containing special characters
+* [Herve Drolon] fixed incorrect behavior when reading JPEG ICC profiles with a size greater than 64 KB
 
 February 20, 2005 - 3.6.1
 * [Ryan Rubley] fixed a memory leak in the metadata API
