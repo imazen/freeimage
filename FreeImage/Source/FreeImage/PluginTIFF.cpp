@@ -846,15 +846,19 @@ Close(FreeImageIO *io, fi_handle handle, void *data) {
 
 static int DLL_CALLCONV
 PageCount(FreeImageIO *io, fi_handle handle, void *data) {
-	int nr_ifd = 0;
+	if(data) {
+		int nr_ifd = 0;
 
-	TIFF *tif = (TIFF *)data;
+		TIFF *tif = (TIFF *)data;
 
-	do {
-		nr_ifd++;
-	} while (TIFFReadDirectory(tif));
-			
-	return nr_ifd;
+		do {
+			nr_ifd++;
+		} while (TIFFReadDirectory(tif));
+				
+		return nr_ifd;
+	}
+
+	return 0;
 }
 
 // ----------------------------------------------------------
@@ -1246,7 +1250,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 static BOOL DLL_CALLCONV
 Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data) {
-	if (dib != NULL) {
+	if ((dib != NULL) && (handle != NULL) && (data != NULL)) {
 		TIFF *out = (TIFF *)data;
 
 		int32 height;
