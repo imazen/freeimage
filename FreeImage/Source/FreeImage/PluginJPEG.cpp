@@ -61,6 +61,10 @@ static int s_format_id;
 #define ICC_MARKER		(JPEG_APP0+2)	// ICC profile marker
 #define IPTC_MARKER		(JPEG_APP0+13)	// IPTC marker / BIM marker 
 
+#define ICC_HEADER_SIZE 14				// size of non-profile data in APP2
+#define MAX_BYTES_IN_MARKER 65533L		// maximum data length of a JPEG marker
+#define MAX_DATA_BYTES_IN_MARKER 65519L	// maximum data length of a JPEG APP2 marker
+
 // ----------------------------------------------------------
 //   Typedef declarations
 // ----------------------------------------------------------
@@ -381,24 +385,19 @@ jpeg_freeimage_dst (j_compress_ptr cinfo, fi_handle outfile, FreeImageIO *io) {
 */
 static BOOL 
 jpeg_read_comment(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
-	int count;
-	size_t i;
 	size_t length = datalen;
 	BYTE *profile = (BYTE*)dataptr;
 
 	// read the comment
 	char *value = (char*)malloc((length + 1) * sizeof(char));
 	memcpy(value, profile, length);
-	for(i = 0, count = 0; i < length; i++) {
-		if(isprint(profile[i])) {
-			value[count++] = profile[i];
-		}
-	}
-	value[count] = '\0';
+	value[length] = '\0';
 
 	// create a tag
 	FITAG *tag = FreeImage_CreateTag();
 	if(tag) {
+		unsigned count = length + 1;	// includes the null value
+
 		FreeImage_SetTagID(tag, JPEG_COM);
 		FreeImage_SetTagKey(tag, "Comment");
 		FreeImage_SetTagLength(tag, count);
@@ -421,39 +420,134 @@ jpeg_read_comment(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 /** 
 	Read JPEG_APP2 marker (ICC profile)
 */
+
+/**
+Handy subroutine to test whether a saved marker is an ICC profile marker.
+*/
 static BOOL 
-jpeg_read_icc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
+marker_is_icc(jpeg_saved_marker_ptr marker) {
     // marker identifying string "ICC_PROFILE" (null-terminated)
-	BYTE icc_signature[12] = { 0x49, 0x43, 0x43, 0x5F, 0x50, 0x52, 0x4F, 0x46, 0x49, 0x4C, 0x45, 0x00 };
+	const BYTE icc_signature[12] = { 0x49, 0x43, 0x43, 0x5F, 0x50, 0x52, 0x4F, 0x46, 0x49, 0x4C, 0x45, 0x00 };
 
-	size_t length = datalen;
-	BYTE *profile = (BYTE*)dataptr;
-
-	// verify the identifying string
-	if(length >= 14) {
-		if(memcmp(icc_signature, profile, sizeof(icc_signature)) != 0) {
-			// not a ICC profile, return
-			return FALSE;
+	if(marker->marker == ICC_MARKER) {
+		// verify the identifying string
+		if(marker->data_length >= ICC_HEADER_SIZE) {
+			if(memcmp(icc_signature, marker->data, sizeof(icc_signature)) == 0) {
+				return TRUE;
+			}
 		}
-		// sequence number
-		int seq_no = profile[12];
-		// number of markers
-		int num_markers = profile[13];
-		if((seq_no <= 0) || (seq_no > num_markers)) {
-			// bogus sequence number
-			return FALSE;
-		}
-	} else {
-		return FALSE;
 	}
 
-	// skip non-profile data in APP2 marker
-	profile += 14;
-	length  -= 14;
+	return FALSE;
+}
 
-	// copy ICC profile data
-	FreeImage_CreateICCProfile(dib, profile, length);
+/**
+  See if there was an ICC profile in the JPEG file being read;
+  if so, reassemble and return the profile data.
 
+  TRUE is returned if an ICC profile was found, FALSE if not.
+  If TRUE is returned, *icc_data_ptr is set to point to the
+  returned data, and *icc_data_len is set to its length.
+  
+  IMPORTANT: the data at **icc_data_ptr has been allocated with malloc()
+  and must be freed by the caller with free() when the caller no longer
+  needs it.  (Alternatively, we could write this routine to use the
+  IJG library's memory allocator, so that the data would be freed implicitly
+  at jpeg_finish_decompress() time.  But it seems likely that many apps
+  will prefer to have the data stick around after decompression finishes.)
+  
+  NOTE: if the file contains invalid ICC APP2 markers, we just silently
+  return FALSE.  You might want to issue an error message instead.
+*/
+static BOOL 
+jpeg_read_icc_profile(j_decompress_ptr cinfo, JOCTET **icc_data_ptr, unsigned *icc_data_len) {
+	jpeg_saved_marker_ptr marker;
+	int num_markers = 0;
+	int seq_no;
+	JOCTET *icc_data;
+	unsigned total_length;
+
+	const int MAX_SEQ_NO = 255;			// sufficient since marker numbers are bytes
+	BYTE marker_present[MAX_SEQ_NO+1];	// 1 if marker found
+	unsigned data_length[MAX_SEQ_NO+1];	// size of profile data in marker
+	unsigned data_offset[MAX_SEQ_NO+1];	// offset for data in marker
+	
+	*icc_data_ptr = NULL;		// avoid confusion if FALSE return
+	*icc_data_len = 0;
+	
+	/**
+	this first pass over the saved markers discovers whether there are
+	any ICC markers and verifies the consistency of the marker numbering.
+	*/
+	
+	memset(marker_present, 0, (MAX_SEQ_NO + 1));
+	
+	for(marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
+		if (marker_is_icc(marker)) {
+			if (num_markers == 0) {
+				// number of markers
+				num_markers = GETJOCTET(marker->data[13]);
+			}
+			else if (num_markers != GETJOCTET(marker->data[13])) {
+				return FALSE;		// inconsistent num_markers fields 
+			}
+			// sequence number
+			seq_no = GETJOCTET(marker->data[12]);
+			if (seq_no <= 0 || seq_no > num_markers) {
+				return FALSE;		// bogus sequence number 
+			}
+			if (marker_present[seq_no]) {
+				return FALSE;		// duplicate sequence numbers 
+			}
+			marker_present[seq_no] = 1;
+			data_length[seq_no] = marker->data_length - ICC_HEADER_SIZE;
+		}
+	}
+	
+	if (num_markers == 0)
+		return FALSE;
+		
+	/**
+	check for missing markers, count total space needed,
+	compute offset of each marker's part of the data.
+	*/
+	
+	total_length = 0;
+	for(seq_no = 1; seq_no <= num_markers; seq_no++) {
+		if (marker_present[seq_no] == 0) {
+			return FALSE;		// missing sequence number
+		}
+		data_offset[seq_no] = total_length;
+		total_length += data_length[seq_no];
+	}
+	
+	if (total_length <= 0)
+		return FALSE;		// found only empty markers ?
+	
+	// allocate space for assembled data 
+	icc_data = (JOCTET *) malloc(total_length * sizeof(JOCTET));
+	if (icc_data == NULL)
+		return FALSE;		// out of memory
+	
+	// and fill it in
+	for (marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
+		if (marker_is_icc(marker)) {
+			JOCTET FAR *src_ptr;
+			JOCTET *dst_ptr;
+			unsigned length;
+			seq_no = GETJOCTET(marker->data[12]);
+			dst_ptr = icc_data + data_offset[seq_no];
+			src_ptr = marker->data + ICC_HEADER_SIZE;
+			length = data_length[seq_no];
+			while (length--) {
+				*dst_ptr++ = *src_ptr++;
+			}
+		}
+	}
+	
+	*icc_data_ptr = icc_data;
+	*icc_data_len = total_length;
+	
 	return TRUE;
 }
 
@@ -530,15 +624,22 @@ read_markers(j_decompress_ptr cinfo, FIBITMAP *dib) {
 				jpeg_read_exif_profile(dib, marker->data, marker->data_length);
 				jpeg_read_xmp_profile(dib, marker->data, marker->data_length);
 				break;
-			case ICC_MARKER:
-				// ICC profile
-				jpeg_read_icc_profile(dib, marker->data, marker->data_length);
-				break;
 			case IPTC_MARKER:
 				// IPTC/NAA or Adobe Photoshop profile
 				jpeg_read_iptc_profile(dib, marker->data, marker->data_length);
 				break;
 		}
+	}
+
+	// ICC profile
+	BYTE *icc_profile = NULL;
+	unsigned icc_length = 0;
+
+	if( jpeg_read_icc_profile(cinfo, &icc_profile, &icc_length) ) {
+		// copy ICC profile data
+		FreeImage_CreateICCProfile(dib, icc_profile, icc_length);
+		// clean up
+		free(icc_profile);
 	}
 
 	return TRUE;
@@ -561,8 +662,8 @@ jpeg_write_comment(j_compress_ptr cinfo, FIBITMAP *dib) {
 		const char *tag_value = (char*)FreeImage_GetTagValue(tag);
 
 		if(NULL != tag_value) {
-			for(long i = 0; i < (long)strlen(tag_value); i+= 65533L) {
-				jpeg_write_marker(cinfo, JPEG_COM, (BYTE*)tag_value + i, MIN((long)strlen(tag_value + i), 65533L));
+			for(long i = 0; i < (long)strlen(tag_value); i+= MAX_BYTES_IN_MARKER) {
+				jpeg_write_marker(cinfo, JPEG_COM, (BYTE*)tag_value + i, MIN((long)strlen(tag_value + i), MAX_BYTES_IN_MARKER));
 			}
 			return TRUE;
 		}
@@ -581,21 +682,20 @@ jpeg_write_icc_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 	FIICCPROFILE *iccProfile = FreeImage_GetICCProfile(dib);
 
 	if (iccProfile->size && iccProfile->data) {
-		// ICC signature is 'ICC_PROFILE' + 2 bytes
-		unsigned icc_header_size = 14;
+		// ICC_HEADER_SIZE: ICC signature is 'ICC_PROFILE' + 2 bytes
 
-		BYTE *profile = (BYTE*)malloc((iccProfile->size + icc_header_size) * sizeof(BYTE));
+		BYTE *profile = (BYTE*)malloc((iccProfile->size + ICC_HEADER_SIZE) * sizeof(BYTE));
 		memcpy(profile, icc_signature, 12);
 
-		for(long i = 0; i < (long)iccProfile->size; i += 65519L) {
-			unsigned length = MIN((long)(iccProfile->size - i), 65519L);
+		for(long i = 0; i < (long)iccProfile->size; i += MAX_DATA_BYTES_IN_MARKER) {
+			unsigned length = MIN((long)(iccProfile->size - i), MAX_DATA_BYTES_IN_MARKER);
 			// sequence number
-			profile[12] = (BYTE) ((i / 65519L) + 1);
+			profile[12] = (BYTE) ((i / MAX_DATA_BYTES_IN_MARKER) + 1);
 			// number of markers
-			profile[13] = (BYTE) (iccProfile->size / 65519L + 1);
+			profile[13] = (BYTE) (iccProfile->size / MAX_DATA_BYTES_IN_MARKER + 1);
 
-			memcpy(profile + icc_header_size, (BYTE*)iccProfile->data + i, length);
-			jpeg_write_marker(cinfo, ICC_MARKER, profile, (length + icc_header_size));
+			memcpy(profile + ICC_HEADER_SIZE, (BYTE*)iccProfile->data + i, length);
+			jpeg_write_marker(cinfo, ICC_MARKER, profile, (length + ICC_HEADER_SIZE));
         }
 
 		free(profile);
