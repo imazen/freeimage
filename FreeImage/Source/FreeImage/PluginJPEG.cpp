@@ -860,7 +860,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// step 4a: set parameters for decompression
 
-			if ((flags != JPEG_ACCURATE)) {
+			if ((flags & JPEG_ACCURATE) != JPEG_ACCURATE) {
 				cinfo.dct_method          = JDCT_IFAST;
 				cinfo.do_fancy_upsampling = FALSE;
 			}
