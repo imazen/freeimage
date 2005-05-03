@@ -24,7 +24,7 @@
 
 // ----------------------------------------------------------
 
-/** Convert an image of type Tsrc to type Tdst.
+/** Convert a greyscale image of type Tsrc to type Tdst.
 	Conversion is done using standard C language casting convention.
 */
 template<class Tdst, class Tsrc>
@@ -64,7 +64,7 @@ CONVERT_TYPE<Tdst, Tsrc>::convert(FIBITMAP *src, FREE_IMAGE_TYPE dst_type) {
 }
 
 
-/** Convert an image of type Tsrc to a 8-bit grayscale dib.
+/** Convert a greyscale image of type Tsrc to a 8-bit grayscale dib.
 	Conversion is done using either a linear scaling from [min, max] to [0, 255]
 	or a rounding from src_pixel to (BYTE) MIN(255, MAX(0, q)) where int q = int(src_pixel + 0.5); 
 */
@@ -141,6 +141,8 @@ CONVERT_TO_BYTE<Tsrc>::convert(FIBITMAP *src, BOOL scale_linear) {
 	return dst;
 }
 
+/** Convert a greyscale image of type Tsrc to a FICOMPLEX dib.
+*/
 template<class Tsrc>
 class CONVERT_TO_COMPLEX
 {
