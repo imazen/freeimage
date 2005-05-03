@@ -211,7 +211,7 @@ FreeImage_InternalGetPageCount(FIMULTIBITMAP *bitmap) {
 // =====================================================================
 
 FIMULTIBITMAP * DLL_CALLCONV
-FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL create_new, BOOL read_only, BOOL keep_cache_in_memory, FREE_IMAGE_FORMAT cache_fif, int flags) {
+FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL create_new, BOOL read_only, BOOL keep_cache_in_memory, int flags) {
 	// sanity check on the parameters
 
 	if (create_new)
@@ -257,7 +257,7 @@ FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL crea
 						header->changed = FALSE;						
 						header->read_only = read_only;
 						header->m_cachefile = NULL;
-						header->cache_fif = cache_fif == FIF_UNKNOWN ? fif : cache_fif;
+						header->cache_fif = fif;
 						header->load_flags = flags;
 
 						if (header) {
