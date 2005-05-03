@@ -480,6 +480,34 @@ BOOL fipImage::dither(FREE_IMAGE_DITHER algorithm) {
 	return FALSE;
 }
 
+BOOL fipImage::convertToRGBF() {
+	if(_dib) {
+		switch(FreeImage_GetImageType(_dib)) {
+			case FIT_BITMAP:
+				if(FreeImage_GetBPP(_dib) < 24) {
+					// conversion is only allowed from 24- or 32-bit
+					if(!convertTo24Bits()) return FALSE;
+				}
+				// no break here
+			case FIT_RGB16:
+			case FIT_RGBF:
+				FIBITMAP *dib = FreeImage_ConvertToRGBF(_dib);
+				return replace(dib);
+		}
+	}
+	return FALSE;
+
+}
+
+
+BOOL fipImage::toneMapping(FREE_IMAGE_TMO tmo, double first_param, double second_param) {
+	if(_dib) {
+		FIBITMAP *dib = FreeImage_ToneMapping(_dib, tmo, first_param, second_param);
+		return replace(dib);
+	}
+	return FALSE;
+}
+
 ///////////////////////////////////////////////////////////////////   
 // Transparency support: background colour and alpha channel
 

@@ -236,6 +236,22 @@ SOURCE=.\Source\FreeImage\ConversionType.cpp
 
 SOURCE=.\Source\FreeImage\Halftoning.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=.\Source\FreeImage\tmoColorConvert.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Source\FreeImage\tmoDrago03.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Source\FreeImage\tmoReinhard05.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Source\FreeImage\ToneMapping.cpp
+# End Source File
 # End Group
 # Begin Group "Quantizers"
 
@@ -376,6 +392,10 @@ SOURCE=.\Source\Plugin.h
 # Begin Source File
 
 SOURCE=.\Source\Quantizers.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Source\ToneMapping.h
 # End Source File
 # Begin Source File
 

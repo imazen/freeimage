@@ -196,6 +196,18 @@ copy ..\FreeImage.h ..\..\Dist
 				<File
 					RelativePath="..\FreeImage\Halftoning.cpp">
 				</File>
+				<File
+					RelativePath="..\FreeImage\tmoColorConvert.cpp">
+				</File>
+				<File
+					RelativePath="..\FreeImage\tmoDrago03.cpp">
+				</File>
+				<File
+					RelativePath="..\FreeImage\tmoReinhard05.cpp">
+				</File>
+				<File
+					RelativePath="..\FreeImage\ToneMapping.cpp">
+				</File>
 			</Filter>
 			<Filter
 				Name="Plugins"
@@ -339,6 +351,9 @@ copy ..\FreeImage.h ..\..\Dist
 			</File>
 			<File
 				RelativePath="..\Quantizers.h">
+			</File>
+			<File
+				RelativePath="..\ToneMapping.h">
 			</File>
 			<File
 				RelativePath="..\Utilities.h">

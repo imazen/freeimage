@@ -1,6 +1,9 @@
 Attribute VB_Name = "FreeImage"
 Option Explicit
 
+Const unix As Long = 1
+Const linux As Long = 1
+Const i386 As Long = 1
 Const FREEIMAGE_MAJOR_VERSION As Long = 3
 Const FREEIMAGE_MINOR_VERSION As Long = 7
 Const FREEIMAGE_RELEASE_SERIAL As Long = 0
@@ -149,6 +152,10 @@ Public Enum FREE_IMAGE_DITHER
 	FID_CLUSTER6x6 = 3
 	FID_CLUSTER8x8 = 4
 	FID_CLUSTER16x16 = 5
+End Enum
+Public Enum FREE_IMAGE_TMO
+	FITMO_DRAGO03 = 0
+	FITMO_REINHARD05 = 1
 End Enum
 Public Enum FREE_IMAGE_FILTER
 	FILTER_BOX = 0
@@ -339,7 +346,7 @@ Public Declare Function FreeImage_FIFSupportsWriting Lib "FreeImage.dll" Alias "
 Public Declare Function FreeImage_FIFSupportsExportBPP Lib "FreeImage.dll" Alias "_FreeImage_FIFSupportsExportBPP@8" (ByVal fif As FREE_IMAGE_FORMAT, ByVal bpp As Long) As Long
 Public Declare Function FreeImage_FIFSupportsExportType Lib "FreeImage.dll" Alias "_FreeImage_FIFSupportsExportType@8" (ByVal fif As FREE_IMAGE_FORMAT, ByVal type_ As FREE_IMAGE_TYPE) As Long
 Public Declare Function FreeImage_FIFSupportsICCProfiles Lib "FreeImage.dll" Alias "_FreeImage_FIFSupportsICCProfiles@4" (ByVal fif As FREE_IMAGE_FORMAT) As Long
-Public Declare Function FreeImage_OpenMultiBitmap Lib "FreeImage.dll" Alias "_FreeImage_OpenMultiBitmap@28" (ByVal fif As FREE_IMAGE_FORMAT, ByVal filename As String, ByVal create_new As Long, ByVal read_only As Long, Optional ByVal keep_cache_in_memory As Long = 0, Optional ByVal cache_fif As FREE_IMAGE_FORMAT = FIF_UNKNOWN, Optional ByVal flags As Long = 0) As Long
+Public Declare Function FreeImage_OpenMultiBitmap Lib "FreeImage.dll" Alias "_FreeImage_OpenMultiBitmap@24" (ByVal fif As FREE_IMAGE_FORMAT, ByVal filename As String, ByVal create_new As Long, ByVal read_only As Long, Optional ByVal keep_cache_in_memory As Long = 0, Optional ByVal flags As Long = 0) As Long
 Public Declare Function FreeImage_CloseMultiBitmap Lib "FreeImage.dll" Alias "_FreeImage_CloseMultiBitmap@8" (ByVal bitmap As Long, Optional ByVal flags As Long = 0) As Long
 Public Declare Function FreeImage_GetPageCount Lib "FreeImage.dll" Alias "_FreeImage_GetPageCount@4" (ByVal bitmap As Long) As Long
 Public Declare Sub FreeImage_AppendPage Lib "FreeImage.dll" Alias "_FreeImage_AppendPage@8" (ByVal bitmap As Long, ByVal data As Long)
@@ -442,6 +449,9 @@ Public Declare Sub FreeImage_ConvertToRawBits Lib "FreeImage.dll" Alias "_FreeIm
 Public Declare Function FreeImage_ConvertToRGBF Lib "FreeImage.dll" Alias "_FreeImage_ConvertToRGBF@4" (ByVal dib As Long) As Long
 Public Declare Function FreeImage_ConvertToStandardType Lib "FreeImage.dll" Alias "_FreeImage_ConvertToStandardType@8" (ByVal src As Long, Optional ByVal scale_linear As Long = 1) As Long
 Public Declare Function FreeImage_ConvertToType Lib "FreeImage.dll" Alias "_FreeImage_ConvertToType@12" (ByVal src As Long, ByVal dst_type As FREE_IMAGE_TYPE, Optional ByVal scale_linear As Long = 1) As Long
+Public Declare Function FreeImage_ToneMapping Lib "FreeImage.dll" Alias "_FreeImage_ToneMapping@20" (ByVal dib As Long, UNKNOWN tmo As FREE_IMAGE_TMO, Optional ByVal first_param As Double = 0, Optional ByVal second_param As Double = 0) As Long
+Public Declare Function FreeImage_TmoDrago03 Lib "FreeImage.dll" Alias "_FreeImage_TmoDrago03@20" (ByVal src As Long, Optional ByVal gamma As Double = 2.2, Optional ByVal exposure As Double = 0) As FIBITMAP*
+Public Declare Function FreeImage_TmoReinhard05 Lib "FreeImage.dll" Alias "_FreeImage_TmoReinhard05@20" (ByVal src As Long, Optional ByVal intensity As Double = 0, Optional ByVal contrast As Double = 0) As FIBITMAP*
 Public Declare Function FreeImage_ZLibCompress Lib "FreeImage.dll" Alias "_FreeImage_ZLibCompress@16" (ByRef target As Long, ByVal target_size As Long, ByRef source As Long, ByVal source_size As Long) As Long
 Public Declare Function FreeImage_ZLibUncompress Lib "FreeImage.dll" Alias "_FreeImage_ZLibUncompress@16" (ByRef target As Long, ByVal target_size As Long, ByRef source As Long, ByVal source_size As Long) As Long
 Public Declare Function FreeImage_ZLibGZip Lib "FreeImage.dll" Alias "_FreeImage_ZLibGZip@16" (ByRef target As Long, ByVal target_size As Long, ByRef source As Long, ByVal source_size As Long) As Long

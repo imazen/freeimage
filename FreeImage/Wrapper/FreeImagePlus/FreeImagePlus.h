@@ -255,12 +255,14 @@ public:
 	WORD getScanWidth();
 
 	/**
-	Returns a pointer to the FIBITMAP data. Used for direct access from FREEIMAGE functions.<br>
+	Returns a pointer to the FIBITMAP data. Used for direct access from FREEIMAGE functions 
+	or from your own low level C functions.<br>
 	<b>Sample use</b> : <br>
 	<pre>
 	fipImage src, dst;
 	src.load("test.png");
 	dst = FreeImage_ConvertTo8Bits(src);
+	FreeImage_Save(FIF_TIFF, dst, "test.tif", 0);
 	</pre>
 	@see operator=(FIBITMAP *dib)
 	*/
@@ -269,7 +271,7 @@ public:
 	}
 
 	/// Returns TRUE if the image is allocated, FALSE otherwise
-	BOOL  isValid();
+	BOOL isValid();
 
 	/**
 	Returns a pointer to the bitmap's BITMAPINFO header. 
@@ -327,6 +329,7 @@ public:
 	@see FreeImage_GetInfoHeader
 	*/
 	void setVerticalResolution(double value);
+
 	//@}
 
 	/**@name Palette operations */
@@ -382,7 +385,8 @@ public:
 	*/
 	BYTE* getScanLine(WORD scanline);
 
-	/** @brief Get the pixel index of a 1-, 4- or 8-bit palettized image at position (x, y), including range check (slow access). 
+	/** 
+	Get the pixel index of a 1-, 4- or 8-bit palettized image at position (x, y), including range check (slow access). 
 	@param x Pixel position in horizontal direction
 	@param y Pixel position in vertical direction
 	@param value Pixel index (returned value)
@@ -391,7 +395,8 @@ public:
 	*/
 	BOOL getPixelIndex(unsigned x, unsigned y, BYTE *value);
 
-	/** @brief Get the pixel color of a 16-, 24- or 32-bit image at position (x, y), including range check (slow access). 
+	/** 
+	Get the pixel color of a 16-, 24- or 32-bit image at position (x, y), including range check (slow access). 
 	@param x Pixel position in horizontal direction
 	@param y Pixel position in vertical direction
 	@param value Pixel color (returned value)
@@ -400,7 +405,8 @@ public:
 	*/
 	BOOL getPixelColor(unsigned x, unsigned y, RGBQUAD *value);
 
-	/** @brief Set the pixel index of a 1-, 4- or 8-bit palettized image at position (x, y), including range check (slow access). 
+	/** 
+	Set the pixel index of a 1-, 4- or 8-bit palettized image at position (x, y), including range check (slow access). 
 	@param x Pixel position in horizontal direction
 	@param y Pixel position in vertical direction
 	@param value Pixel index
@@ -409,7 +415,8 @@ public:
 	*/
 	BOOL setPixelIndex(unsigned x, unsigned y, BYTE *value);
 
-	/** @brief Set the pixel color of a 16-, 24- or 32-bit image at position (x, y), including range check (slow access). 
+	/** 
+	Set the pixel color of a 16-, 24- or 32-bit image at position (x, y), including range check (slow access). 
 	@param x Pixel position in horizontal direction
 	@param y Pixel position in vertical direction
 	@param value Pixel color
@@ -442,6 +449,14 @@ public:
 	BOOL threshold(BYTE T);
 	
 	/** 
+	Converts a 8-bit image to a monochrome 1-bit image using a dithering algorithm.
+	@param algorithm Dithering algorithm to use.
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_Dither, FREE_IMAGE_DITHER
+	*/
+	BOOL dither(FREE_IMAGE_DITHER algorithm);
+
+	/** 
 	Converts the bitmap to 4 bits. Unless the bitmap is a 1-bit palettized bitmap, colour values are converted to greyscale.
 	@return Returns TRUE if successfull, FALSE otherwise. 
 	@see FreeImage_ConvertTo4Bits
@@ -454,6 +469,23 @@ public:
 	@see FreeImage_ConvertTo8Bits
 	*/
 	BOOL convertTo8Bits();
+
+	/** 
+	Converts the bitmap to 8 bits.<br> 
+	For palletized bitmaps, the color map is converted to a greyscale ramp.
+	@see convertTo8Bits
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	*/
+	BOOL convertToGrayscale();
+	
+	/** 
+	Quantizes a full colour 24-bit bitmap to a palletised 8-bit bitmap.<br>
+	The quantize parameter specifies which colour reduction algorithm should be used.
+	@param algorithm Color quantization algorithm to use.
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ColorQuantize, FREE_IMAGE_QUANTIZE
+	*/
+	BOOL colorQuantize(FREE_IMAGE_QUANTIZE algorithm);
 
 	/** 
 	Converts the bitmap to 16 bits. The resulting bitmap has a layout of 5 bits red, 5 bits green, 5 bits blue and 1 unused bit. 
@@ -483,30 +515,23 @@ public:
 	*/
 	BOOL convertTo32Bits();
 
-	/** @brief Converts the bitmap to 8 bits. 
-		
-		For palletized bitmaps, the color map is converted to a greyscale ramp.
-		@see convertTo8Bits
-		@return Returns TRUE if successfull, FALSE otherwise. 
-	*/
-	BOOL convertToGrayscale();
-	
-	/** @brief Quantizes a full colour 24-bit bitmap to a palletised 8-bit bitmap.
-	
-	    The quantize parameter specifies which colour reduction algorithm should be used.
-		@param algorithm Color quantization algorithm to use.
-		@return Returns TRUE if successfull, FALSE otherwise. 
-		@see FreeImage_ColorQuantize, FREE_IMAGE_QUANTIZE
-	*/
-	BOOL colorQuantize(FREE_IMAGE_QUANTIZE algorithm);
-
 	/** 
-	Converts a 8-bit image to a monochrome image using a dithering algorithm.
-	@param algorithm Dithering algorithm to use.
+	Converts the bitmap to a 96-bit RGBF image. 
 	@return Returns TRUE if successfull, FALSE otherwise. 
-	@see FreeImage_Dither, FREE_IMAGE_DITHER
+	@see FreeImage_ConvertToRGBF
 	*/
-	BOOL dither(FREE_IMAGE_DITHER algorithm);
+	BOOL convertToRGBF();
+
+	/**
+	Converts a High Dynamic Range image (48-bit RGB or 96-bit RGB Float) to a 24-bit RGB image. 
+	@param tmo Tone mapping operator
+	@param first_param First tone mapping algorithm parameter (algorithm dependant)
+	@param second_param Second tone mapping algorithm parameter (algorithm dependant)
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ToneMapping
+	*/
+	BOOL toneMapping(FREE_IMAGE_TMO tmo, double first_param = 0, double second_param = 0);
+
 	//@}
 
 	/**	@name Transparency support: background colour and alpha channel */
@@ -717,6 +742,28 @@ public:
 	BOOL rescale(WORD new_width, WORD new_height, FREE_IMAGE_FILTER filter);
 	//@}
 
+	/**@name Image status */
+	//@{	
+	/**
+	Set the image status as 'modified'.<br>
+	When using the fipWinImage class, the image status is used to refresh the display. 
+	It is changed to FALSE whenever the display has just been refreshed. 
+	@param bStatus TRUE if the image should be marked as modified, FALSE otherwise
+	@see isModified
+	*/
+	void setModified(BOOL bStatus = TRUE) {
+		_bHasChanged = bStatus;
+	}
+
+	/**
+	Get the image status
+	@return Returns TRUE if the image is marked as modified, FALSE otherwise
+	@see setModified
+	*/
+	BOOL isModified() {
+		return _bHasChanged;
+	}
+	//@}
 
   protected:
 	/**@name Internal use */
@@ -824,15 +871,39 @@ public:
 
     When the image is transparent or has a file background, this function can composite 
 	the foreground image against a checkerboard background image, against a single background color or 
-	against a user background image.
+	against a user background image.<br>
+	When the image is a High Dynamic Range image (48-bit or RGB float), this function will apply a 
+	tone mapping operator before drawing the image.<br>
+	The original image (located in the fipImage class) will not be affected by any of the operations 
+	that could be done in order to display it. 
 	@param hDC Handle to the device context
 	@param rcDest Destination rectangle
 	@param useFileBkg When set to TRUE, the function uses the file color background if there is one
 	@param appBkColor When a color is given, the function uses it as the background color
 	@param bg When a FIBITMAP is given, the function uses it as the background image
 	@see FreeImage_Composite
+	@see setToneMappingOperator
 	*/
 	void drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg = FALSE, RGBQUAD *appBkColor = NULL, FIBITMAP *bg = NULL);
+
+	/**
+	Select a tone mapping algorithm used for drawing and set the image as modified 
+	so that the display will be refreshed.
+	@param tmo Tone mapping operator
+	@param first_param First tone mapping algorithm parameter
+	@param second_param Second tone mapping algorithm parameter
+	@see FreeImage_ToneMapping
+	*/
+	void setToneMappingOperator(FREE_IMAGE_TMO tmo, double first_param = 0, double second_param = 0);
+
+	/**
+	Get the tone mapping algorithm used for drawing, with its parameters.
+	@param tmo Tone mapping operator
+	@param first_param First tone mapping algorithm parameter
+	@param second_param Second tone mapping algorithm parameter
+	@see FreeImage_ToneMapping
+	*/
+	void getToneMappingOperator(FREE_IMAGE_TMO *tmo, double *first_param, double *second_param);
 
 	//@}
 
@@ -841,6 +912,12 @@ protected:
 	FIBITMAP *_display_dib;
 	/// remember to delete _display_dib
 	BOOL _bDeleteMe;
+	/// tone mapping operator
+	FREE_IMAGE_TMO _tmo;
+	/// first tone mapping algorithm parameter
+	double _tmo_param_1;
+	/// second tone mapping algorithm parameter
+	double _tmo_param_2;
 };
 
 #endif // WIN32

@@ -29,6 +29,10 @@
 fipWinImage::fipWinImage(FREE_IMAGE_TYPE image_type, WORD width, WORD height, WORD bpp) : fipImage(image_type, width, height, bpp) {
 	_display_dib = NULL;
 	_bDeleteMe = FALSE;
+	// default tone mapping operator
+	_tmo = FITMO_DRAGO03;
+	_tmo_param_1 = 0;
+	_tmo_param_2 = 0;
 }
 
 fipWinImage::~fipWinImage() { 
@@ -300,16 +304,21 @@ void fipWinImage::drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg, RGBQUAD *appBkC
 				_bDeleteMe = TRUE;
 			}
 		} else {
-			// Convert to standard dib for display
-			if(image_type != FIT_COMPLEX) {
-				_display_dib = FreeImage_ConvertToStandardType(_dib, TRUE);
-			} else {
+			// Convert to a standard dib for display
+
+			if(image_type == FIT_COMPLEX) {
 				// Convert to type FIT_DOUBLE
 				FIBITMAP *dib_double = FreeImage_GetComplexChannel(_dib, FICC_MAG);
-				// Convert to standard bitmap (linear scaling)
+				// Convert to a standard bitmap (linear scaling)
 				_display_dib = FreeImage_ConvertToStandardType(dib_double, TRUE);
 				// Free image of type FIT_DOUBLE
 				FreeImage_Unload(dib_double);
+			} else if((image_type == FIT_RGBF) || (image_type == FIT_RGB16)) {
+				// Apply a tone mapping algorithm and convert to 24-bit 
+				_display_dib = FreeImage_ToneMapping(_dib, _tmo, _tmo_param_1, _tmo_param_2);
+			} else {
+				// Other cases: convert to a standard bitmap (linear scaling)
+				_display_dib = FreeImage_ConvertToStandardType(_dib, TRUE);
 			}
 			// Remember to delete _display_dib
 			_bDeleteMe = TRUE;
@@ -325,6 +334,23 @@ void fipWinImage::drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg, RGBQUAD *appBkC
 		0, 0, FreeImage_GetWidth(_display_dib), FreeImage_GetHeight(_display_dib),
 		FreeImage_GetBits(_display_dib), FreeImage_GetInfo(_display_dib), DIB_RGB_COLORS, SRCCOPY);
 
+}
+
+void fipWinImage::setToneMappingOperator(FREE_IMAGE_TMO tmo, double first_param, double second_param) {
+	_tmo = tmo;
+	_tmo_param_1 = first_param;
+	_tmo_param_2 = second_param;
+
+	FREE_IMAGE_TYPE image_type = getImageType();
+	if((image_type == FIT_RGBF) || (image_type == FIT_RGB16)) {
+		_bHasChanged = TRUE;
+	}
+}
+
+void fipWinImage::getToneMappingOperator(FREE_IMAGE_TMO *tmo, double *first_param, double *second_param) {
+	*tmo = _tmo;
+	*first_param = _tmo_param_1;
+	*second_param = _tmo_param_2;
 }
 
 

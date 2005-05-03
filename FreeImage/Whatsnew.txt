@@ -21,6 +21,10 @@ Month day, 2005 - 3.7.0
 + [Herve Drolon] added HDR (High Dynamic Range) format (loader & writer)
 + [Herve Drolon] added support for 48-bit images in TIFF plugin
 + [Herve Drolon] added support for 48-bit images in PNG plugin
++ [Herve Drolon] added tone mapping operators (see below)
++                added FreeImage_ToneMapping
++                added FreeImage_TmoDrago03
++                added FreeImage_TmoReinhard05                                  
 * [Herve Drolon] allowed loading of corrupted JPEG with a premature end of file
 * [Herve Drolon] fixed a memory leak with loading of exif JPEG images
 * [Detlev Vendt] changed some 'pointer-to-int' casts to 'pointer-to-long' for 64bit machines

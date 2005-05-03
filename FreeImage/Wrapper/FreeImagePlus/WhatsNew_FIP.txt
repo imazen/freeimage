@@ -5,6 +5,14 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+May 3rd, 2005
+[Herve Drolon]
++ added accessors fipImage::setModified and fipImage::isModified
++ added fipImage::convertToRGBF
++ added fipImage::toneMapping
++ added tone mapping functions to fipWinImage (see get/setToneMappingOperator)
++ added tone mapping capabilities to fipWinImage::drawEx
+
 January 5th, 2005
 [Herve Drolon]
 ! changed the prototype of get/set Resolution functions

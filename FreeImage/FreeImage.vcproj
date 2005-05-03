@@ -287,6 +287,18 @@ copy Source\FreeImage.h Dist
 				<File
 					RelativePath="Source\FreeImage\Halftoning.cpp">
 				</File>
+				<File
+					RelativePath=".\Source\FreeImage\tmoColorConvert.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\FreeImage\tmoDrago03.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\FreeImage\tmoReinhard05.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\FreeImage\ToneMapping.cpp">
+				</File>
 			</Filter>
 			<Filter
 				Name="Quantizers"
@@ -370,6 +382,9 @@ copy Source\FreeImage.h Dist
 			</File>
 			<File
 				RelativePath="Source\Quantizers.h">
+			</File>
+			<File
+				RelativePath=".\Source\ToneMapping.h">
 			</File>
 			<File
 				RelativePath="Source\Utilities.h">

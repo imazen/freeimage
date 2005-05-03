@@ -146,6 +146,22 @@ SOURCE=..\FreeImage\ConversionType.cpp
 
 SOURCE=..\FreeImage\Halftoning.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=..\FreeImage\tmoColorConvert.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\FreeImage\tmoDrago03.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\FreeImage\tmoReinhard05.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\FreeImage\ToneMapping.cpp
+# End Source File
 # End Group
 # Begin Group "Plugins"
 
@@ -169,6 +185,10 @@ SOURCE=..\FreeImage\PluginDDS.cpp
 # Begin Source File
 
 SOURCE=..\FreeImage\PluginGIF.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\FreeImage\PluginHDR.cpp
 # End Source File
 # Begin Source File
 
@@ -354,6 +374,10 @@ SOURCE=..\Plugin.h
 # Begin Source File
 
 SOURCE=..\Quantizers.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ToneMapping.h
 # End Source File
 # Begin Source File
 
