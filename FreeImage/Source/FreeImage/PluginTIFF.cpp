@@ -57,28 +57,35 @@ void tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib);
 // Plugin Interface
 // ==========================================================
 
-static FreeImageIO *g_io = NULL;
-
 static int s_format_id;
+
+typedef struct {
+    FreeImageIO *io;
+	fi_handle handle;
+	TIFF *tif;
+} fi_TIFFIO;
 
 // ----------------------------------------------------------
 //   libtiff interface 
 // ----------------------------------------------------------
 
 static tsize_t 
-_tiffReadProc(thandle_t file, tdata_t buf, tsize_t size) {
-	return g_io->read_proc(buf, size, 1, (fi_handle)file) * size;
+_tiffReadProc(thandle_t handle, tdata_t buf, tsize_t size) {
+	fi_TIFFIO *fio = (fi_TIFFIO*)handle;
+	return fio->io->read_proc(buf, size, 1, fio->handle) * size;
 }
 
 static tsize_t
-_tiffWriteProc(thandle_t file, tdata_t buf, tsize_t size) {
-	return g_io->write_proc(buf, size, 1, (fi_handle)file) * size;
+_tiffWriteProc(thandle_t handle, tdata_t buf, tsize_t size) {
+	fi_TIFFIO *fio = (fi_TIFFIO*)handle;
+	return fio->io->write_proc(buf, size, 1, fio->handle) * size;
 }
 
 static toff_t
-_tiffSeekProc(thandle_t file, toff_t off, int whence) {
-	g_io->seek_proc((fi_handle)file, off, whence);
-	return g_io->tell_proc((fi_handle)file);
+_tiffSeekProc(thandle_t handle, toff_t off, int whence) {
+	fi_TIFFIO *fio = (fi_TIFFIO*)handle;
+	fio->io->seek_proc(fio->handle, off, whence);
+	return fio->io->tell_proc(fio->handle);
 }
 
 static int
@@ -89,9 +96,10 @@ _tiffCloseProc(thandle_t fd) {
 #include <sys/stat.h>
 
 static toff_t
-_tiffSizeProc(thandle_t file) {
+_tiffSizeProc(thandle_t handle) {
 	struct stat sb;
-	return (fstat((long) file, &sb) < 0 ? 0 : sb.st_size);
+	fi_TIFFIO *fio = (fi_TIFFIO*)handle;
+	return (fstat((long) fio->handle, &sb) < 0 ? 0 : sb.st_size);
 }
 
 static int
@@ -827,19 +835,31 @@ SupportsICCProfiles() {
 
 static void * DLL_CALLCONV
 Open(FreeImageIO *io, fi_handle handle, BOOL read) {
-	g_io = io;
+	fi_TIFFIO *fio = (fi_TIFFIO*)malloc(sizeof(fi_TIFFIO));
+	if(!fio) return NULL;
+	fio->io = io;
+	fio->handle = handle;
 
-	if (read)
-		return TIFFFdOpen((thandle_t)handle, "", "r");
-	else
-		return TIFFFdOpen((thandle_t)handle, "", "w");
+	if (read) {
+		fio->tif = TIFFFdOpen((thandle_t)fio, "", "r");
+	} else {
+		fio->tif = TIFFFdOpen((thandle_t)fio, "", "w");
+	}
+	if(fio->tif == NULL) {
+		free(fio);
+		FreeImage_OutputMessageProc(s_format_id, "data is invalid");
+		return NULL;
+	}
+	return fio;
 }
 
 static void DLL_CALLCONV
 Close(FreeImageIO *io, fi_handle handle, void *data) {
-	if(data)
-		TIFFClose((TIFF *)data);
-	g_io = NULL;
+	if(data) {
+		fi_TIFFIO *fio = (fi_TIFFIO*)data;
+		TIFFClose(fio->tif);
+		free(fio);
+	}
 }
 
 // ----------------------------------------------------------
@@ -847,9 +867,9 @@ Close(FreeImageIO *io, fi_handle handle, void *data) {
 static int DLL_CALLCONV
 PageCount(FreeImageIO *io, fi_handle handle, void *data) {
 	if(data) {
+		fi_TIFFIO *fio = (fi_TIFFIO*)data;
+		TIFF *tif = (TIFF *)fio->tif;
 		int nr_ifd = 0;
-
-		TIFF *tif = (TIFF *)data;
 
 		do {
 			nr_ifd++;
@@ -887,7 +907,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		BOOL has_alpha = FALSE;    
 
 		try {			
-			tif = (TIFF *)data;
+			fi_TIFFIO *fio = (fi_TIFFIO*)data;
+			tif = fio->tif;
 
 			if (page != -1)
 				if (!tif || !TIFFSetDirectory(tif, page))
@@ -1251,7 +1272,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 static BOOL DLL_CALLCONV
 Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data) {
 	if ((dib != NULL) && (handle != NULL) && (data != NULL)) {
-		TIFF *out = (TIFF *)data;
+		fi_TIFFIO *fio = (fi_TIFFIO*)data;
+		TIFF *out = fio->tif;
 
 		int32 height;
 		int32 width;

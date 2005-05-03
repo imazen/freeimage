@@ -25,6 +25,7 @@ del TestAPI\TestImageType.tif
 del TestAPI\zoneplate.png
 del TestAPI\sample.ico
 del TestAPI\sample.tif
+del TestAPI\sample.gif
 del Dist\FreeImage.h
 del *.pch /s /q
 del *.ncb /s /q
