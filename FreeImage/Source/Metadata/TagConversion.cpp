@@ -189,7 +189,7 @@ ConvertAnyTag(FITAG *tag) {
 			sprintf(format, "(%d,%d,%d,%d)", pvalue[0].rgbRed, pvalue[0].rgbGreen, pvalue[0].rgbBlue, pvalue[0].rgbReserved);
 			buffer += format;
 			for(i = 1; i < tag_count; i++) {
-				sprintf(format, " (%d,%d,%d,%d)", pvalue[0].rgbRed, pvalue[0].rgbGreen, pvalue[0].rgbBlue, pvalue[0].rgbReserved);
+				sprintf(format, " (%d,%d,%d,%d)", pvalue[i].rgbRed, pvalue[i].rgbGreen, pvalue[i].rgbBlue, pvalue[i].rgbReserved);
 				buffer += format;
 			}
 			break;
