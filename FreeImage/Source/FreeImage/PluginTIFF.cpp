@@ -62,7 +62,6 @@ static int s_format_id;
 typedef struct {
     FreeImageIO *io;
 	fi_handle handle;
-	TIFF *tif;
 } fi_TIFFIO;
 
 // ----------------------------------------------------------
@@ -835,30 +834,35 @@ SupportsICCProfiles() {
 
 static void * DLL_CALLCONV
 Open(FreeImageIO *io, fi_handle handle, BOOL read) {
+	TIFF *tif = NULL;
+	// wrapper for TIFF I/O
 	fi_TIFFIO *fio = (fi_TIFFIO*)malloc(sizeof(fi_TIFFIO));
 	if(!fio) return NULL;
 	fio->io = io;
 	fio->handle = handle;
 
 	if (read) {
-		fio->tif = TIFFFdOpen((thandle_t)fio, "", "r");
+		tif = TIFFFdOpen((thandle_t)fio, "", "r");
 	} else {
-		fio->tif = TIFFFdOpen((thandle_t)fio, "", "w");
+		tif = TIFFFdOpen((thandle_t)fio, "", "w");
 	}
-	if(fio->tif == NULL) {
+	if(tif == NULL) {
 		free(fio);
 		FreeImage_OutputMessageProc(s_format_id, "data is invalid");
 		return NULL;
 	}
-	return fio;
+	return tif;
 }
 
 static void DLL_CALLCONV
 Close(FreeImageIO *io, fi_handle handle, void *data) {
 	if(data) {
-		fi_TIFFIO *fio = (fi_TIFFIO*)data;
-		TIFFClose(fio->tif);
+		TIFF *tif = (TIFF *)data;
+		// delete our I/O wrapper
+		fi_TIFFIO *fio = (fi_TIFFIO*)tif->tif_fd;
 		free(fio);
+		// close the TIF handle
+		TIFFClose(tif);
 	}
 }
 
@@ -867,8 +871,7 @@ Close(FreeImageIO *io, fi_handle handle, void *data) {
 static int DLL_CALLCONV
 PageCount(FreeImageIO *io, fi_handle handle, void *data) {
 	if(data) {
-		fi_TIFFIO *fio = (fi_TIFFIO*)data;
-		TIFF *tif = (TIFF *)fio->tif;
+		TIFF *tif = (TIFF *)data;
 		int nr_ifd = 0;
 
 		do {
@@ -906,9 +909,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		void *iccBuf = NULL;	// ICC profile data
 		BOOL has_alpha = FALSE;    
 
-		try {			
-			fi_TIFFIO *fio = (fi_TIFFIO*)data;
-			tif = fio->tif;
+		try {	
+			tif = (TIFF *)data;
 
 			if (page != -1)
 				if (!tif || !TIFFSetDirectory(tif, page))
@@ -1272,8 +1274,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 static BOOL DLL_CALLCONV
 Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data) {
 	if ((dib != NULL) && (handle != NULL) && (data != NULL)) {
-		fi_TIFFIO *fio = (fi_TIFFIO*)data;
-		TIFF *out = fio->tif;
+		TIFF *out = (TIFF *)data;
 
 		int32 height;
 		int32 width;
