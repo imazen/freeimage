@@ -267,6 +267,10 @@ SOURCE=.\jquant2.c
 
 SOURCE=.\jutils.c
 # End Source File
+# Begin Source File
+
+SOURCE=.\transupp.c
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -314,6 +318,10 @@ SOURCE=.\jpeglib.h
 # Begin Source File
 
 SOURCE=.\jversion.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\transupp.h
 # End Source File
 # End Group
 # End Target
