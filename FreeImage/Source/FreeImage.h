@@ -397,6 +397,20 @@ FI_ENUM(FREE_IMAGE_DITHER) {
 	FID_CLUSTER16x16= 5		// Ordered clustered dot dithering (order 8 - 16x16 matrix)
 };
 
+/** Lossless JPEG transformations
+Constants used in FreeImage_JPEGTransform
+*/
+FI_ENUM(FREE_IMAGE_JPEG_OPERATION) {
+	FIJPEG_OP_NONE			= 0,	// no transformation
+	FIJPEG_OP_FLIP_H		= 1,	// horizontal flip
+	FIJPEG_OP_FLIP_V		= 2,	// vertical flip
+	FIJPEG_OP_TRANSPOSE		= 3,	// transpose across UL-to-LR axis
+	FIJPEG_OP_TRANSVERSE	= 4,	// transpose across UR-to-LL axis
+	FIJPEG_OP_ROTATE_90		= 5,	// 90-degree clockwise rotation
+	FIJPEG_OP_ROTATE_180	= 6,	// 180-degree rotation
+	FIJPEG_OP_ROTATE_270	= 7		// 270-degree clockwise (or 90 ccw)
+};
+
 /** Tone mapping operators.
 Constants used in FreeImage_ToneMapping.
 */
@@ -891,6 +905,7 @@ DLL_API FIBITMAP *DLL_CALLCONV FreeImage_RotateClassic(FIBITMAP *dib, double ang
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_RotateEx(FIBITMAP *dib, double angle, double x_shift, double y_shift, double x_origin, double y_origin, BOOL use_mask);
 DLL_API BOOL DLL_CALLCONV FreeImage_FlipHorizontal(FIBITMAP *dib);
 DLL_API BOOL DLL_CALLCONV FreeImage_FlipVertical(FIBITMAP *dib);
+DLL_API BOOL DLL_CALLCONV FreeImage_JPEGTransform(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OPERATION operation, BOOL perfect FI_DEFAULT(FALSE));
 
 // upsampling / downsampling
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_Rescale(FIBITMAP *dib, int dst_width, int dst_height, FREE_IMAGE_FILTER filter);

@@ -153,6 +153,16 @@ Public Enum FREE_IMAGE_DITHER
 	FID_CLUSTER8x8 = 4
 	FID_CLUSTER16x16 = 5
 End Enum
+Public Enum FREE_IMAGE_JPEG_OPERATION
+	FIJPEG_OP_NONE = 0
+	FIJPEG_OP_FLIP_H = 1
+	FIJPEG_OP_FLIP_V = 2
+	FIJPEG_OP_TRANSPOSE = 3
+	FIJPEG_OP_TRANSVERSE = 4
+	FIJPEG_OP_ROTATE_90 = 5
+	FIJPEG_OP_ROTATE_180 = 6
+	FIJPEG_OP_ROTATE_270 = 7
+End Enum
 Public Enum FREE_IMAGE_TMO
 	FITMO_DRAGO03 = 0
 	FITMO_REINHARD05 = 1
@@ -485,6 +495,7 @@ Public Declare Function FreeImage_RotateClassic Lib "FreeImage.dll" Alias "_Free
 Public Declare Function FreeImage_RotateEx Lib "FreeImage.dll" Alias "_FreeImage_RotateEx@48" (ByVal dib As Long, ByVal angle As Double, ByVal x_shift As Double, ByVal y_shift As Double, ByVal x_origin As Double, ByVal y_origin As Double, ByVal use_mask As Long) As Long
 Public Declare Function FreeImage_FlipHorizontal Lib "FreeImage.dll" Alias "_FreeImage_FlipHorizontal@4" (ByVal dib As Long) As Long
 Public Declare Function FreeImage_FlipVertical Lib "FreeImage.dll" Alias "_FreeImage_FlipVertical@4" (ByVal dib As Long) As Long
+Public Declare Function FreeImage_JPEGTransform Lib "FreeImage.dll" Alias "_FreeImage_JPEGTransform@12" (ByVal src_file As String, ByVal dst_file As String, UNKNOWN operation As FREE_IMAGE_JPEG_OPERATION, Optional ByVal perfect As Long = 0) As Long
 Public Declare Function FreeImage_Rescale Lib "FreeImage.dll" Alias "_FreeImage_Rescale@16" (ByVal dib As Long, ByVal dst_width As Long, ByVal dst_height As Long, ByVal filter As FREE_IMAGE_FILTER) As Long
 Public Declare Function FreeImage_AdjustCurve Lib "FreeImage.dll" Alias "_FreeImage_AdjustCurve@12" (ByVal dib As Long, ByRef LUT As Long, ByVal channel As FREE_IMAGE_COLOR_CHANNEL) As Long
 Public Declare Function FreeImage_AdjustGamma Lib "FreeImage.dll" Alias "_FreeImage_AdjustGamma@12" (ByVal dib As Long, ByVal gamma As Double) As Long

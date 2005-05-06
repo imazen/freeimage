@@ -384,6 +384,9 @@ copy ..\FreeImage.h ..\..\Dist
 				RelativePath="..\FreeImageToolkit\Flip.cpp">
 			</File>
 			<File
+				RelativePath="..\FreeImageToolkit\JPEGTransform.cpp">
+			</File>
+			<File
 				RelativePath="..\FreeImageToolkit\Rescale.cpp">
 			</File>
 			<File

@@ -435,6 +435,10 @@ SOURCE=.\Source\FreeImageToolkit\Flip.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\Source\FreeImageToolkit\JPEGTransform.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\Source\FreeImageToolkit\Rescale.cpp
 # End Source File
 # Begin Source File
