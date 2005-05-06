@@ -62,6 +62,7 @@ static int s_format_id;
 typedef struct {
     FreeImageIO *io;
 	fi_handle handle;
+	TIFF *tif;
 } fi_TIFFIO;
 
 // ----------------------------------------------------------
@@ -842,27 +843,24 @@ Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 	fio->handle = handle;
 
 	if (read) {
-		tif = TIFFFdOpen((thandle_t)fio, "", "r");
+		fio->tif = TIFFFdOpen((thandle_t)fio, "", "r");
 	} else {
-		tif = TIFFFdOpen((thandle_t)fio, "", "w");
+		fio->tif = TIFFFdOpen((thandle_t)fio, "", "w");
 	}
-	if(tif == NULL) {
+	if(fio->tif == NULL) {
 		free(fio);
 		FreeImage_OutputMessageProc(s_format_id, "data is invalid");
 		return NULL;
 	}
-	return tif;
+	return fio;
 }
 
 static void DLL_CALLCONV
 Close(FreeImageIO *io, fi_handle handle, void *data) {
 	if(data) {
-		TIFF *tif = (TIFF *)data;
-		// delete our I/O wrapper
-		fi_TIFFIO *fio = (fi_TIFFIO*)tif->tif_fd;
+		fi_TIFFIO *fio = (fi_TIFFIO*)data;
+		TIFFClose(fio->tif);
 		free(fio);
-		// close the TIF handle
-		TIFFClose(tif);
 	}
 }
 
@@ -871,7 +869,8 @@ Close(FreeImageIO *io, fi_handle handle, void *data) {
 static int DLL_CALLCONV
 PageCount(FreeImageIO *io, fi_handle handle, void *data) {
 	if(data) {
-		TIFF *tif = (TIFF *)data;
+		fi_TIFFIO *fio = (fi_TIFFIO*)data;
+		TIFF *tif = (TIFF *)fio->tif;
 		int nr_ifd = 0;
 
 		do {
@@ -910,7 +909,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		BOOL has_alpha = FALSE;    
 
 		try {	
-			tif = (TIFF *)data;
+			fi_TIFFIO *fio = (fi_TIFFIO*)data;
+			tif = fio->tif;
 
 			if (page != -1)
 				if (!tif || !TIFFSetDirectory(tif, page))
@@ -1274,7 +1274,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 static BOOL DLL_CALLCONV
 Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data) {
 	if ((dib != NULL) && (handle != NULL) && (data != NULL)) {
-		TIFF *out = (TIFF *)data;
+		fi_TIFFIO *fio = (fi_TIFFIO*)data;
+		TIFF *out = fio->tif;
 
 		int32 height;
 		int32 width;
