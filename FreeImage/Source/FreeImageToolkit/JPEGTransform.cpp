@@ -80,7 +80,7 @@ static BOOL
 LosslessTransform(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OPERATION operation, BOOL perfect) {
 	// We assume all-in-memory processing and can therefore use only a
 	// single file pointer for sequential input and output operation
-	FILE *fp = NULL;;
+	FILE *fp = NULL;
 
 	// Set up the jpeglib structures
 	jpeg_decompress_struct srcinfo;

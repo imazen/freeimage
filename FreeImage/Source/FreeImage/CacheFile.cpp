@@ -115,7 +115,7 @@ CacheFile::allocateBlock() {
 		block->nr = *m_free_pages.begin();
 		m_free_pages.pop_front();
 	} else {
-		block->nr = m_page_count++;;
+		block->nr = m_page_count++;
 	}
 
 	m_page_cache_mem.push_front(block);

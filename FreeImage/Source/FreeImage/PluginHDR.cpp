@@ -256,7 +256,7 @@ rgbe_ReadHeader(FreeImageIO *io, fi_handle handle, unsigned *width, unsigned *he
 		}
 	}
 
-	return TRUE;;
+	return TRUE;
 }
 
 /**
