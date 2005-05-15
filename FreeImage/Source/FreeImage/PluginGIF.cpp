@@ -79,16 +79,14 @@ protected:
 
 	int m_minCodeSize, m_clearCode, m_endCode, m_nextCode;
 
-	typedef std::basic_string<BYTE> str;
-
 	int m_bpp, m_slack; //Compressor information
-	str m_prefix; //Compressor state variable
+	std::string m_prefix; //Compressor state variable
 	int m_codeSize, m_codeMask; //Compressor/Decompressor state variables
 	int m_oldCode; //Decompressor state variable
 	int m_partial, m_partialSize; //Compressor/Decompressor bit buffer
 
-	str m_strings[MAX_LZW_CODE]; //This is what is really the "string table" data for the Decompressor
-	std::map<str, int> m_strmap; //This is what is really the "string table" data for the Compressor
+	std::string m_strings[MAX_LZW_CODE]; //This is what is really the "string table" data for the Decompressor
+	std::map<std::string, int> m_strmap; //This is what is really the "string table" data for the Compressor
 
 	//input buffer
 	BYTE *m_buffer;
@@ -259,9 +257,9 @@ bool StringTable::Compress(BYTE *buf, int *len)
 	BYTE *bufpos = buf;
 	while( m_bufferPos < m_bufferSize ) {
 		//get the current pixel value
-		BYTE ch = (m_buffer[m_bufferPos] >> m_bufferShift) & mask;
+		char ch = (m_buffer[m_bufferPos] >> m_bufferShift) & mask;
 
-		str nextprefix = m_prefix + ch;
+		std::string nextprefix = m_prefix + ch;
 		if( m_strmap.find(nextprefix) != m_strmap.end() ) {
 			m_prefix = nextprefix;
 		} else {
@@ -386,7 +384,7 @@ void StringTable::ClearCompressorTable(void)
 {
 	m_strmap.clear();
 	for( int i = 0; i < m_clearCode; i++ ) {
-		m_strmap[str(1, (BYTE)i)] = i;
+		m_strmap[std::string(1, (char)i)] = i;
 	}
 	m_nextCode = m_endCode + 1;
 
