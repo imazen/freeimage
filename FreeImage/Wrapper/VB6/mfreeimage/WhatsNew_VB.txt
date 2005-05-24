@@ -1,0 +1,10 @@
+What's New for FreeImage VB Wrapper
+
+* : fixed
+- : removed
+! : changed
++ : added
+
+May 24, 2005
++ [Carsten Klein] added a new VB wrapper
+
