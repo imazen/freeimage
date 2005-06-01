@@ -7,6 +7,7 @@ What's New for FreeImage
 
 Month Day, 2005 - 3.7.1
 * [Ryan Rubley] fixed PluginGIF failing to link on some broken gcc versions
+* [Karl-Heinz Bussian] fixed a bug in LookupX11Color/LookupSVGColor with handling of grey color names
 
 May 7, 2005 - 3.7.0
 ! FreeImage now uses libTIFF 3.7.2
