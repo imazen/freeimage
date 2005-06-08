@@ -3,9 +3,10 @@ Attribute VB_Name = "MFreeImage"
 '// Visual Basic Wrapper for FreeImage 3
 '// Original FreeImage 3 functions and VB compatible derived functions
 '// Design and implementation by
-'// - Carsten Klein (c.klein@datagis.com)
+'// - Carsten Klein (cklein05@users.sourceforge.net)
 '//
 '// Main reference : Curland, Matthew., Advanced Visual Basic 6, Addison Wesley, ISBN 0201707128, (c) 2000
+'//                  Steve McMahon, creator of the excellent site vbAccelerator at http://www.vbaccelerator.com/
 '//                  MSDN Knowlede Base
 '//
 '// This file is part of FreeImage 3
@@ -49,10 +50,10 @@ Option Explicit
 ' as 'const char *' in C/C++ and so actually return a string pointer. Without using
 ' a type library for declaring these functions, in VB it is impossible to declare
 ' these functions to return a VB String type. So each of these functions is wrapped
-' by a VB implemented function named correctly according to the FreeImage API,
+' by a VB implemented function named correctly according to theFreeImage API,
 ' actually returning a 'real' VB String.
 
-' Some of the functions are additionally provided in an extended, say more VB
+' Some of the functions are additionally provided in an extended, call it a more VB
 ' friendly version, named '...Ex'. For example look at the 'FreeImage_GetPaletteEx'
 ' function. Most of them are dealing with arrays and so actually return a VB style
 ' array of correct type.
@@ -65,14 +66,14 @@ Option Explicit
 ' FreeImage_GetOlePicture functions.
 
 ' Both known VB functions LoadPicture() and SavePicture() are provided in extended
-' versions called LoadPictureEx() and SavePictureEx() offering the FreeImage 3´s
+' versions calles LoadPictureEx() and SavePictureEx() offering the FreeImage 3´s
 ' image file types.
 
 ' The FreeImage 3 error handling is provided in VB after calling the VB specific
 ' function FreeImage_InitErrorHandler()
 
 
-' All of the enumeration members are additionally 'declared' as constants in a
+' All of the enumaration members are additionally 'declared' as constants in a
 ' conditional compiler directive '#If...#Then' block that is actually unreachable.
 ' For example see:
 '
@@ -86,7 +87,7 @@ Option Explicit
 ' #End If
 '
 ' Since this module is supposed to be used directly in VB projects rather than in
-' compiled form (maybe through an ActiveX-DLL), this is for tweaking some ugly VB
+' compiled form (mybe through an ActiveX-DLL), this is for tweaking some ugly VB
 ' behaviour regarding enumerations. Enum members are automatically adjusted in case
 ' by the VB IDE whenever you type these members in wrong case. Since these are also
 ' constants now, they are no longer adjusted to wrong case but always corrected
@@ -120,6 +121,26 @@ Option Explicit
 '--------------------------------------------------------------------------------
 ' Change Log
 '--------------------------------------------------------------------------------
+
+' 07.06.2005 - added some more inline comments and documentation
+'            - added optional parameter 'bUnloadSource' to function
+'              'FreeImage_SaveToMemoryEx'
+'            - added optional parameter 'bUnloadSource' to function
+'              'FreeImage_SaveToMemoryEx2'
+'            - added 'InPercent' parameter to function 'SavePictureEx' and
+'              implemented resizing of the image to be saved
+'            - added 'InPercent' and 'Format' parameters to function
+'              'LoadPictureEx'
+'            - fixed wrong declaration of function 'FreeImage_JPEGTransform'
+
+' 06.06.2005 - added some more inline comments and documentation
+
+' 30.05.2005 - changes in wrapper function FreeImage_RescaleEx
+'            - renamed the 'bUnloadDIB' parameter to 'bUnloadSource' of function
+'              FreeImage_GetOlePicture
+'            - added some more inline comments and documentation
+'            - changes in FreeImage_SetTransparencaTableEx: parameter Count will
+'              no longer exceed 256.
 
 ' 24.05.2005 - deploy of first release
 
@@ -1537,7 +1558,7 @@ Public Declare Function FreeImage_FlipHorizontal Lib "FreeImage.dll" Alias "_Fre
 Public Declare Function FreeImage_FlipVertical Lib "FreeImage.dll" Alias "_FreeImage_FlipVertical@4" ( _
            ByVal dib As Long) As Long
            
-Public Declare Function FreeImage_JPEGTransform Lib "FreeImage.dll" Alias "_FreeImage_JPEGTransform@4" ( _
+Public Declare Function FreeImage_JPEGTransform Lib "FreeImage.dll" Alias "_FreeImage_JPEGTransform@16" ( _
            ByVal src_file As String, _
            ByVal dst_file As String, _
            ByVal operation As FREE_IMAGE_JPEG_OPERATION, _
@@ -1829,41 +1850,83 @@ End Sub
 
 Public Function FreeImage_GetVersion() As String
 
+   ' This function returns the version of the FreeImage 3 library
+   ' as VB String. Read paragraph 2 of the "General notes on implementation
+   ' and design" section to learn more about that technique.
+   
+   ' The parameter 'fif' works according to the FreeImage 3 API documentation.
+   
    FreeImage_GetVersion = pGetStringFromPointerA(FreeImage_GetVersionInt)
 
 End Function
 
 Public Function FreeImage_GetCopyrightMessage() As String
 
+   ' This function returns the copyright message of the FreeImage 3 library
+   ' as VB String. Read paragraph 2 of the "General notes on implementation
+   ' and design" section to learn more about that technique.
+   
+   ' The parameter 'fif' works according to the FreeImage 3 API documentation.
+   
    FreeImage_GetCopyrightMessage = pGetStringFromPointerA(FreeImage_GetCopyrightMessageInt)
 
 End Function
 
 Public Function FreeImage_GetFormatFromFIF(ByVal fif As FREE_IMAGE_FORMAT) As String
 
+   ' This function returns the result of the 'FreeImage_GetFormatFromFIF' function
+   ' as VB String. Read paragraph 2 of the "General notes on implementation
+   ' and design" section to learn more about that technique.
+   
+   ' The parameter 'fif' works according to the FreeImage 3 API documentation.
+   
    FreeImage_GetFormatFromFIF = pGetStringFromPointerA(FreeImage_GetFormatFromFIFInt(fif))
 
 End Function
 
 Public Function FreeImage_GetFIFExtensionList(ByVal fif As FREE_IMAGE_FORMAT) As String
 
+   ' This function returns the result of the 'FreeImage_GetFIFExtensionList' function
+   ' as VB String. Read paragraph 2 of the "General notes on implementation
+   ' and design" section to learn more about that technique.
+   
+   ' The parameter 'fif' works according to the FreeImage 3 API documentation.
+   
    FreeImage_GetFIFExtensionList = pGetStringFromPointerA(FreeImage_GetFIFExtensionListInt(fif))
 
 End Function
 
 Public Function FreeImage_GetFIFDescription(ByVal fif As FREE_IMAGE_FORMAT) As String
 
+   ' This function returns the result of the 'FreeImage_GetFIFDescription' function
+   ' as VB String. Read paragraph 2 of the "General notes on implementation
+   ' and design" section to learn more about that technique.
+   
+   ' The parameter 'fif' works according to the FreeImage 3 API documentation.
+   
    FreeImage_GetFIFDescription = pGetStringFromPointerA(FreeImage_GetFIFDescriptionInt(fif))
 
 End Function
 
 Public Function FreeImage_GetFIFRegExpr(ByVal fif As FREE_IMAGE_FORMAT) As String
 
+   ' This function returns the result of the 'FreeImage_GetFIFRegExpr' function
+   ' as VB String. Read paragraph 2 of the "General notes on implementation
+   ' and design" section to learn more about that technique.
+   
+   ' The parameter 'fif' works according to the FreeImage 3 API documentation.
+   
    FreeImage_GetFIFRegExpr = pGetStringFromPointerA(FreeImage_GetFIFRegExprInt(fif))
 
 End Function
 
 Public Function FreeImage_GetFIFMimeType(ByVal fif As FREE_IMAGE_FORMAT) As String
+   
+   ' This function returns the result of the 'FreeImage_GetFIFMimeType' function
+   ' as VB String. Read paragraph 2 of the "General notes on implementation
+   ' and design" section to learn more about that technique.
+   
+   ' The parameter 'fif' works according to the FreeImage 3 API documentation.
    
    FreeImage_GetFIFMimeType = pGetStringFromPointerA(FreeImage_GetFIFMimeTypeInt(fif))
    
@@ -1918,6 +1981,8 @@ Dim lpSA As Long
    ' To learn more about this technique I recommend reading chapter 2 (Leveraging
    ' Arrays) of Matthew Curland's book "Advanced Visual Basic 6"
    
+   ' The parameter 'dib' works according to the FreeImage 3 API documentation.
+   
    If (dib) Then
       
       ' create a proper SAVEARRAY descriptor
@@ -1963,8 +2028,10 @@ Dim lColors As Long
 Dim atRGB() As RGBQUAD
 Dim i As Long
 
-   ' This function returns a redudant clone of a dib's palette as a
+   ' This function returns a redundant clone of a dib's palette as a
    ' VB style array of type RGBQUAD.
+   
+   ' The parameter 'dib' works according to the FreeImage 3 API documentation.
 
    Select Case FreeImage_GetBPP(dib)
    
@@ -1982,6 +2049,12 @@ Public Function FreeImage_GetTransparencyTableEx(ByVal dib As Long) As Byte()
 Dim abBuffer() As Byte
 Dim lpTransparencyTable As Long
 
+   ' This function returns a copy of a DIB's transparency table as VB style
+   ' array of type Byte. So, the array provides read access only from the DIS's
+   ' point of view.
+   
+   ' The parameter 'dib' works according to the FreeImage 3 API documentation.
+
    lpTransparencyTable = FreeImage_GetTransparencyTable(dib)
    If (lpTransparencyTable) Then
       ReDim abBuffer(255)
@@ -1995,9 +2068,20 @@ Public Sub FreeImage_SetTransparencyTableEx(ByVal dib As Long, _
                                             ByRef table() As Byte, _
                                    Optional ByRef Count As Long = -1)
 
+   ' This function sets a DIB's transparency table to the contents of the
+   ' parameter table(). When the optional parameter Count is omitted, the
+   ' number of entries used is taken from the number of elements stored in
+   ' the array, but never greater than 256.
+   
+   ' The parameter 'dib' works according to the FreeImage 3 API documentation.
+   
    If ((Count > UBound(table) + 1) Or _
        (Count < 0)) Then
       Count = UBound(table) + 1
+   End If
+   
+   If (Count > 256) Then
+      Count = 256
    End If
 
    Call FreeImage_SetTransparencyTable(dib, VarPtr(table(0)), Count)
@@ -2010,10 +2094,16 @@ Public Function FreeImage_GetHistogramEx(ByVal dib As Long, _
                                 
 Dim alResult() As Long
 
+   ' This function returns a DIB's histogram data as VB style array of
+   ' type Long. Since histogram data is never modified directly, it seems
+   ' enough to return a clone of the data and no read/write accessible
+   ' array wrapped around the actual pointer.
+   
+   ' All parameters work according to the FreeImage 3 API documentation.
+
    ReDim alResult(255)
    success = FreeImage_GetHistogram(dib, alResult(0), channel)
    If (success) Then
-      'FreeImage_GetHistogramEx = alResult
       Call swap(VarPtrArray(FreeImage_GetHistogramEx), VarPtrArray(alResult))
    End If
 
@@ -2026,6 +2116,24 @@ Public Function FreeImage_LoadFromMemoryEx(ByRef data As Variant, _
 Dim hStream As Long
 Dim lDataPtr As Long
 Dim lPtr As Long
+
+   ' This function extends the FreeImage function FreeImage_LoadFromMemory
+   ' to a more VB suitable function. The parameter data of type Variant my
+   ' me either an array of type Byte, Integer or Long or may contain the pointer
+   ' to a memory block, what in VB is always the address of the memory block,
+   ' since VB actually doesn's support native pointers.
+   
+   ' In case of providing the memory block as an array, the size_in_bytes may
+   ' be omitted, zero or less than zero. Then, the size of the memory block
+   ' is calculated correctly. When size_in_bytes is given, it is up to the caller
+   ' to ensure, it is correct.
+   
+   ' In case of providing an address of a memory block, size_in_bytes must not
+   ' be omitted.
+   
+   ' The parameter fif is an OUT parameter, that will contain the image type
+   ' detected. Any values set by the caller will never be used within this
+   ' function.
    
    ' do we have an array?
    If (VarType(data) And vbArray) Then
@@ -2057,12 +2165,16 @@ Dim lPtr As Long
       End If
    End If
    
+   ' open the memory stream
    hStream = FreeImage_OpenMemoryByPtr(lDataPtr, size_in_bytes)
    If (hStream) Then
+      ' on success, detect image type
       fif = FreeImage_GetFileTypeFromMemory(hStream)
       If (fif <> FIF_UNKNOWN) Then
+         ' load the image from memory stream only, if known image type
          FreeImage_LoadFromMemoryEx = FreeImage_LoadFromMemory(fif, hStream)
       End If
+      ' close the memory stream when open
       Call FreeImage_CloseMemory(hStream)
    End If
 
@@ -2071,11 +2183,28 @@ End Function
 Public Function FreeImage_SaveToMemoryEx(ByVal fif As FREE_IMAGE_FORMAT, _
                                          ByVal dib As Long, _
                                          ByRef data() As Byte, _
-                                Optional ByVal flags As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT) As Boolean
+                                Optional ByVal flags As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
+                                Optional ByVal bUnloadSource As Boolean) As Boolean
 
 Dim hStream As Long
 Dim lpData As Long
 Dim lSizeInBytes As Long
+
+   ' This function saves a FreeImage DIB into memory by using the VB Byte
+   ' array data(). It makes a deep copy of the image data and closes the
+   ' memory stream opened before it returns to the caller.
+   
+   ' The Byte array 'data()' must not be a fixed sized array and will be
+   ' redimensioned according to the size needed to hold all the data.
+   
+   ' The parameters 'fif', 'dib' and 'flags' work according to the FreeImage 3
+   ' API documentation.
+   
+   ' The optional 'bUnloadSource' parameter is for unloading the original image
+   ' after it has been saved into memory. There is no need to clean up the DIB
+   ' at the caller's site.
+   
+   ' The function returns True on success and False otherwise.
 
    hStream = FreeImage_OpenMemory()
    If (hStream) Then
@@ -2099,6 +2228,10 @@ Dim lSizeInBytes As Long
    Else
       FreeImage_SaveToMemoryEx = False
    End If
+   
+   If (bUnloadSource) Then
+      Call FreeImage_Unload(dib)
+   End If
 
 End Function
 
@@ -2106,10 +2239,38 @@ Public Function FreeImage_SaveToMemoryEx2(ByVal fif As FREE_IMAGE_FORMAT, _
                                           ByVal dib As Long, _
                                           ByRef data() As Byte, _
                                           ByRef stream As Long, _
-                                 Optional ByVal flags As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT) As Boolean
+                                 Optional ByVal flags As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
+                                 Optional ByVal bUnloadSource As Boolean) As Boolean
 
 Dim lpData As Long
 Dim tSA As SAVEARRAY1D
+
+   ' This function saves a FreeImage DIB into memory by using the VB Byte
+   ' array data(). It does not makes a deep copy of the image data, but uses
+   ' the function 'FreeImage_AcquireMemoryEx' to wrap the array 'data()'
+   ' around the memory block pointed to by the result of the
+   ' 'FreeImage_AcquireMemory' function.
+   
+   ' The Byte array 'data()' must not be a fixed sized array and will be
+   ' redimensioned according to the size needed to hold all the data.
+   
+   ' The parameter 'stream' is an IN/OUT parameter, tracking the memory
+   ' stream, the VB array 'data()' is based on. This parameter may contain
+   ' an already opened FreeImage memory stream when the function is called and
+   ' contains a valid memory stream when the function returns in each case.
+   ' After all, it is up to the caller to close that memory stream correctly.
+   ' The array 'data()' will no longer be valid and accessable after the stream
+   ' has been closed, so it should only be closed after the passed byte array
+   ' variable either goes out of the caller's scope or is redimensioned.
+   
+   ' The parameters 'fif', 'dib' and 'flags' work according to the FreeImage 3
+   ' API documentation.
+   
+   ' The optional 'bUnloadSource' parameter is for unloading the original image
+   ' after it has been saved into memory. There is no need to clean up the DIB
+   ' at the caller's site.
+   
+   ' The function returns True on success and False otherwise.
 
    If (stream = 0) Then
       stream = FreeImage_OpenMemory()
@@ -2127,6 +2288,10 @@ Dim tSA As SAVEARRAY1D
    Else
       FreeImage_SaveToMemoryEx2 = False
    End If
+   
+   If (bUnloadSource) Then
+      Call FreeImage_Unload(dib)
+   End If
 
 End Function
 
@@ -2138,7 +2303,7 @@ Dim lpData As Long
 Dim tSA As SAVEARRAY1D
 Dim lpSA As Long
 
-   ' This function wraps the byte array data() over acquired memory
+   ' This function wraps the byte array data() around acquired memory
    ' of the memory stream specified by then stream parameter. The adjusted
    ' array then points directly to the stream's data pointer and so
    ' provides full read and write access. All data contained in the array
@@ -2181,6 +2346,11 @@ Public Function FreeImage_TagFromPointer(ByVal tag As Long) As FITAG
 
 Dim tTagInt As FITAG_int
 
+   ' This function is a helper routine for converting a FreeImage
+   ' FITAG structure into an internal used VB friedly FITAG structure.
+   
+   ' This function is in experimental state and so subject to change!
+
    Call CopyMemory(tTagInt, ByVal deref(tag), Len(tTagInt))
    
    With FreeImage_TagFromPointer
@@ -2211,7 +2381,10 @@ End Function
 Public Function FreeImage_IsExtensionValidForFIF(ByVal fif As FREE_IMAGE_FORMAT, _
                                                  ByVal extension As String, _
                                         Optional ByVal compare As VbCompareMethod = vbBinaryCompare) As Boolean
-                                                
+   
+   ' This function tests, whether a given filename extension is valid
+   ' for a certain image format (fif).
+   
    FreeImage_IsExtensionValidForFIF = (InStr(1, _
                                              FreeImage_GetFIFExtensionList(fif) & ",", _
                                              extension, _
@@ -2225,6 +2398,9 @@ Public Function FreeImage_IsFilenameValidForFIF(ByVal fif As FREE_IMAGE_FORMAT, 
                                                 
 Dim strExtension As String
 Dim i As Long
+
+   ' This function tests, whether a given complete filename is valid
+   ' for a certain image format (fif).
 
    i = InStrRev(FileName, ".")
    If (i) Then
@@ -2242,6 +2418,14 @@ Public Function FreeImage_GetPrimaryExtensionFromFIF(ByVal fif As FREE_IMAGE_FOR
 Dim strExtensionList As String
 Dim i As Long
 
+   ' This function returns the primary (main or most commonly used?) extension
+   ' of a certain image format (fif). This is done by returning the first of
+   ' all possible extensions returned by 'FreeImage_GetFIFExtensionList'. That
+   ' assumes, that the plugin returns the extensions in ordered form. If not,
+   ' in most cases it is even enough, to receive any extension.
+   
+   ' This function is primarily used by the function 'SavePictureEx'.
+
    strExtensionList = FreeImage_GetFIFExtensionList(fif)
    i = InStr(strExtensionList, ",")
    If (i) Then
@@ -2256,6 +2440,25 @@ Public Function FreeImage_IsGreyscaleImage(ByVal dib As Long) As Boolean
 
 Dim atRGB() As RGBQUAD
 Dim i As Long
+
+   ' This function returns a boolean value that is true, if the DIB is actually
+   ' a greyscale image. Here, the only test condition is, that each palette
+   ' entry must be a grey value, what means that each color component has the
+   ' same value (red = green = blue).
+   
+   ' The FreeImage libraray doesn't offer a function to determine if a DIB is
+   ' greyscale. The only thing you can do is to use the 'FreeImage_GetColorType'
+   ' function, that returns either FIC_MINISWHITE or FIC_MINISBLACK for
+   ' greyscale images. However, a DIB needs to have a ordered greyscale palette
+   ' (linear ramp or inverse linear ramp) to be judged as FIC_MINISWHITE or
+   ' FIC_MINISBLACK. DIB's with an unordered palette that are actually (visually)
+   ' greyscale, are said to be (color-)palettized. That's also true for any 4 bpp
+   ' image, since it will never have a palette that satifies the tests done
+   ' in the 'FreeImage_GetColorType' function.
+   
+   ' So, there is a chance to omit some color depth conversions, when displaying
+   ' an image in greyscale fashion. Maybe the problem will be solved in the
+   ' FreeImage library one day.
 
    Select Case FreeImage_GetBPP(dib)
    
@@ -2277,11 +2480,17 @@ End Function
 
 Public Function FreeImage_GetResolutionX(ByVal dib As Long) As Long
 
+   ' This function gets a DIB's resolution in X-direction measured
+   ' in 'dots per inch' (DPI) and not in 'dots per meter'.
+   
    FreeImage_GetResolutionX = Int(0.5 + 0.0254 * FreeImage_GetDotsPerMeterX(dib))
 
 End Function
 
 Public Sub FreeImage_SetResolutionX(ByVal dib As Long, ByVal res As Long)
+
+   ' This function sets a DIB's resolution in X-direction measured
+   ' in 'dots per inch' (DPI) and not in 'dots per meter'.
 
    Call FreeImage_SetDotsPerMeterX(dib, Int(res / 0.0254 + 0.5))
 
@@ -2289,11 +2498,17 @@ End Sub
 
 Public Function FreeImage_GetResolutionY(ByVal dib As Long) As Long
 
+   ' This function gets a DIB's resolution in Y-direction measured
+   ' in 'dots per inch' (DPI) and not in 'dots per meter'.
+
    FreeImage_GetResolutionY = Int(0.5 + 0.0254 * FreeImage_GetDotsPerMeterY(dib))
 
 End Function
 
 Public Sub FreeImage_SetResolutionY(ByVal dib As Long, ByVal res As Long)
+
+   ' This function sets a DIB's resolution in Y-direction measured
+   ' in 'dots per inch' (DPI) and not in 'dots per meter'.
 
    Call FreeImage_SetDotsPerMeterY(dib, Int(res / 0.0254 + 0.5))
 
@@ -2313,6 +2528,23 @@ Dim hDIBTemp As Long
 Dim lBPP As Long
 Dim bConvertPalette As Boolean
 Dim bKeepPalette As Boolean
+
+   ' This function is an easy-to-use wrapper for color depth conversion, intended
+   ' to work around some tweaks in the FreeImage library.
+   
+   ' The parameters 'bThreshold' and 'eDitherMode' control how thresholding or
+   ' dithering are performed. The 'eQuantizationMethod' parameter determines, what
+   ' quantization algorithm will be used when converting to 8 bit color images.
+   
+   ' In the future the function should be adapted to use 'FreeImage_ColorQuantizeEx'
+   ' in some cases.
+   
+   ' The 'eConversionFlag' parameter, which can contain a single value or an OR'ed
+   ' combination be  FREE_IMAGE_CONVERSION_FLAGS enumeration
+   
+   ' The optional 'bUnloadSource' parameter is for unloading the original image, so
+   ' you can "change" an image with this function rather than getting a new DIB
+   ' pointer. There is no more need for a second DIB variable at the caller's site.
 
    bKeepPalette = ((eConversionFlag And FICF_REORDER_GREYSCALE_PALETTE) = 0)
 
@@ -2542,20 +2774,60 @@ Dim lNewWidth As Long
 Dim lNewHeight As Long
 Dim hDIBNew As Long
 
+   ' This function is a easy-to-use wrapper for rescaling an image with the
+   ' FreeImage library. It returns a pointer to a new rescaled DIB provided
+   ' by FreeImage.
+   
+   ' The parameters 'vntDstWidth', 'vntDstHeight' and 'bIsPercentValue' control
+   ' the size of the new image. Here, the function tries to fake something like
+   ' overloading known from Java. It depends on the parameter's data type passed
+   ' through the Variant, how the provided values for width and height are
+   ' actually interpreted. The following rules apply:
+   
+   ' In general, non integer values are either interpreted as percent values or
+   ' factors, the original image size will be multiplied with. The 'bIsPercentValue'
+   ' parameter controls whether the values are percent values or factors. Integer
+   ' values are always considered to be the direct new image size, not depending on
+   ' the original image size. In that case, the 'bIsPercentValue' parameter has no
+   ' effect. If one of the parameters is omitted, the image will not be resized in
+   ' that direction (either in width or height) and keeps it's original size. It is
+   ' possible to omit both, but that makes actually no sense.
+   
+   ' The following table shows some of possible data type and value combinations
+   ' that might by used with that function: (assume an original image sized 100x100 px)
+   
+   ' Parameter         |  Values |  Values |  Values |  Values |     Values |
+   ' ----------------------------------------------------------------------
+   ' vntDstWidth       |    75.0 |    0.85 |     200 |     120 |        400 |
+   ' vntDstHeight      |   120.0 |     1.3 |     230 |       - |        400 |
+   ' bIsPercentValue   |    True |   False |    d.c. |    d.c. |      False | <- wrong option?
+   ' ----------------------------------------------------------------------
+   ' Result Size       |  75x120 |  85x130 | 200x230 | 120x100 |40000x40000 |
+   ' Remarks           | percent |  factor |  direct |         |maybe not   |
+   '                                                           |what you    |
+   '                                                           |wanted, or? |
+   
+   ' The optional 'bUnloadSource' parameter is for unloading the original image, so
+   ' you can "change" an image with this function rather than getting a new DIB
+   ' pointer. There is no more need for a second DIB variable at the caller's site.
+   
+   ' Since this diversity my be confusing to VB developers, this function is also
+   ' callable through three different functions called 'FreeImage_RescaleByPixel',
+   ' 'FreeImage_RescaleByPercent' and 'FreeImage_RescaleByFactor'.
+
    If (Not IsMissing(vntDstWidth)) Then
       Select Case VarType(vntDstWidth)
       
-      Case vbDouble, vbSingle, vbDecimal
+      Case vbDouble, vbSingle, vbDecimal, vbCurrency
          lNewWidth = FreeImage_GetWidth(hDIB) * vntDstWidth
+         If (bIsPercentValue) Then
+            lNewWidth = lNewWidth / 100
+         End If
       
       Case Else
          lNewWidth = vntDstWidth
       
       End Select
-      
-      If (bIsPercentValue) Then
-         lNewWidth = lNewWidth / 10
-      End If
    End If
    
    If (Not IsMissing(vntDstHeight)) Then
@@ -2563,15 +2835,14 @@ Dim hDIBNew As Long
       
       Case vbDouble, vbSingle, vbDecimal
          lNewHeight = FreeImage_GetHeight(hDIB) * vntDstHeight
+         If (bIsPercentValue) Then
+            lNewHeight = lNewHeight / 100
+         End If
       
       Case Else
          lNewHeight = vntDstHeight
       
       End Select
-      
-      If (bIsPercentValue) Then
-         lNewHeight = lNewHeight / 10
-      End If
    End If
    
    If ((lNewWidth > 0) And _
@@ -2599,6 +2870,63 @@ Dim hDIBNew As Long
                      
 End Function
 
+Public Function FreeImage_RescaleByPixel(ByVal hDIB As Long, _
+                                Optional ByVal lDstWidthPixel As Long, _
+                                Optional ByVal lDstHeightPixel As Long, _
+                                Optional ByVal bUnloadSource As Boolean, _
+                                Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+                                
+   ' Thin wrapper for function 'FreeImage_RescaleEx' for removing method
+   ' overload fake. This function rescales the image directly to the size
+   ' specified by the 'lDstWidthPixel' and 'lDstHeightPixel' parameters.
+
+   FreeImage_RescaleByPixel = FreeImage_RescaleEx(hDIB, _
+                                                  lDstWidthPixel, _
+                                                  lDstHeightPixel, _
+                                                  False, _
+                                                  bUnloadSource, _
+                                                  eFilter)
+
+End Function
+
+Public Function FreeImage_RescaleByPercent(ByVal hDIB As Long, _
+                                  Optional ByVal dblDstWidthPercent As Double, _
+                                  Optional ByVal dblDstHeightPercent As Double, _
+                                  Optional ByVal bUnloadSource As Boolean, _
+                                  Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+
+   ' Thin wrapper for function 'FreeImage_RescaleEx' for removing method
+   ' overload fake. This function rescales the image by a percent value
+   ' based on the image's original size.
+
+   FreeImage_RescaleByPercent = FreeImage_RescaleEx(hDIB, _
+                                                    dblDstWidthPercent, _
+                                                    dblDstHeightPercent, _
+                                                    True, _
+                                                    bUnloadSource, _
+                                                    eFilter)
+
+End Function
+
+Public Function FreeImage_RescaleByFactor(ByVal hDIB As Long, _
+                                 Optional ByVal dblDstWidthFactor As Double, _
+                                 Optional ByVal dblDstHeightFactor As Double, _
+                                 Optional ByVal bUnloadSource As Boolean, _
+                                 Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+
+   ' Thin wrapper for function 'FreeImage_RescaleEx' for removing method
+   ' overload fake. This function rescales the image by a factor
+   ' based on the image's original size.
+
+   FreeImage_RescaleByFactor = FreeImage_RescaleEx(hDIB, _
+                                                   dblDstWidthFactor, _
+                                                   dblDstHeightFactor, _
+                                                   False, _
+                                                   bUnloadSource, _
+                                                   eFilter)
+
+End Function
+
 Public Function FreeImage_PaintDC(ByVal hDC As Long, _
                                   ByVal hDIB As Long, _
                          Optional ByVal lXDest As Long = 0, _
@@ -2611,6 +2939,9 @@ Public Function FreeImage_PaintDC(ByVal hDC As Long, _
                          Optional ByVal eRasterOperator As RASTER_OPERATOR = ROP_SRCCOPY) As Long
  
 Dim eLastStretchMode As STRETCH_MODE
+
+   ' This function draws a FreeImage DIB directly onto a device context (DC). There
+   ' are many (selfexplaining?) parameters that control the visual result.
    
    If ((hDC) And (hDIB)) Then
       
@@ -2661,6 +2992,13 @@ Public Function FreeImage_PaintDCEx(ByVal hDC As Long, _
                            Optional ByVal eStretchMode As STRETCH_MODE = SM_COLORONCOLOR) As Long
 
 Dim eLastStretchMode As STRETCH_MODE
+
+   ' This function draws a FreeImage DIB directly onto a device context (DC). There
+   ' are many (selfexplaining?) parameters that control the visual result.
+   
+   ' The main differences of this function compared to the 'FreeImage_PaintDC' are,
+   ' that this function supports mirroring and stretching of the image to be
+   ' painted and so, is somewhat slower than 'FreeImage_PaintDC'.
    
    If ((hDC) And (hDIB)) Then
       
@@ -2712,13 +3050,29 @@ End Function
 
 Public Function FreeImage_GetOlePicture(ByVal hDIB As Long, _
                                Optional ByVal hDC As Long, _
-                               Optional ByVal bUnloadDIB As Boolean) As IPicture
+                               Optional ByVal bUnloadSource As Boolean) As IPicture
 
 Dim bReleaseDC As Boolean
 Dim hBMP As Long
 Dim tPicDesc As PictDesc
 Dim tGuid As Guid
 
+   ' This function creates a VB Picture object (OlePicture) from a FreeImage DIB.
+   ' The original image must not remain valid nor loaded after the VB Picture
+   ' object has been created.
+   
+   ' The optional parameter 'hDC' determines the device context (DC) used for
+   ' transforming the device independent bitmap (DIB) to a device dependent
+   ' bitmap (DDB). This device context's color depth is responsible for this
+   ' transformation. This parameter may be null or omitted. In that case, the
+   ' windows desktop's device context will be used, what will be the desired
+   ' way in almost any cases.
+   
+   ' The optional 'bUnloadSource' parameter is for unloading the original image
+   ' after the OlePicture has been created, so you can easiely "switch" from a
+   ' FreeImage DIB to a VB Picture object. There is no need to clean up the DIB
+   ' at the caller's site.
+   
    If (hDIB) Then
    
       If (hDC = 0) Then
@@ -2759,7 +3113,7 @@ Dim tGuid As Guid
          Call ReleaseDC(0, hDC)
       End If
       
-      If (bUnloadDIB) Then
+      If (bUnloadSource) Then
          Call FreeImage_Unload(hDIB)
       End If
    End If
@@ -2773,6 +3127,11 @@ Dim tBM As BITMAP
 Dim hDIB As Long
 Dim hDC As Long
 Dim lResult As Long
+
+   ' Creates a FreeImage DIB from a VB Picture object (OlePicture). This functions
+   ' returns a pointer to the DIB as, for instance, the FreeImage function
+   ' 'FreeImage_Load' does. So, this could be a real replacement for 'FreeImage_Load'
+   ' when working with VB Picture objects.
 
    hBMP = IOlePicture.handle
    If (hBMP) Then
@@ -2830,10 +3189,10 @@ Const vbObjectOrWithBlockVariableNotSet As Long = 91
    ' One reason for resizing a usually fixed size logo or background image
    ' may be the following scenario:
    
-   ' When running on a Windows machine using smaller or bigger fonts (what can
+   ' When running on a Windos machine using smaller or bigger fonts (what can
    ' be configured in the control panel by using different dpi fonts), the
    ' operation system automatically adjusts the sizes of Forms, Labels,
-   ' TextBoxes, Frames and even PictureBoxes. So, the whole VB application is
+   ' TextBoxes, Frames and even PictureBoxes. So, the hole VB application is
    ' perfectly adapted to these font metrics with the exception of compile time
    ' provided images. Although the PictureBox control is resized, the containing
    ' image remains untouched. This problem could be solved with this function.
@@ -2901,26 +3260,47 @@ End Function
 Public Function LoadPictureEx(Optional ByRef FileName As Variant, _
                               Optional ByRef Width As Variant, _
                               Optional ByRef Height As Variant, _
-                              Optional ByRef Filter As FREE_IMAGE_FILTER) As IPictureDisp
+                              Optional ByRef InPercent As Boolean = False, _
+                              Optional ByRef Filter As FREE_IMAGE_FILTER, _
+                              Optional ByRef Format As FREE_IMAGE_FORMAT = FIF_UNKNOWN) As IPictureDisp
 
-Dim eFIF As FREE_IMAGE_FORMAT
 Dim hDIB As Long
 Dim hDIBTmp As Long
 
 Const vbInvalidPictureError As Long = 481
 
+   ' This function is an extended version of the VB method 'LoadPicture'. As
+   ' the VB version it takes a filename parameter to load the image and throws
+   ' the same errors in most cases.
+   
+   ' The function provides all image formats, the FreeImage library can read. The
+   ' image format is determined from the image file to load, the optional parameter
+   ' 'Format' is an OUT parameter that will contain the image format that has
+   ' been loaded.
+   
+   ' The parameters 'Width', 'Height', 'InPercent' and 'Filter' make it possible
+   ' to "load" the image in a resized version. 'Width', 'Height' specify the desired
+   ' width and height, 'Filter' determines, what image filter should be used
+   ' on the resizing process.
+   
+   ' The parameters 'Width', 'Height', 'InPercent' and 'Filter' map directly to the
+   ' according parameters of the 'FreeImage_RescaleEx' function. So, read the
+   ' documentation of the 'FreeImage_RescaleEx' for a complete understanding of the
+   ' usage of these parameters.
+
+
    If (Not IsMissing(FileName)) Then
-      eFIF = FreeImage_GetFIFFromFilename(FileName)
-      If (eFIF <> FIF_UNKNOWN) Then
-         If (FreeImage_FIFSupportsReading(eFIF)) Then
-            hDIB = FreeImage_Load(eFIF, FileName)
+      Format = FreeImage_GetFIFFromFilename(FileName)
+      If (Format <> FIF_UNKNOWN) Then
+         If (FreeImage_FIFSupportsReading(Format)) Then
+            hDIB = FreeImage_Load(Format, FileName)
             If (hDIB) Then
                
                If ((Not IsMissing(Width)) Or _
                    (Not IsMissing(Height))) Then
                   
                   hDIB = FreeImage_ConvertColorDepth(hDIB, FICF_PREPARE_RESCALE, True)
-                  hDIB = FreeImage_RescaleEx(hDIB, Width, Height, , True, Filter)
+                  hDIB = FreeImage_RescaleEx(hDIB, Width, Height, InPercent, True, Filter)
                End If
             
                Set LoadPictureEx = FreeImage_GetOlePicture(hDIB, , True)
@@ -2946,17 +3326,53 @@ Public Function SavePictureEx(ByRef Picture As IPictureDisp, _
                      Optional ByRef Options As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
                      Optional ByRef Width As Variant, _
                      Optional ByRef Height As Variant, _
-                     Optional ByRef Filter As FREE_IMAGE_FILTER) As Long
+                     Optional ByRef InPercent As Boolean = False, _
+                     Optional ByRef Filter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
                      
 Dim hDIB As Long
 Dim strExtension As String
 
 Const vbObjectOrWithBlockVariableNotSet As Long = 91
 Const vbInvalidPictureError As Long = 481
+
+   ' This function is an extended version of the VB method 'SavePicture'. As
+   ' the VB version it takes a Picture object and a filename parameter to
+   ' save the image and throws the same errors in most cases.
+   
+   ' The function provides all image formats, and save options, the FreeImage
+   ' library can write. The optional parameter 'Format' may contain the desired
+   ' image format. When omitted, the function tries to get the image format from
+   ' the filename extension.
+   
+   ' The function checks, whether the given filename has a valid extension or
+   ' not. If not, the "primary" extension for the used image format will be
+   ' appended to the filename. The parameter 'FileName' remains untouched in
+   ' this case.
+   
+   ' To learn more about the "primary" extension, read the documentation for
+   ' the 'FreeImage_GetPrimaryExtensionFromFIF' function.
+   
+   ' The parameters 'Width', 'Height', 'InPercent' and 'Filter' make it possible
+   ' to save the image in a resized version. 'Width', 'Height' specify the desired
+   ' width and height, 'Filter' determines, what image filter should be used
+   ' on the resizing process.
+   
+   ' The parameters 'Width', 'Height', 'InPercent' and 'Filter' map directly to the
+   ' according parameters of the 'FreeImage_RescaleEx' function. So, read the
+   ' documentation of the 'FreeImage_RescaleEx' for a complete understanding of the
+   ' usage of these parameters.
                          
    If (Not Picture Is Nothing) Then
       hDIB = FreeImage_CreateFromOlePicture(Picture)
       If (hDIB) Then
+      
+         If ((Not IsMissing(Width)) Or _
+             (Not IsMissing(Height))) Then
+             
+            hDIB = FreeImage_ConvertColorDepth(hDIB, FICF_PREPARE_RESCALE, True)
+            hDIB = FreeImage_RescaleEx(hDIB, Width, Height, InPercent, True, Filter)
+         End If
+         
          If (Format = FIF_UNKNOWN) Then
             Format = FreeImage_GetFIFFromFilename(FileName)
          End If

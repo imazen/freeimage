@@ -40,13 +40,15 @@ Public Function FreeImage_LoadFromMemoryEx(ByRef data As Variant, _
 Public Function FreeImage_SaveToMemoryEx(ByVal fif As FREE_IMAGE_FORMAT, _
                                          ByVal dib As Long, _
                                          ByRef data() As Byte, _
-                                Optional ByVal flags As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT) As Boolean
+                                Optional ByVal flags As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
+                                Optional ByVal bUnloadSource As Boolean) As Boolean
 
 Public Function FreeImage_SaveToMemoryEx2(ByVal fif As FREE_IMAGE_FORMAT, _
                                           ByVal dib As Long, _
                                           ByRef data() As Byte, _
                                           ByRef stream As Long, _
-                                 Optional ByVal flags As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT) As Boolean
+                                 Optional ByVal flags As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
+                                 Optional ByVal bUnloadSource As Boolean) As Boolean
 
 Public Function FreeImage_AcquireMemoryEx(ByVal stream As Long, _
                                           ByRef data() As Byte, _
@@ -91,6 +93,24 @@ Public Function FreeImage_RescaleEx(ByVal hDIB As Long, _
                            Optional ByVal bIsPercentValue As Boolean, _
                            Optional ByVal bUnloadSource As Boolean, _
                            Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+                           
+Public Function FreeImage_RescaleByPixel(ByVal hDIB As Long, _
+                                Optional ByVal lDstWidthPixel As Long, _
+                                Optional ByVal lDstHeightPixel As Long, _
+                                Optional ByVal bUnloadSource As Boolean, _
+                                Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+
+Public Function FreeImage_RescaleByPercent(ByVal hDIB As Long, _
+                                  Optional ByVal dblDstWidthPercent As Double, _
+                                  Optional ByVal dblDstHeightPercent As Double, _
+                                  Optional ByVal bUnloadSource As Boolean, _
+                                  Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+
+Public Function FreeImage_RescaleByFactor(ByVal hDIB As Long, _
+                                 Optional ByVal dblDstWidthFactor As Double, _
+                                 Optional ByVal dblDstHeightFactor As Double, _
+                                 Optional ByVal bUnloadSource As Boolean, _
+                                 Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long                                  
 
 Public Function FreeImage_PaintDC(ByVal hDC As Long, _
                                   ByVal hDIB As Long, _
@@ -121,7 +141,7 @@ Public Function FreeImage_PaintDCEx(ByVal hDC As Long, _
 ' Ole Picture functions
 Public Function FreeImage_GetOlePicture(ByVal hDIB As Long, _
                                Optional ByVal hDC As Long, _
-                               Optional ByVal bUnloadDIB As Boolean) As IPicture
+                               Optional ByVal bUnloadSource As Boolean) As IPicture
 
 Public Function FreeImage_CreateFromOlePicture(ByRef IOlePicture As IPicture) As Long
 
@@ -136,7 +156,9 @@ Public Function AdjustPicture(ByRef Control As Object, _
 Public Function LoadPictureEx(Optional ByRef FileName As Variant, _
                               Optional ByRef Width As Variant, _
                               Optional ByRef Height As Variant, _
-                              Optional ByRef Filter As FREE_IMAGE_FILTER) As IPictureDisp
+                              Optional ByRef InPercent As Boolean = False, _
+                              Optional ByRef Filter As FREE_IMAGE_FILTER, _
+                              Optional ByRef Format As FREE_IMAGE_FORMAT = FIF_UNKNOWN) As IPictureDisp
 
 Public Function SavePictureEx(ByRef Picture As IPictureDisp, _
                               ByRef FileName As String, _
@@ -144,7 +166,8 @@ Public Function SavePictureEx(ByRef Picture As IPictureDisp, _
                      Optional ByRef Options As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
                      Optional ByRef Width As Variant, _
                      Optional ByRef Height As Variant, _
-                     Optional ByRef Filter As FREE_IMAGE_FILTER) As Long
+                     Optional ByRef InPercent As Boolean = False, _
+                     Optional ByRef Filter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
 
                                 
 
