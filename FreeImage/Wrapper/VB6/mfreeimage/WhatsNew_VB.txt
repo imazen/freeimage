@@ -5,6 +5,28 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+June 07, 2005
++ [Carsten Klein] added some more inline comments and documentation
++ [Carsten Klein] added optional parameter 'bUnloadSource' to function FreeImage_SaveToMemoryEx()
++                 added optional parameter 'bUnloadSource' to function FreeImage_SaveToMemoryEx2()
++ [Carsten Klein] added optional parameter 'InPercent' to function SavePictureEx()
+!                 implemented the capability to resize the image on saving in function SavePictureEx()
++ [Carsten Klein] added parameters 'InPercent' and 'Format' to function LoadPictureEx()
+* [Carsten Klein] fixed wrong function declaration of function FreeImage_JPEGTransform() (...@12 -> ...@16)
+
+June 06, 2005
++ [Carsten Klein] added some more inline comments and documentation
+
+May 30, 2005
+* [Carsten Klein] fixed percent calculating bug in function FreeImage_RescaleEx()
+!                 changed behaviour of parameter 'bIsPercentValue' -> it now has no effect on integer values
++                 added function FreeImage_RescaleByPixel() to avoid confusion with overloading
++                 added function FreeImage_RescaleByPercent() to avoid confusion with overloading
++                 added function FreeImage_RescaleByFactor() to avoid confusion with overloading
+! [Carsten Klein] changed name of parameter 'bUnloadDIB' to 'bUnloadSource' of function FreeImage_GetOlePicture()
++ [Carsten Klein] added some more inline comments and documentation
+* [Carsten Klein] fixed a potential runtime error in function FreeImage_SetTransparencyTableEx(): 'Count' will no longer exceed 256
+
 May 24, 2005
 + [Carsten Klein] added a new VB wrapper
 
