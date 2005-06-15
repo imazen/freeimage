@@ -450,16 +450,8 @@ BOOL fipImage::convertTo32Bits() {
 
 BOOL fipImage::convertToGrayscale() {
 	if(_dib) {
-		if(FreeImage_GetColorType(_dib) == FIC_PALETTE) {
-			// Convert the palette to 24-bit, then to 8-bit
-			BOOL bResult;
-			bResult = convertTo24Bits();
-			bResult &= convertTo8Bits();
-			return bResult;
-		} else if(FreeImage_GetBPP(_dib) != 8) {
-			// Convert the bitmap to 8-bit greyscale
-			return convertTo8Bits();
-		}
+		FIBITMAP *dib8 = FreeImage_ConvertToGreyscale(_dib);
+		return replace(dib8);
 	}
 	return FALSE;
 }

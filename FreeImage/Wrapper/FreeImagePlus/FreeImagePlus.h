@@ -473,7 +473,7 @@ public:
 	/** 
 	Converts the bitmap to 8 bits.<br> 
 	For palletized bitmaps, the color map is converted to a greyscale ramp.
-	@see convertTo8Bits
+	@see FreeImage_ConvertToGreyscale
 	@return Returns TRUE if successfull, FALSE otherwise. 
 	*/
 	BOOL convertToGrayscale();
@@ -1006,7 +1006,7 @@ public :
 /** Multi-page file stream
 
 	fipMultiPage encapsulates the multi-page API. It supports reading/writing 
-	multi-page TIFF and ICO files. 
+	multi-page TIFF, ICO and GIF files. 
 */
 class FIP_API fipMultiPage : public fipObject 
 {

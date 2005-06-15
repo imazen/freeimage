@@ -293,7 +293,7 @@ void fipWinImage::drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg, RGBQUAD *appBkC
 			BOOL bHasBackground = FreeImage_HasBackgroundColor(_dib);
 			BOOL bIsTransparent = FreeImage_IsTransparent(_dib);
 
-			if(!bIsTransparent && !bHasBackground) {
+			if(!bIsTransparent && (!bHasBackground || !useFileBkg)) {
 				// Copy pointer
 				_display_dib = _dib;
 			}

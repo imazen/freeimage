@@ -216,3 +216,78 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 
 	return FreeImage_Clone(dib);
 }
+
+FIBITMAP * DLL_CALLCONV
+FreeImage_ConvertToGreyscale(FIBITMAP *dib) {
+	if(!dib) return NULL;
+
+	FREE_IMAGE_COLOR_TYPE color_type = FreeImage_GetColorType(dib);
+	int bpp = FreeImage_GetBPP(dib);
+
+	if((color_type == FIC_PALETTE) || (color_type == FIC_MINISWHITE)) {
+		int width  = FreeImage_GetWidth(dib);
+		int height = FreeImage_GetHeight(dib);
+		FIBITMAP *new_dib = FreeImage_Allocate(width, height, 8);
+
+		if(new_dib == NULL) {
+			return NULL;
+		}
+
+		// Build a greyscale palette
+
+		RGBQUAD *new_pal = FreeImage_GetPalette(new_dib);
+
+		for(int i = 0; i < 256; i++) {
+			new_pal[i].rgbRed	= i;
+			new_pal[i].rgbGreen = i;
+			new_pal[i].rgbBlue	= i;
+		}
+
+		// allocate a 24-bit buffer
+
+		BYTE *buffer = (BYTE*)malloc( CalculatePitch(CalculateLine(width, 24)) );
+		if(NULL == buffer) {
+			FreeImage_Unload(new_dib);
+			return NULL;
+		}
+
+		// Convert the palette to 24-bit, then to 8-bit
+
+		switch(bpp) {
+			case 1:
+			{
+				for (int rows = 0; rows < height; rows++) {
+					FreeImage_ConvertLine1To24(buffer, FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
+					FreeImage_ConvertLine24To8(FreeImage_GetScanLine(new_dib, rows), buffer, width);
+				}
+			}
+			break;
+
+			case 4:
+			{
+				for (int rows = 0; rows < height; rows++) {
+					FreeImage_ConvertLine4To24(buffer, FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
+					FreeImage_ConvertLine24To8(FreeImage_GetScanLine(new_dib, rows), buffer, width);
+				}
+			}
+			break;
+
+			case 8:
+			{
+				for (int rows = 0; rows < height; rows++) {
+					FreeImage_ConvertLine8To24(buffer, FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
+					FreeImage_ConvertLine24To8(FreeImage_GetScanLine(new_dib, rows), buffer, width);
+				}
+			}
+			break;
+
+		}
+		free(buffer);
+
+		return new_dib;
+
+	} 
+	
+	// Convert the bitmap to 8-bit greyscale
+	return FreeImage_ConvertTo8Bits(dib);
+}

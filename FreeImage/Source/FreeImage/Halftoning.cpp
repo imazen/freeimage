@@ -339,7 +339,7 @@ FreeImage_Dither(FIBITMAP *dib, FREE_IMAGE_DITHER algorithm) {
 		case 16:
 		case 24:
 		case 32:
-			input = FreeImage_ConvertTo8Bits(dib);
+			input = FreeImage_ConvertToGreyscale(dib);
 			break;			
 	}
 	if(NULL == input) return NULL;
@@ -410,7 +410,7 @@ FreeImage_Threshold(FIBITMAP *dib, BYTE T) {
 		case 16:
 		case 24:
 		case 32:
-			dib8 = FreeImage_ConvertTo8Bits(dib);
+			dib8 = FreeImage_ConvertToGreyscale(dib);
 			break;			
 	}
 	if(NULL == dib8) return NULL;

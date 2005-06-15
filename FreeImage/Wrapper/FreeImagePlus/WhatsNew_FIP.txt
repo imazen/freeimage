@@ -5,6 +5,11 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+June 15th, 2005
+[Herve Drolon]
+! fipImage::convertToGrayscale now uses FreeImage_ConvertToGreyscale
+* fixed a bug in fipWinWimage::drawEx with non transparent PNG having a file background
+
 May 3rd, 2005
 [Herve Drolon]
 + added accessors fipImage::setModified and fipImage::isModified
