@@ -5,6 +5,11 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+May 22th, 2005
+* [Steven Lee] fixed incorrect definition for FreeImage_GetDotsPerMeterX
+* [Steven Lee] fixed incorrect definition for FreeImage_ColorQuantize
+* [Herve Drolon] fixed incorrect definition for FreeImage_OpenMultiBitmap
+
 March 30th, 2005
 + [Werner Haug] added enum LoadSaveFlags
 + [Werner Haug] added #if (DEBUG)

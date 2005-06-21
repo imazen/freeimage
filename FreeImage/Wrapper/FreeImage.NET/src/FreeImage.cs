@@ -355,7 +355,7 @@ namespace FreeImageAPI
 		// Multipage interface ----------------------------------------
 		[DllImport(dllName, EntryPoint="FreeImage_OpenMultiBitmap")]
 		public static extern FIMULTIBITMAP OpenMultiBitmap(
-			FIF format, string filename, bool createNew, bool readOnly, bool keepCacheInMemory);
+			FIF format, string filename, bool createNew, bool readOnly, bool keepCacheInMemory, int flags);
 		
 		[DllImport(dllName, EntryPoint="FreeImage_CloseMultiBitmap")]
 		public static extern long CloseMultiBitmap(FIMULTIBITMAP bitmap, int flags);
@@ -442,7 +442,7 @@ namespace FreeImageAPI
 		[return: MarshalAs(UnmanagedType.LPStruct)]
 		public static extern RGBQUAD GetPalette(FIBITMAP dib);
 		
-		[DllImport(dllName, EntryPoint="FreeImage_GetDotsPerMeter")]
+		[DllImport(dllName, EntryPoint="FreeImage_GetDotsPerMeterX")]
 		public static extern uint GetDotsPerMeterX(FIBITMAP dib);
 		
 		[DllImport(dllName, EntryPoint="FreeImage_GetDotsPerMeterY")]
@@ -502,7 +502,7 @@ namespace FreeImageAPI
 		[DllImport(dllName, EntryPoint="FreeImage_ConvertToType")]
 		public static extern FIBITMAP ConvertToType(FIBITMAP dib, FIT dst_type, bool scale_linear);
 
-		[DllImport(dllName, EntryPoint="ColorQuantize")]
+		[DllImport(dllName, EntryPoint="FreeImage_ColorQuantize")]
 		public static extern FIBITMAP ColorQuantize(FIBITMAP dib, FI_QUANTIZE quantize);
 		
 		[DllImport(dllName, EntryPoint="FreeImage_Threshold")]
