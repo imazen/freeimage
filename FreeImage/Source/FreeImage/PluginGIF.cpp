@@ -1021,6 +1021,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		bool have_transparent = false, no_local_palette = false, interlaced = false;
 		int disposal_method = GIF_DISPOSAL_BACKGROUND, delay_time = 100, transparent_color = 0;
 		WORD left = 0, top = 0, width = FreeImage_GetWidth(dib), height = FreeImage_GetHeight(dib);
+		WORD output_height = height;
 		if( FreeImage_GetMetadataEx(FIMD_ANIMATION, dib, "FrameLeft", FIDT_SHORT, &tag) ) {
 			left = *(WORD *)FreeImage_GetTagValue(tag);
 		}
@@ -1050,13 +1051,14 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		if( page == 0 ) {
 			//gather some info
-			WORD logicalwidth = width, logicalheight = height;
+			WORD logicalwidth = width; // width has already been swapped...
 			if( FreeImage_GetMetadataEx(FIMD_ANIMATION, dib, "LogicalWidth", FIDT_SHORT, &tag) ) {
 				logicalwidth = *(WORD *)FreeImage_GetTagValue(tag);
 #ifdef FREEIMAGE_BIGENDIAN
 				SwapShort(&logicalwidth);
 #endif
 			}
+			WORD logicalheight = height; // height has already been swapped...
 			if( FreeImage_GetMetadataEx(FIMD_ANIMATION, dib, "LogicalHeight", FIDT_SHORT, &tag) ) {
 				logicalheight = *(WORD *)FreeImage_GetTagValue(tag);
 #ifdef FREEIMAGE_BIGENDIAN
@@ -1244,8 +1246,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		BYTE buf[255], *bufptr = buf; //255 is the max sub-block length
 		int size = sizeof(buf);
 		b = sizeof(buf);
-		while( y < height ) {
-			memcpy(stringtable.FillInputBuffer(line), FreeImage_GetScanLine(dib, height - y - 1), line);
+		while( y < output_height ) {
+			memcpy(stringtable.FillInputBuffer(line), FreeImage_GetScanLine(dib, output_height - y - 1), line);
 			while( stringtable.Compress(bufptr, &size) ) {
 				bufptr += size;
 				if( bufptr - buf == sizeof(buf) ) {
@@ -1259,7 +1261,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			}
 			if( interlaced ) {
 				y += g_GifInterlaceIncrement[interlacepass];
-				if( y >= height && interlacepass < GIF_INTERLACE_PASSES ) {
+				if( y >= output_height && interlacepass < GIF_INTERLACE_PASSES ) {
 					y = g_GifInterlaceOffset[++interlacepass];
 				}
 			} else {
