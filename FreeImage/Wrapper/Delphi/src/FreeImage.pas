@@ -459,7 +459,7 @@ function FreeImage_FIFSupportsExportType(fif: FREE_IMAGE_FORMAT; image_type: FRE
 // Multipaging interface ----------------------------------------------------
 // --------------------------------------------------------------------------
 
-function FreeImage_OpenMultiBitmap(fif: FREE_IMAGE_FORMAT; filename: PChar; create_new, read_only, keep_cache_in_memory: Boolean): PFIMULTIBITMAP; stdcall; external FIDLL Name '_FreeImage_OpenMultiBitmap@20';
+function FreeImage_OpenMultiBitmap(fif: FREE_IMAGE_FORMAT; filename: PChar; create_new, read_only, keep_cache_in_memory: Boolean; flags: integer = 0): PFIMULTIBITMAP; stdcall; external FIDLL Name '_FreeImage_OpenMultiBitmap@24';
 function FreeImage_CloseMultiBitmap(bitmap: PFIMULTIBITMAP; flags: Integer = 0): Boolean; stdcall; external FIDLL Name '_FreeImage_CloseMultiBitmap@8';
 function FreeImage_GetPageCount(bitmap: PFIMULTIBITMAP): Integer; stdcall; external FIDLL Name '_FreeImage_GetPageCount@4';
 procedure FreeImage_AppendPage(bitmap: PFIMULTIBITMAP; data: PFIBITMAP); stdcall; external FIDLL Name '_FreeImage_AppendPage@8';
