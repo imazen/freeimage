@@ -100,10 +100,13 @@ Option Explicit
 ' ToDo and known issues (unordered and with no priority)
 '--------------------------------------------------------------------------------
 
-' ToDo: implement wrappers for most of the pixel access functions
+' ToDo: implement scanline conversion functions
 
-' ToDo: provide support for FreeImage_ColorQuantizeEx in
-'       FreeImage_ConvertColorDepth function
+' ToDo: implement FreeImage_GetBits wrappers for some more data types like RGBTRIPLE and RGBQUAD
+
+' ToDo: implement image alpha transparency helper functions
+
+' ToDo: implement OlePicture aware wrapper functions for many of the toolkit functions
 
 ' Bug:  FreeImage_PaintDC paints more scan lines than needed
 
@@ -111,38 +114,129 @@ Option Explicit
 
 ' ToDo: currently poor and experimental support of tag accessing functions
 
-' ToDo: implement ICC Profile function wrappers
-
-' ToDo: implement ZLib related function wrappers
-
-' ToDo: implement Width and Height support in SavePictureEx function
+' ToDo: implement ICC Profile function wrappers (do we need that?)
 
 
 '--------------------------------------------------------------------------------
 ' Change Log
 '--------------------------------------------------------------------------------
 
-' 07.06.2005 - added some more inline comments and documentation
-'            - added optional parameter 'bUnloadSource' to function
-'              'FreeImage_SaveToMemoryEx'
-'            - added optional parameter 'bUnloadSource' to function
-'              'FreeImage_SaveToMemoryEx2'
-'            - added 'InPercent' parameter to function 'SavePictureEx' and
-'              implemented resizing of the image to be saved
-'            - added 'InPercent' and 'Format' parameters to function
-'              'LoadPictureEx'
-'            - fixed wrong declaration of function 'FreeImage_JPEGTransform'
-
-' 06.06.2005 - added some more inline comments and documentation
-
-' 30.05.2005 - changes in wrapper function FreeImage_RescaleEx
-'            - renamed the 'bUnloadDIB' parameter to 'bUnloadSource' of function
-'              FreeImage_GetOlePicture
-'            - added some more inline comments and documentation
-'            - changes in FreeImage_SetTransparencaTableEx: parameter Count will
-'              no longer exceed 256.
-
-' 24.05.2005 - deploy of first release
+'* : fixed
+'- : removed
+'! : changed
+'+ : added
+'
+'June 22, 2005
+'+ [Carsten Klein] added inline comments and documentation for pixel access functions
+'
+'June 18, 2005
+'+ [Carsten Klein] added function FreeImage_GetBitsEx()
+'+ [Carsten Klein] added structure SAFEARRAY2D to create 2 dimensional custom arrays
+'+ [Carsten Klein] added function declarations for converting scanlines to 4 bpp:
+'+                 added declaration for FreeImage_ConvertLine1To4()
+'+                 added declaration for FreeImage_ConvertLine8To4()
+'+                 added declaration for FreeImage_ConvertLine16To4_555()
+'+                 added declaration for FreeImage_ConvertLine16To4_565()
+'+                 added declaration for FreeImage_ConvertLine24To4()
+'+                 added declaration for FreeImage_ConvertLine32To4()
+'
+'June 16, 2005
+'! [Carsten Klein] changed inproper function declaration for all functions FreeImage_ConvertLineXXXX(): now parameters 'target' and 'Source' are passed ByVal
+'
+'June 15, 2005
+'+ [Carsten Klein] added function FreeImage_DestroyLockedArrayByPtr() to destroy a locked array by it's pointer (VB can't pass a array of structures through a Variant type)
+'+ [Carsten Klein] added some wrapper functions for FreeImage_DestroyLockedArrayByPtr() for common FreeImage structures:
+'+                 added function FreeImage_DestroyLockedArrayRGBTRIPLE()
+'+                 added function FreeImage_DestroyLockedArrayRGBQUAD()
+'+                 added function FreeImage_DestroyLockedArrayFICOMPLEX()
+'+                 added function FreeImage_DestroyLockedArrayFIRGB16()
+'+                 added function FreeImage_DestroyLockedArrayFIRGBA16()
+'+                 added function FreeImage_DestroyLockedArrayFIRGBF()
+'+                 added function FreeImage_DestroyLockedArrayFIRGBAF()
+'+ [Carsten Klein] added functions to return scanlines as VB style arrays in all supported FreeImage formats:
+'+                 added function FreeImage_GetScanLineBITMAP8()
+'+                 added function FreeImage_GetScanLineBITMAP16()
+'+                 added function FreeImage_GetScanLineBITMAP24()
+'+                 added function FreeImage_GetScanLineBITMAP32()
+'+                 added function FreeImage_GetScanLineINT16()
+'+                 added function FreeImage_GetScanLineINT32()
+'+                 added function FreeImage_GetScanLineFLOAT()
+'+                 added function FreeImage_GetScanLineDOUBLE()
+'+                 added function FreeImage_GetScanLineCOMPLEX()
+'+                 added function FreeImage_GetScanLineRGB16()
+'+                 added function FreeImage_GetScanLineRGBA16()
+'+                 added function FreeImage_GetScanLineRGBF()
+'+                 added function FreeImage_GetScanLineRGBAF()
+'
+'June 14, 2005
+'! [Carsten Klein] updated documentation on array-dealing functions using arrays with custom array descriptors
+'+ [Carsten Klein] added function FreeImage_DestroyLockedArray() to destroy a self created array 'FADF_AUTO Or FADF_FIXEDSIZE' array
+'+ [Carsten Klein] added function FreeImage_GetPaletteExLong() to return palette data in an array of type Long
+'+ [Carsten Klein] added parameters 'lPaletteSize', 'vntReservePalette' and 'lReserveSize' to FreeImage_ConvertColorDepth()
+'
+'June 13, 2005
+'* [Carsten Klein] fixed a bug in helper function pGetMemoryBlockPtrFromVariant(): now 'size_in_bytes' will never exceed the size of an array provided
+'
+'June 12, 2005
+'+ [Carsten Klein] added ZLib compression function wrappers dealing with VB style arrays:
+'+                 added function FreeImage_ZLibCompressVB()
+'+                 added function FreeImage_ZLibUncompressVB()
+'+                 added function FreeImage_ZLibGZipVB()
+'+                 added function FreeImage_ZLibGUnzipVB()
+'
+'June 10, 2005
+'+ [Carsten Klein] added ZLib compression function wrappers dealing with VB style arrays:
+'+                 added function FreeImage_ZLibCompressEx()
+'+                 added function FreeImage_ZLibUncompressEx()
+'+                 added function FreeImage_ZLibGZipEx()
+'+                 added function FreeImage_ZLibCRC32Ex()
+'+                 added function FreeImage_ZLibGUnzipEx()
+'+ [Carsten Klein] added more VB friendly ZLib compression function wrappers:
+'+                 added function FreeImage_ZLibCompressVB()
+'+                 added function FreeImage_ZLibUncompressVB()
+'+                 added function FreeImage_ZLibGZipVB()
+'+                 added function FreeImage_ZLibGUnzipVB()
+'! [Carsten Klein] fixed wrong function declaration of functions FreeImage_ZLibGUnzip(): alias was '_FreeImage_ZLibZlibGUnzip@16' (double ZLib)
+'! [Carsten Klein] fixed function pGetArrayPtrFromVariantArray() that now can deal with uninitialized arrays
+'!                 fixed function pGetMemoryBlockPtrFromVariant() that now can deal with uninitialized arrays
+'! [Carsten Klein] fixed wrong function declaration of functions FreeImage_AdjustBrightness(): ...@8 -> ...@12
+'!                 fixed wrong function declaration of functions FreeImage_AdjustContrast(): ...@8 -> ...@12
+'!                 fixed wrong function declaration of functions FreeImage_AdjustGamma(): ...@8 -> ...@12
+'!                 fixed wrong function declaration of functions FreeImage_RotateClassic(): ...@8 -> ...@12
+'!                 fixed wrong function declaration of functions FreeImage_RotateEx(): ...@28 -> ...@48
+'
+'June 9, 2005
+'! [Carsten Klein] fixed wrong function declaration of function FreeImage_OpenMultiBitmap(): added parameter 'flags' (...@20 -> ...@24)
+'
+'June 8, 2005
+'! [Carsten Klein] refactored function FreeImage_LoadFromMemoryEx(): now using pGetMemoryBlockPtrFromVariant()
+'+ [Carsten Klein] added private function pGetMemoryBlockPtrFromVariant() to get poiner and size of a memory block from a Variant parameter
+'! [Carsten Klein] changed declaration of ZLib related functions: 'target' and 'Source' are now 'ByVal Long'
+'
+'June 7, 2005
+'+ [Carsten Klein] added some more inline comments and documentation
+'+ [Carsten Klein] added optional parameter 'bUnloadSource' to function FreeImage_SaveToMemoryEx()
+'+                 added optional parameter 'bUnloadSource' to function FreeImage_SaveToMemoryEx2()
+'+ [Carsten Klein] added optional parameter 'InPercent' to function SavePictureEx()
+'!                 implemented the capability to resize the image on saving in function SavePictureEx()
+'+ [Carsten Klein] added parameters 'InPercent' and 'Format' to function LoadPictureEx()
+'* [Carsten Klein] fixed wrong function declaration of function FreeImage_JPEGTransform() (...@12 -> ...@16)
+'
+'June 6, 2005
+'+ [Carsten Klein] added some more inline comments and documentation
+'
+'May 30, 2005
+'* [Carsten Klein] fixed percent calculating bug in function FreeImage_RescaleEx()
+'!                 changed behaviour of parameter 'bIsPercentValue' -> it now has no effect on integer values
+'+                 added function FreeImage_RescaleByPixel() to avoid confusion with overloading
+'+                 added function FreeImage_RescaleByPercent() to avoid confusion with overloading
+'+                 added function FreeImage_RescaleByFactor() to avoid confusion with overloading
+'! [Carsten Klein] changed name of parameter 'bUnloadDIB' to 'bUnloadSource' of function FreeImage_GetOlePicture()
+'+ [Carsten Klein] added some more inline comments and documentation
+'* [Carsten Klein] fixed a potential runtime error in function FreeImage_SetTransparencyTableEx(): 'Count' will no longer exceed 256
+'
+'May 24, 2005
+'+ [Carsten Klein] added a new VB wrapper
 
 
 '--------------------------------------------------------------------------------
@@ -172,6 +266,9 @@ Private Declare Function SafeArrayAllocDescriptor Lib "oleaut32.dll" ( _
     ByVal cDims As Long, _
     ByRef ppsaOut As Long) As Long
     
+Private Declare Sub SafeArrayDestroyDescriptor Lib "oleaut32.dll" ( _
+    ByVal psa As Long)
+    
 Private Declare Sub SafeArrayDestroyData Lib "oleaut32.dll" ( _
     ByVal psa As Long)
 
@@ -189,6 +286,18 @@ Private Type SAVEARRAY1D
    pvData As Long
    cElements As Long
    lLbound As Long
+End Type
+
+Private Type SAVEARRAY2D
+   cDims As Integer
+   fFeatures As Integer
+   cbElements As Long
+   cLocks As Long
+   pvData As Long
+   cElements1 As Long
+   lLbound1 As Long
+   cElements2 As Long
+   lLbound2 As Long
 End Type
 
 
@@ -906,13 +1015,13 @@ Public Type FIRGBA16
    alpha As Integer
 End Type
 
-Public Type FIRGF16
+Public Type FIRGBF
    red As Single
    green As Single
    blue As Single
 End Type
 
-Public Type FIRGFA16
+Public Type FIRGBAF
    red As Single
    green As Single
    blue As Single
@@ -1156,7 +1265,7 @@ Public Declare Function FreeImage_GetFileTypeFromMemory Lib "FreeImage.dll" Alia
 Public Declare Function FreeImage_GetBits Lib "FreeImage.dll" Alias "_FreeImage_GetBits@4" ( _
            ByVal dib As Long) As Long
 
-Public Declare Function FreeImage_GetScanLine Lib "FreeImage.dll" Alias "_FreeImage_GetScanLine@8" ( _
+Public Declare Function FreeImage_GetScanline Lib "FreeImage.dll" Alias "_FreeImage_GetScanLine@8" ( _
            ByVal dib As Long, _
            ByVal scanline As Long) As Long
 
@@ -1355,12 +1464,13 @@ Public Declare Function FreeImage_RegisterExternalPlugin Lib "FreeImage.dll" Ali
 
 
 ' Multipage functions (p. 43 to 44)
-Public Declare Function FreeImage_OpenMultiBitmap Lib "FreeImage.dll" Alias "_FreeImage_OpenMultiBitmap@20" ( _
+Public Declare Function FreeImage_OpenMultiBitmap Lib "FreeImage.dll" Alias "_FreeImage_OpenMultiBitmap@24" ( _
            ByVal fif As FREE_IMAGE_FORMAT, _
            ByVal FileName As String, _
            ByVal create_new As Long, _
            ByVal read_only As Long, _
-  Optional ByVal keep_cache_in_memory As Long = 0) As Long
+  Optional ByVal keep_cache_in_memory As Long = 0, _
+  Optional ByVal flags As Long = 0) As Long
 
 Public Declare Function FreeImage_CloseMultiBitmap Lib "FreeImage.dll" Alias "_FreeImage_CloseMultiBitmap@8" ( _
            ByVal BITMAP As Long, _
@@ -1441,32 +1551,32 @@ Public Declare Function FreeImage_SeekMemory Lib "FreeImage.dll" Alias "_FreeIma
 
 ' Compression functions (p. 50 to 52)
 Public Declare Function FreeImage_ZLibCompress Lib "FreeImage.dll" Alias "_FreeImage_ZLibCompress@16" ( _
-           ByRef target As Long, _
+           ByVal target As Long, _
            ByVal target_size As Long, _
-           ByRef Source As Long, _
+           ByVal Source As Long, _
            ByVal source_size As Long) As Long
 
 Public Declare Function FreeImage_ZLibUncompress Lib "FreeImage.dll" Alias "_FreeImage_ZLibUncompress@16" ( _
-           ByRef target As Long, _
+           ByVal target As Long, _
            ByVal target_size As Long, _
-           ByRef Source As Long, _
+           ByVal Source As Long, _
            ByVal source_size As Long) As Long
 
 Public Declare Function FreeImage_ZLibGZip Lib "FreeImage.dll" Alias "_FreeImage_ZLibGZip@16" ( _
-           ByRef target As Long, _
+           ByVal target As Long, _
            ByVal target_size As Long, _
-           ByRef Source As Long, _
+           ByVal Source As Long, _
            ByVal source_size As Long) As Long
            
-Public Declare Function FreeImage_ZLibGUnzip Lib "FreeImage.dll" Alias "_FreeImage_ZLibZLibGUnzip@16" ( _
-           ByRef target As Long, _
+Public Declare Function FreeImage_ZLibGUnzip Lib "FreeImage.dll" Alias "_FreeImage_ZLibGUnzip@16" ( _
+           ByVal target As Long, _
            ByVal target_size As Long, _
-           ByRef Source As Long, _
+           ByVal Source As Long, _
            ByVal source_size As Long) As Long
 
 Public Declare Function FreeImage_ZLibCRC32 Lib "FreeImage.dll" Alias "_FreeImage_ZLibCRC32@12" ( _
            ByVal crc As Long, _
-           ByRef Source As Long, _
+           ByVal Source As Long, _
            ByVal source_size As Long) As Long
 
 
@@ -1539,11 +1649,11 @@ Public Declare Function FreeImage_TagToString Lib "FreeImage.dll" Alias "_FreeIm
 '--------------------------------------------------------------------------------
 
 ' Rotating and flipping (p. 64 to 66)
-Public Declare Function FreeImage_RotateClassic Lib "FreeImage.dll" Alias "_FreeImage_RotateClassic@8" ( _
+Public Declare Function FreeImage_RotateClassic Lib "FreeImage.dll" Alias "_FreeImage_RotateClassic@12" ( _
            ByVal dib As Long, _
            ByVal angle As Double) As Long
 
-Public Declare Function FreeImage_RotateEx Lib "FreeImage.dll" Alias "_FreeImage_RotateEx@28" ( _
+Public Declare Function FreeImage_RotateEx Lib "FreeImage.dll" Alias "_FreeImage_RotateEx@48" ( _
            ByVal dib As Long, _
            ByVal angle As Double, _
            ByVal x_shift As Double, _
@@ -1579,15 +1689,15 @@ Public Declare Function FreeImage_AdjustCurve Lib "FreeImage.dll" Alias "_FreeIm
            ByRef LUT As Long, _
            ByVal channel As FREE_IMAGE_COLOR_CHANNEL) As Long
 
-Public Declare Function FreeImage_AdjustGamma Lib "FreeImage.dll" Alias "_FreeImage_AdjustGamma@8" ( _
+Public Declare Function FreeImage_AdjustGamma Lib "FreeImage.dll" Alias "_FreeImage_AdjustGamma@12" ( _
            ByVal dib As Long, _
            ByVal gamma As Double) As Long
 
-Public Declare Function FreeImage_AdjustBrightness Lib "FreeImage.dll" Alias "_FreeImage_AdjustBrightness@8" ( _
+Public Declare Function FreeImage_AdjustBrightness Lib "FreeImage.dll" Alias "_FreeImage_AdjustBrightness@12" ( _
            ByVal dib As Long, _
            ByVal percentage As Double) As Long
 
-Public Declare Function FreeImage_AdjustContrast Lib "FreeImage.dll" Alias "_FreeImage_AdjustContrast@8" ( _
+Public Declare Function FreeImage_AdjustContrast Lib "FreeImage.dll" Alias "_FreeImage_AdjustContrast@12" ( _
            ByVal dib As Long, _
            ByVal percentage As Double) As Long
 
@@ -1644,169 +1754,209 @@ Public Declare Function FreeImage_Composite Lib "FreeImage.dll" Alias "_FreeImag
 
 
 '--------------------------------------------------------------------------------
-' Internal functions
+' Line converting functions
 '--------------------------------------------------------------------------------
 
+' convert to 4 bpp
+Public Declare Sub FreeImage_ConvertLine1To4 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine1To4@12" ( _
+           ByVal target As Long, _
+           ByVal Source As Long, _
+           ByVal width_in_pixels As Long)
+           
+Public Declare Sub FreeImage_ConvertLine8To4 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine1To8@16" ( _
+           ByVal target As Long, _
+           ByVal Source As Long, _
+           ByVal width_in_pixels As Long, _
+           ByVal palette As Long)
+           
+Public Declare Sub FreeImage_ConvertLine16To4_555 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine16To4_555@12" ( _
+           ByVal target As Long, _
+           ByVal Source As Long, _
+           ByVal width_in_pixels As Long)
+                     
+Public Declare Sub FreeImage_ConvertLine16To4_565 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine16To4_565@12" ( _
+           ByVal target As Long, _
+           ByVal Source As Long, _
+           ByVal width_in_pixels As Long)
+           
+Public Declare Sub FreeImage_ConvertLine24To4 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine1To24@12" ( _
+           ByVal target As Long, _
+           ByVal Source As Long, _
+           ByVal width_in_pixels As Long)
+           
+Public Declare Sub FreeImage_ConvertLine32To4 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine32To4@12" ( _
+           ByVal target As Long, _
+           ByVal Source As Long, _
+           ByVal width_in_pixels As Long)
+
+
+' convert to 8 bpp
 Public Declare Sub FreeImage_ConvertLine1To8 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine1To8@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine4To8 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine4To8@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine16To8_555 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine16To8_555@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine16To8_565 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine16To8_565@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine24To8 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine24To8@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine32To8 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine32To8@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
+           
 
+' convert to 16 bpp
 Public Declare Sub FreeImage_ConvertLine1To16_555 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine1To16_555@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine4To16_555 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine4To16_555@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine8To16_555 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine8To16_555@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine16_565_To16_555 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine16_565_To16_555@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine24To16_555 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine24To16_555@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine32To16_555 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine32To16_555@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine1To16_565 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine1To16_565@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine4To16_565 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine4To16_565@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine8To16_565 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine8To16_565@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine16_555_To16_565 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine16_555_To16_565@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine24To16_565 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine24To16_565@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine32To16_565 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine32To16_565@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
+
+' convert to 24 bpp
 Public Declare Sub FreeImage_ConvertLine1To24 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine1To24@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine4To24 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine4To24@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine8To24 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine8To24@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine16To24_555 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine16To24_555@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine16To24_565 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine16To24_565@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine32To24 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine32To24@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
+
+' convert to 32 bpp
 Public Declare Sub FreeImage_ConvertLine1To32 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine1To32@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine4To32 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine4To32@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine8To32 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine8To32@16" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long, _
            ByVal palette As Long)
 
 Public Declare Sub FreeImage_ConvertLine16To32_555 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine16To32_555@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine16To32_565 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine16To32_565@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 Public Declare Sub FreeImage_ConvertLine24To32 Lib "FreeImage.dll" Alias "_FreeImage_ConvertLine24To32@12" ( _
-           ByRef target As Long, _
-           ByRef Source As Long, _
+           ByVal target As Long, _
+           ByVal Source As Long, _
            ByVal width_in_pixels As Long)
 
 
@@ -1854,8 +2004,6 @@ Public Function FreeImage_GetVersion() As String
    ' as VB String. Read paragraph 2 of the "General notes on implementation
    ' and design" section to learn more about that technique.
    
-   ' The parameter 'fif' works according to the FreeImage 3 API documentation.
-   
    FreeImage_GetVersion = pGetStringFromPointerA(FreeImage_GetVersionInt)
 
 End Function
@@ -1865,8 +2013,6 @@ Public Function FreeImage_GetCopyrightMessage() As String
    ' This function returns the copyright message of the FreeImage 3 library
    ' as VB String. Read paragraph 2 of the "General notes on implementation
    ' and design" section to learn more about that technique.
-   
-   ' The parameter 'fif' works according to the FreeImage 3 API documentation.
    
    FreeImage_GetCopyrightMessage = pGetStringFromPointerA(FreeImage_GetCopyrightMessageInt)
 
@@ -1945,7 +2091,7 @@ Dim tSA As SAVEARRAY1D
 Dim lpSA As Long
 
    ' This function returns a VB style array of type RGBQUAD, containing
-   ' the palette data of the dib. It array provides read and write access
+   ' the palette data of the dib. This array provides read and write access
    ' to the actual palette data provided by FreeImage. This is done by
    ' creating a VB array with an own SAFEARRAY descriptor making the
    ' array point to the palette pointer returned by FreeImage_GetPalette.
@@ -1982,6 +2128,11 @@ Dim lpSA As Long
    ' Arrays) of Matthew Curland's book "Advanced Visual Basic 6"
    
    ' The parameter 'dib' works according to the FreeImage 3 API documentation.
+   
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+   
    
    If (dib) Then
       
@@ -2041,6 +2192,101 @@ Dim i As Long
       Call CopyMemory(atRGB(0), ByVal FreeImage_GetPalette(dib), lColors * 4)
       
    End Select
+
+End Function
+
+Public Function FreeImage_GetPaletteExLong(ByVal dib As Long) As Long()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+
+   ' This function returns a VB style array of type Long, containing
+   ' the palette data of the dib. This array provides read and write access
+   ' to the actual palette data provided by FreeImage. This is done by
+   ' creating a VB array with an own SAFEARRAY descriptor making the
+   ' array point to the palette pointer returned by FreeImage_GetPalette.
+   
+   ' The function actually returns an array of type RGBQUAD with each
+   ' element packed into a Long. This is possible, since the RGBQUAD
+   ' structure is also four bytes in size. Palette data, stored in an
+   ' array of type Long may be passed ByRef to a function through an
+   ' optional paremeter. For an example have a look at function
+   ' 'FreeImage_ConvertColorDepth'
+   
+   ' This makes you use code like you would in C/C++:
+   
+   ' // this code assumes there is a bitmap loaded and
+   ' // present in a variable called ‘dib’
+   ' if(FreeImage_GetBPP(dib) == 8) {
+   '   // Build a greyscale palette
+   '   RGBQUAD *pal = FreeImage_GetPalette(dib);
+   '   for (int i = 0; i < 256; i++) {
+   '     pal[i].rgbRed = i;
+   '     pal[i].rgbGreen = i;
+   '     pal[i].rgbBlue = i;
+   '   }
+   
+   ' As in C/C++ the array is only valid while the dib is loaded and the
+   ' palette data remains where the pointer returned by FreeImage_GetPalette
+   ' has pointed to when this function was called. So, a good thing would
+   ' be, not to keep the returned array in scope over the lifetime of the
+   ' dib. Best practise is, to use this function within another routine and
+   ' assign the return value (the array) to a local variable only. As soon
+   ' as this local variable goes out of scope (when the calling function
+   ' returns to their caller), the array and the descriptor is automatically
+   ' cleaned up by VB.
+   
+   ' This function does not make a deep copy of the palette data, but only
+   ' wraps a VB array around the FreeImge palette data. So, it can be called
+   ' frequently "on demand" or somewhat "in place" without a significant
+   ' performance loss.
+   
+   ' To learn more about this technique I recommend reading chapter 2 (Leveraging
+   ' Arrays) of Matthew Curland's book "Advanced Visual Basic 6"
+   
+   ' The parameter 'dib' works according to the FreeImage 3 API documentation.
+   
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+
+   
+   If (dib) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 4                           ' size in bytes of RGBQUAD structure
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetColorsUsed(dib) ' the number of elements in the array is
+                                                   ' the number of used colors in the dib
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetPalette(dib)       ' let the array point to the memory block, the
+                                                   ' FreeImage palette pointer points to
+      End With
+      
+      ' allocate memory for an array descriptor
+      ' we cannot use the memory block used by tSA, since it is
+      ' released when tSA goes out of scope, leaving us with an
+      ' array with zeroed descriptor
+      ' we use nearly the same method that VB uses, so VB is able
+      ' to cleanup the array variable and it's descriptor; the
+      ' array data is not touched when cleaning up, since both AUTO
+      ' and FIXEDSIZE flags are set
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      
+      ' copy our own array descriptor over the descriptor allocated
+      ' by SafeArrayAllocDescriptor; lpSA is a pointer to that memory
+      ' location
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      
+      ' the implicit variable named like the function is an array
+      ' variable in VB
+      ' make it point to the allocated array descriptor
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetPaletteExLong), lpSA, 4)
+   End If
 
 End Function
 
@@ -2134,36 +2380,10 @@ Dim lPtr As Long
    ' The parameter fif is an OUT parameter, that will contain the image type
    ' detected. Any values set by the caller will never be used within this
    ' function.
-   
-   ' do we have an array?
-   If (VarType(data) And vbArray) Then
-      Select Case (VarType(data) And (Not vbArray))
-      
-      Case vbByte
-         lDataPtr = pGetArrayPtrFromVariantArray(data)
-         If (size_in_bytes <= 0) Then
-            size_in_bytes = (UBound(data) + 1)
-         End If
-      
-      Case vbInteger
-         lDataPtr = pGetArrayPtrFromVariantArray(data)
-         If (size_in_bytes <= 0) Then
-            size_in_bytes = (UBound(data) + 1) * 2
-         End If
-      
-      Case vbLong
-         lDataPtr = pGetArrayPtrFromVariantArray(data)
-         If (size_in_bytes <= 0) Then
-            size_in_bytes = (UBound(data) + 1) * 4
-         End If
-      
-      End Select
-   Else
-      If ((VarType(data) = vbLong) And _
-          (size_in_bytes >= 0)) Then
-         lDataPtr = data
-      End If
-   End If
+
+   ' get both pointer and size in bytes of the memory block provided
+   ' through the Variant parameter 'data'.
+   lDataPtr = pGetMemoryBlockPtrFromVariant(data, size_in_bytes)
    
    ' open the memory stream
    hStream = FreeImage_OpenMemoryByPtr(lDataPtr, size_in_bytes)
@@ -2205,7 +2425,8 @@ Dim lSizeInBytes As Long
    ' at the caller's site.
    
    ' The function returns True on success and False otherwise.
-
+   
+   
    hStream = FreeImage_OpenMemory()
    If (hStream) Then
       FreeImage_SaveToMemoryEx = FreeImage_SaveToMemory(fif, dib, hStream, flags)
@@ -2254,6 +2475,10 @@ Dim tSA As SAVEARRAY1D
    ' The Byte array 'data()' must not be a fixed sized array and will be
    ' redimensioned according to the size needed to hold all the data.
    
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+   
    ' The parameter 'stream' is an IN/OUT parameter, tracking the memory
    ' stream, the VB array 'data()' is based on. This parameter may contain
    ' an already opened FreeImage memory stream when the function is called and
@@ -2272,6 +2497,7 @@ Dim tSA As SAVEARRAY1D
    
    ' The function returns True on success and False otherwise.
 
+   
    If (stream = 0) Then
       stream = FreeImage_OpenMemory()
    End If
@@ -2308,6 +2534,11 @@ Dim lpSA As Long
    ' array then points directly to the stream's data pointer and so
    ' provides full read and write access. All data contained in the array
    ' will be lost and freed properly.
+   
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+
 
    If (stream) Then
       If (FreeImage_AcquireMemory(stream, lpData, size_in_bytes)) Then
@@ -2521,13 +2752,18 @@ Public Function FreeImage_ConvertColorDepth(ByVal hDIB As Long, _
                                    Optional ByVal bUnloadSource As Boolean, _
                                    Optional ByVal bThreshold As Byte = 128, _
                                    Optional ByVal eDitherMethod As FREE_IMAGE_DITHER = FID_FS, _
-                                   Optional ByVal eQuantizationMethod As FREE_IMAGE_QUANTIZE = FIQ_WUQUANT) As Long
+                                   Optional ByVal eQuantizationMethod As FREE_IMAGE_QUANTIZE = FIQ_WUQUANT, _
+                                   Optional ByVal lPaletteSize As Long = 256, _
+                                   Optional ByRef vntReservePalette As Variant, _
+                                   Optional ByVal lReserveSize As Long) As Long
                                             
 Dim hDIBNew As Long
 Dim hDIBTemp As Long
 Dim lBPP As Long
 Dim bConvertPalette As Boolean
 Dim bKeepPalette As Boolean
+Dim lpReservePalette As Long
+Dim bAdjustReservePaletteSize As Boolean
 
    ' This function is an easy-to-use wrapper for color depth conversion, intended
    ' to work around some tweaks in the FreeImage library.
@@ -2540,11 +2776,28 @@ Dim bKeepPalette As Boolean
    ' in some cases.
    
    ' The 'eConversionFlag' parameter, which can contain a single value or an OR'ed
-   ' combination be  FREE_IMAGE_CONVERSION_FLAGS enumeration
+   ' combination of some of the FREE_IMAGE_CONVERSION_FLAGS enumeration values,
+   ' determines the desired output image format.
    
    ' The optional 'bUnloadSource' parameter is for unloading the original image, so
    ' you can "change" an image with this function rather than getting a new DIB
    ' pointer. There is no more need for a second DIB variable at the caller's site.
+   
+   ' The optional 'lPaletteSize' parameter lets you specify the desired size (the
+   ' number of actually used palette entries) of the output palette when converting
+   ' to an 8 bit color image. When 'lPaletteSize' differs from 256, this function
+   ' uses 'FreeImage_ColorQuantizeEx' to get the converted image.
+   
+   ' Both parameters 'vntReservePalette' and 'lReserveSize' also work together with
+   ' the 'FreeImage_ColorQuantizeEx' function. 'vntReservePalette' may either be a
+   ' pointer to palette data (pointer to an array of type RGBQUAD) or an array of
+   ' type Long, which must contain the palette data. You can receive palette data as
+   ' an array of type Long with the function 'FreeImage_GetPaletteExLong'. According
+   ' to the FreeImage API documentation, lReserveSize must contain the number of
+   ' palette entries used from the reserve palette and may be omitted, if
+   ' 'vntReservePalette' is an array. In that case, 'lReserveSize' will be assumed
+   ' to be the number of array elements.
+   
 
    bKeepPalette = ((eConversionFlag And FICF_REORDER_GREYSCALE_PALETTE) = 0)
 
@@ -2701,20 +2954,51 @@ Dim bKeepPalette As Boolean
          End Select
          
       Case FICF_PALETTISED_8BPP
+         ' check 'lPaletteSize' and adjust if needed
+         If (lPaletteSize > 256) Then
+            lPaletteSize = 256
+         
+         ElseIf (lPaletteSize < 2) Then
+            lPaletteSize = 2
+         
+         End If
+         
+         bAdjustReservePaletteSize = (lReserveSize <= 0)
+         
+         ' check for reserve palette
+         lpReservePalette = pGetMemoryBlockPtrFromVariant(vntReservePalette, _
+                                                          lReserveSize)
+                                                          
+         If (bAdjustReservePaletteSize) Then
+            lReserveSize = lReserveSize \ 4
+         End If
+         
          ' note, that the FreeImage library only quantizes 24 bit images
          lBPP = FreeImage_GetBPP(hDIB)
-         ' do not convert any 8 bit images
-         If (lBPP <> 8) Then
+         ' do not convert any 8 bit images, as long as 'lPaletteSize' is 256
+         If ((lBPP <> 8) Or _
+             (lPaletteSize <> 256)) Then
             ' images with a color depth of 24 bits can directly be
             ' converted with the FreeImage_ColorQuantize function;
             ' other images need to be converted to 24 bits first
             If (lBPP = 24) Then
-               hDIBNew = FreeImage_ColorQuantize(hDIB, eQuantizationMethod)
+               If (lPaletteSize = 256) Then
+                  hDIBNew = FreeImage_ColorQuantize(hDIB, eQuantizationMethod)
+               Else
+                  hDIBNew = FreeImage_ColorQuantizeEx(hDIB, eQuantizationMethod, _
+                                                      lPaletteSize, lReserveSize, lpReservePalette)
+               End If
             Else
                hDIBTemp = FreeImage_ConvertTo24Bits(hDIB)
-               hDIBNew = FreeImage_ColorQuantize(hDIBTemp, eQuantizationMethod)
+               If (lPaletteSize = 256) Then
+                  hDIBNew = FreeImage_ColorQuantize(hDIBTemp, eQuantizationMethod)
+               Else
+                  hDIBNew = FreeImage_ColorQuantizeEx(hDIBTemp, eQuantizationMethod, _
+                                                      lPaletteSize, lReserveSize, lpReservePalette)
+               End If
                Call FreeImage_Unload(hDIBTemp)
             End If
+            
          End If
          
       Case FICF_RGB_15BPP
@@ -2798,8 +3082,8 @@ Dim hDIBNew As Long
    
    ' Parameter         |  Values |  Values |  Values |  Values |     Values |
    ' ----------------------------------------------------------------------
-   ' vntDstWidth       |    75.0 |    0.85 |     200 |     120 |        400 |
-   ' vntDstHeight      |   120.0 |     1.3 |     230 |       - |        400 |
+   ' vntDstWidth       |    75.0 |    0.85 |     200 |     120 |      400.0 |
+   ' vntDstHeight      |   120.0 |     1.3 |     230 |       - |      400.0 |
    ' bIsPercentValue   |    True |   False |    d.c. |    d.c. |      False | <- wrong option?
    ' ----------------------------------------------------------------------
    ' Result Size       |  75x120 |  85x130 | 200x230 | 120x100 |40000x40000 |
@@ -3042,6 +3326,720 @@ Dim eLastStretchMode As STRETCH_MODE
 
 End Function
 
+
+
+'--------------------------------------------------------------------------------
+' Pixel access functions
+'--------------------------------------------------------------------------------
+
+Public Function FreeImage_GetBitsEx(ByVal dib As Long) As Byte()
+
+Dim tSA As SAVEARRAY2D
+Dim lpSA As Long
+
+   ' This function returns a two dimensional Byte array containing a DIB's
+   ' data-bits. This is done by wrapping a true VB array around the memory
+   ' block the returned pointer of 'FreeImage_GetBits' is pointing to. So, the
+   ' array returned provides full read and write acces to the image's data.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+
+   If (dib) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 1                           ' size in bytes per array element
+         .cDims = 2                                ' the array has only 1 dimension
+         .cElements1 = FreeImage_GetHeight(dib)    ' the number of elements in y direction (byte width of dib)
+         .cElements2 = FreeImage_GetPitch(dib)     ' the number of elements in x direction (height of dib)
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetBits(dib)          ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' allocate memory for an array descriptor
+      ' we cannot use the memory block used by tSA, since it is
+      ' released when tSA goes out of scope, leaving us with an
+      ' array with zeroed descriptor
+      ' we use nearly the same method that VB uses, so VB is able
+      ' to cleanup the array variable and it's descriptor; the
+      ' array data is not touched when cleaning up, since both AUTO
+      ' and FIXEDSIZE flags are set
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      
+      ' copy our own array descriptor over the descriptor allocated
+      ' by SafeArrayAllocDescriptor; lpSA is a pointer to that memory
+      ' location
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      
+      ' the implicit variable named like the function is an array
+      ' variable in VB
+      ' make it point to the allocated array descriptor
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetBitsEx), lpSA, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineEx(ByVal dib As Long, _
+                                        ByVal scanline As Long) As Byte()
+                                        
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+
+   ' This function returns a one dimensional Byte array containing a whole
+   ' scanline's data-bits. This is done by wrapping a true VB array around
+   ' the memory block the returned pointer of 'FreeImage_GetScanline' is
+   ' pointing to. So, the array returned provides full read and write acces
+   ' to the image's data.
+   
+   ' This is the most generic function of a complete function set dealing with
+   ' scanline data, since this function returns an array of type Byte. It is
+   ' up to the caller of the function to interpret these bytes correctly,
+   ' according to the results of FreeImage_GetBPP and FreeImage_GetImageType.
+   
+   ' You may consider using any of the non-generic functions named
+   ' 'FreeImage_GetScanLineXXX', that return an array of proper type, according
+   ' to the images bit depth and type.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+   
+   If (dib) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 1                           ' size in bytes per array element
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetLine(dib)       ' the number of elements in the array
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetScanline(dib, _
+                                         scanline) ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' allocate memory for an array descriptor
+      ' we cannot use the memory block used by tSA, since it is
+      ' released when tSA goes out of scope, leaving us with an
+      ' array with zeroed descriptor
+      ' we use nearly the same method that VB uses, so VB is able
+      ' to cleanup the array variable and it's descriptor; the
+      ' array data is not touched when cleaning up, since both AUTO
+      ' and FIXEDSIZE flags are set
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      
+      ' copy our own array descriptor over the descriptor allocated
+      ' by SafeArrayAllocDescriptor; lpSA is a pointer to that memory
+      ' location
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      
+      ' the implicit variable named like the function is an array
+      ' variable in VB
+      ' make it point to the allocated array descriptor
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineEx), lpSA, 4)
+   End If
+                                        
+End Function
+
+Public Function FreeImage_GetScanLineBITMAP8(ByVal dib As Long, _
+                                             ByVal scanline As Long) As Byte()
+                                             
+   ' This function returns a one dimensional Byte array containing a whole
+   ' scanline's data-bits of a 8 bit bitmap image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned provides
+   ' full read and write acces to the image's data.
+   
+   ' This function is just a thin wrapper for 'FreeImage_GetScanLineEx' but
+   ' includes checking of the image's bit depth and type, as all of the
+   ' non-generic scanline functions do.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+
+   If (FreeImage_GetImageType(dib) = FIT_BITMAP) Then
+      Select Case FreeImage_GetBPP(dib)
+      
+      Case 1, 4, 8
+         FreeImage_GetScanLineBITMAP8 = FreeImage_GetScanLineEx(dib, scanline)
+         
+      End Select
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineBITMAP16(ByVal dib As Long, _
+                                              ByVal scanline As Long) As Integer()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+
+   ' This function returns a one dimensional Integer array containing a whole
+   ' scanline's data-bits of a 16 bit bitmap image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned provides
+   ' full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+
+   If (FreeImage_GetImageType(dib) = FIT_BITMAP) Then
+      If (FreeImage_GetBPP(dib) = 16) Then
+      
+         ' create a proper SAVEARRAY descriptor
+         With tSA
+            .cbElements = 2                           ' size in bytes per array element
+            .cDims = 1                                ' the array has only 1 dimension
+            .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+            .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                      ' so the array can not be modified in size
+                                                      ' or erased; according to Matthew Curland never
+                                                      ' use FIXEDSIZE alone
+            .pvData = FreeImage_GetScanline(dib, _
+                                            scanline) ' let the array point to the memory block, the
+                                                      ' FreeImage scanline data pointer points to
+         End With
+         
+         ' For a complete source code documentation have a
+         ' look at the funciton 'FreeImage_GetScanLineEx'
+         Call SafeArrayAllocDescriptor(1, lpSA)
+         Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+         Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineBITMAP16), lpSA, 4)
+      End If
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineBITMAP24(ByVal dib As Long, _
+                                              ByVal scanline As Long) As RGBTRIPLE()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+
+   ' This function returns a one dimensional RGBTRIPLE array containing a whole
+   ' scanline's data-bits of a 24 bit bitmap image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned provides
+   ' full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+   
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArrayRGBTRIPLE' function.
+
+   If (FreeImage_GetImageType(dib) = FIT_BITMAP) Then
+      If (FreeImage_GetBPP(dib) = 24) Then
+      
+         ' create a proper SAVEARRAY descriptor
+         With tSA
+            .cbElements = 3                           ' size in bytes per array element
+            .cDims = 1                                ' the array has only 1 dimension
+            .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+            .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                      ' so the array can not be modified in size
+                                                      ' or erased; according to Matthew Curland never
+                                                      ' use FIXEDSIZE alone
+            .pvData = FreeImage_GetScanline(dib, _
+                                            scanline) ' let the array point to the memory block, the
+                                                      ' FreeImage scanline data pointer points to
+         End With
+         
+         ' For a complete source code documentation have a
+         ' look at the funciton 'FreeImage_GetScanLineEx'
+         Call SafeArrayAllocDescriptor(1, lpSA)
+         Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+         Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineBITMAP24), lpSA, 4)
+      End If
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineBITMAP32(ByVal dib As Long, _
+                                              ByVal scanline As Long) As RGBQUAD()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+
+   ' This function returns a one dimensional RGBQUAD array containing a whole
+   ' scanline's data-bits of a 32 bit bitmap image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned provides
+   ' full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArrayRGBQUAD' function.
+
+   If (FreeImage_GetImageType(dib) = FIT_BITMAP) Then
+      If (FreeImage_GetBPP(dib) = 32) Then
+      
+         ' create a proper SAVEARRAY descriptor
+         With tSA
+            .cbElements = 4                           ' size in bytes per array element
+            .cDims = 1                                ' the array has only 1 dimension
+            .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+            .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                      ' so the array can not be modified in size
+                                                      ' or erased; according to Matthew Curland never
+                                                      ' use FIXEDSIZE alone
+            .pvData = FreeImage_GetScanline(dib, _
+                                            scanline) ' let the array point to the memory block, the
+                                                      ' FreeImage scanline data pointer points to
+         End With
+         
+         ' For a complete source code documentation have a
+         ' look at the funciton 'FreeImage_GetScanLineEx'
+         Call SafeArrayAllocDescriptor(1, lpSA)
+         Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+         Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineBITMAP32), lpSA, 4)
+      End If
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineINT16(ByVal dib As Long, _
+                                           ByVal scanline As Long) As Integer()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+Dim eImageType As FREE_IMAGE_TYPE
+
+   ' This function returns a one dimensional Integer array containing a whole
+   ' scanline's data-bits of a FIT_INT16 or FIT_UINT16 image. This is done
+   ' by wrapping a true VB array around the memory block the returned pointer
+   ' of 'FreeImage_GetScanline' is pointing to. So, the array returned
+   ' provides full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+   
+   ' Since VB does not distinguish between signed and unsigned data types, both
+   ' image types FIT_INT16 and FIT_UINT16 are handled with this function. If 'dib'
+   ' specifies an image of type FIT_UINT16, it is up to the caller to treat the
+   ' array's Integers as unsigned, although VB knows signed Integers only.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+
+   eImageType = FreeImage_GetImageType(dib)
+   If ((eImageType = FIT_INT16) Or _
+       (eImageType = FIT_UINT16)) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 2                           ' size in bytes per array element
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetScanline(dib, _
+                                         scanline) ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' For a complete source code documentation have a
+      ' look at the funciton 'FreeImage_GetScanLineEx'
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineINT16), lpSA, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineINT32(ByVal dib As Long, _
+                                           ByVal scanline As Long) As Long()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+Dim eImageType As FREE_IMAGE_TYPE
+
+   ' This function returns a one dimensional Long array containing a whole
+   ' scanline's data-bits of a FIT_INT32 or FIT_UINT32 image. This is done
+   ' by wrapping a true VB array around the memory block the returned pointer
+   ' of 'FreeImage_GetScanline' is pointing to. So, the array returned
+   ' provides full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+   
+   ' Since VB does not distinguish between signed and unsigned data types, both
+   ' image types FIT_INT32 and FIT_UINT32 are handled with this function. If 'dib'
+   ' specifies an image of type FIT_UINT32, it is up to the caller to treat the
+   ' array's Longs as unsigned, although VB knows signed Longs only.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+
+   eImageType = FreeImage_GetImageType(dib)
+   If ((eImageType = FIT_INT32) Or _
+       (eImageType = FIT_UINT32)) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 4                           ' size in bytes per array element
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetScanline(dib, _
+                                         scanline) ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' For a complete source code documentation have a
+      ' look at the funciton 'FreeImage_GetScanLineEx'
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineINT32), lpSA, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineFLOAT(ByVal dib As Long, _
+                                           ByVal scanline As Long) As Single()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+Dim eImageType As FREE_IMAGE_TYPE
+
+   ' This function returns a one dimensional Single array containing a whole
+   ' scanline's data-bits of a FIT_FLOAT image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned  provides
+   ' full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+   
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+
+   eImageType = FreeImage_GetImageType(dib)
+   If (eImageType = FIT_FLOAT) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 4                           ' size in bytes per array element
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetScanline(dib, _
+                                         scanline) ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' For a complete source code documentation have a
+      ' look at the funciton 'FreeImage_GetScanLineEx'
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineFLOAT), lpSA, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineDOUBLE(ByVal dib As Long, _
+                                            ByVal scanline As Long) As Double()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+Dim eImageType As FREE_IMAGE_TYPE
+
+   ' This function returns a one dimensional Double array containing a whole
+   ' scanline's data-bits of a FIT_DOUBLE image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned  provides
+   ' full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+   
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArray' function.
+
+   eImageType = FreeImage_GetImageType(dib)
+   If (eImageType = FIT_DOUBLE) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 8                           ' size in bytes per array element
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetScanline(dib, _
+                                         scanline) ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' For a complete source code documentation have a
+      ' look at the funciton 'FreeImage_GetScanLineEx'
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineDOUBLE), lpSA, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineCOMPLEX(ByVal dib As Long, _
+                                             ByVal scanline As Long) As FICOMPLEX()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+Dim eImageType As FREE_IMAGE_TYPE
+
+   ' This function returns a one dimensional FICOMPLEX array containing a whole
+   ' scanline's data-bits of a FIT_COMPLEX image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned  provides
+   ' full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArrayFICOMPLEX' function.
+
+   eImageType = FreeImage_GetImageType(dib)
+   If (eImageType = FIT_COMPLEX) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 16                          ' size in bytes per array element
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetScanline(dib, _
+                                         scanline) ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' For a complete source code documentation have a
+      ' look at the funciton 'FreeImage_GetScanLineEx'
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineCOMPLEX), lpSA, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineRGB16(ByVal dib As Long, _
+                                           ByVal scanline As Long) As FIRGB16()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+Dim eImageType As FREE_IMAGE_TYPE
+
+   ' This function returns a one dimensional FIRGB16 array containing a whole
+   ' scanline's data-bits of a FIT_RGB16 image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned  provides
+   ' full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArrayFIRGB16' function.
+
+   eImageType = FreeImage_GetImageType(dib)
+   If (eImageType = FIT_RGB16) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 6                           ' size in bytes per array element
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetScanline(dib, _
+                                         scanline) ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' For a complete source code documentation have a
+      ' look at the funciton 'FreeImage_GetScanLineEx'
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineRGB16), lpSA, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineRGBA16(ByVal dib As Long, _
+                                            ByVal scanline As Long) As FIRGBA16()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+Dim eImageType As FREE_IMAGE_TYPE
+
+   ' This function returns a one dimensional FIRGBA16 array containing a whole
+   ' scanline's data-bits of a FIT_RGBA16 image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned  provides
+   ' full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArrayFIRGBA16' function.
+
+   eImageType = FreeImage_GetImageType(dib)
+   If (eImageType = FIT_RGBA16) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 8                           ' size in bytes per array element
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetScanline(dib, _
+                                         scanline) ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' For a complete source code documentation have a
+      ' look at the funciton 'FreeImage_GetScanLineEx'
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineRGBA16), lpSA, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineRGBF(ByVal dib As Long, _
+                                          ByVal scanline As Long) As FIRGBF()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+Dim eImageType As FREE_IMAGE_TYPE
+
+   ' This function returns a one dimensional FIRGBF array containing a whole
+   ' scanline's data-bits of a FIT_RGBF image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned  provides
+   ' full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArrayFIRGBF' function.
+
+   eImageType = FreeImage_GetImageType(dib)
+   If (eImageType = FIT_RGBF) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 12                          ' size in bytes per array element
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetScanline(dib, _
+                                         scanline) ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' For a complete source code documentation have a
+      ' look at the funciton 'FreeImage_GetScanLineEx'
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineRGBF), lpSA, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_GetScanLineRGBAF(ByVal dib As Long, _
+                                           ByVal scanline As Long) As FIRGBAF()
+
+Dim tSA As SAVEARRAY1D
+Dim lpSA As Long
+Dim eImageType As FREE_IMAGE_TYPE
+
+   ' This function returns a one dimensional FIRGBAF array containing a whole
+   ' scanline's data-bits of a FIT_RGBAF image. This is done by wrapping
+   ' a true VB array around the memory block the returned pointer of
+   ' 'FreeImage_GetScanline' is pointing to. So, the array returned  provides
+   ' full read and write acces to the image's data.
+   
+   ' The function includes checking of the image's bit depth and type and
+   ' returns a non-initialized array if 'dib' is an image of inproper type.
+
+   ' To reuse the caller's array variable, this function's result was assigned to,
+   ' before it goes out of scope, the caller's array variable must be destroyed with
+   ' the 'FreeImage_DestroyLockedArrayFIRGBAF' function.
+
+   eImageType = FreeImage_GetImageType(dib)
+   If (eImageType = FIT_RGBAF) Then
+      
+      ' create a proper SAVEARRAY descriptor
+      With tSA
+         .cbElements = 12                          ' size in bytes per array element
+         .cDims = 1                                ' the array has only 1 dimension
+         .cElements = FreeImage_GetWidth(dib)      ' the number of elements in the array
+         .fFeatures = FADF_AUTO Or FADF_FIXEDSIZE  ' need AUTO and FIXEDSIZE for safety issues,
+                                                   ' so the array can not be modified in size
+                                                   ' or erased; according to Matthew Curland never
+                                                   ' use FIXEDSIZE alone
+         .pvData = FreeImage_GetScanline(dib, _
+                                         scanline) ' let the array point to the memory block, the
+                                                   ' FreeImage scanline data pointer points to
+      End With
+      
+      ' For a complete source code documentation have a
+      ' look at the funciton 'FreeImage_GetScanLineEx'
+      Call SafeArrayAllocDescriptor(1, lpSA)
+      Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
+      Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineRGBAF), lpSA, 4)
+   End If
+
+End Function
 
 
 '--------------------------------------------------------------------------------
@@ -3395,6 +4393,713 @@ End Function
 
 
 '--------------------------------------------------------------------------------
+' Compression functions wrappers
+'--------------------------------------------------------------------------------
+
+Public Function FreeImage_ZLibCompressEx(ByRef target As Variant, _
+                                Optional ByRef target_size As Long, _
+                                Optional ByRef Source As Variant, _
+                                Optional ByVal source_size As Long, _
+                                Optional ByVal offset As Long = 0) As Long
+                                
+Dim lSourceDataPtr As Long
+Dim lTargetDataPtr As Long
+Dim bTargetCreated As Boolean
+
+   ' This function is a more VB friendly wrapper for compressing data with
+   ' the 'FreeImage_ZLibCompress' function.
+   
+   ' The parameter 'target' may either be a VB style array of Byte, Integer
+   ' or Long or a pointer to a memory block. If 'target' is a pointer to a
+   ' memory block (when it contains an address), 'target_size' must be
+   ' specified and greater than zero. If 'target' is an initialized array,
+   ' the hole array will be used to store compressed data when 'target_size'
+   ' is missing or below or equal to zero. If 'target_size' is specified, only
+   ' the first target_size bytes of the array will be used.
+   ' In each case, all rules according to the FreeImage API documentation
+   ' apply, what means that the target buffer must be at least 0.1% greater
+   ' than the source buffer plus 12 bytes.
+   ' If 'target' is an uninitialized array, the contents of 'target_size'
+   ' will be ignored and the size of the array 'target' will be handled
+   ' internally. When the function returns, 'target' will be initialized
+   ' as an array of Byte and sized correctly to hold all the compressed
+   ' data.
+   
+   ' Nearly all, that is true for the parameters 'target' and 'target_size',
+   ' is also true for 'Source' and 'source_size', expect that 'Source' should
+   ' never be an uninitialized array. In that case, the function returns
+   ' immediately.
+   
+   ' The optional parameter 'offset' may contain a number of bytes to remain
+   ' untouched at the beginning of 'target', when an uninitialized array is
+   ' provided through 'target'. When 'target' is either a pointer or an
+   ' initialized array, 'offset' will be ignored. This parameter is currently
+   ' used by 'FreeImage_ZLibCompressVB' to store the length of the uncompressed
+   ' data at the first four bytes of 'target'.
+
+   
+   ' get the pointer and the size in bytes of the source
+   ' memory block
+   lSourceDataPtr = pGetMemoryBlockPtrFromVariant(Source, source_size)
+   If (lSourceDataPtr) Then
+      ' when we got a valid pointer, get the pointer and the size in bytes
+      ' of the target memory block
+      lTargetDataPtr = pGetMemoryBlockPtrFromVariant(target, target_size)
+      If (lTargetDataPtr = 0) Then
+         ' if 'target' is a null pointer, we will initialized it as an array
+         ' of bytes; here we will take 'offset' into account
+         ReDim target(source_size + Int(source_size * 0.1) + _
+                      12 + offset) As Byte
+         ' get pointer and size in bytes (will never be a null pointer)
+         lTargetDataPtr = pGetMemoryBlockPtrFromVariant(target, target_size)
+         ' adjust according to 'offset'
+         lTargetDataPtr = lTargetDataPtr + offset
+         target_size = target_size - offset
+         bTargetCreated = True
+      End If
+      
+      ' compress source data
+      FreeImage_ZLibCompressEx = FreeImage_ZLibCompress(lTargetDataPtr, _
+                                                        target_size, _
+                                                        lSourceDataPtr, _
+                                                        source_size)
+      
+      ' the function returns the number of bytes needed to store the
+      ' compressed data or zero on failure
+      If (FreeImage_ZLibCompressEx) Then
+         If (bTargetCreated) Then
+            ' when we created the array, we need to adjust it's size
+            ' according to the length of the compressed data
+            ReDim Preserve target(FreeImage_ZLibCompressEx - 1 + offset)
+         End If
+      End If
+   End If
+                                
+End Function
+
+Public Function FreeImage_ZLibUncompressEx(ByRef target As Variant, _
+                                  Optional ByRef target_size As Long, _
+                                  Optional ByRef Source As Variant, _
+                                  Optional ByVal source_size As Long) As Long
+                                
+Dim lSourceDataPtr As Long
+Dim lTargetDataPtr As Long
+
+   ' This function is a more VB friendly wrapper for compressing data with
+   ' the 'FreeImage_ZLibUncompress' function.
+   
+   ' The parameter 'target' may either be a VB style array of Byte, Integer
+   ' or Long or a pointer to a memory block. If 'target' is a pointer to a
+   ' memory block (when it contains an address), 'target_size' must be
+   ' specified and greater than zero. If 'target' is an initialized array,
+   ' the hole array will be used to store uncompressed data when 'target_size'
+   ' is missing or below or equal to zero. If 'target_size' is specified, only
+   ' the first target_size bytes of the array will be used.
+   ' In each case, all rules according to the FreeImage API documentation
+   ' apply, what means that the target buffer must be at least as large, to
+   ' hold all the uncompressed data.
+   ' Unlike the function 'FreeImage_ZLibCompressEx', 'target' can not be
+   ' an uninitialized array, since the size of the uncompressed data can
+   ' not be determined by the ZLib functions, but must be specified by a
+   ' mechanism outside the FreeImage compression functions' scope.
+   
+   ' Nearly all, that is true for the parameters 'target' and 'target_size',
+   ' is also true for 'Source' and 'source_size'.
+   
+   
+   ' get the pointer and the size in bytes of the source
+   ' memory block
+   lSourceDataPtr = pGetMemoryBlockPtrFromVariant(Source, source_size)
+   If (lSourceDataPtr) Then
+      ' when we got a valid pointer, get the pointer and the size in bytes
+      ' of the target memory block
+      lTargetDataPtr = pGetMemoryBlockPtrFromVariant(target, target_size)
+      If (lTargetDataPtr) Then
+         ' if we do not have a null pointer, uncompress the data
+         FreeImage_ZLibUncompressEx = FreeImage_ZLibUncompress(lTargetDataPtr, _
+                                                               target_size, _
+                                                               lSourceDataPtr, _
+                                                               source_size)
+      End If
+   End If
+                                
+End Function
+
+Public Function FreeImage_ZLibGZipEx(ByRef target As Variant, _
+                            Optional ByRef target_size As Long, _
+                            Optional ByRef Source As Variant, _
+                            Optional ByVal source_size As Long, _
+                            Optional ByVal offset As Long = 0) As Long
+                                
+Dim lSourceDataPtr As Long
+Dim lTargetDataPtr As Long
+Dim bTargetCreated As Boolean
+
+   ' This function is a more VB friendly wrapper for compressing data with
+   ' the 'FreeImage_ZLibGZip' function.
+   
+   ' The parameter 'target' may either be a VB style array of Byte, Integer
+   ' or Long or a pointer to a memory block. If 'target' is a pointer to a
+   ' memory block (when it contains an address), 'target_size' must be
+   ' specified and greater than zero. If 'target' is an initialized array,
+   ' the hole array will be used to store compressed data when 'target_size'
+   ' is missing or below or equal to zero. If 'target_size' is specified, only
+   ' the first target_size bytes of the array will be used.
+   ' In each case, all rules according to the FreeImage API documentation
+   ' apply, what means that the target buffer must be at least 0.1% greater
+   ' than the source buffer plus 24 bytes.
+   ' If 'target' is an uninitialized array, the contents of 'target_size'
+   ' will be ignored and the size of the array 'target' will be handled
+   ' internally. When the function returns, 'target' will be initialized
+   ' as an array of Byte and sized correctly to hold all the compressed
+   ' data.
+   
+   ' Nearly all, that is true for the parameters 'target' and 'target_size',
+   ' is also true for 'Source' and 'source_size', expect that 'Source' should
+   ' never be an uninitialized array. In that case, the function returns
+   ' immediately.
+   
+   ' The optional parameter 'offset' may contain a number of bytes to remain
+   ' untouched at the beginning of 'target', when an uninitialized array is
+   ' provided through 'target'. When 'target' is either a pointer or an
+   ' initialized array, 'offset' will be ignored. This parameter is currently
+   ' used by 'FreeImage_ZLibGZipVB' to store the length of the uncompressed
+   ' data at the first four bytes of 'target'.
+
+   
+   ' get the pointer and the size in bytes of the source
+   ' memory block
+   lSourceDataPtr = pGetMemoryBlockPtrFromVariant(Source, source_size)
+   If (lSourceDataPtr) Then
+      ' when we got a valid pointer, get the pointer and the size in bytes
+      ' of the target memory block
+      lTargetDataPtr = pGetMemoryBlockPtrFromVariant(target, target_size)
+      If (lTargetDataPtr = 0) Then
+         ' if 'target' is a null pointer, we will initialized it as an array
+         ' of bytes; here we will take 'offset' into account
+         ReDim target(source_size + Int(source_size * 0.1) + _
+                      24 + offset) As Byte
+         ' get pointer and size in bytes (will never be a null pointer)
+         lTargetDataPtr = pGetMemoryBlockPtrFromVariant(target, target_size)
+         ' adjust according to 'offset'
+         lTargetDataPtr = lTargetDataPtr + offset
+         target_size = target_size - offset
+         bTargetCreated = True
+      End If
+      
+      ' compress source data
+      FreeImage_ZLibGZipEx = FreeImage_ZLibGZip(lTargetDataPtr, _
+                                                target_size, _
+                                                lSourceDataPtr, _
+                                                source_size)
+      
+      ' the function returns the number of bytes needed to store the
+      ' compressed data or zero on failure
+      If (FreeImage_ZLibGZipEx) Then
+         If (bTargetCreated) Then
+            ' when we created the array, we need to adjust it's size
+            ' according to the length of the compressed data
+            ReDim Preserve target(FreeImage_ZLibGZipEx - 1 + offset)
+         End If
+      End If
+   End If
+                                
+End Function
+
+Public Function FreeImage_ZLibCRC32Ex(ByVal crc As Long, _
+                             Optional ByRef Source As Variant, _
+                             Optional ByVal source_size As Long) As Long
+                                
+Dim lSourceDataPtr As Long
+
+   ' This function is a more VB friendly wrapper for compressing data with
+   ' the 'FreeImage_ZLibCRC32' function.
+   
+   ' The parameter 'Source' may either be a VB style array of Byte, Integer
+   ' or Long or a pointer to a memory block. If 'Source' is a pointer to a
+   ' memory block (when it contains an address), 'source_size' must be
+   ' specified and greater than zero. If 'Source' is an initialized array,
+   ' the hole array will be used to calculate the new CRC when 'source_size'
+   ' is missing or below or equal to zero. If 'source_size' is specified, only
+   ' the first source_size bytes of the array will be used.
+
+   
+   ' get the pointer and the size in bytes of the source
+   ' memory block
+   lSourceDataPtr = pGetMemoryBlockPtrFromVariant(Source, source_size)
+   If (lSourceDataPtr) Then
+      ' if we do not have a null pointer, calculate the CRC including 'crc'
+      FreeImage_ZLibCRC32Ex = FreeImage_ZLibCRC32(crc, _
+                                                  lSourceDataPtr, _
+                                                  source_size)
+   End If
+                                
+End Function
+
+Public Function FreeImage_ZLibGUnzipEx(ByRef target As Variant, _
+                              Optional ByRef target_size As Long, _
+                              Optional ByRef Source As Variant, _
+                              Optional ByVal source_size As Long) As Long
+                                
+Dim lSourceDataPtr As Long
+Dim lTargetDataPtr As Long
+
+   ' This function is a more VB friendly wrapper for compressing data with
+   ' the 'FreeImage_ZLibGUnzip' function.
+   
+   ' The parameter 'target' may either be a VB style array of Byte, Integer
+   ' or Long or a pointer to a memory block. If 'target' is a pointer to a
+   ' memory block (when it contains an address), 'target_size' must be
+   ' specified and greater than zero. If 'target' is an initialized array,
+   ' the hole array will be used to store uncompressed data when 'target_size'
+   ' is missing or below or equal to zero. If 'target_size' is specified, only
+   ' the first target_size bytes of the array will be used.
+   ' In each case, all rules according to the FreeImage API documentation
+   ' apply, what means that the target buffer must be at least as large, to
+   ' hold all the uncompressed data.
+   ' Unlike the function 'FreeImage_ZLibGZipEx', 'target' can not be
+   ' an uninitialized array, since the size of the uncompressed data can
+   ' not be determined by the ZLib functions, but must be specified by a
+   ' mechanism outside the FreeImage compression functions' scope.
+   
+   ' Nearly all, that is true for the parameters 'target' and 'target_size',
+   ' is also true for 'Source' and 'source_size'.
+   
+   
+   ' get the pointer and the size in bytes of the source
+   ' memory block
+   lSourceDataPtr = pGetMemoryBlockPtrFromVariant(Source, source_size)
+   If (lSourceDataPtr) Then
+      ' when we got a valid pointer, get the pointer and the size in bytes
+      ' of the target memory block
+      lTargetDataPtr = pGetMemoryBlockPtrFromVariant(target, target_size)
+      If (lTargetDataPtr) Then
+         ' if we do not have a null pointer, uncompress the data
+         FreeImage_ZLibGUnzipEx = FreeImage_ZLibGUnzip(lTargetDataPtr, _
+                                                       target_size, _
+                                                       lSourceDataPtr, _
+                                                       source_size)
+      End If
+   End If
+                                
+End Function
+
+Public Function FreeImage_ZLibCompressVB(ByRef data() As Byte, _
+                                Optional ByVal IncludeSize As Boolean = True) As Byte()
+                                
+Dim lOffset As Long
+Dim lArrayDataPtr As Long
+
+   ' This function is another, even more VB friendly wrapper for the FreeImage
+   ' 'FreeImage_ZLibCompress' function, that uses the 'FreeImage_ZLibCompressEx'
+   ' function. This function is very easy to use, since it deals only with VB
+   ' style Byte arrays.
+   
+   ' The parameter 'data()' is a Byte array, providing the uncompressed source
+   ' data that will be compressed.
+   
+   ' The optional parameter 'IncludeSize' determines whether the size of the
+   ' uncompressed data should be stored in the first four bytes of the returned
+   ' byte buffer containing the compressed data or not. When 'IncludeSize' is
+   ' True, the size of the uncompressed source data will be stored. This works
+   ' in conjunction with the corresponding 'FreeImage_ZLibUncompressVB' function.
+   
+   ' The function returns a VB style Byte array containing the compressed data.
+   
+
+   ' start population the memory block with compressed data
+   ' at offset 4 bytes, when the unclompressed size should
+   ' be included
+   If (IncludeSize) Then
+      lOffset = 4
+   End If
+   
+   Call FreeImage_ZLibCompressEx(FreeImage_ZLibCompressVB, , data, , lOffset)
+                                 
+   If (IncludeSize) Then
+      ' get the pointer actual pointing to the array data of
+      ' the Byte array 'FreeImage_ZLibCompressVB'
+      lArrayDataPtr = deref(deref(VarPtrArray(FreeImage_ZLibCompressVB)) + 12)
+
+      ' copy uncompressed size into the first 4 bytes
+      Call CopyMemory(ByVal lArrayDataPtr, UBound(data) + 1, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_ZLibUncompressVB(ByRef data() As Byte, _
+                                  Optional ByVal SizeIncluded As Boolean = True, _
+                                  Optional ByVal SizeNeeded As Long) As Byte()
+
+Dim abBuffer() As Byte
+
+   ' This function is another, even more VB friendly wrapper for the FreeImage
+   ' 'FreeImage_ZLibUncompress' function, that uses the 'FreeImage_ZLibUncompressEx'
+   ' function. This function is very easy to use, since it deals only with VB
+   ' style Byte arrays.
+   
+   ' The parameter 'data()' is a Byte array, providing the compressed source
+   ' data that will be uncompressed either withthe size of the uncompressed
+   ' data included or not.
+   
+   ' When the optional parameter 'SizeIncluded' is True, the function assumes,
+   ' that the first four bytes contain the size of the uncompressed data as a
+   ' Long value. In that case, 'SizeNeeded' will be ignored.
+   
+   ' When the size of the uncompressed data is not included in the buffer 'data()'
+   ' containing the compressed data, the optional parameter 'SizeNeeded' must
+   ' specify the size in bytes needed to hold all the uncompressed data.
+   
+   ' The function returns a VB style Byte array containing the uncompressed data.
+
+
+   If (SizeIncluded) Then
+      ' get uncompressed size from the first 4 bytes and allocate
+      ' buffer accordingly
+      Call CopyMemory(SizeNeeded, data(0), 4)
+      ReDim abBuffer(SizeNeeded - 1)
+      Call FreeImage_ZLibUncompressEx(abBuffer, , VarPtr(data(4)), UBound(data) - 3)
+      Call swap(VarPtrArray(FreeImage_ZLibUncompressVB), VarPtrArray(abBuffer))
+   
+   ElseIf (SizeNeeded) Then
+      ' no size included in compressed data, so just forward the
+      ' call to 'FreeImage_ZLibUncompressEx' and trust on SizeNeeded
+      ReDim abBuffer(SizeNeeded - 1)
+      Call FreeImage_ZLibUncompressEx(abBuffer, , data)
+      Call swap(VarPtrArray(FreeImage_ZLibUncompressVB), VarPtrArray(abBuffer))
+   
+   End If
+
+End Function
+
+Public Function FreeImage_ZLibGZipVB(ByRef data() As Byte, _
+                            Optional ByVal IncludeSize As Boolean = True) As Byte()
+                                
+Dim lOffset As Long
+Dim lArrayDataPtr As Long
+
+   ' This function is another, even more VB friendly wrapper for the FreeImage
+   ' 'FreeImage_ZLibGZip' function, that uses the 'FreeImage_ZLibGZipEx'
+   ' function. This function is very easy to use, since it deals only with VB
+   ' style Byte arrays.
+   
+   ' The parameter 'data()' is a Byte array, providing the uncompressed source
+   ' data that will be compressed.
+   
+   ' The optional parameter 'IncludeSize' determines whether the size of the
+   ' uncompressed data should be stored in the first four bytes of the returned
+   ' byte buffer containing the compressed data or not. When 'IncludeSize' is
+   ' True, the size of the uncompressed source data will be stored. This works
+   ' in conjunction with the corresponding 'FreeImage_ZLibGUnzipVB' function.
+   
+   ' The function returns a VB style Byte array containing the compressed data.
+
+
+   ' start population the memory block with compressed data
+   ' at offset 4 bytes, when the unclompressed size should
+   ' be included
+   If (IncludeSize) Then
+      lOffset = 4
+   End If
+   
+   Call FreeImage_ZLibGZipEx(FreeImage_ZLibGZipVB, , data, , lOffset)
+                                 
+   If (IncludeSize) Then
+      ' get the pointer actual pointing to the array data of
+      ' the Byte array 'FreeImage_ZLibCompressVB'
+      lArrayDataPtr = deref(deref(VarPtrArray(FreeImage_ZLibGZipVB)) + 12)
+
+      ' copy uncompressed size into the first 4 bytes
+      Call CopyMemory(ByVal lArrayDataPtr, UBound(data) + 1, 4)
+   End If
+
+End Function
+
+Public Function FreeImage_ZLibGUnzipVB(ByRef data() As Byte, _
+                              Optional ByVal SizeIncluded As Boolean = True, _
+                              Optional ByVal SizeNeeded As Long) As Byte()
+
+Dim abBuffer() As Byte
+
+   ' This function is another, even more VB friendly wrapper for the FreeImage
+   ' 'FreeImage_ZLibGUnzip' function, that uses the 'FreeImage_ZLibGUnzipEx'
+   ' function. This function is very easy to use, since it deals only with VB
+   ' style Byte arrays.
+   
+   ' The parameter 'data()' is a Byte array, providing the compressed source
+   ' data that will be uncompressed either withthe size of the uncompressed
+   ' data included or not.
+   
+   ' When the optional parameter 'SizeIncluded' is True, the function assumes,
+   ' that the first four bytes contain the size of the uncompressed data as a
+   ' Long value. In that case, 'SizeNeeded' will be ignored.
+   
+   ' When the size of the uncompressed data is not included in the buffer 'data()'
+   ' containing the compressed data, the optional parameter 'SizeNeeded' must
+   ' specify the size in bytes needed to hold all the uncompressed data.
+   
+   ' The function returns a VB style Byte array containing the uncompressed data.
+
+
+   If (SizeIncluded) Then
+      ' get uncompressed size from the first 4 bytes and allocate
+      ' buffer accordingly
+      Call CopyMemory(SizeNeeded, data(0), 4)
+      ReDim abBuffer(SizeNeeded - 1)
+      Call FreeImage_ZLibGUnzipEx(abBuffer, , VarPtr(data(4)), UBound(data) - 3)
+      Call swap(VarPtrArray(FreeImage_ZLibGUnzipVB), VarPtrArray(abBuffer))
+   
+   ElseIf (SizeNeeded) Then
+      ' no size included in compressed data, so just forward the
+      ' call to 'FreeImage_ZLibUncompressEx' and trust on SizeNeeded
+      ReDim abBuffer(SizeNeeded - 1)
+      Call FreeImage_ZLibGUnzipEx(abBuffer, , data)
+      Call swap(VarPtrArray(FreeImage_ZLibGUnzipVB), VarPtrArray(abBuffer))
+   
+   End If
+
+End Function
+
+
+'--------------------------------------------------------------------------------
+' Public functions to destroy custom safearrays
+'--------------------------------------------------------------------------------
+
+Public Function FreeImage_DestroyLockedArray(ByRef data As Variant) As Long
+
+Dim lpArrayPtr As Long
+
+   ' This function destroys an array, that was self created with a custom
+   ' array descriptor of type ('fFeatures' member) 'FADF_AUTO Or FADF_FIXEDSIZE'.
+   ' Such arrays are returned by mostly all of the array-dealing wrapper
+   ' functions. Since these should not destroy the actual array data, when
+   ' going out of scope, they are craeted as 'FADF_FIXEDSIZE'.'
+   
+   ' So, VB sees them as fixed or temporarily locked, when you try to manipulate
+   ' the array's dimensions. There will occur some strange effects, you should
+   ' know about:
+   
+   ' 1. When trying to 'ReDim' the array, this run-time error will occur:
+   '    Error #10, 'This array is fixed or temporarily locked'
+   
+   ' 2. When trying to assign another array to the array variable, this
+   '    run-time error will occur:
+   '    Error #13, 'Type mismatch'
+   
+   ' 3. The 'Erase' statement has no effect on the array
+   
+   ' Although VB clears up these arrays correctly, when the array variable
+   ' goes out of scope, you have to destroy the array manually, when you want
+   ' to reuse the array variable in current scope.
+   
+   ' For an example assume, that you want do walk all scanlines in an image:
+   
+   ' For i = 0 To FreeImage_GetHeight(dib)
+   '
+   '    ' assign scanline-arary to array variable
+   '    abByte = FreeImage_GetScanLineEx(dib, i)
+   '
+   '    ' do some work on it...
+   '
+   '    ' destroy the array (only the array, not the actual data)
+   '    Call FreeImage_DestroyLockedArray(dbByte)
+   ' Next i
+   
+   ' The function returns zero on success and any other value on failure
+   
+   ' !! Attention !!
+   ' This function uses a Variant parameter for passing the array to be
+   ' destroyed. Since VB does not allow to pass an array of non public
+   ' structures through a Variant parameter, this function can not be used
+   ' with arrays of cutom type.
+   
+   ' You will get this compiler error: "Only public user defined types defined
+   ' in public object modules can be used as parameters or return types for
+   ' public procedures of class modules or as fields of public user defined types"
+   
+   ' So, there is a function in the wrapper called 'FreeImage_DestroyLockedArrayByPtr'
+   ' that takes a pointer to the array variable which can be used to work around
+   ' that VB limitation and furthermore can be used for any of these self-created
+   ' arrays. To get the array variable's pointer, a declared version of the
+   ' VB 'VarPtr' function can be used which works for all types of arrays expect
+   ' String arrays. Declare this function like this in your code:
+   
+   ' Private Declare Function VarPtrArray Lib "msvbvm60.dll" Alias "VarPtr" ( _
+         ByRef Ptr() As Any) As Long
+         
+   ' Then an array could be destroyed by calling the 'FreeImage_DestroyLockedArrayByPtr'
+   ' function like this:
+   
+   ' lResult = FreeImage_DestroyLockedArrayByPtr(VarPtrArray(MyLockedArray))
+   
+   ' Additionally there are some handy wrapper functions available, one for each
+   ' commonly used structure in FreeImage like RGBTRIPLE, RGBQUAD, FICOMPLEX etc.
+   
+   
+   ' Currently, these functions do return 'FADF_AUTO Or FADF_FIXEDSIZE' arrays
+   ' that must be destroyed using this or any of it's derived functions:
+   
+   ' FreeImage_GetPaletteEx()           with FreeImage_DestroyLockedArrayRGBQUAD()
+   ' FreeImage_GetPaletteLong()         with FreeImage_DestroyLockedArray()
+   ' FreeImage_SaveToMemoryEx2()        with FreeImage_DestroyLockedArray()
+   ' FreeImage_AcquireMemoryEx()        with FreeImage_DestroyLockedArray()
+   ' FreeImage_GetScanLineEx()          with FreeImage_DestroyLockedArray()
+   ' FreeImage_GetScanLineBITMAP8()     with FreeImage_DestroyLockedArray()
+   ' FreeImage_GetScanLineBITMAP16()    with FreeImage_DestroyLockedArray()
+   ' FreeImage_GetScanLineBITMAP24()    with FreeImage_DestroyLockedArrayRGBTRIPLE()
+   ' FreeImage_GetScanLineBITMAP32()    with FreeImage_DestroyLockedArrayRGBQUAD()
+   ' FreeImage_GetScanLineINT16()       with FreeImage_DestroyLockedArray()
+   ' FreeImage_GetScanLineINT32()       with FreeImage_DestroyLockedArray()
+   ' FreeImage_GetScanLineFLOAT()       with FreeImage_DestroyLockedArray()
+   ' FreeImage_GetScanLineDOUBLE()      with FreeImage_DestroyLockedArray()
+   ' FreeImage_GetScanLineCOMPLEX()     with FreeImage_DestroyLockedArrayFICOMPLEX()
+   ' FreeImage_GetScanLineRGB16()       with FreeImage_DestroyLockedArrayFIRGB16()
+   ' FreeImage_GetScanLineRGBA16()      with FreeImage_DestroyLockedArrayFIRGBA16()
+   ' FreeImage_GetScanLineRGBF()        with FreeImage_DestroyLockedArrayFIRGBF()
+   ' FreeImage_GetScanLineRGBAF()       with FreeImage_DestroyLockedArrayFIRGBAF()
+
+   
+   ' ensure, this is an array
+   If (VarType(data) And vbArray) Then
+   
+      ' data is a VB array, what means a SAFEARRAY in C/C++, that is
+      ' passed through a ByRef Variant variable, that is a pointer to
+      ' a VARIANTARG structure
+      
+      ' the VARIANTARG structure looks like this:
+      
+      ' typedef struct tagVARIANT VARIANTARG;
+      ' struct tagVARIANT
+      '     {
+      '     Union
+      '         {
+      '         struct __tagVARIANT
+      '             {
+      '             VARTYPE vt;
+      '             WORD wReserved1;
+      '             WORD wReserved2;
+      '             WORD wReserved3;
+      '             Union
+      '                 {
+      '                 [...]
+      '             SAFEARRAY *parray;    // used when not VT_BYREF
+      '                 [...]
+      '             SAFEARRAY **pparray;  // used when VT_BYREF
+      '                 [...]
+      
+      ' the data element (SAFEARRAY) has an offset of 8, since VARTYPE
+      ' and WORD both have a length of 2 bytes; the pointer to the
+      ' VARIANTARG structure is the VarPtr of the Variant variable in VB
+      
+      ' getting the contents of the data element (in C/C++: *(data + 8))
+      lpArrayPtr = deref(VarPtr(data) + 8)
+      
+      ' call the 'FreeImage_DestroyLockedArrayByPtr' function to destroy
+      ' the array properly
+      Call FreeImage_DestroyLockedArrayByPtr(lpArrayPtr)
+   Else
+      
+      FreeImage_DestroyLockedArray = -1
+   End If
+
+End Function
+
+Public Function FreeImage_DestroyLockedArrayByPtr(ByVal lpArrayPtr As Long) As Long
+
+Dim lpSA As Long
+
+   ' This function destroys a self-created array with a custom array
+   ' descriptor by a pointer to the array variable.
+
+   ' dereference the pointer once (in C/C++: *lpArrayPtr)
+   lpSA = deref(lpArrayPtr)
+   ' now 'lpSA' is a pointer to the actual SAFEARRAY structure
+   ' and could be a null pointer when the array is not initialized
+   ' then, we have nothing to do here but return (-1) to indicate
+   ' an "error"
+   If (lpSA) Then
+      
+      ' destroy the array descriptor
+      Call SafeArrayDestroyDescriptor(lpSA)
+      
+      ' make 'lpSA' a null pointer, that is an uninitialized array;
+      ' keep in mind, that we here use 'lpArrayPtr' as a ByVal argument,
+      ' since 'lpArrayPtr' is a pointer to lpSA (the address of lpSA);
+      ' we need to zero these four bytes, 'lpArrayPtr' points to
+      Call CopyMemory(ByVal lpArrayPtr, 0&, 4)
+   Else
+      
+      ' the array is already uninitialized, so return an "error" value
+      FreeImage_DestroyLockedArrayByPtr = -1
+   End If
+
+End Function
+
+Public Function FreeImage_DestroyLockedArrayRGBTRIPLE(ByRef data() As RGBTRIPLE) As Long
+
+   ' This function is a thin wrapper for 'FreeImage_DestroyLockedArrayByPtr'
+   ' for destroying arrays of type 'RGBTRIPLE'.
+   
+   FreeImage_DestroyLockedArrayRGBTRIPLE = FreeImage_DestroyLockedArrayByPtr(VarPtrArray(data))
+
+End Function
+
+Public Function FreeImage_DestroyLockedArrayRGBQUAD(ByRef data() As RGBQUAD) As Long
+
+   ' This function is a thin wrapper for 'FreeImage_DestroyLockedArrayByPtr'
+   ' for destroying arrays of type 'RGBQUAD'.
+
+   FreeImage_DestroyLockedArrayRGBQUAD = FreeImage_DestroyLockedArrayByPtr(VarPtrArray(data))
+
+End Function
+
+Public Function FreeImage_DestroyLockedArrayFICOMPLEX(ByRef data() As FICOMPLEX) As Long
+
+   ' This function is a thin wrapper for 'FreeImage_DestroyLockedArrayByPtr'
+   ' for destroying arrays of type 'FICOMPLEX'.
+
+   FreeImage_DestroyLockedArrayFICOMPLEX = FreeImage_DestroyLockedArrayByPtr(VarPtrArray(data))
+
+End Function
+
+Public Function FreeImage_DestroyLockedArrayFIRGB16(ByRef data() As FIRGB16) As Long
+
+   ' This function is a thin wrapper for 'FreeImage_DestroyLockedArrayByPtr'
+   ' for destroying arrays of type 'FIRGB16'.
+
+   FreeImage_DestroyLockedArrayFIRGB16 = FreeImage_DestroyLockedArrayByPtr(VarPtrArray(data))
+
+End Function
+
+Public Function FreeImage_DestroyLockedArrayFIRGBA16(ByRef data() As FIRGBA16) As Long
+
+   ' This function is a thin wrapper for 'FreeImage_DestroyLockedArrayByPtr'
+   ' for destroying arrays of type 'FIRGBA16'.
+
+   FreeImage_DestroyLockedArrayFIRGBA16 = FreeImage_DestroyLockedArrayByPtr(VarPtrArray(data))
+
+End Function
+
+Public Function FreeImage_DestroyLockedArrayFIRGBF(ByRef data() As FIRGBF) As Long
+
+   ' This function is a thin wrapper for 'FreeImage_DestroyLockedArrayByPtr'
+   ' for destroying arrays of type 'FIRGBF'.
+
+   FreeImage_DestroyLockedArrayFIRGBF = FreeImage_DestroyLockedArrayByPtr(VarPtrArray(data))
+
+End Function
+
+Public Function FreeImage_DestroyLockedArrayFIRGBAF(ByRef data() As FIRGBAF) As Long
+
+   ' This function is a thin wrapper for 'FreeImage_DestroyLockedArrayByPtr'
+   ' for destroying arrays of type 'FIRGBAF'.
+
+   FreeImage_DestroyLockedArrayFIRGBAF = FreeImage_DestroyLockedArrayByPtr(VarPtrArray(data))
+
+End Function
+
+
+'--------------------------------------------------------------------------------
 ' Private pointer manipulation helper functions
 '--------------------------------------------------------------------------------
 
@@ -3455,6 +5160,75 @@ Dim lpTmp As Long
 
 End Sub
 
+Private Function pGetMemoryBlockPtrFromVariant(ByRef data As Variant, _
+                                      Optional ByRef size_in_bytes As Long) As Long
+                                            
+   ' This function returns the pointer to the memory block provided through
+   ' the Variant parameter 'data', which could be either a Byte, Integer or
+   ' Long array or the address of the memory block itself. In the last case,
+   ' the parameter 'size_in_bytes' must not be omitted or zero, since it's
+   ' correct value (the size of the memory block) can not be determined by
+   ' the address only. So, the function fails, if 'size_in_bytes' is omitted
+   ' or zero and 'data' is not an array but contains a Long value (the address
+   ' of a memory block) by returning Null.
+   
+   ' If 'data' contains either a Byte, Integer or Long array, the pointer to
+   ' the actual array data is returned. The parameter 'size_in_bytes' will
+   ' be adjusted correctly, if it was less or equal zero upon entry.
+   
+   ' The function returns Null (zero) if there was no supported memory block
+   ' provided.
+   
+   ' do we have an array?
+   If (VarType(data) And vbArray) Then
+      Select Case (VarType(data) And (Not vbArray))
+      
+      Case vbByte
+         pGetMemoryBlockPtrFromVariant = pGetArrayPtrFromVariantArray(data)
+         If (pGetMemoryBlockPtrFromVariant) Then
+            If (size_in_bytes <= 0) Then
+               size_in_bytes = (UBound(data) + 1)
+            
+            ElseIf (size_in_bytes > (UBound(data) + 1)) Then
+               size_in_bytes = (UBound(data) + 1)
+            
+            End If
+         End If
+      
+      Case vbInteger
+         pGetMemoryBlockPtrFromVariant = pGetArrayPtrFromVariantArray(data)
+         If (pGetMemoryBlockPtrFromVariant) Then
+            If (size_in_bytes <= 0) Then
+               size_in_bytes = (UBound(data) + 1) * 2
+            
+            ElseIf (size_in_bytes > ((UBound(data) + 1) * 2)) Then
+               size_in_bytes = (UBound(data) + 1) * 2
+            
+            End If
+         End If
+      
+      Case vbLong
+         pGetMemoryBlockPtrFromVariant = pGetArrayPtrFromVariantArray(data)
+         If (pGetMemoryBlockPtrFromVariant) Then
+            If (size_in_bytes <= 0) Then
+               size_in_bytes = (UBound(data) + 1) * 4
+            
+            ElseIf (size_in_bytes > ((UBound(data) + 1) * 4)) Then
+               size_in_bytes = (UBound(data) + 1) * 4
+            
+            End If
+         End If
+      
+      End Select
+   Else
+      If ((VarType(data) = vbLong) And _
+          (size_in_bytes >= 0)) Then
+         pGetMemoryBlockPtrFromVariant = data
+      End If
+   End If
+                                            
+End Function
+
 Private Function pGetArrayPtrFromVariantArray(ByRef data As Variant) As Long
 
 Dim eVarType As VbVarType
@@ -3505,41 +5279,52 @@ Dim lDataPtr As Long
       ' dereference the pointer again (in C/C++: *(lDataPtr))
       lDataPtr = deref(lDataPtr)
       
-      ' the contents of lDataPtr now is a pointer to the SAFEARRAY structure
+      ' test, whether 'lDataPtr' now is a Null pointer
+      ' in that case, the array is not yet initialized and so we can't dereference
+      ' it another time since we have no permisson to acces address 0
+      
+      ' the contents of 'lDataPtr' may be Null now in case of an uninitialized
+      ' array; then we can't access any of the SAFEARRAY members since the array
+      ' variable doesn't event point to a SAFEARRAY structure, so we will return
+      ' the null pointer
+      
+      If (lDataPtr) Then
+         ' the contents of lDataPtr now is a pointer to the SAFEARRAY structure
+            
+         ' the SAFEARRAY structure looks like this:
          
-      ' the SAFEARRAY structure looks like this:
-      
-      ' typedef struct FARSTRUCT tagSAFEARRAY {
-      '    unsigned short cDims;       // Count of dimensions in this array.
-      '    unsigned short fFeatures;   // Flags used by the SafeArray
-      '                                // routines documented below.
-      ' #if defined(WIN32)
-      '    unsigned long cbElements;   // Size of an element of the array.
-      '                                // Does not include size of
-      '                                // pointed-to data.
-      '    unsigned long cLocks;       // Number of times the array has been
-      '                                // locked without corresponding unlock.
-      ' #Else
-      '    unsigned short cbElements;
-      '    unsigned short cLocks;
-      '    unsigned long handle;       // Used on Macintosh only.
-      ' #End If
-      '    void HUGEP* pvData;               // Pointer to the data.
-      '    SAFEARRAYBOUND rgsabound[1];      // One bound for each dimension.
-      ' } SAFEARRAY;
-      
-      ' since we live in WIN32, the pvData element has an offset
-      ' of 12 bytes from the base address of the structure,
-      ' so dereference the pvData pointer, what indeed is a pointer
-      ' to the actual array (in C/C++: *(lDataPtr + 12))
-      lDataPtr = deref(lDataPtr + 12)
+         ' typedef struct FARSTRUCT tagSAFEARRAY {
+         '    unsigned short cDims;       // Count of dimensions in this array.
+         '    unsigned short fFeatures;   // Flags used by the SafeArray
+         '                                // routines documented below.
+         ' #if defined(WIN32)
+         '    unsigned long cbElements;   // Size of an element of the array.
+         '                                // Does not include size of
+         '                                // pointed-to data.
+         '    unsigned long cLocks;       // Number of times the array has been
+         '                                // locked without corresponding unlock.
+         ' #Else
+         '    unsigned short cbElements;
+         '    unsigned short cLocks;
+         '    unsigned long handle;       // Used on Macintosh only.
+         ' #End If
+         '    void HUGEP* pvData;               // Pointer to the data.
+         '    SAFEARRAYBOUND rgsabound[1];      // One bound for each dimension.
+         ' } SAFEARRAY;
+         
+         ' since we live in WIN32, the pvData element has an offset
+         ' of 12 bytes from the base address of the structure,
+         ' so dereference the pvData pointer, what indeed is a pointer
+         ' to the actual array (in C/C++: *(lDataPtr + 12))
+         lDataPtr = deref(lDataPtr + 12)
+      End If
       
       ' return this value
       pGetArrayPtrFromVariantArray = lDataPtr
       
       ' a more shorter form of this function would be:
+      ' (doesn't work for uninitialized arrays, but will likely crash!)
       'pGetArrayPtrFromVariantArray = deref(deref(deref(VarPtr(data) + 8)) + 12)
    End If
 
 End Function
-

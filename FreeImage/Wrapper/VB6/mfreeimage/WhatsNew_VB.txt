@@ -5,6 +5,79 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+June 22, 2005
++ [Carsten Klein] added added inline comments and documentation for pixel access functions
+
+June 18, 2005
++ [Carsten Klein] added function FreeImage_GetBitsEx()
++ [Carsten Klein] added structure SAFEARRAY2D to create 2 dimensional custom arrays
++ [Carsten Klein] added function declarations for converting scanlines to 4 bpp:
++                 added declaration for FreeImage_ConvertLine1To4()
++                 added declaration for FreeImage_ConvertLine8To4()
++                 added declaration for FreeImage_ConvertLine16To4_555()
++                 added declaration for FreeImage_ConvertLine16To4_565()
++                 added declaration for FreeImage_ConvertLine24To4()
++                 added declaration for FreeImage_ConvertLine32To4()
+
+June 16, 2005
+! [Carsten Klein] changed inproper function declaration for all functions FreeImage_ConvertLineXXXX(): now parameters 'target' and 'Source' are passed ByVal
+
+June 15, 2005
++ [Carsten Klein] added function FreeImage_DestroyLockedArrayByPtr() to destroy a locked array by it's pointer (VB can't pass a array of structures through a Variant type)
++ [Carsten Klein] added some wrapper functions for FreeImage_DestroyLockedArrayByPtr() for common FreeImage structures:
++                 added function FreeImage_DestroyLockedArrayRGBTRIPLE()
++                 added function FreeImage_DestroyLockedArrayRGBQUAD()
++                 added function FreeImage_DestroyLockedArrayFICOMPLEX()
++                 added function FreeImage_DestroyLockedArrayFIRGB16()
++                 added function FreeImage_DestroyLockedArrayFIRGBA16()
++                 added function FreeImage_DestroyLockedArrayFIRGBF()
++                 added function FreeImage_DestroyLockedArrayFIRGBAF()
++ [Carsten Klein] added functions to return scanlines as VB style arrays in all supported FreeImage formats:
++                 added function FreeImage_GetScanLineBITMAP8()
++                 added function FreeImage_GetScanLineBITMAP16()
++                 added function FreeImage_GetScanLineBITMAP24()
++                 added function FreeImage_GetScanLineBITMAP32()
++                 added function FreeImage_GetScanLineINT16()
++                 added function FreeImage_GetScanLineINT32()
++                 added function FreeImage_GetScanLineFLOAT()
++                 added function FreeImage_GetScanLineDOUBLE()
++                 added function FreeImage_GetScanLineCOMPLEX()
++                 added function FreeImage_GetScanLineRGB16()
++                 added function FreeImage_GetScanLineRGBA16()
++                 added function FreeImage_GetScanLineRGBF()
++                 added function FreeImage_GetScanLineRGBAF()
+
+June 14, 2005
+! [Carsten Klein] updated documentation on array-dealing functions using arrays with custom array descriptors
++ [Carsten Klein] added function FreeImage_DestroyLockedArray() to destroy a self created array 'FADF_AUTO Or FADF_FIXEDSIZE' array
++ [Carsten Klein] added function FreeImage_GetPaletteExLong() to return palette data in an array of type Long
++ [Carsten Klein] added parameters 'lPaletteSize', 'vntReservePalette' and 'lReserveSize' to FreeImage_ConvertColorDepth()
+
+June 13, 2005
+* [Carsten Klein] fixed a bug in helper function pGetMemoryBlockPtrFromVariant(): now 'size_in_bytes' will never exceed the size of an array provided
+
+June 12, 2005
++ [Carsten Klein] added ZLib compression function wrappers dealing with VB style arrays:
++                 added function FreeImage_ZLibCompressVB()
++                 added function FreeImage_ZLibUncompressVB()
++                 added function FreeImage_ZLibGZipVB()
++                 added function FreeImage_ZLibGUnzipVB()
+
+June 10, 2005
+! [Carsten Klein] fixed wrong function declaration of functions FreeImage_AdjustBrightness(): ...@8 -> ...@12
+!                 fixed wrong function declaration of functions FreeImage_AdjustContrast(): ...@8 -> ...@12
+!                 fixed wrong function declaration of functions FreeImage_AdjustGamma(): ...@8 -> ...@12
+!                 fixed wrong function declaration of functions FreeImage_RotateClassic(): ...@8 -> ...@12
+!                 fixed wrong function declaration of functions FreeImage_RotateEx(): ...@28 -> ...@48
+
+June 9, 2005
+! [Carsten Klein] fixed wrong function declaration of function FreeImage_OpenMultiBitmap(): added parameter 'flags' (...@20 -> ...@24)
+
+June 8, 2005
+! [Carsten Klein] refactored function FreeImage_LoadFromMemoryEx(): now using pGetMemoryBlockPtrFromVariant()
++ [Carsten Klein] added private function pGetMemoryBlockPtrFromVariant() to get poiner and size of a memory block from a Variant parameter
+! [Carsten Klein] changed declaration of ZLib related functions: 'target' and 'Source' are now 'ByVal Long'
+
 June 07, 2005
 + [Carsten Klein] added some more inline comments and documentation
 + [Carsten Klein] added optional parameter 'bUnloadSource' to function FreeImage_SaveToMemoryEx()
