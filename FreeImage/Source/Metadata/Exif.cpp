@@ -58,6 +58,8 @@ int
 FreeImage_strnicmp(const char *s1, const char *s2, size_t len) {
 	unsigned char c1, c2;
 
+	if(!s1 || !s2) return -1;
+
 	c1 = 0;	c2 = 0;
 	if(len) {
 		do {
@@ -164,6 +166,8 @@ processMakerNote(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *s
 	*md_model = TagLib::UNKNOWN;
 
 	// Determine the camera model and makernote format
+	// WARNING: note that Maker may be NULL sometimes so check its value before using it
+	// (NULL pointer checking is done by FreeImage_strnicmp)
 	FreeImage_GetMetadata(FIMD_EXIF_MAIN, dib, "Make", &tagMake);
 	const char *Maker = (char*)FreeImage_GetTagValue(tagMake);
 
@@ -172,42 +176,40 @@ processMakerNote(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *s
 		*md_model = TagLib::EXIF_MAKERNOTE_OLYMPUS;
 		*subdirOffset = 8;
 	} 
-	else if(FreeImage_strnicmp("NIKON", Maker, 5) == 0) {
-		if(strncmp("Nikon", pval, 5) == 0) {
-			/* There are two scenarios here:
-			 * Type 1:
-			 * :0000: 4E 69 6B 6F 6E 00 01 00-05 00 02 00 02 00 06 00 Nikon...........
-			 * :0010: 00 00 EC 02 00 00 03 00-03 00 01 00 00 00 06 00 ................
-			 * Type 3:
-			 * :0000: 4E 69 6B 6F 6E 00 02 00-00 00 4D 4D 00 2A 00 00 Nikon....MM.*...
-			 * :0010: 00 08 00 1E 00 01 00 07-00 00 00 04 30 32 30 30 ............0200
-			 */
-			if (pval[6] == 1) {
-				// Nikon type 1 Makernote
-				*md_model = TagLib::EXIF_MAKERNOTE_NIKONTYPE1;
-				*subdirOffset = 8;
-            } else if (pval[6] == 2) {
-                // Nikon type 3 Makernote
-				*md_model = TagLib::EXIF_MAKERNOTE_NIKONTYPE3;
-				*subdirOffset = 18;
-            } else {
-				// Unsupported makernote data ignored
-				*md_model = TagLib::UNKNOWN;
-			}
-		} else {
-			// Nikon type 2 Makernote
-			*md_model = TagLib::EXIF_MAKERNOTE_NIKONTYPE2;
-			*subdirOffset = 0;
+	else if(strncmp("Nikon", pval, 5) == 0) {
+		/* There are two scenarios here:
+		 * Type 1:
+		 * :0000: 4E 69 6B 6F 6E 00 01 00-05 00 02 00 02 00 06 00 Nikon...........
+		 * :0010: 00 00 EC 02 00 00 03 00-03 00 01 00 00 00 06 00 ................
+		 * Type 3:
+		 * :0000: 4E 69 6B 6F 6E 00 02 00-00 00 4D 4D 00 2A 00 00 Nikon....MM.*...
+		 * :0010: 00 08 00 1E 00 01 00 07-00 00 00 04 30 32 30 30 ............0200
+		 */
+		if (pval[6] == 1) {
+			// Nikon type 1 Makernote
+			*md_model = TagLib::EXIF_MAKERNOTE_NIKONTYPE1;
+			*subdirOffset = 8;
+        } else if (pval[6] == 2) {
+            // Nikon type 3 Makernote
+			*md_model = TagLib::EXIF_MAKERNOTE_NIKONTYPE3;
+			*subdirOffset = 18;
+        } else {
+			// Unsupported makernote data ignored
+			*md_model = TagLib::UNKNOWN;
 		}
-    } else if(FreeImage_strnicmp("Canon", Maker, 5) == 0) {
+	} else if(Maker && (FreeImage_strnicmp("NIKON", Maker, 5) == 0)) {
+		// Nikon type 2 Makernote
+		*md_model = TagLib::EXIF_MAKERNOTE_NIKONTYPE2;
+		*subdirOffset = 0;
+    } else if(Maker && (FreeImage_strnicmp("Canon", Maker, 5) == 0)) {
         // Canon Makernote
 		*md_model = TagLib::EXIF_MAKERNOTE_CANON;
 		*subdirOffset = 0;		
-    } else if(FreeImage_strnicmp("Casio", Maker, 5) == 0) {
+    } else if(Maker && (FreeImage_strnicmp("Casio", Maker, 5) == 0)) {
         // Casio Makernote
 		*md_model = TagLib::EXIF_MAKERNOTE_CASIO;
 		*subdirOffset = 0;
-	} else if ((strncmp("FUJIFILM", pval, 8) == 0) || (FreeImage_strnicmp("Fujifilm", Maker, 8) == 0)) {
+	} else if ((strncmp("FUJIFILM", pval, 8) == 0) || (Maker && (FreeImage_strnicmp("Fujifilm", Maker, 8) == 0))) {
         // Fujifile Makernote
 		*md_model = TagLib::EXIF_MAKERNOTE_FUJIFILM;
         DWORD ifdStart = (DWORD) ReadUint32(msb_order, pval + 8);
@@ -217,7 +219,7 @@ processMakerNote(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *s
 		*md_model = TagLib::EXIF_MAKERNOTE_KYOCERA;
 		*subdirOffset = 22;
 	}
-	else if(FreeImage_strnicmp("Minolta", Maker, 7) == 0) {
+	else if(Maker && (FreeImage_strnicmp("Minolta", Maker, 7) == 0)) {
 		// Minolta maker note
 		*md_model = TagLib::EXIF_MAKERNOTE_MINOLTA;
 		*subdirOffset = 0;
@@ -227,7 +229,7 @@ processMakerNote(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *s
 		*md_model = TagLib::EXIF_MAKERNOTE_PANASONIC;
 		*subdirOffset = 12;
 	}
-	else if((FreeImage_strnicmp("Pentax", Maker, 6) == 0) || (FreeImage_strnicmp("Asahi", Maker, 5) == 0)) {
+	else if(Maker && ((FreeImage_strnicmp("Pentax", Maker, 6) == 0) || (FreeImage_strnicmp("Asahi", Maker, 5) == 0))) {
 		// Pentax maker note
 		*md_model = TagLib::EXIF_MAKERNOTE_PENTAX;
 		if(strncmp("AOC\x00", pval, 4) == 0) {
