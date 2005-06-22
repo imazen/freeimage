@@ -13,6 +13,7 @@ Month Day, 2005 - 3.7.1
 * [Herve Drolon] FreeImage_Dither now uses FreeImage_ConvertToGreyscale and handles 4/8-bit palletized images
 * [Herve Drolon] FreeImage_Threshold now uses FreeImage_ConvertToGreyscale and handles 4/8-bit palletized images
 * [Craig Hockenberry] fixed PluginGIF::Save swapping the byte order for the height on big endian machines (e.g. PPC on Mac OS X.)
+* [Herve Drolon] fixed a bug in JPEG plugin when reading Exif maker notes from images produced by Nikon Editor
 
 May 7, 2005 - 3.7.0
 ! FreeImage now uses libTIFF 3.7.2
