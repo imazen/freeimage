@@ -1,173 +1,122 @@
+'--------------------------------------------------------------------------------
+' FreeImage 3 VB6/VBA wrapper 
+' List of public functions available
+'--------------------------------------------------------------------------------
+
+'--------------------------------------------------------------------------------
 ' Error handling functions
-Public Sub FreeImage_InitErrorHandler()
+'--------------------------------------------------------------------------------
+FreeImage_InitErrorHandler()
 
 
-' String returning function wrappers (same signature as in FreeImage 3)
-Public Function FreeImage_GetVersion() As String
-
-Public Function FreeImage_GetCopyrightMessage() As String
-
-Public Function FreeImage_GetFormatFromFIF(ByVal fif As FREE_IMAGE_FORMAT) As String
-
-Public Function FreeImage_GetFIFExtensionList(ByVal fif As FREE_IMAGE_FORMAT) As String
-
-Public Function FreeImage_GetFIFDescription(ByVal fif As FREE_IMAGE_FORMAT) As String
-
-Public Function FreeImage_GetFIFRegExpr(ByVal fif As FREE_IMAGE_FORMAT) As String
-
-Public Function FreeImage_GetFIFMimeType(ByVal fif As FREE_IMAGE_FORMAT) As String
+'--------------------------------------------------------------------------------
+' String returning functions wrappers
+'--------------------------------------------------------------------------------
+FreeImage_GetVersion()
+FreeImage_GetCopyrightMessage()
+FreeImage_GetFormatFromFIF()
+FreeImage_GetFIFExtensionList()
+FreeImage_GetFIFDescription()
+FreeImage_GetFIFRegExpr()
+FreeImage_GetFIFMimeType()
 
 
-' Array dealing functions
-Public Function FreeImage_GetPaletteEx(ByVal dib As Long) As RGBQUAD()
-
-Public Function FreeImage_GetPaletteExClone(ByVal dib As Long) As RGBQUAD()
-
-Public Function FreeImage_GetTransparencyTableEx(ByVal dib As Long) As Byte()
-
-Public Sub FreeImage_SetTransparencyTableEx(ByVal dib As Long, _
-                                            ByRef table() As Byte, _
-                                   Optional ByRef Count As Long = -1)
-
-Public Function FreeImage_GetHistogramEx(ByVal dib As Long, _
-                                Optional ByVal channel As FREE_IMAGE_COLOR_CHANNEL = FICC_BLACK, _
-                                Optional ByRef success As Boolean) As Long()
-
-Public Function FreeImage_LoadFromMemoryEx(ByRef data As Variant, _
-                                  Optional ByRef size_in_bytes As Long = 0, _
-                                  Optional ByRef fif As FREE_IMAGE_FORMAT) As Long
-
-Public Function FreeImage_SaveToMemoryEx(ByVal fif As FREE_IMAGE_FORMAT, _
-                                         ByVal dib As Long, _
-                                         ByRef data() As Byte, _
-                                Optional ByVal flags As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
-                                Optional ByVal bUnloadSource As Boolean) As Boolean
-
-Public Function FreeImage_SaveToMemoryEx2(ByVal fif As FREE_IMAGE_FORMAT, _
-                                          ByVal dib As Long, _
-                                          ByRef data() As Byte, _
-                                          ByRef stream As Long, _
-                                 Optional ByVal flags As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
-                                 Optional ByVal bUnloadSource As Boolean) As Boolean
-
-Public Function FreeImage_AcquireMemoryEx(ByVal stream As Long, _
-                                          ByRef data() As Byte, _
-                                 Optional ByRef size_in_bytes As Long) As Boolean
+'--------------------------------------------------------------------------------
+' Extended functions derived from FreeImage 3 functions usually dealing
+' with arrays
+'--------------------------------------------------------------------------------
+FreeImage_GetPaletteEx()
+FreeImage_GetPaletteExClone()
+FreeImage_GetPaletteExLong()
+FreeImage_GetTransparencyTableEx()
+FreeImage_SetTransparencyTableEx()
+FreeImage_GetHistogramEx()
+FreeImage_LoadFromMemoryEx()
+FreeImage_SaveToMemoryEx()
+FreeImage_SaveToMemoryEx2()
+FreeImage_AcquireMemoryEx()
 
 
-' Tag accessing functions (experimental)
-Public Function FreeImage_TagFromPointer(ByVal tag As Long) As FITAG
+'--------------------------------------------------------------------------------
+' Tag accessing VB friendly helper functions
+'--------------------------------------------------------------------------------
+FreeImage_TagFromPointer()
 
 
-' other derived functions
-Public Function FreeImage_IsExtensionValidForFIF(ByVal fif As FREE_IMAGE_FORMAT, _
-                                                 ByVal extension As String, _
-                                        Optional ByVal compare As VbCompareMethod = vbBinaryCompare) As Boolean
-
-Public Function FreeImage_IsFilenameValidForFIF(ByVal fif As FREE_IMAGE_FORMAT, _
-                                                ByVal FileName As String, _
-                                       Optional ByVal compare As VbCompareMethod = vbBinaryCompare) As Boolean
-
-Public Function FreeImage_GetPrimaryExtensionFromFIF(ByVal fif As FREE_IMAGE_FORMAT) As String
-
-Public Function FreeImage_IsGreyscaleImage(ByVal dib As Long) As Boolean
-
-Public Function FreeImage_GetResolutionX(ByVal dib As Long) As Long
-
-Public Function FreeImage_GetResolutionY(ByVal dib As Long) As Long
-
-Public Sub FreeImage_SetResolutionX(ByVal dib As Long, ByVal res As Long)
-
-Public Sub FreeImage_SetResolutionY(ByVal dib As Long, ByVal res As Long)
-
-Public Function FreeImage_ConvertColorDepth(ByVal hDIB As Long, _
-                                            ByVal eConversionFlag As FREE_IMAGE_CONVERSION_FLAGS, _
-                                   Optional ByVal bUnloadSource As Boolean, _
-                                   Optional ByVal bThreshold As Byte = 128, _
-                                   Optional ByVal eDitherMethod As FREE_IMAGE_DITHER = FID_FS, _
-                                   Optional ByVal eQuantizationMethod As FREE_IMAGE_QUANTIZE = FIQ_WUQUANT) As Long
-
-Public Function FreeImage_RescaleEx(ByVal hDIB As Long, _
-                           Optional ByVal vntDstWidth As Variant, _
-                           Optional ByVal vntDstHeight As Variant, _
-                           Optional ByVal bIsPercentValue As Boolean, _
-                           Optional ByVal bUnloadSource As Boolean, _
-                           Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
-                           
-Public Function FreeImage_RescaleByPixel(ByVal hDIB As Long, _
-                                Optional ByVal lDstWidthPixel As Long, _
-                                Optional ByVal lDstHeightPixel As Long, _
-                                Optional ByVal bUnloadSource As Boolean, _
-                                Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
-
-Public Function FreeImage_RescaleByPercent(ByVal hDIB As Long, _
-                                  Optional ByVal dblDstWidthPercent As Double, _
-                                  Optional ByVal dblDstHeightPercent As Double, _
-                                  Optional ByVal bUnloadSource As Boolean, _
-                                  Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
-
-Public Function FreeImage_RescaleByFactor(ByVal hDIB As Long, _
-                                 Optional ByVal dblDstWidthFactor As Double, _
-                                 Optional ByVal dblDstHeightFactor As Double, _
-                                 Optional ByVal bUnloadSource As Boolean, _
-                                 Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long                                  
-
-Public Function FreeImage_PaintDC(ByVal hDC As Long, _
-                                  ByVal hDIB As Long, _
-                         Optional ByVal lXDest As Long = 0, _
-                         Optional ByVal lYDest As Long = 0, _
-                         Optional ByVal lXSrc As Long = 0, _
-                         Optional ByVal lYSrc As Long = 0, _
-                         Optional ByVal lnSrcWidth As Long, _
-                         Optional ByVal lnSrcHeight As Long, _
-                         Optional ByVal eDrawMode As DRAW_MODE = DM_DRAW_DEFAULT, _
-                         Optional ByVal eRasterOperator As RASTER_OPERATOR = ROP_SRCCOPY) As Long
- 
-Public Function FreeImage_PaintDCEx(ByVal hDC As Long, _
-                                    ByVal hDIB As Long, _
-                           Optional ByVal lXDest As Long = 0, _
-                           Optional ByVal lYDest As Long = 0, _
-                           Optional ByVal lnDestWidth As Long, _
-                           Optional ByVal lnDestHeight As Long, _
-                           Optional ByVal lXSrc As Long = 0, _
-                           Optional ByVal lYSrc As Long = 0, _
-                           Optional ByVal lnSrcWidth As Long, _
-                           Optional ByVal lnSrcHeight As Long, _
-                           Optional ByVal eDrawMode As DRAW_MODE = DM_DRAW_DEFAULT, _
-                           Optional ByVal eRasterOperator As RASTER_OPERATOR = ROP_SRCCOPY, _
-                           Optional ByVal eStretchMode As STRETCH_MODE = SM_COLORONCOLOR) As Long
+'--------------------------------------------------------------------------------
+' Derived and hopefully useful functions
+'--------------------------------------------------------------------------------
+FreeImage_IsExtensionValidForFIF()
+FreeImage_IsFilenameValidForFIF()
+FreeImage_GetPrimaryExtensionFromFIF()
+FreeImage_IsGreyscaleImage()
+FreeImage_GetResolutionX()
+FreeImage_SetResolutionX()
+FreeImage_GetResolutionY()
+FreeImage_SetResolutionY()
+FreeImage_ConvertColorDepth()
+FreeImage_RescaleEx()
+FreeImage_RescaleByPixel()
+FreeImage_RescaleByPercent()
+FreeImage_RescaleByFactor()
+FreeImage_PaintDC()
+FreeImage_PaintDCEx()
 
 
-' Ole Picture functions
-Public Function FreeImage_GetOlePicture(ByVal hDIB As Long, _
-                               Optional ByVal hDC As Long, _
-                               Optional ByVal bUnloadSource As Boolean) As IPicture
+'--------------------------------------------------------------------------------
+' Pixel access functions
+'--------------------------------------------------------------------------------
+FreeImage_GetBitsEx()
+FreeImage_GetScanLineEx()
+FreeImage_GetScanLineBITMAP8()
+FreeImage_GetScanLineBITMAP16()
+FreeImage_GetScanLineBITMAP24()
+FreeImage_GetScanLineBITMAP32()
+FreeImage_GetScanLineINT16()
+FreeImage_GetScanLineINT32()
+FreeImage_GetScanLineFLOAT()
+FreeImage_GetScanLineDOUBLE()
+FreeImage_GetScanLineCOMPLEX()
+FreeImage_GetScanLineRGB16()
+FreeImage_GetScanLineRGBA16()
+FreeImage_GetScanLineRGBF()
+FreeImage_GetScanLineRGBAF()
 
-Public Function FreeImage_CreateFromOlePicture(ByRef IOlePicture As IPicture) As Long
 
-Public Function FreeImage_AdjustPictureBox(ByRef pbox As Object, _
-                                  Optional ByVal adjust_mode As FREE_IMAGE_ADJUST_MODE, _
-                                  Optional ByVal Filter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As IPicture
+'--------------------------------------------------------------------------------
+' OlePicture conversion functions
+'--------------------------------------------------------------------------------
+FreeImage_GetOlePicture()
+FreeImage_CreateFromOlePicture()
+FreeImage_AdjustPictureBox()
+AdjustPicture()
+LoadPictureEx()
+SavePictureEx()
 
-Public Function AdjustPicture(ByRef Control As Object, _
-                     Optional ByRef Mode As FREE_IMAGE_ADJUST_MODE = AM_DEFAULT, _
-                     Optional ByRef Filter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As IPicture
-                     
-Public Function LoadPictureEx(Optional ByRef FileName As Variant, _
-                              Optional ByRef Width As Variant, _
-                              Optional ByRef Height As Variant, _
-                              Optional ByRef InPercent As Boolean = False, _
-                              Optional ByRef Filter As FREE_IMAGE_FILTER, _
-                              Optional ByRef Format As FREE_IMAGE_FORMAT = FIF_UNKNOWN) As IPictureDisp
 
-Public Function SavePictureEx(ByRef Picture As IPictureDisp, _
-                              ByRef FileName As String, _
-                     Optional ByRef Format As FREE_IMAGE_FORMAT = FIF_UNKNOWN, _
-                     Optional ByRef Options As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
-                     Optional ByRef Width As Variant, _
-                     Optional ByRef Height As Variant, _
-                     Optional ByRef InPercent As Boolean = False, _
-                     Optional ByRef Filter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+'--------------------------------------------------------------------------------
+' Compression functions wrappers
+'--------------------------------------------------------------------------------
+FreeImage_ZLibCompressEx()
+FreeImage_ZLibUncompressEx()
+FreeImage_ZLibGZipEx()
+FreeImage_ZLibCRC32Ex()
+FreeImage_ZLibGUnzipEx()
+FreeImage_ZLibCompressVB()
+FreeImage_ZLibUncompressVB()
+FreeImage_ZLibGZipVB()
+FreeImage_ZLibGUnzipVB()
 
-                                
 
+'--------------------------------------------------------------------------------
+' Public functions to destroy custom safearrays
+'--------------------------------------------------------------------------------
+FreeImage_DestroyLockedArray()
+FreeImage_DestroyLockedArrayByPtr()
+FreeImage_DestroyLockedArrayRGBTRIPLE()
+FreeImage_DestroyLockedArrayRGBQUAD()
+FreeImage_DestroyLockedArrayFICOMPLEX()
+FreeImage_DestroyLockedArrayFIRGB16()
+FreeImage_DestroyLockedArrayFIRGBA16()
+FreeImage_DestroyLockedArrayFIRGBF()
+FreeImage_DestroyLockedArrayFIRGBAF()
