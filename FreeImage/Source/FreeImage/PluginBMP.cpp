@@ -359,7 +359,14 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 										}
 
 										default :
-											io->read_proc((void *)(FreeImage_GetScanLine(dib, scanline) + bits), sizeof(BYTE) * status_byte, 1, handle);
+										{
+											if(scanline >= height) {
+												return dib;
+											}
+
+											int count = MIN((int)status_byte, width - bits);
+
+											io->read_proc((void *)(FreeImage_GetScanLine(dib, scanline) + bits), sizeof(BYTE) * count, 1, handle);
 											
 											// align run length to even number of bytes 
 
@@ -368,24 +375,33 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 											bits += status_byte;													
 
-											break;								
-									};
+											break;	
+										}
+									}
 
 									break;
 
 								default :
+								{
+									if(scanline >= height) {
+										return dib;
+									}
+
+									int count = MIN((int)status_byte, width - bits);
+
 									BYTE *sline = FreeImage_GetScanLine(dib, scanline);
 
 									io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
 
-									for (unsigned i = 0; i < status_byte; i++) {
+									for (unsigned i = 0; i < count; i++) {
 										*(sline + bits) = second_byte;
 
 										bits++;					
 									}
 
 									break;
-							};
+								}
+							}
 						}
 
 						break;
