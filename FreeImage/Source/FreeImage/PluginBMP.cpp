@@ -393,7 +393,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 									io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
 
-									for (unsigned i = 0; i < count; i++) {
+									for (int i = 0; i < count; i++) {
 										*(sline + bits) = second_byte;
 
 										bits++;					
