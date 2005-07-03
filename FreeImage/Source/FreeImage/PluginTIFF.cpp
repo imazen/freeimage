@@ -934,6 +934,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if((photometric == PHOTOMETRIC_SEPARATED) && (bitspersample == 16))
 				throw "Unable to handle 16-bit CMYK TIFF";
 
+			if( TIFFIsTiled(tif) )
+				throw "Tiled TIFF images are not supported";
+
 			// ---------------------------------------------------------------------------------
 
 			// get image data type
