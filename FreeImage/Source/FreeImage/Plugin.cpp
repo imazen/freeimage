@@ -724,6 +724,7 @@ FreeImage_GetFIFFromFilename(const char *filename) {
 
 FREE_IMAGE_FORMAT DLL_CALLCONV 
 FreeImage_GetFIFFromFilenameU(const wchar_t *filename) {
+#ifdef WIN32	
 	if (filename == NULL) return FIF_UNKNOWN;
     	
 	// get the proper extension if we received a filename
@@ -739,6 +740,9 @@ FreeImage_GetFIFFromFilenameU(const wchar_t *filename) {
 	free(extension);
 
 	return fRet;
+#else
+	return FIF_UNKNOWN;
+#endif // WIN32
 }
 
 BOOL DLL_CALLCONV
