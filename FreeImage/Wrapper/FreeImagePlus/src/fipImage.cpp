@@ -263,6 +263,33 @@ BOOL fipImage::load(const char* lpszPathName, int flag) {
 	return FALSE;
 }
 
+BOOL fipImage::loadU(const wchar_t* lpszPathName, int flag) {
+	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
+
+	// check the file signature and get its format
+	// (the second argument is currently not used by FreeImage)
+	fif = FreeImage_GetFileTypeU(lpszPathName, 0);
+	if(fif == FIF_UNKNOWN) {
+		// no signature ?
+		// try to guess the file format from the file extension
+		fif = FreeImage_GetFIFFromFilenameU(lpszPathName);
+	}
+	// check that the plugin has reading capabilities ...
+	if((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
+		// Free the previous dib
+		if(_dib) {
+			FreeImage_Unload(_dib);			
+		}
+		// Load the file
+		_dib = FreeImage_LoadU(fif, lpszPathName, flag);
+		_bHasChanged = TRUE;
+		if(_dib == NULL)
+			return FALSE;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 BOOL fipImage::loadFromHandle(FreeImageIO *io, fi_handle handle, int flag) {
 	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
 
@@ -325,6 +352,34 @@ BOOL fipImage::save(const char* lpszPathName, int flag) {
 
 		if(bCanSave) {
 			bSuccess = FreeImage_Save(fif, _dib, lpszPathName, flag);
+			return bSuccess;
+		}
+	}
+	return bSuccess;
+}
+
+BOOL fipImage::saveU(const wchar_t* lpszPathName, int flag) {
+	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
+	BOOL bSuccess = FALSE;
+
+	// Try to guess the file format from the file extension
+	fif = FreeImage_GetFIFFromFilenameU(lpszPathName);
+	if(fif != FIF_UNKNOWN ) {
+		// Check that the dib can be saved in this format
+		BOOL bCanSave;
+
+		FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(_dib);
+		if(image_type == FIT_BITMAP) {
+			// standard bitmap type
+			WORD bpp = FreeImage_GetBPP(_dib);
+			bCanSave = (FreeImage_FIFSupportsWriting(fif) && FreeImage_FIFSupportsExportBPP(fif, bpp));
+		} else {
+			// special bitmap type
+			bCanSave = FreeImage_FIFSupportsExportType(fif, image_type);
+		}
+
+		if(bCanSave) {
+			bSuccess = FreeImage_SaveU(fif, _dib, lpszPathName, flag);
 			return bSuccess;
 		}
 	}

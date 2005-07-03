@@ -384,6 +384,24 @@ FreeImage_Load(FREE_IMAGE_FORMAT fif, const char *filename, int flags) {
 	return NULL;
 }
 
+FIBITMAP * DLL_CALLCONV
+FreeImage_LoadU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, int flags) {
+	FreeImageIO io;
+	SetDefaultIO(&io);
+#ifdef WIN32	
+	FILE *handle = _wfopen(filename, L"rb");
+
+	if (handle) {
+		FIBITMAP *bitmap = FreeImage_LoadFromHandle(fif, &io, (fi_handle)handle, flags);
+
+		fclose(handle);
+
+		return bitmap;
+	}
+#endif
+	return NULL;
+}
+
 BOOL DLL_CALLCONV
 FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FreeImageIO *io, fi_handle handle, int flags) {
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
@@ -425,6 +443,24 @@ FreeImage_Save(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const char *filename, int f
 		return success;
 	}
 
+	return FALSE;
+}
+
+BOOL DLL_CALLCONV
+FreeImage_SaveU(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const wchar_t *filename, int flags) {
+	FreeImageIO io;
+	SetDefaultIO(&io);
+#ifdef WIN32	
+	FILE *handle = _wfopen(filename, L"w+b");
+	
+	if (handle) {
+		BOOL success = FreeImage_SaveToHandle(fif, dib, &io, (fi_handle)handle, flags);
+
+		fclose(handle);
+
+		return success;
+	}
+#endif
 	return FALSE;
 }
 
@@ -650,40 +686,59 @@ FreeImage_GetFIFFromFilename(const char *filename) {
 
 			if (s_plugins->FindNodeFromFIF(i)->m_enabled) {
 
-			// compare the format id with the extension
+				// compare the format id with the extension
 
-			if (FreeImage_stricmp(FreeImage_GetFormatFromFIF((FREE_IMAGE_FORMAT)i), extension) == 0) {
+				if (FreeImage_stricmp(FreeImage_GetFormatFromFIF((FREE_IMAGE_FORMAT)i), extension) == 0) {
 					return (FREE_IMAGE_FORMAT)i;
 				} else {
-				// make a copy of the extension list and split it
+					// make a copy of the extension list and split it
 
-				char *copy = (char *)malloc(strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
-				memset(copy, 0, strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
-				memcpy(copy, FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i), strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)));
+					char *copy = (char *)malloc(strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
+					memset(copy, 0, strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)) + 1);
+					memcpy(copy, FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i), strlen(FreeImage_GetFIFExtensionList((FREE_IMAGE_FORMAT)i)));
 
-				// get the first token
+					// get the first token
 
-				char *token = strtok(copy, ",");
+					char *token = strtok(copy, ",");
 
-				while (token != NULL) {
-					if (FreeImage_stricmp(token, extension) == 0) {
-						free(copy);
+					while (token != NULL) {
+						if (FreeImage_stricmp(token, extension) == 0) {
+							free(copy);
 
-							return (FREE_IMAGE_FORMAT)i;
+								return (FREE_IMAGE_FORMAT)i;
+						}
+
+						token = strtok(NULL, ",");
 					}
 
-					token = strtok(NULL, ",");
-				}
+					// free the copy of the extension list
 
-				// free the copy of the extension list
-
-				free(copy);
-			}	
+					free(copy);
+				}	
 			}
 		}
 	}
 
 	return FIF_UNKNOWN;
+}
+
+FREE_IMAGE_FORMAT DLL_CALLCONV 
+FreeImage_GetFIFFromFilenameU(const wchar_t *filename) {
+	if (filename == NULL) return FIF_UNKNOWN;
+    	
+	// get the proper extension if we received a filename
+	wchar_t *place = wcsrchr((wchar_t *)filename, '.');	
+	// convert to single character - no national chars in extensions
+	char *extension = (char *)malloc(wcslen(place)+1);
+	unsigned int i=0;
+	for(; i < wcslen(place); i++) // convert 16-bit to 8-bit
+		extension[i] = (place[i]&0x00ff);
+	// set terminating 0
+	extension[i]=0;
+	FREE_IMAGE_FORMAT fRet = FreeImage_GetFIFFromFilename(extension);
+	free(extension);
+
+	return fRet;
 }
 
 BOOL DLL_CALLCONV

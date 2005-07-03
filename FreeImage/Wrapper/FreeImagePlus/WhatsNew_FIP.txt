@@ -5,6 +5,11 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+July 3rd, 2005
+[Herve Drolon] 
++ added UNICODE function fipImage::loadU
++ added UNICODE function fipImage::saveU
+                                  
 June 15th, 2005
 [Herve Drolon]
 ! fipImage::convertToGrayscale now uses FreeImage_ConvertToGreyscale

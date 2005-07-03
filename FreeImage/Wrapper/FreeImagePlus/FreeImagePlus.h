@@ -175,6 +175,12 @@ public:
 	BOOL load(const char* lpszPathName, int flag = 0);
 
 	/**
+	UNICODE version of load (this function only works under WIN32 and does nothing on other OS)
+	@see load
+	*/
+	BOOL loadU(const wchar_t* lpszPathName, int flag = 0);
+
+	/**
 	@brief Loads an image using the specified FreeImageIO struct and fi_handle, and an optional flag.
 	@param io FreeImageIO structure
 	@param handle FreeImage fi_handle
@@ -201,6 +207,12 @@ public:
 	@see FreeImage_Save, FreeImage documentation
 	*/
 	BOOL save(const char* lpszPathName, int flag = 0);
+
+	/**
+	UNICODE version of save (this function only works under WIN32 and does nothing on other OS)
+	@see save
+	*/
+	BOOL saveU(const wchar_t* lpszPathName, int flag = 0);
 
 	/**
 	@brief Saves an image using the specified FreeImageIO struct and fi_handle, and an optional flag.

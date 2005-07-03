@@ -8,6 +8,12 @@ What's New for FreeImage
 Month Day, 2005 - 3.7.1
 + [Herve Drolon] added support for 48-bit images to FreeImage_ConvertTo24Bits
 + [Herve Drolon] added FreeImage_ConvertToGreyscale
++ [Herve Drolon] added support for 16-bit greyscale images to FreeImage_ConvertTo8Bits
++ [Petr Pytelka] added UNICODE functions (see below) 
+                 added FreeImage_LoadU
+                 added FreeImage_SaveU
+                 added FreeImage_GetFIFFromFilenameU
+                 added FreeImage_GetFileTypeU
 * [Ryan Rubley] fixed PluginGIF failing to link on some broken gcc versions
 * [Karl-Heinz Bussian] fixed a bug in LookupX11Color/LookupSVGColor with handling of grey color names
 * [Herve Drolon] FreeImage_Dither now uses FreeImage_ConvertToGreyscale and handles 4/8-bit palletized images
