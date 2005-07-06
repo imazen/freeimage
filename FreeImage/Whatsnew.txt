@@ -6,6 +6,7 @@ What's New for FreeImage
 + : added
 
 Month Day, 2005 - 3.7.1
+! FreeImage now uses libTIFF 3.7.3
 + [Herve Drolon] added support for 48-bit images to FreeImage_ConvertTo24Bits
 + [Herve Drolon] added FreeImage_ConvertToGreyscale
 + [Herve Drolon] added support for 16-bit greyscale images to FreeImage_ConvertTo8Bits

@@ -81,7 +81,7 @@ typedef	signed char int8;	/* NB: non-ANSI compilers may not grok */
 typedef	unsigned char uint8;
 typedef	short int16;
 typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
-#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64) || defined(__LP64__) || defined(__arch64__)
+#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64) || defined(__LP64__) || defined(__arch64__) || defined(__sparcv9)
 typedef	int int32;
 typedef	unsigned int uint32;	/* sizeof (uint32) must == 4 */
 #else
@@ -289,6 +289,9 @@ typedef	enum {
 #define	TIFFTAG_ARTIST			315	/* creator of image */
 #define	TIFFTAG_HOSTCOMPUTER		316	/* machine where created */
 #define	TIFFTAG_PREDICTOR		317	/* prediction scheme w/ LZW */
+#define     PREDICTOR_NONE		1	/* no prediction scheme used */
+#define     PREDICTOR_HORIZONTAL	2	/* horizontal differencing */
+#define     PREDICTOR_FLOATINGPOINT	3	/* floating point predictor */
 #define	TIFFTAG_WHITEPOINT		318	/* image white point */
 #define	TIFFTAG_PRIMARYCHROMATICITIES	319	/* !primary chromaticities */
 #define	TIFFTAG_COLORMAP		320	/* RGB map for pallette image */
@@ -415,12 +418,15 @@ typedef	enum {
 #define TIFFTAG_IT8CMYKEQUIVALENT	34032	/* CMYK color equivalents */
 /* tags 34232-34236 are private tags registered to Texas Instruments */
 #define TIFFTAG_FRAMECOUNT              34232   /* Sequence Frame Count */
-/* tag 34750 is a private tag registered to Adobe? */
-#define TIFFTAG_ICCPROFILE		34675	/* ICC profile data */
 /* tag 34377 is private tag registered to Adobe for PhotoShop */
 #define TIFFTAG_PHOTOSHOP		34377 
+/* tags 34665, 34853 and 40965 are documented in EXIF specification */
+#define TIFFTAG_EXIFIFD			34665	/* Pointer to EXIF private directory */
+/* tag 34750 is a private tag registered to Adobe? */
+#define TIFFTAG_ICCPROFILE		34675	/* ICC profile data */
 /* tag 34750 is a private tag registered to Pixel Magic */
 #define	TIFFTAG_JBIGOPTIONS		34750	/* JBIG options */
+#define TIFFTAG_GPSIFD			34853	/* Pointer to GPS private directory */
 /* tags 34908-34914 are private tags registered to SGI */
 #define	TIFFTAG_FAXRECVPARAMS		34908	/* encoded Class 2 ses. parms */
 #define	TIFFTAG_FAXSUBADDRESS		34909	/* received SubAddr string */
@@ -430,9 +436,8 @@ typedef	enum {
 #define TIFFTAG_STONITS			37439	/* Sample value to Nits */
 /* tag 34929 is a private tag registered to FedEx */
 #define	TIFFTAG_FEDEX_EDR		34929	/* unknown use */
-/* tag 65535 is an undefined tag used by Eastman Kodak */
-#define TIFFTAG_DCSHUESHIFTVALUES       65535   /* hue shift correction data */
-/* Adobe Digital Negative format tags */
+#define TIFFTAG_INTEROPERABILITYIFD	40965	/* Pointer to Interoperability private directory */
+/* Adobe Digital Negative (DNG) format tags */
 #define TIFFTAG_DNGVERSION		50706	/* &DNG version number */
 #define TIFFTAG_DNGBACKWARDVERSION	50707	/* &DNG compatibility version */
 #define TIFFTAG_UNIQUECAMERAMODEL	50708	/* &name for the camera model */
@@ -485,9 +490,11 @@ typedef	enum {
 						   in the red/green rows */
 #define TIFFTAG_LINEARRESPONSELIMIT	50734	/* &non-linear encoding range */
 #define TIFFTAG_CAMERASERIALNUMBER	50735	/* &camera's serial number */
+#define TIFFTAG_LENSINFO		50736	/* info about the lens */
 #define TIFFTAG_CHROMABLURRADIUS	50737	/* &chroma blur radius */
 #define TIFFTAG_ANTIALIASSTRENGTH	50738	/* &relative strength of the
 						   camera's anti-alias filter */
+#define TIFFTAG_SHADOWSCALE		50739	/* &used by Adobe Camera Raw */
 #define TIFFTAG_DNGPRIVATEDATA		50740	/* &manufacturer's private data */
 #define TIFFTAG_MAKERNOTESAFETY		50741	/* &whether the EXIF MakerNote
 						   tag is safe to preserve
@@ -496,6 +503,23 @@ typedef	enum {
 #define	TIFFTAG_CALIBRATIONILLUMINANT1	50778	/* &illuminant 1 */
 #define TIFFTAG_CALIBRATIONILLUMINANT2	50779	/* &illuminant 2 */
 #define TIFFTAG_BESTQUALITYSCALE	50780	/* &best quality multiplier */
+#define TIFFTAG_RAWDATAUNIQUEID		50781	/* &unique identifier for
+						   the raw image data */
+#define TIFFTAG_ORIGINALRAWFILENAME	50827	/* &file name of the original
+						   raw file */
+#define TIFFTAG_ORIGINALRAWFILEDATA	50828	/* &contents of the original
+						   raw file */
+#define TIFFTAG_ACTIVEAREA		50829	/* &active (non-masked) pixels
+						   of the sensor */
+#define TIFFTAG_MASKEDAREAS		50830	/* &list of coordinates
+						   of fully masked pixels */
+#define TIFFTAG_ASSHOTICCPROFILE	50831	/* &these two tags used to */
+#define TIFFTAG_ASSHOTPREPROFILEMATRIX	50832	/* map cameras's color space
+						   into ICC profile space */
+#define TIFFTAG_CURRENTICCPROFILE	50833	/* & */
+#define TIFFTAG_CURRENTPREPROFILEMATRIX	50834	/* & */
+/* tag 65535 is an undefined tag used by Eastman Kodak */
+#define TIFFTAG_DCSHUESHIFTVALUES       65535   /* hue shift correction data */
 
 /*
  * The following are ``pseudo tags'' that can be used to control

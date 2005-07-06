@@ -50,6 +50,10 @@
 # define assert(x) 
 #endif
 
+#if HAVE_SEARCH_H
+# include <search.h>
+#endif
+
 #include "tiffio.h"
 #include "tif_dir.h"
 
@@ -105,6 +109,8 @@ struct tiff {
 #define	TIFF_INSUBIFD		0x2000	/* currently writing a subifd */
 #define	TIFF_UPSAMPLED		0x4000	/* library is doing data up-sampling */ 
 #define	TIFF_STRIPCHOP		0x8000	/* enable strip chopping support */
+#define	TIFF_HEADERONLY		0x10000	/* read header only, do not process */
+					/* the first directory */
 	toff_t		tif_diroff;	/* file offset of current directory */
 	toff_t		tif_nextdiroff;	/* file offset of following directory */
 	toff_t*		tif_dirlist;	/* list of offsets to already seen */
@@ -169,7 +175,7 @@ struct tiff {
 	TIFFPostMethod	tif_postdecode;	/* post decoding routine */
 /* tag support */
 	TIFFFieldInfo**	tif_fieldinfo;	/* sorted table of registered tags */
-	int		tif_nfields;	/* # entries in registered tag table */
+	size_t		tif_nfields;	/* # entries in registered tag table */
 	const TIFFFieldInfo *tif_foundfield;/* cached pointer to already found tag */
         TIFFTagMethods  tif_tagmethods; /* tag get/set/print routines */
         TIFFClientInfoLink *tif_clientinfo; /* extra client information. */
@@ -234,6 +240,7 @@ extern	void _TIFFNoPostDecode(TIFF*, tidata_t, tsize_t);
 extern  int  _TIFFNoPreCode (TIFF*, tsample_t); 
 extern	int _TIFFNoSeek(TIFF*, uint32);
 extern	void _TIFFSwab16BitData(TIFF*, tidata_t, tsize_t);
+extern	void _TIFFSwab24BitData(TIFF*, tidata_t, tsize_t);
 extern	void _TIFFSwab32BitData(TIFF*, tidata_t, tsize_t);
 extern	void _TIFFSwab64BitData(TIFF*, tidata_t, tsize_t);
 extern	int TIFFFlushData1(TIFF*);
@@ -243,13 +250,14 @@ extern	int TIFFSetCompressionScheme(TIFF*, int);
 extern	int TIFFSetDefaultCompressionState(TIFF*);
 extern	uint32 _TIFFDefaultStripSize(TIFF*, uint32);
 extern	void _TIFFDefaultTileSize(TIFF*, uint32*, uint32*);
+extern	int _TIFFDataSize(TIFFDataType);
 
-extern	void _TIFFsetByteArray(void**, void*, long);
+extern	void _TIFFsetByteArray(void**, void*, uint32);
 extern	void _TIFFsetString(char**, char*);
-extern	void _TIFFsetShortArray(uint16**, uint16*, long);
-extern	void _TIFFsetLongArray(uint32**, uint32*, long);
-extern	void _TIFFsetFloatArray(float**, float*, long);
-extern	void _TIFFsetDoubleArray(double**, double*, long);
+extern	void _TIFFsetShortArray(uint16**, uint16*, uint32);
+extern	void _TIFFsetLongArray(uint32**, uint32*, uint32);
+extern	void _TIFFsetFloatArray(float**, float*, uint32);
+extern	void _TIFFsetDoubleArray(double**, double*, uint32);
 
 extern	void _TIFFprintAscii(FILE*, const char*);
 extern	void _TIFFprintAsciiTag(FILE*, const char*, const char*);

@@ -74,7 +74,7 @@ TIFFCleanup(TIFF* tif)
 	/* Clean up custom fields */
 	if (tif->tif_nfields > 0) 
 	{
-	    int  i;
+	    size_t i;
 
 	    for (i = 0; i < tif->tif_nfields; i++) 
 	    {

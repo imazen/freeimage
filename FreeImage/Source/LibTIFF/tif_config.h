@@ -239,8 +239,21 @@
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
-/* #undef inline */
-#endif
+  #ifdef _MSC_VER
+    #ifndef inline
+    #define inline __inline
+    #endif
+  #else
+    #undef inline
+  #endif // _MSC_VER
+#endif // __cplusplus
+
+#ifdef _MSC_VER 
+#define lfind _lfind
+/* Define to 1 if you have the <search.h> header file. */
+#define HAVE_SEARCH_H 1
+#endif // _MSC_VER
+
 
 /* Define to `long' if <sys/types.h> does not define. */
 /* #undef off_t */

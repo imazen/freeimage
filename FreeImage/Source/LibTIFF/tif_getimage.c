@@ -24,6 +24,10 @@
  * OF THIS SOFTWARE.
  */
 
+#ifdef _MSC_VER 
+#pragma warning (disable : 4550) // expression evaluates to a function which is missing an argument list
+#endif
+
 /*
  * TIFF Library
  *
@@ -2040,12 +2044,12 @@ initYCbCrConversion(TIFFRGBAImage* img)
 	 */
 	TIFFGetFieldDefaulted(img->tif, TIFFTAG_YCBCRSUBSAMPLING, &hs, &vs);
 	switch ((hs<<4)|vs) {
-		case 0x44: return (&putcontig8bitYCbCr44tile);
-		case 0x42: return (&putcontig8bitYCbCr42tile);
-		case 0x41: return (&putcontig8bitYCbCr41tile);
-		case 0x22: return (&putcontig8bitYCbCr22tile);
-		case 0x21: return (&putcontig8bitYCbCr21tile);
-		case 0x11: return (&putcontig8bitYCbCr11tile);
+		case 0x44: return (putcontig8bitYCbCr44tile);
+		case 0x42: return (putcontig8bitYCbCr42tile);
+		case 0x41: return (putcontig8bitYCbCr41tile);
+		case 0x22: return (putcontig8bitYCbCr22tile);
+		case 0x21: return (putcontig8bitYCbCr21tile);
+		case 0x11: return (putcontig8bitYCbCr11tile);
 	}
 
 	return (NULL);
@@ -2081,7 +2085,7 @@ initCIELabConversion(TIFFRGBAImage* img)
 		return NULL;
 	}
 
-	return &putcontig8bitCIELab;
+	return putcontig8bitCIELab;
 }
 
 /*
