@@ -678,19 +678,17 @@ tiff_read_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
 */
 static BOOL 
 tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib) {
-	#define TIFFTAG_EXIFIFD	34665	// Offset to private IFD holding Exif Tags
-
-	short tag_count = 0;
-	void* data = NULL;
+	uint16  count = 0;
+    uint32 *exif_offset = 0;
 	
-	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &tag_count, &data)) {
-		// get the IFD offset
-		uint32 offset = *(uint32*)data;
+	// get the IFD offset
+	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &count, &exif_offset)) {
+		if(!exif_offset) return FALSE;
 
 		// don't know where to go from here ...
 		// the following doesn't work because there's no image data in the exif IFD
 		
-		if(!TIFFSetSubDirectory(tiff, offset))
+		if(!TIFFSetSubDirectory(tiff, *exif_offset))
 			return FALSE;
 		
 		return TRUE;
@@ -712,7 +710,7 @@ ReadMetadata(TIFF *tiff, FIBITMAP *dib) {
 	tiff_read_xmp_profile(tiff, dib);
 
 	// Exif-TIFF (does not work)
-	tiff_read_exif_profile(tiff, dib);
+	//tiff_read_exif_profile(tiff, dib);
 
 	// GeoTIFF
 	tiff_read_geotiff_profile(tiff, dib);
