@@ -297,6 +297,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					// Read SUN raster colormap
 
 					int numcolors = 1 << header.depth;
+					if(3 * numcolors > header.maplength) {
+						// some RAS may have less colors than the full palette
+						numcolors = header.maplength / 3;
+					} else {
+						throw "Invalid palette";
+					}
 
 					r = (BYTE*)malloc(3 * numcolors * sizeof(BYTE));
 					g = r + numcolors;
@@ -449,6 +455,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			return dib;
 
 		} catch (const char *text) {
+			if(dib) {
+				FreeImage_Unload(dib);
+			}
 			FreeImage_OutputMessageProc(s_format_id, text);
 	
 			return NULL;

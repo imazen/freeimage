@@ -22,6 +22,7 @@ Month Day, 2005 - 3.7.1
 * [Craig Hockenberry] fixed PluginGIF::Save swapping the byte order for the height on big endian machines (e.g. PPC on Mac OS X.)
 * [Herve Drolon] fixed a bug in JPEG plugin when reading Exif maker notes from images produced by Nikon Editor
 * [Herve Drolon] fixed a bug in BMP plugin when reading some malformed RLE8 bmp
+* [Herve Drolon] fixed a bug in RAS plugin when loading 8-bit palettized images with less than 256 colors
 
 May 7, 2005 - 3.7.0
 ! FreeImage now uses libTIFF 3.7.2
