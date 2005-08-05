@@ -5,6 +5,9 @@ What's New for FreeImage Delphi Wrapper
 ! : changed
 + : added
 
+August 5, 2005
+* [kaare-nysite] fixed the prototype of FreeImage_ConvertFromRawBits
+
 June 21, 2005
 * [Maarten Veerman] fixed the prototype of FreeImage_OpenMultiBitmap
 
