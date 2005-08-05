@@ -35,16 +35,16 @@ BOOL fipMultiPage::isValid() {
 	return (NULL != _mpage) ? TRUE : FALSE;
 }
 
-BOOL fipMultiPage::open(const char* lpszPathName, BOOL create_new, BOOL read_only) {
+BOOL fipMultiPage::open(const char* lpszPathName, BOOL create_new, BOOL read_only, int flags) {
 	// try to guess the file format from the filename
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(lpszPathName);
 
 	// check for supported file types
-	if((fif == FIF_UNKNOWN) || (fif != FIF_TIFF) && (fif != FIF_ICO))
+	if((fif == FIF_UNKNOWN) || (fif != FIF_TIFF) && (fif != FIF_ICO) && (fif != FIF_GIF))
 		return FALSE;
 
 	// open the stream
-	_mpage = FreeImage_OpenMultiBitmap(fif, lpszPathName, create_new, read_only, _bMemoryCache);
+	_mpage = FreeImage_OpenMultiBitmap(fif, lpszPathName, create_new, read_only, _bMemoryCache, flags);
 
 	return (NULL != _mpage ) ? TRUE : FALSE;
 }

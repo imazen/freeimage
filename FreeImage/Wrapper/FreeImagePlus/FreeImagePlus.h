@@ -1049,10 +1049,11 @@ public:
 	@param lpszPathName Name of the multi-page bitmap file
 	@param create_new When TRUE, it means that a new bitmap will be created rather than an existing one being opened
 	@param read_only When TRUE the bitmap is opened read-only
+	@param flags Load flags. The signification of this flag depends on the image to be loaded.
 	@return Returns TRUE if successful, returns FALSE otherwise
 	@see FreeImage_OpenMultiBitmap
 	*/
-	BOOL open(const char* lpszPathName, BOOL create_new, BOOL read_only);
+	BOOL open(const char* lpszPathName, BOOL create_new, BOOL read_only, int flags = 0);
 
 	/**
 	Close a file stream

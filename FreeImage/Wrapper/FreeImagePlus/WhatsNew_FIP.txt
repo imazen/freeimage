@@ -5,6 +5,10 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+July 15th, 2005
+* fixed fipMultiPage not reading GIF files
++ added load flags to fipMultiPage::open
+
 July 3rd, 2005
 [Herve Drolon] 
 + added UNICODE function fipImage::loadU
