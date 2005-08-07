@@ -105,6 +105,11 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 
 	int bpp = FreeImage_GetBPP(dib);
 
+	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+	if((image_type != FIT_BITMAP) && (image_type != FIT_UINT16)) {
+		return NULL;
+	}
+
 	if(bpp != 8) {
 		int width  = FreeImage_GetWidth(dib);
 		int height = FreeImage_GetHeight(dib);
@@ -123,8 +128,6 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 			new_pal[i].rgbGreen = i;
 			new_pal[i].rgbBlue	= i;
 		}
-
-		FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 
 		if(image_type == FIT_BITMAP) {
 
@@ -233,7 +236,9 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 				dst_bits += dst_pitch;
 			}
 
-		}
+			return new_dib;
+
+		} 
 
 	} // bpp != 8
 
