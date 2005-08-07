@@ -273,7 +273,7 @@ void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned
 			case 48:
 			case 64:
 			{
-				// Calculate the number of words per pixel (1 for 16-bit, 3 for 48-bit or 4 for 96-bit)
+				// Calculate the number of words per pixel (1 for 16-bit, 3 for 48-bit or 4 for 64-bit)
 				unsigned wordspp = (FreeImage_GetLine(src) / FreeImage_GetWidth(src)) / sizeof(WORD);
 
 				for(unsigned y = 0; y < dst_height; y++) {
@@ -300,7 +300,7 @@ void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned
 
 						// clamp and place result in destination pixel
 						for (unsigned j = 0; j < wordspp; j++) {
-							dst_bits[j] = (BYTE)MIN(MAX((WORD)0, (WORD)(value[j] + 0.5)), (WORD)0xFFFF);
+							dst_bits[j] = (WORD)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)0xFFFF);
 						}
 
 						dst_bits += wordspp;
@@ -381,7 +381,7 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 			case 48:
 			case 64:
 			{
-				// Calculate the number of words per pixel (1 for 16-bit, 3 for 48-bit or 4 for 96-bit)
+				// Calculate the number of words per pixel (1 for 16-bit, 3 for 48-bit or 4 for 64-bit)
 				unsigned wordspp = (FreeImage_GetLine(src) / FreeImage_GetWidth(src)) / sizeof(WORD);
 
 				unsigned src_pitch = FreeImage_GetPitch(src) / sizeof(WORD);
@@ -415,7 +415,7 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 
 						// clamp and place result in destination pixel
 						for (unsigned j = 0; j < wordspp; j++) {
-							dst_bits[j] = (BYTE)MIN(MAX((WORD)0, (WORD)(value[j] + 0.5)), (WORD)0xFFFF);
+							dst_bits[j] = (WORD)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)0xFFFF);
 						}
 
 						dst_bits += dst_pitch;
