@@ -125,6 +125,11 @@ FreeImage_ConvertTo24Bits(FIBITMAP *dib) {
 
 	int bpp = FreeImage_GetBPP(dib);
 
+	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+	if((image_type != FIT_BITMAP) && (image_type != FIT_RGB16)) {
+		return NULL;
+	}
+
 	if (bpp != 24) {
 		int width = FreeImage_GetWidth(dib);
 		int height = FreeImage_GetHeight(dib);
