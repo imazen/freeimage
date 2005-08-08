@@ -132,8 +132,8 @@ public:
 
 	/**
 	@brief Copy a sub part of the current image and returns it as a fipImage object.
-
-	The bit depth of the bitmap must be equal to 1, 4, 8, 16, 24 or 32.
+	
+	This method works with any bitmap type.
 	@param dst Output subimage
 	@param left Specifies the left position of the cropped rectangle. 
 	@param top Specifies the top position of the cropped rectangle. 
@@ -819,12 +819,16 @@ public:
 
 	/** Clone function used for clipboard copy.<br>
 	Convert the FIBITMAP image to a DIB, 
-	and transfer the DIB in a global bitmap handle.
+	and transfer the DIB in a global bitmap handle.<br>
+	For non standard bitmaps, the BITMAPINFOHEADER->biCompression field is set to 0xFF + FreeImage_GetImageType(_dib), 
+	in order to recognize the bitmap as non standard. 
 	*/
 	HANDLE copyToHandle();
 
 	/** Copy constructor used for clipboard paste.<br>
-	Converts a global object to a FIBITMAP. The clipboard format must be CF_DIB.
+	Converts a global object to a FIBITMAP. The clipboard format must be CF_DIB.<br>
+	When the BITMAPINFOHEADER->biCompression field is set to 0xFF + [one of the predefined FREE_IMAGE_TYPE], 
+	the bitmap is recognized as non standard and correctly copied. 
 	@return Returns TRUE if successful, returns FALSE otherwise
 	*/
 	BOOL copyFromHandle(HANDLE hMem);

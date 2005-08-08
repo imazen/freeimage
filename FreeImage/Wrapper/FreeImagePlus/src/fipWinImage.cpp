@@ -23,6 +23,20 @@
 
 #ifdef WIN32
 
+// marker used for clipboard copy / paste
+
+static inline void 
+SET_FREEIMAGE_MARKER(BITMAPINFOHEADER *bmih, FIBITMAP *dib) {
+	// Windows constants goes from 0L to 5L
+	// Add 0xFF to avoid conflicts
+	bmih->biCompression = 0xFF + FreeImage_GetImageType(dib);
+}
+
+static inline FREE_IMAGE_TYPE 
+GET_FREEIMAGE_MARKER(BITMAPINFOHEADER *bmih) {
+	return (FREE_IMAGE_TYPE)(bmih->biCompression - 0xFF);
+}
+
 ///////////////////////////////////////////////////////////////////
 // Construction / Destruction
 
@@ -71,6 +85,10 @@ HANDLE fipWinImage::copyToHandle() {
 
 		BITMAPINFOHEADER *bih = FreeImage_GetInfoHeader(_dib);
 		memcpy(p_dib, bih, sizeof(BITMAPINFOHEADER));
+		if(FreeImage_GetImageType(_dib) != FIT_BITMAP) {
+			// this hack is used to store the bitmap type in the biCompression member of the BITMAPINFOHEADER
+			SET_FREEIMAGE_MARKER((BITMAPINFOHEADER*)p_dib, _dib);
+		}
 		p_dib += sizeof(BITMAPINFOHEADER);
 
 		// Copy the palette
@@ -120,7 +138,25 @@ BOOL fipWinImage::copyFromHandle(HANDLE hMem) {
 	if(lpVoid) {
 
 		// Allocate a new FIBITMAP
-		if(!setSize(FIT_BITMAP, (WORD)pHead->biWidth, (WORD)pHead->biHeight, pHead->biBitCount, bitfields[2], bitfields[1], bitfields[0])) {
+
+		FREE_IMAGE_TYPE image_type = FIT_BITMAP;
+		// Use a hack to decide if the clipboard contains non standard bitmaps ...
+		switch(GET_FREEIMAGE_MARKER(pHead)) {
+			case FIT_UINT16:
+			case FIT_INT16:
+			case FIT_UINT32:
+			case FIT_INT32:
+			case FIT_FLOAT:
+			case FIT_DOUBLE:
+			case FIT_COMPLEX:
+			case FIT_RGB16:
+			case FIT_RGBA16:
+			case FIT_RGBF:
+			case FIT_RGBAF:
+				image_type = GET_FREEIMAGE_MARKER(pHead);
+				break;
+		}
+		if(!setSize(image_type, (WORD)pHead->biWidth, (WORD)pHead->biHeight, pHead->biBitCount, bitfields[2], bitfields[1], bitfields[0])) {
 			GlobalUnlock(lpVoid);
 			return FALSE;
 		}
