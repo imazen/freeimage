@@ -40,6 +40,8 @@
 // Alpha blending / combine functions
 
 // ----------------------------------------------------------
+/// 1-bit
+static BOOL Combine1(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha);
 /// 4-bit
 static BOOL Combine4(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha);
 /// 8-bit
@@ -53,6 +55,43 @@ static BOOL Combine24(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD
 /// 32- bit
 static BOOL Combine32(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha);
 // ----------------------------------------------------------
+
+// ----------------------------------------------------------
+//   1-bit
+// ----------------------------------------------------------
+
+static BOOL 
+Combine1(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) {
+	BOOL value;
+
+	// check the bit depth of src and dst images
+	if((FreeImage_GetBPP(dst_dib) != 1) || (FreeImage_GetBPP(src_dib) != 1)) {
+		return FALSE;
+	}
+
+	// check the size of src image
+	if((x + FreeImage_GetWidth(src_dib) > FreeImage_GetWidth(dst_dib)) || (y + FreeImage_GetHeight(src_dib) > FreeImage_GetHeight(dst_dib))) {
+		return FALSE;
+	}
+
+	BYTE *dst_bits = FreeImage_GetBits(dst_dib) + ((FreeImage_GetHeight(dst_dib) - FreeImage_GetHeight(src_dib) - y) * FreeImage_GetPitch(dst_dib));
+	BYTE *src_bits = FreeImage_GetBits(src_dib);	
+
+	// combine images
+	for(WORD rows = 0; rows < FreeImage_GetHeight(src_dib); rows++) {
+		for(WORD cols = 0; cols < FreeImage_GetWidth(src_dib); cols++) {
+			// get bit at (rows, cols) in src image
+			value = (src_bits[cols >> 3] & (0x80 >> (cols & 0x07))) != 0;
+			// set bit at (rows, x+cols) in dst image	
+			value ? dst_bits[(x + cols) >> 3] |= (0x80 >> ((x + cols) & 0x7)) : dst_bits[(x + cols) >> 3] &= (0xFF7F >> ((x + cols) & 0x7));
+		}
+
+		dst_bits += FreeImage_GetPitch(dst_dib);
+		src_bits += FreeImage_GetPitch(src_dib);
+	}
+
+	return TRUE;
+}
 
 // ----------------------------------------------------------
 //   4-bit
@@ -411,12 +450,12 @@ Combine32(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) {
 
 /**
 Copy a sub part of the current image and returns it as a FIBITMAP*.
-The bit depth of the bitmap must be equal to 1, 4, 8, 16, 24 or 32.
+Works with any bitmap type.
 @param left Specifies the left position of the cropped rectangle. 
 @param top Specifies the top position of the cropped rectangle. 
 @param right Specifies the right position of the cropped rectangle. 
 @param bottom Specifies the bottom position of the cropped rectangle. 
-@return Returns subimage if successful, NULL otherwise.
+@return Returns the subimage if successful, NULL otherwise.
 */
 FIBITMAP * DLL_CALLCONV 
 FreeImage_Copy(FIBITMAP *src, int left, int top, int right, int bottom) {
@@ -442,7 +481,15 @@ FreeImage_Copy(FIBITMAP *src, int left, int top, int right, int bottom) {
 	unsigned bpp = FreeImage_GetBPP(src);
 	int dst_width = (right - left);
 	int dst_height = (bottom - top);
-	FIBITMAP *dst = FreeImage_Allocate(dst_width, dst_height, bpp, FreeImage_GetRedMask(src), FreeImage_GetGreenMask(src), FreeImage_GetBlueMask(src));
+
+	FIBITMAP *dst = 
+		FreeImage_AllocateT(FreeImage_GetImageType(src), 
+							dst_width, 
+							dst_height, 
+							bpp, 
+							FreeImage_GetRedMask(src), FreeImage_GetGreenMask(src), FreeImage_GetBlueMask(src));
+
+	if(NULL == dst) return NULL;
 
 	// get the dimensions
 	int dst_line = FreeImage_GetLine(dst);
@@ -461,27 +508,17 @@ FreeImage_Copy(FIBITMAP *src, int left, int top, int right, int bottom) {
 			// point to x = 0
 			break;
 
-		case 8 :
-			src_bits += left * sizeof(BYTE);
-			break;
-
-		case 16 :
-			src_bits += left * sizeof(WORD);
-			break;
-
-		case 24 :
-			src_bits += left * sizeof(RGBTRIPLE);
-			break;
-
-		case 32 :
-			src_bits += left * sizeof(RGBQUAD);
-			break;
-
 		default:
-			FreeImage_Unload(dst);
-			return NULL;
+		{
+			// calculate the number of bytes per pixel
+			unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+			// point to x = left
+			src_bits += left * bytespp;
+		}
+		break;
 	}
 
+	// point to x = 0
 	BYTE *dst_bits = FreeImage_GetBits(dst);
 
 	// copy the palette
@@ -536,7 +573,7 @@ FreeImage_Copy(FIBITMAP *src, int left, int top, int right, int bottom) {
 /**
 Alpha blend or combine a sub part image with the current image.
 The bit depth of dst bitmap must be greater than or equal to the bit depth of src. 
-Upper promotion of src is done internally. Supported bit depth equals to 4, 8, 16, 24 or 32.
+Upper promotion of src is done internally. Supported bit depth equals to 1, 4, 8, 16, 24 or 32.
 @param src Source subimage
 @param left Specifies the left position of the sub image. 
 @param top Specifies the top position of the sub image. 
@@ -574,6 +611,9 @@ FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha) {
 	} else if(bpp_dst > bpp_src) {
 		// perform promotion
 		switch(bpp_dst) {
+			case 4:
+				clone = FreeImage_ConvertTo4Bits(src);
+				break;
 			case 8:
 				clone = FreeImage_ConvertTo8Bits(src);
 				break;
@@ -602,6 +642,9 @@ FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha) {
 
 	// paste src to dst
 	switch(FreeImage_GetBPP(dst)) {
+		case 1:
+			bResult = Combine1(dst, clone, left, top, alpha);
+			break;
 		case 4:
 			bResult = Combine4(dst, clone, left, top, alpha);
 			break;
