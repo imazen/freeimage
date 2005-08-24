@@ -90,7 +90,7 @@
 #pragma option push -b
 #endif
 
-// For C compatility --------------------------------------------------------
+// For C compatibility --------------------------------------------------------
 
 #ifdef __cplusplus
 #define FI_DEFAULT(x)	= x

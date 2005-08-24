@@ -587,11 +587,10 @@ FreeImage_GetICCProfile(FIBITMAP *dib) {
 
 FIICCPROFILE * DLL_CALLCONV
 FreeImage_CreateICCProfile(FIBITMAP *dib, void *data, long size) {
+	// clear the profile but preserve profile->flags
+	FreeImage_DestroyICCProfile(dib);
+	// create the new profile
 	FIICCPROFILE *profile = FreeImage_GetICCProfile(dib);
-	if (profile->data) {
-		free (profile->data);
-	}
-	memset(profile, 0, sizeof(FIICCPROFILE));
 	if (size && (profile->data = malloc(size))) {
 		memcpy(profile->data, data, profile->size = size);
 	}
@@ -604,7 +603,9 @@ FreeImage_DestroyICCProfile(FIBITMAP *dib) {
 	if (profile->data) {
 		free (profile->data);
 	}
-	memset(profile, 0, sizeof(FIICCPROFILE));
+	// clear the profile but preserve profile->flags
+	profile->data = NULL;
+	profile->size = 0;
 }
 
 // ----------------------------------------------------------
