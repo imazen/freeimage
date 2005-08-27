@@ -47,6 +47,7 @@ fipImage::fipImage(FREE_IMAGE_TYPE image_type, WORD width, WORD height, WORD bpp
 fipImage::~fipImage() {
 	if(_dib) {
 		FreeImage_Unload(_dib);
+		_dib = NULL;
 	}
 }
 
@@ -76,6 +77,14 @@ BOOL fipImage::setSize(FREE_IMAGE_TYPE image_type, WORD width, WORD height, WORD
 	_bHasChanged = TRUE;
 
 	return TRUE;
+}
+
+void fipImage::clear() {
+	if(_dib) {
+		FreeImage_Unload(_dib);
+		_dib = NULL;
+	}
+	_bHasChanged = TRUE;
 }
 
 ///////////////////////////////////////////////////////////////////

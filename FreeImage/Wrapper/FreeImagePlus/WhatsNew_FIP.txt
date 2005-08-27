@@ -8,10 +8,13 @@ What's New for FreeImagePlus
 Month Day, 2005 - 3.8.0
 [Herve Drolon]
 ! fipImage::convertToGrayscale now uses FreeImage_ConvertToGreyscale
+! fipWinImage::captureWindow now converts 32-bit images to 24-bit
 + added UNICODE function fipImage::loadU
 + added UNICODE function fipImage::saveU
 + added load flags to fipMultiPage::open
 + fipWinImage::copyTo/FromHandle now work with non-standard bitmap types
++ added copy constructors to fipWinImage
++ added fipImage::clear() and fipWinImage::clear()
 * fixed a bug in fipWinWimage::drawEx with non transparent PNG having a file background
 * fixed fipMultiPage not reading GIF files
 * fixed a bug in fipImage::rescale whan handling FIT_UINT16 bitmaps

@@ -55,13 +55,50 @@ fipWinImage::~fipWinImage() {
 	}
 }
 
-fipWinImage::fipWinImage(const fipImage& Img) : fipImage(Img) { 
+void fipWinImage::clear() {
+	// delete _display_dib
+	if(_bDeleteMe) {
+		FreeImage_Unload(_display_dib);
+	}
 	_display_dib = NULL;
 	_bDeleteMe = FALSE;
+	// delete base class data
+	fipImage::clear();
 }
 
 ///////////////////////////////////////////////////////////////////
 // Copying
+
+fipWinImage& fipWinImage::operator=(const fipImage& Image) {
+	// delete _display_dib
+	if(_bDeleteMe) {
+		FreeImage_Unload(_display_dib);
+	}
+	_display_dib = NULL;
+	_bDeleteMe = FALSE;
+	// clone the base class
+	fipImage::operator=(Image);
+
+	return *this;
+}
+
+fipWinImage& fipWinImage::operator=(const fipWinImage& Image) {
+	if(this != &Image) {
+		// delete _display_dib
+		if(_bDeleteMe) {
+			FreeImage_Unload(_display_dib);
+		}
+		_display_dib = NULL;
+		_bDeleteMe = FALSE;
+		// copy tmo data
+		_tmo = Image._tmo;
+		_tmo_param_1 = Image._tmo_param_1;
+		_tmo_param_2 = Image._tmo_param_2;
+		// clone the base class
+		fipImage::operator=(Image);
+	}
+	return *this;
+}
 
 HANDLE fipWinImage::copyToHandle() {
 	HANDLE hMem = NULL;
@@ -308,6 +345,11 @@ BOOL fipWinImage::captureWindow(HWND hWndApplicationWindow, HWND hWndSelectedWin
 	DeleteObject(SelectObject(memDC, oldbm));
 	DeleteObject(memDC);
 
+	// Convert 32-bit images to 24-bit
+	if(getBitsPerPixel() == 32) {
+		convertTo24Bits();
+	}
+
 	return TRUE;
 }
 
@@ -373,13 +415,16 @@ void fipWinImage::drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg, RGBQUAD *appBkC
 }
 
 void fipWinImage::setToneMappingOperator(FREE_IMAGE_TMO tmo, double first_param, double second_param) {
-	_tmo = tmo;
-	_tmo_param_1 = first_param;
-	_tmo_param_2 = second_param;
+	// avoid costly operations if possible ...
+	if((_tmo != tmo) && (_tmo_param_1 != first_param) && (_tmo_param_2 != second_param)) {
+		_tmo = tmo;
+		_tmo_param_1 = first_param;
+		_tmo_param_2 = second_param;
 
-	FREE_IMAGE_TYPE image_type = getImageType();
-	if((image_type == FIT_RGBF) || (image_type == FIT_RGB16)) {
-		_bHasChanged = TRUE;
+		FREE_IMAGE_TYPE image_type = getImageType();
+		if((image_type == FIT_RGBF) || (image_type == FIT_RGB16)) {
+			_bHasChanged = TRUE;
+		}
 	}
 }
 

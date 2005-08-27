@@ -108,6 +108,8 @@ public:
 	@see FreeImage_AllocateT
 	*/
 	BOOL setSize(FREE_IMAGE_TYPE image_type, WORD width, WORD height, WORD bpp, unsigned red_mask = 0, unsigned green_mask = 0, unsigned blue_mask = 0);
+	/// Destroy image data
+	virtual void clear();
 	//@}
 
 	/**@name Copying */
@@ -810,12 +812,28 @@ public:
 
 	/// Destructor
 	~fipWinImage();
+	/// Destroy image data
+	virtual void clear();
 	//@}
 
 	/**@name Copying */
 	//@{	
-	/// Copy constructor
-	fipWinImage(const fipImage& Img);
+
+	/**
+	Copy constructor. 
+	Delete internal _display_dib data and copy the base class image data. 
+	Tone mapping parameters are left unchanged. 
+	@see FreeImage_Clone
+	*/
+	fipWinImage& operator=(const fipImage& src);
+
+	/**
+	Copy constructor
+	Delete internal _display_dib data and copy tone mapping parameters. 
+	Copy also the base class image data. 
+	@see FreeImage_Clone
+	*/
+	fipWinImage& operator=(const fipWinImage& src);
 
 	/** Clone function used for clipboard copy.<br>
 	Convert the FIBITMAP image to a DIB, 
