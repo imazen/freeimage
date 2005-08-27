@@ -356,9 +356,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 				case PNG_COLOR_TYPE_PALETTE:
-					// expand palette images to the full 8 bits from 2 or 4 bits/pixel
+					// expand palette images to the full 8 bits from 2 bits/pixel
 
-					if ((pixel_depth == 2) || (pixel_depth == 4)) {
+					if (pixel_depth == 2) {
 						png_set_packing(png_ptr);
 						pixel_depth = 8;
 					}					
@@ -366,9 +366,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 				case PNG_COLOR_TYPE_GRAY:
-					// expand grayscale images to the full 8 bits from 2 or 4 bits/pixel
+					// expand grayscale images to the full 8 bits from 2 bits/pixel
 
-					if ((pixel_depth == 2) || (pixel_depth == 4)) {
+					if (pixel_depth == 2) {
 						png_set_expand(png_ptr);
 						pixel_depth = 8;
 					}
