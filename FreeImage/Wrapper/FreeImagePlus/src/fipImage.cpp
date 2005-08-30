@@ -538,18 +538,8 @@ BOOL fipImage::dither(FREE_IMAGE_DITHER algorithm) {
 
 BOOL fipImage::convertToRGBF() {
 	if(_dib) {
-		switch(FreeImage_GetImageType(_dib)) {
-			case FIT_BITMAP:
-				if(FreeImage_GetBPP(_dib) < 24) {
-					// conversion is only allowed from 24- or 32-bit
-					if(!convertTo24Bits()) return FALSE;
-				}
-				// no break here
-			case FIT_RGB16:
-			case FIT_RGBF:
-				FIBITMAP *dib = FreeImage_ConvertToRGBF(_dib);
-				return replace(dib);
-		}
+		FIBITMAP *dib = FreeImage_ConvertToRGBF(_dib);
+		return replace(dib);
 	}
 	return FALSE;
 

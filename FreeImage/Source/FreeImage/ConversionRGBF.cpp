@@ -92,7 +92,7 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 					dst_pixel->blue  = (float)(src_pixel[FI_RGBA_BLUE])  / 255;
 
 					src_pixel += bytespp;
-					dst_pixel += sizeof(FIRGBF);
+					dst_pixel ++;
 				}
 				src_bits += src_pitch;
 				dst_bits += dst_pitch;
