@@ -5,7 +5,7 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month Day, 2005 - 3.8.0
+September 5, 2005 - 3.8.0
 ! FreeImage now uses libTIFF 3.7.3
 ! FreeImage now uses ZLib 1.2.3
 + [Herve Drolon] added support for 48-bit images to FreeImage_ConvertTo24Bits
