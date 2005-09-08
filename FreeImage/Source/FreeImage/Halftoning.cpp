@@ -333,7 +333,11 @@ FreeImage_Dither(FIBITMAP *dib, FREE_IMAGE_DITHER algorithm) {
 	//
 	switch(bpp) {
 		case 8:
-			input = dib;
+			if(FreeImage_GetColorType(dib) == FIC_MINISBLACK) {
+				input = dib;
+			} else {
+				input = FreeImage_ConvertToGreyscale(dib);
+			} 
 			break;
 		case 4:
 		case 16:
@@ -365,8 +369,16 @@ FreeImage_Dither(FIBITMAP *dib, FREE_IMAGE_DITHER algorithm) {
 			dib8 = OrderedClusteredDot(input, 8);
 			break;
 	}
-	if(bpp != 8) {
+	if(input != dib) {
 		FreeImage_Unload(input);
+	}
+
+	// Build a greyscale palette (needed by threshold)
+	RGBQUAD *grey_pal = FreeImage_GetPalette(dib8);
+	for(int i = 0; i < 256; i++) {
+		grey_pal[i].rgbRed	= i;
+		grey_pal[i].rgbGreen = i;
+		grey_pal[i].rgbBlue	= i;
 	}
 
 	// Convert to 1-bit
@@ -404,7 +416,11 @@ FreeImage_Threshold(FIBITMAP *dib, BYTE T) {
 	//
 	switch(bpp) {
 		case 8:
-			dib8 = dib;
+			if(FreeImage_GetColorType(dib) == FIC_MINISBLACK) {
+				dib8 = dib;
+			} else {
+				dib8 = FreeImage_ConvertToGreyscale(dib);
+			} 
 			break;
 		case 4:
 		case 16:
@@ -440,7 +456,7 @@ FreeImage_Threshold(FIBITMAP *dib, BYTE T) {
 			}
 		}
 	}
-	if(bpp != 8) {
+	if(dib8 != dib) {
 		FreeImage_Unload(dib8);
 	}
 
