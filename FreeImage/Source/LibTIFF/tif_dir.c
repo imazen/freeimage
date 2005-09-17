@@ -156,6 +156,8 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 				tif->tif_postdecode = _TIFFSwab32BitData;
 			else if (td->td_bitspersample == 64)
 				tif->tif_postdecode = _TIFFSwab64BitData;
+			else if (td->td_bitspersample == 128) /* two 64's */
+				tif->tif_postdecode = _TIFFSwab64BitData;
 		}
 		break;
 	case TIFFTAG_COMPRESSION:
@@ -334,10 +336,6 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
                          && td->td_bitspersample == 64
                          && tif->tif_postdecode == _TIFFSwab64BitData )
                     tif->tif_postdecode = _TIFFSwab32BitData;
-                else if( td->td_sampleformat == SAMPLEFORMAT_COMPLEXIEEEFP
-                         && td->td_bitspersample == 128
-                         && tif->tif_postdecode == NULL )
-                    tif->tif_postdecode = _TIFFSwab64BitData;
 		break;
 	case TIFFTAG_IMAGEDEPTH:
 		td->td_imagedepth = va_arg(ap, uint32);
@@ -348,26 +346,6 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 			goto badvaluedbl;
 		td->td_stonits = d;
 		break;
-	/* Begin Pixar Tags */
- 	case TIFFTAG_PIXAR_IMAGEFULLWIDTH:
- 		td->td_imagefullwidth = va_arg(ap, uint32);
- 		break;
- 	case TIFFTAG_PIXAR_IMAGEFULLLENGTH:
- 		td->td_imagefulllength = va_arg(ap, uint32);
- 		break;
- 	case TIFFTAG_PIXAR_FOVCOT:
- 		td->td_fovcot = (float) va_arg(ap, dblparam_t);
- 		break;
- 	case TIFFTAG_PIXAR_MATRIX_WORLDTOSCREEN:
- 		_TIFFsetFloatArray(&td->td_matrixWorldToScreen,
- 			va_arg(ap, float*), 16);
- 		break;
- 	case TIFFTAG_PIXAR_MATRIX_WORLDTOCAMERA:
- 		_TIFFsetFloatArray(&td->td_matrixWorldToCamera,
- 			va_arg(ap, float*), 16);
- 		break;
- 	/* End Pixar Tags */	       
-
 	case TIFFTAG_SUBIFD:
 		if ((tif->tif_flags & TIFF_INSUBIFD) == 0) {
 			td->td_nsubifd = (uint16) va_arg(ap, int);
@@ -391,9 +369,6 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		break;
 	case TIFFTAG_WHITEPOINT:
 		_TIFFsetFloatArray(&td->td_whitepoint, va_arg(ap, float*), 2);
-		break;
-	case TIFFTAG_PRIMARYCHROMATICITIES:
-		_TIFFsetFloatArray(&td->td_primarychromas, va_arg(ap, float*), 6);
 		break;
 	case TIFFTAG_TRANSFERFUNCTION:
 		v = (td->td_samplesperpixel - td->td_extrasamples) > 1 ? 3 : 1;
@@ -478,7 +453,10 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
                 if(td->td_customValues[iCustom].info == fip) {
                     tv = td->td_customValues + iCustom;
                     if(tv->value != NULL)
+                    {
                         _TIFFfree(tv->value);
+                        tv->value = NULL;
+                    }
                     break;
                 }
             }
@@ -553,12 +531,27 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		} else {
 		    switch (fip->field_type) {
 			case TIFF_BYTE:
-			case TIFF_SBYTE:
-			case TIFF_SHORT:
-			case TIFF_SSHORT:
 			case TIFF_UNDEFINED:
 			    {
-				int v = va_arg(ap, int);
+				uint8 v = (uint8)va_arg(ap, int);
+				_TIFFmemcpy(tv->value, &v, tv_size*tv->count);
+			    }
+			    break;
+			case TIFF_SBYTE:
+			    {
+				int8 v = (int8)va_arg(ap, int);
+				_TIFFmemcpy(tv->value, &v, tv_size*tv->count);
+			    }
+			    break;
+			case TIFF_SHORT:
+			    {
+				uint16 v = (uint16)va_arg(ap, int);
+				_TIFFmemcpy(tv->value, &v, tv_size*tv->count);
+			    }
+			    break;
+			case TIFF_SSHORT:
+			    {
+				int16 v = (int16)va_arg(ap, int);
 				_TIFFmemcpy(tv->value, &v, tv_size*tv->count);
 			    }
 			    break;
@@ -578,6 +571,11 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 			case TIFF_RATIONAL:
 			case TIFF_SRATIONAL:
 			case TIFF_FLOAT:
+			    {
+				float v = (float)va_arg(ap, double);
+				_TIFFmemcpy(tv->value, &v, tv_size*tv->count);
+			    }
+			    break;
 			case TIFF_DOUBLE:
 			    {
 				double v = va_arg(ap, double);
@@ -835,9 +833,6 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
 	case TIFFTAG_WHITEPOINT:
             *va_arg(ap, float**) = td->td_whitepoint;
             break;
-	case TIFFTAG_PRIMARYCHROMATICITIES:
-            *va_arg(ap, float**) = td->td_primarychromas;
-            break;
 	case TIFFTAG_TRANSFERFUNCTION:
             *va_arg(ap, uint16**) = td->td_transferfunction[0];
             if (td->td_samplesperpixel - td->td_extrasamples > 1) {
@@ -877,23 +872,6 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
             *va_arg(ap, uint32*) = td->td_xmlpacketLength;
             *va_arg(ap, void**) = td->td_xmlpacketData;
             break;
-            /* Begin Pixar Tags */
- 	case TIFFTAG_PIXAR_IMAGEFULLWIDTH:
-            *va_arg(ap, uint32*) = td->td_imagefullwidth;
-            break;
- 	case TIFFTAG_PIXAR_IMAGEFULLLENGTH:
-            *va_arg(ap, uint32*) = td->td_imagefulllength;
-            break;
- 	case TIFFTAG_PIXAR_FOVCOT:
-            *va_arg(ap, float*) = td->td_fovcot;
-            break;
- 	case TIFFTAG_PIXAR_MATRIX_WORLDTOSCREEN:
-            *va_arg(ap, float**) = td->td_matrixWorldToScreen;
-            break;
- 	case TIFFTAG_PIXAR_MATRIX_WORLDTOCAMERA:
-            *va_arg(ap, float**) = td->td_matrixWorldToCamera;
-            break;
-            /* End Pixar Tags */
 
         default:
         {
@@ -1056,7 +1034,6 @@ TIFFFreeDirectory(TIFF* tif)
 	CleanupField(td_ycbcrcoeffs);
 	CleanupField(td_inknames);
 	CleanupField(td_whitepoint);
-	CleanupField(td_primarychromas);
 	CleanupField(td_refblackwhite);
 	CleanupField(td_transferfunction[0]);
 	CleanupField(td_transferfunction[1]);
@@ -1067,10 +1044,6 @@ TIFFFreeDirectory(TIFF* tif)
 	CleanupField(td_xmlpacketData);
 	CleanupField(td_stripoffset);
 	CleanupField(td_stripbytecount);
-	/* Begin Pixar Tags */
-	CleanupField(td_matrixWorldToScreen);
-	CleanupField(td_matrixWorldToCamera);
-	/* End Pixar Tags */
 
 	/* Cleanup custom tag values */
 	for( i = 0; i < td->td_customValueCount; i++ ) {

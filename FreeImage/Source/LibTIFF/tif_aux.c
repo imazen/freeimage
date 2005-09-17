@@ -33,6 +33,24 @@
 #include "tif_predict.h"
 #include <math.h>
 
+tdata_t
+_TIFFCheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
+{
+	tdata_t *cp = NULL;
+	tsize_t	bytes = nmemb * elem_size;
+
+	/*
+	 * XXX: Check for integer overflow.
+	 */
+	if (nmemb && elem_size && bytes / elem_size == nmemb)
+		cp = _TIFFmalloc(bytes);
+
+	if (cp == NULL)
+		TIFFError(tif->tif_name, "No space %s", what);
+	
+	return (cp);
+}
+
 static int
 TIFFDefaultTransferFunction(TIFFDirectory* td)
 {

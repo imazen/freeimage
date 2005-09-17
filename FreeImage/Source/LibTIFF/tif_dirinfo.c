@@ -31,7 +31,6 @@
  */
 #include "tiffiop.h"
 #include <stdlib.h>
-#include <stdio.h>
 
 /*
  * NB: NB: THIS ARRAY IS ASSUMED TO BE SORTED BY TAG.
@@ -150,9 +149,9 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       TRUE,	FALSE,	"Artist" },
     { TIFFTAG_HOSTCOMPUTER,	-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"HostComputer" },
-    { TIFFTAG_WHITEPOINT,	 2, 2, TIFF_RATIONAL,FIELD_WHITEPOINT,
+    { TIFFTAG_WHITEPOINT,	 2, 2, TIFF_RATIONAL,	FIELD_WHITEPOINT,
       TRUE,	FALSE,	"WhitePoint" },
-    { TIFFTAG_PRIMARYCHROMATICITIES,6,6,TIFF_RATIONAL,FIELD_PRIMARYCHROMAS,
+    { TIFFTAG_PRIMARYCHROMATICITIES,6,6,TIFF_RATIONAL,	FIELD_CUSTOM,
       TRUE,	FALSE,	"PrimaryChromaticities" },
     { TIFFTAG_COLORMAP,		-1,-1, TIFF_SHORT,	FIELD_COLORMAP,
       TRUE,	FALSE,	"ColorMap" },
@@ -241,20 +240,20 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       FALSE,	FALSE,	"TileDepth" },
 /* end SGI tags */
 /* begin Pixar tags */
-    { TIFFTAG_PIXAR_IMAGEFULLWIDTH,  1, 1, TIFF_LONG,	FIELD_IMAGEFULLWIDTH,
+    { TIFFTAG_PIXAR_IMAGEFULLWIDTH,  1, 1, TIFF_LONG,	FIELD_CUSTOM,
       TRUE,	FALSE,	"ImageFullWidth" },
-    { TIFFTAG_PIXAR_IMAGEFULLLENGTH, 1, 1, TIFF_LONG,	FIELD_IMAGEFULLLENGTH,
+    { TIFFTAG_PIXAR_IMAGEFULLLENGTH, 1, 1, TIFF_LONG,	FIELD_CUSTOM,
       TRUE,	FALSE,	"ImageFullLength" },
     { TIFFTAG_PIXAR_TEXTUREFORMAT,  -1, -1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"TextureFormat" },
     { TIFFTAG_PIXAR_WRAPMODES,	    -1, -1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"TextureWrapModes" },
-    { TIFFTAG_PIXAR_FOVCOT,	     1, 1, TIFF_FLOAT,	FIELD_FOVCOT,
-      TRUE,	FALSE,	"FieldOfViewCotan" },
+    { TIFFTAG_PIXAR_FOVCOT,	     1, 1, TIFF_FLOAT,	FIELD_CUSTOM,
+      TRUE,	FALSE,	"FieldOfViewCotangent" },
     { TIFFTAG_PIXAR_MATRIX_WORLDTOSCREEN,	16,16,	TIFF_FLOAT,
-      FIELD_MATRIX_WORLDTOSCREEN,	TRUE,	FALSE,	"MatrixWorldToScreen" },
+      FIELD_CUSTOM,	TRUE,	FALSE,	"MatrixWorldToScreen" },
     { TIFFTAG_PIXAR_MATRIX_WORLDTOCAMERA,	16,16,	TIFF_FLOAT,
-       FIELD_MATRIX_WORLDTOCAMERA,	TRUE,	FALSE,	"MatrixWorldToCamera" },
+       FIELD_CUSTOM,	TRUE,	FALSE,	"MatrixWorldToCamera" },
     { TIFFTAG_COPYRIGHT,	-1, -1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"Copyright" },
 /* end Pixar tags */
@@ -399,7 +398,7 @@ void
 _TIFFSetupFieldInfo(TIFF* tif)
 {
 	if (tif->tif_fieldinfo) {
-		size_t  i;
+		size_t i;
 
 		for (i = 0; i < tif->tif_nfields; i++) 
 		{
@@ -527,11 +526,11 @@ int
 _TIFFDataSize(TIFFDataType type)
 {
 	switch (type) {
+		case TIFF_BYTE:
+		case TIFF_SBYTE:
 		case TIFF_ASCII:
 		case TIFF_UNDEFINED:
 		    return 1;
-		case TIFF_BYTE:
-		case TIFF_SBYTE:
 		case TIFF_SHORT:
 		case TIFF_SSHORT:
 		    return 2;
