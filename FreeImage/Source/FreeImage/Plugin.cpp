@@ -729,6 +729,7 @@ FreeImage_GetFIFFromFilenameU(const wchar_t *filename) {
     	
 	// get the proper extension if we received a filename
 	wchar_t *place = wcsrchr((wchar_t *)filename, '.');	
+	if (place == NULL) return FIF_UNKNOWN;
 	// convert to single character - no national chars in extensions
 	char *extension = (char *)malloc(wcslen(place)+1);
 	unsigned int i=0;
