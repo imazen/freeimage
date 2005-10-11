@@ -7,6 +7,9 @@ int main(void)
 	vga_modeinfo *inf;
 	int length,height,bpp,y;
 
+	// initialize the FreeImage library
+	FreeImage_Initialise();
+
 	dib = FreeImage_Load(FIF_PNG, "freeimage.png", PNG_DEFAULT);
 
 	vga_init();
@@ -85,6 +88,9 @@ int main(void)
 
 	vga_getch();
 	vga_setmode(TEXT);
+
+	// release the FreeImage library
+	FreeImage_DeInitialise();
 
 	return 0;
 }

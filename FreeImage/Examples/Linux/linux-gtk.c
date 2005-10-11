@@ -13,6 +13,9 @@ int main(int argc, char *argv[])
 	FIBITMAP *dib;
 	int y;
 
+	// initialize the FreeImage library
+	FreeImage_Initialise();
+
 	dib = FreeImage_Load(FIF_PNG, "freeimage.png", PNG_DEFAULT);
 
 	gtk_init(&argc, &argv);
@@ -86,6 +89,9 @@ int main(int argc, char *argv[])
 	gtk_widget_show(window);
 
 	gtk_main();
+
+	// release the FreeImage library
+	FreeImage_DeInitialise();
 
 	return 0;
 }
