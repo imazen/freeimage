@@ -9,6 +9,7 @@ Month day, 2005 - 3.8.1
 ! FreeImage now uses libTIFF 3.7.4
 * [Carsten Klein] FreeImage_Dither and FreeImage_Threshold now work with palettized 8-bit dib
 * [Christophe Petit] fixed a bug in FreeImage_GetFIFFromFilenameU occuring with files without extension
+* [Leigh Brasington] fixed a bug in PluginGIF causing FreeImage not working on Win/98/ME
 
 September 5, 2005 - 3.8.0
 ! FreeImage now uses libTIFF 3.7.3

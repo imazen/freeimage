@@ -841,8 +841,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		//LZW Minimum Code Size
 		io->read_proc(&b, 1, 1, handle);
-		StringTable stringtable;
-		stringtable.Initialize(b);
+		StringTable *stringtable = new StringTable;
+		stringtable->Initialize(b);
 
 		//Image Data Sub-blocks
 		int x = 0, xpos = 0, y = 0, shift = 8 - bpp, mask = (1 << bpp) - 1, interlacepass = 0;
@@ -850,9 +850,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		BYTE buf[1024];
 		io->read_proc(&b, 1, 1, handle);
 		while( b ) {
-			io->read_proc(stringtable.FillInputBuffer(b), b, 1, handle);
+			io->read_proc(stringtable->FillInputBuffer(b), b, 1, handle);
 			int size = sizeof(buf);
-			while( stringtable.Decompress(buf, &size) ) {
+			while( stringtable->Decompress(buf, &size) ) {
 				for( int i = 0; i < size; i++ ) {
 					scanline[xpos] |= (buf[i] & mask) << shift;
 					if( shift > 0 ) {
@@ -871,7 +871,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							y++;
 						}
 						if( y >= height ) {
-							stringtable.Done();
+							stringtable->Done();
 							break;
 						}
 						x = xpos = 0;
@@ -986,6 +986,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameTime", ANIMTAG_FRAMETIME, FIDT_LONG, 1, 4, &delay_time);
 		b = disposal_method;
 		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "DisposalMethod", ANIMTAG_DISPOSALMETHOD, FIDT_BYTE, 1, 1, &b);
+
+		delete stringtable;
+
 	} catch (const char *msg) {
 		if( dib != NULL ) {
 			FreeImage_Unload(dib);
@@ -1237,9 +1240,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		//LZW Minimum Code Size
 		b = bpp == 1 ? 2 : bpp;
 		io->write_proc(&b, 1, 1, handle);
-		StringTable stringtable;
-		stringtable.Initialize(b);
-		stringtable.CompressStart(bpp, width);
+		StringTable *stringtable = new StringTable;
+		stringtable->Initialize(b);
+		stringtable->CompressStart(bpp, width);
 
 		//Image Data Sub-blocks
 		int y = 0, interlacepass = 0, line = FreeImage_GetLine(dib);
@@ -1247,8 +1250,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		int size = sizeof(buf);
 		b = sizeof(buf);
 		while( y < output_height ) {
-			memcpy(stringtable.FillInputBuffer(line), FreeImage_GetScanLine(dib, output_height - y - 1), line);
-			while( stringtable.Compress(bufptr, &size) ) {
+			memcpy(stringtable->FillInputBuffer(line), FreeImage_GetScanLine(dib, output_height - y - 1), line);
+			while( stringtable->Compress(bufptr, &size) ) {
 				bufptr += size;
 				if( bufptr - buf == sizeof(buf) ) {
 					io->write_proc(&b, 1, 1, handle);
@@ -1270,7 +1273,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		}
 		size = bufptr - buf;
 		BYTE last[4];
-		w = stringtable.CompressEnd(last);
+		w = stringtable->CompressEnd(last);
 		if( size + w >= sizeof(buf) ) {
 			//one last full size sub-block
 			io->write_proc(&b, 1, 1, handle);
@@ -1293,6 +1296,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		//Block Terminator
 		b = 0;
 		io->write_proc(&b, 1, 1, handle);
+
+		delete stringtable;
 
 	} catch (const char *msg) {
 		FreeImage_OutputMessageProc(s_format_id, msg);
