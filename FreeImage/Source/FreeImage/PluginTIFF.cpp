@@ -198,7 +198,7 @@ msdosErrorHandler(const char* module, const char* fmt, va_list ap) {
 	if (module != NULL) {
 		char msg[1024];
 		vsprintf(msg, fmt, ap);
-		FreeImage_OutputMessageProc(s_format_id, "%s%s", module, msg);
+		FreeImage_OutputMessageProc(s_format_id, "%s: %s", module, msg);
 	}
 	*/
 }
@@ -559,10 +559,18 @@ SetCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint16 
 	else if ((flags & TIFF_LZW) == TIFF_LZW)
 		compression = COMPRESSION_LZW;
 	else if ((flags & TIFF_JPEG) == TIFF_JPEG) {
-		if(((bitsperpixel == 8) && (photometric != PHOTOMETRIC_PALETTE)) || (bitsperpixel == 24))
+		if(((bitsperpixel == 8) && (photometric != PHOTOMETRIC_PALETTE)) || (bitsperpixel == 24)) {
 			compression = COMPRESSION_JPEG;
-		else
+			// RowsPerStrip must be multiple of 8 for JPEG
+			uint32 rowsperstrip = (uint32) -1;
+			rowsperstrip = TIFFDefaultStripSize(tiff, rowsperstrip);
+            rowsperstrip = rowsperstrip + (8 - (rowsperstrip % 8));
+			// overwrite previous RowsPerStrip
+			TIFFSetField(tiff, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
+		} else {
+			// default to LZW
 			compression = COMPRESSION_LZW;
+		}
 	}
 	else {
 		// default compression scheme
