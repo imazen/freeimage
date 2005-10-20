@@ -462,7 +462,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					bits -= pitch;
 				}
 			} else if ((header.planes == 4) && (header.bpp == 1)) {
-				BYTE bit, index, mask, skip;
+				BYTE bit,  mask, skip;
+        		        WORD index;
 				BYTE *buffer;
 				WORD x, y, written;
 
