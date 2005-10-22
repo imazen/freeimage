@@ -5,6 +5,10 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+October 22, 2005
+! [Herve Drolon] renamed structure to names used in FreeImage
++ [Herve Drolon] added all functions used by the library, except I/O handle functions
+
 May 22th, 2005
 * [Steven Lee] fixed incorrect definition for FreeImage_GetDotsPerMeterX
 * [Steven Lee] fixed incorrect definition for FreeImage_ColorQuantize

@@ -15,7 +15,7 @@ namespace FI
 
 	public class Form1 : System.Windows.Forms.Form
 	{
-		private int fi;
+		private UInt32 fi;
 
 		private System.ComponentModel.Container components = null;
 
@@ -74,9 +74,9 @@ namespace FI
 
 		private void Form1_Load(object sender, System.EventArgs e)
 		{
-			string img = @"D:\Temp\Z4_1.bmp";
+			string img = @"C:\Temp\kodim22.png";
 
-			this.fi = FreeImage.FreeImage_Load(FIF.FIF_BMP, img, 0);
+			this.fi = FreeImage.Load(FREE_IMAGE_FORMAT.FIF_PNG, img, 0);
 		}
 
 		[DllImport("Gdi32.dll")]
@@ -107,9 +107,9 @@ namespace FI
 			int r = SetStretchBltMode(hdc, 3 /* COLORONCOLOR */);
 			r = StretchDIBits(hdc,
 				0, 0, this.ClientSize.Width, this.ClientSize.Height,
-				0, 0, (int)FreeImage.FreeImage_GetWidth(this.fi), (int)FreeImage.FreeImage_GetHeight(this.fi),
-				FreeImage.FreeImage_GetBits(this.fi),
-				FreeImage.FreeImage_GetInfo(this.fi),
+				0, 0, (int)FreeImage.GetWidth(this.fi), (int)FreeImage.GetHeight(this.fi),
+				FreeImage.GetBits(this.fi),
+				FreeImage.GetInfo(this.fi),
 				0 /* DIB_RGB_COLORS */, 0x00CC0020 /* SRCCOPY */);
 
 			e.Graphics.ReleaseHdc(hdc);
