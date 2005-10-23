@@ -516,7 +516,7 @@ FreeImage_SetBackgroundColor(FIBITMAP *dib, RGBQUAD *bkcolor) {
 			bkgnd_color->rgbReserved = 1;
 		} else {
 			// clear and disable the file background color
-			memcpy(bkgnd_color, 0, sizeof(RGBQUAD));
+			memset(bkgnd_color, 0, sizeof(RGBQUAD));
 		}
 		return TRUE;
 	}

@@ -12,6 +12,8 @@ Month day, 2005 - 3.8.1
 * [Leigh Brasington] fixed a bug in PluginGIF causing FreeImage not working on Win/98/ME
 * [Herve Drolon] fixed a bug in PluginTIFF with writing of JPEG-in-TIFF files
 * [Jojakim Stahl] fixed a bug occuring with 4-bit PCX files
+* [Sandor Szalacsi] fixed a bug in FreeImage_SetBackgroundColor (bkgnd clearing)
+
 
 September 5, 2005 - 3.8.0
 ! FreeImage now uses libTIFF 3.7.3
