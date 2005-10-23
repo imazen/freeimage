@@ -378,8 +378,13 @@ void fipWinImage::drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg, RGBQUAD *appBkC
 			else {
 				// Create the transparent / alpha blended image
 				_display_dib = FreeImage_Composite(_dib, useFileBkg, appBkColor, bg);
-				// Remember to delete _display_dib
-				_bDeleteMe = TRUE;
+				if(_display_dib) {
+					// Remember to delete _display_dib
+					_bDeleteMe = TRUE;
+				} else {
+					// Something failed: copy pointers
+					_display_dib = _dib;
+				}
 			}
 		} else {
 			// Convert to a standard dib for display
