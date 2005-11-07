@@ -97,9 +97,17 @@ _tiffCloseProc(thandle_t fd) {
 
 static toff_t
 _tiffSizeProc(thandle_t handle) {
+	/* the following fails on some images
 	struct stat sb;
 	fi_TIFFIO *fio = (fi_TIFFIO*)handle;
 	return (fstat((long) fio->handle, &sb) < 0 ? 0 : sb.st_size);
+	*/
+    fi_TIFFIO *fio = (fi_TIFFIO*)handle;
+    long currPos = fio->io->tell_proc(fio->handle);
+    fio->io->seek_proc(fio->handle, 0, SEEK_END);
+    long fileSize = fio->io->tell_proc(fio->handle);
+    fio->io->seek_proc(fio->handle, currPos, SEEK_SET);
+    return fileSize;
 }
 
 static int
