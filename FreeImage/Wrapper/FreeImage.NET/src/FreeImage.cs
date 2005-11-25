@@ -159,6 +159,7 @@ namespace FreeImageAPI
 		BMP_SAVE_RLE		= 1,
 		CUT_DEFAULT			= 0,
 		DDS_DEFAULT			= 0,
+		FAXG3_DEFAULT		= 0,
 		GIF_DEFAULT			= 0,
 		GIF_LOAD256			= 1,		// Load	the	image as a 256 color image with	ununsed	palette	entries, if	it's 16	or 2 color
 		GIF_PLAYBACK		= 2,		// 'Play' the GIF to generate each frame (as 32bpp)	instead	of returning raw frame data	when loading
@@ -238,7 +239,8 @@ namespace FreeImageAPI
 		FIF_XPM		= 23,
 		FIF_DDS     = 24,
 		FIF_GIF     = 25,
-		FIF_HDR		= 26
+		FIF_HDR		= 26,
+		FIF_FAXG3	= 27
 	}
 
 	/** Image type used in FreeImage.

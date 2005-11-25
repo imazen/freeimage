@@ -47,7 +47,7 @@
 // Version information ------------------------------------------------------
 
 #define FREEIMAGE_MAJOR_VERSION   3
-#define FREEIMAGE_MINOR_VERSION   8
+#define FREEIMAGE_MINOR_VERSION   9
 #define FREEIMAGE_RELEASE_SERIAL  0
 
 // Compiler options ---------------------------------------------------------
@@ -347,7 +347,8 @@ FI_ENUM(FREE_IMAGE_FORMAT) {
 	FIF_XPM		= 23,
 	FIF_DDS		= 24,
 	FIF_GIF     = 25,
-	FIF_HDR		= 26
+	FIF_HDR		= 26,
+	FIF_FAXG3	= 27
 };
 
 /** Image type used in FreeImage.
@@ -589,6 +590,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define BMP_SAVE_RLE        1
 #define CUT_DEFAULT         0
 #define DDS_DEFAULT			0
+#define FAXG3_DEFAULT		0
 #define GIF_DEFAULT			0
 #define GIF_LOAD256			1		// Load the image as a 256 color image with ununsed palette entries, if it's 16 or 2 color
 #define GIF_PLAYBACK		2		// 'Play' the GIF to generate each frame (as 32bpp) instead of returning raw frame data when loading

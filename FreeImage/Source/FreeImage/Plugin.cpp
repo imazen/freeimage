@@ -244,6 +244,7 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 			s_plugins->AddNode(InitDDS);
 	        s_plugins->AddNode(InitGIF);
 	        s_plugins->AddNode(InitHDR);
+			s_plugins->AddNode(InitG3);
 			
 			// external plugin initialization
 

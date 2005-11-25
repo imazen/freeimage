@@ -109,7 +109,7 @@ type
   // I/O image format identifiers.
   FREE_IMAGE_FORMAT = (
     FIF_UNKNOWN = -1,
-    FIF_BMP		  = 0,
+    FIF_BMP		= 0,
     FIF_ICO	  	= 1,
     FIF_JPEG   	= 2,
     FIF_JNG	  	= 3,
@@ -134,8 +134,10 @@ type
     FIF_CUT	  	= 21,
     FIF_XBM	  	= 22,
     FIF_XPM	  	= 23,
-    FIF_DDS		  = 24,
-  	FIF_GIF     = 25
+    FIF_DDS		= 24,
+  	FIF_GIF     = 25,
+	FIF_HDR		= 26,
+	FIF_FAXG3	= 27	
   );
 
   // Image type used in FreeImage.
@@ -153,12 +155,12 @@ type
 
   // Image color type used in FreeImage.
   FREE_IMAGE_COLOR_TYPE = (
-	  FIC_MINISWHITE = 0,		// min value is white
+	FIC_MINISWHITE = 0,		// min value is white
     FIC_MINISBLACK = 1,		// min value is black
     FIC_RGB        = 2,		// RGB color model
     FIC_PALETTE    = 3,		// color map indexed
-	  FIC_RGBALPHA   = 4,		// RGB color model with alpha channel
-	  FIC_CMYK       = 5		// CMYK color model
+	FIC_RGBALPHA   = 4,		// RGB color model with alpha channel
+	FIC_CMYK       = 5		// CMYK color model
   );
 
   // Color quantization algorithms. Constants used in FreeImage_ColorQuantize.
@@ -337,7 +339,9 @@ const
   BMP_SAVE_RLE        = 1;
   CUT_DEFAULT         = 0;
   DDS_DEFAULT         = 0;
+  FAXG3_DEFAULT       = 0;
   GIF_DEFAULT         = 0;
+  HDR_DEFAULT         = 0;
   ICO_DEFAULT         = 0;
   ICO_MAKEALPHA       = 0;     // convert to 32bpp and create an alpha channel from the AND-mask when loading
   IFF_DEFAULT         = 0;

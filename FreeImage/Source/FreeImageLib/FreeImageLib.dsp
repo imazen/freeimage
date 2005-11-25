@@ -184,6 +184,10 @@ SOURCE=..\FreeImage\PluginDDS.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\FreeImage\PluginG3.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\FreeImage\PluginGIF.cpp
 # End Source File
 # Begin Source File
