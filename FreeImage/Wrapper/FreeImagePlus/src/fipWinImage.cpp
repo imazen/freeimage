@@ -421,7 +421,7 @@ void fipWinImage::drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg, RGBQUAD *appBkC
 
 void fipWinImage::setToneMappingOperator(FREE_IMAGE_TMO tmo, double first_param, double second_param) {
 	// avoid costly operations if possible ...
-	if((_tmo != tmo) && (_tmo_param_1 != first_param) && (_tmo_param_2 != second_param)) {
+	if((_tmo != tmo) || (_tmo_param_1 != first_param) || (_tmo_param_2 != second_param)) {
 		_tmo = tmo;
 		_tmo_param_1 = first_param;
 		_tmo_param_2 = second_param;

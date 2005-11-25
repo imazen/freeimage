@@ -7,6 +7,7 @@ What's New for FreeImagePlus
 
 Month Day, 2005 - 3.8.1
 * [Sandor Szalacsi] improved fipWinWimage::drawEx behavior with non transparent PNG having a file background
+* [Herve Drolon] fixed a bug in fipWinImage::setToneMappingOperator
 
 September 5, 2005 - 3.8.0
 [Herve Drolon]
