@@ -126,6 +126,14 @@ BOOL fipImage::pasteSubImage(fipImage& src, int left, int top, int alpha) {
 	return FALSE;
 }
 
+BOOL fipImage::crop(int left, int top, int right, int bottom) {
+	if(_dib) {
+		FIBITMAP *dst = FreeImage_Copy(_dib, left, top, right, bottom);
+		return replace(dst);
+	}
+	return FALSE;
+}
+
 
 ///////////////////////////////////////////////////////////////////
 // Information functions

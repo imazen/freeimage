@@ -161,6 +161,19 @@ public:
 	*/
 	BOOL pasteSubImage(fipImage& src, int left, int top, int alpha = 256);
 
+	/**
+	@brief Crop a sub part of the current image and update it accordingly.
+	
+	This method works with any bitmap type.
+	@param left Specifies the left position of the cropped rectangle. 
+	@param top Specifies the top position of the cropped rectangle. 
+	@param right Specifies the right position of the cropped rectangle. 
+	@param bottom Specifies the bottom position of the cropped rectangle. 
+	@return Returns TRUE if successful, FALSE otherwise.
+	*/
+	BOOL crop(int left, int top, int right, int bottom);
+
+
 	//@}
 
 	/** @name Loading & Saving

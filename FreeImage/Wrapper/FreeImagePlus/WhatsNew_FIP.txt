@@ -5,7 +5,8 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
-Month Day, 2005 - 3.8.1
+Month Day, 2005 - 3.9.0
++ [Herve Drolon] added fipImage::crop
 * [Sandor Szalacsi] improved fipWinWimage::drawEx behavior with non transparent PNG having a file background
 * [Herve Drolon] fixed a bug in fipWinImage::setToneMappingOperator
 
