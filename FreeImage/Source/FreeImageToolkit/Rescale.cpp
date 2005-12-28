@@ -56,31 +56,66 @@ FreeImage_Rescale(FIBITMAP *src, int dst_width, int dst_height, FREE_IMAGE_FILTE
 
 	// perform upsampling or downsampling
 
-	if((FreeImage_GetBPP(src) == 8) && (FreeImage_GetColorType(src) == FIC_PALETTE)) {
-		// special case for color map indexed images ...
+	if((FreeImage_GetBPP(src) == 4) || (FreeImage_GetColorType(src) == FIC_PALETTE)) {
+		// special case for 4-bit images or color map indexed images ...
+		if(FreeImage_IsTransparent(src) == FALSE) {
+			FIBITMAP *src24 = NULL;
+			FIBITMAP *dst24 = NULL;
+			try {
+				// transparent conversion to 24-bit (any transparency table will be destroyed)
+				src24 = FreeImage_ConvertTo24Bits(src);
+				if(!src24) throw(1);
+				// perform upsampling or downsampling
+				dst24 = Engine.scale(src24, dst_width, dst_height);
+				if(!dst24) throw(1);
+				// color quantize to 8-bit
+				dst = FreeImage_ColorQuantize(dst24, FIQ_WUQUANT);
+				// free and return
+				FreeImage_Unload(src24);
+				FreeImage_Unload(dst24);
+			} catch(int) {
+				if(src24) FreeImage_Unload(src24);
+				if(dst24) FreeImage_Unload(dst24);
+			}
+		} else {
+			FIBITMAP *src32 = NULL;
+			try {
+				// transparent conversion to 32-bit (keep transparency)
+				src32 = FreeImage_ConvertTo32Bits(src);
+				if(!src32) throw(1);
+				// perform upsampling or downsampling
+				dst = Engine.scale(src32, dst_width, dst_height);
+				if(!dst) throw(1);
+				// free and return
+				FreeImage_Unload(src32);
+			} catch(int) {
+				if(src32) FreeImage_Unload(src32);
+				if(dst) FreeImage_Unload(dst);
+			}
+		}
+	}
+	else if((FreeImage_GetBPP(src) == 16) && (FreeImage_GetImageType(src) == FIT_BITMAP)) {
+		// convert 16-bit RGB to 24-bit
 		FIBITMAP *src24 = NULL;
-		FIBITMAP *dst24 = NULL;
 		try {
 			// transparent conversion to 24-bit (any transparency table will be destroyed)
 			src24 = FreeImage_ConvertTo24Bits(src);
 			if(!src24) throw(1);
 			// perform upsampling or downsampling
-			dst24 = Engine.scale(src24, dst_width, dst_height);
-			if(!dst24) throw(1);
-			// color quantize to 8-bit
-			dst = FreeImage_ColorQuantize(dst24, FIQ_WUQUANT);
+			dst = Engine.scale(src24, dst_width, dst_height);
+			if(!dst) throw(1);
 			// free and return
 			FreeImage_Unload(src24);
-			FreeImage_Unload(dst24);
 		} catch(int) {
 			if(src24) FreeImage_Unload(src24);
-			if(dst24) FreeImage_Unload(dst24);
+			if(dst) FreeImage_Unload(dst);
 		}
 	}
 	else {
 		// normal case : 
-		// 8-bit greyscale, 24- or 32-bit RGB(A) images
-		// 16-bit greyscale, 48- or 96-bit RGB(A) images
+		// 1- or 8-bit greyscale, 24- or 32-bit RGB(A) images
+		// 16-bit greyscale, 48- or 64-bit RGB(A) images
+		// 32-bit float, 96- or 128-bit RGB(A) float images
 		dst = Engine.scale(src, dst_width, dst_height);
 	}
 

@@ -140,6 +140,10 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 	unsigned blueMask	= FreeImage_GetBlueMask(src);
 
 	unsigned bpp = FreeImage_GetBPP(src);
+	if(bpp == 1) {
+		// convert output to 8-bit
+		bpp = 8;
+	}
 
 	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(src);
 
@@ -217,9 +221,27 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned src_height, FIBITMAP *dst, unsigned dst_width, unsigned dst_height) { 
 	if(dst_width == src_width) {
 		// no scaling required, just copy
-		BYTE *src_bits = FreeImage_GetBits(src);
-		BYTE *dst_bits = FreeImage_GetBits(dst);
-		memcpy(dst_bits, src_bits, dst_height * FreeImage_GetPitch(dst));
+		switch(FreeImage_GetBPP(src)) {
+			case 1:
+			{
+				if(FreeImage_GetBPP(dst) != 8) break;
+				for(unsigned y = 0; y < dst_height; y++) {
+					// convert each row 
+					BYTE *src_bits = FreeImage_GetScanLine(src, y);
+					BYTE *dst_bits = FreeImage_GetScanLine(dst, y);
+					FreeImage_ConvertLine1To8(dst_bits, src_bits, dst_width);
+				}
+			}
+			break;
+
+			default:
+			{
+				BYTE *src_bits = FreeImage_GetBits(src);
+				BYTE *dst_bits = FreeImage_GetBits(dst);
+				memcpy(dst_bits, src_bits, dst_height * FreeImage_GetPitch(dst));
+			}
+			break;
+		}
 	}
 	else {
 		unsigned index;	// pixel index
@@ -228,50 +250,89 @@ void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned
 		CWeightsTable weightsTable(m_pFilter, dst_width, src_width); 
 		
 		// step through rows
-		switch(FreeImage_GetBPP(src)) {
-			case 8:
-			case 24:
-			case 32:
+		switch(FreeImage_GetImageType(src)) {
+			case FIT_BITMAP:
 			{
-				// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
-				unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+				switch(FreeImage_GetBPP(src)) {
+					case 1:
+					{
+						// scale and convert to 8-bit
+						if(FreeImage_GetBPP(dst) != 8) break;
 
-				for(unsigned y = 0; y < dst_height; y++) {
-					// scale each row 
-					BYTE *src_bits = FreeImage_GetScanLine(src, y);
-					BYTE *dst_bits = FreeImage_GetScanLine(dst, y);
+						for(unsigned y = 0; y < dst_height; y++) {
+							// scale each row 
+							BYTE *src_bits = FreeImage_GetScanLine(src, y);
+							BYTE *dst_bits = FreeImage_GetScanLine(dst, y);
 
-					for(unsigned x = 0; x < dst_width; x++) {
-						// loop through row
-						double value[4] = {0, 0, 0, 0};					// 4 = 32bpp max
-						int iLeft = weightsTable.getLeftBoundary(x);    // retrieve left boundary
-						int iRight = weightsTable.getRightBoundary(x);  // retrieve right boundary
+							for(unsigned x = 0; x < dst_width; x++) {
+								// loop through row
+								double value = 0;
+								int iLeft = weightsTable.getLeftBoundary(x);    // retrieve left boundary
+								int iRight = weightsTable.getRightBoundary(x);  // retrieve right boundary
 
-						for(int i = iLeft; i <= iRight; i++) {
-							// scan between boundaries
-							// accumulate weighted effect of each neighboring pixel
-							double weight = weightsTable.getWeight(x, i-iLeft);
-							
-							index = i * bytespp;
-							for (unsigned j = 0; j < bytespp; j++) {
-								value[j] += (weight * (double)src_bits[index++]); 
-							}
-						} 
+								for(int i = iLeft; i <= iRight; i++) {
+									// scan between boundaries
+									// accumulate weighted effect of each neighboring pixel
+									double weight = weightsTable.getWeight(x, i-iLeft);
+									
+									BYTE pixel = (src_bits[i >> 3] & (0x80 >> (i & 0x07))) != 0;
+									value += (weight * (double)pixel);
+								} 
+								value *= 255;
 
-						// clamp and place result in destination pixel
-						for (unsigned j = 0; j < bytespp; j++) {
-							dst_bits[j] = (BYTE)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)255);
+								// clamp and place result in destination pixel
+								dst_bits[x] = (BYTE)MIN(MAX((int)0, (int)(value + 0.5)), (int)255);
+							} 
 						}
+					}
+					break;
 
-						dst_bits += bytespp;
-					} 
+					case 8:
+					case 24:
+					case 32:
+					{
+						// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+						unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+
+						for(unsigned y = 0; y < dst_height; y++) {
+							// scale each row 
+							BYTE *src_bits = FreeImage_GetScanLine(src, y);
+							BYTE *dst_bits = FreeImage_GetScanLine(dst, y);
+
+							for(unsigned x = 0; x < dst_width; x++) {
+								// loop through row
+								double value[4] = {0, 0, 0, 0};					// 4 = 32bpp max
+								int iLeft = weightsTable.getLeftBoundary(x);    // retrieve left boundary
+								int iRight = weightsTable.getRightBoundary(x);  // retrieve right boundary
+
+								for(int i = iLeft; i <= iRight; i++) {
+									// scan between boundaries
+									// accumulate weighted effect of each neighboring pixel
+									double weight = weightsTable.getWeight(x, i-iLeft);
+									
+									index = i * bytespp;
+									for (unsigned j = 0; j < bytespp; j++) {
+										value[j] += (weight * (double)src_bits[index++]); 
+									}
+								} 
+
+								// clamp and place result in destination pixel
+								for (unsigned j = 0; j < bytespp; j++) {
+									dst_bits[j] = (BYTE)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)255);
+								}
+
+								dst_bits += bytespp;
+							} 
+						}
+					}
+					break;
 				}
 			}
 			break;
 
-			case 16:
-			case 48:
-			case 64:
+			case FIT_UINT16:
+			case FIT_RGB16:
+			case FIT_RGBA16:
 			{
 				// Calculate the number of words per pixel (1 for 16-bit, 3 for 48-bit or 4 for 64-bit)
 				unsigned wordspp = (FreeImage_GetLine(src) / FreeImage_GetWidth(src)) / sizeof(WORD);
@@ -309,6 +370,46 @@ void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned
 			}
 			break;
 
+			case FIT_FLOAT:
+			case FIT_RGBF:
+			case FIT_RGBAF:
+			{
+				// Calculate the number of floats per pixel (1 for 32-bit, 3 for 96-bit or 4 for 128-bit)
+				unsigned floatspp = (FreeImage_GetLine(src) / FreeImage_GetWidth(src)) / sizeof(float);
+
+				for(unsigned y = 0; y < dst_height; y++) {
+					// scale each row 
+					float *src_bits = (float*)FreeImage_GetScanLine(src, y);
+					float *dst_bits = (float*)FreeImage_GetScanLine(dst, y);
+
+					for(unsigned x = 0; x < dst_width; x++) {
+						// loop through row
+						double value[4] = {0, 0, 0, 0};					// 4 = 64bpp max
+						int iLeft = weightsTable.getLeftBoundary(x);    // retrieve left boundary
+						int iRight = weightsTable.getRightBoundary(x);  // retrieve right boundary
+
+						for(int i = iLeft; i <= iRight; i++) {
+							// scan between boundaries
+							// accumulate weighted effect of each neighboring pixel
+							double weight = weightsTable.getWeight(x, i-iLeft);
+							
+							index = i * floatspp;
+							for (unsigned j = 0; j < floatspp; j++) {
+								value[j] += (weight * (double)src_bits[index++]); 
+							}
+						} 
+
+						// place result in destination pixel
+						for (unsigned j = 0; j < floatspp; j++) {
+							dst_bits[j] = (float)value[j];
+						}
+
+						dst_bits += floatspp;
+					} 
+				}
+			}
+			break;
+
 		}
 	}
 } 
@@ -317,9 +418,28 @@ void CResizeEngine::horizontalFilter(FIBITMAP *src, unsigned src_width, unsigned
 void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned src_height, FIBITMAP *dst, unsigned dst_width, unsigned dst_height) { 
 	if(src_height == dst_height) {
 		// no scaling required, just copy
-		BYTE *src_bits = FreeImage_GetBits(src);
-		BYTE *dst_bits = FreeImage_GetBits(dst);
-		memcpy(dst_bits, src_bits, dst_height * FreeImage_GetPitch(dst));	
+		switch(FreeImage_GetBPP(src)) {
+			case 1:
+			{
+				if(FreeImage_GetBPP(dst) != 8) break;
+				for(unsigned y = 0; y < dst_height; y++) {
+					// convert each row 
+					BYTE *src_bits = FreeImage_GetScanLine(src, y);
+					BYTE *dst_bits = FreeImage_GetScanLine(dst, y);
+					FreeImage_ConvertLine1To8(dst_bits, src_bits, dst_width);
+				}
+			}
+			break;
+
+			default:
+			{
+				BYTE *src_bits = FreeImage_GetBits(src);
+				BYTE *dst_bits = FreeImage_GetBits(dst);
+				memcpy(dst_bits, src_bits, dst_height * FreeImage_GetPitch(dst));
+			}
+			break;
+		}
+
 	}
 	else {
 		unsigned index;	// pixel index
@@ -329,57 +449,106 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 
 
 		// step through columns
-		switch(FreeImage_GetBPP(src)) {
-			case 8:
-			case 24:
-			case 32:
+		switch(FreeImage_GetImageType(src)) {
+			case FIT_BITMAP:
 			{
-				// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
-				unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+				switch(FreeImage_GetBPP(src)) {
+					case 1:
+					{
+						// scale and convert to 8-bit
+						if(FreeImage_GetBPP(dst) != 8) break;
 
-				unsigned src_pitch = FreeImage_GetPitch(src);
-				unsigned dst_pitch = FreeImage_GetPitch(dst);
+						unsigned src_pitch = FreeImage_GetPitch(src);
+						unsigned dst_pitch = FreeImage_GetPitch(dst);
 
-				for(unsigned x = 0; x < dst_width; x++) {
-					index = x * bytespp;
+						for(unsigned x = 0; x < dst_width; x++) {
 
-					// work on column x in dst
-					BYTE *dst_bits = FreeImage_GetBits(dst) + index;
+							// work on column x in dst
+							BYTE *dst_bits = FreeImage_GetBits(dst) + x;
 
-					// scale each column
-					for(unsigned y = 0; y < dst_height; y++) {
-						// loop through column
-						double value[4] = {0, 0, 0, 0};					// 4 = 32bpp max
-						int iLeft = weightsTable.getLeftBoundary(y);    // retrieve left boundary
-						int iRight = weightsTable.getRightBoundary(y);  // retrieve right boundary
+							// scale each column
+							for(unsigned y = 0; y < dst_height; y++) {
+								// loop through column
+								double value = 0;
+								int iLeft = weightsTable.getLeftBoundary(y);    // retrieve left boundary
+								int iRight = weightsTable.getRightBoundary(y);  // retrieve right boundary
 
-						BYTE *src_bits = FreeImage_GetScanLine(src, iLeft) + index;
+								BYTE *src_bits = FreeImage_GetScanLine(src, iLeft);
 
-						for(int i = iLeft; i <= iRight; i++) {
-							// scan between boundaries
-							// accumulate weighted effect of each neighboring pixel
-							double weight = weightsTable.getWeight(y, i-iLeft);							
-							for (unsigned j = 0; j < bytespp; j++) {
-								value[j] += (weight * (double)src_bits[j]);
+								for(int i = iLeft; i <= iRight; i++) {
+									// scan between boundaries
+									// accumulate weighted effect of each neighboring pixel
+									double weight = weightsTable.getWeight(y, i-iLeft);	
+									
+									BYTE pixel = (src_bits[x >> 3] & (0x80 >> (x & 0x07))) != 0;
+									value += (weight * (double)pixel);
+
+									src_bits += src_pitch;
+								}
+								value *= 255;
+
+								// clamp and place result in destination pixel
+								*dst_bits = (BYTE)MIN(MAX((int)0, (int)(value + 0.5)), (int)255);
+
+								dst_bits += dst_pitch;
 							}
-
-							src_bits += src_pitch;
 						}
-
-						// clamp and place result in destination pixel
-						for (unsigned j = 0; j < bytespp; j++) {
-							dst_bits[j] = (BYTE)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)255);
-						}
-
-						dst_bits += dst_pitch;
 					}
+					break;
+
+					case 8:
+					case 24:
+					case 32:
+					{
+						// Calculate the number of bytes per pixel (1 for 8-bit, 3 for 24-bit or 4 for 32-bit)
+						unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
+
+						unsigned src_pitch = FreeImage_GetPitch(src);
+						unsigned dst_pitch = FreeImage_GetPitch(dst);
+
+						for(unsigned x = 0; x < dst_width; x++) {
+							index = x * bytespp;
+
+							// work on column x in dst
+							BYTE *dst_bits = FreeImage_GetBits(dst) + index;
+
+							// scale each column
+							for(unsigned y = 0; y < dst_height; y++) {
+								// loop through column
+								double value[4] = {0, 0, 0, 0};					// 4 = 32bpp max
+								int iLeft = weightsTable.getLeftBoundary(y);    // retrieve left boundary
+								int iRight = weightsTable.getRightBoundary(y);  // retrieve right boundary
+
+								BYTE *src_bits = FreeImage_GetScanLine(src, iLeft) + index;
+
+								for(int i = iLeft; i <= iRight; i++) {
+									// scan between boundaries
+									// accumulate weighted effect of each neighboring pixel
+									double weight = weightsTable.getWeight(y, i-iLeft);							
+									for (unsigned j = 0; j < bytespp; j++) {
+										value[j] += (weight * (double)src_bits[j]);
+									}
+
+									src_bits += src_pitch;
+								}
+
+								// clamp and place result in destination pixel
+								for (unsigned j = 0; j < bytespp; j++) {
+									dst_bits[j] = (BYTE)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)255);
+								}
+
+								dst_bits += dst_pitch;
+							}
+						}
+					}
+					break;
 				}
 			}
 			break;
 
-			case 16:
-			case 48:
-			case 64:
+			case FIT_UINT16:
+			case FIT_RGB16:
+			case FIT_RGBA16:
 			{
 				// Calculate the number of words per pixel (1 for 16-bit, 3 for 48-bit or 4 for 64-bit)
 				unsigned wordspp = (FreeImage_GetLine(src) / FreeImage_GetWidth(src)) / sizeof(WORD);
@@ -416,6 +585,53 @@ void CResizeEngine::verticalFilter(FIBITMAP *src, unsigned src_width, unsigned s
 						// clamp and place result in destination pixel
 						for (unsigned j = 0; j < wordspp; j++) {
 							dst_bits[j] = (WORD)MIN(MAX((int)0, (int)(value[j] + 0.5)), (int)0xFFFF);
+						}
+
+						dst_bits += dst_pitch;
+					}
+				}
+			}
+			break;
+
+			case FIT_FLOAT:
+			case FIT_RGBF:
+			case FIT_RGBAF:
+			{
+				// Calculate the number of floats per pixel (1 for 32-bit, 3 for 96-bit or 4 for 128-bit)
+				unsigned floatspp = (FreeImage_GetLine(src) / FreeImage_GetWidth(src)) / sizeof(float);
+
+				unsigned src_pitch = FreeImage_GetPitch(src) / sizeof(float);
+				unsigned dst_pitch = FreeImage_GetPitch(dst) / sizeof(float);
+
+				for(unsigned x = 0; x < dst_width; x++) {
+					index = x * floatspp;
+
+					// work on column x in dst
+					float *dst_bits = (float*)FreeImage_GetBits(dst) + index;
+
+					// scale each column
+					for(unsigned y = 0; y < dst_height; y++) {
+						// loop through column
+						double value[4] = {0, 0, 0, 0};					// 4 = 64bpp max
+						int iLeft = weightsTable.getLeftBoundary(y);    // retrieve left boundary
+						int iRight = weightsTable.getRightBoundary(y);  // retrieve right boundary
+
+						float *src_bits = (float*)FreeImage_GetScanLine(src, iLeft) + index;
+
+						for(int i = iLeft; i <= iRight; i++) {
+							// scan between boundaries
+							// accumulate weighted effect of each neighboring pixel
+							double weight = weightsTable.getWeight(y, i-iLeft);							
+							for (unsigned j = 0; j < floatspp; j++) {
+								value[j] += (weight * (double)src_bits[j]);
+							}
+
+							src_bits += src_pitch;
+						}
+
+						// clamp and place result in destination pixel
+						for (unsigned j = 0; j < floatspp; j++) {
+							dst_bits[j] = (float)value[j];
 						}
 
 						dst_bits += dst_pitch;

@@ -751,20 +751,18 @@ BOOL fipImage::getHistogram(DWORD *histo, FREE_IMAGE_COLOR_CHANNEL channel) {
 
 BOOL fipImage::rescale(WORD new_width, WORD new_height, FREE_IMAGE_FILTER filter) {
 	if(_dib) {
-		int bpp = FreeImage_GetBPP(_dib);
-
-		FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(_dib);
-
-		if(image_type == FIT_BITMAP) {
-			if(bpp < 8) {
-				// Convert to 8-bit
-				if(!convertTo8Bits())
-					return FALSE;
-			} else if(bpp == 16) {
-				// Convert to 24-bit
-				if(!convertTo24Bits())
-					return FALSE;
-			}
+		switch(FreeImage_GetImageType(_dib)) {
+			case FIT_BITMAP:
+			case FIT_UINT16:
+			case FIT_RGB16:
+			case FIT_RGBA16:
+			case FIT_FLOAT:
+			case FIT_RGBF:
+			case FIT_RGBAF:
+				break;
+			default:
+				return FALSE;
+				break;
 		}
 
 		// Perform upsampling / downsampling
