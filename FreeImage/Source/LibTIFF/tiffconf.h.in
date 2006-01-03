@@ -1,6 +1,7 @@
 /*
   Configuration defines for installed libtiff.
-  Editing this file no longer has any effect on the libtiff build!
+  This file maintained for backward compatibility. Do not use definitions
+  from this file in your programs.
 */
 
 #ifndef _TIFFCONF_
@@ -80,6 +81,9 @@
 /* Pick up YCbCr subsampling info from the JPEG data stream to support files
    lacking the tag (default enabled). */
 #undef CHECK_JPEG_YCBCR_SUBSAMPLING
+
+/* Support MS MDI magic number files as TIFF */
+#undef MDI_SUPPORT
 
 /*
  * Feature support definitions.

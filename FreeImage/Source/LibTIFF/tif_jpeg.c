@@ -24,6 +24,9 @@
  * OF THIS SOFTWARE.
  */
 
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+
 #include "tiffiop.h"
 #ifdef JPEG_SUPPORT
 
@@ -50,6 +53,15 @@ int TIFFFillTile(TIFF*, ttile_t);
 #undef FAR
 #endif
 
+/*
+  Libjpeg's jmorecfg.h defines INT16 and INT32, but only if XMD_H is
+  not defined.  Unfortunately, the MinGW and Borland compilers include
+  a typedef for INT32, which causes a conflict.  MSVC does not include
+  a conficting typedef given the headers which are included.
+*/
+#if defined(__BORLANDC__) || defined(__MINGW32__)
+# define XMD_H 1
+#endif
 
 /*
    The windows RPCNDR.H file defines boolean, but defines it with the
@@ -65,7 +77,7 @@ int TIFFFillTile(TIFF*, ttile_t);
 */
 
 /* Define "boolean" as unsigned char, not int, per Windows custom. */
-#if defined(WIN32)
+#if defined(WIN32) && !defined(__MINGW32__)
 # ifndef __RPCNDR_H__            /* don't conflict if rpcndr.h already read */
    typedef unsigned char boolean;
 # endif
@@ -163,7 +175,7 @@ static	int JPEGDecodeRaw(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int JPEGEncode(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int JPEGEncodeRaw(TIFF*, tidata_t, tsize_t, tsample_t);
 static  int JPEGInitializeLibJPEG( TIFF * tif,
-                                   int force_encode, int force_decode );
+								   int force_encode, int force_decode );
 
 #define	FIELD_JPEGTABLES	(FIELD_CODEC+0)
 #define	FIELD_RECVPARAMS	(FIELD_CODEC+1)
@@ -188,7 +200,7 @@ static const TIFFFieldInfo jpegFieldInfo[] = {
     { TIFFTAG_FAXRECVTIME,	 1, 1, TIFF_LONG,	FIELD_RECVTIME,
       TRUE,	FALSE,	"FaxRecvTime" },
     { TIFFTAG_FAXDCS,		-1, -1, TIFF_ASCII,	FIELD_FAXDCS,
-      TRUE,	FALSE,	"FaxDcs" },
+	  TRUE,	FALSE,	"FaxDcs" },
 };
 #define	N(a)	(sizeof (a) / sizeof (a[0]))
 
@@ -213,7 +225,7 @@ TIFFjpeg_error_exit(j_common_ptr cinfo)
 	char buffer[JMSG_LENGTH_MAX];
 
 	(*cinfo->err->format_message) (cinfo, buffer);
-	TIFFError("JPEGLib", buffer);		/* display the error message */
+	TIFFErrorExt(sp->tif->tif_clientdata, "JPEGLib", buffer);		/* display the error message */
 	jpeg_abort(cinfo);			/* clean up libjpeg state */
 	LONGJMP(sp->exit_jmpbuf, 1);		/* return to libtiff caller */
 }
@@ -229,7 +241,7 @@ TIFFjpeg_output_message(j_common_ptr cinfo)
 	char buffer[JMSG_LENGTH_MAX];
 
 	(*cinfo->err->format_message) (cinfo, buffer);
-	TIFFWarning("JPEGLib", buffer);
+	TIFFWarningExt(((JPEGState *) cinfo)->tif->tif_clientdata, "JPEGLib", buffer);
 }
 
 /*
@@ -482,7 +494,7 @@ TIFFjpeg_tables_dest(JPEGState* sp, TIFF* tif)
 	sp->jpegtables = (void*) _TIFFmalloc((tsize_t) sp->jpegtables_length);
 	if (sp->jpegtables == NULL) {
 		sp->jpegtables_length = 0;
-		TIFFError("TIFFjpeg_tables_dest", "No space for JPEGTables");
+		TIFFErrorExt(sp->tif->tif_clientdata, "TIFFjpeg_tables_dest", "No space for JPEGTables");
 		return (0);
 	}
 	sp->cinfo.c.dest = &sp->dest;
@@ -637,7 +649,7 @@ JPEGSetupDecode(TIFF* tif)
 	if (TIFFFieldSet(tif,FIELD_JPEGTABLES)) {
 		TIFFjpeg_tables_src(sp, tif);
 		if(TIFFjpeg_read_header(sp,FALSE) != JPEG_HEADER_TABLES_ONLY) {
-			TIFFError("JPEGSetupDecode", "Bogus JPEGTables field");
+			TIFFErrorExt(tif->tif_clientdata, "JPEGSetupDecode", "Bogus JPEGTables field");
 			return (0);
 		}
 	}
@@ -712,7 +724,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 	}
 	if (sp->cinfo.d.image_width != segment_width ||
 	    sp->cinfo.d.image_height != segment_height) {
-		TIFFWarning(module, 
+		TIFFWarningExt(tif->tif_clientdata, module,
                  "Improper JPEG strip/tile size, expected %dx%d, got %dx%d",
                           segment_width, 
                           segment_height,
@@ -722,19 +734,19 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 	if (sp->cinfo.d.num_components !=
 	    (td->td_planarconfig == PLANARCONFIG_CONTIG ?
 	     td->td_samplesperpixel : 1)) {
-		TIFFError(module, "Improper JPEG component count");
+		TIFFErrorExt(tif->tif_clientdata, module, "Improper JPEG component count");
 		return (0);
 	}
 #ifdef JPEG_LIB_MK1
 	if (12 != td->td_bitspersample && 8 != td->td_bitspersample) {
-            TIFFError(module, "Improper JPEG data precision");
+			TIFFErrorExt(tif->tif_clientdata, module, "Improper JPEG data precision");
             return (0);
 	}
         sp->cinfo.d.data_precision = td->td_bitspersample;
         sp->cinfo.d.bits_in_jsample = td->td_bitspersample;
 #else
 	if (sp->cinfo.d.data_precision != td->td_bitspersample) {
-            TIFFError(module, "Improper JPEG data precision");
+			TIFFErrorExt(tif->tif_clientdata, module, "Improper JPEG data precision");
             return (0);
 	}
 #endif
@@ -742,7 +754,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 		/* Component 0 should have expected sampling factors */
 		if (sp->cinfo.d.comp_info[0].h_samp_factor != sp->h_sampling ||
 		    sp->cinfo.d.comp_info[0].v_samp_factor != sp->v_sampling) {
-			    TIFFWarning(module, 
+				TIFFWarningExt(tif->tif_clientdata, module,
                                     "Improper JPEG sampling factors %d,%d\n"
                                     "Apparently should be %d,%d.",
                                     sp->cinfo.d.comp_info[0].h_samp_factor,
@@ -757,7 +769,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 			     * of the tag 33918.
 			     */
 			    if (!_TIFFFindFieldInfo(tif, 33918, TIFF_ANY)) {
-				    TIFFWarning(module, 
+					TIFFWarningExt(tif->tif_clientdata, module,
 					"Decompressor will try reading with "
 					"sampling %d,%d.",
 					sp->cinfo.d.comp_info[0].h_samp_factor,
@@ -773,7 +785,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 		for (ci = 1; ci < sp->cinfo.d.num_components; ci++) {
 			if (sp->cinfo.d.comp_info[ci].h_samp_factor != 1 ||
 			    sp->cinfo.d.comp_info[ci].v_samp_factor != 1) {
-				TIFFError(module, "Improper JPEG sampling factors");
+				TIFFErrorExt(tif->tif_clientdata, module, "Improper JPEG sampling factors");
 				return (0);
 			}
 		}
@@ -781,7 +793,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 		/* PC 2's single component should have sampling factors 1,1 */
 		if (sp->cinfo.d.comp_info[0].h_samp_factor != 1 ||
 		    sp->cinfo.d.comp_info[0].v_samp_factor != 1) {
-			TIFFError(module, "Improper JPEG sampling factors");
+			TIFFErrorExt(tif->tif_clientdata, module, "Improper JPEG sampling factors");
 			return (0);
 		}
 	}
@@ -836,10 +848,11 @@ JPEGDecode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 {
     JPEGState *sp = JState(tif);
     tsize_t nrows;
+    (void) s;
 
     nrows = cc / sp->bytesperline;
     if (cc % sp->bytesperline)
-        TIFFWarning(tif->tif_name, "fractional scanline not read");
+		TIFFWarningExt(tif->tif_clientdata, tif->tif_name, "fractional scanline not read");
 
     if( nrows > (int) sp->cinfo.d.image_height )
         nrows = sp->cinfo.d.image_height;
@@ -939,6 +952,7 @@ JPEGDecodeRaw(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 {
     JPEGState *sp = JState(tif);
     tsize_t nrows;
+    (void) s;
 
     /* data is expected to be read in multiples of a scanline */
     if ( (nrows = sp->cinfo.d.image_height) ) {
@@ -1142,21 +1156,26 @@ JPEGSetupEncode(TIFF* tif)
 		 * default value is inappropriate for YCbCr.  Fill in the
 		 * proper value if application didn't set it.
 		 */
-		if (!TIFFFieldSet(tif, FIELD_REFBLACKWHITE)) {
-			float refbw[6];
-			long top = 1L << td->td_bitspersample;
-			refbw[0] = 0;
-			refbw[1] = (float)(top-1L);
-			refbw[2] = (float)(top>>1);
-			refbw[3] = refbw[1];
-			refbw[4] = refbw[2];
-			refbw[5] = refbw[1];
-			TIFFSetField(tif, TIFFTAG_REFERENCEBLACKWHITE, refbw);
+		{
+			float *ref;
+			if (!TIFFGetField(tif, TIFFTAG_REFERENCEBLACKWHITE,
+					  &ref)) {
+				float refbw[6];
+				long top = 1L << td->td_bitspersample;
+				refbw[0] = 0;
+				refbw[1] = (float)(top-1L);
+				refbw[2] = (float)(top>>1);
+				refbw[3] = refbw[1];
+				refbw[4] = refbw[2];
+				refbw[5] = refbw[1];
+				TIFFSetField(tif, TIFFTAG_REFERENCEBLACKWHITE,
+					     refbw);
+			}
 		}
 		break;
 	case PHOTOMETRIC_PALETTE:		/* disallowed by Tech Note */
 	case PHOTOMETRIC_MASK:
-		TIFFError(module,
+		TIFFErrorExt(tif->tif_clientdata, module,
 			  "PhotometricInterpretation %d not allowed for JPEG",
 			  (int) sp->photometric);
 		return (0);
@@ -1166,7 +1185,7 @@ JPEGSetupEncode(TIFF* tif)
 		sp->v_sampling = 1;
 		break;
 	}
-	
+
 	/* Verify miscellaneous parameters */
 
 	/*
@@ -1181,7 +1200,7 @@ JPEGSetupEncode(TIFF* tif)
 	if (td->td_bitspersample != BITS_IN_JSAMPLE ) 
 #endif
         {
-		TIFFError(module, "BitsPerSample %d not allowed for JPEG",
+		TIFFErrorExt(tif->tif_clientdata, module, "BitsPerSample %d not allowed for JPEG",
 			  (int) td->td_bitspersample);
 		return (0);
 	}
@@ -1191,13 +1210,13 @@ JPEGSetupEncode(TIFF* tif)
 #endif
 	if (isTiled(tif)) {
 		if ((td->td_tilelength % (sp->v_sampling * DCTSIZE)) != 0) {
-			TIFFError(module,
+			TIFFErrorExt(tif->tif_clientdata, module,
 				  "JPEG tile height must be multiple of %d",
 				  sp->v_sampling * DCTSIZE);
 			return (0);
 		}
 		if ((td->td_tilewidth % (sp->h_sampling * DCTSIZE)) != 0) {
-			TIFFError(module,
+			TIFFErrorExt(tif->tif_clientdata, module,
 				  "JPEG tile width must be multiple of %d",
 				  sp->h_sampling * DCTSIZE);
 			return (0);
@@ -1205,7 +1224,7 @@ JPEGSetupEncode(TIFF* tif)
 	} else {
 		if (td->td_rowsperstrip < td->td_imagelength &&
 		    (td->td_rowsperstrip % (sp->v_sampling * DCTSIZE)) != 0) {
-			TIFFError(module,
+			TIFFErrorExt(tif->tif_clientdata, module,
 				  "RowsPerStrip must be multiple of %d for JPEG",
 				  sp->v_sampling * DCTSIZE);
 			return (0);
@@ -1268,7 +1287,7 @@ JPEGPreEncode(TIFF* tif, tsample_t s)
 		segment_height = TIFFhowmany(segment_height, sp->v_sampling);
 	}
 	if (segment_width > 65535 || segment_height > 65535) {
-		TIFFError(module, "Strip/tile too large for JPEG");
+		TIFFErrorExt(tif->tif_clientdata, module, "Strip/tile too large for JPEG");
 		return (0);
 	}
 	sp->cinfo.c.image_width = segment_width;
@@ -1368,7 +1387,7 @@ JPEGEncode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 	/* data is expected to be supplied in multiples of a scanline */
 	nrows = cc / sp->bytesperline;
 	if (cc % sp->bytesperline)
-		TIFFWarning(tif->tif_name, "fractional scanline discarded");
+		TIFFWarningExt(tif->tif_clientdata, tif->tif_name, "fractional scanline discarded");
 
 	while (nrows-- > 0) {
 		bufptr[0] = (JSAMPROW) buf;
@@ -1402,7 +1421,7 @@ JPEGEncodeRaw(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 	/* data is expected to be supplied in multiples of a scanline */
 	nrows = cc / sp->bytesperline;
 	if (cc % sp->bytesperline)
-		TIFFWarning(tif->tif_name, "fractional scanline discarded");
+		TIFFWarningExt(tif->tif_clientdata, tif->tif_name, "fractional scanline discarded");
 
 	/* Cb,Cr both have sampling factors 1, so this is correct */
 	clumps_per_line = sp->cinfo.c.comp_info[1].downsampled_width;
@@ -1640,10 +1659,10 @@ JPEGFixupTestSubsampling( TIFF * tif )
     if( TIFFIsTiled( tif ) )
     {
         if( !TIFFFillTile( tif, 0 ) )
-            return;
+			return;
     }
     else
-    {
+	{
         if( !TIFFFillStrip( tif, 0 ) )
             return;
     }
@@ -1661,37 +1680,37 @@ JPEGVGetField(TIFF* tif, ttag_t tag, va_list ap)
 	assert(sp != NULL);
 
 	switch (tag) {
-	case TIFFTAG_JPEGTABLES:
-		*va_arg(ap, uint32*) = sp->jpegtables_length;
-		*va_arg(ap, void**) = sp->jpegtables;
-		break;
-	case TIFFTAG_JPEGQUALITY:
-		*va_arg(ap, int*) = sp->jpegquality;
-		break;
-	case TIFFTAG_JPEGCOLORMODE:
-		*va_arg(ap, int*) = sp->jpegcolormode;
-		break;
-	case TIFFTAG_JPEGTABLESMODE:
-		*va_arg(ap, int*) = sp->jpegtablesmode;
-		break;
-	case TIFFTAG_YCBCRSUBSAMPLING:
-                JPEGFixupTestSubsampling( tif );
-		return (*sp->vgetparent)(tif, tag, ap);
-		break;
-        case TIFFTAG_FAXRECVPARAMS:
-                *va_arg(ap, uint32*) = sp->recvparams;
-                break;
-        case TIFFTAG_FAXSUBADDRESS:
-                *va_arg(ap, char**) = sp->subaddress;
-                break;
-        case TIFFTAG_FAXRECVTIME:
-                *va_arg(ap, uint32*) = sp->recvtime;
-                break;
-        case TIFFTAG_FAXDCS:
-                *va_arg(ap, char**) = sp->faxdcs;
-                break;
-default:
-		return (*sp->vgetparent)(tif, tag, ap);
+		case TIFFTAG_JPEGTABLES:
+			*va_arg(ap, uint32*) = sp->jpegtables_length;
+			*va_arg(ap, void**) = sp->jpegtables;
+			break;
+		case TIFFTAG_JPEGQUALITY:
+			*va_arg(ap, int*) = sp->jpegquality;
+			break;
+		case TIFFTAG_JPEGCOLORMODE:
+			*va_arg(ap, int*) = sp->jpegcolormode;
+			break;
+		case TIFFTAG_JPEGTABLESMODE:
+			*va_arg(ap, int*) = sp->jpegtablesmode;
+			break;
+		case TIFFTAG_YCBCRSUBSAMPLING:
+			JPEGFixupTestSubsampling( tif );
+			return (*sp->vgetparent)(tif, tag, ap);
+			break;
+		case TIFFTAG_FAXRECVPARAMS:
+			*va_arg(ap, uint32*) = sp->recvparams;
+			break;
+		case TIFFTAG_FAXSUBADDRESS:
+			*va_arg(ap, char**) = sp->subaddress;
+			break;
+		case TIFFTAG_FAXRECVTIME:
+			*va_arg(ap, uint32*) = sp->recvtime;
+			break;
+		case TIFFTAG_FAXDCS:
+			*va_arg(ap, char**) = sp->faxdcs;
+			break;
+		default:
+			return (*sp->vgetparent)(tif, tag, ap);
 	}
 	return (1);
 }
@@ -1836,7 +1855,7 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	tif->tif_data = (tidata_t) _TIFFmalloc(sizeof (JPEGState));
 
 	if (tif->tif_data == NULL) {
-		TIFFError("TIFFInitJPEG", "No space for JPEG state block");
+		TIFFErrorExt(tif->tif_clientdata, "TIFFInitJPEG", "No space for JPEG state block");
 		return (0);
 	}
         _TIFFmemset( tif->tif_data, 0, sizeof(JPEGState));

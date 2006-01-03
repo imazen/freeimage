@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id$ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -95,7 +95,7 @@ TIFFCodec _TIFFBuiltinCODECS[] = {
     { "PixarLog",	COMPRESSION_PIXARLOG,	TIFFInitPixarLog },
     { "SGILog",		COMPRESSION_SGILOG,	TIFFInitSGILog },
     { "SGILog24",	COMPRESSION_SGILOG24,	TIFFInitSGILog },
-    { NULL }
+    { NULL,             0,                      NULL }
 };
 
 static int
@@ -103,7 +103,7 @@ _notConfigured(TIFF* tif)
 {
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
-	TIFFError(tif->tif_name,
+	TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 	    "%s compression support is not configured", c->name);
 	return (0);
 }

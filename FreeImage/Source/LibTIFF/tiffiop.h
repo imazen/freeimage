@@ -229,6 +229,8 @@ struct tiff {
 #define TIFFmax(A,B) ((A)>(B)?(A):(B))
 #define TIFFmin(A,B) ((A)<(B)?(A):(B))
 
+#define TIFFArrayCount(a) (sizeof (a) / sizeof ((a)[0]))
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -247,7 +249,6 @@ extern	void _TIFFSwab24BitData(TIFF*, tidata_t, tsize_t);
 extern	void _TIFFSwab32BitData(TIFF*, tidata_t, tsize_t);
 extern	void _TIFFSwab64BitData(TIFF*, tidata_t, tsize_t);
 extern	int TIFFFlushData1(TIFF*);
-extern	void TIFFFreeDirectory(TIFF*);
 extern	int TIFFDefaultDirectory(TIFF*);
 extern	int TIFFSetCompressionScheme(TIFF*, int);
 extern	int TIFFSetDefaultCompressionState(TIFF*);
@@ -267,6 +268,8 @@ extern	void _TIFFprintAsciiTag(FILE*, const char*, const char*);
 
 GLOBALDATA(TIFFErrorHandler,_TIFFwarningHandler);
 GLOBALDATA(TIFFErrorHandler,_TIFFerrorHandler);
+GLOBALDATA(TIFFErrorHandlerExt,_TIFFwarningHandlerExt);
+GLOBALDATA(TIFFErrorHandlerExt,_TIFFerrorHandlerExt);
 
 extern	tdata_t _TIFFCheckMalloc(TIFF*, size_t, size_t, const char*);
 
