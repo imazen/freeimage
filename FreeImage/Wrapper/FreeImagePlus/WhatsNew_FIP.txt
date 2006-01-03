@@ -6,6 +6,7 @@ What's New for FreeImagePlus
 + : added
 
 Month Day, 2005 - 3.9.0
++ [Herve Drolon] added version info to the DLL
 + [Herve Drolon] added fipImage::crop
 + [Herve Drolon] added support for most image types to fipImage::rescale
 * [Sandor Szalacsi] improved fipWinWimage::drawEx behavior with non transparent PNG having a file background
