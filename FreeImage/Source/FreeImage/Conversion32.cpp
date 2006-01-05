@@ -224,6 +224,33 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 				
 				return new_dib;
 			}
+
+			case 64:
+			{
+				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+
+				if (new_dib != NULL) {
+					unsigned src_pitch = FreeImage_GetPitch(dib);
+					unsigned dst_pitch = FreeImage_GetPitch(new_dib);
+					BYTE *src_bits = FreeImage_GetBits(dib);
+					BYTE *dst_bits = FreeImage_GetBits(new_dib);
+					for (int rows = 0; rows < height; rows++) {
+						FIRGBA16 *src_pixel = (FIRGBA16*)src_bits;
+						RGBQUAD *dst_pixel = (RGBQUAD*)dst_bits;
+						for(int cols = 0; cols < width; cols++) {
+							dst_pixel[cols].rgbRed		= (BYTE)(src_pixel[cols].red   >> 8);
+							dst_pixel[cols].rgbGreen	= (BYTE)(src_pixel[cols].green >> 8);
+							dst_pixel[cols].rgbBlue		= (BYTE)(src_pixel[cols].blue  >> 8);
+							dst_pixel[cols].rgbReserved = (BYTE)(src_pixel[cols].alpha >> 8);
+						}
+						src_bits += src_pitch;
+						dst_bits += dst_pitch;
+					}
+				}				
+				return new_dib;
+
+			}
+
 		}
 	}
 

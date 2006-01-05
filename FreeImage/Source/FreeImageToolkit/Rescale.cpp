@@ -125,3 +125,98 @@ FreeImage_Rescale(FIBITMAP *src, int dst_width, int dst_height, FREE_IMAGE_FILTE
 	return dst;
 }
 
+FIBITMAP * DLL_CALLCONV 
+FreeImage_MakeThumbnail(FIBITMAP *dib, int max_pixel_size, BOOL convert) {
+	FIBITMAP *thumbnail = NULL;
+	int new_width, new_height;
+
+	if(!dib || (max_pixel_size <= 0)) return NULL;
+
+	int width	= FreeImage_GetWidth(dib);
+	int height = FreeImage_GetHeight(dib);
+
+	if(max_pixel_size == 0) max_pixel_size = 1;
+
+	if((width < max_pixel_size) && (height < max_pixel_size)) {
+		// image is smaller than the requested thumbnail
+		return FreeImage_Clone(dib);
+	}
+
+	if(width > height) {
+		new_width = max_pixel_size;
+		// change image height with the same ratio
+		double ratio = ((double)new_width / (double)width);
+		new_height = (int)(height * ratio + 0.5);
+		if(new_height == 0) new_height = 1;
+	} else {
+		new_height = max_pixel_size;
+		// change image width with the same ratio
+		double ratio = ((double)new_height / (double)height);
+		new_width = (int)(width * ratio + 0.5);
+		if(new_width == 0) new_width = 1;
+	}
+
+	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+
+	// perform downsampling using a bilinear interpolation
+
+	switch(image_type) {
+		case FIT_BITMAP:
+		case FIT_UINT16:
+		case FIT_RGB16:
+		case FIT_RGBA16:
+		case FIT_FLOAT:
+		case FIT_RGBF:
+		case FIT_RGBAF:
+		{
+			FREE_IMAGE_FILTER filter = FILTER_BILINEAR;
+			thumbnail = FreeImage_Rescale(dib, new_width, new_height, filter);
+		}
+		break;
+
+		case FIT_INT16:
+		case FIT_UINT32:
+		case FIT_INT32:
+		case FIT_DOUBLE:
+		case FIT_COMPLEX:
+		default:
+			thumbnail = NULL;
+			break;
+	}
+
+	if((thumbnail != NULL) && (image_type != FIT_BITMAP) && convert) {
+		// convert to a standard bitmap
+		FIBITMAP *bitmap = NULL;
+		switch(image_type) {
+			case FIT_UINT16:
+				bitmap = FreeImage_ConvertTo8Bits(thumbnail);
+				FreeImage_Unload(thumbnail);
+				thumbnail = bitmap;
+				break;
+			case FIT_RGB16:
+				bitmap = FreeImage_ConvertTo24Bits(thumbnail);
+				break;
+			case FIT_RGBA16:
+				bitmap = FreeImage_ConvertTo32Bits(thumbnail);
+				break;
+			case FIT_FLOAT:
+				bitmap = FreeImage_ConvertToStandardType(thumbnail, TRUE);
+				break;
+			case FIT_RGBF:
+				bitmap = FreeImage_ToneMapping(thumbnail, FITMO_DRAGO03);
+				break;
+			case FIT_RGBAF:
+				// no way to keep the transparency yet ...
+				FIBITMAP *rgbf = FreeImage_ConvertToRGBF(thumbnail);
+				bitmap = FreeImage_ToneMapping(rgbf, FITMO_DRAGO03);
+				FreeImage_Unload(rgbf);
+				break;
+		}
+		if(bitmap != NULL) {
+			FreeImage_Unload(thumbnail);
+			thumbnail = bitmap;
+		}
+	}
+
+	return thumbnail;
+}

@@ -767,6 +767,15 @@ public:
 	@see FreeImage_Rescale, FREE_IMAGE_FILTER
 	*/
 	BOOL rescale(WORD new_width, WORD new_height, FREE_IMAGE_FILTER filter);
+
+	/** @brief Creates a thumbnail image keeping aspect ratio
+
+	@param max_size Maximum width or height in pixel units
+	@param convert When set to TRUE, converts the image to a standard type
+	@return Returns TRUE if the operation was successful, FALSE otherwise
+	@see FreeImage_MakeThumbnail
+	*/
+	BOOL makeThumbnail(WORD max_size, BOOL convert = TRUE);
 	//@}
 
 	/**@name Image status */

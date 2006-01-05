@@ -772,3 +772,25 @@ BOOL fipImage::rescale(WORD new_width, WORD new_height, FREE_IMAGE_FILTER filter
 	return FALSE;
 }
 
+BOOL fipImage::makeThumbnail(WORD max_size, BOOL convert) {
+	if(_dib) {
+		switch(FreeImage_GetImageType(_dib)) {
+			case FIT_BITMAP:
+			case FIT_UINT16:
+			case FIT_RGB16:
+			case FIT_RGBA16:
+			case FIT_FLOAT:
+			case FIT_RGBF:
+			case FIT_RGBAF:
+				break;
+			default:
+				return FALSE;
+				break;
+		}
+
+		// Perform downsampling
+		FIBITMAP *dst = FreeImage_MakeThumbnail(_dib, max_size, convert);
+		return replace(dst);
+	}
+	return FALSE;
+}
