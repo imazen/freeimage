@@ -15,6 +15,7 @@ Known problem : memory leaks in PluginG3 and memory access violation in libtiff 
 + [Herve Drolon] added support for most image types to FreeImage_Rescale
 + [Herve Drolon] added FreeImage_MakeThumbnail
 + [Herve Drolon] added support for 64-bit images to FreeImage_ConvertTo32Bits
++ [Herve Drolon] added support for Exif tags to TIF plugin (read only)
 * [Carsten Klein] FreeImage_Dither and FreeImage_Threshold now work with palettized 8-bit dib
 * [Christophe Petit] fixed a bug in FreeImage_GetFIFFromFilenameU occuring with files without extension
 * [Leigh Brasington] fixed a bug in PluginGIF causing FreeImage not working on Win/98/ME
