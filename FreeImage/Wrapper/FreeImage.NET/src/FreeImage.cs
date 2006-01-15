@@ -601,7 +601,7 @@ namespace FreeImageAPI
 		public static extern uint GetDIBSize(FIBITMAP dib);
 		
 		[DllImport(dllName, EntryPoint="FreeImage_GetPalette")]
-		[return: MarshalAs(UnmanagedType.LPStruct)]
+		[return: MarshalAs(UnmanagedType.LPArray)]
 		public static extern RGBQUAD GetPalette(FIBITMAP dib);
 		
 		[DllImport(dllName, EntryPoint="FreeImage_GetDotsPerMeterX")]
