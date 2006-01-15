@@ -183,3 +183,54 @@ FreeImage_TellMemory(FIMEMORY *stream) {
 	return -1L;
 }
 
+// =====================================================================
+// Reading or Writing in Memory stream
+// =====================================================================
+
+/**
+Reads data from a memory stream
+@param buffer Storage location for data
+@param size Item size in bytes
+@param count Maximum number of items to be read
+@param stream Pointer to FIMEMORY structure
+@return Returns the number of full items actually read, which may be less than count if an error occurs
+*/
+unsigned DLL_CALLCONV 
+FreeImage_ReadMemory(void *buffer, unsigned size, unsigned count, FIMEMORY *stream) {
+	FreeImageIO io;
+	SetMemoryIO(&io);
+
+	if (stream != NULL) {
+		return io.read_proc(buffer, size, count, stream);
+	}
+
+	return 0;
+}
+
+/**
+Writes data to a memory stream.
+@param buffer Pointer to data to be written
+@param size Item size in bytes
+@param count Maximum number of items to be written
+@param stream Pointer to FIMEMORY structure
+@return Returns the number of full items actually written, which may be less than count if an error occurs
+*/
+unsigned DLL_CALLCONV 
+FreeImage_WriteMemory(const void *buffer, unsigned size, unsigned count, FIMEMORY *stream) {
+	if (stream != NULL) {
+		FreeImageIO io;
+		SetMemoryIO(&io);
+
+		FIMEMORYHEADER *mem_header = (FIMEMORYHEADER*)(((FIMEMORY*)stream)->data);
+
+		if(mem_header->delete_me == TRUE) {
+			return io.write_proc((void *)buffer, size, count, stream);
+		} else {
+			// do not write in a user buffer
+			FreeImage_OutputMessageProc(FIF_UNKNOWN, "Memory buffer is read only");
+		}
+	}
+
+	return 0;
+}
+
