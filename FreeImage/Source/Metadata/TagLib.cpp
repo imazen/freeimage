@@ -626,15 +626,18 @@ TagLib::getTagInfo(MDMODEL md_model, WORD tagID) {
 	return NULL;
 }
 
-
 const char* 
-TagLib::getTagFieldName(MDMODEL md_model, WORD tagID) {
+TagLib::getTagFieldName(MDMODEL md_model, WORD tagID, int bBuildKey) {
 	static char unknown_tag[11];
 
 	const TagInfo *info = getTagInfo(md_model, tagID);
 	if(NULL == info) {
-		sprintf(unknown_tag, "Tag 0x%04X", tagID);
-		return &unknown_tag[0];
+		if(bBuildKey == TRUE) {
+			sprintf(unknown_tag, "Tag 0x%04X", tagID);
+			return &unknown_tag[0];
+		} else {
+			return NULL;
+		}
 	}
 
 	return info->fieldname;

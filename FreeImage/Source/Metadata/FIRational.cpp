@@ -66,6 +66,41 @@ FIRational::FIRational(const FITAG *tag) {
 	}
 }
 
+FIRational::FIRational(float value) {
+	if (value == (float)((long)value)) {
+	   _numerator = (long)value;
+	   _denominator = 1L;
+	} else {
+		int k, count;
+		long n[4];
+
+		float x = fabs(value);
+		int sign = (value > 0) ? 1 : -1;
+
+		// make a continued-fraction expansion of x
+		count = -1;
+		for(k = 0; k < 4; k++) {
+			n[k] = (long)floor(x);
+			count++;
+			x -= (float)n[k];
+			if(x == 0) break;
+			x = 1 / x;
+		}
+		// compute the rational
+		_numerator = 1;
+		_denominator = n[count];
+
+		for(int i = count - 1; i >= 0; i--) {
+			if(n[i] == 0) break;
+			long _num = (n[i] * _numerator + _denominator);
+			long _den = _numerator;
+			_numerator = _num;
+			_denominator = _den;
+		}
+		_numerator *= sign;
+	}
+}
+
 /// Copy constructor
 FIRational::FIRational (const FIRational& r) {
 	initialize(r._numerator, r._denominator);

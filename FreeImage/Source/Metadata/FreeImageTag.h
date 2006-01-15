@@ -365,12 +365,13 @@ public:
 
 	/**
 	Given a tag ID, returns its tag field name. 
-	When the tag is unknown, a string such as "Tag 0x1234" is returned.
+	When the tag is unknown and bBuildKey is TRUE, a string such as "Tag 0x1234" is returned.
 	@param md_model Internal metadata model
 	@param tagID tag ID
+	@param bBuildKey If TRUE, build a key for unknown tags
 	@return Returns the tag field name if successful, returns an 'unknown tag' string otherwise
 	*/
-	const char* getTagFieldName(MDMODEL md_model, WORD tagID);
+	const char* getTagFieldName(MDMODEL md_model, WORD tagID, int bBuildKey = TRUE);
 
 	/**
 	Given a tag ID, returns its description. 
@@ -409,9 +410,6 @@ BOOL jpeg_read_exif_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int dat
 
 // JPEG / TIFF IPTC profile
 BOOL read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen);
-
-// Extended TIFF Directory GEO Tag Support
-//void XTIFFInitialize();
 
 #if defined(__cplusplus)
 }

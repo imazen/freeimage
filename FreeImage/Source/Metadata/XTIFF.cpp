@@ -31,6 +31,7 @@
 #include "FreeImage.h"
 #include "Utilities.h"
 #include "FreeImageTag.h"
+#include "FIRational.h"
 
 // ----------------------------------------------------------
 //   Extended TIFF Directory GEO Tag Support
@@ -186,4 +187,209 @@ tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 		}
 	}
 }
+
+// ----------------------------------------------------------
+//   EXIF tag reading 
+// ----------------------------------------------------------
+
+BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
+    int  i;
+    short count;
+
+	TagLib& tagLib = TagLib::instance();
+
+	TIFFDirectory *td = &tif->tif_dir;
+    
+	count = (short) TIFFGetTagListCount(tif);
+    for(i = 0; i < count; i++) {
+        ttag_t tag = TIFFGetTagListEntry(tif, i);
+        const TIFFFieldInfo *fip;
+        uint16 value_count;
+        int mem_alloc = 0;
+        void *raw_data;
+
+		if(tag == TIFFTAG_EXIFIFD) continue;
+
+		// get the tag key - use FALSE to avoid reading GeoTIFF tags
+		const char *key = tagLib.getTagFieldName(md_model, tag, FALSE);
+		if(key == NULL) continue;
+        
+		fip = TIFFFieldWithTag(tif, tag);
+        if(fip == NULL)
+			continue;
+		
+		if(fip->field_passcount) {
+			if(TIFFGetField(tif, tag, &value_count, &raw_data) != 1)
+				continue;
+		} else {
+			if (fip->field_readcount == TIFF_VARIABLE || fip->field_readcount == TIFF_VARIABLE2)
+				value_count = 1;
+			else if (fip->field_readcount == TIFF_SPP)
+				value_count = td->td_samplesperpixel;
+			else
+				value_count = fip->field_readcount;
+			if (fip->field_type == TIFF_ASCII 
+				|| fip->field_readcount == TIFF_VARIABLE
+				|| fip->field_readcount == TIFF_VARIABLE2
+				|| fip->field_readcount == TIFF_SPP
+				|| value_count > 1) {
+				if(TIFFGetField(tif, tag, &raw_data) != 1)
+					continue;
+			} else {
+				raw_data = _TIFFmalloc(_TIFFDataSize(fip->field_type) * value_count);
+				mem_alloc = 1;
+				if(TIFFGetField(tif, tag, raw_data) != 1) {
+					_TIFFfree(raw_data);
+					continue;
+				}
+			}
+		}
+		
+		// create a tag
+		FITAG *fitag = FreeImage_CreateTag();
+		if(!fitag) {
+			if(mem_alloc)
+				_TIFFfree(raw_data);
+			return FALSE;
+		}
+
+		FreeImage_SetTagID(fitag, tag);
+		FreeImage_SetTagKey(fitag, key);
+
+		switch(fip->field_type) {
+			case TIFF_BYTE:
+				FreeImage_SetTagType(fitag, FIDT_BYTE);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, raw_data);
+				break;
+
+			case TIFF_UNDEFINED:
+				FreeImage_SetTagType(fitag, FIDT_UNDEFINED);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, raw_data);
+				break;
+
+			case TIFF_SBYTE:
+				FreeImage_SetTagType(fitag, FIDT_SBYTE);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, raw_data);
+				break;
+
+			case TIFF_SHORT:
+				FreeImage_SetTagType(fitag, FIDT_SHORT);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, raw_data);
+				break;
+
+			case TIFF_SSHORT:
+				FreeImage_SetTagType(fitag, FIDT_SSHORT);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, raw_data);
+				break;
+
+			case TIFF_LONG:
+				FreeImage_SetTagType(fitag, FIDT_LONG);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, raw_data);
+				break;
+
+			case TIFF_IFD:
+				FreeImage_SetTagType(fitag, FIDT_IFD);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, raw_data);
+				break;
+
+			case TIFF_SLONG:
+				FreeImage_SetTagType(fitag, FIDT_SLONG);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, raw_data);
+				break;
+
+			case TIFF_RATIONAL:
+			{
+				// LibTIFF converts rational to floats : reconvert floats to rationals
+				DWORD *rvalue = (DWORD*)malloc(2 * value_count * sizeof(DWORD));
+				for(int i = 0; i < value_count; i++) {
+					float *fv = (float*)raw_data;
+					FIRational rational(fv[i]);
+					rvalue[2*i] = rational.getNumerator();
+					rvalue[2*i+1] = rational.getDenominator();
+				}
+				FreeImage_SetTagType(fitag, FIDT_RATIONAL);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, rvalue);
+				free(rvalue);
+			}
+			break;
+
+			case TIFF_SRATIONAL:
+			{
+				// LibTIFF converts rational to floats : reconvert floats to rationals
+				LONG *rvalue = (LONG*)malloc(2 * value_count * sizeof(LONG));
+				for(int i = 0; i < value_count; i++) {
+					float *fv = (float*)raw_data;
+					FIRational rational(fv[i]);
+					rvalue[2*i] = rational.getNumerator();
+					rvalue[2*i+1] = rational.getDenominator();
+				}
+				FreeImage_SetTagType(fitag, FIDT_RATIONAL);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, rvalue);
+				free(rvalue);
+			}
+			break;
+
+			case TIFF_FLOAT:
+				FreeImage_SetTagType(fitag, FIDT_FLOAT);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, raw_data);
+				break;
+
+			case TIFF_DOUBLE:
+				FreeImage_SetTagType(fitag, FIDT_DOUBLE);
+				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+				FreeImage_SetTagCount(fitag, value_count);
+				FreeImage_SetTagValue(fitag, raw_data);
+				break;
+
+			default:
+			{
+				int length = strlen((char*)raw_data) + 1;
+				FreeImage_SetTagType(fitag, FIDT_ASCII);
+				FreeImage_SetTagLength(fitag, length);
+				FreeImage_SetTagCount(fitag, length);
+				FreeImage_SetTagValue(fitag, raw_data);
+			}
+			break;
+		}
+
+		const char *description = tagLib.getTagDescription(md_model, tag);
+		if(description) {
+			FreeImage_SetTagDescription(fitag, description);
+		}
+		// store the tag
+		FreeImage_SetMetadata(tagLib.getFreeImageModel(md_model), dib, FreeImage_GetTagKey(fitag), fitag);
+
+		// destroy the tag
+		FreeImage_DeleteTag(fitag);
+	
+		if(mem_alloc)
+			_TIFFfree(raw_data);
+    }
+
+	return TRUE;
+
+}
+
 

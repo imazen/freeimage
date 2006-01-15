@@ -52,6 +52,12 @@ void XTIFFInitialize();
 void tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib);
 void tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib);
 
+// ----------------------------------------------------------
+//   exif interface (see XTIFF.cpp)
+// ----------------------------------------------------------
+
+// TIFF Exif profile
+BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib);
 
 // ==========================================================
 // Plugin Interface
@@ -97,11 +103,6 @@ _tiffCloseProc(thandle_t fd) {
 
 static toff_t
 _tiffSizeProc(thandle_t handle) {
-	/* the following fails on some images
-	struct stat sb;
-	fi_TIFFIO *fio = (fi_TIFFIO*)handle;
-	return (fstat((long) fio->handle, &sb) < 0 ? 0 : sb.st_size);
-	*/
     fi_TIFFIO *fio = (fi_TIFFIO*)handle;
     long currPos = fio->io->tell_proc(fio->handle);
     fio->io->seek_proc(fio->handle, 0, SEEK_END);
@@ -695,19 +696,18 @@ tiff_read_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
 static BOOL 
 tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib) {
 	uint16  count = 0;
-    uint32 *exif_offset = 0;
-	
-	// get the IFD offset
-	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &count, &exif_offset)) {
-		if(!exif_offset) return FALSE;
+    uint32 exif_offset = 0;
 
-		// don't know where to go from here ...
-		// the following doesn't work because there's no image data in the exif IFD
-		
-		if(!TIFFSetSubDirectory(tiff, *exif_offset))
+	// read EXIF-TIFF tags
+	tiff_read_exif_tags(tiff, TagLib::EXIF_MAIN, dib);
+
+	// get the IFD offset
+	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &exif_offset)) {
+		// read EXIF tags
+		if(!TIFFReadEXIFDirectory(tiff, exif_offset))
 			return FALSE;
-		
-		return TRUE;
+
+		return tiff_read_exif_tags(tiff, TagLib::EXIF_EXIF, dib);
 	}
 
 	return FALSE;
@@ -725,11 +725,11 @@ ReadMetadata(TIFF *tiff, FIBITMAP *dib) {
 	// Adobe XMP
 	tiff_read_xmp_profile(tiff, dib);
 
-	// Exif-TIFF (does not work)
-	//tiff_read_exif_profile(tiff, dib);
-
 	// GeoTIFF
 	tiff_read_geotiff_profile(tiff, dib);
+
+	// Exif-TIFF
+	tiff_read_exif_profile(tiff, dib);
 }
 
 // ----------------------------------------------------------

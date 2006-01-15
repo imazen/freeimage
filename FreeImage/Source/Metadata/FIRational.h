@@ -42,6 +42,9 @@ public:
 	/// Constructor with FITAG
 	FIRational(const FITAG *tag);
 
+	/// Constructor with a float
+	FIRational(float value);
+
 	/// Copy constructor
 	FIRational (const FIRational& r);
 
