@@ -9,6 +9,7 @@ Month Day, 2005 - 3.9.0
 + [Herve Drolon] added version info to the DLL
 + [Herve Drolon] added fipImage::crop
 + [Herve Drolon] added support for most image types to fipImage::rescale
++ [Herve Drolon] added fipImage::makeThumbnail
 * [Sandor Szalacsi] improved fipWinWimage::drawEx behavior with non transparent PNG having a file background
 * [Herve Drolon] fixed a bug in fipWinImage::setToneMappingOperator
 
