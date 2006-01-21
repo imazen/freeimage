@@ -145,16 +145,6 @@ begin
   Close;
 end;
 
-{const
-  cColorType: array [FREE_IMAGE_COLOR_TYPE] of string = (
-    'MinIsWhite',
-    'MinIsBlack',
-    'RGB',
-    'Palette',
-    'RGBAlpha',
-    'CMYK'
-  ); }
-
 procedure TfwbMainForm.mnuFileOpenClick(Sender: TObject);
 var
   t: Cardinal;
@@ -165,9 +155,8 @@ begin
     FBitmap.Load(OD.FileName);
     t := GetTickCount - t;
     mnuImage.Enabled := FBitmap.IsValid;
-    StatusBar.Panels[0].Text := 'Loaded in ' + IntToStr(t) + 'msec.';
+    StatusBar.Panels[0].Text := 'Loaded in ' + IntToStr(t) + ' msec.';
     StatusBar.Panels[1].Text := Format('%dx%d', [FBitmap.GetWidth, FBitmap.GetHeight]);
-//    StatusBar.Panels[2].Text := 'Color type: ' + cColorType[FBitmap.GetColorType];
     Invalidate;
   end;
 end;
@@ -215,7 +204,6 @@ begin
     Invert else
   if Sender = mnuClear then
     Clear;
-//  StatusBar.Panels[2].Text := 'Color type: ' + cColorType[FBitmap.GetColorType];
   Invalidate;
 end;
 
