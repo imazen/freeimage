@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, Menus, FreeBitmap, ComCtrls;
+  Dialogs, Menus, FreeBitmap, ComCtrls, ImgList, ToolWin;
 
 type
   TfwbMainForm = class(TForm)
@@ -33,6 +33,15 @@ type
     mnuInvert: TMenuItem;
     mnuClear: TMenuItem;
     mnuTo4Bits: TMenuItem;
+    tbTools: TToolBar;
+    btnCopy: TToolButton;
+    ImageList1: TImageList;
+    ToolButton1: TToolButton;
+    btnPaste: TToolButton;
+    btnClear: TToolButton;
+    btnOpen: TToolButton;
+    ToolButton3: TToolButton;
+    ToolButton4: TToolButton;
     procedure FormDestroy(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -40,6 +49,9 @@ type
     procedure mnuFileOpenClick(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure mnuFlipHorzClick(Sender: TObject);
+    procedure btnCopyClick(Sender: TObject);
+    procedure btnClearClick(Sender: TObject);
+    procedure btnPasteClick(Sender: TObject);
   private
     FBitmap: TFreeWinBitmap;
     procedure WMEraseBkgnd(var Message: TMessage); message WM_ERASEBKGND;
@@ -55,7 +67,7 @@ implementation
 {$R *.dfm}
 
 uses
-  FreeUtils, FreeImage;
+  FreeUtils, FreeImage, Math;
 
 procedure TfwbMainForm.FormDestroy(Sender: TObject);
 begin
@@ -64,12 +76,58 @@ begin
 end;
 
 procedure TfwbMainForm.FormPaint(Sender: TObject);
+var
+  dx, dy, w, h: Integer;
+  r1, r2: Double;
+  R: TRect;
 begin
-  if FBitmap.IsValid then
-    FBitmap.Draw(Canvas.Handle, ClientRect)
-  else
+  if FBitmap.IsValid then // draw the bitmap
   begin
-    Canvas.Brush.Color := clBtnFace;
+    // determine paint rect
+    r1 := FBitmap.GetWidth / FBitmap.GetHeight;
+    r2 := ClientWidth / ClientHeight;
+    if r1 > r2 then // fit by width
+    begin
+      w := ClientWidth;
+      h := Floor(w / r1);
+      dx := 0;
+      dy := (ClientHeight - h) div 2;
+    end
+    else // fit by height
+    begin
+      h := ClientHeight;
+      w := Floor(h * r1);
+      dy := 0;
+      dx := (ClientWidth - w) div 2;
+    end;
+    with ClientRect do
+      R := Bounds(Left + dx, Top + dy, w, h);
+    FBitmap.Draw(Canvas.Handle, R);
+
+    // erase area around the image
+    Canvas.Brush.Color := Color;
+    if dx > 0 then
+    begin
+      with ClientRect do
+        R := Bounds(Left, Top, dx, ClientHeight);
+      Canvas.FillRect(R);
+      with ClientRect do
+        R := Bounds(Right - dx, Top, dx, ClientHeight);
+      Canvas.FillRect(R);
+    end else
+    if dy > 0 then
+    begin
+      with ClientRect do
+        R := Bounds(Left, Top, ClientWidth, dy);
+      Canvas.FillRect(R);
+      with ClientRect do
+        R := Bounds(Left, Bottom - dy, ClientWidth, dy);
+      Canvas.FillRect(R);
+    end
+  end
+  else // clear
+  begin
+    Canvas.Brush.Color := Color;
     Canvas.FillRect(ClientRect);
   end
 end;
@@ -87,7 +145,7 @@ begin
   Close;
 end;
 
-const
+{const
   cColorType: array [FREE_IMAGE_COLOR_TYPE] of string = (
     'MinIsWhite',
     'MinIsBlack',
@@ -95,7 +153,7 @@ const
     'Palette',
     'RGBAlpha',
     'CMYK'
-  );
+  ); }
 
 procedure TfwbMainForm.mnuFileOpenClick(Sender: TObject);
 var
@@ -109,7 +167,7 @@ begin
     mnuImage.Enabled := FBitmap.IsValid;
     StatusBar.Panels[0].Text := 'Loaded in ' + IntToStr(t) + 'msec.';
     StatusBar.Panels[1].Text := Format('%dx%d', [FBitmap.GetWidth, FBitmap.GetHeight]);
-    StatusBar.Panels[2].Text := 'Color type: ' + cColorType[FBitmap.GetColorType];
+//    StatusBar.Panels[2].Text := 'Color type: ' + cColorType[FBitmap.GetColorType];
     Invalidate;
   end;
 end;
@@ -157,7 +215,24 @@ begin
     Invert else
   if Sender = mnuClear then
     Clear;
-  StatusBar.Panels[2].Text := 'Color type: ' + cColorType[FBitmap.GetColorType];
+//  StatusBar.Panels[2].Text := 'Color type: ' + cColorType[FBitmap.GetColorType];
+  Invalidate;
+end;
+
+procedure TfwbMainForm.btnCopyClick(Sender: TObject);
+begin
+  if FBitmap.IsValid then FBitmap.CopyToClipBoard(Handle);
+end;
+
+procedure TfwbMainForm.btnClearClick(Sender: TObject);
+begin
+  FBitmap.Clear;
+  Invalidate;
+end;
+
+procedure TfwbMainForm.btnPasteClick(Sender: TObject);
+begin
+  FBitmap.PasteFromClipBoard;
   Invalidate;
 end;
 

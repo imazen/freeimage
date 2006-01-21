@@ -37,56 +37,97 @@ uses
   SysUtils, Classes, Windows, FreeImage;
 
 type
-  TFreeStretchFilter = (
-    sfBox,
-    sfBicubic,
-    sfBilinear,
-    sfBSpline,
-    sfCatmullRom,
-    sfLanczos3
-  );
-
   { TFreeObject }
 
-  TFreeObject = class
+  TFreeObject = class(TObject)
   public
     function IsValid: Boolean; virtual;
   end;
 
-  // forward declarations
+  { TFreeTag }
+
+  TFreeTag = class(TFreeObject)
+  private
+    // fields
+    FTag: PFITAG;
+
+    // getters & setters
+    function GetCount: Cardinal;
+    function GetDescription: string;
+    function GetID: Word;
+    function GetKey: string;
+    function GetLength: Cardinal;
+    function GetTagType: FREE_IMAGE_MDTYPE;
+    function GetValue: Pointer;
+    procedure SetCount(const Value: Cardinal);
+    procedure SetDescription(const Value: string);
+    procedure SetID(const Value: Word);
+    procedure SetKey(const Value: string);
+    procedure SetLength(const Value: Cardinal);
+    procedure SetTagType(const Value: FREE_IMAGE_MDTYPE);
+    procedure SetValue(const Value: Pointer);
+  public
+    // construction & destruction
+    constructor Create(ATag: PFITAG = nil); virtual;
+    destructor Destroy; override;
+
+    // methods
+    function Clone: TFreeTag;
+    function IsValid: Boolean; override;
+    function ToString(Model: FREE_IMAGE_MDMODEL; Make: PChar = nil): string;
+
+    // properties
+    property Key: string read GetKey write SetKey;
+    property Description: string read GetDescription write SetDescription;
+    property ID: Word read GetID write SetID;
+    property TagType: FREE_IMAGE_MDTYPE read GetTagType write SetTagType;
+    property Count: Cardinal read GetCount write SetCount;
+    property Length: Cardinal read GetLength write SetLength;
+    property Value: Pointer read GetValue write SetValue;
+    property Tag: PFITAG read FTag;
+  end;
+
+  { forward declarations }
+
+  TFreeBitmap = class;
   TFreeMemoryIO = class;
 
   { TFreeBitmap }
 
+  TFreeBitmapChangingEvent = procedure(Sender: TFreeBitmap; var OldDib, NewDib: PFIBITMAP; var Handled: Boolean) of object;
+
   TFreeBitmap = class(TFreeObject)
   private
+    // fields
     FDib: PFIBITMAP;
     FOnChange: TNotifyEvent;
+    FOnChanging: TFreeBitmapChangingEvent;
+
+    procedure SetDib(Value: PFIBITMAP);
   protected
-    function Replace(NewDib: PFIBITMAP): Boolean;
+    function DoChanging(var OldDib, NewDib: PFIBITMAP): Boolean; dynamic;
+    function Replace(NewDib: PFIBITMAP): Boolean; dynamic;
   public
-    // construction & destruction
-    constructor Create(ImageType: FREE_IMAGE_TYPE = FIT_BITMAP;
-      Width: Integer = 0; Height: Integer = 0; Bpp: Integer = 0);
+    constructor Create(ImageType: FREE_IMAGE_TYPE = FIT_BITMAP; Width: Integer = 0; Height: Integer = 0; Bpp: Integer = 0);
     destructor Destroy; override;
     function SetSize(ImageType: FREE_IMAGE_TYPE; Width, Height, Bpp: Integer; RedMask: Cardinal = 0; GreenMask: Cardinal = 0; BlueMask: Cardinal = 0): Boolean;
-    // change notification
     procedure Change; dynamic;
-    // copying
-    procedure Assign(Source: TFreeBitmap); overload;
-    procedure Assign(Source: PFIBITMAP); overload;
+    procedure Assign(Source: TFreeBitmap);
     function CopySubImage(Left, Top, Right, Bottom: Integer; Dest: TFreeBitmap): Boolean;
-    function PasteSubImage(Src: TFreeBitmap; Left, Top: Integer; Alpha: Integer = 256): Boolean;    
-    // clearing
-    procedure Clear;
-    // load functions
+    function PasteSubImage(Src: TFreeBitmap; Left, Top: Integer; Alpha: Integer = 256): Boolean;
+    procedure Clear; virtual;
     function Load(const FileName: string; Flag: Integer = 0): Boolean;
+    function LoadU(const FileName: WideString; Flag: Integer = 0): Boolean;
     function LoadFromHandle(IO: PFreeImageIO; Handle: fi_handle; Flag: Integer = 0): Boolean;
     function LoadFromMemory(MemIO: TFreeMemoryIO; Flag: Integer = 0): Boolean;
+    function LoadFromStream(Stream: TStream; Flag: Integer = 0): Boolean;
     // save functions
+    function CanSave(fif: FREE_IMAGE_FORMAT): Boolean;
     function Save(const FileName: string; Flag: Integer = 0): Boolean;
+    function SaveU(const FileName: WideString; Flag: Integer = 0): Boolean;
     function SaveToHandle(fif: FREE_IMAGE_FORMAT; IO: PFreeImageIO; Handle: fi_handle; Flag: Integer = 0): Boolean;
     function SaveToMemory(fif: FREE_IMAGE_FORMAT; MemIO: TFreeMemoryIO; Flag: Integer = 0): Boolean;
+    function SaveToStream(fif: FREE_IMAGE_FORMAT; Stream: TStream; Flag: Integer = 0): Boolean;
     // image information
     function GetImageType: FREE_IMAGE_TYPE;
     function GetWidth: Integer;
@@ -98,10 +139,10 @@ type
     function GetImageSize: Cardinal;
     function GetBitsPerPixel: Integer;
     function GetLine: Integer;
-    function GetHorizontalResolution: Integer;
-    function GetVerticalResolution: Integer;
-    procedure SetHorizontalResolution(Value: Integer);
-    procedure SetVerticalResolution(Value: Integer);
+    function GetHorizontalResolution: Double;
+    function GetVerticalResolution: Double;
+    procedure SetHorizontalResolution(Value: Double);
+    procedure SetVerticalResolution(Value: Double);
     // palette operations
     function GetPalette: PRGBQUAD;
     function GetPaletteSize: Integer;
@@ -116,7 +157,7 @@ type
     function SetPixelIndex(X, Y: Cardinal; Value: PByte): Boolean;
     function SetPixelColor(X, Y: Cardinal; Value: PRGBQUAD): Boolean;
     // convertion
-    function ConvertToStandartType(ScaleLinear: Boolean): Boolean;
+    function ConvertToStandardType(ScaleLinear: Boolean): Boolean;
     function ConvertToType(ImageType: FREE_IMAGE_TYPE; ScaleLinear: Boolean): Boolean;
     function Threshold(T: Byte): Boolean;
     function ConvertTo4Bits: Boolean;
@@ -128,6 +169,8 @@ type
     function ConvertToGrayscale: Boolean;
     function ColorQuantize(Algorithm: FREE_IMAGE_QUANTIZE): Boolean;
     function Dither(Algorithm: FREE_IMAGE_DITHER): Boolean;
+    function ConvertToRGBF: Boolean;
+    function ToneMapping(TMO: FREE_IMAGE_TMO; FirstParam, SecondParam: Double): Boolean;
     // transparency
     function IsTransparent: Boolean;
     function GetTransparencyCount: Cardinal;
@@ -155,11 +198,19 @@ type
     function GetHistogram(Histo: PDWORD; Channel: FREE_IMAGE_COLOR_CHANNEL = FICC_BLACK): Boolean;
     // upsampling / downsampling
     procedure MakeThumbnail(const Width, Height: Integer; DestBitmap: TFreeBitmap);
-    function Rescale(NewWidth, NewHeight: Integer; Filter: TFreeStretchFilter; Dest: TFreeBitmap = nil): Boolean;
+    function Rescale(NewWidth, NewHeight: Integer; Filter: FREE_IMAGE_FILTER; Dest: TFreeBitmap = nil): Boolean;
+    // metadata routines
+    function FindFirstMetadata(Model: FREE_IMAGE_MDMODEL; var Tag: TFreeTag): PFIMETADATA;
+    function FindNextMetadata(MDHandle: PFIMETADATA; var Tag: TFreeTag): Boolean;
+    procedure FindCloseMetadata(MDHandle: PFIMETADATA);
+    function SetMetadata(Model: FREE_IMAGE_MDMODEL; const Key: string; Tag: TFreeTag): Boolean;
+    function GetMetadata(Model: FREE_IMAGE_MDMODEL; const Key: string; var Tag: TFreeTag): Boolean;
+    function GetMetadataCount(Model: FREE_IMAGE_MDMODEL): Cardinal;
 
-    // Properties 
-    property Dib: PFIBITMAP read FDib;
+    // properties
+    property Dib: PFIBITMAP read FDib write SetDib;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
+    property OnChanging: TFreeBitmapChangingEvent read FOnChanging write FOnChanging;
   end;
   
   { TFreeWinBitmap }
@@ -169,10 +220,10 @@ type
     FDeleteMe: Boolean;     // True - need to delete FDisplayDib
     FDisplayDib: PFIBITMAP; // Image that paints on DC
   public
-    constructor Create(ImageType: FREE_IMAGE_TYPE = FIT_BITMAP;
-      Width: Integer = 0; Height: Integer = 0; Bpp: Integer = 0);
+    constructor Create(ImageType: FREE_IMAGE_TYPE = FIT_BITMAP; Width: Integer = 0; Height: Integer = 0; Bpp: Integer = 0);
     destructor Destroy; override;
 
+    procedure Clear; override;
     function CopyToHandle: THandle;
     function CopyFromHandle(HMem: THandle): Boolean;
     function CopyFromBitmap(HBmp: HBITMAP): Boolean;
@@ -206,7 +257,7 @@ type
   end;
 
   { TFreeMultiBitmap }
-  
+
   TFreeMultiBitmap = class(TFreeObject)
   private
     FMPage: PFIMULTIBITMAP;
@@ -216,7 +267,8 @@ type
     constructor Create(KeepCacheInMemory: Boolean = False);
     destructor Destroy; override;
 
-    function Open(const FileName: string; CreateNew, ReadOnly: Boolean): Boolean;
+    // methods
+    function Open(const FileName: string; CreateNew, ReadOnly: Boolean; Flags: Integer = 0): Boolean;
     function Close(Flags: Integer = 0): Boolean;
     function GetPageCount: Integer;
     procedure AppendPage(Bitmap: TFreeBitmap);
@@ -236,7 +288,24 @@ type
 
 implementation
 
-{ TFreeObject }
+const
+  ThumbSize = 150;
+
+// marker used for clipboard copy / paste
+
+procedure SetFreeImageMarker(bmih: PBitmapInfoHeader; dib: PFIBITMAP);
+begin
+  // Windows constants goes from 0L to 5L
+	// Add $FF to avoid conflicts
+	bmih.biCompression := $FF + FreeImage_GetImageType(dib);
+end;
+
+function GetFreeImageMarker(bmih: PBitmapInfoHeader): FREE_IMAGE_TYPE;
+begin
+  Result := FREE_IMAGE_TYPE(bmih.biCompression - $FF);
+end;
+
+{ TFreePersistent }
 
 function TFreeObject.IsValid: Boolean;
 begin
@@ -296,27 +365,54 @@ begin
 end;
 
 procedure TFreeBitmap.Assign(Source: TFreeBitmap);
-begin
-  if Source <> Self then
-  begin
-    if Source <> nil then
-      Assign(Source.FDib)
-    else
-      Clear;
-  end;
-end;
-
-procedure TFreeBitmap.Assign(Source: PFIBITMAP);
 var
+  SourceBmp: TFreeBitmap;
   Clone: PFIBITMAP;
 begin
   if Source = nil then
-    Clear
-  else
   begin
-    Clone := FreeImage_Clone(Source);
-    Replace(Clone)
-  end
+    Clear;
+    Exit;
+  end;
+  
+  if Source is TFreeBitmap then
+  begin
+    SourceBmp := TFreeBitmap(Source);
+    if SourceBmp <> Self then
+    begin
+      if SourceBmp.IsValid then
+      begin
+        Clone := FreeImage_Clone(SourceBmp.FDib);
+        Replace(Clone);
+      end
+      else
+        Clear;
+    end;
+  end;
+end;
+
+function TFreeBitmap.CanSave(fif: FREE_IMAGE_FORMAT): Boolean;
+var
+  ImageType: FREE_IMAGE_TYPE;
+  Bpp: Word;
+begin
+  Result := False;
+  if not IsValid then Exit;
+
+  if fif <> FIF_UNKNOWN then
+  begin
+    // check that the dib can be saved in this format
+    ImageType := FreeImage_GetImageType(FDib);
+    if ImageType = FIT_BITMAP then
+    begin
+      // standard bitmap type
+      Bpp := FreeImage_GetBPP(FDib);
+      Result := FreeImage_FIFSupportsWriting(fif)
+                and FreeImage_FIFSupportsExportBPP(fif, Bpp);
+    end
+    else // special bitmap type
+      Result := FreeImage_FIFSupportsExportType(fif, ImageType);
+  end;
 end;
 
 procedure TFreeBitmap.Change;
@@ -452,35 +548,45 @@ end;
 
 function TFreeBitmap.ConvertToGrayscale: Boolean;
 var
-  ColorType: FREE_IMAGE_COLOR_TYPE;
+  dib8: PFIBITMAP;
 begin
   Result := False;
 
-  if FDib <> nil then
+  if IsValid then
   begin
-    ColorType := FreeImage_GetColorType(FDib);
-
-    if (ColorType in [FIC_PALETTE, FIC_MINISWHITE]) then
-    begin
-      // convert the palette to 24-bit, then to 8-bit
-      Result := ConvertTo24Bits;
-      Result := Result and ConvertTo8Bits;
-    end
-    else
-    if FreeImage_GetBPP(FDib) <> 8 then
-      // convert the bitmap to 8-bit grayscale
-      Result := ConvertTo8Bits
+    dib8 := FreeImage_ConvertToGreyscale(FDib);
+    Result := Replace(dib8);
   end
 end;
 
-function TFreeBitmap.ConvertToStandartType(ScaleLinear: Boolean): Boolean;
+function TFreeBitmap.ConvertToRGBF: Boolean;
 var
-  dibStandart: PFIBITMAP;
+  ImageType: FREE_IMAGE_TYPE;
+  NewDib: PFIBITMAP;
+begin
+  Result := False;
+  if not IsValid then Exit;
+
+  ImageType := GetImageType;
+
+  if (ImageType = FIT_BITMAP) then
+  begin
+    if GetBitsPerPixel < 24 then
+      if not ConvertTo24Bits then
+        Exit
+  end;
+  NewDib := FreeImage_ConvertToRGBF(FDib);
+  Result := Replace(NewDib);
+end;
+
+function TFreeBitmap.ConvertToStandardType(ScaleLinear: Boolean): Boolean;
+var
+  dibStandard: PFIBITMAP;
 begin
   if IsValid then
   begin
-    dibStandart := FreeImage_ConvertToStandardType(FDib, ScaleLinear);
-    Result := Replace(dibStandart);
+    dibStandard := FreeImage_ConvertToStandardType(FDib, ScaleLinear);
+    Result := Replace(dibStandard);
   end
   else
     Result := False;
@@ -514,6 +620,8 @@ end;
 constructor TFreeBitmap.Create(ImageType: FREE_IMAGE_TYPE; Width, Height,
   Bpp: Integer);
 begin
+  inherited Create;
+
   FDib := nil;
   if (Width > 0) and (Height > 0) and (Bpp > 0) then
     SetSize(ImageType, Width, Height, Bpp);
@@ -537,6 +645,30 @@ begin
   end
   else
     Result := False;
+end;
+
+function TFreeBitmap.DoChanging(var OldDib, NewDib: PFIBITMAP): Boolean;
+begin
+  Result := False;
+  if (OldDib <> NewDib) and Assigned(FOnChanging) then
+    FOnChanging(Self, OldDib, NewDib, Result);
+end;
+
+procedure TFreeBitmap.FindCloseMetadata(MDHandle: PFIMETADATA);
+begin
+  FreeImage_FindCloseMetadata(MDHandle);
+end;
+
+function TFreeBitmap.FindFirstMetadata(Model: FREE_IMAGE_MDMODEL;
+  var Tag: TFreeTag): PFIMETADATA;
+begin
+  Result := FreeImage_FindFirstMetadata(Model, FDib, Tag.FTag);
+end;
+
+function TFreeBitmap.FindNextMetadata(MDHandle: PFIMETADATA;
+  var Tag: TFreeTag): Boolean;
+begin
+  Result := FreeImage_FindNextMetadata(MDHandle, Tag.FTag);
 end;
 
 function TFreeBitmap.FlipHorizontal: Boolean;
@@ -571,7 +703,7 @@ function TFreeBitmap.GetChannel(Bitmap: TFreeBitmap;
 begin
   if FDib <> nil then
   begin
-    Bitmap.FDib := FreeImage_GetChannel(FDib, Channel);
+    Bitmap.Dib := FreeImage_GetChannel(FDib, Channel);
     Result := Bitmap.IsValid;
   end
   else
@@ -585,7 +717,7 @@ end;
 
 function TFreeBitmap.GetColorType: FREE_IMAGE_COLOR_TYPE;
 begin
-  Result := FreeImage_GetColorType(FDib)
+  Result := FreeImage_GetColorType(FDib);
 end;
 
 function TFreeBitmap.GetFileBkColor(var BkColor: PRGBQuad): Boolean;
@@ -607,9 +739,9 @@ begin
     Result := False
 end;
 
-function TFreeBitmap.GetHorizontalResolution: Integer;
+function TFreeBitmap.GetHorizontalResolution: Double;
 begin
-  Result := FreeImage_GetDotsPerMeterX(FDib) div 100
+  Result := FreeImage_GetDotsPerMeterX(FDib) / 100
 end;
 
 function TFreeBitmap.GetImageSize: Cardinal;
@@ -619,7 +751,7 @@ end;
 
 function TFreeBitmap.GetImageType: FREE_IMAGE_TYPE;
 begin
-  Result := FreeImage_GetImageType(FDib)
+  Result := FreeImage_GetImageType(FDib);
 end;
 
 function TFreeBitmap.GetInfo: PBitmapInfo;
@@ -635,6 +767,17 @@ end;
 function TFreeBitmap.GetLine: Integer;
 begin
   Result := FreeImage_GetLine(FDib)
+end;
+
+function TFreeBitmap.GetMetadata(Model: FREE_IMAGE_MDMODEL;
+  const Key: string; var Tag: TFreeTag): Boolean;
+begin
+  Result := FreeImage_GetMetaData(Model, FDib, PChar(Key), Tag.FTag);
+end;
+
+function TFreeBitmap.GetMetadataCount(Model: FREE_IMAGE_MDMODEL): Cardinal;
+begin
+  Result := FreeImage_GetMetadataCount(Model, FDib);
 end;
 
 function TFreeBitmap.GetPalette: PRGBQUAD;
@@ -685,9 +828,9 @@ begin
   Result := FreeImage_GetTransparencyTable(FDib)
 end;
 
-function TFreeBitmap.GetVerticalResolution: Integer;
+function TFreeBitmap.GetVerticalResolution: Double;
 begin
-  Result := FreeImage_GetDotsPerMeterY(Fdib) div 100
+  Result := FreeImage_GetDotsPerMeterY(Fdib) / 100
 end;
 
 function TFreeBitmap.GetWidth: Integer;
@@ -800,8 +943,60 @@ begin
     Result := False;
 end;
 
-const
-  ThumbSize = 150;
+function TFreeBitmap.LoadFromStream(Stream: TStream;
+  Flag: Integer): Boolean;
+var
+  MemIO: TFreeMemoryIO;
+  Data: PByte;
+  MemStream: TMemoryStream;
+  Size: Cardinal;
+begin
+  Size := Stream.Size;
+
+  MemStream := TMemoryStream.Create;
+  try
+    MemStream.CopyFrom(Stream, Size);
+    Data := MemStream.Memory;
+
+    MemIO := TFreeMemoryIO.Create(Data, Size);
+    try
+      Result := LoadFromMemory(MemIO);
+    finally
+      MemIO.Free;
+    end;
+  finally
+    MemStream.Free;
+  end;
+end;
+
+function TFreeBitmap.LoadU(const FileName: WideString;
+  Flag: Integer): Boolean;
+var
+  fif: FREE_IMAGE_FORMAT;
+begin
+
+  // check the file signature and get its format
+  fif := FreeImage_GetFileTypeU(PWideChar(Filename), 0);
+  if fif = FIF_UNKNOWN then
+    // no signature?
+    // try to guess the file format from the file extention
+    fif := FreeImage_GetFIFFromFilenameU(PWideChar(FileName));
+
+    // check that the plugin has reading capabilities ...
+    if (fif <> FIF_UNKNOWN) and FreeImage_FIFSupportsReading(FIF) then
+    begin
+      // free the previous dib
+      if FDib <> nil then
+        FreeImage_Unload(dib);
+
+      // load the file
+      FDib := FreeImage_LoadU(fif, PWideChar(FileName), Flag);
+
+      Change;
+      Result := IsValid;
+    end else
+      Result := False;
+end;
 
 procedure TFreeBitmap.MakeThumbnail(const Width, Height: Integer;
   DestBitmap: TFreeBitmap);
@@ -990,7 +1185,7 @@ begin
   Result := False;
   if NewDib = nil then Exit;
 
-  if FDib <> nil then
+  if not DoChanging(FDib, NewDib) and IsValid then
     FreeImage_Unload(FDib);
 
   FDib := NewDib;
@@ -999,16 +1194,7 @@ begin
 end;
 
 function TFreeBitmap.Rescale(NewWidth, NewHeight: Integer;
-  Filter: TFreeStretchFilter; Dest: TFreeBitmap): Boolean;
-const
-  cFilter: array [TFreeStretchFilter] of FREE_IMAGE_FILTER = (
-    FILTER_BOX,
-    FILTER_BICUBIC,
-    FILTER_BILINEAR,
-    FILTER_BSPLINE,
-    FILTER_CATMULLROM,
-    FILTER_LANCZOS3
-  );
+  Filter: FREE_IMAGE_FILTER; Dest: TFreeBitmap): Boolean;
 var
   Bpp: Integer;
   DstDib: PFIBITMAP;
@@ -1027,7 +1213,7 @@ begin
       if not ConvertTo24Bits then Exit;
 
     // perform upsampling / downsampling
-    DstDib := FreeImage_Rescale(FDib, NewWidth, NewHeight, cFilter[Filter]);
+    DstDib := FreeImage_Rescale(FDib, NewWidth, NewHeight, Filter);
     if Dest = nil then
       Result := Replace(DstDib)
     else
@@ -1071,87 +1257,63 @@ end;
 function TFreeBitmap.Save(const FileName: string; Flag: Integer): Boolean;
 var
   fif: FREE_IMAGE_FORMAT;
-  CanSave: Boolean;
-  ImageType: FREE_IMAGE_TYPE;
-  Bpp: Word;
 begin
   Result := False;
 
   // try to guess the file format from the file extension
   fif := FreeImage_GetFIFFromFilename(PChar(Filename));
-  if fif <> FIF_UNKNOWN then
-  begin
-    // check that the dib can be saved in this format
-    ImageType := FreeImage_GetImageType(FDib);
-    if ImageType = FIT_BITMAP then
-    begin
-      // standart bitmap type
-      Bpp := FreeImage_GetBPP(FDib);
-      CanSave := FreeImage_FIFSupportsWriting(fif)
-                 and FreeImage_FIFSupportsExportBPP(fif, Bpp);
-    end
-    else // special bitmap type
-      CanSave := FreeImage_FIFSupportsExportType(fif, ImageType);
-
-    if CanSave then
-      Result := FreeImage_Save(fif, FDib, PChar(FileName), Flag)
-  end
+  if CanSave(fif) then
+    Result := FreeImage_Save(fif, FDib, PChar(FileName), Flag);
 end;
 
 function TFreeBitmap.SaveToHandle(fif: FREE_IMAGE_FORMAT; IO: PFreeImageIO;
   Handle: fi_handle; Flag: Integer): Boolean;
-var
-  CanSave: Boolean;
-  ImageType: FREE_IMAGE_TYPE;
-  Bpp: Word;
 begin
   Result := False;
-
-  if fif <> FIF_UNKNOWN then
-  begin
-    // check that the dib can be saved in this format
-    ImageType := FreeImage_GetImageType(FDib);
-    if ImageType = FIT_BITMAP then
-    begin
-      // standart bitmap type
-      Bpp := FreeImage_GetBPP(FDib);
-      CanSave := FreeImage_FIFSupportsWriting(fif)
-                 and FreeImage_FIFSupportsExportBPP(fif, Bpp);
-    end
-    else // special bitmap type
-      CanSave := FreeImage_FIFSupportsExportType(fif, ImageType);
-
-    if CanSave then
-      Result := FreeImage_SaveToHandle(fif, FDib, IO, Handle, Flag)
-  end
+  if CanSave(fif) then
+    Result := FreeImage_SaveToHandle(fif, FDib, IO, Handle, Flag)
 end;
 
 function TFreeBitmap.SaveToMemory(fif: FREE_IMAGE_FORMAT;
   MemIO: TFreeMemoryIO; Flag: Integer): Boolean;
-var
-  CanSave: Boolean;
-  ImageType: FREE_IMAGE_TYPE;
-  Bpp: Word;
 begin
   Result := False;
 
-  if fif <> FIF_UNKNOWN then
-  begin
-    // check that the dib can be saved in this format
-    ImageType := FreeImage_GetImageType(FDib);
-    if ImageType = FIT_BITMAP then
-    begin
-      // standart bitmap type
-      Bpp := FreeImage_GetBPP(FDib);
-      CanSave := FreeImage_FIFSupportsWriting(fif)
-                 and FreeImage_FIFSupportsExportBPP(fif, Bpp);
-    end
-    else // special bitmap type
-      CanSave := FreeImage_FIFSupportsExportType(fif, ImageType);
+  if CanSave(fif) then
+    Result := MemIO.Write(fif, FDib, Flag)
+end;
 
-    if CanSave then
-      Result := MemIO.Write(fif, FDib, Flag)
-  end
+function TFreeBitmap.SaveToStream(fif: FREE_IMAGE_FORMAT; Stream: TStream;
+  Flag: Integer): Boolean;
+var
+  MemIO: TFreeMemoryIO;
+  Data: PByte;
+  Size: Cardinal;
+begin
+  MemIO := TFreeMemoryIO.Create;
+  try
+    Result := SaveToMemory(fif, MemIO, Flag);
+    if Result then
+    begin
+      MemIO.Acquire(Data, Size);
+      Stream.WriteBuffer(Data^, Size);
+    end;
+  finally
+    MemIO.Free;
+  end;
+end;
+
+function TFreeBitmap.SaveU(const FileName: WideString;
+  Flag: Integer): Boolean;
+var
+  fif: FREE_IMAGE_FORMAT;
+begin
+  Result := False;
+
+  // try to guess the file format from the file extension
+  fif := FreeImage_GetFIFFromFilenameU(PWideChar(Filename));
+  if CanSave(fif) then
+    Result := FreeImage_SaveU(fif, FDib, PWideChar(FileName), Flag);
 end;
 
 function TFreeBitmap.SetChannel(Bitmap: TFreeBitmap;
@@ -1166,19 +1328,30 @@ begin
     Result := False
 end;
 
+procedure TFreeBitmap.SetDib(Value: PFIBITMAP);
+begin
+  Replace(Value);
+end;
+
 function TFreeBitmap.SetFileBkColor(BkColor: PRGBQuad): Boolean;
 begin
   Result := FreeImage_SetBackgroundColor(FDib, BkColor);
   Change;
 end;
 
-procedure TFreeBitmap.SetHorizontalResolution(Value: Integer);
+procedure TFreeBitmap.SetHorizontalResolution(Value: Double);
 begin
   if IsValid then
   begin
-    FreeImage_SetDotsPerMeterX(FDib, Value * 100);
+    FreeImage_SetDotsPerMeterX(FDib, Trunc(Value * 100 + 0.5));
     Change;
   end;
+end;
+
+function TFreeBitmap.SetMetadata(Model: FREE_IMAGE_MDMODEL;
+  const Key: string; Tag: TFreeTag): Boolean;
+begin
+  Result := FreeImage_SetMetadata(Model, FDib, PChar(Key), Tag.Tag);
 end;
 
 function TFreeBitmap.SetPixelColor(X, Y: Cardinal;
@@ -1233,11 +1406,11 @@ begin
   Change;
 end;
 
-procedure TFreeBitmap.SetVerticalResolution(Value: Integer);
+procedure TFreeBitmap.SetVerticalResolution(Value: Double);
 begin
   if IsValid then
   begin
-    FreeImage_SetDotsPerMeterY(FDib, Value * 100);
+    FreeImage_SetDotsPerMeterY(FDib, Trunc(Value * 100 + 0.5));
     Change;
   end;
 end;
@@ -1267,6 +1440,18 @@ begin
   end
   else
     Result := False
+end;
+
+function TFreeBitmap.ToneMapping(TMO: FREE_IMAGE_TMO; FirstParam,
+  SecondParam: Double): Boolean;
+var
+  NewDib: PFIBITMAP;
+begin
+  Result := False;
+  if not IsValid then Exit;
+
+  NewDib := FreeImage_ToneMapping(Fdib, TMO, FirstParam, SecondParam);
+  Result := Replace(NewDib);
 end;
 
 { TFreeWinBitmap }
@@ -1342,7 +1527,15 @@ begin
   DeleteObject(SelectObject(memDC, oldBM));
   DeleteObject(memDC);
 
+  if GetBitsPerPixel = 32 then ConvertTo24Bits;
+
   Result := True;
+end;
+
+procedure TFreeWinBitmap.Clear;
+begin
+  if FDeleteMe then FreeImage_Unload(FDisplayDib);
+  inherited;
 end;
 
 function TFreeWinBitmap.CopyFromBitmap(HBmp: HBITMAP): Boolean;
@@ -1391,6 +1584,7 @@ var
   Bits: PByte;
   BitFields: array [0..2] of DWORD;
   MaskSize: Longint;
+  image_type: FREE_IMAGE_TYPE;
 begin
   Result := False;
   Palette := nil;
@@ -1424,8 +1618,14 @@ begin
 
   if Data <> nil then
   begin
+    image_type := FIT_BITMAP;
+
+    case GetFreeImageMarker(bmih) of
+      FIT_UINT16..FIT_RGBAF: image_type := GetFreeImageMarker(bmih);
+    end;
+
     // allocate a new FIBITMAP
-    if not SetSize(FIT_BITMAP, bmih.biWidth, bmih.biHeight, bmih.biBitCount,
+    if not SetSize(image_type, bmih.biWidth, bmih.biHeight, bmih.biBitCount,
                    BitFields[2], BitFields[1], BitFields[0]) then
     begin
       GlobalUnlock(HMem);
@@ -1502,14 +1702,14 @@ begin
     Result := GlobalAlloc(GHND, DibSize);
     ADib := GlobalLock(Result);
 
-    FillChar(Result, DibSize, 0);
-
     pdib := ADib;
 
     // copy the BITMAPINFOHEADER
     bmih := FreeImage_GetInfoHeader(Dib);
     CopyMemory(pdib, bmih, SizeOf(BITMAPINFOHEADER));
     Inc(pdib, SizeOf(BITMAPINFOHEADER));
+    if FreeImage_GetImageType(Dib) <> FIT_BITMAP then
+      SetFreeImageMarker(bmih, FDib);
 
     // copy the palette
     Pal := FreeImage_GetPalette(Dib);
@@ -1554,7 +1754,7 @@ var
 begin
   if not IsValid then Exit;
   
-  // convert to standart bitmap if needed
+  // convert to standard bitmap if needed
   if FDeleteMe then
   begin
     FreeImage_Unload(FDisplayDib);
@@ -1581,7 +1781,7 @@ begin
   end
   else
   begin
-    // convert to standart dib for display
+    // convert to standard dib for display
     if ImageType <> FIT_COMPLEX then
       FDisplayDib := FreeImage_ConvertToStandardType(Dib, True)
     else
@@ -1595,7 +1795,6 @@ begin
     // remember to delete FDisplayDib
     FDeleteMe := True;
   end;
-
 
   // Draw the DIB
   SetStretchBltMode(DC, COLORONCOLOR);
@@ -1637,6 +1836,7 @@ end;
 
 constructor TFreeMultiBitmap.Create(KeepCacheInMemory: Boolean);
 begin
+  inherited Create;
   FMemoryCache := KeepCacheInMemory;
 end;
 
@@ -1696,7 +1896,7 @@ begin
 end;
 
 function TFreeMultiBitmap.Open(const FileName: string; CreateNew,
-  ReadOnly: Boolean): Boolean;
+  ReadOnly: Boolean; Flags: Integer): Boolean;
 var
   fif: FREE_IMAGE_FORMAT;
 begin
@@ -1706,11 +1906,11 @@ begin
   fif := FreeImage_GetFIFFromFilename(PChar(FileName));
 
   // check for supported file types
-  if (fif <> FIF_TIFF) and (fif <> FIF_ICO) then
+  if (fif <> FIF_UNKNOWN) and (not fif in [FIF_TIFF, FIF_ICO, FIF_GIF]) then
     Exit;
 
   // open the stream
-  FMPage := FreeImage_OpenMultiBitmap(fif, PChar(FileName), CreateNew, ReadOnly, FMemoryCache);
+  FMPage := FreeImage_OpenMultiBitmap(fif, PChar(FileName), CreateNew, ReadOnly, FMemoryCache, Flags);
 
   Result := FMPage <> nil;  
 end;
@@ -1751,7 +1951,7 @@ end;
 
 function TFreeMemoryIO.GetFileType: FREE_IMAGE_FORMAT;
 begin
-  Result := FreeImage_GetFileTypeFromMemory(FHMem)
+  Result := FreeImage_GetFileTypeFromMemory(FHMem);
 end;
 
 function TFreeMemoryIO.IsValid: Boolean;
@@ -1779,6 +1979,145 @@ function TFreeMemoryIO.Write(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP;
   Flag: Integer): Boolean;
 begin
   Result := FreeImage_SaveToMemory(fif, dib, FHMem, Flag)
+end;
+
+{ TFreeTag }
+
+function TFreeTag.Clone: TFreeTag;
+var
+  CloneTag: PFITAG;
+begin
+  Result := nil;
+  if not IsValid then Exit;
+
+  CloneTag := FreeImage_CloneTag(FTag);
+  Result := TFreeTag.Create(CloneTag);
+end;
+
+constructor TFreeTag.Create(ATag: PFITAG);
+begin
+  inherited Create;
+
+  if ATag <> nil then
+    FTag := ATag
+  else
+    FTag := FreeImage_CreateTag;
+end;
+
+destructor TFreeTag.Destroy;
+begin
+  if IsValid then
+    FreeImage_DeleteTag(FTag);
+    
+  inherited;
+end;
+
+function TFreeTag.GetCount: Cardinal;
+begin
+  Result := 0;
+  if not IsValid then Exit;
+
+  Result := FreeImage_GetTagCount(FTag);
+end;
+
+function TFreeTag.GetDescription: string;
+begin
+  Result := '';
+  if not IsValid then Exit;
+
+  Result := FreeImage_GetTagDescription(FTag);
+end;
+
+function TFreeTag.GetID: Word;
+begin
+  Result := 0;
+  if not IsValid then Exit;
+
+  Result := FreeImage_GetTagID(FTag);
+end;
+
+function TFreeTag.GetKey: string;
+begin
+  Result := '';
+  if not IsValid then Exit;
+
+  Result := FreeImage_GetTagKey(FTag);
+end;
+
+function TFreeTag.GetLength: Cardinal;
+begin
+  Result := 0;
+  if not IsValid then Exit;
+
+  Result := FreeImage_GetTagLength(FTag);
+end;
+
+function TFreeTag.GetTagType: FREE_IMAGE_MDTYPE;
+begin
+  Result := FIDT_NOTYPE;
+  if not IsValid then Exit;
+
+  Result := FreeImage_GetTagType(FTag);
+end;
+
+function TFreeTag.GetValue: Pointer;
+begin
+  Result := nil;
+  if not IsValid then Exit;
+
+  Result := FreeImage_GetTagValue(FTag);
+end;
+
+function TFreeTag.IsValid: Boolean;
+begin
+  Result := FTag <> nil;
+end;
+
+procedure TFreeTag.SetCount(const Value: Cardinal);
+begin
+  if IsValid then
+    FreeImage_SetTagCount(FTag, Value);
+end;
+
+procedure TFreeTag.SetDescription(const Value: string);
+begin
+  if IsValid then
+    FreeImage_SetTagDescription(FTag, PChar(Value));
+end;
+
+procedure TFreeTag.SetID(const Value: Word);
+begin
+  if IsValid then
+    FreeImage_SetTagID(FTag, Value);
+end;
+
+procedure TFreeTag.SetKey(const Value: string);
+begin
+  if IsValid then
+    FreeImage_SetTagKey(FTag, PChar(Value));
+end;
+
+procedure TFreeTag.SetLength(const Value: Cardinal);
+begin
+  if IsValid then
+    FreeImage_SetTagLength(FTag, Value);
+end;
+
+procedure TFreeTag.SetTagType(const Value: FREE_IMAGE_MDTYPE);
+begin
+  if IsValid then
+    FreeImage_SetTagType(FTag, Value);
+end;
+
+procedure TFreeTag.SetValue(const Value: Pointer);
+begin
+  if IsValid then
+    FreeImage_SetTagValue(FTag, Value);
+end;
+
+function TFreeTag.ToString(Model: FREE_IMAGE_MDMODEL; Make: PChar): string;
+begin
+  Result := FreeImage_TagToString(Model, FTag, Make);
 end;
 
 end.

@@ -5,6 +5,20 @@ What's New for FreeImage Delphi Wrapper
 ! : changed
 + : added
 
+January 20, 2006
+! [Anatoliy Pulyaevskiy] updated WinBitmap demo
+* [Anatoliy Pulyaevskiy] fixed TFreeBitmap.ConvertToStandartType renamed to TFreeBitmap.ConvertToStandardType
+* [Anatoliy Pulyaevskiy] fixed using of SetFreeImageMarker (only for HDR dib)
+
+October 19, 2005
++ [Anatoliy Pulyaevskiy] updated wrapper for FreeImage 3.8.0
++ [Anatoliy Pulyaevskiy] added Delphi 5 support
++ [Anatoliy Pulyaevskiy] added TFreeBitmap.OnChanging event
+! [Anatoliy Pulyaevskiy] changed declaration of TFreeBitmap.Assign method
++ [Anatoliy Pulyaevskiy] added TFreeBitmap.CanSave function
+! [Anatoliy Pulyaevskiy] property TFreeBitmap.Dib now have read/write access
++ [Anatoliy Pulyaevskiy] added TFreeTag class incapsulating FreeImage FITAG type
+
 August 5, 2005
 * [kaare-nysite] fixed the prototype of FreeImage_ConvertFromRawBits
 

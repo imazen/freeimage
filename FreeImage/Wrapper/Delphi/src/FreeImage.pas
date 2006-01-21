@@ -1,8 +1,5 @@
 unit FreeImage;
 
-interface
-
-uses Windows;
 // ==========================================================
 // Delphi wrapper for FreeImage 3
 //
@@ -25,6 +22,10 @@ uses Windows;
 //
 // Use at your own risk!
 // ==========================================================
+
+interface
+
+uses Windows;
 
 {$MINENUMSIZE 4} // Make sure enums are stored as an integer to be compatible with C/C++
 
@@ -106,149 +107,160 @@ type
 // --------------------------------------------------------------------------
 
 type
+  FREE_IMAGE_FORMAT         = type Integer;
+  FREE_IMAGE_TYPE           = type Integer;
+  FREE_IMAGE_COLOR_TYPE     = type Integer;
+  FREE_IMAGE_QUANTIZE       = type Integer;
+  FREE_IMAGE_DITHER         = type Integer;
+  FREE_IMAGE_FILTER         = type Integer;
+  FREE_IMAGE_COLOR_CHANNEL  = type Integer;
+  FREE_IMAGE_MDTYPE         = type Integer;
+  FREE_IMAGE_MDMODEL        = type Integer;
+  FREE_IMAGE_JPEG_OPERATION = type Integer;
+  FREE_IMAGE_TMO            = type Integer;
+
+const
   // I/O image format identifiers.
-  FREE_IMAGE_FORMAT = (
-    FIF_UNKNOWN = -1,
-    FIF_BMP		= 0,
-    FIF_ICO	  	= 1,
-    FIF_JPEG   	= 2,
-    FIF_JNG	  	= 3,
-    FIF_KOALA 	= 4,
-    FIF_LBM	  	= 5,
-    FIF_IFF     = FIF_LBM,
-    FIF_MNG	  	= 6,
-    FIF_PBM	  	= 7,
-    FIF_PBMRAW	= 8,
-    FIF_PCD	  	= 9,
-    FIF_PCX	  	= 10,
-    FIF_PGM	  	= 11,
-    FIF_PGMRAW	= 12,
-    FIF_PNG	  	= 13,
-    FIF_PPM	  	= 14,
-    FIF_PPMRAW	= 15,
-    FIF_RAS	  	= 16,
-    FIF_TARGA 	= 17,
-    FIF_TIFF  	= 18,
-    FIF_WBMP  	= 19,
-    FIF_PSD	  	= 20,
-    FIF_CUT	  	= 21,
-    FIF_XBM	  	= 22,
-    FIF_XPM	  	= 23,
-    FIF_DDS		= 24,
-  	FIF_GIF     = 25,
-	FIF_HDR		= 26,
-	FIF_FAXG3	= 27	
-  );
+  FIF_UNKNOWN = FREE_IMAGE_FORMAT(-1);
+  FIF_BMP     = FREE_IMAGE_FORMAT(0);
+  FIF_ICO     = FREE_IMAGE_FORMAT(1);
+  FIF_JPEG    = FREE_IMAGE_FORMAT(2);
+  FIF_JNG     = FREE_IMAGE_FORMAT(3);
+  FIF_KOALA   = FREE_IMAGE_FORMAT(4);
+  FIF_LBM     = FREE_IMAGE_FORMAT(5);
+  FIF_IFF     = FIF_LBM;
+  FIF_MNG     = FREE_IMAGE_FORMAT(6);
+  FIF_PBM     = FREE_IMAGE_FORMAT(7);
+  FIF_PBMRAW  = FREE_IMAGE_FORMAT(8);
+  FIF_PCD     = FREE_IMAGE_FORMAT(9);
+  FIF_PCX     = FREE_IMAGE_FORMAT(10);
+  FIF_PGM     = FREE_IMAGE_FORMAT(11);
+  FIF_PGMRAW  = FREE_IMAGE_FORMAT(12);
+  FIF_PNG     = FREE_IMAGE_FORMAT(13);
+  FIF_PPM     = FREE_IMAGE_FORMAT(14);
+  FIF_PPMRAW  = FREE_IMAGE_FORMAT(15);
+  FIF_RAS     = FREE_IMAGE_FORMAT(16);
+  FIF_TARGA   = FREE_IMAGE_FORMAT(17);
+  FIF_TIFF    = FREE_IMAGE_FORMAT(18);
+  FIF_WBMP    = FREE_IMAGE_FORMAT(19);
+  FIF_PSD     = FREE_IMAGE_FORMAT(20);
+  FIF_CUT     = FREE_IMAGE_FORMAT(21);
+  FIF_XBM     = FREE_IMAGE_FORMAT(22);
+  FIF_XPM     = FREE_IMAGE_FORMAT(23);
+  FIF_DDS     = FREE_IMAGE_FORMAT(24);
+  FIF_GIF     = FREE_IMAGE_FORMAT(25);
+  FIF_HDR     = FREE_IMAGE_FORMAT(26);
 
   // Image type used in FreeImage.
-  FREE_IMAGE_TYPE = (
-    FIT_UNKNOWN = 0,	// unknown type
-    FIT_BITMAP  = 1,	// standard image		    	: 1-, 4-, 8-, 16-, 24-, 32-bit
-    FIT_UINT16	= 2,	// array of unsigned short: unsigned 16-bit
-    FIT_INT16	  = 3,	// array of short			    : signed 16-bit
-    FIT_UINT32	= 4,	// array of unsigned long	: unsigned 32-bit
-    FIT_INT32  	= 5,	// array of long			    : signed 32-bit
-    FIT_FLOAT	  = 6,	// array of float			    : 32-bit IEEE floating point
-    FIT_DOUBLE	= 7,	// array of double			  : 64-bit IEEE floating point
-    FIT_COMPLEX	= 8		// array of FICOMPLEX		  : 2 x 64-bit IEEE floating point
-  );
+  FIT_UNKNOWN = FREE_IMAGE_TYPE(0);  // unknown type
+  FIT_BITMAP  = FREE_IMAGE_TYPE(1);	 // standard image: 1-, 4-, 8-, 16-, 24-, 32-bit
+  FIT_UINT16  = FREE_IMAGE_TYPE(2);	 // array of unsigned short: unsigned 16-bit
+  FIT_INT16   = FREE_IMAGE_TYPE(3);  // array of short: signed 16-bit
+  FIT_UINT32  = FREE_IMAGE_TYPE(4);	 // array of unsigned long: unsigned 32-bit
+  FIT_INT32   = FREE_IMAGE_TYPE(5);	 // array of long: signed 32-bit
+  FIT_FLOAT   = FREE_IMAGE_TYPE(6);	 // array of float: 32-bit IEEE floating point
+  FIT_DOUBLE  = FREE_IMAGE_TYPE(7);	 // array of double: 64-bit IEEE floating point
+  FIT_COMPLEX = FREE_IMAGE_TYPE(8);	 // array of FICOMPLEX: 2 x 64-bit IEEE floating point
+  FIT_RGB16	  = FREE_IMAGE_TYPE(9);	 // 48-bit RGB image: 3 x 16-bit
+	FIT_RGBA16	= FREE_IMAGE_TYPE(10); // 64-bit RGBA image: 4 x 16-bit
+	FIT_RGBF	  = FREE_IMAGE_TYPE(11); // 96-bit RGB float image: 3 x 32-bit IEEE floating point
+	FIT_RGBAF	  = FREE_IMAGE_TYPE(12); // 128-bit RGBA float image: 4 x 32-bit IEEE floating point
 
   // Image color type used in FreeImage.
-  FREE_IMAGE_COLOR_TYPE = (
-	FIC_MINISWHITE = 0,		// min value is white
-    FIC_MINISBLACK = 1,		// min value is black
-    FIC_RGB        = 2,		// RGB color model
-    FIC_PALETTE    = 3,		// color map indexed
-	FIC_RGBALPHA   = 4,		// RGB color model with alpha channel
-	FIC_CMYK       = 5		// CMYK color model
-  );
+  FIC_MINISWHITE = FREE_IMAGE_COLOR_TYPE(0); // min value is white
+  FIC_MINISBLACK = FREE_IMAGE_COLOR_TYPE(1); // min value is black
+  FIC_RGB        = FREE_IMAGE_COLOR_TYPE(2); // RGB color model
+  FIC_PALETTE    = FREE_IMAGE_COLOR_TYPE(3); // color map indexed
+  FIC_RGBALPHA   = FREE_IMAGE_COLOR_TYPE(4); // RGB color model with alpha channel
+  FIC_CMYK       = FREE_IMAGE_COLOR_TYPE(5); // CMYK color model
 
   // Color quantization algorithms. Constants used in FreeImage_ColorQuantize.
-  FREE_IMAGE_QUANTIZE = (
-    FIQ_WUQUANT = 0,		// Xiaolin Wu color quantization algorithm
-    FIQ_NNQUANT = 1			// NeuQuant neural-net quantization algorithm by Anthony Dekker
-  );
+  FIQ_WUQUANT = FREE_IMAGE_QUANTIZE(0);	// Xiaolin Wu color quantization algorithm
+  FIQ_NNQUANT = FREE_IMAGE_QUANTIZE(1);	// NeuQuant neural-net quantization algorithm by Anthony Dekker
 
   // Dithering algorithms. Constants used FreeImage_Dither.
-  FREE_IMAGE_DITHER = (
-    FID_FS            = 0,	// Floyd & Steinberg error diffusion
-    FID_BAYER4x4      = 1,	// Bayer ordered dispersed dot dithering (order 2 dithering matrix)
-    FID_BAYER8x8      = 2,	// Bayer ordered dispersed dot dithering (order 3 dithering matrix)
-    FID_CLUSTER6x6    = 3,	// Ordered clustered dot dithering (order 3 - 6x6 matrix)
-    FID_CLUSTER8x8    = 4,	// Ordered clustered dot dithering (order 4 - 8x8 matrix)
-    FID_CLUSTER16x16  = 5   // Ordered clustered dot dithering (order 8 - 16x16 matrix)
-  );
+  FID_FS            = FREE_IMAGE_DITHER(0);	// Floyd & Steinberg error diffusion
+  FID_BAYER4x4      = FREE_IMAGE_DITHER(1);	// Bayer ordered dispersed dot dithering (order 2 dithering matrix)
+  FID_BAYER8x8      = FREE_IMAGE_DITHER(2);	// Bayer ordered dispersed dot dithering (order 3 dithering matrix)
+  FID_CLUSTER6x6    = FREE_IMAGE_DITHER(3);	// Ordered clustered dot dithering (order 3 - 6x6 matrix)
+  FID_CLUSTER8x8    = FREE_IMAGE_DITHER(4);	// Ordered clustered dot dithering (order 4 - 8x8 matrix)
+  FID_CLUSTER16x16  = FREE_IMAGE_DITHER(5); // Ordered clustered dot dithering (order 8 - 16x16 matrix)
+
+  // Lossless JPEG transformations Constants used in FreeImage_JPEGTransform
+	FIJPEG_OP_NONE			  = FREE_IMAGE_JPEG_OPERATION(0);	// no transformation
+	FIJPEG_OP_FLIP_H		  = FREE_IMAGE_JPEG_OPERATION(1);	// horizontal flip
+	FIJPEG_OP_FLIP_V		  = FREE_IMAGE_JPEG_OPERATION(2);	// vertical flip
+	FIJPEG_OP_TRANSPOSE		= FREE_IMAGE_JPEG_OPERATION(3);	// transpose across UL-to-LR axis
+	FIJPEG_OP_TRANSVERSE	= FREE_IMAGE_JPEG_OPERATION(4);	// transpose across UR-to-LL axis
+	FIJPEG_OP_ROTATE_90		= FREE_IMAGE_JPEG_OPERATION(5);	// 90-degree clockwise rotation
+	FIJPEG_OP_ROTATE_180	= FREE_IMAGE_JPEG_OPERATION(6);	// 180-degree rotation
+	FIJPEG_OP_ROTATE_270	= FREE_IMAGE_JPEG_OPERATION(7); // 270-degree clockwise (or 90 ccw)
+
+  // Tone mapping operators. Constants used in FreeImage_ToneMapping.
+  FITMO_DRAGO03	   = FREE_IMAGE_TMO(0);	// Adaptive logarithmic mapping (F. Drago, 2003)
+	FITMO_REINHARD05 = FREE_IMAGE_TMO(1);	// Dynamic range reduction inspired by photoreceptor physiology (E. Reinhard, 2005)
 
   // Upsampling / downsampling filters. Constants used in FreeImage_Rescale.
-  FREE_IMAGE_FILTER = (
-    FILTER_BOX	      = 0,	// Box, pulse, Fourier window, 1st order (constant) b-spline
-    FILTER_BICUBIC    = 1,	// Mitchell & Netravali's two-param cubic filter
-    FILTER_BILINEAR   = 2,	// Bilinear filter
-    FILTER_BSPLINE    = 3,	// 4th order (cubic) b-spline
-    FILTER_CATMULLROM = 4,	// Catmull-Rom spline, Overhauser spline
-    FILTER_LANCZOS3   = 5	  // Lanczos3 filter
-  );
+  FILTER_BOX	      = FREE_IMAGE_FILTER(0);	// Box, pulse, Fourier window, 1st order (constant) b-spline
+  FILTER_BICUBIC    = FREE_IMAGE_FILTER(1);	// Mitchell & Netravali's two-param cubic filter
+  FILTER_BILINEAR   = FREE_IMAGE_FILTER(2);	// Bilinear filter
+  FILTER_BSPLINE    = FREE_IMAGE_FILTER(3);	// 4th order (cubic) b-spline
+  FILTER_CATMULLROM = FREE_IMAGE_FILTER(4);	// Catmull-Rom spline, Overhauser spline
+  FILTER_LANCZOS3   = FREE_IMAGE_FILTER(5);	// Lanczos3 filter
 
   // Color channels. Constants used in color manipulation routines.
-  FREE_IMAGE_COLOR_CHANNEL = (
-    FICC_RGB	  = 0, // Use red, green and blue channels
-    FICC_RED	  = 1, // Use red channel
-    FICC_GREEN	= 2, // Use green channel
-    FICC_BLUE	  = 3, // Use blue channel
-    FICC_ALPHA	= 4, // Use alpha channel
-    FICC_BLACK	= 5, // Use black channel
-    FICC_REAL	  = 6, // Complex images: use real part
-	  FICC_IMAG	  = 7, // Complex images: use imaginary part
-	  FICC_MAG	  = 8, // Complex images: use magnitude
-  	FICC_PHASE	= 9	 // Complex images: use phase
-  );
+  FICC_RGB   = FREE_IMAGE_COLOR_CHANNEL(0); // Use red, green and blue channels
+  FICC_RED   = FREE_IMAGE_COLOR_CHANNEL(1); // Use red channel
+  FICC_GREEN = FREE_IMAGE_COLOR_CHANNEL(2); // Use green channel
+  FICC_BLUE  = FREE_IMAGE_COLOR_CHANNEL(3); // Use blue channel
+  FICC_ALPHA = FREE_IMAGE_COLOR_CHANNEL(4); // Use alpha channel
+  FICC_BLACK = FREE_IMAGE_COLOR_CHANNEL(5); // Use black channel
+  FICC_REAL  = FREE_IMAGE_COLOR_CHANNEL(6); // Complex images: use real part
+  FICC_IMAG  = FREE_IMAGE_COLOR_CHANNEL(7); // Complex images: use imaginary part
+  FICC_MAG   = FREE_IMAGE_COLOR_CHANNEL(8); // Complex images: use magnitude
+  FICC_PHASE = FREE_IMAGE_COLOR_CHANNEL(9);	// Complex images: use phase
 
-// --------------------------------------------------------------------------
-// MetaData support ---------------------------------------------------------
-// --------------------------------------------------------------------------
-
-type
   // Tag data type information (based on TIFF specifications)
-  FREE_IMAGE_MDTYPE = (
-    FIDT_NOTYPE		 = 0,	 // placeholder
-    FIDT_BYTE		   = 1,	 // 8-bit unsigned integer
-    FIDT_ASCII	   = 2,	 // 8-bit bytes w/ last byte null
-    FIDT_SHORT	   = 3,	 // 16-bit unsigned integer
-    FIDT_LONG		   = 4,	 // 32-bit unsigned integer
-    FIDT_RATIONAL  = 5,	 // 64-bit unsigned fraction
-    FIDT_SBYTE		 = 6,	 // 8-bit signed integer
-    FIDT_UNDEFINED = 7,	 // 8-bit untyped data
-    FIDT_SSHORT	   = 8,	 // 16-bit signed integer
-    FIDT_SLONG	   = 9,	 // 32-bit signed integer
-    FIDT_SRATIONAL = 10, // 64-bit signed fraction
-    FIDT_FLOAT	   = 11, // 32-bit IEEE floating point
-    FIDT_DOUBLE	   = 12, // 64-bit IEEE floating point
-    FIDT_IFD	     = 13	 // 32-bit unsigned integer (offset)
-  );
+  FIDT_NOTYPE	   = FREE_IMAGE_MDTYPE(0);	// placeholder
+  FIDT_BYTE	     = FREE_IMAGE_MDTYPE(1);	// 8-bit unsigned integer
+  FIDT_ASCII	   = FREE_IMAGE_MDTYPE(2);	// 8-bit bytes w/ last byte null
+  FIDT_SHORT	   = FREE_IMAGE_MDTYPE(3);	// 16-bit unsigned integer
+  FIDT_LONG	     = FREE_IMAGE_MDTYPE(4);	// 32-bit unsigned integer
+  FIDT_RATIONAL  = FREE_IMAGE_MDTYPE(5);	// 64-bit unsigned fraction
+  FIDT_SBYTE	   = FREE_IMAGE_MDTYPE(6);	// 8-bit signed integer
+  FIDT_UNDEFINED = FREE_IMAGE_MDTYPE(7);	// 8-bit untyped data
+  FIDT_SSHORT	   = FREE_IMAGE_MDTYPE(8);	// 16-bit signed integer
+  FIDT_SLONG	   = FREE_IMAGE_MDTYPE(9);	// 32-bit signed integer
+  FIDT_SRATIONAL = FREE_IMAGE_MDTYPE(10); // 64-bit signed fraction
+  FIDT_FLOAT	   = FREE_IMAGE_MDTYPE(11); // 32-bit IEEE floating point
+  FIDT_DOUBLE	   = FREE_IMAGE_MDTYPE(12); // 64-bit IEEE floating point
+  FIDT_IFD	     = FREE_IMAGE_MDTYPE(13);	// 32-bit unsigned integer (offset)
+  FIDT_PALETTE	 = FREE_IMAGE_MDTYPE(14);	// 32-bit RGBQUAD
 
   // Metadata models supported by FreeImage
-  FREE_IMAGE_MDMODEL = (
-    FIMD_NODATA		    	= -1,
-    FIMD_COMMENTS		    = 0,	// single comment or keywords
-    FIMD_EXIF_MAIN		  = 1,	// Exif-TIFF metadata
-    FIMD_EXIF_EXIF	  	= 2,	// Exif-specific metadata
-    FIMD_EXIF_GPS		    = 3,	// Exif GPS metadata
-    FIMD_EXIF_MAKERNOTE = 4,	// Exif maker note metadata
-    FIMD_EXIF_INTEROP	  = 5,	// Exif interoperability metadata
-    FIMD_IPTC		      	= 6,	// IPTC/NAA metadata
-    FIMD_XMP		      	= 7,	// Abobe XMP metadata
-    FIMD_GEOTIFF	    	= 8,	// GeoTIFF metadata (to be implemented)
-    FIMD_CUSTOM		    	= 9		// Used to attach other metadata types to a dib
-  );
+  FIMD_NODATA	        = FREE_IMAGE_MDMODEL(-1);
+  FIMD_COMMENTS	      = FREE_IMAGE_MDMODEL(0);  // single comment or keywords
+  FIMD_EXIF_MAIN      = FREE_IMAGE_MDMODEL(1);  // Exif-TIFF metadata
+  FIMD_EXIF_EXIF      = FREE_IMAGE_MDMODEL(2);  // Exif-specific metadata
+  FIMD_EXIF_GPS	      = FREE_IMAGE_MDMODEL(3);  // Exif GPS metadata
+  FIMD_EXIF_MAKERNOTE = FREE_IMAGE_MDMODEL(4);  // Exif maker note metadata
+  FIMD_EXIF_INTEROP   = FREE_IMAGE_MDMODEL(5);  // Exif interoperability metadata
+  FIMD_IPTC	          = FREE_IMAGE_MDMODEL(6);  // IPTC/NAA metadata
+  FIMD_XMP	          = FREE_IMAGE_MDMODEL(7);  // Abobe XMP metadata
+  FIMD_GEOTIFF	      = FREE_IMAGE_MDMODEL(8);  // GeoTIFF metadata (to be implemented)
+  FIMD_ANIMATION		  = FREE_IMAGE_MDMODEL(9);  // Animation metadata
+  FIMD_CUSTOM	        = FREE_IMAGE_MDMODEL(10); // Used to attach other metadata types to a dib
 
+//{$endif}
 
+type
   // Handle to a metadata model
   FIMETADATA = record
     data: Pointer;
   end;
   PFIMETADATA = ^FIMETADATA;
 
-  // Handle to a FreeImage tag
+  // Handle to a metadata tag
   FITAG = record
     data: Pointer;
   end;
@@ -264,7 +276,7 @@ type
   PInt = ^Integer;
 
   FI_ReadProc = function(buffer : pointer; size : Cardinal; count : Cardinal; handle : fi_handle) : PCardinal; stdcall;
-  FI_WriteProc = function(buffer : pointer; size, count : Cardinal; handle : fi_handle) : PCardinal; stdcall;
+  FI_WriteProc = function(buffer : pointer; size, count : Cardinal; handle : FI_Handle) : PCardinal; stdcall;
   FI_SeekProc = function(handle : fi_handle; offset : longint; origin : integer) : pint; stdcall;
   FI_TellProc = function(handle : fi_handle) : PCardinal; stdcall;
 
@@ -339,9 +351,7 @@ const
   BMP_SAVE_RLE        = 1;
   CUT_DEFAULT         = 0;
   DDS_DEFAULT         = 0;
-  FAXG3_DEFAULT       = 0;
   GIF_DEFAULT         = 0;
-  HDR_DEFAULT         = 0;
   ICO_DEFAULT         = 0;
   ICO_MAKEALPHA       = 0;     // convert to 32bpp and create an alpha channel from the AND-mask when loading
   IFF_DEFAULT         = 0;
@@ -420,10 +430,12 @@ procedure FreeImage_Unload(dib: PFIBITMAP); stdcall; external FIDLL name '_FreeI
 // Load / Save routines -----------------------------------------------------
 // --------------------------------------------------------------------------
 
-function FreeImage_Load(fif: FREE_IMAGE_FORMAT; filename: PChar; flags: integer = 0): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_Load@12';
+function FreeImage_Load(fif: FREE_IMAGE_FORMAT; const filename: PChar; flags: integer = 0): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_Load@12';
+function FreeImage_LoadU(fif: FREE_IMAGE_FORMAT; const filename: PWideChar; flags: Integer = 0): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_LoadU@12';
 function FreeImage_LoadFromHandle(fif: FREE_IMAGE_FORMAT; io: PFreeImageIO; handle: fi_handle; flags: integer = 0): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_LoadFromHandle@16';
-function FreeImage_Save(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP; filename: PChar; flags: integer = 0): boolean; stdcall; external FIDLL name '_FreeImage_Save@16';
-function FreeImage_SaveToHandle(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP; io : PFreeImageIO; handle : fi_handle; flags : integer = 0) : boolean; stdcall; external FIDLL name '_FreeImage_SaveToHandle@20';
+function FreeImage_Save(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP; filename: PChar; flags: integer = 0): Boolean; stdcall; external FIDLL name '_FreeImage_Save@16';
+function FreeImage_SaveU(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP; const filename: PWideChar; flags: Integer = 0): Boolean; stdcall; external FIDLL name '_FreeImage_SaveU@16';
+function FreeImage_SaveToHandle(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP; io : PFreeImageIO; handle : fi_handle; flags : integer = 0) : Boolean; stdcall; external FIDLL name '_FreeImage_SaveToHandle@20';
 
 // --------------------------------------------------------------------------
 // Memory I/O stream routines -----------------------------------------------
@@ -446,13 +458,14 @@ function FreeImage_RegisterExternalPlugin(path, format, description, extension, 
 function FreeImage_GetFIFCount: Integer; stdcall; external FIDLL name '_FreeImage_GetFIFCount@0';
 procedure FreeImage_SetPluginEnabled(fif: FREE_IMAGE_FORMAT; enable: Boolean); stdcall; external FIDLL Name '_FreeImage_SetPluginEnabled@8';
 function FreeImage_IsPluginEnabled(fif: FREE_IMAGE_FORMAT): Integer; stdcall; external FIDLL Name '_FreeImage_IsPluginEnabled@4';
-function FreeImage_GetFIFFromFormat(format: PChar): FREE_IMAGE_FORMAT; stdcall; external FIDLL Name '_FreeImage_GetFIFFromFormat@4';
-function FreeImage_GetFIFFromMime(format: PChar): FREE_IMAGE_FORMAT; stdcall; external FIDLL Name '_FreeImage_GetFIFFromMime@4';
+function FreeImage_GetFIFFromFormat(const format: PChar): FREE_IMAGE_FORMAT; stdcall; external FIDLL Name '_FreeImage_GetFIFFromFormat@4';
+function FreeImage_GetFIFFromMime(const format: PChar): FREE_IMAGE_FORMAT; stdcall; external FIDLL Name '_FreeImage_GetFIFFromMime@4';
 function FreeImage_GetFormatFromFIF(fif: FREE_IMAGE_FORMAT): PChar; stdcall; external FIDLL Name '_FreeImage_GetFormatFromFIF@4';
 function FreeImage_GetFIFExtensionList(fif: FREE_IMAGE_FORMAT): PChar; stdcall; external FIDLL Name '_FreeImage_GetFIFExtensionList@4';
 function FreeImage_GetFIFDescription(fif: FREE_IMAGE_FORMAT): PChar; stdcall; external FIDLL Name '_FreeImage_GetFIFDescription@4';
 function FreeImage_GetFIFRegExpr(fif: FREE_IMAGE_FORMAT): PChar; stdcall; external FIDLL Name '_FreeImage_GetFIFRegExpr@4';
-function FreeImage_GetFIFFromFilename(fname: PChar): FREE_IMAGE_FORMAT; stdcall; external FIDLL Name '_FreeImage_GetFIFFromFilename@4';
+function FreeImage_GetFIFFromFilename(const fname: PChar): FREE_IMAGE_FORMAT; stdcall; external FIDLL Name '_FreeImage_GetFIFFromFilename@4';
+function FreeImage_GetFIFFromFilenameU(const fname:PWideChar): FREE_IMAGE_FORMAT; stdcall; external FIDLL Name '_FreeImage_GetFIFFromFilenameU@4';
 function FreeImage_FIFSupportsReading(fif: FREE_IMAGE_FORMAT): Boolean; stdcall; external FIDLL Name '_FreeImage_FIFSupportsReading@4';
 function FreeImage_FIFSupportsWriting(fif: FREE_IMAGE_FORMAT): Boolean; stdcall; external FIDLL Name '_FreeImage_FIFSupportsWriting@4';
 function FreeImage_FIFSupportsExportBPP(fif: FREE_IMAGE_FORMAT; bpp: Integer): Boolean; stdcall; external FIDLL Name '_FreeImage_FIFSupportsExportBPP@8';
@@ -478,8 +491,9 @@ function FreeImage_GetLockedPageNumbers(bitmap: PFIMULTIBITMAP; var pages: Integ
 // Filetype request routines ------------------------------------------------
 // --------------------------------------------------------------------------
 
-function FreeImage_GetFileType(filename: PChar; size: Integer): FREE_IMAGE_FORMAT; stdcall; external FIDLL name '_FreeImage_GetFileType@8';
-function FreeImage_GetFileTypeFromHandle(io: PFreeImageIO; handle: FI_Handle; size: Integer): FREE_IMAGE_FORMAT; stdcall; external FIDLL name '_FreeImage_GetFileTypeFromHandle@12';
+function FreeImage_GetFileType(const filename: PChar; size: Integer): FREE_IMAGE_FORMAT; stdcall; external FIDLL name '_FreeImage_GetFileType@8';
+function FreeImage_GetFileTypeU(const filename: PWideChar; size: Integer): FREE_IMAGE_FORMAT; stdcall; external FIDLL name '_FreeImage_GetFileTypeU@8';
+function FreeImage_GetFileTypeFromHandle(io: PFreeImageIO; handle: FI_Handle; size: Integer = 0): FREE_IMAGE_FORMAT; stdcall; external FIDLL name '_FreeImage_GetFileTypeFromHandle@12';
 function FreeImage_GetFileTypeFromMemory(stream: PFIMEMORY; size: Integer = 0): FREE_IMAGE_FORMAT; stdcall; external FIDLL name '_FreeImage_GetFileTypeFromMemory@8'; 
 
 // --------------------------------------------------------------------------
@@ -557,7 +571,7 @@ procedure FreeImage_DestroyICCProfile(var dib : FIBITMAP); stdcall; external FID
 // --------------------------------------------------------------------------
 
 procedure FreeImage_ConvertLine1To4(target, source: PBYTE; width_in_pixels: Integer); stdcall; external FIDLL name '_FreeImage_ConvertLine1To4@12';
-// --??-- procedure FreeImage_ConvertLine8To4(target, source: PBYTE; width_in_pixels: Integer; palette: PRGBQuad);  stdcall; external FIDLL name
+procedure FreeImage_ConvertLine8To4(target, source: PBYTE; width_in_pixels: Integer; palette: PRGBQuad);  stdcall; external FIDLL name '_FreeImage_ConvertLine8To4@16';
 procedure FreeImage_ConvertLine16To4_555(target, source: PBYTE; width_in_pixels: Integer); stdcall; external FIDLL name '_FreeImage_ConvertLine16To4_555@12';
 procedure FreeImage_ConvertLine16To4_565(target, source: PBYTE; width_in_pixels: Integer); stdcall; external FIDLL name '_FreeImage_ConvertLine16To4_565@12';
 procedure FreeImage_ConvertLine24To4(target, source: PBYTE; width_in_pixels: Integer); stdcall; external FIDLL name '_FreeImage_ConvertLine24To4@12';
@@ -604,19 +618,28 @@ procedure FreeImage_ConvertLine24To32(target, source: PBYTE; width_in_pixels: In
 
 function FreeImage_ConvertTo4Bits(dib: PFIBITMAP): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertTo4Bits@4';
 function FreeImage_ConvertTo8Bits(dib: PFIBITMAP): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertTo8Bits@4';
+function FreeImage_ConvertToGreyscale(dib: PFIBITMAP): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertToGreyscale@4';
 function FreeImage_ConvertTo16Bits555(dib: PFIBITMAP): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertTo16Bits555@4';
 function FreeImage_ConvertTo16Bits565(dib: PFIBITMAP): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertTo16Bits565@4';
 function FreeImage_ConvertTo24Bits(dib: PFIBITMAP): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertTo24Bits@4';
 function FreeImage_ConvertTo32Bits(dib: PFIBITMAP): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertTo32Bits@4';
 function FreeImage_ColorQuantize(dib: PFIBITMAP; quantize: FREE_IMAGE_QUANTIZE): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ColorQuantize@8';
+function FreeImage_ColorQuantizeEx(dib: PFIBITMAP; quantize: FREE_IMAGE_QUANTIZE = FIQ_WUQUANT; PaletteSize: Integer = 256; ReserveSize: Integer = 0; ReservePalette: PRGBQuad = nil): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ColorQuantizeEx@20';
 function FreeImage_Threshold(dib: PFIBITMAP; T: Byte): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_Threshold@8';
 function FreeImage_Dither(dib: PFIBITMAP; algorithm: FREE_IMAGE_DITHER): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_Dither@8';
 
-function FreeImage_ConvertFromRawBits(bits: PBYTE; width, height, pitch: Integer; bpp, red_mask, green_mask, blue_mask: LongWord; topdown: Boolean): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertFromRawBits@36'; 
+function FreeImage_ConvertFromRawBits(bits: PBYTE; width, height, pitch: Integer; bpp, red_mask, green_mask, blue_mask: LongWord; topdown: Boolean): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertFromRawBits@36';
 procedure FreeImage_ConvertToRawBits(bits: PBYTE; dib: PFIBITMAP; pitch: Integer; bpp, red_mask, green_mask, blue_mask: LongWord; topdown: Boolean); stdcall; external FIDLL name '_FreeImage_ConvertToRawBits@32';
+
+function FreeImage_ConvertToRGBF(dib: PFIBITMAP): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertToRGBF@4';
 
 function FreeImage_ConvertToStandardType(src: PFIBITMAP; scale_linear: Boolean = True): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertToStandardType@8';
 function FreeImage_ConvertToType(src: PFIBITMAP; dst_type: FREE_IMAGE_TYPE; scale_linear: Boolean = True): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ConvertToType@12';
+
+// tone mapping operators
+function FreeImage_ToneMapping(dib: PFIBITMAP; tmo: FREE_IMAGE_TMO; first_param: Double = 0; second_param: Double = 0): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_ToneMapping@24';
+function FreeImage_TmoDrago03(src: PFIBITMAP; gamma: Double = 2.2; exposure: Double = 0): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_TmoDrago03@20';
+function FreeImage_TmoReinhard05(src: PFIBITMAP; intensity: Double = 0; contrast: Double = 0): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_TmoReinhard05@20';
 
 // --------------------------------------------------------------------------
 // ZLib interface -----------------------------------------------------------
@@ -626,6 +649,7 @@ function FreeImage_ZLibCompress(target: PBYTE; target_size: DWORD; source: PBYTE
 function FreeImage_ZLibUncompress(target: PBYTE; target_size: DWORD; source: PBYTE; source_size: DWORD): DWORD; stdcall; external FIDLL name '_FreeImage_ZLibUncompress@16';
 
 function FreeImage_ZLibGZip(target: PBYTE; target_size: DWORD; source: PBYTE; source_size: DWORD): DWORD; stdcall; external FIDLL name '_FreeImage_ZLibGZip@16';
+function FreeImage_ZLibGUnzip(target: PBYTE; target_size: DWORD; source: PBYTE; source_size: DWORD): DWORD; stdcall; external FIDLL name '_FreeImage_ZLibGUnzip@16';
 function FreeImage_ZLibCRC32(crc: DWORD; source: PByte; source_size: DWORD): DWORD; stdcall; external FIDLL name '_FreeImage_ZLibCRC32@12';
 
 // --------------------------------------------------------------------------
@@ -678,6 +702,7 @@ function FreeImage_RotateClassic(dib: PFIBITMAP; angle: Double): PFIBITMAP; stdc
 function FreeImage_RotateEx(dib: PFIBITMAP; angle, x_shift, y_shift, x_origin, y_origin: Double; use_mask: Boolean): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_RotateEx@48';
 function FreeImage_FlipHorizontal(dib: PFIBITMAP): Boolean; stdcall; external FIDLL name '_FreeImage_FlipHorizontal@4';
 function FreeImage_FlipVertical(dib: PFIBITMAP): Boolean; stdcall; external FIDLL name '_FreeImage_FlipVertical@4';
+function FreeImage_JPEGTransform(const src_file: PChar; const dst_file: PChar; operation: FREE_IMAGE_JPEG_OPERATION; perfect: Boolean = False): Boolean; stdcall; external FIDLL name '_FreeImage_JPEGTransform@16';
 
 // upsampling / downsampling
 function FreeImage_Rescale(dib: PFIBITMAP; dst_width, dst_height: Integer; filter: FREE_IMAGE_FILTER): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_Rescale@16';

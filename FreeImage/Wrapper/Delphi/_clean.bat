@@ -9,4 +9,5 @@ del /S *.ddp
 del /S *.mps
 del /S *.mpt
 del /S *.bak
-del /s *.exe
+del /S *.exe
+del /S *.stat
