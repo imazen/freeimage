@@ -388,8 +388,8 @@ static int s_format_id;
 
 static FIBITMAP *
 LoadRGB (DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
-	int width = (int)desc.dwWidth;
-	int height = (int)desc.dwHeight;
+	int width = (int)desc.dwWidth & ~3;
+	int height = (int)desc.dwHeight & ~3;
 	int bpp = (int)desc.ddpfPixelFormat.dwRGBBitCount;
 	
 	// allocate a new dib
@@ -485,8 +485,8 @@ LoadDXT_Helper (FreeImageIO *io, fi_handle handle, int page, int flags, void *da
 
 static FIBITMAP *
 LoadDXT (int type, DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
-	int width = (int)desc.dwWidth;
-	int height = (int)desc.dwHeight;
+	int width = (int)desc.dwWidth & ~3;
+	int height = (int)desc.dwHeight & ~3;
 
 	// allocate a 32-bit dib
 	FIBITMAP *dib = FreeImage_Allocate (width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
