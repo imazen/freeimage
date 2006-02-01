@@ -62,13 +62,13 @@ CacheFile::close() {
 	while (!m_page_cache_disk.empty()) {
 		Block *block = *m_page_cache_disk.begin();
 		m_page_cache_disk.pop_front();
-		delete block->data;
+		delete [] block->data;
 		delete block;
 	}
 	while (!m_page_cache_mem.empty()) { 
 		Block *block = *m_page_cache_mem.begin(); 
 		m_page_cache_mem.pop_front(); 
-		delete block->data; 
+		delete [] block->data; 
 		delete block; 
 	} 
 

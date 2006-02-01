@@ -26,6 +26,7 @@ Known problem : memory access violation in libtiff 3.8.0
 * [Sandor Szalacsi] fixed a bug in FreeImage_SetBackgroundColor (bkgnd clearing)
 * [Petr Pytelka] fixed PluginTIFF::_tiffSizeProc failing on some images
 * [Sherman Wilcox] fixed a bug in DDS plugin when loading images whose size is not a multiple of 4
+* [Floris van den Berg] fixed a memory leak in the MultiPage cache mechanism
 
 September 5, 2005 - 3.8.0
 ! FreeImage now uses libTIFF 3.7.3
