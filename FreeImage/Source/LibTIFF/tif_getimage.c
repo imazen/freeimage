@@ -24,10 +24,6 @@
  * OF THIS SOFTWARE.
  */
 
-#ifdef _MSC_VER 
-#pragma warning (disable : 4550) // expression evaluates to a function which is missing an argument list
-#endif
-
 /*
  * TIFF Library
  *

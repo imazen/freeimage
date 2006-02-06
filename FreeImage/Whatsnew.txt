@@ -6,10 +6,6 @@ What's New for FreeImage
 + : added
 
 Month day, 2005 - 3.9.0
-
-WARNING : DO NOT USE THIS VERSION IN PRODUCTION CODE
-Known problem : memory access violation in libtiff 3.8.0
-
 ! FreeImage now uses libTIFF 3.8.0
 + [Herve Drolon/Petr Pytelka] added a raw FAX G3 format loader
 + [Herve Drolon] added support for most image types to FreeImage_Rescale
