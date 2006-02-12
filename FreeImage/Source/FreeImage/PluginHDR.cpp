@@ -49,7 +49,7 @@ static int s_format_id;
 #define RGBE_DATA_BLUE   2
 
 // ----------------------------------------------------------
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -63,7 +63,7 @@ typedef struct tagHeaderInfo {
 	float exposure;				// a value of 1.0 in an image corresponds to <exposure> watts/steradian/m^2. defaults to 1.0
 } rgbeHeaderInfo;
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(pop)
 #else
 #pragma pack()

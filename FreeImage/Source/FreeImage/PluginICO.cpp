@@ -27,7 +27,7 @@
 //   Constants + headers
 // ----------------------------------------------------------
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -53,7 +53,7 @@ typedef struct tagICONDIRECTORYENTRY {
 	DWORD	dwImageOffset;        // where in the file is this image
 } ICONDIRENTRY;
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(pop)
 #else
 #pragma pack()

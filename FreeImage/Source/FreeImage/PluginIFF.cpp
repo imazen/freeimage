@@ -29,7 +29,7 @@
 //  Internal typedefs and structures
 // ----------------------------------------------------------
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -47,7 +47,7 @@ typedef struct {
     WORD pageWidth, pageHeight;   /* source "page" size in pixels */
 } BMHD;
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(pop)
 #else
 #pragma pack()

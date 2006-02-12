@@ -26,7 +26,7 @@
 //   Constants + headers
 // ----------------------------------------------------------
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -43,7 +43,7 @@ typedef struct tagSUNHEADER {
 	DWORD maplength;	// Length of colormap (in bytes)
 } SUNHEADER;
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(pop)
 #else
 #pragma pack()

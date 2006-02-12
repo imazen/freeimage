@@ -19,15 +19,15 @@
 // Use at your own risk!
 // ==========================================================
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
-#endif // WIN32
+#endif // _WIN32
 
 #include "FreeImagePlus.h"
 
 //----------------------------------------------------------------------
 
-#ifdef WIN32
+#ifdef _WIN32
 
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -43,4 +43,4 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 }
 
 
-#endif // WIN32
+#endif // _WIN32

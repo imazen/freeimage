@@ -22,15 +22,15 @@
 #ifndef FREEIMAGEPLUS_H
 #define FREEIMAGEPLUS_H
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
-#endif // WIN32
+#endif // _WIN32
 #include "FreeImage.h"
 
 
 // Compiler options ---------------------------------------------------------
 
-#if defined(FREEIMAGE_LIB) || !defined(WIN32)
+#if defined(FREEIMAGE_LIB) || !defined(_WIN32)
 #define FIP_API
 #define FIP_CALLCONV
 #else
@@ -47,7 +47,7 @@
 #else
 #define FIP_API __declspec(dllimport)
 #endif // FIP_EXPORTS
-#endif // FREEIMAGE_LIB || !WIN32
+#endif // FREEIMAGE_LIB || !_WIN32
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -822,7 +822,7 @@ public:
 	@version FreeImage 3
 	@author Hervé Drolon
 */
-#ifdef WIN32
+#ifdef _WIN32
 
 class FIP_API fipWinImage : public fipImage
 {
@@ -976,7 +976,7 @@ protected:
 	double _tmo_param_2;
 };
 
-#endif // WIN32
+#endif // _WIN32
 
 // ----------------------------------------------------------
 

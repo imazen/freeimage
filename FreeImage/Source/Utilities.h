@@ -63,11 +63,11 @@ void FreeImage_Aligned_Free(void* mem);
 // these structs are for file I/O and should not be confused with similar
 // structs in FreeImage.h which are for in-memory bitmap handling
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
-#endif // WIN32
+#endif // _WIN32
 
 typedef struct tagFILE_RGBA {
   unsigned char r,g,b,a;
@@ -85,17 +85,17 @@ typedef struct tagFILE_BGR {
   unsigned char b,g,r;
 } FILE_BGR;
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(pop)
 #else
 #pragma pack()
-#endif // WIN32
+#endif // _WIN32
 
 // ==========================================================
 //   Utility functions
 // ==========================================================
 
-#ifndef WIN32
+#ifndef _WIN32
 inline char*
 i2a(unsigned i, char *a, unsigned r) {
 	if (i/r > 0) a = i2a(i/r,a,r);
@@ -122,7 +122,7 @@ _itoa(int i, char *a, int r) {
 	return a;
 }
 
-#endif // !WIN32
+#endif // !_WIN32
 
 inline unsigned char
 HINIBBLE (unsigned char byte) {

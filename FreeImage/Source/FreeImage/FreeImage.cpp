@@ -22,7 +22,7 @@
 // ==========================================================
 
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -35,7 +35,7 @@ static const char *s_copyright = "This program uses FreeImage, a free, open sour
 
 //----------------------------------------------------------------------
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifndef FREEIMAGE_LIB
 BOOL APIENTRY
 DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
@@ -56,7 +56,7 @@ DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
     return TRUE;
 }
 #endif // FREEIMAGE_LIB
-#endif // WIN32
+#endif // _WIN32
 
 //----------------------------------------------------------------------
 

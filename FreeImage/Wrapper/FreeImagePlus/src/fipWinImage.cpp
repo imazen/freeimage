@@ -21,7 +21,7 @@
 
 #include "FreeImagePlus.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 
 // marker used for clipboard copy / paste
 
@@ -440,4 +440,4 @@ void fipWinImage::getToneMappingOperator(FREE_IMAGE_TMO *tmo, double *first_para
 }
 
 
-#endif // WIN32
+#endif // _WIN32

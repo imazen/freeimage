@@ -46,7 +46,7 @@ static const BYTE BI_BITFIELDS    = 3;
 
 // ----------------------------------------------------------
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -80,7 +80,7 @@ typedef struct tagBITMAPFILEHEADER {
 } BITMAPFILEHEADER, *PBITMAPFILEHEADER;
 #endif //__MINGW32__
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(pop)
 #else
 #pragma pack()

@@ -350,8 +350,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		else if (compression_in == COMPRESSION_CCITTFAX4)
 			TIFFSetField(faxTIFF, TIFFTAG_GROUP4OPTIONS, group4options_in);
 		
-		TIFFSetClientdata(faxTIFF, (thandle_t)handle);
-
 		resX = 204;
 		if (!stretch) {
 			TIFFGetField(faxTIFF, TIFFTAG_YRESOLUTION, &resY);
@@ -386,7 +384,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// read the decoded scanline and fill the bitmap data
 		FreeImage_SeekMemory(memory, 0, SEEK_SET);
 		BYTE *bits = FreeImage_GetScanLine(dib, rows - 1);
-		for(unsigned k = 0; k < rows; k++) {
+		for(int k = 0; k < rows; k++) {
 			FreeImage_ReadMemory(bits, linesize, 1, memory);
 			bits -= pitch;
 		}

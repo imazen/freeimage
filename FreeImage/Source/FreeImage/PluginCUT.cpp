@@ -26,7 +26,7 @@
 //   Constants + headers
 // ----------------------------------------------------------
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -38,7 +38,7 @@ typedef struct tagCUTHEADER {
 	int dummy;
 } CUTHEADER;
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(pop)
 #else
 #pragma pack()

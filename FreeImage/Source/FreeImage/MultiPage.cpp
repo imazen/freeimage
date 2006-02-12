@@ -584,7 +584,7 @@ FreeImage_DeletePage(FIMULTIBITMAP *bitmap, int page) {
 			if (FreeImage_GetPageCount(bitmap) > 1) {
 				BlockListIterator i = FreeImage_FindBlock(bitmap, page);
 
-				if (i != 0) {
+				if (i != header->m_blocks.end()) {
 					switch((*i)->m_type) {
 						case BLOCK_CONTINUEUS :
 							header->m_blocks.erase(i);

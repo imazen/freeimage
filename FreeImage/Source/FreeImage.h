@@ -54,7 +54,7 @@
 
 #include <wchar.h>	// needed for UNICODE functions
 
-#if defined(FREEIMAGE_LIB) || !(defined(WIN32) || defined(__WIN32__))
+#if defined(FREEIMAGE_LIB) || !(defined(_WIN32) || defined(__WIN32__))
 #define DLL_API
 #define DLL_CALLCONV
 #else
@@ -136,7 +136,7 @@ typedef unsigned short WORD;
 typedef unsigned long DWORD;
 typedef long LONG;
 
-#if (defined(WIN32) || defined(__WIN32__))
+#if (defined(_WIN32) || defined(__WIN32__))
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -167,7 +167,7 @@ typedef struct tagRGBTRIPLE {
 #endif // FREEIMAGE_BIGENDIAN
 } RGBTRIPLE;
 
-#if (defined(WIN32) || defined(__WIN32__))
+#if (defined(_WIN32) || defined(__WIN32__))
 #pragma pack(pop)
 #else
 #pragma pack()
@@ -198,7 +198,7 @@ typedef struct tagBITMAPINFO {
 
 // Types used in the library (specific to FreeImage) ------------------------
 
-#if (defined(WIN32) || defined(__WIN32__))
+#if (defined(_WIN32) || defined(__WIN32__))
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -247,7 +247,7 @@ typedef struct tagFICOMPLEX {
     double i;
 } FICOMPLEX;
 
-#if (defined(WIN32) || defined(__WIN32__))
+#if (defined(_WIN32) || defined(__WIN32__))
 #pragma pack(pop)
 #else
 #pragma pack()
@@ -348,7 +348,9 @@ FI_ENUM(FREE_IMAGE_FORMAT) {
 	FIF_DDS		= 24,
 	FIF_GIF     = 25,
 	FIF_HDR		= 26,
-	FIF_FAXG3	= 27
+	FIF_FAXG3	= 27,
+	FIF_J2K		= 28,
+	FIF_JP2		= 29
 };
 
 /** Image type used in FreeImage.
@@ -514,7 +516,7 @@ typedef unsigned (DLL_CALLCONV *FI_WriteProc) (void *buffer, unsigned size, unsi
 typedef int (DLL_CALLCONV *FI_SeekProc) (fi_handle handle, long offset, int origin);
 typedef long (DLL_CALLCONV *FI_TellProc) (fi_handle handle);
 
-#if (defined(WIN32) || defined(__WIN32__))
+#if (defined(_WIN32) || defined(__WIN32__))
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -527,7 +529,7 @@ FI_STRUCT(FreeImageIO) {
     FI_TellProc  tell_proc;     // pointer to the function used to aquire the current position
 };
 
-#if (defined(WIN32) || defined(__WIN32__))
+#if (defined(_WIN32) || defined(__WIN32__))
 #pragma pack(pop)
 #else
 #pragma pack()
@@ -598,6 +600,8 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define ICO_DEFAULT         0
 #define ICO_MAKEALPHA		1		// convert to 32bpp and create an alpha channel from the AND-mask when loading
 #define IFF_DEFAULT         0
+#define J2K_DEFAULT			0
+#define JP2_DEFAULT			0
 #define JPEG_DEFAULT        0
 #define JPEG_FAST           1
 #define JPEG_ACCURATE       2

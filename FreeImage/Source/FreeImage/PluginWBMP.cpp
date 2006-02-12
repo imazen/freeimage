@@ -47,7 +47,7 @@
 
 // WBMP Header
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -61,7 +61,7 @@ typedef struct tagWBMPHEADER {
 	WORD Height;			// Multi-byte height field
 } WBMPHEADER;
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(pop)
 #else
 #pragma pack()

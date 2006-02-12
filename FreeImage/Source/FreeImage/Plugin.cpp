@@ -26,12 +26,12 @@
 #pragma warning (disable : 4786) // identifier was truncated to 'number' characters
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <io.h>
 #else
 #include <ctype.h>
-#endif // WIN32
+#endif // _WIN32
 
 #include "FreeImage.h"
 #include "Utilities.h"
@@ -186,7 +186,7 @@ PluginList::IsEmpty() const {
 
 PluginList::~PluginList() {
 	for (map<int, PluginNode *>::iterator i = m_plugin_map.begin(); i != m_plugin_map.end(); ++i) {
-#ifdef WIN32
+#ifdef _WIN32
 		if ((*i).second->m_instance != NULL)
 			FreeLibrary((HINSTANCE)(*i).second->m_instance);
 #endif
@@ -248,7 +248,7 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 			
 			// external plugin initialization
 
-#ifdef WIN32
+#ifdef _WIN32
 			if (!load_local_plugins_only) {
 				int count = 0;
 				char buffer[MAX_PATH + 200];
@@ -306,7 +306,7 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 				if (bOk)
 					SetCurrentDirectory(current_dir);
 			}
-#endif // WIN32
+#endif // _WIN32
 		}
 	}
 }
@@ -389,7 +389,7 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_LoadU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, int flags) {
 	FreeImageIO io;
 	SetDefaultIO(&io);
-#ifdef WIN32	
+#ifdef _WIN32	
 	FILE *handle = _wfopen(filename, L"rb");
 
 	if (handle) {
@@ -451,7 +451,7 @@ BOOL DLL_CALLCONV
 FreeImage_SaveU(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const wchar_t *filename, int flags) {
 	FreeImageIO io;
 	SetDefaultIO(&io);
-#ifdef WIN32	
+#ifdef _WIN32	
 	FILE *handle = _wfopen(filename, L"w+b");
 	
 	if (handle) {
@@ -474,7 +474,7 @@ FreeImage_RegisterLocalPlugin(FI_InitProc proc_address, const char *format, cons
 	return s_plugins->AddNode(proc_address, NULL, format, description, extension, regexpr);
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 FREE_IMAGE_FORMAT DLL_CALLCONV
 FreeImage_RegisterExternalPlugin(const char *path, const char *format, const char *description, const char *extension, const char *regexpr) {
 	if (path != NULL) {
@@ -494,7 +494,7 @@ FreeImage_RegisterExternalPlugin(const char *path, const char *format, const cha
 
 	return FIF_UNKNOWN;
 }
-#endif // WIN32
+#endif // _WIN32
 
 int DLL_CALLCONV
 FreeImage_SetPluginEnabled(FREE_IMAGE_FORMAT fif, BOOL enable) {
@@ -725,7 +725,7 @@ FreeImage_GetFIFFromFilename(const char *filename) {
 
 FREE_IMAGE_FORMAT DLL_CALLCONV 
 FreeImage_GetFIFFromFilenameU(const wchar_t *filename) {
-#ifdef WIN32	
+#ifdef _WIN32	
 	if (filename == NULL) return FIF_UNKNOWN;
     	
 	// get the proper extension if we received a filename
@@ -744,7 +744,7 @@ FreeImage_GetFIFFromFilenameU(const wchar_t *filename) {
 	return fRet;
 #else
 	return FIF_UNKNOWN;
-#endif // WIN32
+#endif // _WIN32
 }
 
 BOOL DLL_CALLCONV

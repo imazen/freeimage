@@ -34,11 +34,11 @@ static const int BLOCK_SIZE = (64 * 1024) - 8;
 
 // ----------------------------------------------------------
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
-#endif // WIN32
+#endif // _WIN32
 
 struct Block {
      unsigned nr;
@@ -46,11 +46,11 @@ struct Block {
      BYTE *data;
 };
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(pop)
 #else
 #pragma pack()
-#endif // WIN32
+#endif // _WIN32
 
 // ----------------------------------------------------------
 

@@ -26,7 +26,7 @@
 //   Definitions for the DDS format
 // ----------------------------------------------------------
 
-#ifdef WIN32
+#ifdef _WIN32
 #pragma pack(push, 1)
 #else
 #pragma pack(1)
@@ -163,7 +163,7 @@ typedef struct tagDXT5Block {		// also used by dxt4
 	DXTColBlock color;
 } DXT5Block;
 
-#ifdef WIN32
+#ifdef _WIN32
 #	pragma pack(pop)
 #else
 #	pragma pack()
