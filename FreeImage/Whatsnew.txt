@@ -23,6 +23,8 @@ Month day, 2005 - 3.9.0
 * [Petr Pytelka] fixed PluginTIFF::_tiffSizeProc failing on some images
 * [Sherman Wilcox] fixed a bug in DDS plugin when loading images whose size is not a multiple of 4
 * [Floris van den Berg] fixed a memory leak in the MultiPage cache mechanism
+* [Herve Drolon] replaced WIN32 #define by _WIN32 #define as this is needed by VS2005
+* [Herve Drolon] fixed a VS2005 error in FreeImage_DeletePage
 
 September 5, 2005 - 3.8.0
 ! FreeImage now uses libTIFF 3.7.3
