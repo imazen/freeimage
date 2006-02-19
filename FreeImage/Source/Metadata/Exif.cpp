@@ -47,7 +47,8 @@
 
 // CANON cameras have some funny bespoke fields that need further processing...
 #define TAG_CANON_CAMERA_STATE_1 0x0001
-#define TAG_CANON_CAMERA_STATE_2 0x0004
+#define TAG_CANON_CAMERA_STATE_2 0x0002
+#define TAG_CANON_CAMERA_STATE_4 0x0004
 
 
 // =====================================================================
@@ -248,11 +249,12 @@ A single Canon tag may contain many other tags within.
 */
 static void 
 processCanonMakerNoteTag(FIBITMAP *dib, FITAG *tag) {
+	DWORD startIndex;
 	TagLib& s = TagLib::instance();
 
 	WORD tag_id = FreeImage_GetTagID(tag);
 
-	if((tag_id == TAG_CANON_CAMERA_STATE_1) || (tag_id == TAG_CANON_CAMERA_STATE_2)) {
+	if((tag_id == TAG_CANON_CAMERA_STATE_1) || (tag_id == TAG_CANON_CAMERA_STATE_2) || (tag_id == TAG_CANON_CAMERA_STATE_4)) {
 		// this single tag has multiple values within
 
 		int subTagTypeBase = 0;
@@ -260,16 +262,22 @@ processCanonMakerNoteTag(FIBITMAP *dib, FITAG *tag) {
 		switch(tag_id) {
 			case TAG_CANON_CAMERA_STATE_1:
 				subTagTypeBase = 0xC100;
+				startIndex = 1;
 				break;
 			case TAG_CANON_CAMERA_STATE_2:
+				subTagTypeBase = 0xC200;
+				startIndex = 0;
+				break;
+			case TAG_CANON_CAMERA_STATE_4:
 				subTagTypeBase = 0xC400;
+				startIndex = 2;
 				break;
 		}
 
 		WORD *pvalue = (WORD*)FreeImage_GetTagValue(tag);
 
         // we intentionally skip the first array member
-        for (DWORD i = 1; i < FreeImage_GetTagCount(tag); i++) {
+        for (DWORD i = startIndex; i < FreeImage_GetTagCount(tag); i++) {
 			// create a tag
 			FITAG *canonTag = FreeImage_CreateTag();
 			if(!canonTag) return;
