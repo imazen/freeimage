@@ -481,6 +481,8 @@ LoadDXT_Helper (FreeImageIO *io, fi_handle handle, int page, int flags, void *da
 		}
 
 	}
+
+	delete [] input_buffer;
 }
 
 static FIBITMAP *
