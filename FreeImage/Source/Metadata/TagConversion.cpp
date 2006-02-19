@@ -375,7 +375,7 @@ ConvertExifTag(FITAG *tag) {
 		{
 			FIRational r(tag);
 			long apexValue = r.longValue();
-			long apexPower = (long)pow((long)2, apexValue);
+			long apexPower = 1 << apexValue;
 			sprintf(format, "1/%d sec", (int)apexPower);
 			buffer += format;
 			return buffer.c_str();
