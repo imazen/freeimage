@@ -28,6 +28,7 @@ Month day, 2005 - 3.9.0
 * [Herve Drolon] replaced WIN32 #define by _WIN32 #define as this is needed by VS2005
 * [Herve Drolon] fixed a VS2005 error in FreeImage_DeletePage
 * [Petr Supina] fixed a pow(long,long) function not being standard ANSI C/C++
+* [Petr Supina] fixed FreeImage_FindBlock function not being standard ANSI C/C++
 
 September 5, 2005 - 3.8.0
 ! FreeImage now uses libTIFF 3.7.3
