@@ -101,88 +101,89 @@ FreeImage_GetMultiBitmapHeader(FIMULTIBITMAP *bitmap) {
 
 static BlockListIterator DLL_CALLCONV
 FreeImage_FindBlock(FIMULTIBITMAP *bitmap, int position) {
-	if (bitmap) {
-		MULTIBITMAPHEADER *header = FreeImage_GetMultiBitmapHeader(bitmap);
+	assert(NULL != bitmap);
 
-		// step 1: find the block that matches the given position
+	MULTIBITMAPHEADER *header = FreeImage_GetMultiBitmapHeader(bitmap);
 
-		int prev_count = 0;
-		int count = 0;
-		BlockListIterator i;
-		BlockTypeS *current_block = NULL;
+	// step 1: find the block that matches the given position
 
-		for (i = header->m_blocks.begin(); i != header->m_blocks.end(); ++i) {
-			prev_count = count;
+	int prev_count = 0;
+	int count = 0;
+	BlockListIterator i;
+	BlockTypeS *current_block = NULL;
 
-			switch((*i)->m_type) {
-				case BLOCK_CONTINUEUS :
-					count += ((BlockContinueus *)(*i))->m_end - ((BlockContinueus *)(*i))->m_start + 1;
-					break;
+	for (i = header->m_blocks.begin(); i != header->m_blocks.end(); ++i) {
+		prev_count = count;
 
-				case BLOCK_REFERENCE :
-					count++;
-					break;
-			}
+		switch((*i)->m_type) {
+			case BLOCK_CONTINUEUS :
+				count += ((BlockContinueus *)(*i))->m_end - ((BlockContinueus *)(*i))->m_start + 1;
+				break;
 
-			current_block = *i;
-
-			if (count >= position)
+			case BLOCK_REFERENCE :
+				count++;
 				break;
 		}
 
-		// step 2: make sure we found the node. from here it gets a little complicated:
-		// * if the block is there, just return it
-		// * if the block is a series of blocks, split it in max 3 new blocks
-		//   and return the splitted block
+		current_block = *i;
 
-		if ((current_block) && (count >= position)) {
-			switch(current_block->m_type) {
-				case BLOCK_REFERENCE :
-					return i;
+		if (count >= position)
+			break;
+	}
 
-				case BLOCK_CONTINUEUS :
-				{
-					BlockContinueus *block = (BlockContinueus *)current_block;
+	// step 2: make sure we found the node. from here it gets a little complicated:
+	// * if the block is there, just return it
+	// * if the block is a series of blocks, split it in max 3 new blocks
+	//   and return the splitted block
 
-					if (block->m_start != block->m_end) {
-						int item = block->m_start + (position - prev_count);
+	if ((current_block) && (count >= position)) {
+		switch(current_block->m_type) {
+			case BLOCK_REFERENCE :
+				return i;
 
-						// left part
+			case BLOCK_CONTINUEUS :
+			{
+				BlockContinueus *block = (BlockContinueus *)current_block;
 
-						if (item != block->m_start) {
-							BlockContinueus *block_a = new BlockContinueus(block->m_start, item - 1);
-							header->m_blocks.insert(i, (BlockTypeS *)block_a);
-						}
+				if (block->m_start != block->m_end) {
+					int item = block->m_start + (position - prev_count);
 
-						// middle part
+					// left part
 
-						BlockContinueus *block_b = new BlockContinueus(item, item);
-						BlockListIterator block_target = header->m_blocks.insert(i, (BlockTypeS *)block_b);
-
-						// right part
-
-						if (item != block->m_end) {
-							BlockContinueus *block_c = new BlockContinueus(item + 1, block->m_end);
-							header->m_blocks.insert(i, (BlockTypeS *)block_c);
-						}
-
-						// remove the old block that was just splitted
-
-						header->m_blocks.remove((BlockTypeS *)block);
-						delete block;
-
-						// return the splitted block
-						
-						return block_target;
+					if (item != block->m_start) {
+						BlockContinueus *block_a = new BlockContinueus(block->m_start, item - 1);
+						header->m_blocks.insert(i, (BlockTypeS *)block_a);
 					}
 
-					return i;
+					// middle part
+
+					BlockContinueus *block_b = new BlockContinueus(item, item);
+					BlockListIterator block_target = header->m_blocks.insert(i, (BlockTypeS *)block_b);
+
+					// right part
+
+					if (item != block->m_end) {
+						BlockContinueus *block_c = new BlockContinueus(item + 1, block->m_end);
+						header->m_blocks.insert(i, (BlockTypeS *)block_c);
+					}
+
+					// remove the old block that was just splitted
+
+					header->m_blocks.remove((BlockTypeS *)block);
+					delete block;
+
+					// return the splitted block
+					
+					return block_target;
 				}
+
+				return i;
 			}
 		}
 	}
-
-	return 0;
+	// we should never go here ...
+	assert(false);
+	return header->m_blocks.end();
 }
 
 int DLL_CALLCONV
