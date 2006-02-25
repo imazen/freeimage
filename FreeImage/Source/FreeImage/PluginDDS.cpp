@@ -3,6 +3,7 @@
 //
 // Design and implementation by
 // - Volker Gärtner (volkerg@gmx.at)
+// - Sherman Wilcox
 //
 // This file is part of FreeImage 3
 //
@@ -546,6 +547,7 @@ MimeType() {
 static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {
 	DDSHEADER header;
+	memset(&header, 0, sizeof(header));
 	io->read_proc(&header, 1, sizeof(header), handle);
 #ifdef FREEIMAGE_BIGENDIAN
 	SwapHeader(&header);
@@ -585,6 +587,8 @@ static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	DDSHEADER header;
 	FIBITMAP *dib = NULL;
+
+	memset(&header, 0, sizeof(header));
 	io->read_proc(&header, 1, sizeof(header), handle);
 #ifdef FREEIMAGE_BIGENDIAN
 	SwapHeader(&header);
