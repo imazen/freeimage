@@ -249,7 +249,7 @@ A single Canon tag may contain many other tags within.
 */
 static void 
 processCanonMakerNoteTag(FIBITMAP *dib, FITAG *tag) {
-	DWORD startIndex;
+	DWORD startIndex = 0;
 	TagLib& s = TagLib::instance();
 
 	WORD tag_id = FreeImage_GetTagID(tag);
