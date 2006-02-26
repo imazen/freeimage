@@ -6,10 +6,16 @@ What's New for FreeImagePlus
 + : added
 
 Month Day, 2005 - 3.9.0
+! [Herve Drolon] renamed fipMemoryIO::read to fipMemoryIO::load
+! [Herve Drolon] renamed fipMemoryIO::write to fipMemoryIO::save
++ [Herve Drolon] added fipMemoryIO::read (wrapper for FreeImage_ReadMemory)
++ [Herve Drolon] added fipMemoryIO::write (wrapper for FreeImage_WriteMemory)
 + [Herve Drolon] added version info to the DLL
 + [Herve Drolon] added fipImage::crop
 + [Herve Drolon] added support for most image types to fipImage::rescale
 + [Herve Drolon] added fipImage::makeThumbnail
++ [Herve Drolon] added fipTag
++ [Herve Drolon] added fipMetadataFind
 * [Sandor Szalacsi] improved fipWinWimage::drawEx behavior with non transparent PNG having a file background
 * [Herve Drolon] fixed a bug in fipWinImage::setToneMappingOperator
 
