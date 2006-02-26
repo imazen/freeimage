@@ -175,7 +175,13 @@ copy         FreeImagePlus.h         dist\
 				RelativePath="src\fipMemoryIO.cpp">
 			</File>
 			<File
+				RelativePath=".\src\fipMetadataFind.cpp">
+			</File>
+			<File
 				RelativePath="src\fipMultiPage.cpp">
+			</File>
+			<File
+				RelativePath=".\src\fipTag.cpp">
 			</File>
 			<File
 				RelativePath="src\fipWinImage.cpp">

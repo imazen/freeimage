@@ -338,7 +338,7 @@ BOOL fipImage::loadFromMemory(fipMemoryIO& memIO, int flag) {
 			FreeImage_Unload(_dib);			
 		}
 		// Load the file
-		_dib = memIO.read(fif, flag);
+		_dib = memIO.load(fif, flag);
 		_bHasChanged = TRUE;
 		if(_dib == NULL)
 			return FALSE;
@@ -446,7 +446,7 @@ BOOL fipImage::saveToMemory(FREE_IMAGE_FORMAT fif, fipMemoryIO& memIO, int flag)
 		}
 
 		if(bCanSave) {
-			bSuccess = memIO.write(fif, _dib, flag);
+			bSuccess = memIO.save(fif, _dib, flag);
 			return bSuccess;
 		}
 	}
@@ -794,3 +794,25 @@ BOOL fipImage::makeThumbnail(WORD max_size, BOOL convert) {
 	}
 	return FALSE;
 }
+
+///////////////////////////////////////////////////////////////////
+// Metadata
+
+unsigned fipImage::getMetadataCount(FREE_IMAGE_MDMODEL model) {
+	return FreeImage_GetMetadataCount(model, _dib);
+}
+
+BOOL fipImage::getMetadata(FREE_IMAGE_MDMODEL model, const char *key, fipTag& tag) {
+	FITAG *searchedTag = NULL;
+	FreeImage_GetMetadata(model, _dib, key, &searchedTag);
+	if(searchedTag != NULL) {
+		tag = FreeImage_CloneTag(searchedTag);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+BOOL fipImage::setMetadata(FREE_IMAGE_MDMODEL model, const char *key, fipTag& tag) {
+	return FreeImage_SetMetadata(model, _dib, key, tag);
+}
+

@@ -4,7 +4,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 PROJECT_NAME           = FreeImagePlus
-PROJECT_NUMBER         = "FreeImage 3.7.0"
+PROJECT_NUMBER         = "FreeImage 3.9.0"
 OUTPUT_DIRECTORY       = C:/Projects/FreeImage/Wrapper/FreeImagePlus/
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = English
@@ -179,7 +179,7 @@ EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = 
 INCLUDE_FILE_PATTERNS  = 
-PREDEFINED             = WIN32
+PREDEFINED             = _WIN32
 EXPAND_AS_DEFINED      = 
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------

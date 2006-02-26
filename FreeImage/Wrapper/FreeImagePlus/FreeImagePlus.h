@@ -72,6 +72,7 @@ public:
 
 class fipMemoryIO;
 class fipMultiPage;
+class fipTag;
 
 /** A class used to manage all photo related images and all image types used by the library.
 
@@ -801,6 +802,35 @@ public:
 	}
 	//@}
 
+	/**@name Metadata */
+	//@{	
+	/**
+	Returns the number of tags contained in the <i>model</i> metadata model 
+	attached to the dib
+	@param model Metadata model to look for
+	*/
+	unsigned getMetadataCount(FREE_IMAGE_MDMODEL model);
+	/**
+	Retrieve a metadata attached to the dib
+	@param model Metadata model to look for
+	@param key Metadata field name 
+	@param tag Returned tag
+	@return Returns TRUE if the operation was succesfull, FALSE otherwise
+	@see FreeImage_GetMetadata
+	*/
+	BOOL getMetadata(FREE_IMAGE_MDMODEL model, const char *key, fipTag& tag);
+	/**
+	Attach a new FreeImage tag to the dib
+	@param model Metadata model used to store the tag
+	@param key Tag field name 
+	@param tag Tag to be attached
+	@return Returns TRUE if the operation was succesfull, FALSE otherwise
+	@see FreeImage_SetMetadata
+	*/
+	BOOL setMetadata(FREE_IMAGE_MDMODEL model, const char *key, fipTag& tag);
+	//@}
+
+
   protected:
 	/**@name Internal use */
 	//@{
@@ -1028,7 +1058,7 @@ public :
 	@return Returns the loaded dib if successful, returns NULL otherwise
 	@see FreeImage_LoadFromMemory
 	*/
-	FIBITMAP* read(FREE_IMAGE_FORMAT fif, int flags = 0);
+	FIBITMAP* load(FREE_IMAGE_FORMAT fif, int flags = 0);
 	/**
 	Saves a dib to a memory stream
 	@param fif Format identifier (FreeImage format)
@@ -1037,7 +1067,25 @@ public :
 	@return Returns TRUE if successful, returns FALSE otherwise
 	@see FreeImage_SaveToMemory
 	*/
-	BOOL write(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, int flags = 0);
+	BOOL save(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, int flags = 0);
+	/**
+	Reads data from a memory stream
+	@param buffer Storage location for data
+	@param size Item size in bytes
+	@param count Maximum number of items to be read
+	@return Returns the number of full items actually read, which may be less than count if an error occurs
+	@see FreeImage_ReadMemory
+	*/
+	unsigned read(void *buffer, unsigned size, unsigned count);
+	/**
+	Writes data to a memory stream
+	@param buffer Pointer to data to be written
+	@param size Item size in bytes
+	@param count Maximum number of items to be written
+	@return Returns the number of full items actually written, which may be less than count if an error occurs
+	@see FreeImage_WriteMemory
+	*/
+	unsigned write(const void *buffer, unsigned size, unsigned count);
 	/**
 	Gets the current position of a memory pointer
 	@see FreeImage_TellMemory
@@ -1058,6 +1106,8 @@ public :
 	//@}
 
 };
+
+// ----------------------------------------------------------
 
 /** Multi-page file stream
 
@@ -1180,6 +1230,218 @@ public:
 	@see FreeImage_GetLockedPageNumbers
 	*/
 	BOOL getLockedPageNumbers(int *pages, int *count);
+};
+
+// ----------------------------------------------------------
+
+/**
+FreeImage Tag
+
+FreeImage uses this structure to store metadata information. 
+*/
+class FIP_API fipTag : public fipObject
+{
+protected:
+	/// Pointer to a FreeImage tag
+	FITAG *_tag;
+
+public:
+	/**@name Creation & Destruction */
+	//@{	
+	/**
+	Constructor
+	@see FreeImage_CreateTag
+	*/
+	fipTag();
+	/** 
+	Destructor
+	@see FreeImage_DeleteTag
+	*/
+	~fipTag();
+	//@}
+
+	/**@name Copying */
+	//@{	
+	/**
+	Copy constructor
+	@see FreeImage_CloneTag
+	*/
+	fipTag(const fipTag& tag);
+	/**
+	Copy constructor
+	@see FreeImage_CloneTag
+	*/
+	fipTag& operator=(const fipTag& tag);
+	/**
+	<b>Assignement operator</b><br>
+	Copy the input pointer and manage its destruction
+	@see operator FITAG*()
+	*/
+	fipTag& operator=(FITAG *tag);
+	//@}
+
+	/**
+	Returns a pointer to the FITAG data. Used for direct access from FREEIMAGE functions 
+	or from your own low level C functions.
+	@see operator=(FITAG *tag)
+	*/
+	operator FITAG*() { 
+		return _tag; 
+	}
+
+	/// Returns TRUE if the tag is allocated, FALSE otherwise
+	BOOL isValid();
+
+	/**@name Tag accessors */
+	//@{	
+	/**
+	Returns the tag field name (unique inside a metadata model).
+	@see FreeImage_GetTagKey
+	*/
+	const char *getKey();
+	/**
+	Returns the tag description if available, returns NULL otherwise
+	@see FreeImage_GetTagDescription
+	*/
+	const char *getDescription();
+	/**
+	Returns the tag ID if available, returns 0 otherwise
+	@see FreeImage_GetTagID
+	*/
+	WORD getID();
+	/**
+	Returns the tag data type 
+	@see FreeImage_GetTagType
+	*/
+	FREE_IMAGE_MDTYPE getType();
+	/**
+	Returns the number of components in the tag (in tag type units)
+	@see FreeImage_GetTagCount
+	*/
+	DWORD getCount();
+	/**
+	Returns the length of the tag value in bytes
+	@see FreeImage_GetTagLength
+	*/
+	DWORD getLength();
+	/**
+	Returns the tag value
+	@see FreeImage_GetTagValue
+	*/
+	const void *getValue();
+	/**
+	Set the tag field name 
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_SetTagKey
+	*/
+	BOOL setKey(const char *key);
+	/**
+	Set the (usually optional) tag description
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_SetTagDescription
+	*/
+	BOOL setDescription(const char *description);
+	/**
+	Set the (usually optional) tad ID
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_SetTagID
+	*/
+	BOOL setID(WORD id);
+	/**
+	Set the tag data type 
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_SetTagType
+	*/
+	BOOL setType(FREE_IMAGE_MDTYPE type);
+	/**
+	Set the number of data in the tag 
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_SetTagCount
+	*/
+	BOOL setCount(DWORD count);
+	/**
+	Set the length of the tag value, in bytes 
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_SetTagLength
+	*/
+	BOOL setLength(DWORD length);
+	/**
+	Set the tag value 
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_SetTagValue
+	*/
+	BOOL setValue(const void *value);
+
+	//@}
+
+	/**
+	Converts a FreeImage tag structure to a string that represents the interpreted tag value
+	@param model Metadata model specification (metadata model from which the tag was extracted)
+	@param Make Camera model (not used yet)
+	*/
+	const char* toString(FREE_IMAGE_MDMODEL model, char *Make = NULL);
+
+};
+
+/**
+Metadata iterator
+
+<b>Usage : </b><br>
+<pre>
+fipImage image;
+// ...
+fipTag tag;
+fipMetadataFind finder;
+if( finder.findFirstMetadata(FIMD_EXIF_MAIN, image, tag) ) {
+  do {
+    // process the tag
+	cout << tag.getKey() << "\n";
+
+  } while( finder.findNextMetadata(tag) );
+}
+// the class can be called again with another metadata model
+if( finder.findFirstMetadata(FIMD_EXIF_EXIF, image, tag) ) {
+  do {
+    // process the tag
+	cout << tag.getKey() << "\n";
+
+  } while( finder.findNextMetadata(tag) );
+}
+</pre>
+*/
+class FIP_API fipMetadataFind : public fipObject
+{
+protected:
+	/// Pointer to a search handle
+	FIMETADATA *_mdhandle;
+
+public:
+	/// Constructor
+	fipMetadataFind();
+	/**
+	Destructor
+	@see FreeImage_FindCloseMetadata
+	*/
+	~fipMetadataFind();
+	/**
+	Provides information about the first instance of a tag that matches 
+	the metadata model specified in the <i>model</i> argument. 
+	@param model Metadata model
+	@param image Input image
+	@param tag Returned tag
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_FindFirstMetadata
+	*/
+	BOOL findFirstMetadata(FREE_IMAGE_MDMODEL model, fipImage& image, fipTag& tag);
+	/**
+	Find the next tag, if any, that matches the metadata model argument 
+	in a previous call to findFirstMetadata
+	@param tag Returned tag
+	@return Returns TRUE if successful, returns FALSE otherwise, indicating that no more matching tags could be found
+	@see FreeImage_FindNextMetadata
+	*/
+	BOOL findNextMetadata(fipTag& tag);
+
 };
 
 #endif	// FREEIMAGEPLUS_H
