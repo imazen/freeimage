@@ -15,6 +15,7 @@ Month day, 2005 - 3.9.0
 + [Herve Drolon] added FreeImage_ReadMemory
 + [Herve Drolon] added FreeImage_WriteMemory
 + [Herve Drolon] added new Exif maker note tags
++ [Sherman Wilcox] added a SGI file format loader
 * [Carsten Klein] FreeImage_Dither and FreeImage_Threshold now work with palettized 8-bit dib
 * [Christophe Petit] fixed a bug in FreeImage_GetFIFFromFilenameU occuring with files without extension
 * [Leigh Brasington] fixed a bug in PluginGIF causing FreeImage not working on Win/98/ME

@@ -240,6 +240,10 @@ SOURCE=..\FreeImage\PluginRAS.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\FreeImage\PluginSGI.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\FreeImage\PluginTARGA.cpp
 # End Source File
 # Begin Source File

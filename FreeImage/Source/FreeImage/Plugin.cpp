@@ -217,6 +217,10 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 		s_plugins = new PluginList;
 
 		if (s_plugins) {
+			/* NOTE : 
+			The order used to initialize internal plugins below MUST BE the same order 
+			as the one used to define the FREE_IMAGE_FORMAT enum. 
+			*/
 			s_plugins->AddNode(InitBMP);
 			s_plugins->AddNode(InitICO);
 			s_plugins->AddNode(InitJPEG);
@@ -245,6 +249,7 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 	        s_plugins->AddNode(InitGIF);
 	        s_plugins->AddNode(InitHDR);
 			s_plugins->AddNode(InitG3);
+			s_plugins->AddNode(InitSGI);
 			
 			// external plugin initialization
 

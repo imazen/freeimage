@@ -349,8 +349,7 @@ FI_ENUM(FREE_IMAGE_FORMAT) {
 	FIF_GIF     = 25,
 	FIF_HDR		= 26,
 	FIF_FAXG3	= 27,
-	FIF_J2K		= 28,
-	FIF_JP2		= 29
+	FIF_SGI		= 28
 };
 
 /** Image type used in FreeImage.
@@ -600,8 +599,6 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define ICO_DEFAULT         0
 #define ICO_MAKEALPHA		1		// convert to 32bpp and create an alpha channel from the AND-mask when loading
 #define IFF_DEFAULT         0
-#define J2K_DEFAULT			0
-#define JP2_DEFAULT			0
 #define JPEG_DEFAULT        0
 #define JPEG_FAST           1
 #define JPEG_ACCURATE       2
@@ -626,6 +623,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define PNM_SAVE_ASCII      1       // If set the writer saves in ASCII format (i.e. P1, P2 or P3)
 #define PSD_DEFAULT         0
 #define RAS_DEFAULT         0
+#define SGI_DEFAULT			0
 #define TARGA_DEFAULT       0
 #define TARGA_LOAD_RGB888   1       // If set the loader converts RGB555 and ARGB8888 -> RGB888.
 #define TIFF_DEFAULT        0

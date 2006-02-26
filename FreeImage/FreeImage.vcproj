@@ -242,6 +242,9 @@ copy Source\FreeImage.h Dist
 					RelativePath="Source\FreeImage\PluginRAS.cpp">
 				</File>
 				<File
+					RelativePath=".\Source\FreeImage\PluginSGI.cpp">
+				</File>
+				<File
 					RelativePath="Source\FreeImage\PluginTARGA.cpp">
 				</File>
 				<File
