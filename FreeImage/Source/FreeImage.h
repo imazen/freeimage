@@ -59,10 +59,6 @@
 #define DLL_CALLCONV
 #else
 
-#ifdef __MINGW32__		// prevents a bug in mingw32
-#include <windows.h>
-#endif // __MINGW32__
-
 #define DLL_CALLCONV __stdcall
 // The following ifdef block is the standard way of creating macros which make exporting 
 // from a DLL simpler. All files within this DLL are compiled with the FREEIMAGE_EXPORTS
@@ -128,13 +124,22 @@ FI_STRUCT (FIMULTIBITMAP) { void *data; };
 #define SEEK_END  2
 #endif
 
-#ifndef __MINGW32__		// prevents a bug in mingw32
-
+#ifndef _MSC_VER
+// define portable types for 32-bit / 64-bit OS
+#include <stdint.h>
+typedef int32_t BOOL;
+typedef uint8_t BYTE;
+typedef uint16_t WORD;
+typedef uint32_t DWORD;
+typedef int32_t LONG;
+#else
+// MS is not C99 ISO compliant
 typedef long BOOL;
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
 typedef unsigned long DWORD;
 typedef long LONG;
+#endif // _MSC_VER
 
 #if (defined(_WIN32) || defined(__WIN32__))
 #pragma pack(push, 1)
@@ -191,8 +196,6 @@ typedef struct tagBITMAPINFO {
   BITMAPINFOHEADER bmiHeader; 
   RGBQUAD          bmiColors[1];
 } BITMAPINFO, *PBITMAPINFO;
-
-#endif // __MINGW32__
 
 #endif // _WINDOWS_
 

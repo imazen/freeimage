@@ -31,6 +31,7 @@ Month day, 2005 - 3.9.0
 * [Herve Drolon] fixed a VS2005 error in FreeImage_DeletePage
 * [Petr Supina] fixed a pow(long,long) function not being standard ANSI C/C++
 * [Petr Supina] fixed FreeImage_FindBlock function not being standard ANSI C/C++
+* [Olaf Stoyke] added support for 64-bit Linux OS
 
 September 5, 2005 - 3.8.0
 ! FreeImage now uses libTIFF 3.7.3

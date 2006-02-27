@@ -31,8 +31,8 @@
  ============================================================
 */
 
-#include "Utilities.h"
 #include "FreeImage.h"
+#include "Utilities.h"
 
 #define ROTATE_PI	double (3.1415926535897932384626433832795)
 

@@ -195,13 +195,13 @@ ReplaceExtension(char *result, const char *filename, const char *extension) {
 // ==========================================================
 
 inline void
-SwapShort(unsigned short *sp) {
-	unsigned char *cp = (unsigned char *)sp, t = cp[0]; cp[0] = cp[1]; cp[1] = t;
+SwapShort(WORD *sp) {
+	BYTE *cp = (BYTE *)sp, t = cp[0]; cp[0] = cp[1]; cp[1] = t;
 }
 
 inline void
-SwapLong(unsigned long *lp) {
-	unsigned char *cp = (unsigned char *)lp, t = cp[0]; cp[0] = cp[3]; cp[3] = t;
+SwapLong(DWORD *lp) {
+	BYTE *cp = (BYTE *)lp, t = cp[0]; cp[0] = cp[3]; cp[3] = t;
 	t = cp[1]; cp[1] = cp[2]; cp[2] = t;
 }
 

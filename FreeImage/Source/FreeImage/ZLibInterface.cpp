@@ -38,7 +38,7 @@ which must be at least 0.1% larger than source_size plus 12 bytes.
 */
 DWORD DLL_CALLCONV 
 FreeImage_ZLibCompress(BYTE *target, DWORD target_size, BYTE *source, DWORD source_size) {
-	DWORD dest_len = target_size;
+	uLongf dest_len = (uLongf)target_size;
 
 	int zerr = compress(target, &dest_len, source, source_size);
 	switch(zerr) {
@@ -70,7 +70,7 @@ compression library.
 */
 DWORD DLL_CALLCONV 
 FreeImage_ZLibUncompress(BYTE *target, DWORD target_size, BYTE *source, DWORD source_size) {
-	DWORD dest_len = target_size;
+	uLongf dest_len = (uLongf)target_size;
 
 	int zerr = uncompress(target, &dest_len, source, source_size);
 	switch(zerr) {
@@ -101,8 +101,8 @@ which must be at least 0.1% larger than source_size plus 24 bytes.
 */
 DWORD DLL_CALLCONV 
 FreeImage_ZLibGZip(BYTE *target, DWORD target_size, BYTE *source, DWORD source_size) {
-	DWORD dest_len = target_size - 12;
-    DWORD crc = crc32(0L, NULL, 0);
+	uLongf dest_len = (uLongf)target_size - 12;
+	DWORD crc = crc32(0L, NULL, 0);
 
     // set up header (stolen from zlib/gzio.c)
     sprintf((char *)target, "%c%c%c%c%c%c%c%c", 0x1f, 0x8b,
