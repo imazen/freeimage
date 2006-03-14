@@ -528,19 +528,44 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 				value_count = td->td_samplesperpixel;
 			else
 				value_count = fip->field_readcount;
-			if (fip->field_type == TIFF_ASCII
-			    || fip->field_readcount == TIFF_VARIABLE
-			    || fip->field_readcount == TIFF_VARIABLE2
-			    || fip->field_readcount == TIFF_SPP
-			    || value_count > 1) {
+			if ((fip->field_type == TIFF_ASCII
+			     || fip->field_readcount == TIFF_VARIABLE
+			     || fip->field_readcount == TIFF_VARIABLE2
+			     || fip->field_readcount == TIFF_SPP
+			     || value_count > 1)
+			    && fip->field_tag != TIFFTAG_PAGENUMBER
+			    && fip->field_tag != TIFFTAG_HALFTONEHINTS
+			    && fip->field_tag != TIFFTAG_YCBCRSUBSAMPLING
+			    && fip->field_tag != TIFFTAG_DOTRANGE) {
 				if(TIFFGetField(tif, tag, &raw_data) != 1)
 					continue;
-			} else {
+			} else if (fip->field_tag != TIFFTAG_PAGENUMBER
+				   && fip->field_tag != TIFFTAG_HALFTONEHINTS
+				   && fip->field_tag != TIFFTAG_YCBCRSUBSAMPLING
+				   && fip->field_tag != TIFFTAG_DOTRANGE) {
 				raw_data = _TIFFmalloc(
 					_TIFFDataSize(fip->field_type)
 					* value_count);
 				mem_alloc = 1;
 				if(TIFFGetField(tif, tag, raw_data) != 1) {
+					_TIFFfree(raw_data);
+					continue;
+				}
+			} else {
+				/* 
+				 * XXX: Should be fixed and removed, see the
+				 * notes related to TIFFTAG_PAGENUMBER,
+				 * TIFFTAG_HALFTONEHINTS,
+				 * TIFFTAG_YCBCRSUBSAMPLING and
+				 * TIFFTAG_DOTRANGE tags in tif_dir.c. */
+				char *tmp;
+				raw_data = _TIFFmalloc(
+					_TIFFDataSize(fip->field_type)
+					* value_count);
+				tmp = raw_data;
+				mem_alloc = 1;
+				if(TIFFGetField(tif, tag, tmp,
+				tmp + _TIFFDataSize(fip->field_type)) != 1) {
 					_TIFFfree(raw_data);
 					continue;
 				}
@@ -553,8 +578,11 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		 * _TIFFPrettyPrintField() fall down and print it as any other
 		 * tag.
 		 */
-		if (_TIFFPrettyPrintField(tif, fd, tag, value_count, raw_data))
+		if (_TIFFPrettyPrintField(tif, fd, tag, value_count, raw_data)) {
+			if(mem_alloc)
+				_TIFFfree(raw_data);
 			continue;
+		}
 		else
 			_TIFFPrintField(fd, fip, value_count, raw_data);
 
