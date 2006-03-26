@@ -14,7 +14,7 @@
 */
 #if (defined(BYTE_ORDER) && BYTE_ORDER==BIG_ENDIAN) || \
 	(defined(__BYTE_ORDER) && __BYTE_ORDER==__BIG_ENDIAN) || \
-	defined(__APPLE__)
+	defined(__BIG_ENDIAN__)
 /* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
 #define HOST_FILLORDER FILLORDER_MSB2LSB
 /* Native cpu byte order: 1 if big-endian (Motorola) or 0 if little-endian (Intel) */

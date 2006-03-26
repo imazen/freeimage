@@ -77,7 +77,7 @@
 // If your big endian system isn't being detected, add an OS specific check
 #if (defined(BYTE_ORDER) && BYTE_ORDER==BIG_ENDIAN) || \
 	(defined(__BYTE_ORDER) && __BYTE_ORDER==__BIG_ENDIAN) || \
-	defined(__APPLE__)
+	defined(__BIG_ENDIAN__)
 #define FREEIMAGE_BIGENDIAN
 #endif // BYTE_ORDER
 
