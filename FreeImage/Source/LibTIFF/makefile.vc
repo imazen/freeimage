@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2004, Andrey Kiselev <dron@remotesensing.org>
+# Copyright (C) 2004, Andrey Kiselev <dron@ak4719.spb.edu>
 #
 # Permission to use, copy, modify, distribute, and sell this software and 
 # its documentation for any purpose is hereby granted without fee, provided
@@ -78,20 +78,21 @@ OBJ	= \
 
 all:	libtiff.lib $(DLLNAME)
 
-tif_config.h:
+tif_config.h:	tif_config.h.vc
 	copy tif_config.h.vc tif_config.h
 
-tiffconf.h:
+tiffconf.h:	tiffconf.h.vc
 	copy tiffconf.h.vc tiffconf.h
 
 libtiff.lib:	tif_config.h tiffconf.h $(OBJ)
 	$(AR) /out:libtiff.lib $(OBJ) $(LIBS)
 
-$(DLLNAME):	tif_config.h $(OBJ)
+$(DLLNAME):	tif_config.h tiffconf.h libtiff.def $(OBJ)
 	$(LD) /debug /dll /def:libtiff.def /out:$(DLLNAME) \
 	/implib:libtiff_i.lib $(OBJ) $(LIBS)
 	
 clean:
-	-del *.obj *.lib *.dll *.exe
-
-
+	-del *.obj
+	-del *.lib
+	-del *.dll
+	-del *.exe
