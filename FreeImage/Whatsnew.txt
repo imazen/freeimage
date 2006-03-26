@@ -6,7 +6,7 @@ What's New for FreeImage
 + : added
 
 Month day, 2005 - 3.9.0
-! FreeImage now uses libTIFF 3.8.1 + patch 2006-03-16
+! FreeImage now uses libTIFF 3.8.2
 + [Herve Drolon/Petr Pytelka] added a raw FAX G3 format loader
 + [Herve Drolon] added support for most image types to FreeImage_Rescale
 + [Herve Drolon] added FreeImage_MakeThumbnail
@@ -32,6 +32,7 @@ Month day, 2005 - 3.9.0
 * [Petr Supina] fixed a pow(long,long) function not being standard ANSI C/C++
 * [Petr Supina] fixed FreeImage_FindBlock function not being standard ANSI C/C++
 * [Olaf Stoyke] added support for 64-bit Linux OS
+* [Craig Stark] fixed FreeImage support on Intel based Mac OS
 
 September 5, 2005 - 3.8.0
 ! FreeImage now uses libTIFF 3.7.3
