@@ -11,7 +11,9 @@ LIBTOOL = libtool
 INSTALLDIR = /usr/lib
 
 COMPILERFLAGS = -O3
-LIBRARIES = -lc -lgcc -lstdc++
+# change the LIBRARIES flag as needed (MacOSX G4 / Intel based Mac OSX)
+#LIBRARIES = -lc -lgcc -lstdc++
+LIBRARIES = -L/usr/lib/gcc/darwin/3.3 -lc -lgcc -lstdc++.6.0.4
 
 MODULES = $(SRCS:.c=.o)
 MODULES := $(MODULES:.cpp=.o)
