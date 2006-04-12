@@ -520,7 +520,7 @@ namespace FreeImageAPI
 		public static extern FIBITMAP LockPage(FIMULTIBITMAP bitmap, int page);
 		
 		[DllImport(dllName, EntryPoint="FreeImage_UnlockPage")]
-		public static extern void UnlockPage(FIMULTIBITMAP bitmap, int page, bool changed);
+		public static extern void UnlockPage(FIMULTIBITMAP bitmap, FIBITMAP data, bool changed);
 		
 		[DllImport(dllName, EntryPoint="FreeImage_MovePage")]
 		public static extern bool MovePage(FIMULTIBITMAP bitmap, int target, int source);
