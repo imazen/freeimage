@@ -6,7 +6,9 @@ What's New for FreeImage
 + : added
 
 Month day, 2005 - 3.9.0
+! FreeImage now uses libPNG 1.2.10
 ! FreeImage now uses libTIFF 3.8.2
+! FreeImage_Allocate/FreeImage_Allocate now set the resolution to 72 dpi instead of 0
 + [Herve Drolon/Petr Pytelka] added a raw FAX G3 format loader
 + [Herve Drolon] added support for most image types to FreeImage_Rescale
 + [Herve Drolon] added FreeImage_MakeThumbnail
@@ -16,6 +18,7 @@ Month day, 2005 - 3.9.0
 + [Herve Drolon] added FreeImage_WriteMemory
 + [Herve Drolon] added new Exif maker note tags
 + [Sherman Wilcox] added a SGI file format loader
++ [Herve Drolon] added support for separated images to PluginTIFF
 * [Carsten Klein] FreeImage_Dither and FreeImage_Threshold now work with palettized 8-bit dib
 * [Christophe Petit] fixed a bug in FreeImage_GetFIFFromFilenameU occuring with files without extension
 * [Leigh Brasington] fixed a bug in PluginGIF causing FreeImage not working on Win/98/ME
