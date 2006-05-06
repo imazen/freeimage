@@ -228,6 +228,8 @@ FreeImage_AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp, unsign
 			bih->biBitCount         = bpp;
 			bih->biClrUsed          = CalculateUsedPaletteEntries(bpp);
 			bih->biClrImportant     = bih->biClrUsed;
+			bih->biXPelsPerMeter	= 2835;	// 72 dpi
+			bih->biYPelsPerMeter	= 2835;	// 72 dpi
 
 			return bitmap;
 		}
