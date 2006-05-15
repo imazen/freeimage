@@ -36,6 +36,7 @@ Month day, 2005 - 3.9.0
 * [Petr Supina] fixed FreeImage_FindBlock function not being standard ANSI C/C++
 * [Olaf Stoyke] added support for 64-bit Linux OS
 * [Craig Stark] fixed FreeImage support on Intel based Mac OS
+* [Herve Drolon] fixed PluginTIFF failing on bad fax tiff images (bad images are now loaded 'as is')
 
 September 5, 2005 - 3.8.0
 ! FreeImage now uses libTIFF 3.7.3

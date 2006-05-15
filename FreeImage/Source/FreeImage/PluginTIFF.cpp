@@ -1511,8 +1511,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
 
 						if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, y, 0), buf, nrow * src_line) == -1) {
+							// ignore errors as they can be frequent and not really valid errors, especially with fax images
+							FreeImage_OutputMessageProc(s_format_id, "Warning: parsing error. Image may be incomplete or contain invalid data !");
+							/*
 							free(buf);
 							throw "Parsing error";
+							*/
 						} 
 						// color/greyscale picture (1-, 4-, 8-bit) or special type (int, long, double, ...)
 						// ... just copy 
@@ -1540,8 +1544,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						channel = buf;
 						for(sample = 0; sample < samplesperpixel; sample++) {
 							if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, y, sample), channel, nrow * src_line) == -1) {
+								// ignore errors as they can be frequent and not really valid errors, especially with fax images
+								FreeImage_OutputMessageProc(s_format_id, "Warning: parsing error. Image may be incomplete or contain invalid data !");
+								/*
 								free(buf);
 								throw "Parsing error";
+								*/
 							} 
 							channel += stripsize;
 						}
@@ -1562,6 +1570,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							}
 						}
 					}
+
+					free(buf);
 				}
 
 			} else {
