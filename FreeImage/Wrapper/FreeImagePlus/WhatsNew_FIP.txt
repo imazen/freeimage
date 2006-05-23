@@ -18,6 +18,8 @@ Month Day, 2005 - 3.9.0
 + [Herve Drolon] added fipMetadataFind
 * [Sandor Szalacsi] improved fipWinWimage::drawEx behavior with non transparent PNG having a file background
 * [Herve Drolon] fixed a bug in fipWinImage::setToneMappingOperator
+* [Conrado PLG] added const keyword to fip methods
+* [Conrado PLG] made the copy constructors of fipMemoryIO private
 
 September 5, 2005 - 3.8.0
 [Herve Drolon]

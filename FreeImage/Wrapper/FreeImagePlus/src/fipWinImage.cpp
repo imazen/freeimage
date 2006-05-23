@@ -66,6 +66,10 @@ void fipWinImage::clear() {
 	fipImage::clear();
 }
 
+BOOL fipWinImage::isValid() const {
+	return fipImage::isValid();
+}
+
 ///////////////////////////////////////////////////////////////////
 // Copying
 
@@ -100,7 +104,7 @@ fipWinImage& fipWinImage::operator=(const fipWinImage& Image) {
 	return *this;
 }
 
-HANDLE fipWinImage::copyToHandle() {
+HANDLE fipWinImage::copyToHandle() const {
 	HANDLE hMem = NULL;
 
 	if(_dib) {
@@ -248,7 +252,7 @@ BOOL fipWinImage::copyFromBitmap(HBITMAP hbmp) {
 	return FALSE;
 }
 
-BOOL fipWinImage::copyToClipboard(HWND hWndNewOwner) {
+BOOL fipWinImage::copyToClipboard(HWND hWndNewOwner) const {
 	HANDLE hDIB = copyToHandle();
 
 	if(OpenClipboard(hWndNewOwner)) {
@@ -357,7 +361,7 @@ BOOL fipWinImage::captureWindow(HWND hWndApplicationWindow, HWND hWndSelectedWin
 ///////////////////////////////////////////////////////////////////
 // Painting operations
 
-void fipWinImage::drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP *bg) {
+void fipWinImage::drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP *bg) const {
 	// Convert to a standard bitmap if needed
 	if(_bHasChanged) {
 		if(_bDeleteMe) {
@@ -433,7 +437,7 @@ void fipWinImage::setToneMappingOperator(FREE_IMAGE_TMO tmo, double first_param,
 	}
 }
 
-void fipWinImage::getToneMappingOperator(FREE_IMAGE_TMO *tmo, double *first_param, double *second_param) {
+void fipWinImage::getToneMappingOperator(FREE_IMAGE_TMO *tmo, double *first_param, double *second_param) const {
 	*tmo = _tmo;
 	*first_param = _tmo_param_1;
 	*second_param = _tmo_param_2;

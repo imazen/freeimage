@@ -47,35 +47,35 @@ fipTag& fipTag::operator=(FITAG *tag) {
 	return *this;
 }
 
-BOOL fipTag::isValid() {
+BOOL fipTag::isValid() const {
 	return (_tag != NULL) ? TRUE : FALSE;
 }
 
-const char* fipTag::getKey() {
+const char* fipTag::getKey() const {
 	return FreeImage_GetTagKey(_tag);
 }
 
-const char* fipTag::getDescription() {
+const char* fipTag::getDescription() const {
 	return FreeImage_GetTagDescription(_tag);
 }
 
-WORD fipTag::getID() {
+WORD fipTag::getID() const {
 	return FreeImage_GetTagID(_tag);
 }
 
-FREE_IMAGE_MDTYPE fipTag::getType() {
+FREE_IMAGE_MDTYPE fipTag::getType() const {
 	return FreeImage_GetTagType(_tag);
 }
 
-DWORD fipTag::getCount() {
+DWORD fipTag::getCount() const {
 	return FreeImage_GetTagCount(_tag);
 }
 
-DWORD fipTag::getLength() {
+DWORD fipTag::getLength() const {
 	return FreeImage_GetTagLength(_tag);
 }
 
-const void* fipTag::getValue() {
+const void* fipTag::getValue() const {
 	return FreeImage_GetTagValue(_tag);
 }
 
@@ -107,6 +107,6 @@ BOOL fipTag::setValue(const void *value) {
 	return FreeImage_SetTagValue(_tag, value);
 }
 
-const char* fipTag::toString(FREE_IMAGE_MDMODEL model, char *Make) {
+const char* fipTag::toString(FREE_IMAGE_MDMODEL model, char *Make) const {
 	return FreeImage_TagToString(model, _tag, Make);
 }

@@ -31,7 +31,7 @@ fipMultiPage::~fipMultiPage() {
 	}
 }
 
-BOOL fipMultiPage::isValid() {
+BOOL fipMultiPage::isValid() const {
 	return (NULL != _mpage) ? TRUE : FALSE;
 }
 
@@ -60,7 +60,7 @@ BOOL fipMultiPage::close(int flags) {
 	return bSuccess;
 }
 
-int fipMultiPage::getPageCount() {
+int fipMultiPage::getPageCount() const {
 	return _mpage ? FreeImage_GetPageCount(_mpage) : 0;
 }
 
@@ -97,7 +97,7 @@ void fipMultiPage::unlockPage(fipImage& image, BOOL changed) {
 	}
 }
 
-BOOL fipMultiPage::getLockedPageNumbers(int *pages, int *count) {
+BOOL fipMultiPage::getLockedPageNumbers(int *pages, int *count) const {
 	return _mpage ? FreeImage_GetLockedPageNumbers(_mpage, pages, count) : FALSE;
 }
 
