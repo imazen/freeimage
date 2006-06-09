@@ -180,6 +180,7 @@ FreeImage_MakeThumbnail(FIBITMAP *dib, int max_pixel_size, BOOL convert) {
 		case FIT_DOUBLE:
 		case FIT_COMPLEX:
 		default:
+			// cannot rescale this kind of image
 			thumbnail = NULL;
 			break;
 	}
@@ -190,8 +191,6 @@ FreeImage_MakeThumbnail(FIBITMAP *dib, int max_pixel_size, BOOL convert) {
 		switch(image_type) {
 			case FIT_UINT16:
 				bitmap = FreeImage_ConvertTo8Bits(thumbnail);
-				FreeImage_Unload(thumbnail);
-				thumbnail = bitmap;
 				break;
 			case FIT_RGB16:
 				bitmap = FreeImage_ConvertTo24Bits(thumbnail);
