@@ -7,6 +7,7 @@
 ' Error handling functions
 '--------------------------------------------------------------------------------
 FreeImage_InitErrorHandler()
+FreeImage_IsAvailable()
 
 
 '--------------------------------------------------------------------------------
@@ -92,38 +93,30 @@ FreeImage_GetScanLineRGBF()
 FreeImage_GetScanLineRGBAF()
 
 
+
+'--------------------------------------------------------------------------------
+' Color, palette and transparency functions
+'--------------------------------------------------------------------------------
+FreeImage_CompareColorsLongLong()
+FreeImage_CompareColorsRGBTRIPLELong()
+FreeImage_CompareColorsRGBQUADLong()
+FreeImage_SearchPalette()
+FreeImage_SwapColorLong()
+FreeImage_IsTransparencyTableTransparent()
+
+
 '--------------------------------------------------------------------------------
 ' OlePicture conversion functions
 '--------------------------------------------------------------------------------
 FreeImage_GetOlePicture()
 FreeImage_CreateFromOlePicture()
+FreeImage_CreateFromDC()
+FreeImage_CreateFromImageContainer()
 FreeImage_AdjustPictureBox()
 AdjustPicture()
 LoadPictureEx()
 SavePictureEx()
-
-
-'--------------------------------------------------------------------------------
-' OlePicture aware toolkit, rescale and conversion functions
-'--------------------------------------------------------------------------------
-FreeImage_RescaleIOP()
-FreeImage_RescaleByPixelIOP()
-FreeImage_RescaleByPercentIOP()
-FreeImage_RescaleByFactorIOP()
-FreeImage_ConvertColorDepthIOP()
-FreeImage_RotateClassicIOP()
-FreeImage_RotateExIOP()
-FreeImage_FlipHorizontalIOP()
-FreeImage_FlipVerticalIOP()
-FreeImage_AdjustCurveIOP()
-FreeImage_AdjustGammaIOP()
-FreeImage_AdjustBrightnessIOP()
-FreeImage_AdjustContrastIOP()
-FreeImage_InvertIOP()
-FreeImage_GetChannelIOP()
-FreeImage_CopyIOP()
-FreeImage_PasteIOP()
-FreeImage_CompositeIOP()
+SaveImageContainerEx()
 
 
 '--------------------------------------------------------------------------------

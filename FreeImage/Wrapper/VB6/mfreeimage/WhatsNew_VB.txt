@@ -5,6 +5,62 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+June 12, 2006 - 1.5
+* [Carsten Klein] fixed bug in wrapper function FreeImage_PaintDCEx(): now handles boolean test correctly: 'If ((hDC <> 0) And (hDIB <> 0)) Then -> Thanks to ender_wiggin for reporting that bug.
++ [Carsten Klein] added private function pGetIOlePictureFromContainer(): used to get IPicture from image hosting control (Form, PictureBox) including custom drawings
++ [Carsten Klein] added wrapper function FreeImage_CreateFromImageContainer(): used to create FreeImage DIB from image hosting control (Form, PictureBox) including custom drawings
++ [Carsten Klein] added wrapper function SaveImageContainerEx(): derivate of wrapper function 'SavePictureEx()': saves content of image hosting control (Form, PictureBox) including custom drawings
+
+February 27, 2006 - 1.4.8
++ [Carsten Klein] added inline documentation for these wrapper functions:
++                 documented function FreeImage_CompareColorsLongLong()
++                 documented function FreeImage_CompareColorsRGBTRIPLELong()
++                 documented function FreeImage_CompareColorsRGBQUADLong()
++                 documented function FreeImage_SearchPalette()
+! [Carsten Klein] changed and updated general remarks in section "General notes on implementation and design"
+! [Carsten Klein] changed all function declarations of FreeImage functions that return a BOOL in C/C++: see "Functions returning Booleans" in section "General notes on implementation and design"
+! [Carsten Klein] changed all function signatures of functions that are derived from or extend FreeImage BOOL functions: see "Functions returning Booleans" in section "General notes on implementation and design"
++ [Carsten Klein] added wrapper functions for all FreeImage functions that return a BOOL in C/C++: see "Functions returning Booleans" in section "General notes on implementation and design"
++ [Carsten Klein] added wrapper function FreeImage_CreateFromDC(): creates an DIB from a DC. Thanks to Evan (wxforecaster) for this suggestion.
++ [Carsten Klein] added declaration of GID function GetCurrentObject() and constant OBJ_BITMAP
++ [Carsten Klein] added wrapper function FreeImage_IsAvailable(): used to test for existence of FreeImage Library (FreeImage.dll)
+
+February 9, 2006 - 1.4.7
++ [Carsten Klein] added private helper function pGetPreviousColorDepth()
++ [Carsten Klein] added private helper function pGetNextColorDepth()
+! [Carsten Klein] changed/extended signature of wrapper function SavePictureEx(): now includes a parameter 'ColorDepth'
++ [Carsten Klein] added enumeration FREE_IMAGE_COLOR_DEPTH
++ [Carsten Klein] added error handling capabilities to wrapper function SavePictureEx()
++ [Carsten Klein] added/updated inline documentation of wrapper function SavePictureEx()
+
+October 31, 2005 - 1.4.6
++ [Carsten Klein] added wrapper function FreeImage_SwapColorLong(): this converts from a RGB to a BGR color value stored in a Long and vice versa
+
+October 27, 2005 - 1.4.5
++ [Carsten Klein] added function FreeImage_IsTransparencyTableTransparent(): checks for transparency directly on the transparency table
+
+October 13, 2005 - 1.4.4
++ [Carsten Klein] added some functions to compare colors in different formats and with tolerance:
++                 added function FreeImage_CompareColorsLongLong()
++                 added function FreeImage_CompareColorsRGBTRIPLELong()
++                 added function FreeImage_CompareColorsRGBQUADLong()
++ [Carsten Klein] added enumeration FREE_IMAGE_COLOR_FORMAT_FLAGS
++ [Carsten Klein] added enumeration FREE_IMAGE_TRANSPARENCY_STATE_FLAGS
++ [Carsten Klein] added function FreeImage_SearchPalette(): to search the palette index for a given color
+
+October 13, 2005 - 1.4.3
++ [Carsten Klein] added additional function declaration FreeImage_SetPixelColorByLong(): now color values may be provided in a long value
++ [Carsten Klein] added additional function declaration FreeImage_GetPixelColorByLong(): now color values may be received in a long value
+
+October 11, 2005 - 1.4.2
+* [Carsten Klein] fixed bug in wrapper function FreeImage_GetBitsExRGBQUAD(): now tests and works for 32 bit images
+
+October 10, 2005 - 1.4.1
+* [Carsten Klein] fixed serious bug in FreeImage_GetBitsEx...() functions: created custom array descriptor now really has two dimensions
+*                 fixed wrapper function FreeImage_GetBitsEx()
+*                 fixed wrapper function FreeImage_GetBitsExRGBTRIPLE()
+*                 fixed wrapper function FreeImage_GetBitsExRGBQUAD()
+
 September 9, 2005 - 1.4
 ! [Carsten Klein] changed wrapper function FreeImage_ConvertColorDepth(): now uses FreeImage_ConvertToGreyscale
 + [Carsten Klein] added version numbers to change log
