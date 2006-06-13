@@ -611,6 +611,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define JPEG_QUALITYAVERAGE 0x400
 #define JPEG_QUALITYBAD     0x800
 #define JPEG_CMYK			0x1000	// load separated CMYK "as is" (use | to combine with other flags)
+#define JPEG_PROGRESSIVE	0x2000	// save as a progressive-JPEG (use | to combine with other flags)
 #define KOALA_DEFAULT       0
 #define LBM_DEFAULT         0
 #define MNG_DEFAULT         0

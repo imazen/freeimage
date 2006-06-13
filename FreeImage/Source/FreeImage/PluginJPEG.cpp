@@ -1049,6 +1049,11 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			jpeg_set_defaults(&cinfo);
 
+		    // progressive-JPEG support
+			if((flags & JPEG_PROGRESSIVE) == JPEG_PROGRESSIVE) {
+				jpeg_simple_progression(&cinfo);
+			}
+
 			// Set JFIF density parameters from the DIB data
 
 			BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
