@@ -19,6 +19,7 @@ Month day, 2005 - 3.9.0
 + [Herve Drolon] added new Exif maker note tags
 + [Sherman Wilcox] added a SGI file format loader
 + [Herve Drolon] added support for separated images to PluginTIFF
++ [Herve Drolon] added support for progressive-JPEG saving to PluginJPEG
 * [Carsten Klein] FreeImage_Dither and FreeImage_Threshold now work with palettized 8-bit dib
 * [Christophe Petit] fixed a bug in FreeImage_GetFIFFromFilenameU occuring with files without extension
 * [Leigh Brasington] fixed a bug in PluginGIF causing FreeImage not working on Win/98/ME
@@ -37,6 +38,7 @@ Month day, 2005 - 3.9.0
 * [Olaf Stoyke] added support for 64-bit Linux OS
 * [Craig Stark] fixed FreeImage support on Intel based Mac OS
 * [Herve Drolon] fixed PluginTIFF failing on bad fax tiff images (bad images are now loaded 'as is')
+* [Zack Simpson] fixed a bug occuring in rare situations with FreeImage_Aligned_Malloc
 
 September 5, 2005 - 3.8.0
 ! FreeImage now uses libTIFF 3.7.3
