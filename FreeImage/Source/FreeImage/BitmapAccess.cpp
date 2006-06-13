@@ -79,9 +79,25 @@ FI_STRUCT (FREEIMAGEHEADER) {
 // ----------------------------------------------------------
 
 void* FreeImage_Aligned_Malloc(size_t amount, size_t alignment) {
-	void* mem_real = malloc(amount + alignment);
+	/*
+	In some rare situations, the malloc routines can return misaligned memory. 
+	The routine FreeImage_Aligned_Malloc allocates a bit more memory to do
+	aligned writes.  Normally, it *should* allocate "alignment" extra memory and then writes
+	one dword back the true pointer.  But if the memory manager returns a
+	misaligned block that is less than a dword from the next alignment, 
+	then the writing back one dword will corrupt memory.
+
+	For example, suppose that alignment is 16 and malloc returns the address 0xFFFF.
+
+	16 - 0xFFFF % 16 + 0xFFFF = 16 - 15 + 0xFFFF = 0x10000.
+
+	Now, you subtract one dword from that and write and that will corrupt memory.
+
+	That's why the code below allocates *two* alignments instead of one. 
+	*/
+	void* mem_real = malloc(amount + 2 * alignment);
 	if(!mem_real) return NULL;
-	char* mem_align = (char*)((unsigned long)(alignment - (unsigned long)mem_real % (unsigned long)alignment) + (unsigned long)mem_real);
+	char* mem_align = (char*)((unsigned long)(2 * alignment - (unsigned long)mem_real % (unsigned long)alignment) + (unsigned long)mem_real);
 	*((long*)mem_align - 1) = (long)mem_real;
 	return mem_align;
 }
