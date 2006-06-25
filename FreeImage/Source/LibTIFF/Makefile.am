@@ -26,7 +26,12 @@
 LIBPORT = $(top_builddir)/port/libport.la
 LIBTIFF = $(top_builddir)/libtiff/libtiff.la
 
-EXTRA_DIST = Makefile.vc SConstruct tif_config.h.vc tiffconf.h.vc libtiff.def \
+EXTRA_DIST = Makefile.vc \
+	     SConstruct \
+	     tif_config.h-vms \
+	     tif_config.h.vc \
+	     tiffconf.h.vc \
+	     libtiff.def \
 	     $(EXTRA_SRCS)
 
 HDRS = \
@@ -63,6 +68,7 @@ SRCS = \
 	tif_fax3sm.c \
 	tif_flush.c \
 	tif_getimage.c \
+	tif_jbig.c \
 	tif_jpeg.c \
 	tif_luv.c \
 	tif_lzw.c \

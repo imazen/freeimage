@@ -449,6 +449,8 @@ exifFieldInfo[] = {
       1,	0,	"SubSecTimeDigitized" },
     { EXIFTAG_FLASHPIXVERSION,	4, 4,		TIFF_UNDEFINED,	FIELD_CUSTOM,
       1,	0,	"FlashpixVersion" },
+    { EXIFTAG_COLORSPACE,	1, 1,		TIFF_SHORT,	FIELD_CUSTOM,
+      1,	0,	"ColorSpace" },
     { EXIFTAG_PIXELXDIMENSION,	1, 1,		TIFF_LONG,	FIELD_CUSTOM,
       1,	0,	"PixelXDimension" },
     { EXIFTAG_PIXELXDIMENSION,	1, 1,		TIFF_SHORT,	FIELD_CUSTOM,
@@ -823,8 +825,8 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
 	_TIFFmemset( fld, 0, sizeof(TIFFFieldInfo) );
 
 	fld->field_tag = tag;
-	fld->field_readcount = TIFF_VARIABLE;
-	fld->field_writecount = TIFF_VARIABLE;
+	fld->field_readcount = TIFF_VARIABLE2;
+	fld->field_writecount = TIFF_VARIABLE2;
 	fld->field_type = field_type;
 	fld->field_bit = FIELD_CUSTOM;
 	fld->field_oktochange = TRUE;
@@ -835,7 +837,8 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
 	    return NULL;
 	}
 
-	/* note that this name is a special sign to TIFFClose() and
+	/* 
+	 * note that this name is a special sign to TIFFClose() and
 	 * _TIFFSetupFieldInfo() to free the field
 	 */
 	sprintf(fld->field_name, "Tag %d", (int) tag);

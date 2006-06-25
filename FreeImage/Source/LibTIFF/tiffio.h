@@ -58,14 +58,15 @@ typedef	struct tiff TIFF;
  *     32-bit file offsets being the most important, and to ensure
  *     that it is unsigned, rather than signed.
  */
-typedef	uint32 ttag_t;		/* directory tag */
-typedef	uint16 tdir_t;		/* directory index */
-typedef	uint16 tsample_t;	/* sample number */
-typedef	uint32 tstrip_t;	/* strip number */
-typedef uint32 ttile_t;		/* tile number */
-typedef	int32 tsize_t;		/* i/o size in bytes */
-typedef	void* tdata_t;		/* image data ref */
-typedef	uint32 toff_t;		/* file offset */
+typedef uint32 ttag_t;          /* directory tag */
+typedef uint16 tdir_t;          /* directory index */
+typedef uint16 tsample_t;       /* sample number */
+typedef uint32 tstrile_t;       /* strip or tile number */
+typedef tstrile_t tstrip_t;     /* strip number */
+typedef tstrile_t ttile_t;      /* tile number */
+typedef int32 tsize_t;          /* i/o size in bytes */
+typedef void* tdata_t;          /* image data ref */
+typedef uint32 toff_t;          /* file offset */
 
 #if !defined(__WIN32__) && (defined(_WIN32) || defined(WIN32))
 #define __WIN32__
@@ -216,7 +217,10 @@ struct _TIFFRGBAImage {
 	uint32** BWmap;				/* black&white map */
 	uint32** PALmap;			/* palette image map */
 	TIFFYCbCrToRGB* ycbcr;			/* YCbCr conversion state */
-        TIFFCIELabToRGB* cielab;		/* CIE L*a*b conversion state */
+	TIFFCIELabToRGB* cielab;		/* CIE L*a*b conversion state */
+
+	uint8* UaToAa;                          /* Unassociated alpha to associated alpha convertion LUT */
+	uint8* Bitdepth16To8;                   /* LUT for conversion from 16bit to 8bit values */
 
         int	row_offset;
         int     col_offset;
@@ -349,6 +353,8 @@ extern	int TIFFReadCustomDirectory(TIFF*, toff_t, const TIFFFieldInfo[],
 				    size_t);
 extern	int TIFFReadEXIFDirectory(TIFF*, toff_t);
 extern	tsize_t TIFFScanlineSize(TIFF*);
+extern	tsize_t TIFFOldScanlineSize(TIFF*);
+extern	tsize_t TIFFNewScanlineSize(TIFF*);
 extern	tsize_t TIFFRasterScanlineSize(TIFF*);
 extern	tsize_t TIFFStripSize(TIFF*);
 extern	tsize_t TIFFRawStripSize(TIFF*, tstrip_t);
