@@ -517,8 +517,8 @@ function FreeImage_LookupSVGColor(const szColor: PChar; var nRed, nGreen, nBlue:
 function FreeImage_GetBits(dib: PFIBITMAP): PByte; stdcall; external FIDLL name '_FreeImage_GetBits@4';
 function FreeImage_GetScanLine(dib: PFIBITMAP; scanline: Integer): PByte; stdcall; external FIDLL name '_FreeImage_GetScanLine@8';
 
-function FreeImage_GetPixelIndex(dib: PFIBITMAP; X, Y: Longint; var Value: PByte): Boolean; stdcall; external FIDLL name '_FreeImage_GetPixelIndex@16';
-function FreeImage_GetPixelColor(dib: PFIBITMAP; X, Y: Longint; var Value: PRGBQuad): Boolean; stdcall; external FIDLL name '_FreeImage_GetPixelColor@16';
+function FreeImage_GetPixelIndex(dib: PFIBITMAP; X, Y: Longint; Value: PByte): Boolean; stdcall; external FIDLL name '_FreeImage_GetPixelIndex@16';
+function FreeImage_GetPixelColor(dib: PFIBITMAP; X, Y: Longint; Value: PRGBQuad): Boolean; stdcall; external FIDLL name '_FreeImage_GetPixelColor@16';
 function FreeImage_SetPixelIndex(dib: PFIBITMAP; X, Y: Longint; Value: PByte): Boolean; stdcall; external FIDLL name '_FreeImage_SetPixelIndex@16';
 function FreeImage_SetPixelColor(dib: PFIBITMAP; X, Y: Longint; Value: PRGBQuad): Boolean; stdcall; external FIDLL name '_FreeImage_SetPixelColor@16';
 
