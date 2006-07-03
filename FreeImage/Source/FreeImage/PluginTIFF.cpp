@@ -1505,6 +1505,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// read the tiff lines and save them in the DIB
 
 				if(planar_config == PLANARCONFIG_CONTIG) {
+					BOOL bThrowMessage = FALSE;
 					BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
 
 					for (uint32 y = 0; y < height; y += rowsperstrip) {
@@ -1512,7 +1513,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, y, 0), buf, nrow * src_line) == -1) {
 							// ignore errors as they can be frequent and not really valid errors, especially with fax images
-							FreeImage_OutputMessageProc(s_format_id, "Warning: parsing error. Image may be incomplete or contain invalid data !");
+							bThrowMessage = TRUE;							
 							/*
 							free(buf);
 							throw "Parsing error";
@@ -1527,8 +1528,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 
 					free(buf);
+
+					if(bThrowMessage) {
+						FreeImage_OutputMessageProc(s_format_id, "Warning: parsing error. Image may be incomplete or contain invalid data !");
+					}
 				}
 				else if(planar_config == PLANARCONFIG_SEPARATE) {
+					BOOL bThrowMessage = FALSE;
 					uint16 sample;
 					BYTE *channel;
 					tsize_t stripsize = TIFFStripSize(tif) * sizeof(BYTE);
@@ -1545,7 +1551,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						for(sample = 0; sample < samplesperpixel; sample++) {
 							if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, y, sample), channel, nrow * src_line) == -1) {
 								// ignore errors as they can be frequent and not really valid errors, especially with fax images
-								FreeImage_OutputMessageProc(s_format_id, "Warning: parsing error. Image may be incomplete or contain invalid data !");
+								bThrowMessage = TRUE;								
 								/*
 								free(buf);
 								throw "Parsing error";
@@ -1572,6 +1578,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 
 					free(buf);
+
+					if(bThrowMessage) {
+						FreeImage_OutputMessageProc(s_format_id, "Warning: parsing error. Image may be incomplete or contain invalid data !");
+					}
 				}
 
 			} else {
