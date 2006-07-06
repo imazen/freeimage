@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 	// test multipage creation
 	testBuildMPage("sample.png", "sample.ico", FIF_ICO, 24);
 	testBuildMPage("sample.png", "sample.tif", FIF_TIFF, 24);
-	testBuildMPage("sample.png", "sample.gif", FIF_GIF, 8);
+	//testBuildMPage("sample.png", "sample.gif", FIF_GIF, 8);
 
 	// test memory IO
 	testMemIO("sample.png");
