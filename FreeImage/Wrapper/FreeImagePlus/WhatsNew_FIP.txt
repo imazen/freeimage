@@ -5,7 +5,7 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
-Month Day, 2005 - 3.9.0
+July 6th, 2006 - 3.9.0
 ! [Herve Drolon] renamed fipMemoryIO::read to fipMemoryIO::load
 ! [Herve Drolon] renamed fipMemoryIO::write to fipMemoryIO::save
 + [Herve Drolon] added fipMemoryIO::read (wrapper for FreeImage_ReadMemory)
