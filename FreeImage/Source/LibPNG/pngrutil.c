@@ -1,7 +1,7 @@
 
 /* pngrutil.c - utilities to read a PNG file
  *
- * Last changed in libpng 1.2.9 April 14, 2006
+ * Last changed in libpng 1.2.11 June 4, 2006
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2006 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
@@ -276,7 +276,7 @@ png_decompress_chunk(png_structp png_ptr, int comp_type,
       if (ret != Z_STREAM_END)
       {
 #if !defined(PNG_NO_STDIO) && !defined(_WIN32_WCE)
-         char umsg[50];
+         char umsg[52];
 
          if (ret == Z_BUF_ERROR)
             sprintf(umsg,"Buffer error in compressed datastream in %s chunk",
@@ -829,7 +829,7 @@ png_handle_cHRM(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
 #endif
 
 #if defined(PNG_READ_sRGB_SUPPORTED)
-   if (info_ptr != NULL && (info_ptr->valid & PNG_INFO_sRGB))
+   if ((info_ptr != NULL) && (info_ptr->valid & PNG_INFO_sRGB))
       {
       if (PNG_OUT_OF_RANGE(int_x_white, 31270,  1000) ||
           PNG_OUT_OF_RANGE(int_y_white, 32900,  1000) ||
@@ -840,7 +840,6 @@ png_handle_cHRM(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
           PNG_OUT_OF_RANGE(int_x_blue,  15000,  1000) ||
           PNG_OUT_OF_RANGE(int_y_blue,   6000,  1000))
          {
-
             png_warning(png_ptr,
               "Ignoring incorrect cHRM value when sRGB is also present");
 #ifndef PNG_NO_CONSOLE_IO
