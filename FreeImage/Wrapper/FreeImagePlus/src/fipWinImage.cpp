@@ -228,6 +228,11 @@ BOOL fipWinImage::copyFromBitmap(HBITMAP hbmp) {
         GetObject(hbmp, sizeof(BITMAP), (LPSTR) &bm);
 		// Create the image
         setSize(FIT_BITMAP, (WORD)bm.bmWidth, (WORD)bm.bmHeight, (WORD)bm.bmBitsPixel);
+
+		// The GetDIBits function clears the biClrUsed and biClrImportant BITMAPINFO members (dont't know why) 
+		// So we save these infos below. This is needed for palettized images only. 
+		int nColors = FreeImage_GetColorsUsed(_dib);
+
 		// Create a device context for the bitmap
         HDC dc = GetDC(NULL);
 		// Copy the pixels
@@ -245,6 +250,11 @@ BOOL fipWinImage::copyFromBitmap(HBITMAP hbmp) {
 			return FALSE;
         }
         ReleaseDC(NULL, dc);
+
+		// restore BITMAPINFO members
+		
+		FreeImage_GetInfoHeader(_dib)->biClrUsed = nColors;
+		FreeImage_GetInfoHeader(_dib)->biClrImportant = nColors;
 
 		return TRUE;
     }
