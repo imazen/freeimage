@@ -326,7 +326,7 @@ bool StringTable::Decompress(BYTE *buf, int *len)
 			m_partial >>= m_codeSize;
 			m_partialSize -= m_codeSize;
 
-			if( code > m_nextCode || code == m_endCode ) {
+			if( code > m_nextCode || (m_nextCode == MAX_LZW_CODE && code != m_clearCode) || code == m_endCode ) {
 				m_done = true;
 				*len = bufpos - buf;
 				return true;

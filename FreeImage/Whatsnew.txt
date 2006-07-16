@@ -5,7 +5,10 @@ What's New for FreeImage
 ! : changed
 + : added
 
-July 6th, 2005 - 3.9.0
+July 16th, 2006 - 3.9.1
+* [Ryan Rubley] fixed a bug in PluginGIF plugin causing FreeImage to crash on malformed GIF files
+
+July 6th, 2006 - 3.9.0
 ! FreeImage now uses libPNG 1.2.12
 ! FreeImage now uses libTIFF 3.8.2 (with patch 2006-06-24)
 ! FreeImage_Allocate/FreeImage_Allocate now set the resolution to 72 dpi instead of 0
