@@ -810,9 +810,9 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 			tagmap = new TAGMAP();
 			(*metadata)[model] = tagmap;
 		}
-
-		// first check the tag
+		
 		if(tag) {
+			// first check the tag
 			if(FreeImage_GetTagKey(tag) == NULL) {
 				FreeImage_SetTagKey(tag, key);
 			} else if(strcmp(key, FreeImage_GetTagKey(tag)) != 0) {
@@ -823,16 +823,22 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 				// invalid data count ?
 				return FALSE;
 			}
-		}
+			// delete existing tag
+			FITAG *old_tag = (*tagmap)[key];
+			if(old_tag) {
+				FreeImage_DeleteTag(old_tag);
+			}
 
-		// delete existing tag
-		FITAG *old_tag = (*tagmap)[key];
-		if(old_tag) {
-			FreeImage_DeleteTag(old_tag);
+			// create a new tag
+			(*tagmap)[key] = FreeImage_CloneTag(tag);
 		}
-
-		// create a new tag
-		(*tagmap)[key] = FreeImage_CloneTag(tag);
+		else {
+			// delete existing tag
+			TAGMAP::iterator i = tagmap->find(key);
+			if(i != tagmap->end()) {
+				tagmap->erase(key);
+			}
+		}
 	}
 	else {
 		// destroy the metadata model
