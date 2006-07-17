@@ -150,6 +150,8 @@ const
   FIF_DDS     = FREE_IMAGE_FORMAT(24);
   FIF_GIF     = FREE_IMAGE_FORMAT(25);
   FIF_HDR     = FREE_IMAGE_FORMAT(26);
+  FIF_FAXG3   = FREE_IMAGE_FORMAT(27);
+  FIF_SGI     = FREE_IMAGE_FORMAT(28);  
 
   // Image type used in FreeImage.
   FIT_UNKNOWN = FREE_IMAGE_TYPE(0);  // unknown type
@@ -351,6 +353,7 @@ const
   BMP_SAVE_RLE        = 1;
   CUT_DEFAULT         = 0;
   DDS_DEFAULT         = 0;
+  FAXG3_DEFAULT       = 0;
   GIF_DEFAULT         = 0;
   ICO_DEFAULT         = 0;
   ICO_MAKEALPHA       = 0;     // convert to 32bpp and create an alpha channel from the AND-mask when loading
@@ -379,6 +382,7 @@ const
   PNM_SAVE_ASCII      = 1;     // If set the writer saves in ASCII format (i.e. P1, P2 or P3)
   PSD_DEFAULT         = 0;
   RAS_DEFAULT         = 0;
+  SGI_DEFAULT         = 0;
   TARGA_DEFAULT       = 0;
   TARGA_LOAD_RGB888   = 1;     // If set the loader converts RGB555 and ARGB8888 -> RGB888.
   TIFF_DEFAULT        = 0;
@@ -706,6 +710,7 @@ function FreeImage_JPEGTransform(const src_file: PChar; const dst_file: PChar; o
 
 // upsampling / downsampling
 function FreeImage_Rescale(dib: PFIBITMAP; dst_width, dst_height: Integer; filter: FREE_IMAGE_FILTER): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_Rescale@16';
+function FreeImage_MakeThumbnail(dib: PFIBITMAP; max_pixel_size: Integer; convert:boolean = TRUE): PFIBITMAP; stdcall; external FIDLL name '_FreeImage_MakeThumbnail@12'; 
 
 // color manipulation routines (point operations)
 function FreeImage_AdjustCurve(dib: PFIBITMAP; LUT: PBYTE; channel: FREE_IMAGE_COLOR_CHANNEL): Boolean; stdcall; external FIDLL name '_FreeImage_AdjustCurve@12';
