@@ -1,6 +1,16 @@
 '--------------------------------------------------------------------------------
 ' FreeImage 3 VB6/VBA wrapper 
-' List of public functions available
+' List of public wrapper functions available
+' 
+' These functions implement a behaviour, that is, in general, more suitable for
+' Visual Basic with it's OLE/COM derived data types like BSTRs, SAFEARRAYs
+' or IOlePicture objects than their C/C++ counterpart. All these so called
+' wrapper functions are often very easy to use for a Visual Basic programmer.
+' 
+' Of course, there are much more public functions and procedures available
+' through the wrapper; functions that are already very compatible to Visual
+' Basic and fit well into the wrapper as a whole. These are implemented by 
+' declaring them externally in an appropriate way.
 '--------------------------------------------------------------------------------
 
 '--------------------------------------------------------------------------------
@@ -20,6 +30,7 @@ FreeImage_GetFIFExtensionList()
 FreeImage_GetFIFDescription()
 FreeImage_GetFIFRegExpr()
 FreeImage_GetFIFMimeType()
+FreeImage_TagToString()
 
 
 '--------------------------------------------------------------------------------
@@ -45,12 +56,43 @@ FreeImage_LoadFromMemoryEx()
 FreeImage_SaveToMemoryEx()
 FreeImage_SaveToMemoryEx2()
 FreeImage_AcquireMemoryEx()
+FreeImage_AdjustCurveEx()
+
+
+'--------------------------------------------------------------------------------
+' Memory I/O functions
+'--------------------------------------------------------------------------------
+FreeImage_ReadMemoryEx()
+FreeImage_WriteMemoryEx()
 
 
 '--------------------------------------------------------------------------------
 ' Tag accessing VB friendly helper functions
 '--------------------------------------------------------------------------------
+FreeImage_CreateTagEx()
+FreeImage_AppendTag()
+FreeImage_RemoveTag()
+FreeImage_RemoveTagEx()
+FreeImage_TagExists()
+FreeImage_TagExistsEx()
+FreeImage_DeleteTagEx()
+FreeImage_CloneTagEx()
+FreeImage_RemoveMetadataModel()
+FreeImage_FindFirstMetadataEx()
+FreeImage_FindNextMetadataEx()
+FreeImage_GetAllMetadataTags()
+FreeImage_GetMetadataEx()
+FreeImage_SetMetadataEx()
+FreeImage_GetImageComment()
+FreeImage_SetImageComment()
+FreeImage_CopyMetadata()
+FreeImage_CloneMetadata()
 FreeImage_TagFromPointer()
+FreeImage_UpdateMetadata()
+FreeImage_UnsignedLong()
+FreeImage_UnsignedShort()
+FreeImage_CreateRational()
+FreeImage_CreateSignedRational()
 
 
 '--------------------------------------------------------------------------------
@@ -77,6 +119,8 @@ FreeImage_PaintDCEx()
 ' Pixel access functions
 '--------------------------------------------------------------------------------
 FreeImage_GetBitsEx()
+FreeImage_GetBitsExRGBQUAD()
+FreeImage_GetBitsExRGBTRIPLE()
 FreeImage_GetScanLineEx()
 FreeImage_GetScanLineBITMAP8()
 FreeImage_GetScanLineBITMAP16()
@@ -91,7 +135,23 @@ FreeImage_GetScanLineRGB16()
 FreeImage_GetScanLineRGBA16()
 FreeImage_GetScanLineRGBF()
 FreeImage_GetScanLineRGBAF()
+FreeImage_GetScanLinesRGBTRIPLE()
+FreeImage_SetPixelColorByLong()
+FreeImage_GetPixelColorByLong()
+FreeImage_SetPixelColorEx()
+FreeImage_GetPixelColorEx()
 
+
+'--------------------------------------------------------------------------------
+' Mask and icon creation functions
+'--------------------------------------------------------------------------------
+FreeImage_CreateMask()
+FreeImage_CreateMaskImage()
+FreeImage_CreateMaskInPlace()
+FreeImage_CreateSimpleBWMaskImage()
+FreeImage_CreateSimpleBWMaskInPlace()
+FreeImage_CreateMaskColors()
+FreeImage_GetIcon()
 
 
 '--------------------------------------------------------------------------------
@@ -109,6 +169,8 @@ FreeImage_IsTransparencyTableTransparent()
 ' OlePicture conversion functions
 '--------------------------------------------------------------------------------
 FreeImage_GetOlePicture()
+FreeImage_GetOlePictureIcon()
+FreeImage_GetOlePictureThumbnail()
 FreeImage_CreateFromOlePicture()
 FreeImage_CreateFromDC()
 FreeImage_CreateFromImageContainer()
@@ -140,6 +202,7 @@ FreeImage_GetChannelIOP()
 FreeImage_CopyIOP()
 FreeImage_PasteIOP()
 FreeImage_CompositeIOP()
+FreeImage_MakeThumbnailIOP()
 
 
 '--------------------------------------------------------------------------------

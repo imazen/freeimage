@@ -5,6 +5,123 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+July 17, 2006 - 1.6
++ [Carsten Klein] added more public wrapper functions for tag copying and cloning:
++                 added function FreeImage_CopyMetadata()
++                 added function FreeImage_CloneMetadata()
+- [Carsten Klein] removed dead API functions, dead structures and dead variables
+* [Carsten Klein] fixed a bug in FreeImage_ConvertColorDepth(): now color images are converted to 24 bits when used with FICF_PREPARE_RESCALE, all others to 8 bit
+
+July 16, 2006 - 1.5.6
++ [Carsten Klein] added more public wrapper functions for VB friendly tag access: these functions deal with a FREE_IMAGE_TAG structure instead of FreeImage's Tag pointer.
++                 added function FreeImage_SetMetadataEx()
++                 added function FreeImage_CreateTagEx()
++                 added function FreeImage_AppendTag()
++                 added function FreeImage_RemoveTag()
++                 added function FreeImage_RemoveTagEx()
++                 added function FreeImage_TagExists()
++                 added function FreeImage_TagExistsEx()
++                 added function FreeImage_DeleteTagEx()
++                 added function FreeImage_CloneTagEx()
++                 added function FreeImage_RemoveMetadataModel()
++                 added function FreeImage_UpdateMetadata()
++                 added function FreeImage_UnsignedLong()
++                 added function FreeImage_UnsignedShort()
++                 added function FreeImage_CreateRational()
++                 added function FreeImage_CreateSignedRational()
++                 added function FreeImage_GetImageComment()
++                 added function FreeImage_SetImageComment()
++ [Carsten Klein] added some private helper functions to leverage tag updating:
++                 added helper function pTagToTagPtr()
++                 added helper function pGetValueBuffer()
++                 added helper function pGetRationalValueBuffer()
++                 added helper function pGetVariantAsByteBuffer()
++                 added helper function pGetElementSize()
+
+July 5, 2006 - 1.5.5
+! [Carsten Klein] changed function signature of FreeImage_FindNextMetadataEx(): optional parameter 'Model' is now present; see the function's inline documentation
+
+June 30, 2006 - 1.5.4
+* [Carsten Klein] fixed bug in functions creating a FreeImage DIB from a windows hBitmap: workaround for palettized bitmaps is now implemented
+*                 fixed function FreeImage_CreateFromOLEPicture()
+*                 fixed function FreeImage_CreateFromDC()
+
+June 22, 2006 - 1.5.3
+! [Carsten Klein] changed function declaration of FreeImage_GetMetadataInt(): parameter 'model' is now 'ByVal' and Tag is a Long pointer
+! [Carsten Klein] changed function declaration of FreeImage_SetMetadataInt(): parameter 'model' is now 'ByVal' and Tag is a Long pointer
+! [Carsten Klein] changed function declaration of FreeImage_GetMetadata(): parameter Tag is a Long pointer now
+! [Carsten Klein] changed function declaration of FreeImage_SetMetadata(): parameter Tag is a Long pointer now
++ [Carsten Klein] added function declarations for tag creation and destruction:
++                 added declaration for function FreeImage_CreateTag()
++                 added declaration for procedure FreeImage_DeleteTag()
++                 added declaration for function FreeImage_CloneTag()
++ [Carsten Klein] added new items to structure FREE_IMAGE_TAG:
++                 added item 'Model As FREE_IMAGE_MDMODEL'
++                 added item 'TagPtr As Long'
++ [Carsten Klein] added wrapper functions for more VB friendly Tag access: these functions deal with a FREE_IMAGE_TAG structure instead of FreeImage's Tag pointer.
++                 added function FreeImage_FindFirstMetadataEx()
++                 added function FreeImage_FindNextMetadataEx()
++                 added function FreeImage_GetAllMetadataTags()
++                 added function FreeImage_GetMetadataEx()
+* [Carsten Klein] fixed and adjusted page numbers of the API documentation in header comments in FreeImage function declarations
+- [Carsten Klein] removed workaround for thresholding and dithering non-MINISBLACK 8 bit images in function FreeImage_ConvertColorDepth(): was fixed in FreeImage 3.9.0
+* [Carsten Klein] fixed all pending issues in function FreeImage_PaintDC(): is now in production state
+
+June 14, 2006 - 1.5.2
+! [Carsten Klein] changed signature of function FreeImage_CreateMask()
++ [Carsten Klein] added function FreeImage_CreateMaskImage(): this creates a monochrome mask from a source image
++ [Carsten Klein] added function FreeImage_CreateMaskInPlace(): this creates a monochrome mask from a source image
++ [Carsten Klein] added enumeration FREE_IMAGE_ICON_TRANSPARENCY_OPTION_FLAGS
++ [Carsten Klein] added wrapper function FreeImage_CreateSimpleBWMaskImage(): wrapper for FreeImage_CreateMaskImage() with reduced number of parameters; creates a b/w mask
++ [Carsten Klein] added wrapper function FreeImage_CreateSimpleBWMaskInPlace(): wrapper for FreeImage_CreateMaskInPlace() with reduced number of parameters; creates a b/w mask
++ [Carsten Klein] added function declaration for FreeImage_MakeThumbnail()
++ [Carsten Klein] added function for FreeImage_GetOlePictureThumbnail()
++ [Carsten Klein] added function for FreeImage_MakeThumbnailIOP()
++ [Carsten Klein] documented function FreeImage_ReadMemoryEx()
++ [Carsten Klein] documented function FreeImage_WriteMemoryEx()
+! [Carsten Klein] divided FreeImage_TagFromPointer into an interface only function with a private helper function pGetTagFromTagPtr():
++                 added helper function pGetTagFromTagPtr()
+! [Carsten Klein] added private helper functions to leverage the FIDT_RATIONAL and FIDT_SRATIONAL data type:
++                 added helper function pNormalizeRational()
++                 added helper function pNormalizeSRational()
++                 added helper function gcd()
++                 added helper function floor()
+! [Carsten Klein] changed name of structure 'FITAG_int' to 'FITAG': is now as in FreeImage library
+! [Carsten Klein] changed name of structure 'FITAG' to 'FREE_IMAGE_TAG': this new structure plays an important role in the wrapper's new VB friendly tag accessing concept
+! [Carsten Klein] changed function declaration of FreeImage_GetMetadataCount(): parameter 'model' is now 'ByVal'
+! [Carsten Klein] changed function declaration of FreeImage_TagToString(): parameter 'model' is now 'ByVal' and function returns a Long
+! [Carsten Klein] renamed function declaration of FreeImage_TagToString() to FreeImage_TagToStringInt(): function is now Private and wrapped by a VB String returning function
++ [Carsten Klein] added wrapper function FreeImage_TagToString() returning a real VB String
++ [Carsten Klein] added structure FIRATIONAL: structure to hold an image tag's rational value
++ [Carsten Klein] added new items to structure FREE_IMAGE_TAG:
++                 added item 'StringValue As String'
++                 added item 'Palette() As RGBQUAD'
++                 added item 'RationalValue() As FIRATIONAL'
+
+June 13, 2006 - 1.5.1
+! [Carsten Klein] changed version constant 'FREEIMAGE_MINOR_VERSION' to 9 to meet version 3.9.0
+* [Carsten Klein] fixed and adjusted page numbers of the API documentation in header comments in FreeImage function declarations to match FreeImage 3.9.0 API documentation
++ [Carsten Klein] added function declaration for new Memory I/O functions in 3.9.0
++                 added declaration FreeImage_ReadMemory()
++                 added declaration FreeImage_WriteMemory()
+! [Carsten Klein] changed/added optional parameter 'element_size' to private function pGetMemoryBlockPtrFromVariant(): caller now can get size in bytes one array element
++ [Carsten Klein] added wrapper functions for new Memory I/O functions in 3.9.0
++                 added function FreeImage_ReadMemoryEx()
++                 added function FreeImage_WriteMemoryEx()
++ [Carsten Klein] added constants and updated enumerations for new 3.9.0 file formats 'FAXG3' and 'SGI'
++ [Carsten Klein] added Windows GDI icon related declarations:
++                 added function declaration for CreateIconIndirect()
++                 added function declaration for DestroyIcon()
++                 added structure ICONINFO
++ [Carsten Klein] added function FreeImage_GetIcon(): returns a hIcon handle
++ [Carsten Klein] added function FreeImage_GetOlePictureIcon(): returns a VB Picture object of type vbPicTypeIcon
++ [Carsten Klein] added enumeration FREE_IMAGE_MASK_FLAGS
++ [Carsten Klein] added function FreeImage_CreateMaskColors(): returns an array filled with items from an argument list; synonym for VB's Array() function
++ [Carsten Klein] added enumeration FREE_IMAGE_teMask(): this creates a monochrome mask from a source image
++ [Carsten Klein] added function FreeImage_CreaMASK_CREATION_OPTION_FLAGS
+
+! now FreeImage version 3.9.0
+
 June 12, 2006 - 1.5
 * [Carsten Klein] fixed bug in wrapper function FreeImage_PaintDCEx(): now handles boolean test correctly: 'If ((hDC <> 0) And (hDIB <> 0)) Then -> Thanks to ender_wiggin for reporting that bug.
 + [Carsten Klein] added private function pGetIOlePictureFromContainer(): used to get IPicture from image hosting control (Form, PictureBox) including custom drawings
@@ -22,7 +139,7 @@ February 27, 2006 - 1.4.8
 ! [Carsten Klein] changed all function signatures of functions that are derived from or extend FreeImage BOOL functions: see "Functions returning Booleans" in section "General notes on implementation and design"
 + [Carsten Klein] added wrapper functions for all FreeImage functions that return a BOOL in C/C++: see "Functions returning Booleans" in section "General notes on implementation and design"
 + [Carsten Klein] added wrapper function FreeImage_CreateFromDC(): creates an DIB from a DC. Thanks to Evan (wxforecaster) for this suggestion.
-+ [Carsten Klein] added declaration of GID function GetCurrentObject() and constant OBJ_BITMAP
++ [Carsten Klein] added declaration of GDI function GetCurrentObject() and constant OBJ_BITMAP
 + [Carsten Klein] added wrapper function FreeImage_IsAvailable(): used to test for existence of FreeImage Library (FreeImage.dll)
 
 February 9, 2006 - 1.4.7
@@ -51,9 +168,11 @@ October 13, 2005 - 1.4.4
 October 13, 2005 - 1.4.3
 + [Carsten Klein] added additional function declaration FreeImage_SetPixelColorByLong(): now color values may be provided in a long value
 + [Carsten Klein] added additional function declaration FreeImage_GetPixelColorByLong(): now color values may be received in a long value
++ [Carsten Klein] added function FreeImage_SetPixelColorEx(): color values may be provided by four different byte values
++ [Carsten Klein] added function FreeImage_GetPixelColorEx(): color values are returned through four different byte values
 
 October 11, 2005 - 1.4.2
-* [Carsten Klein] fixed bug in wrapper function FreeImage_GetBitsExRGBQUAD(): now tests and works for 32 bit images
+* [Carsten Klein] fixed bug in wrapper function FreeImage_GetBitsExRGBQUAD(): now tests for and works with 32 bit images
 
 October 10, 2005 - 1.4.1
 * [Carsten Klein] fixed serious bug in FreeImage_GetBitsEx...() functions: created custom array descriptor now really has two dimensions
@@ -88,6 +207,7 @@ July 18, 2005 - 1.3.4
 !                 changed FreeImage_GetBitsEx(): mixed up width and height in SAFEAARAY creation
 !                 changed FreeImage_GetBitsExRGBTRIPLE(): mixed up width and height in SAFEAARAY creation
 !                 changed FreeImage_GetBitsExRGBQUAD(): mixed up width and height in SAFEAARAY creation
++ [Carsten Klein] added wrapper function FreeImage_GetScanLinesRGBTRIPLE():
 
 June 30, 2005 - 1.3.3
 + [Carsten Klein] added Kernel32 function FillMemory()
