@@ -5,6 +5,12 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+August 4, 2006 - 1.7
+* [Carsten Klein] fixed a bug in pGetTagFromTagPtr(): removed overflow error when converting unsigned short tags (FIDT_SHORT) with values between 32768 and 65535. Thanks to André Hendriks.
+! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.9.1
+
+! now FreeImage version 3.9.1
+
 July 17, 2006 - 1.6
 + [Carsten Klein] added more public wrapper functions for tag copying and cloning:
 +                 added function FreeImage_CopyMetadata()
