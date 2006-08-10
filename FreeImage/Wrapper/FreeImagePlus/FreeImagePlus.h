@@ -1426,6 +1426,9 @@ protected:
 	FIMETADATA *_mdhandle;
 
 public:
+	/// Returns TRUE if the search handle is allocated, FALSE otherwise
+	BOOL isValid() const;
+
 	/// Constructor
 	fipMetadataFind();
 	/**

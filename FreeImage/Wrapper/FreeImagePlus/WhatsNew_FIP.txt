@@ -5,6 +5,9 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+Month day, 2006 - 3.9.2
+* [Herve Drolon] fixed missing 'isValid' method in fipMetadataFind
+
 July 16th, 2006 - 3.9.1
 * [Herve Drolon] fixed a bug in fipWinImage::copyFromBitmap occuring with palettized images
 
