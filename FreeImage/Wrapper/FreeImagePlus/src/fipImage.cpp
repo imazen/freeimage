@@ -808,6 +808,9 @@ BOOL fipImage::getMetadata(FREE_IMAGE_MDMODEL model, const char *key, fipTag& ta
 	if(searchedTag != NULL) {
 		tag = FreeImage_CloneTag(searchedTag);
 		return TRUE;
+	} else {
+		// clear the tag
+		tag = (FITAG*)NULL;
 	}
 	return FALSE;
 }
