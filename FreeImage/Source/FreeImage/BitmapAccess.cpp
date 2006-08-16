@@ -820,9 +820,27 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 				FreeImage_SetTagKey(tag, key);
 			}
 			if(FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth(FreeImage_GetTagType(tag)) != FreeImage_GetTagLength(tag)) {
-				// invalid data count ?
+				FreeImage_OutputMessageProc(FIF_UNKNOWN, "Invalid data count for tag '%s'", key);
 				return FALSE;
 			}
+
+			// fill the tag ID if possible and if it's needed
+			TagLib& tag_lib = TagLib::instance();
+			switch(model) {
+				case FIMD_IPTC:
+				{
+					int id = tag_lib.getTagID(TagLib::IPTC, key);
+					if(id == -1) {
+						FreeImage_OutputMessageProc(FIF_UNKNOWN, "IPTC: Invalid key '%s'", key);
+					}
+					FreeImage_SetTagID(tag, (WORD)id);
+				}
+				break;
+
+				default:
+					break;
+			}
+
 			// delete existing tag
 			FITAG *old_tag = (*tagmap)[key];
 			if(old_tag) {
@@ -836,6 +854,8 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 			// delete existing tag
 			TAGMAP::iterator i = tagmap->find(key);
 			if(i != tagmap->end()) {
+				FITAG *old_tag = (*i).second;
+				FreeImage_DeleteTag(old_tag);
 				tagmap->erase(key);
 			}
 		}

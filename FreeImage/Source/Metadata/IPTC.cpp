@@ -31,8 +31,9 @@
 //   IPTC JPEG / TIFF markers routines
 // ----------------------------------------------------------
 
+static const char* IPTC_DELIMITER = ";";	// keywords/supplemental category delimiter
 /**
-	Read IPTC binary data
+	Read and decode IPTC binary data
 */
 BOOL 
 read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
@@ -132,7 +133,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 			if(SupplementalCategory.length() == 0) {
 				SupplementalCategory.append((char*)iptc_value);
 			} else {
-				SupplementalCategory.append(",");
+				SupplementalCategory.append(IPTC_DELIMITER);
 				SupplementalCategory.append((char*)iptc_value);
 			}
 		}
@@ -141,7 +142,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 			if(Keywords.length() == 0) {
 				Keywords.append((char*)iptc_value);
 			} else {
-				Keywords.append(",");
+				Keywords.append(IPTC_DELIMITER);
 				Keywords.append((char*)iptc_value);
 			}
 		}
@@ -196,3 +197,124 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 	return TRUE;
 }
 
+// --------------------------------------------------------------------------
+
+static BYTE* 
+append_iptc_tag(BYTE *profile, unsigned *profile_size, WORD id, DWORD length, const void *value) {
+	BYTE *buffer = NULL;
+
+	// calculate the new buffer size
+	size_t buffer_size = (5 + *profile_size + length) * sizeof(BYTE);
+	buffer = (BYTE*)malloc(buffer_size);
+	if(!buffer)
+		return NULL;
+
+	// add the header
+	buffer[0] = 0x1C;
+	buffer[1] = 0x02;
+	// add the tag type
+	buffer[2] = (BYTE)(id & 0x00FF);
+	// add the tag length
+	buffer[3] = (BYTE)(length >> 8);
+	buffer[4] = (BYTE)(length & 0xFF);
+	// add the tag value
+	memcpy(buffer + 5, (BYTE*)value, length);
+	// append the previous profile
+	if(NULL == profile)	{
+		*profile_size = (5 + length);
+	}
+	else {
+		memcpy(buffer + 5 + length, profile, *profile_size);
+		*profile_size += (5 + length);
+		free(profile);
+	}
+	
+	return buffer;
+}
+
+/**
+Encode IPTC metadata into a binary buffer. 
+The buffer is allocated by the function and must be freed by the caller. 
+*/
+BOOL 
+write_iptc_profile(FIBITMAP *dib, BYTE **profile, unsigned *profile_size) {
+	FITAG *tag = NULL;
+	FIMETADATA *mdhandle = NULL;
+
+	BYTE *buffer = NULL;
+	unsigned buffer_size = 0;
+
+	// parse all IPTC tags and rebuild a IPTC profile
+	mdhandle = FreeImage_FindFirstMetadata(FIMD_IPTC, dib, &tag);
+
+	if(mdhandle) {
+		do {
+			WORD tag_id	= FreeImage_GetTagID(tag);
+
+			// append the tag to the profile
+
+			switch(tag_id) {
+				case TAG_RECORD_VERSION:
+					// ignore (already handled)
+					break;
+
+				case TAG_SUPPLEMENTAL_CATEGORIES:
+				case TAG_KEYWORDS:
+					if(FreeImage_GetTagType(tag) == FIDT_ASCII) {
+						std::string value = (const char*)FreeImage_GetTagValue(tag);
+
+						// split the tag value
+						std::vector<std::string> output;
+						std::string delimiter = IPTC_DELIMITER;		
+						
+						unsigned int offset = 0;
+						unsigned int delimiterIndex = 0;
+
+						delimiterIndex = value.find(delimiter, offset);
+						while (delimiterIndex != std::string::npos) {
+							output.push_back(value.substr(offset, delimiterIndex - offset));
+							offset += delimiterIndex - offset + delimiter.length();
+							delimiterIndex = value.find(delimiter, offset);
+						}
+						output.push_back(value.substr(offset));
+
+						// add as many tags as there are comma separated strings
+						for(int i = 0; i < output.size(); i++) {
+							std::string& tag_value = output[i];
+							buffer = append_iptc_tag(buffer, &buffer_size, tag_id, tag_value.length(), tag_value.c_str());
+						}
+
+					}
+					break;
+
+				case TAG_URGENCY:
+					if(FreeImage_GetTagType(tag) == FIDT_ASCII) {
+						DWORD length = 1;	// keep the first octet only
+						buffer = append_iptc_tag(buffer, &buffer_size, tag_id, length, FreeImage_GetTagValue(tag));
+					}
+					break;
+
+				default:
+					if(FreeImage_GetTagType(tag) == FIDT_ASCII) {
+						DWORD length = FreeImage_GetTagLength(tag);	
+						buffer = append_iptc_tag(buffer, &buffer_size, tag_id, length, FreeImage_GetTagValue(tag));
+					}					
+					break;
+			}
+
+		} while(FreeImage_FindNextMetadata(mdhandle, &tag));
+		
+		FreeImage_FindCloseMetadata(mdhandle);
+
+		// add the DirectoryVersion tag
+		const short version = 0x0200;
+		buffer = append_iptc_tag(buffer, &buffer_size, TAG_RECORD_VERSION, sizeof(version), &version);
+		
+		*profile = buffer;
+		*profile_size = buffer_size;
+
+		return TRUE;
+	}
+
+	return FALSE;
+}

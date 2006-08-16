@@ -99,6 +99,7 @@ static BOOL tiff_read_xmp_profile(TIFF *tiff, FIBITMAP *dib);
 static BOOL tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib);
 static void ReadMetadata(TIFF *tiff, FIBITMAP *dib);
 
+static BOOL tiff_write_iptc_profile(TIFF *tiff, FIBITMAP *dib);
 static BOOL tiff_write_xmp_profile(TIFF *tiff, FIBITMAP *dib);
 static void WriteMetadata(TIFF *tiff, FIBITMAP *dib);
 
@@ -815,6 +816,40 @@ ReadMetadata(TIFF *tiff, FIBITMAP *dib) {
 // ----------------------------------------------------------
 
 /**
+	Write the TIFFTAG_RICHTIFFIPTC tag (IPTC/NAA or Adobe Photoshop profile)
+*/
+static BOOL 
+tiff_write_iptc_profile(TIFF *tiff, FIBITMAP *dib) {
+	if(FreeImage_GetMetadataCount(FIMD_IPTC, dib)) {
+		BYTE *profile = NULL;
+		uint32 profile_size = 0;
+		// create a binary profile
+		if(write_iptc_profile(dib, &profile, &profile_size)) {
+			uint32 iptc_size = profile_size;
+			iptc_size += (4-(iptc_size & 0x03)); // Round up for long word alignment
+			BYTE *iptc_profile = (BYTE*)malloc(iptc_size);
+			if(!iptc_profile) {
+				free(profile);
+				return FALSE;
+			}
+			memset(iptc_profile, 0, iptc_size);
+			memcpy(iptc_profile, profile, profile_size);
+			if (TIFFIsByteSwapped(tiff))
+				TIFFSwabArrayOfLong((uint32 *) iptc_profile, (unsigned long)iptc_size/4);
+			// Tag is type TIFF_LONG so byte length is divided by four
+			TIFFSetField(tiff, TIFFTAG_RICHTIFFIPTC, iptc_size/4, iptc_profile);
+			// release the profile data
+			free(iptc_profile);
+			free(profile);
+
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+/**
 	Write the TIFFTAG_XMLPACKET tag (XMP profile)
 	@param dib Input FIBITMAP
 	@param tiff LibTIFF TIFF handle
@@ -840,6 +875,8 @@ Write TIFF special profiles
 */
 static void 
 WriteMetadata(TIFF *tiff, FIBITMAP *dib) {
+	// IPTC
+	tiff_write_iptc_profile(tiff, dib);
 
 	// Adobe XMP
 	tiff_write_xmp_profile(tiff, dib);

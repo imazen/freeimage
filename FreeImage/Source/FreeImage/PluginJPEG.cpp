@@ -1,5 +1,5 @@
 // ==========================================================
-// JPEG Loader
+// JPEG Loader and writer
 // Based on code developed by The Independent JPEG Group
 //
 // Design and implementation by
@@ -707,6 +707,53 @@ jpeg_write_icc_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 }
 
 /** 
+	Write JPEG_APPD marker (IPTC or Adobe Photoshop profile)
+	@return Returns TRUE if successful, FALSE otherwise
+*/
+static BOOL  
+jpeg_write_iptc_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
+	const char *ps_header = "Photoshop 3.0\x08BIM\x04\x04\x0\x0\x0\x0";
+	const unsigned tag_length = 26;
+
+	if(FreeImage_GetMetadataCount(FIMD_IPTC, dib)) {
+		BYTE *profile = NULL;
+		unsigned profile_size = 0;
+
+		// create a binary profile
+		if(write_iptc_profile(dib, &profile, &profile_size)) {
+
+			// write the profile
+			for(long i = 0; i < (long)profile_size; i += 65517L) {
+				unsigned length = MIN((long)profile_size - i, 65517L);
+				unsigned roundup = length & 0x01;	// needed for Photoshop
+				BYTE *iptc_profile = (BYTE*)malloc(length + roundup + tag_length);
+				if(iptc_profile == NULL) break;
+				// Photoshop identification string
+				memcpy(&iptc_profile[0], "Photoshop 3.0\x0", 14);
+				// 8BIM segment type
+				memcpy(&iptc_profile[14], "8BIM\x04\x04\x0\x0\x0\x0", 10);
+				// segment size
+				iptc_profile[24] = (BYTE)(length >> 8);
+				iptc_profile[25] = (BYTE)(length & 0xFF);
+				// segment data
+				memcpy(&iptc_profile[tag_length], &profile[i], length);
+				if(roundup)
+					iptc_profile[length + tag_length] = 0;
+				jpeg_write_marker(cinfo, IPTC_MARKER, iptc_profile, length + roundup + tag_length);
+				free(iptc_profile);
+			}
+
+			// release profile
+			free(profile);
+
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+/** 
 	Write JPEG_APP1 marker (XMP profile)
 	@return Returns TRUE if successful, FALSE otherwise
 */
@@ -734,7 +781,7 @@ jpeg_write_xmp_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 				unsigned length = MIN((long)(tag_length - i), 65504L);
 				
 				memcpy(profile + xmp_header_size, tag_value + i, length);
-				jpeg_write_marker(cinfo, (JPEG_APP0+1), profile, (length + xmp_header_size));
+				jpeg_write_marker(cinfo, EXIF_MARKER, profile, (length + xmp_header_size));
 			}
 
 			free(profile);
@@ -757,6 +804,9 @@ write_markers(j_compress_ptr cinfo, FIBITMAP *dib) {
 
 	// write ICC profile
 	jpeg_write_icc_profile(cinfo, dib);
+
+	// write IPTC profile
+	jpeg_write_iptc_profile(cinfo, dib);
 
 	// write Adobe XMP profile
 	jpeg_write_xmp_profile(cinfo, dib);
