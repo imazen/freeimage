@@ -55,7 +55,7 @@
 // Reimplementation of strnicmp (it is not supported on some systems)
 // =====================================================================
 
-int 
+static int 
 FreeImage_strnicmp(const char *s1, const char *s2, size_t len) {
 	unsigned char c1, c2;
 
@@ -172,8 +172,10 @@ processMakerNote(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *s
 	FreeImage_GetMetadata(FIMD_EXIF_MAIN, dib, "Make", &tagMake);
 	const char *Maker = (char*)FreeImage_GetTagValue(tagMake);
 
-	if(strncmp("OLYMP", pval, 5) == 0) {
+	if((strncmp("OLYMP", pval, 5) == 0) || (strncmp("EPSON", pval, 5) == 0) || (strncmp("AGFA", pval, 4) == 0)) {
 		// Olympus Makernote
+		// Epson and Agfa use Olympus maker note standard, 
+		// see: http://www.ozhiker.com/electronics/pjmt/jpeg_info/
 		*md_model = TagLib::EXIF_MAKERNOTE_OLYMPUS;
 		*subdirOffset = 8;
 	} 
@@ -208,8 +210,15 @@ processMakerNote(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *s
 		*subdirOffset = 0;		
     } else if(Maker && (FreeImage_strnicmp("Casio", Maker, 5) == 0)) {
         // Casio Makernote
-		*md_model = TagLib::EXIF_MAKERNOTE_CASIO;
-		*subdirOffset = 0;
+		if(strncmp("QVC\x00\x00\x00", pval, 6) == 0) {
+			// Casio Type 2 Makernote
+			*md_model = TagLib::EXIF_MAKERNOTE_CASIOTYPE2;
+			*subdirOffset = 6;
+		} else {
+			// Casio Type 1 Makernote
+			*md_model = TagLib::EXIF_MAKERNOTE_CASIOTYPE1;
+			*subdirOffset = 0;
+		}
 	} else if ((strncmp("FUJIFILM", pval, 8) == 0) || (Maker && (FreeImage_strnicmp("Fujifilm", Maker, 8) == 0))) {
         // Fujifile Makernote
 		*md_model = TagLib::EXIF_MAKERNOTE_FUJIFILM;
@@ -232,14 +241,19 @@ processMakerNote(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *s
 	}
 	else if(Maker && ((FreeImage_strnicmp("Pentax", Maker, 6) == 0) || (FreeImage_strnicmp("Asahi", Maker, 5) == 0))) {
 		// Pentax maker note
-		*md_model = TagLib::EXIF_MAKERNOTE_PENTAX;
 		if(strncmp("AOC\x00", pval, 4) == 0) {
 			// Type 2 Pentax Makernote
+			*md_model = TagLib::EXIF_MAKERNOTE_PENTAX;
 			*subdirOffset = 6;
 		} else {
 			// Type 1 Pentax Makernote
+			*md_model = TagLib::EXIF_MAKERNOTE_ASAHI;
 			*subdirOffset = 0;
 		}
+	}	
+	else if((strncmp("SONY CAM", pval, 8) == 0) || (strncmp("SONY DSC", pval, 8) == 0)) {
+		*md_model = TagLib::EXIF_MAKERNOTE_SONY;
+		*subdirOffset = 12;
 	}
 }
 
@@ -444,13 +458,19 @@ processExifTag(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, TagLib::MD
 	@param msb_order Endianess order of the datafile
 	@return 
 */
-BOOL 
+static BOOL 
 jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsigned int length, BOOL msb_order) {
 	WORD de, nde;
 
 	std::stack<WORD>			destack;	// directory entries stack
 	std::stack<BYTE*>			ifdstack;	// IFD stack
 	std::stack<TagLib::MDMODEL>	modelstack; // metadata model stack
+
+	// Keep a list of already visited IFD to avoid stack overflows 
+	// when recursive/cyclic directory structures exist. 
+	// This kind of recursive Exif file was encountered with Kodak images coming from 
+	// KODAK PROFESSIONAL DCS Photo Desk JPEG Export v3.2 W
+	std::map<BYTE*, int> visitedIFD;
 
     #define DIR_ENTRY_ADDR(_start, _entry) (_start + 2 + (12 * _entry))
 
@@ -470,6 +490,13 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 			ifdp		= ifdstack.top();	ifdstack.pop();
 			de			= destack.top();	destack.pop();
 			md_model	= modelstack.top();	modelstack.pop();
+		}
+
+		// remember that we've visited this directory so that we don't visit it again later
+		if(visitedIFD.find(ifdp) != visitedIFD.end()) {
+			continue;
+		} else {
+			visitedIFD[ifdp] = 1;	// processed
 		}
 
 		// determine how many entries there are in the current IFD

@@ -301,7 +301,8 @@ public:
 		EXIF_GPS, 
 		EXIF_INTEROP,
 		EXIF_MAKERNOTE_CANON,
-		EXIF_MAKERNOTE_CASIO,
+		EXIF_MAKERNOTE_CASIOTYPE1,
+		EXIF_MAKERNOTE_CASIOTYPE2,
 		EXIF_MAKERNOTE_FUJIFILM,
 		EXIF_MAKERNOTE_KYOCERA,
 		EXIF_MAKERNOTE_MINOLTA,
@@ -310,7 +311,9 @@ public:
 		EXIF_MAKERNOTE_NIKONTYPE3,
 		EXIF_MAKERNOTE_OLYMPUS,
 		EXIF_MAKERNOTE_PANASONIC,
+		EXIF_MAKERNOTE_ASAHI,
 		EXIF_MAKERNOTE_PENTAX,
+		EXIF_MAKERNOTE_SONY,
 		IPTC,
 		GEOTIFF,
 		ANIMATION
@@ -383,6 +386,15 @@ public:
 	const char* getTagDescription(MDMODEL md_model, WORD tagID);
 
 	/**
+	Given a tag field name, returns its tag ID. 
+	When the tag doesn't exists, a value '-1' is returned.
+	@param md_model Internal metadata model
+	@param key tag field name
+	@return Returns the tag ID if successful, returns -1 otherwise
+	*/
+	int getTagID(MDMODEL md_model, const char *key);
+
+	/**
 	Perform a conversion between internal metadata models and FreeImage public metadata models
 	@param md_model Internal metadata model
 	*/
@@ -410,6 +422,7 @@ BOOL jpeg_read_exif_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int dat
 
 // JPEG / TIFF IPTC profile
 BOOL read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen);
+BOOL write_iptc_profile(FIBITMAP *dib, BYTE **profile, unsigned *profile_size);
 
 #if defined(__cplusplus)
 }
