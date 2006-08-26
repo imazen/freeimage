@@ -32,6 +32,7 @@ extern "C" {
 }
 
 #include "FreeImage.h"
+#include "Utilities.h"
 
 // ----------------------------------------------------------
 //   Error handling
@@ -77,7 +78,7 @@ ls_jpeg_output_message (j_common_ptr cinfo) {
 // ----------------------------------------------------------
 
 static BOOL  
-LosslessTransform(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OPERATION operation, BOOL perfect) {
+LosslessTransform(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OPERATION operation, const char *crop, BOOL perfect) {
 	// We assume all-in-memory processing and can therefore use only a
 	// single file pointer for sequential input and output operation
 	FILE *fp = NULL;
@@ -153,6 +154,14 @@ LosslessTransform(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OP
 		dstinfo.err->error_exit = ls_jpeg_error_exit;
 		dstinfo.err->output_message = ls_jpeg_output_message;
 		jpeg_create_compress(&dstinfo);
+
+		// crop option
+		if(crop != NULL) {
+			if(!jtransform_parse_crop_spec(&transfoptions, crop)) {
+				FreeImage_OutputMessageProc(FIF_JPEG, "Bogus crop argument %s", crop);
+				throw(1);
+			}
+		}
 
 		// Open the input file
 		if((fp = fopen(src_file, "rb")) == NULL) {
@@ -230,7 +239,7 @@ LosslessTransform(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OP
 		// Close output file and return
 		fclose(fp);
 	}
-	catch(int) {
+	catch(...) {
 		if(fp) fclose(fp);
 		jpeg_destroy_compress(&dstinfo);
 		jpeg_destroy_decompress(&srcinfo);
@@ -253,7 +262,39 @@ FreeImage_JPEGTransform(const char *src_file, const char *dst_file, FREE_IMAGE_J
 		}
 
 		// perform the transformation
-		return LosslessTransform(src_file, dst_file, operation, perfect);
+		return LosslessTransform(src_file, dst_file, operation, NULL, perfect);
+
+	} catch(char *text) {
+		FreeImage_OutputMessageProc(FIF_JPEG, text);
+		return FALSE;
+	}
+
+	return FALSE;
+}
+
+BOOL DLL_CALLCONV 
+FreeImage_JPEGCrop(const char *src_file, const char *dst_file, int left, int top, int right, int bottom) {
+	char crop[64];
+
+	try {
+		// check the src file format
+		if(FreeImage_GetFileType(src_file) != FIF_JPEG) {
+			throw "Input file is not a JPEG file";
+		}
+		
+		// normalize the rectangle
+		if(right < left) {
+			INPLACESWAP(left, right);
+		}
+		if(bottom < top) {
+			INPLACESWAP(top, bottom);
+		}
+
+		// build the crop option
+		sprintf(crop, "%dx%d+%d+%d", right - left, bottom - top, left, top);
+
+		// perform the transformation
+		return LosslessTransform(src_file, dst_file, FIJPEG_OP_NONE, crop, FALSE);
 
 	} catch(char *text) {
 		FreeImage_OutputMessageProc(FIF_JPEG, text);

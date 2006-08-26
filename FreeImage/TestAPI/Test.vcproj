@@ -145,6 +145,9 @@
 			RelativePath="testImageType.cpp">
 		</File>
 		<File
+			RelativePath=".\testJPEG.cpp">
+		</File>
+		<File
 			RelativePath="testMemIO.cpp">
 		</File>
 		<File

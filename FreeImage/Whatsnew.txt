@@ -9,6 +9,7 @@ Month day, 2006 - 3.9.2
 + [Herve Drolon] added full support for 16-bit greyscale and 48-bit RGB to the PNM plugin
 + [Herve Drolon] added IPTC writing support to JPEG & TIFF plugins
 + [Herve Drolon] added new Exif maker note tags
++ [Herve Drolon] added FreeImage_JPEGCrop
 * [Carsten Klein] fixed a bug in FreeImage_SetMetadata occuring when deleting a tag
 
 July 16th, 2006 - 3.9.1

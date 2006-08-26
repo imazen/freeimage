@@ -96,6 +96,10 @@ SOURCE=.\testImageType.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\testJPEG.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\testMemIO.cpp
 # End Source File
 # Begin Source File
@@ -105,6 +109,10 @@ SOURCE=.\testMPage.cpp
 # Begin Source File
 
 SOURCE=.\testPlugins.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\TestSuite.h
 # End Source File
 # Begin Source File
 
