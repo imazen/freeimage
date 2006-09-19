@@ -11,6 +11,7 @@ Month day, 2006 - 3.9.2
 + [Herve Drolon] added new Exif maker note tags
 + [Herve Drolon] added FreeImage_JPEGCrop
 * [Carsten Klein] fixed a bug in FreeImage_SetMetadata occuring when deleting a tag
+* [Herve Drolon] fixed a bug in PNG plugin when reading Macromedia 'false' PNG files
 
 July 16th, 2006 - 3.9.1
 * [Ryan Rubley] fixed a bug in PluginGIF plugin causing FreeImage to crash on malformed GIF files
