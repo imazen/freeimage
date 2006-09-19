@@ -80,7 +80,7 @@ Read32(FreeImageIO *io, fi_handle handle) {
 // ----------------------------------------------------------
 
 static void
-ScanForResolution(float* hres, float* vres, FreeImageIO *io, fi_handle handle, int width, int height, int channel_count, int byte_count) {
+ScanForResolution(float* hres, float* vres, FreeImageIO *io, fi_handle handle, int byte_count) {
 	// scans through the next byte_count bytes of the file, looking for an
 	// image resource block encoding the image's resolution.  Returns the resolution(s),
 	// if found, in the pointed-to floats.  Units are in pixels/meter.
@@ -153,18 +153,6 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 	// skip the mode data.  (it's the palette for indexed color; other info for other modes.)
 	
 	long area = width * height;
-
-	int	mode_data_count = Read32(io, handle);
-  
-	if (mode_data_count)
-		io->seek_proc(handle, mode_data_count, SEEK_CUR);	
-
-	// skip the image resources.  (resolution, pen tool paths, alpha channel names, etc)
-
-	int	resource_data_count = Read32(io, handle);
-
-	if (resource_data_count)
-		io->seek_proc(handle, resource_data_count, SEEK_CUR);	
 
 	// skip the reserved data
 
@@ -366,6 +354,16 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					if (Read16(io, handle) == 8) {
 						unsigned mode = Read16(io, handle);
 
+						// Get Resolution Information
+						float hres = 2835, vres = 2835;		// 72 dpi
+
+						int	mode_data_count = Read32(io, handle);
+						if (mode_data_count)
+							io->seek_proc(handle, mode_data_count, SEEK_CUR);	
+
+						int	resource_data_count = Read32(io, handle);
+						ScanForResolution(&hres, &vres, io, handle, resource_data_count);
+
 						// Valid options are:
 						//   0: Bitmap (not implemented)
 						//   1: Grayscale (not implemented)
@@ -376,13 +374,23 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						//   8: Duotone (not implemented)
 						//   9: Lab color (not implemented)
 
+						FIBITMAP *pBitmap = NULL;
+
 						switch (mode) {
 							case 3 :
-								return LoadPSDRGB(io, handle, width, height, channel_count);
+								pBitmap = LoadPSDRGB(io, handle, width, height, channel_count);
+								break;
 
 							default :
 								throw "color mode not supported";
 						}
+
+						if (pBitmap) {
+							FreeImage_SetDotsPerMeterX(pBitmap, (LONG)hres);
+							FreeImage_SetDotsPerMeterY(pBitmap, (LONG)vres);
+						}
+
+						return pBitmap;
 					}
 				}
 			}
