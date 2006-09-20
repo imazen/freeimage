@@ -864,9 +864,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					if( ++x >= width ) {
 						if( interlaced ) {
 							y += g_GifInterlaceIncrement[interlacepass];
-							if( y >= height && interlacepass < GIF_INTERLACE_PASSES ) {
-								y = g_GifInterlaceOffset[++interlacepass];
-							}
+							if( y >= height && ++interlacepass < GIF_INTERLACE_PASSES ) {
+								y = g_GifInterlaceOffset[interlacepass];
+							} 						
 						} else {
 							y++;
 						}
@@ -1264,9 +1264,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			}
 			if( interlaced ) {
 				y += g_GifInterlaceIncrement[interlacepass];
-				if( y >= output_height && interlacepass < GIF_INTERLACE_PASSES ) {
-					y = g_GifInterlaceOffset[++interlacepass];
-				}
+				if( y >= output_height && ++interlacepass < GIF_INTERLACE_PASSES ) {
+					y = g_GifInterlaceOffset[interlacepass];
+				}		
 			} else {
 				y++;
 			}
