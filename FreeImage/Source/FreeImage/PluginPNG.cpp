@@ -55,7 +55,9 @@ static void
 _ReadProc(png_structp png_ptr, unsigned char *data, png_size_t size) {
     pfi_ioStructure pfio = (pfi_ioStructure)png_get_io_ptr(png_ptr);
 	unsigned n = pfio->s_io->read_proc(data, size, 1, pfio->s_handle);
-	if(n != (unsigned)size) throw "Read error: invalid or corrupted PNG file";
+	if(size && (n == 0)) {
+		throw "Read error: invalid or corrupted PNG file";
+	}
 }
 
 static void
