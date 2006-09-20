@@ -127,7 +127,7 @@ FreeImage_FindBlock(FIMULTIBITMAP *bitmap, int position) {
 
 		current_block = *i;
 
-		if (count >= position)
+		if (count > position)
 			break;
 	}
 
@@ -136,7 +136,7 @@ FreeImage_FindBlock(FIMULTIBITMAP *bitmap, int position) {
 	// * if the block is a series of blocks, split it in max 3 new blocks
 	//   and return the splitted block
 
-	if ((current_block) && (count >= position)) {
+	if ((current_block) && (count > position)) {
 		switch(current_block->m_type) {
 			case BLOCK_REFERENCE :
 				return i;
