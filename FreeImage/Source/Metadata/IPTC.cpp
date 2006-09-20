@@ -279,7 +279,7 @@ write_iptc_profile(FIBITMAP *dib, BYTE **profile, unsigned *profile_size) {
 						output.push_back(value.substr(offset));
 
 						// add as many tags as there are comma separated strings
-						for(int i = 0; i < output.size(); i++) {
+						for(int i = 0; i < (int)output.size(); i++) {
 							std::string& tag_value = output[i];
 							buffer = append_iptc_tag(buffer, &buffer_size, tag_id, tag_value.length(), tag_value.c_str());
 						}
