@@ -57,3 +57,11 @@ make -f Makefile.solaris
 make -f Makefile.solaris install
 3) Clean all files produced during the build process
 make -f Makefile.solaris clean
+
+Release Notes for Solaris/Sparc
+--------------------------------
+Under Solaris/Sparc, you will need to modify the following line : 
+COMPILERFLAGS = -O3
+modified into
+COMPILERFLAGS = -O3 -DBYTE_ORDER=BIG_ENDIAN -D__BIG_ENDIAN__
+
