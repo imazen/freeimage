@@ -3,6 +3,7 @@
 //
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
+// - Thorsten Radde (support@IdealSoftware.com)
 //
 // Based on public domain code created and
 // published by Thatcher Ulrich (ulrich@world.std.com)
