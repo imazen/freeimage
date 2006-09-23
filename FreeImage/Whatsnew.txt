@@ -15,6 +15,7 @@ Month day, 2006 - 3.9.2
 * [Thorsten] added resolution support to PluginPSD
 * [Ryan Rubley] fixed a bug in PluginGIF occuring with interlaced GIF
 * [Ryan Rubley] fixed a bug in the multipage cache mechanism (internal FreeImage_FindBlock function)
+* [Thorsten] fixed a stack corruption in TIFF plugin occuring when reading exif tags
 
 July 16th, 2006 - 3.9.1
 * [Ryan Rubley] fixed a bug in PluginGIF plugin causing FreeImage to crash on malformed GIF files
