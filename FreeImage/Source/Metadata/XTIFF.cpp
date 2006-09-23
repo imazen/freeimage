@@ -4,6 +4,7 @@
 //
 // Design and implementation by
 // - Hervé Drolon (drolon@infonie.fr)
+// - Thorsten Radde (support@IdealSoftware.com)
 //
 // Based on the LibTIFF xtiffio sample and on LibGeoTIFF
 //
