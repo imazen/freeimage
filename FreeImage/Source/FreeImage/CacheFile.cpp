@@ -3,6 +3,7 @@
 //
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
+// - checkered (checkered@users.sourceforge.net)
 //
 // This file is part of FreeImage 3
 //
@@ -101,6 +102,7 @@ CacheFile::cleanupMemCache() {
 			// move the block to another list
 
 			m_page_cache_disk.splice(m_page_cache_disk.begin(), m_page_cache_mem, --m_page_cache_mem.end());
+			m_page_map[old_block->nr] = m_page_cache_disk.begin();
 		}
 	}
 }
@@ -145,6 +147,7 @@ CacheFile::lockBlock(int nr) {
 				fread(m_current_block->data, BLOCK_SIZE, 1, m_file);
 
 				m_page_cache_mem.splice(m_page_cache_mem.begin(), m_page_cache_disk, it->second);
+				m_page_map[nr] = m_page_cache_mem.begin();
 			}
 
 			// if the memory cache size is too large, swap an item to disc
