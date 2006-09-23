@@ -3,6 +3,7 @@
 //
 // Design and implementation by
 // - Hervé Drolon (drolon@infonie.fr)
+// - Thorsten Radde (support@IdealSoftware.com)
 //
 // This file is part of FreeImage 3
 //
@@ -704,11 +705,10 @@ FreeImage_RotateClassic(FIBITMAP *dib, double angle) {
 			if(!dst) throw(1);
 			
 			if(bpp == 8) {
-				// build a greyscale palette			
+				// copy original palette to rotated bitmap
+				RGBQUAD *src_pal = FreeImage_GetPalette(dib);
 				RGBQUAD *dst_pal = FreeImage_GetPalette(dst);
-				for(int i = 0; i < 256; i++) {
-					dst_pal[i].rgbRed = dst_pal[i].rgbGreen = dst_pal[i].rgbBlue = (BYTE)i;
-				}
+				memcpy(&dst_pal[0], &src_pal[0], 256 * sizeof(RGBQUAD));
 			}
 
 			return dst;
