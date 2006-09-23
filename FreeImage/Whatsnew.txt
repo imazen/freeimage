@@ -10,12 +10,15 @@ Month day, 2006 - 3.9.2
 + [Herve Drolon] added IPTC writing support to JPEG & TIFF plugins
 + [Herve Drolon] added new Exif maker note tags
 + [Herve Drolon] added FreeImage_JPEGCrop
++ [Thorsten Radde] added support for 8-bit palettized bitmaps in FreeImage_RotateClassic
 * [Carsten Klein] fixed a bug in FreeImage_SetMetadata occuring when deleting a tag
 * [Herve Drolon] fixed a bug in PNG plugin when reading Macromedia 'false' PNG files
-* [Thorsten] added resolution support to PluginPSD
+* [Thorsten Radde] added resolution support to PluginPSD
 * [Ryan Rubley] fixed a bug in PluginGIF occuring with interlaced GIF
 * [Ryan Rubley] fixed a bug in the multipage cache mechanism (internal FreeImage_FindBlock function)
-* [Thorsten] fixed a stack corruption in TIFF plugin occuring when reading exif tags
+* [Thorsten Radde] fixed a stack corruption in TIFF plugin occuring when reading exif tags
+* [checkered] fixed a bug in the multipage cache mechanism causing VS2005 to crash on multipage files
+
 
 July 16th, 2006 - 3.9.1
 * [Ryan Rubley] fixed a bug in PluginGIF plugin causing FreeImage to crash on malformed GIF files
