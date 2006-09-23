@@ -204,7 +204,7 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
     for(i = 0; i < count; i++) {
         ttag_t tag = TIFFGetTagListEntry(tif, i);
         const TIFFFieldInfo *fip;
-        uint16 value_count;
+        uint32 value_count;
         int mem_alloc = 0;
         void *raw_data;
 
@@ -317,7 +317,7 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 			{
 				// LibTIFF converts rational to floats : reconvert floats to rationals
 				DWORD *rvalue = (DWORD*)malloc(2 * value_count * sizeof(DWORD));
-				for(int i = 0; i < value_count; i++) {
+				for(uint32 i = 0; i < value_count; i++) {
 					float *fv = (float*)raw_data;
 					FIRational rational(fv[i]);
 					rvalue[2*i] = rational.getNumerator();
@@ -335,7 +335,7 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 			{
 				// LibTIFF converts rational to floats : reconvert floats to rationals
 				LONG *rvalue = (LONG*)malloc(2 * value_count * sizeof(LONG));
-				for(int i = 0; i < value_count; i++) {
+				for(uint32 i = 0; i < value_count; i++) {
 					float *fv = (float*)raw_data;
 					FIRational rational(fv[i]);
 					rvalue[2*i] = rational.getNumerator();
