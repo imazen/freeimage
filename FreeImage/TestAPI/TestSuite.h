@@ -61,6 +61,7 @@ void testMemIO(const char *lpszPathName);
 // ==========================================================
 
 void testBuildMPage(char *src_filename, char *dst_filename, FREE_IMAGE_FORMAT dst_fif, unsigned bpp);
+void testMPageCache(char *src_filename);
 
 // JPEG test suite
 // ==========================================================

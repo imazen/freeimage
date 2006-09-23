@@ -64,3 +64,35 @@ testBuildMPage(char *src_filename, char *dst_filename, FREE_IMAGE_FORMAT dst_fif
 
 }
 
+void testMPageCache(char *src_filename) {
+	const char *dst_filename = "mpages.tif";
+
+	BOOL keep_cache_in_memory = FALSE;
+
+	// get the file type
+	FREE_IMAGE_FORMAT src_fif = FreeImage_GetFileType(src_filename);
+	// load the file
+	FIBITMAP *src = FreeImage_Load(src_fif, src_filename, 0); //24bit image 
+	assert(src != NULL);
+
+	// convert to 24-bit
+	if(FreeImage_GetBPP(src) != 24) {
+		FIBITMAP *tmp = FreeImage_ConvertTo24Bits(src);
+		assert(tmp != NULL);
+		FreeImage_Unload(src); 
+		src = tmp;
+	}
+
+	FIMULTIBITMAP *out = FreeImage_OpenMultiBitmap(FIF_TIFF, dst_filename, TRUE, FALSE, keep_cache_in_memory); 
+
+	// attempt to create 16 480X360 images in a 24-bit TIFF multipage file
+	FIBITMAP *rescaled = FreeImage_Rescale(src, 480, 360, FILTER_CATMULLROM);
+	for(int i = 0; i < 16; i++) { 		
+		FreeImage_AppendPage(out, rescaled); 
+	} 
+	FreeImage_Unload(rescaled); 
+	
+	FreeImage_Unload(src); 
+	
+	FreeImage_CloseMultiBitmap(out, 0); 
+}

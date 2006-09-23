@@ -76,6 +76,9 @@ int main(int argc, char *argv[]) {
 	testBuildMPage("sample.png", "sample.tif", FIF_TIFF, 24);
 	//testBuildMPage("sample.png", "sample.gif", FIF_GIF, 8);
 
+	// test multipage cache
+	testMPageCache("sample.png");
+
 	// test memory IO
 	testMemIO("sample.png");
 
