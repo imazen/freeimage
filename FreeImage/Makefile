@@ -8,6 +8,7 @@ CC = gcc
 CXX = g++
 AR = ar
 
+INCDIR = /usr/include
 INSTALLDIR = /usr/lib
 
 # Converts cr/lf to just lf
@@ -24,7 +25,9 @@ CXXFLAGS = $(COMPILERFLAGS)  -Wno-ctor-dtor-privacy $(INCLUDE)
 TARGET  = freeimage
 STATICLIB = lib$(TARGET).a
 SHAREDLIB = lib$(TARGET)-$(VER_MAJOR).$(VER_MINOR).so
-LIBNAME = lib$(TARGET).so.$(VER_MAJOR)
+LIBNAME	= lib$(TARGET).so
+VERLIBNAME = $(LIBNAME).$(VER_MAJOR)
+HEADER = Source/FreeImage.h
 
 
 
@@ -52,12 +55,14 @@ $(STATICLIB): $(MODULES)
 	$(AR) r $@ $(MODULES)
 
 $(SHAREDLIB): $(MODULES)
-	$(CC) -s -shared -Wl,-soname,$(LIBNAME) -o $@ $(MODULES) $(LIBRARIES)
+	$(CC) -s -shared -Wl,-soname,$(VERLIBNAME) -o $@ $(MODULES) $(LIBRARIES)
 
 install:
+	install -m 644 -o root -g root $(HEADER) $(INCDIR)
 	install -m 644 -o root -g root $(STATICLIB) $(INSTALLDIR)
 	install -m 755 -o root -g root $(SHAREDLIB) $(INSTALLDIR)
-	ln -sf $(SHAREDLIB) $(INSTALLDIR)/$(LIBNAME)
+	ln -sf $(SHAREDLIB) $(INSTALLDIR)/$(VERLIBNAME)
+	ln -sf $(VERLIBNAME) $(INSTALLDIR)/$(LIBNAME)	
 	ldconfig
 
 clean:
