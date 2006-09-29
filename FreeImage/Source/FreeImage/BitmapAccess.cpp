@@ -566,7 +566,7 @@ FreeImage_GetTransparencyTable(FIBITMAP *dib) {
 void DLL_CALLCONV
 FreeImage_SetTransparent(FIBITMAP *dib, BOOL enabled) {
 	if (dib) {
-		if ((FreeImage_GetBPP(dib) == 8) || (FreeImage_GetBPP(dib) == 32)) {
+		if ((FreeImage_GetBPP(dib) <= 8) || (FreeImage_GetBPP(dib) == 32)) {
 			((FREEIMAGEHEADER *)dib->data)->transparent = enabled;
 		} else {
 			((FREEIMAGEHEADER *)dib->data)->transparent = FALSE;
@@ -582,7 +582,7 @@ FreeImage_GetTransparencyCount(FIBITMAP *dib) {
 void DLL_CALLCONV
 FreeImage_SetTransparencyTable(FIBITMAP *dib, BYTE *table, int count) {
 	if (dib) {
-		if (FreeImage_GetBPP(dib) == 8) {
+		if (FreeImage_GetBPP(dib) <= 8) {
 			((FREEIMAGEHEADER *)dib->data)->transparent = TRUE;
 			((FREEIMAGEHEADER *)dib->data)->transparency_count = count;
 
