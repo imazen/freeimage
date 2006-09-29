@@ -37,6 +37,7 @@ static const char *s_copyright = "This program uses FreeImage, a free, open sour
 
 #ifdef _WIN32
 #ifndef FREEIMAGE_LIB
+
 BOOL APIENTRY
 DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
 	switch (ul_reason_for_call) {
@@ -55,7 +56,24 @@ DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
 
     return TRUE;
 }
+
 #endif // FREEIMAGE_LIB
+
+#else // !_WIN32 
+#ifndef FREEIMAGE_LIB
+
+void FreeImage_SO_Initialise() __attribute__((constructor));
+void FreeImage_SO_DeInitialise() __attribute__((destructor));
+
+void FreeImage_SO_Initialise() {
+  FreeImage_Initialise(FALSE);
+}
+
+void FreeImage_SO_DeInitialise() {
+  FreeImage_DeInitialise();
+}
+#endif // FREEIMAGE_LIB
+
 #endif // _WIN32
 
 //----------------------------------------------------------------------
