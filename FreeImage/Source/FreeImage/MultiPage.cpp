@@ -8,6 +8,7 @@
 // - Petr Pytelka (pyta@lightcomp.com)
 // - Hervé Drolon (drolon@infonie.fr)
 // - Vadim Alexandrov (vadimalexandrov@users.sourceforge.net
+// - Martin Dyring-Andersen (mda@spamfighter.com)
 //
 // This file is part of FreeImage 3
 //
@@ -210,6 +211,66 @@ FreeImage_InternalGetPageCount(FIMULTIBITMAP *bitmap) {
 // =====================================================================
 // Multipage functions
 // =====================================================================
+
+FIMULTIBITMAP * DLL_CALLCONV
+FreeImage_LoadMultiBitmapFromMemory(FREE_IMAGE_FORMAT fif, FIMEMORY *stream, int flags) {
+	// retrieve the plugin list to find the node belonging to this plugin
+
+	PluginList *list = FreeImage_GetPluginList();
+
+	if (list) {
+		PluginNode *node = list->FindNodeFromFIF(fif);
+
+		if (node) {
+			FreeImageIO *io = new FreeImageIO;
+
+			if (io) {
+				SetMemoryIO(io);
+
+				FIMULTIBITMAP *bitmap = new FIMULTIBITMAP;
+
+				if (bitmap) {
+					MULTIBITMAPHEADER *header = new MULTIBITMAPHEADER;
+
+					header->m_filename = NULL;
+					header->node = node;
+					header->fif = fif;
+					header->io = io;
+					header->handle = (fi_handle)stream;						
+					header->changed = FALSE;						
+					header->read_only = TRUE;
+					header->m_cachefile = NULL;
+					header->cache_fif = fif;
+					header->load_flags = flags;
+
+					if (header) {
+						// store the MULTIBITMAPHEADER in the surrounding FIMULTIBITMAP structure
+
+						bitmap->data = header;
+
+						// cache the page count
+
+						header->page_count = FreeImage_InternalGetPageCount(bitmap);
+
+						// allocate a continueus block to describe the bitmap
+
+						header->m_blocks.push_back((BlockTypeS *)new BlockContinueus(0, header->page_count - 1));
+
+						// set up the cache
+
+						return bitmap;
+					}
+					
+					return NULL;
+				}
+			}
+
+			delete io;
+		}
+	}
+
+	return NULL;
+}
 
 FIMULTIBITMAP * DLL_CALLCONV
 FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL create_new, BOOL read_only, BOOL keep_cache_in_memory, int flags) {
@@ -417,7 +478,7 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 					remove(spool_name);
 				}
 			} else {
-				if (header->handle) {
+				if (header->handle && header->m_filename) {
 					fclose((FILE *)header->handle);
 				}
 			}
@@ -449,7 +510,8 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 			// delete the filename
 
-			delete[] header->m_filename;
+			if(header->m_filename)
+				delete[] header->m_filename;
 
 			// delete the FIMULTIBITMAPHEADER
 
