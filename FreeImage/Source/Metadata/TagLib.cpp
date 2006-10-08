@@ -941,7 +941,7 @@ int TagLib::getTagID(MDMODEL md_model, const char *key) {
 	if(info_map != NULL) {
 		for(TAGINFO::iterator i = info_map->begin(); i != info_map->end(); i++) {
 			const TagInfo *info = (*i).second;
-			if(strcmp(info->fieldname, key) == 0) {
+			if(info && (strcmp(info->fieldname, key) == 0)) {
 				return (int)info->tag;
 			}
 		}
