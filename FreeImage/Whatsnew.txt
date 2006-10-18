@@ -21,6 +21,7 @@ Month day, 2006 - 3.9.2
 * [Thorsten Radde] fixed a stack corruption in TIFF plugin occuring when reading exif tags
 * [checkered] fixed a bug in the multipage cache mechanism causing VS2005 to crash on multipage files
 * [Herve Drolon] fixed a bug with transparency support of 1- and 4-bit images
+* [Roar Flolo] fixed a bug in PSD plugin when reading non compressed RGB images (alpha channel initialization)
 
 July 16th, 2006 - 3.9.1
 * [Ryan Rubley] fixed a bug in PluginGIF plugin causing FreeImage to crash on malformed GIF files
