@@ -266,7 +266,7 @@ LoadPSDRGB(FreeImageIO *io, fi_handle handle, int width, int height, int channel
 			
 			BP_START(dib, width, height)
 
-			if (channel > channel_count) {
+			if (channel >= channel_count) {
 				// fill this channel with default data.
 
 				for (int i = 0; i < area; i++) {
