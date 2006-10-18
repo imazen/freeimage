@@ -677,7 +677,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				have_transparent = (packed & GIF_PACKED_GCE_HAVETRANS) ? true : false;
 				disposal_method = (packed & GIF_PACKED_GCE_DISPOSAL) >> 2;
 				//Image Descriptor
-				io->seek_proc(handle, info->image_descriptor_offsets[page], SEEK_SET);
+				io->seek_proc(handle, info->image_descriptor_offsets[start], SEEK_SET);
 				io->read_proc(&left, 2, 1, handle);
 				io->read_proc(&top, 2, 1, handle);
 				io->read_proc(&width, 2, 1, handle);
