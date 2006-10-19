@@ -23,6 +23,7 @@ Month day, 2006 - 3.9.2
 * [Herve Drolon] fixed a bug with transparency support of 1- and 4-bit images
 * [Roar Flolo] fixed a bug in PSD plugin when reading non compressed RGB images (alpha channel initialization)
 * [Nicolas Hatier] fixed a bug in PluginGIF when using the GIF_PLAYBACK flag
+* [Herve Drolon] fixed a bug in TIFF plugin when saving 8-bit images using LZW with differenciation
 
 July 16th, 2006 - 3.9.1
 * [Ryan Rubley] fixed a bug in PluginGIF plugin causing FreeImage to crash on malformed GIF files

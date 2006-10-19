@@ -1833,11 +1833,14 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					}
 					else {
 						// other cases
-						for (y = height - 1; y >= 0; y--) {
-							BYTE *bits = FreeImage_GetScanLine(dib, y);
-
-							TIFFWriteScanline(out, bits, height - y - 1, 0);
+						BYTE *buffer = (BYTE *)malloc(pitch * sizeof(BYTE));
+						for (y = 0; y < height; y++) {
+							// get a copy of the scanline
+							memcpy(buffer, FreeImage_GetScanLine(dib, height - y - 1), pitch);
+							// write the scanline to disc
+							TIFFWriteScanline(out, buffer, y, 0);
 						}
+						free(buffer);
 					}
 
 					break;
@@ -1886,14 +1889,16 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				case 64:
 				case 128:
 				{
-					for (y = height - 1; y >= 0; y--) {
-						BYTE *bits = FreeImage_GetScanLine(dib, y);
-
-						TIFFWriteScanline(out, bits, height - y - 1, 0);
+					BYTE *buffer = (BYTE *)malloc(pitch * sizeof(BYTE));
+					for (y = 0; y < height; y++) {
+						// get a copy of the scanline
+						memcpy(buffer, FreeImage_GetScanLine(dib, height - y - 1), pitch);
+						// write the scanline to disc
+						TIFFWriteScanline(out, buffer, y, 0);
 					}
-
-					break;
-				}				
+					free(buffer);
+				}	
+				break;
 			}
 		}
 
