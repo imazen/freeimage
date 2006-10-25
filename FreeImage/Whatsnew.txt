@@ -13,6 +13,7 @@ Month day, 2006 - 3.9.2
 + [Thorsten Radde] added support for 8-bit palettized bitmaps in FreeImage_RotateClassic
 + [Matt Rice] added automatic call to FreeImage_Initialise / FreeImage_DeInitialise when using FreeImage as a .so
 + [Martin Dyring-Andersen] added FreeImage_LoadMultiBitmapFromMemory to the multi-page API
++ [Herve Drolon] added support for tiled TIFF images
 * [Carsten Klein] fixed a bug in FreeImage_SetMetadata occuring when deleting a tag
 * [Herve Drolon] fixed a bug in PNG plugin when reading Macromedia 'false' PNG files
 * [Thorsten Radde] added resolution support to PluginPSD
