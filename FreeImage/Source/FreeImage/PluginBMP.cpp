@@ -313,8 +313,6 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 								break;
 							}
 						}
-
-						return (FIBITMAP *)dib;
 					}
 
 					case BI_RLE8 :
@@ -1151,13 +1149,13 @@ RLEEncodeLine(BYTE *target, BYTE *source, int size) {
 						break;
 
 					case RLE_ENDOFBITMAP :
-						target[target_pos++] = buffer_size;
+						target[target_pos++] = (BYTE)buffer_size;
 						target[target_pos++] = buffer[0];
 						break;
 
 					default :
 						target[target_pos++] = RLE_COMMAND;
-						target[target_pos++] = buffer_size;
+						target[target_pos++] = (BYTE)buffer_size;
 						memcpy(target + target_pos, buffer, buffer_size);
 
 						// prepare for next run
@@ -1172,7 +1170,7 @@ RLEEncodeLine(BYTE *target, BYTE *source, int size) {
 
 				// write the continuous data
 
-				target[target_pos++] = (j - i) + 1;
+				target[target_pos++] = (BYTE)((j - i) + 1);
 				target[target_pos++] = source[i];
 
 				buffer_size = 0;
@@ -1184,7 +1182,7 @@ RLEEncodeLine(BYTE *target, BYTE *source, int size) {
 						// write what we have
 
 						target[target_pos++] = RLE_COMMAND;
-						target[target_pos++] = buffer_size;
+						target[target_pos++] = (BYTE)buffer_size;
 						memcpy(target + target_pos, buffer, buffer_size);
 
 						// prepare for next run
@@ -1204,7 +1202,7 @@ RLEEncodeLine(BYTE *target, BYTE *source, int size) {
 
 		if (buffer_size == 254) {
 			target[target_pos++] = RLE_COMMAND;
-			target[target_pos++] = buffer_size;
+			target[target_pos++] = (BYTE)buffer_size;
 			memcpy(target + target_pos, buffer, buffer_size);
 
 			// prepare for next run
@@ -1228,13 +1226,13 @@ RLEEncodeLine(BYTE *target, BYTE *source, int size) {
 			break;
 
 		case RLE_ENDOFBITMAP :
-			target[target_pos++] = buffer_size;
+			target[target_pos++] = (BYTE)buffer_size;
 			target[target_pos++] = buffer[0];
 			break;
 
 		default :
 			target[target_pos++] = RLE_COMMAND;
-			target[target_pos++] = buffer_size;
+			target[target_pos++] = (BYTE)buffer_size;
 			memcpy(target + target_pos, buffer, buffer_size);
 
 			// prepare for next run

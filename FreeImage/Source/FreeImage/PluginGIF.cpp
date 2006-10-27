@@ -53,7 +53,9 @@ struct GIFinfo {
 };
 
 struct PageInfo {
-	PageInfo(int d, int l, int t, int w, int h) { disposal_method = d; left = l; top = t; width = w; height = h; }
+	PageInfo(int d, int l, int t, int w, int h) { 
+		disposal_method = d; left = (WORD)l; top = (WORD)t; width = (WORD)w; height = (WORD)h; 
+	}
 	int disposal_method;
 	WORD left, top, width, height;
 };
@@ -257,7 +259,7 @@ bool StringTable::Compress(BYTE *buf, int *len)
 	BYTE *bufpos = buf;
 	while( m_bufferPos < m_bufferSize ) {
 		//get the current pixel value
-		char ch = (m_buffer[m_bufferPos] >> m_bufferShift) & mask;
+		char ch = (char)((m_buffer[m_bufferPos] >> m_bufferShift) & mask);
 
 		std::string nextprefix = m_prefix + ch;
 		if( m_strmap.find(nextprefix) != m_strmap.end() ) {
@@ -396,7 +398,7 @@ void StringTable::ClearDecompressorTable(void)
 {
 	for( int i = 0; i < m_clearCode; i++ ) {
 		m_strings[i].resize(1);
-		m_strings[i][0] = i;
+		m_strings[i][0] = (char)i;
 	}
 	m_nextCode = m_endCode + 1;
 
@@ -833,9 +835,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		} else {
 			//its legal to have no palette, but we're going to generate *something*
 			for( int i = 0; i < 256; i++ ) {
-				pal[i].rgbRed = i;
-				pal[i].rgbGreen = i;
-				pal[i].rgbBlue = i;
+				pal[i].rgbRed   = (BYTE)i;
+				pal[i].rgbGreen = (BYTE)i;
+				pal[i].rgbBlue  = (BYTE)i;
 			}
 		}
 
@@ -984,7 +986,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 		}
 		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameTime", ANIMTAG_FRAMETIME, FIDT_LONG, 1, 4, &delay_time);
-		b = disposal_method;
+		b = (BYTE)disposal_method;
 		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "DisposalMethod", ANIMTAG_DISPOSALMETHOD, FIDT_BYTE, 1, 1, &b);
 
 		delete stringtable;
@@ -1005,7 +1007,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 	if( data == NULL ) {
 		return FALSE;
 	}
-	GIFinfo *info = (GIFinfo *)data;
+	//GIFinfo *info = (GIFinfo *)data;
 
 	if( page == -1 ) {
 		page = 0;
@@ -1023,7 +1025,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		bool have_transparent = false, no_local_palette = false, interlaced = false;
 		int disposal_method = GIF_DISPOSAL_BACKGROUND, delay_time = 100, transparent_color = 0;
-		WORD left = 0, top = 0, width = FreeImage_GetWidth(dib), height = FreeImage_GetHeight(dib);
+		WORD left = 0, top = 0, width = (WORD)FreeImage_GetWidth(dib), height = (WORD)FreeImage_GetHeight(dib);
 		WORD output_height = height;
 		if( FreeImage_GetMetadataEx(FIMD_ANIMATION, dib, "FrameLeft", FIDT_SHORT, &tag) ) {
 			left = *(WORD *)FreeImage_GetTagValue(tag);
@@ -1116,7 +1118,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 							background_color.rgbGreen == globalpalette[i].rgbGreen &&
 							background_color.rgbBlue == globalpalette[i].rgbBlue ) {
 
-							b = i;
+							b = (BYTE)i;
 							break;
 						}
 					}
@@ -1170,7 +1172,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						char *value = (char *)FreeImage_GetTagValue(tag);
 						io->write_proc((void *)"\x21\xFE", 2, 1, handle);
 						while( length > 0 ) {
-							b = length >= 255 ? 255 : length;
+							b = (BYTE)(length >= 255 ? 255 : length);
 							io->write_proc(&b, 1, 1, handle);
 							io->write_proc(value, b, 1, handle);
 							value += b;
@@ -1198,19 +1200,19 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			}
 		}
 		io->write_proc((void *)"\x21\xF9\x04", 3, 1, handle);
-		b = ((disposal_method << 2) & GIF_PACKED_GCE_DISPOSAL);
+		b = (BYTE)((disposal_method << 2) & GIF_PACKED_GCE_DISPOSAL);
 		if( have_transparent ) b |= GIF_PACKED_GCE_HAVETRANS;
 		io->write_proc(&b, 1, 1, handle);
 		//Notes about delay time for GIFs:
 		//IE5/IE6 have a minimum and default of 100ms
 		//Mozilla/Firefox/Netscape 6+/Opera have a minimum of 20ms and a default of 100ms if <20ms is specified or the GCE is absent
 		//Netscape 4 has a minimum of 10ms if 0ms is specified, but will use 0ms if the GCE is absent
-		w = delay_time / 10; //convert ms to cs
+		w = (WORD)(delay_time / 10); //convert ms to cs
 #ifdef FREEIMAGE_BIGENDIAN
 		SwapShort(&w);
 #endif
 		io->write_proc(&w, 2, 1, handle);
-		b = transparent_color;
+		b = (BYTE)transparent_color;
 		io->write_proc(&b, 1, 1, handle);
 		b = 0;
 		io->write_proc(&b, 1, 1, handle);
@@ -1238,7 +1240,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		}
 
 		//LZW Minimum Code Size
-		b = bpp == 1 ? 2 : bpp;
+		b = (BYTE)(bpp == 1 ? 2 : bpp);
 		io->write_proc(&b, 1, 1, handle);
 		StringTable *stringtable = new StringTable;
 		stringtable->Initialize(b);
@@ -1273,21 +1275,21 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		}
 		size = bufptr - buf;
 		BYTE last[4];
-		w = stringtable->CompressEnd(last);
+		w = (WORD)stringtable->CompressEnd(last);
 		if( size + w >= sizeof(buf) ) {
 			//one last full size sub-block
 			io->write_proc(&b, 1, 1, handle);
 			io->write_proc(buf, size, 1, handle);
 			io->write_proc(last, sizeof(buf) - size, 1, handle);
 			//and possibly a tiny additional sub-block
-			b = w - (sizeof(buf) - size);
+			b = (BYTE)(w - (sizeof(buf) - size));
 			if( b > 0 ) {
 				io->write_proc(&b, 1, 1, handle);
 				io->write_proc(last, b, 1, handle);
 			}
 		} else {
 			//last sub-block less than full size
-			b = size + w;
+			b = (BYTE)(size + w);
 			io->write_proc(&b, 1, 1, handle);
 			io->write_proc(buf, size, 1, handle);
 			io->write_proc(last, w, 1, handle);

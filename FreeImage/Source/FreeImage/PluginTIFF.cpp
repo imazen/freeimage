@@ -777,7 +777,6 @@ tiff_read_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
 */
 static BOOL 
 tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib) {
-	uint16  count = 0;
     uint32 exif_offset = 0;
 
 	// read EXIF-TIFF tags
@@ -967,7 +966,6 @@ SupportsICCProfiles() {
 
 static void * DLL_CALLCONV
 Open(FreeImageIO *io, fi_handle handle, BOOL read) {
-	TIFF *tif = NULL;
 	// wrapper for TIFF I/O
 	fi_TIFFIO *fio = (fi_TIFFIO*)malloc(sizeof(fi_TIFFIO));
 	if(!fio) return NULL;
@@ -1114,7 +1112,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			tif = fio->tif;
 
 			if (page != -1)
-				if (!tif || !TIFFSetDirectory(tif, page))
+				if (!tif || !TIFFSetDirectory(tif, (tdir_t)page))
 					throw "Error encountered while opening TIFF file";			
 
 			TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
@@ -1754,7 +1752,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		width = FreeImage_GetWidth(dib);
 		height = FreeImage_GetHeight(dib);
-		bitsperpixel = FreeImage_GetBPP(dib);
+		bitsperpixel = (uint16)FreeImage_GetBPP(dib);
 
 		FIICCPROFILE *iccProfile = FreeImage_GetICCProfile(dib);
 
@@ -1843,7 +1841,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		if (photometric == PHOTOMETRIC_PALETTE) {
 			uint16 *r, *g, *b;
-			uint16 nColors = FreeImage_GetColorsUsed(dib);
+			uint16 nColors = (uint16)FreeImage_GetColorsUsed(dib);
 			RGBQUAD *pal = FreeImage_GetPalette(dib);
 
 			r = (uint16 *) _TIFFmalloc(sizeof(uint16) * 3 * nColors);
@@ -1874,7 +1872,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		// and save them in the TIF
 		// -------------------------------------
 		
-		pitch = FreeImage_GetPitch(dib);
+		pitch = (uint16)FreeImage_GetPitch(dib);
 
 		if(image_type == FIT_BITMAP) {
 			// standard bitmap type

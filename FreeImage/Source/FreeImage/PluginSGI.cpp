@@ -214,7 +214,7 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
-	int width, height, zsize;
+	int width = 0, height = 0, zsize = 0;
 	int i, dim;
 	int bitcount;
 	SGIHeader sgiHeader;

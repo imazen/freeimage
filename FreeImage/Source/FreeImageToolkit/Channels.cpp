@@ -63,7 +63,7 @@ FreeImage_GetChannel(FIBITMAP *src, FREE_IMAGE_COLOR_CHANNEL channel) {
 		// build a greyscale palette
 		RGBQUAD *pal = FreeImage_GetPalette(dst);
 		for(int i = 0; i < 256; i++) {
-			pal[i].rgbBlue = pal[i].rgbGreen = pal[i].rgbRed = i;
+			pal[i].rgbBlue = pal[i].rgbGreen = pal[i].rgbRed = (BYTE)i;
 		}
 
 		// perform extraction

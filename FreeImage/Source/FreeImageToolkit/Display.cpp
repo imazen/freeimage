@@ -61,10 +61,13 @@ FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP
 
 	
 	int x, y, c;
-	BYTE alpha, not_alpha;
+	BYTE alpha = 0, not_alpha;
 	BYTE index;
 	RGBQUAD fgc;	// foreground color
 	RGBQUAD bkc;	// background color
+
+	memset(&fgc, 0, sizeof(RGBQUAD));
+	memset(&bkc, 0, sizeof(RGBQUAD));
 
 	// allocate the composite image
 	FIBITMAP *composite = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
@@ -141,9 +144,9 @@ FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP
 					// use a checkerboard pattern
 					c = (((y & 0x8) == 0) ^ ((x & 0x8) == 0)) * 192;
 					c = c ? c : 255;
-					bkc.rgbBlue  = c;
-					bkc.rgbGreen = c;
-					bkc.rgbRed   = c;
+					bkc.rgbBlue  = (BYTE)c;
+					bkc.rgbGreen = (BYTE)c;
+					bkc.rgbRed   = (BYTE)c;
 				}
 			}
 

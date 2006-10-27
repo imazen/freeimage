@@ -391,7 +391,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						for (unsigned x = 0; x < width; x++) {
 							for (unsigned n = 0; n < planes; n++) {
-								BYTE bit = src[n * plane_size + (x / 8)] >> ((x^7) & 7);
+								BYTE bit = (BYTE)( src[n * plane_size + (x / 8)] >> ((x^7) & 7) );
 
 								dest[x * pixel_size + (n / 8)] |= (bit & 1) << (n & 7);
 							}

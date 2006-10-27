@@ -464,7 +464,7 @@ rgbe_WriteBytes_RLE(FreeImageIO *io, fi_handle handle, BYTE *data, int numbytes)
 		}
 		// if data before next big run is a short run then write it as such 
 		if ((old_run_count > 1)&&(old_run_count == beg_run - cur)) {
-			buf[0] = 128 + old_run_count;   // write short run
+			buf[0] = (BYTE)(128 + old_run_count);   // write short run
 			buf[1] = data[cur];
 			if(io->write_proc(buf, 2 * sizeof(BYTE), 1, handle) < 1)
 				return rgbe_Error(rgbe_write_error, NULL);
@@ -475,7 +475,7 @@ rgbe_WriteBytes_RLE(FreeImageIO *io, fi_handle handle, BYTE *data, int numbytes)
 			nonrun_count = beg_run - cur;
 			if (nonrun_count > 128) 
 				nonrun_count = 128;
-			buf[0] = nonrun_count;
+			buf[0] = (BYTE)nonrun_count;
 			if(io->write_proc(buf, sizeof(buf[0]), 1, handle) < 1)
 				return rgbe_Error(rgbe_write_error,NULL);
 			if(io->write_proc(&data[cur], sizeof(data[0]) * nonrun_count, 1, handle) < 1)
@@ -484,7 +484,7 @@ rgbe_WriteBytes_RLE(FreeImageIO *io, fi_handle handle, BYTE *data, int numbytes)
 		}
 		// write out next run if one was found 
 		if (run_count >= MINRUNLENGTH) {
-			buf[0] = 128 + run_count;
+			buf[0] = (BYTE)(128 + run_count);
 			buf[1] = data[beg_run];
 			if(io->write_proc(buf, sizeof(buf[0]) * 2, 1, handle) < 1)
 				return rgbe_Error(rgbe_write_error,NULL);
@@ -510,10 +510,10 @@ rgbe_WritePixels_RLE(FreeImageIO *io, fi_handle handle, FIRGBF *data, unsigned s
 		return rgbe_WritePixels(io, handle, data, scanline_width * num_scanlines);
 	}
 	while(num_scanlines-- > 0) {
-		rgbe[0] = 2;
-		rgbe[1] = 2;
-		rgbe[2] = scanline_width >> 8;
-		rgbe[3] = scanline_width & 0xFF;
+		rgbe[0] = (BYTE)2;
+		rgbe[1] = (BYTE)2;
+		rgbe[2] = (BYTE)(scanline_width >> 8);
+		rgbe[3] = (BYTE)(scanline_width & 0xFF);
 		if(io->write_proc(rgbe, sizeof(rgbe), 1, handle) < 1) {
 			free(buffer);
 			return rgbe_Error(rgbe_write_error, NULL);

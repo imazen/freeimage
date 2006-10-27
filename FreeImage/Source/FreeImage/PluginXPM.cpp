@@ -163,7 +163,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			throw "Could not find starting brace";
 
 		//read info string
-		if( !(str = ReadString(io, handle)) )
+		str = ReadString(io, handle);
+		if(!str)
 			throw "Error reading info string";
 
 		int width, height, colors, cpp;
@@ -184,7 +185,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		for(int i = 0; i < colors; i++ ) {
 			FILE_RGBA rgba;
 
-			if( !(str = ReadString(io, handle)) )
+			str = ReadString(io, handle);
+			if(!str)
 				throw "Error reading color strings";
 
 			std::string chrs(str,cpp); //create a string for the color chars using the first cpp chars
@@ -202,7 +204,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				char *clr = strstr(keys," c ") + 3;
 				while( *clr == ' ' ) clr++; //find the start of the hex rgb value
 				if( *clr == '#' ) {
-					int red,green,blue,n;
+					int red = 0, green = 0, blue = 0, n;
 					clr++;
 					//end string at first space, if any found
 					if( strchr(clr,' ') )
@@ -234,9 +236,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						free(str);
 						throw "Improperly formed hex color value";
 					}
-					rgba.r = red;
-					rgba.g = green;
-					rgba.b = blue;
+					rgba.r = (BYTE)red;
+					rgba.g = (BYTE)green;
+					rgba.b = (BYTE)blue;
 				} else if( !strncmp(clr,"None",4) || !strncmp(clr,"none",4) ) {
 					rgba.r = rgba.g = rgba.b = 0xFF;
 				} else {
@@ -275,7 +277,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 
 			//add color to map
-			rgba.a = (colors > 256) ? 0 : i;
+			rgba.a = (BYTE)((colors > 256) ? 0 : i);
 			rawpal[chrs] = rgba;
 
 			//build palette if needed
@@ -293,7 +295,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		//read in pixel data
 		for(int y = 0; y < height; y++ ) {
 			BYTE *line = FreeImage_GetScanLine(dib, height - y - 1);
-			if( !(str = ReadString(io, handle)) )
+			str = ReadString(io, handle);
+			if(!str)
 				throw "Error reading pixel strings";
 			char *pixel_ptr = str;
 
@@ -328,7 +331,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
        return NULL;
     }
-    return NULL;
 }
 
 static BOOL DLL_CALLCONV

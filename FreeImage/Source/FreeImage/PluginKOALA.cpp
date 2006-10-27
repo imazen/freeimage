@@ -166,9 +166,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			RGBQUAD *palette = FreeImage_GetPalette(dib);
 
 			for (int i = 0; i < 16; i++) {
-				palette[i].rgbBlue = c64colours[i].b;
-				palette[i].rgbGreen = c64colours[i].g;
-				palette[i].rgbRed = c64colours[i].r;
+				palette[i].rgbBlue  = (BYTE)c64colours[i].b;
+				palette[i].rgbGreen = (BYTE)c64colours[i].g;
+				palette[i].rgbRed   = (BYTE)c64colours[i].r;
 			}
 
 			// write out bitmap data
@@ -238,5 +238,6 @@ InitKOALA(Plugin *plugin, int format_id) {
 	plugin->validate_proc = Validate;
 	plugin->mime_proc = MimeType;
 	plugin->supports_export_bpp_proc = SupportsExportDepth;
+	plugin->supports_export_type_proc = SupportsExportType;
 	plugin->supports_icc_profiles_proc = NULL;
 }

@@ -206,7 +206,7 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
-	char id_one, id_two;
+	char id_one = 0, id_two = 0;
 	int x, y;
 	FIBITMAP *dib = NULL;
 	RGBQUAD *pal;	// pointer to dib palette
@@ -327,7 +327,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					for (i = 0; i < 256; i++) {
 						pal[i].rgbRed	=
 						pal[i].rgbGreen =
-						pal[i].rgbBlue	= i;
+						pal[i].rgbBlue	= (BYTE)i;
 					}
 
 					// write the bitmap data
@@ -356,7 +356,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						}
 					}
 				}
-				else if(image_type = FIT_UINT16) {
+				else if(image_type == FIT_UINT16) {
 					// write the bitmap data
 
 					if(id_two == '2') {		// ASCII greymap

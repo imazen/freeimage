@@ -201,7 +201,7 @@ BOOL DLL_CALLCONV
 FreeImage_SetTagType(FITAG *tag, FREE_IMAGE_MDTYPE type) {
 	if(tag) {
 		FITAGHEADER *tag_header = (FITAGHEADER *)tag->data;
-		tag_header->type = type;
+		tag_header->type = (WORD)type;
 		return TRUE;
 	}
 	return FALSE;

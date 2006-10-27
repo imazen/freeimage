@@ -281,9 +281,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						int numcolors = 1 << header.depth;
 
 						for (int i = 0; i < numcolors; i++) {
-							pal[i].rgbRed	= (255 * i) / (numcolors - 1);
-							pal[i].rgbGreen = (255 * i) / (numcolors - 1);
-							pal[i].rgbBlue	= (255 * i) / (numcolors - 1);
+							pal[i].rgbRed	= (BYTE)((255 * i) / (numcolors - 1));
+							pal[i].rgbGreen = (BYTE)((255 * i) / (numcolors - 1));
+							pal[i].rgbBlue	= (BYTE)((255 * i) / (numcolors - 1));
 						}
 					}
 

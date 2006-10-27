@@ -85,7 +85,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 
 		// process the tag
 
-		tag_id = tagType | (directoryType << 8);
+		tag_id = (WORD)(tagType | (directoryType << 8));
 
 		FreeImage_SetTagID(tag, tag_id);
 		FreeImage_SetTagLength(tag, tagByteCount);

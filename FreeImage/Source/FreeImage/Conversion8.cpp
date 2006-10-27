@@ -124,9 +124,9 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 		RGBQUAD *new_pal = FreeImage_GetPalette(new_dib);
 
 		for(int i = 0; i < 256; i++) {
-			new_pal[i].rgbRed	= i;
-			new_pal[i].rgbGreen = i;
-			new_pal[i].rgbBlue	= i;
+			new_pal[i].rgbRed	= (BYTE)i;
+			new_pal[i].rgbGreen = (BYTE)i;
+			new_pal[i].rgbBlue	= (BYTE)i;
 		}
 
 		if(image_type == FIT_BITMAP) {
@@ -148,7 +148,7 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 						// Reverse the grayscale palette
 
 						for(int i = 0; i < 256; i++) {
-							new_pal[i].rgbRed = new_pal[i].rgbGreen = new_pal[i].rgbBlue = 255 - i;
+							new_pal[i].rgbRed = new_pal[i].rgbGreen = new_pal[i].rgbBlue = (BYTE)(255 - i);
 						}
 					}
 
@@ -266,9 +266,9 @@ FreeImage_ConvertToGreyscale(FIBITMAP *dib) {
 		RGBQUAD *new_pal = FreeImage_GetPalette(new_dib);
 
 		for(int i = 0; i < 256; i++) {
-			new_pal[i].rgbRed	= i;
-			new_pal[i].rgbGreen = i;
-			new_pal[i].rgbBlue	= i;
+			new_pal[i].rgbRed	= (BYTE)i;
+			new_pal[i].rgbGreen = (BYTE)i;
+			new_pal[i].rgbBlue	= (BYTE)i;
 		}
 
 		// allocate a 24-bit buffer

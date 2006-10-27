@@ -72,8 +72,8 @@ FreeImage_strnicmp(const char *s1, const char *s2, size_t len) {
 				break;
 			if (c1 == c2)
 				continue;
-			c1 = tolower(c1);
-			c2 = tolower(c2);
+			c1 = (BYTE)tolower(c1);
+			c2 = (BYTE)tolower(c2);
 			if (c1 != c2)
 				break;
 		} while (--len);
@@ -136,7 +136,7 @@ Process a IFD offset
 Returns the offset and the metadata model for this tag
 */
 static void 
-processIFDOffset(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *subdirOffset, TagLib::MDMODEL *md_model) {
+processIFDOffset(FITAG *tag, char *pval, BOOL msb_order, DWORD *subdirOffset, TagLib::MDMODEL *md_model) {
 	// get the IFD offset
 	*subdirOffset = (DWORD) ReadUint32(msb_order, pval);
 
@@ -160,7 +160,7 @@ Process a maker note IFD offset
 Returns the offset and the metadata model for this tag
 */
 static void 
-processMakerNote(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, DWORD *subdirOffset, TagLib::MDMODEL *md_model) {
+processMakerNote(FIBITMAP *dib, char *pval, BOOL msb_order, DWORD *subdirOffset, TagLib::MDMODEL *md_model) {
 	FITAG *tagMake = NULL;
 
 	*subdirOffset = 0;
@@ -296,7 +296,7 @@ processCanonMakerNoteTag(FIBITMAP *dib, FITAG *tag) {
 			FITAG *canonTag = FreeImage_CreateTag();
 			if(!canonTag) return;
 
-			tag_id = subTagTypeBase + (WORD)i;
+			tag_id = (WORD)(subTagTypeBase + i);
 
 			FreeImage_SetTagID(canonTag, tag_id);
 			FreeImage_SetTagType(canonTag, FIDT_SHORT);
@@ -528,7 +528,7 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 			// get number of components
 			FreeImage_SetTagCount(tag, ReadUint32(msb_order, pde + 4));
 			// get the size of the tag value in bytes
-			FreeImage_SetTagLength(tag, FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth(FreeImage_GetTagType(tag)));
+			FreeImage_SetTagLength(tag, FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth((WORD)FreeImage_GetTagType(tag)));
 
 			if(FreeImage_GetTagLength(tag) <= 4) {
 				// 4 bytes or less and value is in the dir entry itself
@@ -564,10 +564,10 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 				
 				// get offset and metadata model
 				if (FreeImage_GetTagID(tag) == TAG_MAKER_NOTE) {
-					processMakerNote(dib, tag, pval, msb_order, &sub_offset, &next_mdmodel);
+					processMakerNote(dib, pval, msb_order, &sub_offset, &next_mdmodel);
 					next_ifd = (BYTE*)pval + sub_offset;
 				} else {
-					processIFDOffset(dib, tag, pval, msb_order, &sub_offset, &next_mdmodel);
+					processIFDOffset(tag, pval, msb_order, &sub_offset, &next_mdmodel);
 					next_ifd = (BYTE*)tiffp + sub_offset;
 				}
 

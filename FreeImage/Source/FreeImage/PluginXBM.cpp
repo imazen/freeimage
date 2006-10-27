@@ -209,9 +209,9 @@ readXBMFile(FreeImageIO *io, fi_handle handle, int *widthP, int *heightP, char *
 			value2 = ( hex_table[c1] << 4 ) + hex_table[c2];
 			if ( value2 >= 256 )
 				return( ERR_XBM_SYNTAX );
-			*ptr++ = value2;
+			*ptr++ = (char)value2;
 			if ( ( ! padding ) || ( ( bytes + 2 ) % bytes_per_line ) )
-				*ptr++ = value1;
+				*ptr++ = (char)value1;
 		}
 	}
 	else {
@@ -247,7 +247,7 @@ readXBMFile(FreeImageIO *io, fi_handle handle, int *widthP, int *heightP, char *
 				}
 				else break;
 			}
-			*ptr++ = value1;
+			*ptr++ = (char)value1;
 		}
 	}
 
@@ -369,8 +369,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		FreeImage_OutputMessageProc(s_format_id, text);
 		return NULL;
 	}
-
-	return NULL;
 }
 
 

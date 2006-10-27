@@ -271,7 +271,7 @@ FreeImage_TmoDrago03(FIBITMAP *src, double gamma, double exposure) {
 	if(!src) return NULL;
 
 	// working RGBF variable
-	FIBITMAP *dib = NULL, *Y = NULL;
+	FIBITMAP *dib = NULL;
 
 	dib = FreeImage_ConvertToRGBF(src);
 	if(!dib) return NULL;

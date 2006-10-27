@@ -127,9 +127,11 @@ Combine4(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) {
 
 		for (int j = 0; j < 16; j++)	{
 			// calculates the color difference using a Manhattan distance
-			WORD abs_diff = abs(src_pal[i].rgbBlue - dst_pal[j].rgbBlue)
-				          + abs(src_pal[i].rgbGreen - dst_pal[j].rgbGreen)
-				          + abs(src_pal[i].rgbRed - dst_pal[j].rgbRed);
+			WORD abs_diff = (WORD)(
+				abs(src_pal[i].rgbBlue - dst_pal[j].rgbBlue)
+				+ abs(src_pal[i].rgbGreen - dst_pal[j].rgbGreen)
+				+ abs(src_pal[i].rgbRed - dst_pal[j].rgbRed)
+				);
 
 			if (abs_diff < min_diff)	{
 				swapTable[i] = j;
@@ -147,9 +149,9 @@ Combine4(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) {
 	// combine images
 
 	// allocate space for our temporary row
-	WORD src_line   = FreeImage_GetLine(src_dib);
-	WORD src_width  = FreeImage_GetWidth(src_dib);
-	WORD src_height = FreeImage_GetHeight(src_dib);
+	unsigned src_line   = FreeImage_GetLine(src_dib);
+	unsigned src_width  = FreeImage_GetWidth(src_dib);
+	unsigned src_height = FreeImage_GetHeight(src_dib);
 
 	BYTE *buffer = (BYTE *)malloc(src_line * sizeof(BYTE));
 	if (buffer == NULL) {
@@ -171,7 +173,7 @@ Combine4(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) {
 		// change the values in the temp row to be those from the swap table
 		
 		for (WORD cols = 0; cols < src_line; cols++) {
-			buffer[cols] = (swapTable[HINIBBLE(buffer[cols]) >> 4] << 4) + swapTable[LOWNIBBLE(buffer[cols])];
+			buffer[cols] = (BYTE)((swapTable[HINIBBLE(buffer[cols]) >> 4] << 4) + swapTable[LOWNIBBLE(buffer[cols])]);
 		}
 
 		if (bOddStart) {	
@@ -273,13 +275,13 @@ Combine16_555(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) 
 
 				// convert 16-bit colors to 24-bit
 
-				color_s.rgbtRed = ((*tmp1 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) << 3;
-				color_s.rgbtGreen = ((*tmp1 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) << 3;
-				color_s.rgbtBlue = ((*tmp1 & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) << 3;
+				color_s.rgbtRed = (BYTE)(((*tmp1 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) << 3);
+				color_s.rgbtGreen = (BYTE)(((*tmp1 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) << 3);
+				color_s.rgbtBlue = (BYTE)(((*tmp1 & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) << 3);
 
-				color_t.rgbtRed = ((*tmp2 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) << 3;
-				color_t.rgbtGreen = ((*tmp2 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) << 3;
-				color_t.rgbtBlue = ((*tmp2 & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) << 3;
+				color_t.rgbtRed = (BYTE)(((*tmp2 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) << 3);
+				color_t.rgbtGreen = (BYTE)(((*tmp2 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) << 3);
+				color_t.rgbtBlue = (BYTE)(((*tmp2 & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) << 3);
 
 				// alpha blend
 
@@ -333,13 +335,13 @@ Combine16_565(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) 
 
 				// convert 16-bit colors to 24-bit
 
-				color_s.rgbtRed = ((*tmp1 & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) << 3;
-				color_s.rgbtGreen = ((*tmp1 & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) << 2;
-				color_s.rgbtBlue = ((*tmp1 & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) << 3;
+				color_s.rgbtRed = (BYTE)(((*tmp1 & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) << 3);
+				color_s.rgbtGreen = (BYTE)(((*tmp1 & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) << 2);
+				color_s.rgbtBlue = (BYTE)(((*tmp1 & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) << 3);
 
-				color_t.rgbtRed = ((*tmp2 & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) << 3;
-				color_t.rgbtGreen = ((*tmp2 & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) << 2;
-				color_t.rgbtBlue = ((*tmp2 & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) << 3;
+				color_t.rgbtRed = (BYTE)(((*tmp2 & FI16_565_RED_MASK) >> FI16_565_RED_SHIFT) << 3);
+				color_t.rgbtGreen = (BYTE)(((*tmp2 & FI16_565_GREEN_MASK) >> FI16_565_GREEN_SHIFT) << 2);
+				color_t.rgbtBlue = (BYTE)(((*tmp2 & FI16_565_BLUE_MASK) >> FI16_565_BLUE_SHIFT) << 3);
 
 				// alpha blend
 
@@ -643,27 +645,27 @@ FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha) {
 	// paste src to dst
 	switch(FreeImage_GetBPP(dst)) {
 		case 1:
-			bResult = Combine1(dst, clone, left, top, alpha);
+			bResult = Combine1(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
 			break;
 		case 4:
-			bResult = Combine4(dst, clone, left, top, alpha);
+			bResult = Combine4(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
 			break;
 		case 8:
-			bResult = Combine8(dst, clone, left, top, alpha);
+			bResult = Combine8(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
 			break;
 		case 16:
 			if (isRGB565) {
-				bResult = Combine16_565(dst, clone, left, top, alpha);
+				bResult = Combine16_565(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
 			} else {
 				// includes case where all the masks are 0
-				bResult = Combine16_555(dst, clone, left, top, alpha);
+				bResult = Combine16_555(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
 			}
 			break;
 		case 24:
-			bResult = Combine24(dst, clone, left, top, alpha);
+			bResult = Combine24(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
 			break;
 		case 32:
-			bResult = Combine32(dst, clone, left, top, alpha);
+			bResult = Combine32(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
 			break;
 	}
 

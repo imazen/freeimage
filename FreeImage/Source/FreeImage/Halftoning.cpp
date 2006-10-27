@@ -174,7 +174,7 @@ static FIBITMAP* OrderedDispersedDot(FIBITMAP *dib, int order) {
 	int l = (1 << order);
 	BYTE *matrix = (BYTE*)malloc(l*l * sizeof(BYTE));
 	for(int i = 0; i < l*l; i++) {
-		matrix[i] = dithervalue(i / l, i % l, order);
+		matrix[i] = (BYTE)dithervalue(i / l, i % l, order);
 	}
 
 	// perform the dithering
@@ -376,9 +376,9 @@ FreeImage_Dither(FIBITMAP *dib, FREE_IMAGE_DITHER algorithm) {
 	// Build a greyscale palette (needed by threshold)
 	RGBQUAD *grey_pal = FreeImage_GetPalette(dib8);
 	for(int i = 0; i < 256; i++) {
-		grey_pal[i].rgbRed	= i;
-		grey_pal[i].rgbGreen = i;
-		grey_pal[i].rgbBlue	= i;
+		grey_pal[i].rgbRed	= (BYTE)i;
+		grey_pal[i].rgbGreen = (BYTE)i;
+		grey_pal[i].rgbBlue	= (BYTE)i;
 	}
 
 	// Convert to 1-bit

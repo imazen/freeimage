@@ -268,8 +268,6 @@ FreeImage_JPEGTransform(const char *src_file, const char *dst_file, FREE_IMAGE_J
 		FreeImage_OutputMessageProc(FIF_JPEG, text);
 		return FALSE;
 	}
-
-	return FALSE;
 }
 
 BOOL DLL_CALLCONV 
@@ -300,6 +298,4 @@ FreeImage_JPEGCrop(const char *src_file, const char *dst_file, int left, int top
 		FreeImage_OutputMessageProc(FIF_JPEG, text);
 		return FALSE;
 	}
-
-	return FALSE;
 }

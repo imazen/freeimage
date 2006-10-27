@@ -221,7 +221,7 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 // ----------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *dataa) {
+Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	WORD x, y, width, height;
 	FIBITMAP *dib;
     BYTE *bits;		// pointer to dib data
@@ -315,8 +315,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			WBMPHEADER header;
 			header.TypeField = 0;								// Type 0: B/W, no compression
 			header.FixHeaderField = 0;							// No ExtHeaderField
-			header.Width = FreeImage_GetWidth(dib);		// Image width
-			header.Height = FreeImage_GetHeight(dib);	// Image height
+			header.Width = (WORD)FreeImage_GetWidth(dib);		// Image width
+			header.Height = (WORD)FreeImage_GetHeight(dib);		// Image height
 
 			multiByteWrite(io, handle, header.TypeField);
 			
@@ -327,7 +327,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			// write the bitmap data
 
-			WORD linelength = FreeImage_GetLine(dib);
+			WORD linelength = (WORD)FreeImage_GetLine(dib);
 
 			for (WORD y = 0; y < header.Height; y++) {
 				bits = FreeImage_GetScanLine(dib, header.Height - 1 - y);

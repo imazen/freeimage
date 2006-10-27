@@ -158,9 +158,9 @@ FreeImage_ConvertTo4Bits(FIBITMAP *dib) {
 		RGBQUAD *new_pal = FreeImage_GetPalette(new_dib);
 
 		for(int i = 0; i < 16; i++) {
-			new_pal[i].rgbRed	= (i << 4) + i;
-			new_pal[i].rgbGreen = (i << 4) + i;
-			new_pal[i].rgbBlue	= (i << 4) + i;
+			new_pal[i].rgbRed	= (BYTE)((i << 4) + i);
+			new_pal[i].rgbGreen = (BYTE)((i << 4) + i);
+			new_pal[i].rgbBlue	= (BYTE)((i << 4) + i);
 		}
 
 		switch(bpp) {
@@ -180,7 +180,7 @@ FreeImage_ConvertTo4Bits(FIBITMAP *dib) {
 					// Reverse the grayscale palette
 
 					for(int i = 0; i < 16; i++) {
-						new_pal[i].rgbRed = new_pal[i].rgbGreen = new_pal[i].rgbBlue = 255 - ((i << 4) + i);
+						new_pal[i].rgbRed = new_pal[i].rgbGreen = new_pal[i].rgbBlue = (BYTE)(255 - ((i << 4) + i));
 					}
 				}
 

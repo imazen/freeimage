@@ -92,7 +92,7 @@ G3GetFileSize(FreeImageIO *io, fi_handle handle) {
 
 static BOOL 
 G3ReadFile(FreeImageIO *io, fi_handle handle, tidata_t tif_rawdata, tsize_t tif_rawdatasize) {
-	return ((io->read_proc(tif_rawdata, tif_rawdatasize, 1, handle) * tif_rawdatasize) == tif_rawdatasize);
+	return ((tsize_t)(io->read_proc(tif_rawdata, tif_rawdatasize, 1, handle) * tif_rawdatasize) == tif_rawdatasize);
 }
 
 // ==========================================================
@@ -236,7 +236,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	FIBITMAP *dib = NULL;
 	FIMEMORY *memory = NULL;
 
-	int	verbose = 0;
+	//int verbose = 0;
 	int	stretch = 0;
 	int rows;
 	float resX = 204.0;

@@ -212,9 +212,9 @@ GetBlockColors (const DXTColBlock &block, Color8888 colors[4], bool isDXT1) {
 	int i;
 	for (i = 0; i < 2; i++)	{
 		colors[i].a = 0xff;
-		colors[i].r = block.colors[i].r * 0xff / 0x1f;
-		colors[i].g = block.colors[i].g * 0xff / 0x3f;
-		colors[i].b = block.colors[i].b * 0xff / 0x1f;
+		colors[i].r = (BYTE)(block.colors[i].r * 0xff / 0x1f);
+		colors[i].g = (BYTE)(block.colors[i].g * 0xff / 0x3f);
+		colors[i].b = (BYTE)(block.colors[i].b * 0xff / 0x1f);
 	}
 
 	WORD *wCol = (WORD *)block.colors;
@@ -222,17 +222,17 @@ GetBlockColors (const DXTColBlock &block, Color8888 colors[4], bool isDXT1) {
 		// 4 color block
 		for (i = 0; i < 2; i++)	{
 			colors[i + 2].a = 0xff;
-			colors[i + 2].r = (WORD (colors[0].r) * (2 - i) + WORD (colors[1].r) * (1 + i)) / 3;
-			colors[i + 2].g = (WORD (colors[0].g) * (2 - i) + WORD (colors[1].g) * (1 + i)) / 3;
-			colors[i + 2].b = (WORD (colors[0].b) * (2 - i) + WORD (colors[1].b) * (1 + i)) / 3;
+			colors[i + 2].r = (BYTE)((WORD (colors[0].r) * (2 - i) + WORD (colors[1].r) * (1 + i)) / 3);
+			colors[i + 2].g = (BYTE)((WORD (colors[0].g) * (2 - i) + WORD (colors[1].g) * (1 + i)) / 3);
+			colors[i + 2].b = (BYTE)((WORD (colors[0].b) * (2 - i) + WORD (colors[1].b) * (1 + i)) / 3);
 		}
 	}
 	else {
 		// 3 color block, number 4 is transparent
 		colors[2].a = 0xff;
-		colors[2].r = (WORD (colors[0].r) + WORD (colors[1].r)) / 2;
-		colors[2].g = (WORD (colors[0].g) + WORD (colors[1].g)) / 2;
-		colors[2].b = (WORD (colors[0].b) + WORD (colors[1].b)) / 2;
+		colors[2].r = (BYTE)((WORD (colors[0].r) + WORD (colors[1].r)) / 2);
+		colors[2].g = (BYTE)((WORD (colors[0].g) + WORD (colors[1].g)) / 2);
+		colors[2].b = (BYTE)((WORD (colors[0].b) + WORD (colors[1].b)) / 2);
 
 		colors[3].a = 0x00;
 		colors[3].g = 0x00;
@@ -310,7 +310,7 @@ public:
 	void GetColor (int x, int y, Color8888 &color) {
 		base::GetColor (x, y, color);
 		const unsigned bits = (m_alphaRow >> (x * 4)) & 0xF;
-		color.a = (bits * 0xFF) / 0xF;
+		color.a = (BYTE)((bits * 0xFF) / 0xF);
 	}
 };
 
@@ -360,7 +360,7 @@ public:
 	void GetColor (int x, int y, Color8888 &color) {
 		base::GetColor (x, y, color);
 		unsigned bits = (m_alphaBits >> (x * 3 + m_offset)) & 7;
-		color.a = m_alphas[bits];
+		color.a = (BYTE)m_alphas[bits];
 	}
 };
 
@@ -433,13 +433,11 @@ LoadRGB (DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int page, int 
 }
 
 template <class DECODER> static void 
-LoadDXT_Helper (FreeImageIO *io, fi_handle handle, int page, int flags, void *data, FIBITMAP *dib, BYTE *bits, int width, int height, int line) {
+LoadDXT_Helper (FreeImageIO *io, fi_handle handle, int page, int flags, void *data, FIBITMAP *dib, int width, int height, int line) {
 	typedef typename DECODER::INFO INFO;
 	typedef typename INFO::Block Block;
 
 	Block *input_buffer = new Block[(width + 3) / 4];
-	int widthFullBlocks = width / 4;
-	int heightFullBlocks = height / 4;
 	int widthRest = (int) width & 3;
 	int heightRest = (int) height & 3;
 	int inputLine = (width + 3) / 4;
@@ -503,13 +501,13 @@ LoadDXT (int type, DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int 
 	// select the right decoder
 	switch (type) {
 		case 1:
-			LoadDXT_Helper <DXT_BLOCKDECODER_1> (io, handle, page, flags, data, dib, bits, width, height, line);
+			LoadDXT_Helper <DXT_BLOCKDECODER_1> (io, handle, page, flags, data, dib, width, height, line);
 			break;
 		case 3:
-			LoadDXT_Helper <DXT_BLOCKDECODER_3> (io, handle, page, flags, data, dib, bits, width, height, line);
+			LoadDXT_Helper <DXT_BLOCKDECODER_3> (io, handle, page, flags, data, dib, width, height, line);
 			break;
 		case 5:
-			LoadDXT_Helper <DXT_BLOCKDECODER_5> (io, handle, page, flags, data, dib, bits, width, height, line);
+			LoadDXT_Helper <DXT_BLOCKDECODER_5> (io, handle, page, flags, data, dib, width, height, line);
 			break;
 	}
 	
@@ -612,10 +610,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	return dib;
 }
 
+/*
 static BOOL DLL_CALLCONV
 Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data) {
 	return FALSE;
 }
+*/
 
 // ==========================================================
 //   Init

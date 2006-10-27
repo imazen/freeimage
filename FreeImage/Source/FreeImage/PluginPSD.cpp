@@ -31,19 +31,19 @@
 
 #define BP_START(DIB, WIDTH, HEIGHT) \
 	int xxxscanline = 0; \
-	unsigned *xxxbits = (unsigned *)FreeImage_GetScanLine(DIB, HEIGHT - 1 - xxxscanline); \
-	unsigned *xxxp = xxxbits;
+	RGBQUAD *xxxbits = (RGBQUAD *)FreeImage_GetScanLine(DIB, HEIGHT - 1 - xxxscanline); \
+	RGBQUAD *xxxp = xxxbits;
 
 #define BP_NEXT(DIB, WIDTH, HEIGHT) \
 	xxxp++; \
 	if (xxxp - xxxbits == WIDTH) { \
 		xxxscanline++; \
-		xxxbits = (unsigned *)FreeImage_GetScanLine(DIB, HEIGHT - 1 - xxxscanline); \
+		xxxbits = (RGBQUAD *)FreeImage_GetScanLine(DIB, HEIGHT - 1 - xxxscanline); \
 		xxxp = xxxbits; \
 	}
 
 #define BP_SETVALUE(VALUE, OFFSET) \
-	((unsigned char *)xxxp)[OFFSET] = VALUE;
+	((BYTE *)xxxp)[OFFSET] = (BYTE)VALUE;
 
 // ==========================================================
 // Internal functions

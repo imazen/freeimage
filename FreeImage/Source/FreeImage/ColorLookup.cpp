@@ -77,7 +77,7 @@ FreeImage_LookupNamedColor(const char *szColor, const NamedColor *color_array, i
         if (isspace(szColor[i]))
             continue;
         if (isupper(szColor[i]))
-            color[i] = tolower(szColor[i]);
+            color[i] = (char)tolower(szColor[i]);
         else
             color[i] = szColor[i];
     }
@@ -572,7 +572,7 @@ FreeImage_LookupX11Color(const char *szColor, BYTE *nRed, BYTE *nGreen, BYTE *nB
 
         // grey<num>, or gray<num>, num 1...100
         i = strtol(szColor+4, NULL, 10);
-        *nRed   = (int)(255.0/100.0 * i);
+        *nRed   = (BYTE)(255.0/100.0 * i);
         *nGreen = *nRed;
         *nBlue  = *nRed;
 
@@ -766,7 +766,7 @@ FreeImage_LookupSVGColor(const char *szColor, BYTE *nRed, BYTE *nGreen, BYTE *nB
 
         // grey<num>, or gray<num>, num 1...100
         i = strtol(szColor+4, NULL, 10);
-        *nRed   = (int)(255.0/100.0 * i);
+        *nRed   = (BYTE)(255.0/100.0 * i);
         *nGreen = *nRed;
         *nBlue  = *nRed;
         return TRUE;

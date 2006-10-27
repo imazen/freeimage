@@ -241,7 +241,7 @@ FreeImage_AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp, unsign
 			bih->biHeight           = height;
 			bih->biPlanes           = 1;
 			bih->biCompression      = 0;
-			bih->biBitCount         = bpp;
+			bih->biBitCount         = (WORD)bpp;
 			bih->biClrUsed          = CalculateUsedPaletteEntries(bpp);
 			bih->biClrImportant     = bih->biClrUsed;
 			bih->biXPelsPerMeter	= 2835;	// 72 dpi
@@ -506,7 +506,7 @@ FreeImage_GetBackgroundColor(FIBITMAP *dib, RGBQUAD *bkcolor) {
 					if(bkgnd_color->rgbRed == pal[i].rgbRed) {
 						if(bkgnd_color->rgbGreen == pal[i].rgbGreen) {
 							if(bkgnd_color->rgbBlue == pal[i].rgbBlue) {
-								bkcolor->rgbReserved = i;
+								bkcolor->rgbReserved = (BYTE)i;
 								return TRUE;
 							}
 						}
@@ -609,8 +609,11 @@ FreeImage_CreateICCProfile(FIBITMAP *dib, void *data, long size) {
 	FreeImage_DestroyICCProfile(dib);
 	// create the new profile
 	FIICCPROFILE *profile = FreeImage_GetICCProfile(dib);
-	if (size && (profile->data = malloc(size))) {
-		memcpy(profile->data, data, profile->size = size);
+	if(size) {
+		profile->data = malloc(size);
+		if(profile->data) {
+			memcpy(profile->data, data, profile->size = size);
+		}
 	}
 	return profile;
 }
@@ -819,7 +822,7 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 				// set the tag key
 				FreeImage_SetTagKey(tag, key);
 			}
-			if(FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth(FreeImage_GetTagType(tag)) != FreeImage_GetTagLength(tag)) {
+			if(FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth((WORD)FreeImage_GetTagType(tag)) != FreeImage_GetTagLength(tag)) {
 				FreeImage_OutputMessageProc(FIF_UNKNOWN, "Invalid data count for tag '%s'", key);
 				return FALSE;
 			}

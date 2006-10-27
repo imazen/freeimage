@@ -125,7 +125,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		RGBQUAD *palette = FreeImage_GetPalette(dib);
 
 		for (int j = 0; j < 256; ++j)
-			palette[j].rgbBlue = palette[j].rgbGreen = palette[j].rgbRed = j;
+			palette[j].rgbBlue = palette[j].rgbGreen = palette[j].rgbRed = (BYTE)j;
 
 		// unpack the RLE bitmap bits
 

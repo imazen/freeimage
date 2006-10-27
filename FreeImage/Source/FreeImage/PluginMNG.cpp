@@ -125,7 +125,7 @@ mymngerror(mng_handle mng, mng_int32 code, mng_int8 severity, mng_chunkid chunkt
 		sprintf(msg, "Error %d reported by libmng", code);
 	}
 	throw (const char *)msg;
-	return MNG_TRUE; // not really neccessary but keeps VC5 happy
+	//return MNG_TRUE; // not really neccessary but keeps VC5 happy
 }
 
 // ==========================================================

@@ -186,9 +186,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				YUV2RGB(yl[i][x], cbcr[x / 2], cbcr[(width / 2) + (x / 2)], r, g, b);
 
-				img[FI_RGBA_BLUE] = b;
-				img[FI_RGBA_GREEN] = g;
-				img[FI_RGBA_RED] = r;
+				img[FI_RGBA_BLUE]  = (BYTE)b;
+				img[FI_RGBA_GREEN] = (BYTE)g;
+				img[FI_RGBA_RED]   = (BYTE)r;
 				img += 3;
 			}
 

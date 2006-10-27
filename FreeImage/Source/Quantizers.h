@@ -49,8 +49,8 @@ protected:
 	WORD *Qadd;
 
 	// DIB data
-	WORD width, height;
-	WORD pitch;
+	unsigned width, height;
+	unsigned pitch;
 	FIBITMAP *m_dib;
 
 protected:

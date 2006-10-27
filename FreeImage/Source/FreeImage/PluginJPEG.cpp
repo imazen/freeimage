@@ -712,7 +712,7 @@ jpeg_write_icc_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 */
 static BOOL  
 jpeg_write_iptc_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
-	const char *ps_header = "Photoshop 3.0\x08BIM\x04\x04\x0\x0\x0\x0";
+	//const char *ps_header = "Photoshop 3.0\x08BIM\x04\x04\x0\x0\x0\x0";
 	const unsigned tag_length = 26;
 
 	if(FreeImage_GetMetadataCount(FIMD_IPTC, dib)) {
@@ -936,9 +936,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					RGBQUAD *colors = FreeImage_GetPalette(dib);
 
 					for (int i = 0; i < 256; i++) {
-						colors[i].rgbRed   = i;
-						colors[i].rgbGreen = i;
-						colors[i].rgbBlue  = i;
+						colors[i].rgbRed   = (BYTE)i;
+						colors[i].rgbGreen = (BYTE)i;
+						colors[i].rgbBlue  = (BYTE)i;
 					}
 				}
 			}
@@ -1049,7 +1049,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			const char *sError = "only 24-bit highcolor or 8-bit greyscale/palette bitmaps can be saved as JPEG";
 
 			FREE_IMAGE_COLOR_TYPE color_type = FreeImage_GetColorType(dib);
-			WORD bpp = FreeImage_GetBPP(dib);
+			WORD bpp = (WORD)FreeImage_GetBPP(dib);
 
 			if ((bpp != 24) && (bpp != 8))
 				throw sError;

@@ -285,9 +285,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						// no color-map data is included with this image ...
 						// build a greyscale palette
 						for (unsigned i = 0; i < 256; i++) {
-							palette[i].rgbRed	= i;
-							palette[i].rgbGreen = i;
-							palette[i].rgbBlue	= i;
+							palette[i].rgbRed	= (BYTE)i;
+							palette[i].rgbGreen = (BYTE)i;
+							palette[i].rgbBlue	= (BYTE)i;
 						}
 					}
 					else {
@@ -305,9 +305,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							{
 								WORD *rgb555 = (WORD*)&cmap[0];
 								for (count = header.cm_first_entry; count < header.cm_length; count++) {						
-									palette[count].rgbRed = (((*rgb555 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
-									palette[count].rgbGreen = (((*rgb555 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-									palette[count].rgbBlue = (((*rgb555 & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
+									palette[count].rgbRed   = (BYTE)((((*rgb555 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F);
+									palette[count].rgbGreen = (BYTE)((((*rgb555 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F);
+									palette[count].rgbBlue  = (BYTE)((((*rgb555 & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F);
 									rgb555++;
 								}
 							}
@@ -512,9 +512,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 #endif
 								
 									if (TARGA_LOAD_RGB888 & flags) {
-										bits[x + FI_RGBA_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
-										bits[x + FI_RGBA_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-										bits[x + FI_RGBA_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+										bits[x + FI_RGBA_BLUE]  = (BYTE)((((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F);
+										bits[x + FI_RGBA_GREEN] = (BYTE)((((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F);
+										bits[x + FI_RGBA_RED]   = (BYTE)((((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F);
 									} else {
 										*reinterpret_cast<WORD*>(bits + x) = 0x7FFF & pixel;
 									}
@@ -555,9 +555,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								
 									for (int ix = 0; ix < rle; ix++) {
 										if (TARGA_LOAD_RGB888 & flags) {
-											bits[x + FI_RGBA_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
-											bits[x + FI_RGBA_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-											bits[x + FI_RGBA_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FI_RGBA_BLUE]  = (BYTE)((((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F);
+											bits[x + FI_RGBA_GREEN] = (BYTE)((((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F);
+											bits[x + FI_RGBA_RED]   = (BYTE)((((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F);
 										} else {
 											*reinterpret_cast<WORD *>(bits + x) = 0x7FFF & pixel;
 										}
@@ -582,9 +582,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 #endif
 
 										if (TARGA_LOAD_RGB888 & flags) {
-											bits[x + FI_RGBA_BLUE] = (((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F;
-											bits[x + FI_RGBA_GREEN] = (((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F;
-											bits[x + FI_RGBA_RED] = (((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F;
+											bits[x + FI_RGBA_BLUE]  = (BYTE)((((pixel & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F);
+											bits[x + FI_RGBA_GREEN] = (BYTE)((((pixel & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F);
+											bits[x + FI_RGBA_RED]   = (BYTE)((((pixel & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F);
 										} else {
 											*reinterpret_cast<WORD*>(bits + x) = 0x7FFF & pixel;
 										}
@@ -1022,15 +1022,15 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		header.cm_first_entry = 0;
 		header.is_xorigin = 0;
 		header.is_yorigin = 0;
-		header.is_width = FreeImage_GetWidth(dib);
-		header.is_height = FreeImage_GetHeight(dib);
-		header.is_pixel_depth = bpp;
+		header.is_width = (WORD)FreeImage_GetWidth(dib);
+		header.is_height = (WORD)FreeImage_GetHeight(dib);
+		header.is_pixel_depth = (BYTE)bpp;
 		header.is_image_descriptor = 0;
 
 		if (palette) {
 			header.color_map_type = 1;
 			header.image_type = TGA_CMAP;
-			header.cm_length = 1 << bpp;
+			header.cm_length = (WORD)(1 << bpp);
 			if(FreeImage_IsTransparent(dib)) {
 				header.cm_size = 32;
 			} else {

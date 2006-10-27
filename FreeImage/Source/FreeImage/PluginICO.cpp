@@ -368,7 +368,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 
 					int width_and	= WidthBytes(width);
-					BYTE *bits		= FreeImage_GetBits(dib32);
 					BYTE *line_and	= (BYTE *)malloc(width_and);
 
 					if( line_and == NULL ) {
@@ -476,7 +475,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			if( (icon_list[k].wPlanes * icon_list[k].wBitCount) >= 8 ) {
 				icon_list[k].bColorCount = 0;
 			} else {
-				icon_list[k].bColorCount = 1 << (icon_list[k].wPlanes * icon_list[k].wBitCount);
+				icon_list[k].bColorCount = (BYTE)(1 << (icon_list[k].wPlanes * icon_list[k].wBitCount));
 			}
 			icon_list[k].dwBytesInRes	= CalculateImageSize(icon_dib);
 			icon_list[k].dwImageOffset = CalculateImageOffset(vPages, k);

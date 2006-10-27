@@ -98,7 +98,7 @@ WuQuantizer::~WuQuantizer() {
 // Build 3-D color histogram of counts, r/g/b, c^2
 void 
 WuQuantizer::Hist3D(LONG *vwt, LONG *vmr, LONG *vmg, LONG *vmb, float *m2, int ReserveSize, RGBQUAD *ReservePalette) {
-	int ind;
+	int ind = 0;
 	int inr, ing, inb, table[256];
 	int i;
 	WORD y, x;
@@ -113,7 +113,8 @@ WuQuantizer::Hist3D(LONG *vwt, LONG *vmr, LONG *vmg, LONG *vmb, float *m2, int R
 			inr = (bits[FI_RGBA_RED] >> 3) + 1;
 			ing = (bits[FI_RGBA_GREEN] >> 3) + 1;
 			inb = (bits[FI_RGBA_BLUE] >> 3) + 1;
-			Qadd[y*width + x] = ind = INDEX(inr, ing, inb);
+			ind = INDEX(inr, ing, inb);
+			Qadd[y*width + x] = (WORD)ind;
 			// [inr][ing][inb]
 			vwt[ind]++;
 			vmr[ind] += bits[FI_RGBA_RED];
@@ -413,7 +414,7 @@ WuQuantizer::Mark(Box *cube, int label, BYTE *tag) {
     for (int r = cube->r0 + 1; r <= cube->r1; r++) {
 		for (int g = cube->g0 + 1; g <= cube->g1; g++) {
 			for (int b = cube->b0 + 1; b <= cube->b1; b++) {
-				tag[INDEX(r, g, b)] = label;
+				tag[INDEX(r, g, b)] = (BYTE)label;
 			}
 		}
 	}

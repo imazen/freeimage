@@ -67,9 +67,7 @@ HorizontalSkew(FIBITMAP *src, FIBITMAP *dst, int row, int iOffset, BYTE Weight) 
 	int iXPos;
 
 	int src_width  = FreeImage_GetWidth(src);
-	int src_height = FreeImage_GetHeight(src);
 	int dst_width  = FreeImage_GetWidth(dst);
-	int dst_height = FreeImage_GetHeight(dst);
 
 	switch(FreeImage_GetBPP(src)) {
 		case 8:
@@ -144,9 +142,7 @@ static void
 VerticalSkew(FIBITMAP *src, FIBITMAP *dst, int col, int iOffset, BYTE Weight) {
 	int i, j, iYPos;
 
-	int src_width  = FreeImage_GetWidth(src);
 	int src_height = FreeImage_GetHeight(src);
-	int dst_width  = FreeImage_GetWidth(dst);
 	int dst_height = FreeImage_GetHeight(dst);
 
 	switch(FreeImage_GetBPP(src)) {
@@ -259,7 +255,7 @@ Rotate90(FIBITMAP *src) {
 			// figure out the column we are going to be copying to
 			div_r = div(y, 8);
 			// set bit pos of src column byte
-			bitpos = 128 >> div_r.rem;
+			bitpos = (BYTE)(128 >> div_r.rem);
 			srcdisp = bsrc + y * src_pitch;
 			for (x = 0; x < src_pitch; x++) {
 				// get source bits
@@ -411,7 +407,7 @@ Rotate270(FIBITMAP *src) {
 			// figure out the column we are going to be copying to
 			div_r = div(y + dlineup, 8);
 			// set bit pos of src column byte
-			bitpos = 1 << div_r.rem;
+			bitpos = (BYTE)(1 << div_r.rem);
 			srcdisp = bsrc + y * src_pitch;
 			for (x = 0; x < src_pitch; x++) {
 				// get source bits
@@ -592,9 +588,6 @@ RotateAny(FIBITMAP *src, double dAngle) {
 		return NULL;
 	}
 
-	int src_width  = FreeImage_GetWidth(src);
-	int src_height = FreeImage_GetHeight(src);
-
 	FIBITMAP *image = src;
 
 	while(dAngle >= 360) {
@@ -657,8 +650,6 @@ RotateAny(FIBITMAP *src, double dAngle) {
 
 		return dst;
 	}
-
-	return NULL;
 }
 
 // ==========================================================

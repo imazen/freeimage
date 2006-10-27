@@ -130,7 +130,7 @@ readline(FreeImageIO &io, fi_handle handle, BYTE *buffer, WORD length, BOOL rle,
 	} else {
 		// normal read
 
-		written = io.read_proc(buffer, length, 1, handle);
+		written = (WORD)io.read_proc(buffer, length, 1, handle);
 	}
 
 	return written;
@@ -413,9 +413,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						pal = FreeImage_GetPalette(dib);
 
 						for(int i = 0; i < 256; i++) {
-							pal[i].rgbRed   = i;
-							pal[i].rgbGreen = i;
-							pal[i].rgbBlue  = i;
+							pal[i].rgbRed   = (BYTE)i;
+							pal[i].rgbGreen = (BYTE)i;
+							pal[i].rgbBlue  = (BYTE)i;
 						}
 					}
 
@@ -427,7 +427,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// calculate the line length for the PCX and the DIB
 
 			linelength = header.bytes_per_line * header.planes;
-			pitch = FreeImage_GetPitch(dib);
+			pitch = (WORD)FreeImage_GetPitch(dib);
 
 			// run-length encoding ?
 
@@ -477,11 +477,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					memset(buffer, 0, width * sizeof(BYTE));
 
 					for(int plane = 0; plane < 4; plane++) {
-						bit = 1 << plane;
+						bit = (BYTE)(1 << plane);
 
 						for (x = 0; x < width; x++) {
-							index = (x / 8) + plane * header.bytes_per_line;
-							mask = 0x80 >> (x & 0x07);
+							index = (WORD)((x / 8) + plane * header.bytes_per_line);
+							mask = (BYTE)(0x80 >> (x & 0x07));
 							buffer[x] |= (line[index] & mask) ? bit : 0;
 						}
 					}

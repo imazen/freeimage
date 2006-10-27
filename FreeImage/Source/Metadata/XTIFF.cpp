@@ -151,7 +151,7 @@ tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 				FreeImage_SetTagID(tag, tag_id);
 				FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::GEOTIFF, tag_id));
 				FreeImage_SetTagDescription(tag, tag_lib.getTagDescription(TagLib::GEOTIFF, tag_id));
-				FreeImage_SetTagLength(tag, FreeImage_TagDataWidth(tag_type) * tag_count);
+				FreeImage_SetTagLength(tag, FreeImage_TagDataWidth((WORD)tag_type) * tag_count);
 				FreeImage_SetTagCount(tag, tag_count);
 				FreeImage_SetTagValue(tag, data);
 				FreeImage_SetMetadata(FIMD_GEOTIFF, dib, FreeImage_GetTagKey(tag), tag);
@@ -212,7 +212,7 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 		if(tag == TIFFTAG_EXIFIFD) continue;
 
 		// get the tag key - use FALSE to avoid reading GeoTIFF tags
-		const char *key = tagLib.getTagFieldName(md_model, tag, FALSE);
+		const char *key = tagLib.getTagFieldName(md_model, (WORD)tag, FALSE);
 		if(key == NULL) continue;
         
 		fip = TIFFFieldWithTag(tif, tag);
@@ -254,7 +254,7 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 			return FALSE;
 		}
 
-		FreeImage_SetTagID(fitag, tag);
+		FreeImage_SetTagID(fitag, (WORD)tag);
 		FreeImage_SetTagKey(fitag, key);
 
 		switch(fip->field_type) {
@@ -375,7 +375,7 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 			break;
 		}
 
-		const char *description = tagLib.getTagDescription(md_model, tag);
+		const char *description = tagLib.getTagDescription(md_model, (WORD)tag);
 		if(description) {
 			FreeImage_SetTagDescription(fitag, description);
 		}
