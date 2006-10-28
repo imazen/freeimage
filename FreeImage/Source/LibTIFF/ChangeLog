@@ -1,3 +1,73 @@
+2006-10-13  Andrey Kiselev  <dron@ak4719.spb.edu>
+
+	* libtiff/tif_dir.c: More fixes for vulnerabilities, reported
+	in Gentoo bug ():
+	
+	http://bugs.gentoo.org/show_bug.cgi?id=142383
+
+	* libtiff/contrib/dbs/xtiff/xtiff.c: Make xtiff utility compilable.
+	Though it is still far from the state of being working and useful.
+
+2006-10-12  Andrey Kiselev  <dron@ak4719.spb.edu>
+
+	* libtiff/tif_fax3.c: Save the state of printdir codec dependent
+	method.
+
+	* libtiff/tif_jpeg.c: Save the state of printdir codec dependent method
+	as per bug http://bugzilla.remotesensing.org/show_bug.cgi?id=1273
+
+	* libtiff/tif_win32.c: Fixed problem with offset value manipulation
+	as per bug http://bugzilla.remotesensing.org/show_bug.cgi?id=1322
+
+	* libtiff/{tif_read.c, tif_jpeg.c, tif_dir.c}: More fixes for
+	vulnerabilities, reported in Gentoo bug ():
+
+	http://bugs.gentoo.org/show_bug.cgi?id=142383
+
+2006-09-28  Andrey Kiselev  <dron@ak4719.spb.edu>
+
+	* libtiff/{tif_fax3.c, tif_next.c, tif_pixarlog.c}: Fixed multiple
+	vulnerabilities, as per	Gentoo bug ():
+
+	http://bugs.gentoo.org/show_bug.cgi?id=142383
+
+2006-09-27  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* libtiff/tif_lzw.c, libtiff/tif_zip.c: Fixed problems with mixing
+	encoding and decoding on the same read-write TIFF handle.  The LZW
+	code can now maintain encode and decode state at the same time. The
+	ZIP code will switch back and forth as needed.  
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=757
+
+2006-09-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* libtiff: Rename config.h.vc and tif_config.h.vc to config.vc.h and 
+	tif_config.vc.h for easier identification by folks using an IDE.
+
+2006-07-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* tif_msdos.c: Avoid handle leak for failed opens.  c/o Thierry Pierron
+
+2006-07-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* tif_dirwrite.c: take care not to flush out buffer of strip/tile
+	data in _TIFFWriteDirectory if TIFF_BEENWRITING not set.  Relates
+	to bug report by Peng Gao with black strip at bottom of images.
+
+2006-07-12  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* tif_dirwrite.c: make sure to use uint32 for wordcount in 
+	TIFFWriteNormanTag if writecount is VARIABLE2 for ASCII fields.
+	It already seems to have been done for other field types.  Needed
+	for "tiffset" on files with geotiff ascii text.
+
+2006-07-04  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* {configure.ac, libtiff/tif_config.h.vc, libtiff/tif_jbig.c}
+	(JBIGDecode): jbg_newlen is not available in older JBIG-KIT and
+	its use does not appear to be required, so use it only when it is
+	available.
+
 2006-06-24  Andrey Kiselev  <dron@ak4719.spb.edu>
 
 	* libtiff/tif_dirinfo.c: Added missed EXIF tag ColorSpace (40961).
