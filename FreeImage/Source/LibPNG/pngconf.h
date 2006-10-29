@@ -19,9 +19,17 @@
 
 #define PNG_1_2_X
 
+/* ------------------------------------------------ */
 /** Added by FreeImage
 */
 #define PNG_iTXt_SUPPORTED
+
+#ifdef _WIN32
+#define PNG_ASSEMBLER_CODE_SUPPORTED
+#else
+#undef PNG_ASSEMBLER_CODE_SUPPORTED
+#endif // _WIN32
+/* ------------------------------------------------ */
 
 /* 
  * PNG_USER_CONFIG has to be defined on the compiler command line. This
