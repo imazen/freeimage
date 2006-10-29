@@ -5,7 +5,7 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
-Month day, 2006 - 3.9.2
+October 30th, 2006 - 3.9.2
 + [Herve Drolon] added BOOL fipMultiPage::open(fipMemoryIO& memIO, int flags)
 + [Herve Drolon] added fipMemoryIO::operator FIMEMORY*()
 * [Herve Drolon] fixed missing 'isValid' method in fipMetadataFind
