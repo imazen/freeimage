@@ -5,7 +5,8 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month day, 2006 - 3.9.2
+October 30th, 2006 - 3.9.2
+! FreeImage now uses libTIFF 3.8.2 (with patch 2006-10-13)
 + [Herve Drolon] added full support for 16-bit greyscale and 48-bit RGB to the PNM plugin
 + [Herve Drolon] added IPTC writing support to JPEG & TIFF plugins
 + [Herve Drolon] added new Exif maker note tags
@@ -25,6 +26,7 @@ Month day, 2006 - 3.9.2
 * [Roar Flolo] fixed a bug in PSD plugin when reading non compressed RGB images (alpha channel initialization)
 * [Nicolas Hatier] fixed a bug in PluginGIF when using the GIF_PLAYBACK flag
 * [Herve Drolon] fixed a bug in TIFF plugin when saving 8-bit images using LZW with differenciation
+* [Herve Drolon] fixed 64-bit compilation issue with LibPNG and assembler code
 
 July 16th, 2006 - 3.9.1
 * [Ryan Rubley] fixed a bug in PluginGIF plugin causing FreeImage to crash on malformed GIF files
