@@ -3,9 +3,9 @@
 ' List of public wrapper functions available
 ' 
 ' These functions implement a behaviour, that is, in general, more suitable for
-' Visual Basic with it's OLE/COM derived data types like BSTRs, SAFEARRAYs
-' or IOlePicture objects than their C/C++ counterpart. All these so called
-' wrapper functions are often very easy to use for a Visual Basic programmer.
+' Visual Basic with it's OLE/COM derived data types like BSTRs, SAFEARRAYs or
+' IOlePicture objects than their C/C++ counterpart. All these so called wrapper
+' functions are often very easy to use for a Visual Basic programmer.
 ' 
 ' Of course, there are much more public functions and procedures available
 ' through the wrapper; functions that are already very compatible to Visual
