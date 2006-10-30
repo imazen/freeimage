@@ -5,6 +5,32 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+October 30, 2006 - 1.8
+* [Carsten Klein] fixed a memory leak in wrapper function SavePictureEx(). Thanks to Roogames for reporting that bug.
+! [Carsten Klein] changed return type of wrapper function SavePictureEx() to Boolean.
++ [Carsten Klein] added wrapper function FreeImage_SaveEx() which brings all the features, as there are inline size- and color conversion and format guessing, so far only known from SavePictureEx() for DIBs.
+! [Carsten Klein] changed wrapper function SavePictureEx(): now this is only a thin wrapper for function FreeImage_SaveEx().
++ [Carsten Klein] added enumeration FREE_IMAGE_LOAD_OPTIONS.
+- [Carsten Klein] refactored enumeration FREE_IMAGE_SAVE_OPTIONS: removed unnecessary items from enumeration.
+! [Carsten Klein] changed wrapper function LoadPictureEx(): added parameter 'Options' (enum FREE_IMAGE_LOAD_OPTIONS) to specify image loading options (called 'flags' in FreeImage).
++ [Carsten Klein] added wrapper function FreeImage_LoadEx() which brings all the features, as there are inline size- and color conversion and format guessing, so far only known from LoadPictureEx() for DIBs.
+! [Carsten Klein] changed wrapper function LoadPictureEx(): now this is only a thin wrapper for function FreeImage_LoadEx().
+
+October 13, 2006 - 1.7.2
++ [Carsten Klein] added User32 function GetDesktopWindow()
++                 added User32 function GetWindowDC()
+- [Carsten Klein] removed unused constants DI_MASK, DI_IMAGE and DI_NORMAL
++                 added GDI32 function GetDeviceCaps() with constants HORZRES and VERTRES
++                 added GDI32 function SelectObject()
++                 added GDI32 function DeleteObject()
++                 added GDI32 function CreateCompatibleBitmap()
++                 added GDI32 function CreateCompatibleDC()
++                 added GDI32 function BitBlt()
++ [Carsten Klein] added wrapper function FreeImage_CreateFromScreen(): this function lets you capture the whole screen or any certain window
+
+October 10, 2006 - 1.7.1
+! [Carsten Klein] changed parameter name 'Page' into 'hPageDib' in declared function FreeImage_UnlockPage(). 'hPageDib' must be the (dib-)handle obtained from FreeImage_LockPage() and not the page number. Now, the declaration is less confusing. Thanks to Ender Wiggin.
+
 August 4, 2006 - 1.7
 * [Carsten Klein] fixed a bug in pGetTagFromTagPtr(): removed overflow error when converting unsigned short tags (FIDT_SHORT) with values between 32768 and 65535. Thanks to André Hendriks.
 ! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.9.1

@@ -159,6 +159,32 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'October 30, 2006 - 1.8
+'* [Carsten Klein] fixed a memory leak in wrapper function SavePictureEx(). Thanks to Roogames for reporting that bug.
+'! [Carsten Klein] changed return type of wrapper function SavePictureEx() to Boolean.
+'+ [Carsten Klein] added wrapper function FreeImage_SaveEx() which brings all the features, as there are inline size- and color conversion and format guessing, so far only known from SavePictureEx() for DIBs.
+'! [Carsten Klein] changed wrapper function SavePictureEx(): now this is only a thin wrapper for function FreeImage_SaveEx().
+'+ [Carsten Klein] added enumeration FREE_IMAGE_LOAD_OPTIONS.
+'- [Carsten Klein] refactored enumeration FREE_IMAGE_SAVE_OPTIONS: removed unnecessary items from enumeration.
+'! [Carsten Klein] changed wrapper function LoadPictureEx(): added parameter 'Options' (enum FREE_IMAGE_LOAD_OPTIONS) to specify image loading options (called 'flags' in FreeImage).
+'+ [Carsten Klein] added wrapper function FreeImage_LoadEx() which brings all the features, as there are inline size- and color conversion and format guessing, so far only known from LoadPictureEx() for DIBs.
+'! [Carsten Klein] changed wrapper function LoadPictureEx(): now this is only a thin wrapper for function FreeImage_LoadEx().
+'
+'October 13, 2006 - 1.7.2
+'+ [Carsten Klein] added User32 function GetDesktopWindow()
+'+                 added User32 function GetWindowDC()
+'- [Carsten Klein] removed unused constants DI_MASK, DI_IMAGE and DI_NORMAL
+'+                 added GDI32 function GetDeviceCaps() with constants HORZRES and VERTRES
+'+                 added GDI32 function SelectObject()
+'+                 added GDI32 function DeleteObject()
+'+                 added GDI32 function CreateCompatibleBitmap()
+'+                 added GDI32 function CreateCompatibleDC()
+'+                 added GDI32 function BitBlt()
+'+ [Carsten Klein] added wrapper function FreeImage_CreateFromScreen(): this function lets you capture the whole screen or any certain window
+'
+'October 10, 2006 - 1.7.1
+'! [Carsten Klein] changed parameter name 'Page' into 'hPageDib' in declared function FreeImage_UnlockPage(). 'hPageDib' must be the (dib-)handle obtained from FreeImage_LockPage() and not the page number. Now, the declaration is less confusing. Thanks to Ender Wiggin.
+'
 'August 4, 2006 - 1.7
 '* [Carsten Klein] fixed a bug in pGetTagFromTagPtr(): removed overflow error when converting unsigned short tags (FIDT_SHORT) with values between 32768 and 65535. Thanks to André Hendriks.
 '! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.9.1
@@ -591,10 +617,16 @@ Private Declare Function ReleaseDC Lib "user32.dll" ( _
 
 Private Declare Function GetDC Lib "user32.dll" ( _
     ByVal hWnd As Long) As Long
+    
+Private Declare Function GetDesktopWindow Lib "user32.dll" () As Long
+
+Private Declare Function GetWindowDC Lib "user32.dll" ( _
+    ByVal hWnd As Long) As Long
 
 Private Declare Function GetClientRect Lib "user32.dll" ( _
     ByVal hWnd As Long, _
     ByRef lpRect As RECT) As Long
+
 
 Private Type RECT
    Left As Long
@@ -638,6 +670,13 @@ End Type
    
     
 'GDI32
+Private Declare Function GetDeviceCaps Lib "gdi32.dll" ( _
+    ByVal hDC As Long, _
+    ByVal nIndex As Long) As Long
+    
+Private Const HORZRES As Long = 8
+Private Const VERTRES As Long = 10
+
 Private Declare Function GetStretchBltMode Lib "gdi32.dll" ( _
     ByVal hDC As Long) As Long
 
@@ -684,11 +723,25 @@ Private Declare Function CreateDIBitmap Lib "gdi32.dll" ( _
 
 Private Const CBM_INIT As Long = &H4
     
-Private Declare Function GetObjectAPI Lib "gdi32.dll" Alias "GetObjectA" ( _
-    ByVal hObject As Long, _
-    ByVal nCount As Long, _
-    ByRef lpObject As Any) As Long
+Private Declare Function CreateCompatibleBitmap Lib "gdi32.dll" ( _
+    ByVal hDC As Long, _
+    ByVal nWidth As Long, _
+    ByVal nHeight As Long) As Long
 
+Private Declare Function CreateCompatibleDC Lib "gdi32.dll" ( _
+    ByVal hDC As Long) As Long
+    
+Private Declare Function BitBlt Lib "gdi32.dll" ( _
+    ByVal hDestDC As Long, _
+    ByVal X As Long, _
+    ByVal Y As Long, _
+    ByVal nWidth As Long, _
+    ByVal nHeight As Long, _
+    ByVal hSrcDC As Long, _
+    ByVal xSrc As Long, _
+    ByVal ySrc As Long, _
+    ByVal dwRop As Long) As Long
+    
 Private Declare Function GetDIBits Lib "gdi32.dll" ( _
     ByVal aHDC As Long, _
     ByVal hBitmap As Long, _
@@ -697,6 +750,18 @@ Private Declare Function GetDIBits Lib "gdi32.dll" ( _
     ByVal lpBits As Long, _
     ByVal lpBI As Long, _
     ByVal wUsage As Long) As Long
+    
+Private Declare Function GetObjectAPI Lib "gdi32.dll" Alias "GetObjectA" ( _
+    ByVal hObject As Long, _
+    ByVal nCount As Long, _
+    ByRef lpObject As Any) As Long
+    
+Private Declare Function SelectObject Lib "gdi32.dll" ( _
+    ByVal hDC As Long, _
+    ByVal hObject As Long) As Long
+
+Private Declare Function DeleteObject Lib "gdi32.dll" ( _
+    ByVal hObject As Long) As Long
     
 Private Declare Function GetCurrentObject Lib "gdi32.dll" ( _
     ByVal hDC As Long, _
@@ -711,10 +776,6 @@ Private Declare Function DestroyIcon Lib "user32.dll" ( _
 Private Declare Function CreateIconIndirect Lib "user32.dll" ( _
     ByRef piconinfo As ICONINFO) As Long
 
-
-Public Const DI_MASK As Long = &H1
-Public Const DI_IMAGE As Long = &H2
-Public Const DI_NORMAL As Long = DI_MASK Or DI_IMAGE
 
 Private Const BLACKONWHITE As Long = 1
 Private Const WHITEONBLACK As Long = 2
@@ -732,12 +793,12 @@ End Enum
 #End If
 
 
-
 Private Const SRCAND As Long = &H8800C6
 Private Const SRCCOPY As Long = &HCC0020
 Private Const SRCERASE As Long = &H440328
 Private Const SRCINVERT As Long = &H660046
 Private Const SRCPAINT As Long = &HEE0086
+Private Const CAPTUREBLT As Long = &H40000000
 
 Public Enum RASTER_OPERATOR
    ROP_SRCAND = SRCAND
@@ -863,8 +924,8 @@ Public Const PCD_BASEDIV4 As Long = 2             ' load the bitmap sized 384 x 
 Public Const PCD_BASEDIV16 As Long = 3            ' load the bitmap sized 192 x 128
 Public Const PCX_DEFAULT As Long = 0
 Public Const PNG_DEFAULT As Long = 0
-Public Const PNM_DEFAULT As Long = 0
 Public Const PNG_IGNOREGAMMA As Long = 1          ' avoid gamma correction
+Public Const PNM_DEFAULT As Long = 0
 Public Const PNM_SAVE_RAW As Long = 0             ' if set the writer saves in RAW format (i.e. P4, P5 or P6)
 Public Const PNM_SAVE_ASCII As Long = 1           ' if set the writer saves in ASCII format (i.e. P1, P2 or P3)
 Public Const PSD_DEFAULT As Long = 0
@@ -953,26 +1014,66 @@ End Enum
    Const FIF_SGI = 28
 #End If
 
+Public Enum FREE_IMAGE_LOAD_OPTIONS
+   FILO_LOAD_DEFAULT = 0
+   FILO_GIF_DEFAULT = GIF_DEFAULT
+   FILO_GIF_LOAD256 = GIF_LOAD256                ' load the image as a 256 color image with ununsed palette entries, if it's 16 or 2 color
+   FILO_GIF_PLAYBACK = GIF_PLAYBACK              ' 'play' the GIF to generate each frame (as 32bpp) instead of returning raw frame data when loading
+   FILO_ICO_DEFAULT = ICO_DEFAULT
+   FILO_ICO_MAKEALPHA = ICO_MAKEALPHA            ' convert to 32bpp and create an alpha channel from the AND-mask when loading
+   FILO_JPEG_DEFAULT = JPEG_DEFAULT
+   FILO_JPEG_FAST = JPEG_FAST
+   FILO_JPEG_ACCURATE = JPEG_ACCURATE
+   FILO_JPEG_CMYK = JPEG_CMYK                    ' load separated CMYK "as is" (use 'OR' to combine with other flags)
+   FILO_PCD_DEFAULT = PCD_DEFAULT
+   FILO_PCD_BASE = PCD_BASE                      ' load the bitmap sized 768 x 512
+   FILO_PCD_BASEDIV4 = PCD_BASEDIV4              ' load the bitmap sized 384 x 256
+   FILO_PCD_BASEDIV16 = PCD_BASEDIV16            ' load the bitmap sized 192 x 128
+   FILO_PNG_DEFAULT = PNG_DEFAULT
+   FILO_PNG_IGNOREGAMMA = PNG_IGNOREGAMMA        ' avoid gamma correction
+   FILO_TARGA_DEFAULT = TARGA_LOAD_RGB888
+   FILO_TARGA_LOAD_RGB888 = TARGA_LOAD_RGB888    ' if set the loader converts RGB555 and ARGB8888 -> RGB888
+   FISO_TIFF_DEFAULT = TIFF_DEFAULT
+   FISO_TIFF_CMYK = TIFF_CMYK                    ' reads tags for separated CMYK
+End Enum
+#If False Then
+   Const FILO_LOAD_DEFAULT = 0
+   Const FILO_GIF_DEFAULT = GIF_DEFAULT
+   Const FILO_GIF_LOAD256 = GIF_LOAD256
+   Const FILO_GIF_PLAYBACK = GIF_PLAYBACK
+   Const FILO_ICO_DEFAULT = ICO_DEFAULT
+   Const FILO_ICO_MAKEALPHA = ICO_MAKEALPHA
+   Const FILO_JPEG_DEFAULT = JPEG_DEFAULT
+   Const FILO_JPEG_FAST = JPEG_FAST
+   Const FILO_JPEG_ACCURATE = JPEG_ACCURATE
+   Const FILO_JPEG_CMYK = JPEG_CMYK
+   Const FILO_PCD_DEFAULT = PCD_DEFAULT
+   Const FILO_PCD_BASE = PCD_BASE
+   Const FILO_PCD_BASEDIV4 = PCD_BASEDIV4
+   Const FILO_PCD_BASEDIV16 = PCD_BASEDIV16
+   Const FILO_PNG_DEFAULT = PNG_DEFAULT
+   Const FILO_PNG_IGNOREGAMMA = PNG_IGNOREGAMMA
+   Const FILO_TARGA_DEFAULT = TARGA_LOAD_RGB888
+   Const FILO_TARGA_LOAD_RGB888 = TARGA_LOAD_RGB888
+   Const FISO_TIFF_DEFAULT = TIFF_DEFAULT
+   Const FISO_TIFF_CMYK = TIFF_CMYK
+#End If
+
 Public Enum FREE_IMAGE_SAVE_OPTIONS
    FISO_SAVE_DEFAULT = 0
    FISO_BMP_DEFAULT = BMP_DEFAULT
    FISO_BMP_SAVE_RLE = BMP_SAVE_RLE
-   FISO_GIF_DEFAULT = GIF_DEFAULT
-   FISO_HDR_DEFAULT = HDR_DEFAULT
-   FISO_ICO_DEFAULT = ICO_DEFAULT
    FISO_JPEG_DEFAULT = JPEG_DEFAULT
    FISO_JPEG_QUALITYSUPERB = JPEG_QUALITYSUPERB
    FISO_JPEG_QUALITYGOOD = JPEG_QUALITYGOOD
    FISO_JPEG_QUALITYNORMAL = JPEG_QUALITYNORMAL
    FISO_JPEG_QUALITYAVERAGE = JPEG_QUALITYAVERAGE
    FISO_JPEG_QUALITYBAD = JPEG_QUALITYBAD
-   FISO_PNG_DEFAULT = PNG_DEFAULT
    FISO_PNM_DEFAULT = PNM_DEFAULT
    FISO_PNM_SAVE_RAW = PNM_SAVE_RAW              ' if set the writer saves in RAW format (i.e. P4, P5 or P6)
    FISO_PNM_SAVE_ASCII = PNM_SAVE_ASCII          ' if set the writer saves in ASCII format (i.e. P1, P2 or P3)
-   FISO_TARGA_DEFAULT = TARGA_DEFAULT
    FISO_TIFF_DEFAULT = TIFF_DEFAULT
-   FISO_TIFF_CMYK = TIFF_CMYK                    ' reads/stores tags for separated CMYK (use 'OR' to combine with compression flags)
+   FISO_TIFF_CMYK = TIFF_CMYK                    ' stores tags for separated CMYK (use 'OR' to combine with compression flags)
    FISO_TIFF_PACKBITS = TIFF_PACKBITS            ' save using PACKBITS compression
    FISO_TIFF_DEFLATE = TIFF_DEFLATE              ' save using DEFLATE compression (a.k.a. ZLIB compression)
    FISO_TIFF_ADOBE_DEFLATE = TIFF_ADOBE_DEFLATE  ' save using ADOBE DEFLATE compression
@@ -981,27 +1082,20 @@ Public Enum FREE_IMAGE_SAVE_OPTIONS
    FISO_TIFF_CCITTFAX4 = TIFF_CCITTFAX4          ' save using CCITT Group 4 fax encoding
    FISO_TIFF_LZW = TIFF_LZW                      ' save using LZW compression
    FISO_TIFF_JPEG = TIFF_JPEG                    ' save using JPEG compression
-   FISO_WBMP_DEFAULT = WBMP_DEFAULT
-   FISO_XPM_DEFAULT = XPM_DEFAULT
 End Enum
 #If False Then
    Const FISO_SAVE_DEFAULT = 0
    Const FISO_BMP_DEFAULT = BMP_DEFAULT
    Const FISO_BMP_SAVE_RLE = BMP_SAVE_RLE
-   Const FISO_GIF_DEFAULT = GIF_DEFAULT
-   Const FISO_HDR_DEFAULT = HDR_DEFAULT
-   Const FISO_ICO_DEFAULT = ICO_DEFAULT
    Const FISO_JPEG_DEFAULT = JPEG_DEFAULT
    Const FISO_JPEG_QUALITYSUPERB = JPEG_QUALITYSUPERB
    Const FISO_JPEG_QUALITYGOOD = JPEG_QUALITYGOOD
    Const FISO_JPEG_QUALITYNORMAL = JPEG_QUALITYNORMAL
    Const FISO_JPEG_QUALITYAVERAGE = JPEG_QUALITYAVERAGE
    Const FISO_JPEG_QUALITYBAD = JPEG_QUALITYBAD
-   Const FISO_PNG_DEFAULT = PNG_DEFAULT
    Const FISO_PNM_DEFAULT = PNM_DEFAULT
    Const FISO_PNM_SAVE_RAW = PNM_SAVE_RAW
    Const FISO_PNM_SAVE_ASCII = PNM_SAVE_ASCII
-   Const FISO_TARGA_DEFAULT = TARGA_DEFAULT
    Const FISO_TIFF_DEFAULT = TIFF_DEFAULT
    Const FISO_TIFF_CMYK = TIFF_CMYK
    Const FISO_TIFF_PACKBITS = TIFF_PACKBITS
@@ -1012,8 +1106,6 @@ End Enum
    Const FISO_TIFF_CCITTFAX4 = TIFF_CCITTFAX4
    Const FISO_TIFF_LZW = TIFF_LZW
    Const FISO_TIFF_JPEG = TIFF_JPEG
-   Const FISO_WBMP_DEFAULT = WBMP_DEFAULT
-   Const FISO_XPM_DEFAULT = XPM_DEFAULT
 #End If
 
 Public Enum FREE_IMAGE_TYPE
@@ -1997,7 +2089,7 @@ Public Declare Function FreeImage_LockPage Lib "FreeImage.dll" Alias "_FreeImage
 
 Public Declare Sub FreeImage_UnlockPage Lib "FreeImage.dll" Alias "_FreeImage_UnlockPage@12" ( _
            ByVal BITMAP As Long, _
-           ByVal Page As Long, _
+           ByVal hPageDib As Long, _
            ByVal Changed As Long)
 
 Private Declare Function FreeImage_MovePageInt Lib "FreeImage.dll" Alias "_FreeImage_MovePage@12" ( _
@@ -6475,6 +6567,49 @@ Public Function FreeImage_CreateFromImageContainer(ByRef Container As Object, _
 
 End Function
 
+Public Function FreeImage_CreateFromScreen(Optional ByVal hWnd As Long) As Long
+
+Dim hScreenDC As Long
+Dim lScreenWidth As Long
+Dim lScreenHeight As Long
+Dim hMemDC As Long
+Dim hMemBMP As Long
+Dim hMemOldBMP As Long
+Dim hDIB As Long
+
+   ' Creates a FreeImage DIB from the screen which may either be the whole
+   ' desktop/screen or any certain window. A certain window may be specified
+   ' by it's window handle through the 'hWnd' parameter. By omitting this
+   ' parameter, the whole screen/desktop window will be captured.
+
+   If (hWnd = 0) Then
+      hWnd = GetDesktopWindow()
+   End If
+   
+   ' get screen DC
+   hScreenDC = GetWindowDC(hWnd)
+   ' get screen's width and height
+   lScreenWidth = GetDeviceCaps(hScreenDC, HORZRES)
+   lScreenHeight = GetDeviceCaps(hScreenDC, VERTRES)
+   ' create compatible memory DC and bitmap
+   hMemDC = CreateCompatibleDC(hScreenDC)
+   hMemBMP = CreateCompatibleBitmap(hScreenDC, lScreenWidth, lScreenHeight)
+   ' select compatible bitmap
+   hMemOldBMP = SelectObject(hMemDC, hMemBMP)
+   ' blit bits
+   Call BitBlt(hMemDC, 0, 0, lScreenWidth, lScreenHeight, hScreenDC, 0, 0, SRCCOPY)
+   
+   ' create FreeImgage dib from memory DC
+   FreeImage_CreateFromScreen = FreeImage_CreateFromDC(hMemDC, hMemBMP)
+   
+   ' clean up
+   Call SelectObject(hMemDC, hMemOldBMP)
+   Call DeleteObject(hMemBMP)
+   Call DeleteObject(hMemDC)
+   Call ReleaseDC(hWnd, hScreenDC)
+
+End Function
+
 Public Function FreeImage_CreateMask(ByVal hDIB As Long, _
                             Optional ByVal eMaskCreationOptions As FREE_IMAGE_MASK_CREATION_OPTION_FLAGS = MCOF_CREATE_MASK_IMAGE, _
                             Optional ByVal lBitDepth As Long = 1, _
@@ -7681,21 +7816,18 @@ Public Function AdjustPicture(ByRef Control As Object, _
 
 End Function
 
-Public Function LoadPictureEx(Optional ByRef Filename As Variant, _
-                              Optional ByRef Width As Variant, _
-                              Optional ByRef Height As Variant, _
-                              Optional ByRef InPercent As Boolean = False, _
-                              Optional ByRef Filter As FREE_IMAGE_FILTER, _
-                              Optional ByRef Format As FREE_IMAGE_FORMAT = FIF_UNKNOWN) As IPicture
+Public Function FreeImage_LoadEx(ByVal Filename As String, _
+                        Optional ByVal Options As FREE_IMAGE_LOAD_OPTIONS, _
+                        Optional ByVal Width As Variant, _
+                        Optional ByVal Height As Variant, _
+                        Optional ByVal InPercent As Boolean = False, _
+                        Optional ByVal Filter As FREE_IMAGE_FILTER, _
+                        Optional ByRef Format As FREE_IMAGE_FORMAT = FIF_UNKNOWN) As Long
 
 Dim hDIB As Long
 
 Const vbInvalidPictureError As Long = 481
 
-   ' This function is an extended version of the VB method 'LoadPicture'. As
-   ' the VB version it takes a filename parameter to load the image and throws
-   ' the same errors in most cases.
-   
    ' The function provides all image formats, the FreeImage library can read. The
    ' image format is determined from the image file to load, the optional parameter
    ' 'Format' is an OUT parameter that will contain the image format that has
@@ -7710,28 +7842,19 @@ Const vbInvalidPictureError As Long = 481
    ' according parameters of the 'FreeImage_RescaleEx' function. So, read the
    ' documentation of the 'FreeImage_RescaleEx' for a complete understanding of the
    ' usage of these parameters.
+   
 
-
-   If (Not IsMissing(Filename)) Then
-      Format = FreeImage_GetFIFFromFilename(Filename)
-      If (Format <> FIF_UNKNOWN) Then
-         If (FreeImage_FIFSupportsReading(Format)) Then
-            hDIB = FreeImage_Load(Format, Filename)
-            If (hDIB) Then
-               
-               If ((Not IsMissing(Width)) Or _
-                   (Not IsMissing(Height))) Then
-                  
-                  hDIB = FreeImage_ConvertColorDepth(hDIB, FICF_PREPARE_RESCALE, True)
-                  hDIB = FreeImage_RescaleEx(hDIB, Width, Height, InPercent, True, Filter)
-               End If
+   Format = FreeImage_GetFIFFromFilename(Filename)
+   If (Format <> FIF_UNKNOWN) Then
+      If (FreeImage_FIFSupportsReading(Format)) Then
+         FreeImage_LoadEx = FreeImage_Load(Format, Filename, Options)
+         If (FreeImage_LoadEx) Then
             
-               Set LoadPictureEx = FreeImage_GetOlePicture(hDIB, , True)
-               If (LoadPictureEx Is Nothing) Then
-                  Call Err.Raise(vbInvalidPictureError)
-               End If
-            Else
-               Call Err.Raise(vbInvalidPictureError)
+            If ((Not IsMissing(Width)) Or _
+                (Not IsMissing(Height))) Then
+               
+               FreeImage_LoadEx = FreeImage_ConvertColorDepth(FreeImage_LoadEx, FICF_PREPARE_RESCALE, True)
+               FreeImage_LoadEx = FreeImage_RescaleEx(FreeImage_LoadEx, Width, Height, InPercent, True, Filter)
             End If
          Else
             Call Err.Raise(vbInvalidPictureError)
@@ -7739,34 +7862,61 @@ Const vbInvalidPictureError As Long = 481
       Else
          Call Err.Raise(vbInvalidPictureError)
       End If
+   Else
+      Call Err.Raise(vbInvalidPictureError)
    End If
 
 End Function
 
-Public Function SavePictureEx(ByRef Picture As IPicture, _
-                              ByRef Filename As String, _
-                     Optional ByRef Format As FREE_IMAGE_FORMAT = FIF_UNKNOWN, _
-                     Optional ByRef Options As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
-                     Optional ByRef ColorDepth As FREE_IMAGE_COLOR_DEPTH = FICD_AUTO, _
-                     Optional ByRef Width As Variant, _
-                     Optional ByRef Height As Variant, _
-                     Optional ByRef InPercent As Boolean = False, _
-                     Optional ByRef Filter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
-                     
+Public Function LoadPictureEx(Optional ByRef Filename As Variant, _
+                              Optional ByRef Options As FREE_IMAGE_LOAD_OPTIONS, _
+                              Optional ByRef Width As Variant, _
+                              Optional ByRef Height As Variant, _
+                              Optional ByRef InPercent As Boolean = False, _
+                              Optional ByRef Filter As FREE_IMAGE_FILTER, _
+                              Optional ByRef Format As FREE_IMAGE_FORMAT = FIF_UNKNOWN) As IPicture
+                              
 Dim hDIB As Long
+
+   ' This function is an extended version of the VB method 'LoadPicture'. As
+   ' the VB version it takes a filename parameter to load the image and throws
+   ' the same errors in most cases.
+   
+   ' This function now is only a thin wrapper for the FreeImage_LoadEx() wrapper
+   ' function (as compared to releases of this wrapper prior to version 1.8). So,
+   ' have a look at this function's discussion of the parameters.
+
+
+   If (Not IsMissing(Filename)) Then
+      hDIB = FreeImage_LoadEx(Filename, Options, Width, Height, InPercent, Filter, Format)
+      Set LoadPictureEx = FreeImage_GetOlePicture(hDIB, , True)
+   End If
+
+End Function
+
+Public Function FreeImage_SaveEx(ByVal dib As Long, _
+                                 ByVal Filename As String, _
+                        Optional ByVal Format As FREE_IMAGE_FORMAT = FIF_UNKNOWN, _
+                        Optional ByVal Options As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
+                        Optional ByVal ColorDepth As FREE_IMAGE_COLOR_DEPTH = FICD_AUTO, _
+                        Optional ByVal Width As Variant, _
+                        Optional ByVal Height As Variant, _
+                        Optional ByVal InPercent As Boolean = False, _
+                        Optional ByVal Filter As FREE_IMAGE_FILTER = FILTER_BICUBIC, _
+                        Optional ByVal bUnloadSource As Boolean) As Boolean
+                     
 Dim hDIBRescale As Long
 Dim bConvertedForRescale As Boolean
 Dim lBPPOrg As Long
 Dim lBPP As Long
 Dim strExtension As String
 
-Const vbObjectOrWithBlockVariableNotSet As Long = 91
-Const vbInvalidPictureError As Long = 481
+   ' This functions is an easy to use replacement for FreeImage's FreeImage_Save()
+   ' funciton which supports inline size- and color conversions as well as an
+   ' auto image format detection algorithm that determines the desired image format
+   ' by the given filename. An even more sophisticated algorithm may auto-detect
+   ' the proper color depth for a explicitly given or auto-detected image format.
 
-   ' This function is an extended version of the VB method 'SavePicture'. As
-   ' the VB version it takes a Picture object and a filename parameter to
-   ' save the image and throws the same errors in most cases.
-   
    ' The function provides all image formats, and save options, the FreeImage
    ' library can write. The optional parameter 'Format' may contain the desired
    ' image format. When omitted, the function tries to get the image format from
@@ -7800,99 +7950,141 @@ Const vbInvalidPictureError As Long = 481
    ' width and height, 'Filter' determines, what image filter should be used
    ' on the resizing process.
    
-   If (Not Picture Is Nothing) Then
-      hDIB = FreeImage_CreateFromOlePicture(Picture)
-      If (hDIB) Then
+   ' The optional 'bUnloadSource' parameter is for unloading the saved image, so
+   ' you can save and unload an image with this function in one operation.
+   ' CAUTION: at current, the image is unloaded, even if the image was not
+   '          saved correctly!
+
+   
+   If (dib) Then
+   
+      If ((Not IsMissing(Width)) Or _
+          (Not IsMissing(Height))) Then
+          
+         lBPPOrg = FreeImage_GetBPP(dib)
+         hDIBRescale = FreeImage_ConvertColorDepth(dib, FICF_PREPARE_RESCALE, True)
+         bConvertedForRescale = (hDIBRescale <> dib)
+         dib = hDIBRescale
+         hDIBRescale = 0
+         dib = FreeImage_RescaleEx(dib, Width, Height, InPercent, True, Filter)
+      End If
       
-         If ((Not IsMissing(Width)) Or _
-             (Not IsMissing(Height))) Then
-             
-            lBPPOrg = FreeImage_GetBPP(hDIB)
-            hDIBRescale = FreeImage_ConvertColorDepth(hDIB, FICF_PREPARE_RESCALE, True)
-            bConvertedForRescale = (hDIBRescale <> hDIB)
-            hDIB = hDIBRescale
-            hDIBRescale = 0
-            hDIB = FreeImage_RescaleEx(hDIB, Width, Height, InPercent, True, Filter)
-         End If
-         
-         If (Format = FIF_UNKNOWN) Then
-            Format = FreeImage_GetFIFFromFilename(Filename)
-         End If
-         If (Format <> FIF_UNKNOWN) Then
-            If ((FreeImage_FIFSupportsWriting(Format)) And _
-                (FreeImage_FIFSupportsExportType(Format, FIT_BITMAP))) Then
-               
-               If (Not FreeImage_IsFilenameValidForFIF(Format, Filename)) Then
-                  strExtension = "." & FreeImage_GetPrimaryExtensionFromFIF(Format)
+      If (Format = FIF_UNKNOWN) Then
+         Format = FreeImage_GetFIFFromFilename(Filename)
+      End If
+      If (Format <> FIF_UNKNOWN) Then
+         If ((FreeImage_FIFSupportsWriting(Format)) And _
+             (FreeImage_FIFSupportsExportType(Format, FIT_BITMAP))) Then
+            
+            If (Not FreeImage_IsFilenameValidForFIF(Format, Filename)) Then
+               strExtension = "." & FreeImage_GetPrimaryExtensionFromFIF(Format)
+            End If
+            
+            ' check color depth
+            If (ColorDepth <> FICD_AUTO) Then
+               ' mask out bit 1 (0x02) for the case ColorDepth is FICD_MONOCHROME_DITHER (0x03)
+               ' FREE_IMAGE_COLOR_DEPTH values are true bit depths in general expect FICD_MONOCHROME_DITHER
+               ' by masking out bit 1, 'FreeImage_FIFSupportsExportBPP()' tests for bitdepth 1
+               ' what is correct again for dithered images.
+               If (Not FreeImage_FIFSupportsExportBPP(Format, (ColorDepth And (Not &H2)))) Then
+                  Call Err.Raise(5, _
+                                 "MFreeImage", _
+                                 Error$(5) & vbCrLf & vbCrLf & _
+                                 "FreeImage Library plugin '" & _
+                                      FreeImage_GetFormatFromFIF(Format) & "' " & _
+                                 "is unable to write images with a color depth " & _
+                                 "of " & ColorDepth & " bpp.")
+               Else
+                  dib = FreeImage_ConvertColorDepth(dib, ColorDepth, True)
+               End If
+            Else
+            
+               If (bConvertedForRescale) Then
+                  lBPP = lBPPOrg
+               Else
+                  lBPP = FreeImage_GetBPP(dib)
                End If
                
-               ' check color depth
-               If (ColorDepth <> FICD_AUTO) Then
-                  ' mask out bit 1 (0x02) for the case ColorDepth is FICD_MONOCHROME_DITHER (0x03)
-                  ' FREE_IMAGE_COLOR_DEPTH values are true bit depths in general expect FICD_MONOCHROME_DITHER
-                  ' by masking out bit 1, 'FreeImage_FIFSupportsExportBPP()' tests for bitdepth 1
-                  ' what is correct again for dithered images.
-                  If (Not FreeImage_FIFSupportsExportBPP(Format, (ColorDepth And (Not &H2)))) Then
-                     Call Err.Raise(5, _
-                                    "MFreeImage", _
-                                    Error$(5) & vbCrLf & vbCrLf & _
-                                    "FreeImage Library plugin '" & _
-                                         FreeImage_GetFormatFromFIF(Format) & "' " & _
-                                    "is unable to write images with a color depth " & _
-                                    "of " & ColorDepth & " bpp.")
-                  Else
-                     hDIB = FreeImage_ConvertColorDepth(hDIB, ColorDepth, True)
-                  End If
-               Else
-               
-                  If (bConvertedForRescale) Then
-                     lBPP = lBPPOrg
-                  Else
-                     lBPP = FreeImage_GetBPP(hDIB)
-                  End If
-                  
-                  If (Not FreeImage_FIFSupportsExportBPP(Format, lBPP)) Then
+               If (Not FreeImage_FIFSupportsExportBPP(Format, lBPP)) Then
+                  lBPPOrg = lBPP
+                  Do
+                     lBPP = pGetPreviousColorDepth(lBPP)
+                  Loop While ((Not FreeImage_FIFSupportsExportBPP(Format, lBPP)) Or _
+                              (lBPP = 0))
+                  If (lBPP = 0) Then
                      lBPPOrg = lBPP
                      Do
-                        lBPP = pGetPreviousColorDepth(lBPP)
+                        lBPP = pGetNextColorDepth(lBPP)
                      Loop While ((Not FreeImage_FIFSupportsExportBPP(Format, lBPP)) Or _
                                  (lBPP = 0))
-                     If (lBPP = 0) Then
-                        lBPPOrg = lBPP
-                        Do
-                           lBPP = pGetNextColorDepth(lBPP)
-                        Loop While ((Not FreeImage_FIFSupportsExportBPP(Format, lBPP)) Or _
-                                    (lBPP = 0))
-                     End If
-                     
-                     If (lBPP <> 0) Then
-                        hDIB = FreeImage_ConvertColorDepth(hDIB, lBPP, True)
-                     End If
-                  
-                  ElseIf (bConvertedForRescale) Then
-                     hDIB = FreeImage_ConvertColorDepth(hDIB, lBPPOrg, True)
-                     
                   End If
-               End If
+                  
+                  If (lBPP <> 0) Then
+                     dib = FreeImage_ConvertColorDepth(dib, lBPP, True)
+                  End If
                
-               SavePictureEx = FreeImage_Save(Format, hDIB, Filename & strExtension, Options)
-            Else
-               Call Err.Raise(5, _
-                              "MFreeImage", _
-                              Error$(5) & vbCrLf & vbCrLf & _
-                              "FreeImage Library plugin '" & _
-                                   FreeImage_GetFormatFromFIF(Format) & "' " & _
-                              "is unable to write images of the image format requested.")
+               ElseIf (bConvertedForRescale) Then
+                  dib = FreeImage_ConvertColorDepth(dib, lBPPOrg, True)
+                  
+               End If
             End If
+            
+            FreeImage_SaveEx = FreeImage_Save(Format, dib, Filename & strExtension, Options)
          Else
-            ' unknown image format error
             Call Err.Raise(5, _
                            "MFreeImage", _
                            Error$(5) & vbCrLf & vbCrLf & _
-                           "Unknown image format. Neither an explicit image format " & _
-                           "was specified nor any known image format was parsed " & _
-                           "from the filename given.")
+                           "FreeImage Library plugin '" & _
+                                FreeImage_GetFormatFromFIF(Format) & "' " & _
+                           "is unable to write images of the image format requested.")
          End If
+      Else
+         ' unknown image format error
+         Call Err.Raise(5, _
+                        "MFreeImage", _
+                        Error$(5) & vbCrLf & vbCrLf & _
+                        "Unknown image format. Neither an explicit image format " & _
+                        "was specified nor any known image format was parsed " & _
+                        "from the filename given.")
+      End If
+      
+      If (bUnloadSource) Then
+         Call FreeImage_Unload(dib)
+      End If
+   End If
+
+End Function
+
+Public Function SavePictureEx(ByRef Picture As IPicture, _
+                              ByRef Filename As String, _
+                     Optional ByRef Format As FREE_IMAGE_FORMAT = FIF_UNKNOWN, _
+                     Optional ByRef Options As FREE_IMAGE_SAVE_OPTIONS = FISO_SAVE_DEFAULT, _
+                     Optional ByRef ColorDepth As FREE_IMAGE_COLOR_DEPTH = FICD_AUTO, _
+                     Optional ByRef Width As Variant, _
+                     Optional ByRef Height As Variant, _
+                     Optional ByRef InPercent As Boolean = False, _
+                     Optional ByRef Filter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Boolean
+                     
+Dim hDIB As Long
+
+Const vbObjectOrWithBlockVariableNotSet As Long = 91
+Const vbInvalidPictureError As Long = 481
+
+   ' This function is an extended version of the VB method 'SavePicture'. As
+   ' the VB version it takes a Picture object and a filename parameter to
+   ' save the image and throws the same errors in most cases.
+   
+   ' This function now is only a thin wrapper for the FreeImage_SaveEx() wrapper
+   ' function (as compared to releases of this wrapper prior to version 1.8). So,
+   ' have a look at this function's discussion of the parameters.
+   
+   
+   If (Not Picture Is Nothing) Then
+      hDIB = FreeImage_CreateFromOlePicture(Picture)
+      If (hDIB) Then
+         SavePictureEx = FreeImage_SaveEx(hDIB, Filename, Format, Options, _
+                                          ColorDepth, Width, Height, InPercent, _
+                                          FILTER_BICUBIC, True)
       Else
          Call Err.Raise(vbInvalidPictureError)
       End If

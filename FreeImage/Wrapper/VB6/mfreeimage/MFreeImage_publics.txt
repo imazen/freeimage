@@ -14,6 +14,24 @@
 '--------------------------------------------------------------------------------
 
 '--------------------------------------------------------------------------------
+' New public objects in this release (1.8)
+'--------------------------------------------------------------------------------
+FREE_IMAGE_LOAD_OPTIONS          (Enumeration)
+FreeImage_LoadEx()               (Function) 
+FreeImage_SaveEx()               (Function)
+FreeImage_CreateFromScreen()     (Function)
+
+'--------------------------------------------------------------------------------
+' Changed public objects in this release (1.8)
+'--------------------------------------------------------------------------------
+FREE_IMAGE_SAVE_OPTIONS          (Enumeration)
+FreeImage_LoadPictureEx()        (Function)
+FreeImage_SavePictureEx()        (Function)
+FreeImage_UnlockPage()           (Function)
+
+
+
+'--------------------------------------------------------------------------------
 ' Error handling functions
 '--------------------------------------------------------------------------------
 FreeImage_InitErrorHandler()
@@ -113,6 +131,9 @@ FreeImage_RescaleByPercent()
 FreeImage_RescaleByFactor()
 FreeImage_PaintDC()
 FreeImage_PaintDCEx()
+FreeImage_CreateFromScreen()
+FreeImage_LoadEx()
+FreeImage_SaveEx()
 
 
 '--------------------------------------------------------------------------------
