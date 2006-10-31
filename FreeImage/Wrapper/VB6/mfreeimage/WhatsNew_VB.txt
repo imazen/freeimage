@@ -5,6 +5,16 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+October 31, 2006 - 1.9
+* [Carsten Klein] adjusted page numbers of the API documentation in header comments in FreeImage function declarations to match FreeImage 3.9.2 API documentation
+! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 2 to match current version 3.9.2
++ [Carsten Klein] added function declaration for FreeImage_JPEGCrop(): added both declaration and Boolean returning wrapper function.
+! [Carsten Klein] changed data type of all occurences of parameter 'Flags' from Long to either FREE_IMAGE_LOAD_OPTIONS or FREE_IMAGE_SAVE_OPTIONS enum. This is true for declared funcitons as well as for wrapper functions.
++ [Carsten Klein] added function declaration for FreeImage_LoadMultiBitmapFromMemory().
++ [Carsten Klein] added wrapper function FreeImage_LoadMultiBitmapFromMemoryEx(): this is dealing with a VB style array (SAFEARRAY) like FreeImage_LoadFromMemoryEx() does.
+
+! now FreeImage version 3.9.2
+
 October 30, 2006 - 1.8
 * [Carsten Klein] fixed a memory leak in wrapper function SavePictureEx(). Thanks to Roogames for reporting that bug.
 ! [Carsten Klein] changed return type of wrapper function SavePictureEx() to Boolean.
