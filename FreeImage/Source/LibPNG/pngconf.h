@@ -28,6 +28,7 @@
 #define PNG_ASSEMBLER_CODE_SUPPORTED
 #else
 #undef PNG_ASSEMBLER_CODE_SUPPORTED
+#define PNG_NO_ASSEMBLER_CODE
 #endif // _WIN32
 /* ------------------------------------------------ */
 
