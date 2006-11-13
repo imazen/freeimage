@@ -1,19 +1,22 @@
 Release Notes
 --------------
-This version of the library has been tested under OSX 10.2 using gcc 3.3.
+This version of the library has been tested under OSX 10.3.9 PPC and OSX 10.4.8 Intel.
 
 While the makefiles will make a .dylib and a .a, it is recommended to simply staticly link with the .a file.
 
-Herve Drolon
-FreeImage Project Manager
+FreeImage is now built as a Universal Binary and targets the 10.3.9 SDK for PPC and the 10.4u SDK for i386.
+This means that you must have both of these SDKs installed and that you must be running on OSX 10.4+ to build FreeImage.
+The library will run on 10.3 PPC, but probably not 10.2 or below anymore. wchar.h did not exist on 10.2.
 
-Installation
-------------
-Note: You will need to have root privileges in order to install the library in the /usr/lib directory.
-The installation process is as simple as this : 
+Ryan Rubley
+
+Building the Library
+--------------------
+The build process is as simple as this: 
 1) Enter the FreeImage directory
-2) Build the distribution : 
-make osx
-make osxinstall
-3) Clean all files produced during the build process
-make clean
+2) Build the distribution: 
+make -f Makefile.osx
+3) The libraries will be in the Dist directory when the build is finished
+
+To clean all files produced during the build process:
+make -f Makefile.osx clean

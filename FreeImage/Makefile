@@ -68,8 +68,3 @@ install:
 clean:
 	rm -f core Dist/*.* u2dtmp* $(MODULES) $(STATICLIB) $(SHAREDLIB) $(LIBNAME)
 
-osx:
-	$(MAKE) -f Makefile.osx
-
-osxinstall:
-	$(MAKE) -f Makefile.osx install

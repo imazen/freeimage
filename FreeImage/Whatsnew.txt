@@ -5,6 +5,9 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month day, 2006 - 3.9.3
+* [Ryan Rubley] improved the MacOSX makefile
+
 October 30th, 2006 - 3.9.2
 ! FreeImage now uses libTIFF 3.8.2 (with patch 2006-10-13)
 + [Herve Drolon] added full support for 16-bit greyscale and 48-bit RGB to the PNM plugin
