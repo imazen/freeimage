@@ -4,6 +4,7 @@
 // Design and implementation by
 // - Hervé Drolon (drolon@infonie.fr)
 // - Dennis Lim (dlkj@users.sourceforge.net)
+// - Thomas Chmielewski (Chmielewski.Thomas@oce.de)
 //
 // Main reference : Ulichney, R., Digital Halftoning, The MIT Press, Cambridge, MA, 1987
 //
@@ -159,7 +160,7 @@ static int dithervalue(int x, int y, int size) {
 // Ordered dithering with a Bayer matrix of size 2^order by 2^order
 //
 static FIBITMAP* OrderedDispersedDot(FIBITMAP *dib, int order) {
-	int x, y, pixel;
+	int x, y;
 	int width, height;
 	BYTE *bits, *new_bits;
 	FIBITMAP *new_dib = NULL;
@@ -171,21 +172,20 @@ static FIBITMAP* OrderedDispersedDot(FIBITMAP *dib, int order) {
 	if(NULL == new_dib) return NULL;
 
 	// build the dithering matrix
-	int l = (1 << order);
+	int l = (1 << order);	// square of dither matrix order; the dimensions of the matrix
 	BYTE *matrix = (BYTE*)malloc(l*l * sizeof(BYTE));
 	for(int i = 0; i < l*l; i++) {
-		matrix[i] = (BYTE)dithervalue(i / l, i % l, order);
+		// according to "Purdue University: Digital Image Processing Laboratory: Image Halftoning, April 30th, 2006
+		matrix[i] = (BYTE)( 255 * (((double)dithervalue(i / l, i % l, order) + 0.5) / (l*l)) );
 	}
 
 	// perform the dithering
-	int scale = 8 - 2*order;
 	for(y = 0; y < height; y++) {
 		// scan left to right
 		bits = FreeImage_GetScanLine(dib, y);
 		new_bits = FreeImage_GetScanLine(new_dib, y);
 		for(x = 0; x < width; x++) {
-			pixel = (int)bits[x] >> scale;	// scale values to 0..(2^order x 2^order)
-			if(pixel > matrix[(x % order) + order * (y % order)]) {
+			if(bits[x] > matrix[(x % l) + l * (y % l)]) {
 				new_bits[x] = WHITE;
 			} else {
 				new_bits[x] = BLACK;
@@ -358,6 +358,9 @@ FreeImage_Dither(FIBITMAP *dib, FREE_IMAGE_DITHER algorithm) {
 			break;
 		case FID_BAYER8x8:
 			dib8 = OrderedDispersedDot(input, 3);
+			break;
+		case FID_BAYER16x16:
+			dib8 = OrderedDispersedDot(input, 4);
 			break;
 		case FID_CLUSTER6x6:
 			dib8 = OrderedClusteredDot(input, 3);
