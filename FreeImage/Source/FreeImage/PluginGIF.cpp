@@ -3,6 +3,7 @@
 //
 // Design and implementation by
 // - Ryan Rubley <ryan@lostreality.org>
+// - Raphaël Gaquer <raphael.gaquer@alcer.com>
 //
 // This file is part of FreeImage 3
 //
@@ -39,6 +40,7 @@
 // ==========================================================
 //   Constant/Typedef declarations
 // ==========================================================
+
 
 struct GIFinfo {
 	BOOL read;
@@ -82,13 +84,17 @@ protected:
 	int m_minCodeSize, m_clearCode, m_endCode, m_nextCode;
 
 	int m_bpp, m_slack; //Compressor information
-	std::string m_prefix; //Compressor state variable
+
+	int m_prefix; //Compressor state variable
 	int m_codeSize, m_codeMask; //Compressor/Decompressor state variables
 	int m_oldCode; //Decompressor state variable
 	int m_partial, m_partialSize; //Compressor/Decompressor bit buffer
 
+	int firstPixelPassed; // A specific flag that indicates if the first pixel
+	                      // of the whole image had already been read
+
 	std::string m_strings[MAX_LZW_CODE]; //This is what is really the "string table" data for the Decompressor
-	std::map<std::string, int> m_strmap; //This is what is really the "string table" data for the Compressor
+	int* m_strmap;
 
 	//input buffer
 	BYTE *m_buffer;
@@ -168,12 +174,21 @@ FreeImage_GetMetadataEx(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key
 StringTable::StringTable()
 {
 	m_buffer = NULL;
+	firstPixelPassed = 0; // Still no pixel read
+	// Maximum number of entries in the map is MAX_LZW_CODE * 256 
+	// (aka 2**12 * 2**8 => a 20 bits key)
+	// This Map could be optmized to only handle MAX_LZW_CODE * 2**(m_bpp)
+	m_strmap = (int*)new int[1<<20];
 }
 
 StringTable::~StringTable()
 {
 	if( m_buffer != NULL ) {
 		delete [] m_buffer;
+	}
+	if( m_strmap != NULL ) {
+		delete [] m_strmap;
+		m_strmap = NULL;
 	}
 }
 
@@ -225,7 +240,7 @@ int StringTable::CompressEnd(BYTE *buf)
 	int len = 0;
 
 	//output code for remaining prefix
-	m_partial |= m_strmap[m_prefix] << m_partialSize;
+	m_partial |= m_prefix << m_partialSize;
 	m_partialSize += m_codeSize;
 	while( m_partialSize >= 8 ) {
 		*buf++ = (BYTE)m_partial;
@@ -261,49 +276,75 @@ bool StringTable::Compress(BYTE *buf, int *len)
 		//get the current pixel value
 		char ch = (char)((m_buffer[m_bufferPos] >> m_bufferShift) & mask);
 
-		std::string nextprefix = m_prefix + ch;
-		if( m_strmap.find(nextprefix) != m_strmap.end() ) {
-			m_prefix = nextprefix;
-		} else {
-			m_partial |= m_strmap[m_prefix] << m_partialSize;
-			m_partialSize += m_codeSize;
-			//grab full bytes for the output buffer
-			while( m_partialSize >= 8 && bufpos - buf < *len ) {
-				*bufpos++ = (BYTE)m_partial;
-				m_partial >>= 8;
-				m_partialSize -= 8;
-			}
-
-			//add the string to the table map
-			m_strmap[nextprefix] = m_nextCode;
-
-			//increment the next highest valid code, increase the code size
-			if( m_nextCode == (1 << m_codeSize) ) {
-				m_codeSize++;
-			}
-			m_nextCode++;
-
-			//if we're out of codes, restart the string table
-			if( m_nextCode == MAX_LZW_CODE ) {
-				m_partial |= m_clearCode << m_partialSize;
+		// The next prefix is : 
+		// <the previous LZW code (on 12 bits << 8)> | <the code of the current pixel (on 8 bits)>
+		int nextprefix = (((m_prefix)<<8)&0xFFF00) + (ch & 0x000FF);
+		if(firstPixelPassed) {
+			
+			if( m_strmap[nextprefix] > 0) {
+				m_prefix = m_strmap[nextprefix];
+			} else {
+				m_partial |= m_prefix << m_partialSize;
 				m_partialSize += m_codeSize;
-				ClearCompressorTable();
+				//grab full bytes for the output buffer
+				while( m_partialSize >= 8 && bufpos - buf < *len ) {
+					*bufpos++ = (BYTE)m_partial;
+					m_partial >>= 8;
+					m_partialSize -= 8;
+				}
+
+				//add the code to the "table map"
+				m_strmap[nextprefix] = m_nextCode;
+
+				//increment the next highest valid code, increase the code size
+				if( m_nextCode == (1 << m_codeSize) ) {
+					m_codeSize++;
+				}
+				m_nextCode++;
+
+				//if we're out of codes, restart the string table
+				if( m_nextCode == MAX_LZW_CODE ) {
+					m_partial |= m_clearCode << m_partialSize;
+					m_partialSize += m_codeSize;
+					ClearCompressorTable();
+				}
+
+				// Only keep the 8 lowest bits (prevent problems with "negative chars")
+				m_prefix = ch & 0x000FF;
 			}
 
-			m_prefix = ch;
-		}
+			//increment to the next pixel
+			if( m_bufferShift > 0 && !(m_bufferPos + 1 == m_bufferSize && m_bufferShift <= m_slack) ) {
+				m_bufferShift -= m_bpp;
+			} else {
+				m_bufferPos++;
+				m_bufferShift = 8 - m_bpp;
+			}
 
-		//increment to the next pixel
-		if( m_bufferShift > 0 && !(m_bufferPos + 1 == m_bufferSize && m_bufferShift <= m_slack) ) {
-			m_bufferShift -= m_bpp;
+			//jump out here if the output buffer is full
+			if( bufpos - buf == *len ) {
+				return true;
+			}
+		
 		} else {
-			m_bufferPos++;
-			m_bufferShift = 8 - m_bpp;
-		}
+			// Specific behavior for the first pixel of the whole image
 
-		//jump out here if the output buffer is full
-		if( bufpos - buf == *len ) {
-			return true;
+			firstPixelPassed=1;
+			// Only keep the 8 lowest bits (prevent problems with "negative chars")
+			m_prefix = ch & 0x000FF;
+
+			//increment to the next pixel
+			if( m_bufferShift > 0 && !(m_bufferPos + 1 == m_bufferSize && m_bufferShift <= m_slack) ) {
+				m_bufferShift -= m_bpp;
+			} else {
+				m_bufferPos++;
+				m_bufferShift = 8 - m_bpp;
+			}
+
+			//jump out here if the output buffer is full
+			if( bufpos - buf == *len ) {
+				return true;
+			}
 		}
 	}
 
@@ -384,13 +425,12 @@ void StringTable::Done(void)
 
 void StringTable::ClearCompressorTable(void)
 {
-	m_strmap.clear();
-	for( int i = 0; i < m_clearCode; i++ ) {
-		m_strmap[std::string(1, (char)i)] = i;
+	if(m_strmap) {
+		memset(m_strmap, 0xFF, sizeof(unsigned int)*(1<<20));
 	}
 	m_nextCode = m_endCode + 1;
 
-	m_prefix.erase();
+	m_prefix = 0;
 	m_codeSize = m_minCodeSize + 1;
 }
 
@@ -1238,6 +1278,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				io->write_proc(&pal[i].rgbBlue, 1, 1, handle);
 			}
 		}
+
 
 		//LZW Minimum Code Size
 		b = (BYTE)(bpp == 1 ? 2 : bpp);
