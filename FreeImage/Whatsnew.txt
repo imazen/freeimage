@@ -9,6 +9,7 @@ Month day, 2006 - 3.9.3
 * [Ryan Rubley] improved the MacOSX makefile
 * [Thomas Chmielewski] fixed a bug in FreeImage_Dither and Bayer dithering, added FID_BAYER16x16
 * [Raphael Gaquer] greatly improved the speed of the GIF encoder
+* [Herve Drolon] fixed saving of metadata in the PNG plugin
 
 October 30th, 2006 - 3.9.2
 ! FreeImage now uses libTIFF 3.8.2 (with patch 2006-10-13)

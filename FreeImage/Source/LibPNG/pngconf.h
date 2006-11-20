@@ -23,6 +23,8 @@
 /** Added by FreeImage
 */
 #define PNG_iTXt_SUPPORTED
+#define PNG_READ_iTXt_SUPPORTED
+#define PNG_WRITE_iTXt_SUPPORTED
 
 #ifdef _WIN32
 #define PNG_ASSEMBLER_CODE_SUPPORTED
