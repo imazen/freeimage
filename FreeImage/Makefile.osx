@@ -27,6 +27,8 @@ LIPO = lipo
 TARGET = freeimage
 STATICLIB = lib$(TARGET).a
 SHAREDLIB = lib$(TARGET)-$(VER_MAJOR).$(VER_MINOR).dylib
+LIBNAME = lib$(TARGET).$(VER_MAJOR).dylib
+HEADER = Source/FreeImage.h
 
 .SUFFIXES: .o-ppc .o-i386
 MODULES_PPC = $(SRCS:.c=.o-ppc)
@@ -34,7 +36,9 @@ MODULES_I386 = $(SRCS:.c=.o-i386)
 MODULES_PPC := $(MODULES_PPC:.cpp=.o-ppc)
 MODULES_I386 := $(MODULES_I386:.cpp=.o-i386)
 
-
+PREFIX = /usr/local
+INSTALLDIR = $(PREFIX)/lib
+INCDIR = $(PREFIX)/include
 
 default: all
 
@@ -76,6 +80,13 @@ $(SHAREDLIB)-i386: $(MODULES_I386)
 
 .cpp.o-i386:
 	$(CPP_I386) $(CPPFLAGS_I386) -c $< -o $@
+
+install:
+	install -d -m 755 -o root -g wheel $(INCDIR) $(INSTALLDIR)
+	install -m 644 -o root -g wheel $(HEADER) $(INCDIR)
+	install -m 644 -o root -g wheel $(STATICLIB) $(INSTALLDIR)
+	install -m 755 -o root -g wheel $(SHAREDLIB) $(INSTALLDIR)
+	ln -sf $(SHAREDLIB) $(INSTALLDIR)/$(LIBNAME)
 
 clean:
 	rm -f core Dist/*.* u2dtmp* $(MODULES_PPC) $(MODULES_I386) $(STATICLIB) $(STATICLIB)-ppc $(STATICLIB)-i386 $(SHAREDLIB) $(SHAREDLIB)-ppc $(SHAREDLIB)-i386

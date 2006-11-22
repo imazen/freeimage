@@ -18,5 +18,8 @@ The build process is as simple as this:
 make -f Makefile.osx
 3) The libraries will be in the Dist directory when the build is finished
 
+To install FreeImage in the /usr/local/lib and /usr/local/include directories: 
+make -f Makefile.osx install
+
 To clean all files produced during the build process:
 make -f Makefile.osx clean
