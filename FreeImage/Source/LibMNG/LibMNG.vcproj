@@ -262,7 +262,7 @@
 
 			<File
 
-				RelativePath=".\libmng_chunk_descr.c">
+				RelativePath="libmng_chunk_descr.c">
 
 			</File>
 
@@ -384,7 +384,7 @@
 
 			<File
 
-				RelativePath=".\libmng_chunk_descr.h">
+				RelativePath="libmng_chunk_descr.h">
 
 			</File>
 

@@ -254,7 +254,7 @@
 				RelativePath="jmemnobs.c">
 			</File>
 			<File
-				RelativePath=".\jpegtran.c">
+				RelativePath="jpegtran.c">
 			</File>
 			<File
 				RelativePath="jquant1.c">
@@ -266,7 +266,7 @@
 				RelativePath="jutils.c">
 			</File>
 			<File
-				RelativePath=".\transupp.c">
+				RelativePath="transupp.c">
 			</File>
 		</Filter>
 		<Filter
@@ -306,7 +306,7 @@
 				RelativePath="jversion.h">
 			</File>
 			<File
-				RelativePath=".\transupp.h">
+				RelativePath="transupp.h">
 			</File>
 		</Filter>
 	</Files>

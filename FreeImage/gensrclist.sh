@@ -7,9 +7,9 @@ echo "VER_MINOR = 9.2" >> Makefile.srcs
 
 echo -n "SRCS = " >> Makefile.srcs
 for DIR in $DIRLIST; do
-	DSPS=`echo $DIR/*.dsp`
-	if [ "$DSPS" != "$DIR/*.dsp" ]; then
-		egrep '^SOURCE=.*\.(c|cpp)' $DIR/*.dsp | cut -d= -f2 | tr '\\' '/' | awk '{print "'$DIR'/"$0}' | tr '\r\n' '  ' | tr -s ' ' >> Makefile.srcs
+	VCPRJS=`echo $DIR/*.vcproj`
+	if [ "$VCPRJS" != "$DIR/*.vcproj" ]; then
+		egrep 'RelativePath=.*\.(c|cpp)' $DIR/*.vcproj | cut -d'"' -f2 | tr '\\' '/' | awk '{print "'$DIR'/"$0}' | tr '\r\n' '  ' | tr -s ' ' >> Makefile.srcs
 	fi
 done
 echo >> Makefile.srcs

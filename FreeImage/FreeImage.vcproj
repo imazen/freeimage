@@ -200,13 +200,13 @@ copy Source\FreeImage.h Dist
 					RelativePath="Source\FreeImage\PluginDDS.cpp">
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginG3.cpp">
+					RelativePath="Source\FreeImage\PluginG3.cpp">
 				</File>
 				<File
 					RelativePath="Source\FreeImage\PluginGIF.cpp">
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginHDR.cpp">
+					RelativePath="Source\FreeImage\PluginHDR.cpp">
 				</File>
 				<File
 					RelativePath="Source\FreeImage\PluginICO.cpp">
@@ -242,7 +242,7 @@ copy Source\FreeImage.h Dist
 					RelativePath="Source\FreeImage\PluginRAS.cpp">
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginSGI.cpp">
+					RelativePath="Source\FreeImage\PluginSGI.cpp">
 				</File>
 				<File
 					RelativePath="Source\FreeImage\PluginTARGA.cpp">
@@ -285,7 +285,7 @@ copy Source\FreeImage.h Dist
 					RelativePath="Source\FreeImage\Conversion8.cpp">
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\ConversionRGBF.cpp">
+					RelativePath="Source\FreeImage\ConversionRGBF.cpp">
 				</File>
 				<File
 					RelativePath="Source\FreeImage\ConversionType.cpp">
@@ -294,16 +294,16 @@ copy Source\FreeImage.h Dist
 					RelativePath="Source\FreeImage\Halftoning.cpp">
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\tmoColorConvert.cpp">
+					RelativePath="Source\FreeImage\tmoColorConvert.cpp">
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\tmoDrago03.cpp">
+					RelativePath="Source\FreeImage\tmoDrago03.cpp">
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\tmoReinhard05.cpp">
+					RelativePath="Source\FreeImage\tmoReinhard05.cpp">
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\ToneMapping.cpp">
+					RelativePath="Source\FreeImage\ToneMapping.cpp">
 				</File>
 			</Filter>
 			<Filter
@@ -390,7 +390,7 @@ copy Source\FreeImage.h Dist
 				RelativePath="Source\Quantizers.h">
 			</File>
 			<File
-				RelativePath=".\Source\ToneMapping.h">
+				RelativePath="Source\ToneMapping.h">
 			</File>
 			<File
 				RelativePath="Source\Utilities.h">
@@ -421,7 +421,7 @@ copy Source\FreeImage.h Dist
 				RelativePath="Source\FreeImageToolkit\Flip.cpp">
 			</File>
 			<File
-				RelativePath=".\Source\FreeImageToolkit\JPEGTransform.cpp">
+				RelativePath="Source\FreeImageToolkit\JPEGTransform.cpp">
 			</File>
 			<File
 				RelativePath="Source\FreeImageToolkit\Rescale.cpp">

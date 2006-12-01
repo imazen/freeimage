@@ -145,19 +145,19 @@
 			RelativePath="testImageType.cpp">
 		</File>
 		<File
-			RelativePath=".\testJPEG.cpp">
+			RelativePath="testJPEG.cpp">
 		</File>
 		<File
 			RelativePath="testMemIO.cpp">
 		</File>
 		<File
-			RelativePath=".\testMPage.cpp">
+			RelativePath="testMPage.cpp">
 		</File>
 		<File
 			RelativePath="testPlugins.cpp">
 		</File>
 		<File
-			RelativePath=".\TestSuite.h">
+			RelativePath="TestSuite.h">
 		</File>
 		<File
 			RelativePath="testTools.cpp">
