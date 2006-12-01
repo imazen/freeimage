@@ -132,11 +132,29 @@ FreeImage_ConvertLine24To32(BYTE *target, BYTE *source, int width_in_pixels) {
 // ----------------------------------------------------------
 
 static void DLL_CALLCONV
-MapTransparentTableToAlpha(RGBQUAD *target, BYTE *source, BYTE *table, int transparent_pixels, int width_in_pixels) {
-	for (int cols = 0; cols < width_in_pixels; cols++) {
+MapTransparentTableToAlpha4(RGBQUAD *target, BYTE *source, BYTE *table, int transparent_pixels, int width_in_pixels) {
+    BOOL low_nibble = FALSE;
+    int x = 0;
+
+    for (int cols = 0 ; cols < width_in_pixels ; ++cols) {
+        int index;
+        if (low_nibble) {
+            index = LOWNIBBLE(source[x]);
+            x++;
+        } else {
+            index = HINIBBLE(source[x]) >> 4;
+        }
+        target[cols].rgbReserved = (index < transparent_pixels) ? table[index] : 255;
+        low_nibble = !low_nibble;
+    }
+}
+
+static void DLL_CALLCONV
+MapTransparentTableToAlpha8(RGBQUAD *target, BYTE *source, BYTE *table, int transparent_pixels, int width_in_pixels) {
+    for (int cols = 0; cols < width_in_pixels; cols++) {
 		target[cols].rgbReserved = (source[cols] < transparent_pixels) ? table[source[cols]] : 255;
 	}
-}
+} 
 
 // ----------------------------------------------------------
 
@@ -145,8 +163,9 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 	if(!dib) return NULL;
 
 	int bpp = FreeImage_GetBPP(dib);
+	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 
-	if(bpp != 32) {
+	if((bpp != 32) && ((image_type == FIT_BITMAP) || (image_type == FIT_RGBA16))) {
 		int width = FreeImage_GetWidth(dib);
 		int height = FreeImage_GetHeight(dib);
 
@@ -171,7 +190,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 						FreeImage_ConvertLine4To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
 				
 						if (FreeImage_IsTransparent(dib)) {
-							MapTransparentTableToAlpha((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
+							MapTransparentTableToAlpha4((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
 						}
 					}
 
@@ -188,7 +207,7 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 						FreeImage_ConvertLine8To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
 
 						if (FreeImage_IsTransparent(dib)) {
-							MapTransparentTableToAlpha((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
+							MapTransparentTableToAlpha8((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
 						}
 					}
 
