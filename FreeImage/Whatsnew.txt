@@ -6,10 +6,12 @@ What's New for FreeImage
 + : added
 
 Month day, 2006 - 3.9.3
-* [Ryan Rubley] improved the MacOSX makefile
+! [Ryan Rubley] reworked the MacOSX makefile in order to fully support Universal Binary builds of FreeImage
+! [Herve Drolon] makefiles are now generated from VS2003 project files instead of VS6 project files
 * [Thomas Chmielewski] fixed a bug in FreeImage_Dither and Bayer dithering, added FID_BAYER16x16
 * [Raphael Gaquer] greatly improved the speed of the GIF encoder
 * [Herve Drolon] fixed saving of metadata in the PNG plugin
+* [rampelstinskin] fixed transparency table to alpha channel conversion for 4-bit images in FreeImage_ConvertTo32Bits
 
 October 30th, 2006 - 3.9.2
 ! FreeImage now uses libTIFF 3.8.2 (with patch 2006-10-13)
