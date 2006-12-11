@@ -82,6 +82,8 @@ namespace FreeImageAPI
 		public byte rgbtRed;
 	}
 
+	/*
+	These structures should not be used by a wrapper
 	[StructLayout(LayoutKind.Sequential)]
 	public class BITMAPINFOHEADER {
 		public uint size;
@@ -102,6 +104,7 @@ namespace FreeImageAPI
 	  public BITMAPINFOHEADER bmiHeader; 
 	  public RGBQUAD bmiColors;
 	}
+	*/
 
 	// Types used in the library (specific to FreeImage) ------------------------
 	/** 48-bit RGB 
@@ -610,14 +613,12 @@ namespace FreeImageAPI
 		[DllImport(dllName, EntryPoint="FreeImage_GetDotsPerMeterY")]
 		public static extern uint GetDotsPerMeterY(FIBITMAP dib);
 		
-		[DllImport(dllName, EntryPoint="FreeImage_GetInfoHeader")]
-		[return: MarshalAs(UnmanagedType.LPStruct)]
-		public static extern BITMAPINFOHEADER GetInfoHeader(FIBITMAP dib);
-		
-		[DllImport(dllName, EntryPoint="FreeImage_GetInfo")]
-		[return: MarshalAs(UnmanagedType.LPStruct)]
-		public static extern BITMAPINFO GetInfo(FIBITMAP dib);
-		
+		[DllImport(dllName, EntryPoint = "FreeImage_GetInfoHeader")]
+		public static extern IntPtr FreeImage_GetInfoHeader(FIBITMAP dib);
+
+		[DllImport(dllName, EntryPoint = "FreeImage_GetInfo")]
+		public static extern IntPtr FreeImage_GetInfo(FIBITMAP dib);
+
 		[DllImport(dllName, EntryPoint="FreeImage_GetColorType")]
 		public static extern FREE_IMAGE_COLOR_TYPE GetColorType(FIBITMAP dib);
 		
