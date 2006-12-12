@@ -1,5 +1,5 @@
 # Entry point for FreeImage makefiles
-# Default to 'make -f Makefile.gnu' for unknown OS. 
+# Default to 'make -f Makefile.gnu' for Linux and for unknown OS. 
 #
 OS = $(shell uname)
 MAKEFILE = gnu
@@ -15,16 +15,17 @@ ifeq ($(OS), Solaris)
 endif
 
 default:
-    make -f Makefile.$(MAKEFILE)
+	make -f Makefile.$(MAKEFILE) 
 
 all:
-    make -f Makefile.$(MAKEFILE) all
+	make -f Makefile.$(MAKEFILE) all 
 
 dist:
-    make -f Makefile.$(MAKEFILE) dist
+	make -f Makefile.$(MAKEFILE) dist 
 
 install:
-    make -f Makefile.$(MAKEFILE) install
+	make -f Makefile.$(MAKEFILE) install 
 
 clean:
-    make -f Makefile.$(MAKEFILE) clean
+	make -f Makefile.$(MAKEFILE) clean 
+
