@@ -254,9 +254,6 @@
 				RelativePath="jmemnobs.c">
 			</File>
 			<File
-				RelativePath="jpegtran.c">
-			</File>
-			<File
 				RelativePath="jquant1.c">
 			</File>
 			<File
