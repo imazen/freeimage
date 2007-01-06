@@ -15,17 +15,17 @@ ifeq ($(OS), Solaris)
 endif
 
 default:
-	make -f Makefile.$(MAKEFILE) 
+	$(MAKE) -f Makefile.$(MAKEFILE) 
 
 all:
-	make -f Makefile.$(MAKEFILE) all 
+	$(MAKE) -f Makefile.$(MAKEFILE) all 
 
 dist:
-	make -f Makefile.$(MAKEFILE) dist 
+	$(MAKE) -f Makefile.$(MAKEFILE) dist 
 
 install:
-	make -f Makefile.$(MAKEFILE) install 
+	$(MAKE) -f Makefile.$(MAKEFILE) install 
 
 clean:
-	make -f Makefile.$(MAKEFILE) clean 
+	$(MAKE) -f Makefile.$(MAKEFILE) clean 
 
