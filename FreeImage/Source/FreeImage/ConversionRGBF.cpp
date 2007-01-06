@@ -52,6 +52,10 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 			// allow conversion from 48-bit
 			src = dib;
 			break;
+		case FIT_RGBAF:
+			// allow conversion from 128-bit
+			src = dib;
+			break;
 		case FIT_RGBF:
 			// RGBF type : clone the src
 			return FreeImage_Clone(dib);
@@ -114,6 +118,27 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 					dst_pixel[x].red   = (float)(src_pixel[x].red)   / 65535;
 					dst_pixel[x].green = (float)(src_pixel[x].green) / 65535;
 					dst_pixel[x].blue  = (float)(src_pixel[x].blue)  / 65535;
+				}
+				src_bits += src_pitch;
+				dst_bits += dst_pitch;
+			}
+		}
+		break;
+
+		case FIT_RGBAF:
+		{
+			BYTE *src_bits = (BYTE*)FreeImage_GetBits(src);
+			BYTE *dst_bits = (BYTE*)FreeImage_GetBits(dst);
+
+			for(y = 0; y < height; y++) {
+				FIRGBAF *src_pixel = (FIRGBAF*) src_bits;
+				FIRGBF  *dst_pixel = (FIRGBF*)  dst_bits;
+
+				for(x = 0; x < width; x++) {
+					// convert and skip alpha channel
+					dst_pixel[x].red   = src_pixel[x].red;
+					dst_pixel[x].green = src_pixel[x].green;
+					dst_pixel[x].blue  = src_pixel[x].blue;
 				}
 				src_bits += src_pitch;
 				dst_bits += dst_pitch;
