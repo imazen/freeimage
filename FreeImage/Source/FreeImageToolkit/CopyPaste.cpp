@@ -447,6 +447,36 @@ Combine32(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y, WORD alpha) {
 }
 
 // ----------------------------------------------------------
+//   Any type other than FIBITMAP
+// ----------------------------------------------------------
+
+static BOOL 
+CombineSameType(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y) {
+	// check the bit depth of src and dst images
+	if(FreeImage_GetImageType(dst_dib) != FreeImage_GetImageType(src_dib)) {
+		return FALSE;
+	}
+
+	// check the size of src image
+	if((x + FreeImage_GetWidth(src_dib) > FreeImage_GetWidth(dst_dib)) || (y + FreeImage_GetHeight(src_dib) > FreeImage_GetHeight(dst_dib))) {
+		return FALSE;
+	}
+
+	BYTE *dst_bits = FreeImage_GetBits(dst_dib) + ((FreeImage_GetHeight(dst_dib) - FreeImage_GetHeight(src_dib) - y) * FreeImage_GetPitch(dst_dib)) + (x);
+	BYTE *src_bits = FreeImage_GetBits(src_dib);	
+
+	// combine images
+	for(WORD rows = 0; rows < FreeImage_GetHeight(src_dib); rows++) {
+		memcpy(dst_bits, src_bits, FreeImage_GetLine(src_dib));
+
+		dst_bits += FreeImage_GetPitch(dst_dib);
+		src_bits += FreeImage_GetPitch(src_dib);
+	}
+
+	return TRUE;
+}
+
+// ----------------------------------------------------------
 //   FreeImage interface
 // ----------------------------------------------------------
 
@@ -586,7 +616,6 @@ alpha = 0..255. If alpha > 255, then the source image is combined to the destina
 BOOL DLL_CALLCONV 
 FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha) {
 	BOOL bResult = FALSE;
-	FIBITMAP *clone = NULL;
 
 	if(!src || !dst) return FALSE;
 
@@ -595,82 +624,97 @@ FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha) {
 		return FALSE;
 	}
 
-	// check the bit depth of src and dst images
-	unsigned bpp_src = FreeImage_GetBPP(src);
-	unsigned bpp_dst = FreeImage_GetBPP(dst);
-	BOOL isRGB565 = FALSE;
-
-	if ((FreeImage_GetRedMask(dst) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dst) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dst) == FI16_565_BLUE_MASK)) {
-		isRGB565 = TRUE;
-	} else {
-		// includes case where all the masks are 0
-		isRGB565 = FALSE;
-	}
-
-	// perform promotion if needed
-	if(bpp_dst == bpp_src) {
-		clone = src;
-	} else if(bpp_dst > bpp_src) {
-		// perform promotion
-		switch(bpp_dst) {
-			case 4:
-				clone = FreeImage_ConvertTo4Bits(src);
-				break;
-			case 8:
-				clone = FreeImage_ConvertTo8Bits(src);
-				break;
-			case 16:
-				if (isRGB565) {
-					clone = FreeImage_ConvertTo16Bits565(src);
-				} else {
-					// includes case where all the masks are 0
-					clone = FreeImage_ConvertTo16Bits555(src);
-				}
-				break;
-			case 24:
-				clone = FreeImage_ConvertTo24Bits(src);
-				break;
-			case 32:
-				clone = FreeImage_ConvertTo32Bits(src);
-				break;
-			default:
-				return FALSE;
-		}
-	} else {
+	// check data type
+	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dst);
+	if(image_type != FreeImage_GetImageType(src)) {
+		// no conversion between data type is done
 		return FALSE;
 	}
 
-	if(!clone) return FALSE;
+	if(image_type == FIT_BITMAP) {
+		FIBITMAP *clone = NULL;
 
-	// paste src to dst
-	switch(FreeImage_GetBPP(dst)) {
-		case 1:
-			bResult = Combine1(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
-			break;
-		case 4:
-			bResult = Combine4(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
-			break;
-		case 8:
-			bResult = Combine8(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
-			break;
-		case 16:
-			if (isRGB565) {
-				bResult = Combine16_565(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
-			} else {
-				// includes case where all the masks are 0
-				bResult = Combine16_555(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
+		// check the bit depth of src and dst images
+		unsigned bpp_src = FreeImage_GetBPP(src);
+		unsigned bpp_dst = FreeImage_GetBPP(dst);
+		BOOL isRGB565 = FALSE;
+
+		if ((FreeImage_GetRedMask(dst) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dst) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dst) == FI16_565_BLUE_MASK)) {
+			isRGB565 = TRUE;
+		} else {
+			// includes case where all the masks are 0
+			isRGB565 = FALSE;
+		}
+
+		// perform promotion if needed
+		if(bpp_dst == bpp_src) {
+			clone = src;
+		} else if(bpp_dst > bpp_src) {
+			// perform promotion
+			switch(bpp_dst) {
+				case 4:
+					clone = FreeImage_ConvertTo4Bits(src);
+					break;
+				case 8:
+					clone = FreeImage_ConvertTo8Bits(src);
+					break;
+				case 16:
+					if (isRGB565) {
+						clone = FreeImage_ConvertTo16Bits565(src);
+					} else {
+						// includes case where all the masks are 0
+						clone = FreeImage_ConvertTo16Bits555(src);
+					}
+					break;
+				case 24:
+					clone = FreeImage_ConvertTo24Bits(src);
+					break;
+				case 32:
+					clone = FreeImage_ConvertTo32Bits(src);
+					break;
+				default:
+					return FALSE;
 			}
-			break;
-		case 24:
-			bResult = Combine24(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
-			break;
-		case 32:
-			bResult = Combine32(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
-			break;
-	}
+		} else {
+			return FALSE;
+		}
 
-	if(clone != src)
-		FreeImage_Unload(clone);
+		if(!clone) return FALSE;
+
+		// paste src to dst
+		switch(FreeImage_GetBPP(dst)) {
+			case 1:
+				bResult = Combine1(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
+				break;
+			case 4:
+				bResult = Combine4(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
+				break;
+			case 8:
+				bResult = Combine8(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
+				break;
+			case 16:
+				if (isRGB565) {
+					bResult = Combine16_565(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
+				} else {
+					// includes case where all the masks are 0
+					bResult = Combine16_555(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
+				}
+				break;
+			case 24:
+				bResult = Combine24(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
+				break;
+			case 32:
+				bResult = Combine32(dst, clone, (WORD)left, (WORD)top, (WORD)alpha);
+				break;
+		}
+
+		if(clone != src)
+			FreeImage_Unload(clone);
+
+		}
+	else {	// any type other than FITBITMAP
+		bResult = CombineSameType(dst, src, (WORD)left, (WORD)top);
+	}
 
 	return bResult;
 }
