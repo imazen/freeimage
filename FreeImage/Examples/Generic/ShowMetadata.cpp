@@ -104,7 +104,9 @@ bool GenericWriter(FIBITMAP* dib, const char* lpszPathName, int flag) {
 */
 void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char *message) {
 	cout << "\n*** ";
-	cout << FreeImage_GetFormatFromFIF(fif) << " Format\n";
+	if(fif != FIF_UNKNOWN) {
+		cout << FreeImage_GetFormatFromFIF(fif) << " Format\n";
+	}
 	cout << message;
 	cout << " ***\n";
 }
