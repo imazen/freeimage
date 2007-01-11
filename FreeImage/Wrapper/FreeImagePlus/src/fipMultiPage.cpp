@@ -40,7 +40,7 @@ BOOL fipMultiPage::open(const char* lpszPathName, BOOL create_new, BOOL read_onl
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(lpszPathName);
 
 	// check for supported file types
-	if((fif == FIF_UNKNOWN) || (fif != FIF_TIFF) && (fif != FIF_ICO) && (fif != FIF_GIF))
+	if((fif == FIF_UNKNOWN) || (fif != FIF_TIFF) && (fif != FIF_ICO) && (fif != FIF_GIF) && (fif != FIF_PSD))
 		return FALSE;
 
 	// open the stream
