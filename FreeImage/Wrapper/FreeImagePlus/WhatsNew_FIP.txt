@@ -5,6 +5,10 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+January 11th, 2007
++ [Herve Drolon] added setKeyValue method (a ASCII tag constructor) to fipTag
++ [Herve Drolon] added PSD format support to fipMultiPage::open
+
 October 30th, 2006 - 3.9.2
 + [Herve Drolon] added BOOL fipMultiPage::open(fipMemoryIO& memIO, int flags)
 + [Herve Drolon] added fipMemoryIO::operator FIMEMORY*()
