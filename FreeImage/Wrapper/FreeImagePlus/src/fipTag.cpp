@@ -29,6 +29,26 @@ fipTag::~fipTag() {
 	FreeImage_DeleteTag(_tag);
 }
 
+BOOL fipTag::setKeyValue(const char *key, const char *value) {
+	if(_tag) {
+		FreeImage_DeleteTag(_tag);
+		_tag = NULL;
+	}
+	// create a tag
+	_tag = FreeImage_CreateTag();
+	if(_tag) {
+		BOOL bSuccess = TRUE;
+		// fill the tag
+		bSuccess &= FreeImage_SetTagKey(_tag, key);
+		bSuccess &= FreeImage_SetTagLength(_tag, strlen(value) + 1);
+		bSuccess &= FreeImage_SetTagCount(_tag, strlen(value) + 1);
+		bSuccess &= FreeImage_SetTagType(_tag, FIDT_ASCII);
+		bSuccess &= FreeImage_SetTagValue(_tag, value);
+		return bSuccess;
+	}
+	return FALSE;
+}
+
 fipTag::fipTag(const fipTag& tag) {
 	_tag = FreeImage_CloneTag(tag._tag);
 }

@@ -820,7 +820,18 @@ public:
 	*/
 	BOOL getMetadata(FREE_IMAGE_MDMODEL model, const char *key, fipTag& tag) const;
 	/**
-	Attach a new FreeImage tag to the dib
+	Attach a new FreeImage tag to the dib.<br>
+	<b>Sample use</b> : <br>
+	<pre>
+	fipImage image;
+	// ...
+	fipTag tag;
+	tag.setKeyValue("Caption/Abstract", "my caption");
+	image.setMetadata(FIMD_IPTC, tag.getKey(), tag);
+	tag.setKeyValue("Keywords", "FreeImage;Library;Images;Compression");
+	image.setMetadata(FIMD_IPTC, tag.getKey(), tag);
+	</pre>
+
 	@param model Metadata model used to store the tag
 	@param key Tag field name 
 	@param tag Tag to be attached
@@ -1285,6 +1296,16 @@ public:
 	@see FreeImage_DeleteTag
 	*/
 	~fipTag();
+	/**
+	Construct a FIDT_ASCII tag (ASCII string).<br>
+	This method is useful to store comments or IPTC tags. 
+	@param name Field name
+	@param value Field value
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_CreateTag
+	*/
+	BOOL setKeyValue(const char *key, const char *value);
+
 	//@}
 
 	/**@name Copying */
