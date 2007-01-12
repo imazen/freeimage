@@ -5,6 +5,9 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+January 13th, 2007
++ [Jm2f] added ICC profile functions
+
 December 11th, 2006
 * [Lee Foropoulos] fixed bug [1221709]: 1bpp indexed Tiff Images -> green - C# Wrapper
 
