@@ -155,6 +155,20 @@ namespace FreeImageAPI
 		public double i;
 	}
 
+	// ICC profile support ------------------------------------------------------
+
+	public enum ICCFlags {
+		FIICC_DEFAULT		= 0x00,
+		FIICC_COLOR_IS_CMYK	= 0x01
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public class FIICCPROFILE {
+		public ushort flags;	// info flag
+		public uint size;		// profile's size measured in bytes
+		public IntPtr data;		// points to a block of contiguous memory containing the profile
+	}
+
 	// Important enums ----------------------------------------------------------
 
 	public enum LoadSaveFlags {
@@ -243,7 +257,8 @@ namespace FreeImageAPI
 		FIF_DDS     = 24,
 		FIF_GIF     = 25,
 		FIF_HDR		= 26,
-		FIF_FAXG3	= 27
+		FIF_FAXG3	= 27,
+		FIF_SGI		= 28
 	}
 
 	/** Image type used in FreeImage.
@@ -292,7 +307,8 @@ namespace FreeImageAPI
 		FID_BAYER8x8	= 2,	// Bayer ordered dispersed dot dithering (order 3 dithering matrix)
 		FID_CLUSTER6x6	= 3,	// Ordered clustered dot dithering (order 3 - 6x6 matrix)
 		FID_CLUSTER8x8	= 4,	// Ordered clustered dot dithering (order 4 - 8x8 matrix)
-		FID_CLUSTER16x16= 5		// Ordered clustered dot dithering (order 8 - 16x16 matrix)
+		FID_CLUSTER16x16= 5,	// Ordered clustered dot dithering (order 8 - 16x16 matrix)
+		FID_BAYER16x16	= 6		// Bayer ordered dispersed dot dithering (order 4 dithering matrix)
 	}
 	/** Lossless JPEG transformations
 	Constants used in FreeImage_JPEGTransform
@@ -656,6 +672,17 @@ namespace FreeImageAPI
 		[DllImport(dllName, EntryPoint="FreeImage_SetBackgroundColor")]
 		public static extern bool SetBackgroundColor(FIBITMAP dib, 
 			[In, MarshalAs(UnmanagedType.LPStruct)]RGBQUAD bkcolor);
+
+		// ICC profile routines -----------------------------------------------------
+
+		[DllImport(dllName,EntryPoint="FreeImage_DestroyICCProfile")]
+		public static extern void DestroyICCProfile(FIBITMAP dib);
+
+		[DllImport(dllName,EntryPoint="FreeImage_GetICCProfile")]
+		public static extern FIICCPROFILE GetICCProfile(FIBITMAP dib);
+		
+		[DllImport(dllName,EntryPoint="FreeImage_CreateICCProfile")]
+		public static extern FIICCPROFILE CreateICCProfile(FIBITMAP dib, IntPtr data, uint size);
 
 		// Smart conversion routines ------------------------------------------------
 
