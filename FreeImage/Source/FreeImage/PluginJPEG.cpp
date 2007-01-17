@@ -390,6 +390,7 @@ jpeg_read_comment(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 
 	// read the comment
 	char *value = (char*)malloc((length + 1) * sizeof(char));
+	if(value == NULL) return FALSE;
 	memcpy(value, profile, length);
 	value[length] = '\0';
 
@@ -685,6 +686,7 @@ jpeg_write_icc_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 		// ICC_HEADER_SIZE: ICC signature is 'ICC_PROFILE' + 2 bytes
 
 		BYTE *profile = (BYTE*)malloc((iccProfile->size + ICC_HEADER_SIZE) * sizeof(BYTE));
+		if(profile == NULL) return FALSE;
 		memcpy(profile, icc_signature, 12);
 
 		for(long i = 0; i < (long)iccProfile->size; i += MAX_DATA_BYTES_IN_MARKER) {
@@ -775,6 +777,7 @@ jpeg_write_xmp_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 			DWORD tag_length = FreeImage_GetTagLength(tag_xmp);
 
 			BYTE *profile = (BYTE*)malloc((tag_length + xmp_header_size) * sizeof(BYTE));
+			if(profile == NULL) return FALSE;
 			memcpy(profile, xmp_signature, xmp_header_size);
 
 			for(DWORD i = 0; i < tag_length; i += 65504L) {
@@ -1156,6 +1159,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				// 24-bit RGB image : need to swap red and blue channels
 				unsigned pitch = FreeImage_GetPitch(dib);
 				BYTE *target = (BYTE*)malloc(pitch * sizeof(BYTE));
+				if (target == NULL) 
+					throw "no memory to allocate intermediate scanline buffer";
 
 				while (cinfo.next_scanline < cinfo.image_height) {
 					// get a copy of the scanline
