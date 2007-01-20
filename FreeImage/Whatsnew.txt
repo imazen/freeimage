@@ -12,6 +12,7 @@ Month day, 2006 - 3.9.3
 + [Herve Drolon] added support for RGBAF images to FreeImage_ConvertToRGBF
 + [Herve Drolon] FreeImage_Paste now works with any bitmap type
 + [Floris van den Berg] added multipage support to the PSD plugin (read only)
++ [Herve Drolon] added full support for 64-bit RGBA images to the PNG and TIFF plugins
 * [Thomas Chmielewski] fixed a bug in FreeImage_Dither and Bayer dithering, added FID_BAYER16x16
 * [Raphael Gaquer] greatly improved the speed of the GIF encoder
 * [Herve Drolon] fixed saving of metadata in the PNG plugin
