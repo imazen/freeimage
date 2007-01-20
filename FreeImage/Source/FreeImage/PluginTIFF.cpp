@@ -526,6 +526,11 @@ ReadImageType(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel) {
 							fit = FIT_RGB16;
 						}
 						break;
+					case 64:
+						if(samplesperpixel == 4) {
+							fit = FIT_RGBA16;
+						}
+						break;
 				}
 				break;
 
@@ -583,7 +588,7 @@ ReadImageType(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel) {
 			if(bpp == 48) fit = FIT_RGB16;
 		}
 		else if(samplesperpixel == 4) {
-			if(bpp == 96) fit = FIT_RGBA16;
+			if(bpp == 64) fit = FIT_RGBA16;
 		}
 
 	}
@@ -676,6 +681,8 @@ WriteCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint1
 			case 16 :
 			case 24 :
 			case 32 :
+				compression = COMPRESSION_LZW;
+				break;
 			case 48:
 			case 64 :
 			case 128:
@@ -701,7 +708,7 @@ WriteCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint1
 		// grayscale images do much better with differencing.
 
 		if((bitspersample == 8) || (bitspersample == 16)) {
-			if ((bitsperpixel >= 8) && (photometric != PHOTOMETRIC_PALETTE) && (bitsperpixel != 48))
+			if ((bitsperpixel >= 8) && (photometric != PHOTOMETRIC_PALETTE))
 				TIFFSetField(tiff, TIFFTAG_PREDICTOR, 2);
 			else
 				TIFFSetField(tiff, TIFFTAG_PREDICTOR, 1);
@@ -953,7 +960,8 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 		(type == FIT_FLOAT)   ||
 		(type == FIT_DOUBLE)  ||
 		(type == FIT_COMPLEX) || 
-		(type == FIT_RGB16)
+		(type == FIT_RGB16)   || 
+		(type == FIT_RGBA16)
 	);
 }
 
@@ -1034,8 +1042,8 @@ FindLoadMethod(TIFF *tif, FREE_IMAGE_TYPE image_type, int flags) {
 	switch(photometric) {
 		// convert to 24 or 32 bits RGB if the image is full color
 		case PHOTOMETRIC_RGB:
-			if(image_type == FIT_RGB16) {
-				// load 48-bit RGB without conversion 
+			if((image_type == FIT_RGB16) || (image_type == FIT_RGBA16)) {
+				// load 48-bit RGB and 64-bit RGBA without conversion 
 				loadMethod = LoadAsGenericStrip;
 			} else if(bitspersample >= 8) {
 				loadMethod = LoadAsRBGA;
@@ -1791,6 +1799,17 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			samplesperpixel = 3;
 			bitspersample = bitsperpixel / samplesperpixel;
 			photometric	= PHOTOMETRIC_RGB;
+		} else if(image_type == FIT_RGBA16) {
+			// 64-bit RGBA
+
+			samplesperpixel = 4;
+			bitspersample = bitsperpixel / samplesperpixel;
+			photometric	= PHOTOMETRIC_RGB;
+			// transparency mask support
+			uint16 sampleinfo[1]; 
+			// unassociated alpha data is transparency information
+			sampleinfo[0] = EXTRASAMPLE_UNASSALPHA;
+			TIFFSetField(out, TIFFTAG_EXTRASAMPLES, 1, sampleinfo);
 		} else {
 			// special image type (int, long, double, ...)
 

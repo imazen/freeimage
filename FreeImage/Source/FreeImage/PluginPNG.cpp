@@ -243,7 +243,8 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 	return (
 		(type == FIT_BITMAP) ||
 		(type == FIT_UINT16) ||
-		(type == FIT_RGB16)
+		(type == FIT_RGB16) ||
+		(type == FIT_RGBA16)
 	);
 }
 
@@ -276,7 +277,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		try {		
 			// check to see if the file is in fact a PNG file
 
-			unsigned char png_check[PNG_BYTES_TO_CHECK];
+			BYTE png_check[PNG_BYTES_TO_CHECK];
 
 			io->read_proc(png_check, PNG_BYTES_TO_CHECK, 1, handle);
 
@@ -324,17 +325,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if (bit_depth == 16) {
 				if ((pixel_depth == 16) && (color_type == PNG_COLOR_TYPE_GRAY)) {
 					image_type = FIT_UINT16;
-#ifndef FREEIMAGE_BIGENDIAN
-					// turn on 16 bit byte swapping
-					png_set_swap(png_ptr);
-#endif
 				} 
 				else if ((pixel_depth == 48) && (color_type == PNG_COLOR_TYPE_RGB)) {
 					image_type = FIT_RGB16;
-#ifndef FREEIMAGE_BIGENDIAN
-					// turn on 16 bit byte swapping
-					png_set_swap(png_ptr);
-#endif		
+				} 
+				else if ((pixel_depth == 64) && (color_type == PNG_COLOR_TYPE_RGB_ALPHA)) {
+					image_type = FIT_RGBA16;
 				} else {
 					// tell libpng to strip 16 bit/color files down to 8 bits/color
 					png_set_strip_16(png_ptr);
@@ -342,6 +338,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 			}
 
+#ifndef FREEIMAGE_BIGENDIAN
+			if((image_type == FIT_UINT16) || (image_type == FIT_RGB16) || (image_type == FIT_RGBA16)) {
+				// turn on 16 bit byte swapping
+				png_set_swap(png_ptr);
+			}
+#endif						
 
 			// set some additional flags
 
@@ -446,11 +448,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 					break;
 
-				case PNG_COLOR_TYPE_RGB_ALPHA :
-					dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+				case PNG_COLOR_TYPE_RGB_ALPHA:
+					if(image_type == FIT_BITMAP) {
+						dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+					} else {
+						dib = FreeImage_AllocateT(image_type, width, height, pixel_depth);
+					}
 					break;
 
-				case PNG_COLOR_TYPE_PALETTE :
+				case PNG_COLOR_TYPE_PALETTE:
 					dib = FreeImage_Allocate(width, height, pixel_depth);
 
 					png_get_PLTE(png_ptr,info_ptr, &png_palette,&palette_entries);
@@ -514,10 +520,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				png_get_pHYs(png_ptr,info_ptr,&res_x,&res_y,&res_unit_type);
 
 				if (res_unit_type == 1) {
-					BITMAPINFOHEADER *bih = FreeImage_GetInfoHeader(dib);
-
-					bih->biXPelsPerMeter = res_x;
-					bih->biYPelsPerMeter = res_y;
+					FreeImage_SetDotsPerMeterX(dib, res_x);
+					FreeImage_SetDotsPerMeterY(dib, res_y);
 				}
 			}
 
@@ -659,9 +663,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			// set physical resolution
 
-			BITMAPINFOHEADER *bih = FreeImage_GetInfoHeader(dib);
-			png_uint_32 res_x = bih->biXPelsPerMeter;
-			png_uint_32 res_y = bih->biYPelsPerMeter;
+			png_uint_32 res_x = (png_uint_32)FreeImage_GetDotsPerMeterX(dib);
+			png_uint_32 res_y = (png_uint_32)FreeImage_GetDotsPerMeterY(dib);
 
 			if ((res_x > 0) && (res_y > 0))  {
 				png_set_pHYs(png_ptr, info_ptr, res_x, res_y, 1);
@@ -685,7 +688,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				// standard image type
 				bit_depth = (pixel_depth > 8) ? 8 : pixel_depth;
 			} else {
-				// 16-bit greyscale or 16-bit RGB
+				// 16-bit greyscale or 16-bit RGB(A)
 				bit_depth = 16;
 			}
 
@@ -738,7 +741,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 #ifndef FREEIMAGE_BIGENDIAN
 					// flip BGR pixels to RGB
-					png_set_bgr(png_ptr);
+					if(image_type == FIT_BITMAP)
+						png_set_bgr(png_ptr);
 #endif
 					break;
 	
