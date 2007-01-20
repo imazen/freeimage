@@ -413,6 +413,14 @@ void fipWinImage::drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg, RGBQUAD *appBkC
 			} else if((image_type == FIT_RGBF) || (image_type == FIT_RGB16)) {
 				// Apply a tone mapping algorithm and convert to 24-bit 
 				_display_dib = FreeImage_ToneMapping(_dib, _tmo, _tmo_param_1, _tmo_param_2);
+			} else if(image_type == FIT_RGBA16) {
+				// Convert to 32-bit
+				FIBITMAP *dib32 = FreeImage_ConvertTo32Bits(_dib);
+				if(dib32) {
+					// Create the transparent / alpha blended image
+					_display_dib = FreeImage_Composite(dib32, useFileBkg, appBkColor, bg);
+					FreeImage_Unload(dib32);
+				}
 			} else {
 				// Other cases: convert to a standard bitmap (linear scaling)
 				_display_dib = FreeImage_ConvertToStandardType(_dib, TRUE);
