@@ -20,6 +20,7 @@ Month day, 2006 - 3.9.3
 * [Scott Smith] added missing IPTC tag named "Country/PrimaryLocationCode"
 * [Herve Drolon] changed #include <stdint.h> by #include <inttypes.h> in FreeImage.h (needed by Solaris 9)
 * [Pierre Arnaud] fixed the use of FreeImage in low memory condition by checking some returned values of the malloc function
+* [Pierre Arnaud] fixed TagLib::getTagFieldName not being thread safe
 
 October 30th, 2006 - 3.9.2
 ! FreeImage now uses libTIFF 3.8.2 (with patch 2006-10-13)
