@@ -37,6 +37,7 @@ static const char* IPTC_DELIMITER = ";";	// keywords/supplemental category delim
 */
 BOOL 
 read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
+	char defaultKey[16];
 	size_t length = datalen;
 	BYTE *profile = (BYTE*)dataptr;
 
@@ -148,7 +149,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 		}
 		else {
 			// get the tag key and description
-			const char *key = tag_lib.getTagFieldName(TagLib::IPTC, tag_id);
+			const char *key = tag_lib.getTagFieldName(TagLib::IPTC, tag_id, defaultKey);
 			FreeImage_SetTagKey(tag, key);
 			const char *description = tag_lib.getTagDescription(TagLib::IPTC, tag_id);
 			FreeImage_SetTagDescription(tag, description);
@@ -170,7 +171,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 	if(Keywords.length()) {
 		FreeImage_SetTagType(tag, FIDT_ASCII);
 		FreeImage_SetTagID(tag, TAG_KEYWORDS);
-		FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::IPTC, TAG_KEYWORDS));
+		FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::IPTC, TAG_KEYWORDS, defaultKey));
 		FreeImage_SetTagDescription(tag, tag_lib.getTagDescription(TagLib::IPTC, TAG_KEYWORDS));
 		FreeImage_SetTagLength(tag, Keywords.length());
 		FreeImage_SetTagCount(tag, Keywords.length());
@@ -182,7 +183,7 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 	if(SupplementalCategory.length()) {
 		FreeImage_SetTagType(tag, FIDT_ASCII);
 		FreeImage_SetTagID(tag, TAG_SUPPLEMENTAL_CATEGORIES);
-		FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::IPTC, TAG_SUPPLEMENTAL_CATEGORIES));
+		FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::IPTC, TAG_SUPPLEMENTAL_CATEGORIES, defaultKey));
 		FreeImage_SetTagDescription(tag, tag_lib.getTagDescription(TagLib::IPTC, TAG_SUPPLEMENTAL_CATEGORIES));
 		FreeImage_SetTagLength(tag, SupplementalCategory.length());
 		FreeImage_SetTagCount(tag, SupplementalCategory.length());

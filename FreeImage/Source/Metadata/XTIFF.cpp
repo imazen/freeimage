@@ -104,6 +104,7 @@ XTIFFInitialize(void) {
 
 void 
 tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
+	char defaultKey[16];
 
 	size_t tag_size = sizeof(xtiffFieldInfo) / sizeof(xtiffFieldInfo[0]);
 
@@ -125,7 +126,7 @@ tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 
 				FreeImage_SetTagType(tag, (FREE_IMAGE_MDTYPE)fieldInfo->field_type);
 				FreeImage_SetTagID(tag, tag_id);
-				FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::GEOTIFF, tag_id));
+				FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::GEOTIFF, tag_id, defaultKey));
 				FreeImage_SetTagDescription(tag, tag_lib.getTagDescription(TagLib::GEOTIFF, tag_id));
 				FreeImage_SetTagLength(tag, strlen(params) + 1);
 				FreeImage_SetTagCount(tag, FreeImage_GetTagLength(tag));
@@ -149,7 +150,7 @@ tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 
 				FreeImage_SetTagType(tag, tag_type);
 				FreeImage_SetTagID(tag, tag_id);
-				FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::GEOTIFF, tag_id));
+				FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::GEOTIFF, tag_id, defaultKey));
 				FreeImage_SetTagDescription(tag, tag_lib.getTagDescription(TagLib::GEOTIFF, tag_id));
 				FreeImage_SetTagLength(tag, FreeImage_TagDataWidth((WORD)tag_type) * tag_count);
 				FreeImage_SetTagCount(tag, tag_count);
@@ -165,6 +166,8 @@ tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 
 void 
 tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
+	char defaultKey[16];
+
 	if(FreeImage_GetMetadataCount(FIMD_GEOTIFF, dib) == 0) {
 		return;
 	}
@@ -177,7 +180,7 @@ tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 		const TIFFFieldInfo *fieldInfo = &xtiffFieldInfo[i];
 
 		FITAG *tag = NULL;
-		const char *key = tag_lib.getTagFieldName(TagLib::GEOTIFF, (WORD)fieldInfo->field_tag);
+		const char *key = tag_lib.getTagFieldName(TagLib::GEOTIFF, (WORD)fieldInfo->field_tag, defaultKey);
 
 		if(FreeImage_GetMetadata(FIMD_GEOTIFF, dib, key, &tag)) {
 			if(FreeImage_GetTagType(tag) == FIDT_ASCII) {
@@ -211,8 +214,8 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 
 		if(tag == TIFFTAG_EXIFIFD) continue;
 
-		// get the tag key - use FALSE to avoid reading GeoTIFF tags
-		const char *key = tagLib.getTagFieldName(md_model, (WORD)tag, FALSE);
+		// get the tag key - use NULL to avoid reading GeoTIFF tags
+		const char *key = tagLib.getTagFieldName(md_model, (WORD)tag, NULL);
 		if(key == NULL) continue;
         
 		fip = TIFFFieldWithTag(tif, tag);

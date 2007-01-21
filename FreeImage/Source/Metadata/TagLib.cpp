@@ -910,14 +910,13 @@ TagLib::getTagInfo(MDMODEL md_model, WORD tagID) {
 }
 
 const char* 
-TagLib::getTagFieldName(MDMODEL md_model, WORD tagID, int bBuildKey) {
-	static char unknown_tag[11];
+TagLib::getTagFieldName(MDMODEL md_model, WORD tagID, char *defaultKey) {
 
 	const TagInfo *info = getTagInfo(md_model, tagID);
 	if(NULL == info) {
-		if(bBuildKey == TRUE) {
-			sprintf(unknown_tag, "Tag 0x%04X", tagID);
-			return &unknown_tag[0];
+		if(defaultKey != NULL) {
+			sprintf(defaultKey, "Tag 0x%04X", tagID);
+			return &defaultKey[0];
 		} else {
 			return NULL;
 		}

@@ -368,13 +368,14 @@ public:
 
 	/**
 	Given a tag ID, returns its tag field name. 
-	When the tag is unknown and bBuildKey is TRUE, a string such as "Tag 0x1234" is returned.
+	When the tag is unknown and defaultKey is not NULL, a string such as "Tag 0x1234" is returned. 
+	This string is contained in the provided defaultKey buffer (assumed to be an array of at least 16 chars). 
 	@param md_model Internal metadata model
 	@param tagID tag ID
-	@param bBuildKey If TRUE, build a key for unknown tags
-	@return Returns the tag field name if successful, returns an 'unknown tag' string otherwise
+	@param defaultKey Assumed to be an array of 16 chars. If not NULL, build a key for unknown tags
+	@return Returns the tag field name if successful, returns an 'unknown tag' string contained in defaultKey otherwise
 	*/
-	const char* getTagFieldName(MDMODEL md_model, WORD tagID, int bBuildKey = TRUE);
+	const char* getTagFieldName(MDMODEL md_model, WORD tagID, char *defaultKey);
 
 	/**
 	Given a tag ID, returns its description. 

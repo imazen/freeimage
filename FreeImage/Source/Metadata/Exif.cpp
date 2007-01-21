@@ -263,6 +263,7 @@ A single Canon tag may contain many other tags within.
 */
 static void 
 processCanonMakerNoteTag(FIBITMAP *dib, FITAG *tag) {
+	char defaultKey[16];
 	DWORD startIndex = 0;
 	TagLib& s = TagLib::instance();
 
@@ -305,7 +306,7 @@ processCanonMakerNoteTag(FIBITMAP *dib, FITAG *tag) {
 			FreeImage_SetTagValue(canonTag, &pvalue[i]);
 
 			// get the tag key and description
-			const char *key = s.getTagFieldName(TagLib::EXIF_MAKERNOTE_CANON, tag_id);
+			const char *key = s.getTagFieldName(TagLib::EXIF_MAKERNOTE_CANON, tag_id, defaultKey);
 			FreeImage_SetTagKey(canonTag, key);
 			const char *description = s.getTagDescription(TagLib::EXIF_MAKERNOTE_CANON, tag_id);
 			FreeImage_SetTagDescription(canonTag, description);
@@ -323,7 +324,7 @@ processCanonMakerNoteTag(FIBITMAP *dib, FITAG *tag) {
 		// process as a normal tag
 
 		// get the tag key and description
-		const char *key = s.getTagFieldName(TagLib::EXIF_MAKERNOTE_CANON, tag_id);
+		const char *key = s.getTagFieldName(TagLib::EXIF_MAKERNOTE_CANON, tag_id, defaultKey);
 		FreeImage_SetTagKey(tag, key);
 		const char *description = s.getTagDescription(TagLib::EXIF_MAKERNOTE_CANON, tag_id);
 		FreeImage_SetTagDescription(tag, description);
@@ -340,6 +341,7 @@ Process a standard Exif tag
 */
 static void 
 processExifTag(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, TagLib::MDMODEL md_model) {
+	char defaultKey[16];
 	int n;
 	DWORD i;
 
@@ -431,7 +433,7 @@ processExifTag(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, TagLib::MD
 		WORD tag_id = FreeImage_GetTagID(tag);
 
 		// get the tag key and description
-		const char *key = s.getTagFieldName(md_model, tag_id);
+		const char *key = s.getTagFieldName(md_model, tag_id, defaultKey);
 		FreeImage_SetTagKey(tag, key);
 		const char *description = s.getTagDescription(md_model, tag_id);
 		FreeImage_SetTagDescription(tag, description);
