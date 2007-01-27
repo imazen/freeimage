@@ -619,9 +619,42 @@ namespace FreeImageAPI
 		[DllImport(dllName, EntryPoint="FreeImage_GetDIBSize")]
 		public static extern uint GetDIBSize(FIBITMAP dib);
 		
-		[DllImport(dllName, EntryPoint="FreeImage_GetPalette")]
-		[return: MarshalAs(UnmanagedType.LPArray)]
-		public static extern RGBQUAD GetPalette(FIBITMAP dib);
+		/**
+		Returns a pointer to the bitmap’s palette. If the bitmap doesn’t have a palette 
+		(i.e. when the pixel bit depth is greater than 8), this function returns NULL. 
+		@param dib Bitmap to get the palette for.
+		@return Pointer to the start of the palette data.
+		*/
+		[DllImport(dllName, EntryPoint="FreeImage_GetPalette")] 
+		private static extern UIntPtr GetRawPalette(FIBITMAP dib);
+
+		/**
+		Get a deep copy of the image palette.
+		@param bitmap Pointer to a loaded image.
+		@return Array or RGBQUAD values representing the image palette.
+		*/
+		public static unsafe RGBQUAD [] GetPaletteCopy(FIBITMAP dib) {  
+			RGBQUAD [] paletteCopy = new FreeImageAPI.RGBQUAD[256];  
+ 
+			// Only interested in indexed images. 
+			if (GetBPP(dib) <= 8) { 
+				UIntPtr palette = GetRawPalette(dib);  
+ 				byte * ptr = (byte *)(void*)palette; 
+ 				for (int q = 0; q < 256; q++) { 
+					paletteCopy[q] = new FreeImageAPI.RGBQUAD(); 
+					paletteCopy[q].rgbBlue = (byte)*ptr; 
+					ptr += 1;  
+					paletteCopy[q].rgbGreen = (byte)*ptr; 
+					ptr += 1;  
+					paletteCopy[q].rgbRed = (byte)*ptr; 
+					ptr += 1;  
+					paletteCopy[q].rgbReserved = (byte)*ptr; 
+					ptr += 1;  
+				}  
+			} 
+ 
+			return paletteCopy; 
+		} 
 		
 		[DllImport(dllName, EntryPoint="FreeImage_GetDotsPerMeterX")]
 		public static extern uint GetDotsPerMeterX(FIBITMAP dib);
