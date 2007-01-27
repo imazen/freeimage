@@ -48,7 +48,7 @@
 
 #define FREEIMAGE_MAJOR_VERSION   3
 #define FREEIMAGE_MINOR_VERSION   9
-#define FREEIMAGE_RELEASE_SERIAL  2
+#define FREEIMAGE_RELEASE_SERIAL  3
 
 // Compiler options ---------------------------------------------------------
 
@@ -603,16 +603,16 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define ICO_DEFAULT         0
 #define ICO_MAKEALPHA		1		// convert to 32bpp and create an alpha channel from the AND-mask when loading
 #define IFF_DEFAULT         0
-#define JPEG_DEFAULT        0
-#define JPEG_FAST           1
-#define JPEG_ACCURATE       2
-#define JPEG_QUALITYSUPERB  0x80
-#define JPEG_QUALITYGOOD    0x100
-#define JPEG_QUALITYNORMAL  0x200
-#define JPEG_QUALITYAVERAGE 0x400
-#define JPEG_QUALITYBAD     0x800
-#define JPEG_CMYK			0x1000	// load separated CMYK "as is" (use | to combine with other flags)
-#define JPEG_PROGRESSIVE	0x2000	// save as a progressive-JPEG (use | to combine with other flags)
+#define JPEG_DEFAULT        0		// loading (see JPEG_FAST); saving (see JPEG_QUALITYGOOD)
+#define JPEG_FAST           0x0001	// load the file as fast as possible, sacrificing some quality
+#define JPEG_ACCURATE       0x0002	// load the file with the best quality, sacrificing some speed
+#define JPEG_CMYK			0x0004	// load separated CMYK "as is" (use | to combine with other load flags)
+#define JPEG_QUALITYSUPERB  0x80	// save with superb quality (100:1)
+#define JPEG_QUALITYGOOD    0x0100	// save with good quality (75:1)
+#define JPEG_QUALITYNORMAL  0x0200	// save with normal quality (50:1)
+#define JPEG_QUALITYAVERAGE 0x0400	// save with average quality (25:1)
+#define JPEG_QUALITYBAD     0x0800	// save with bad quality (10:1)
+#define JPEG_PROGRESSIVE	0x2000	// save as a progressive-JPEG (use | to combine with other save flags)
 #define KOALA_DEFAULT       0
 #define LBM_DEFAULT         0
 #define MNG_DEFAULT         0

@@ -8,6 +8,7 @@
 // - Markus Loibl (markus.loibl@epost.de)
 // - Karl-Heinz Bussian (khbussian@moss.de)
 // - Hervé Drolon (drolon@infonie.fr)
+// - Jascha Wetzel (jascha@mainia.de)
 //
 // This file is part of FreeImage 3
 //
@@ -817,6 +818,39 @@ write_markers(j_compress_ptr cinfo, FIBITMAP *dib) {
 	return TRUE;
 }
 
+// ------------------------------------------------------------
+//   Keep original size info when using scale option on loading
+// ------------------------------------------------------------
+static void 
+store_size_info(FIBITMAP *dib, JDIMENSION width, JDIMENSION height) {
+	char buffer[256];
+	// create a tag
+	FITAG *tag = FreeImage_CreateTag();
+	if(tag) {
+		int length = 0;
+		// set the original width
+		sprintf(buffer, "%d", (int)width);
+		length = strlen(buffer) + 1;	// include the NULL/0 value
+		FreeImage_SetTagKey(tag, "OriginalJPEGWidth");
+		FreeImage_SetTagLength(tag, length);
+		FreeImage_SetTagCount(tag, length);
+		FreeImage_SetTagType(tag, FIDT_ASCII);
+		FreeImage_SetTagValue(tag, buffer);
+		FreeImage_SetMetadata(FIMD_COMMENTS, dib, FreeImage_GetTagKey(tag), tag);
+		// set the original height
+		sprintf(buffer, "%d", (int)height);
+		length = strlen(buffer) + 1;	// include the NULL/0 value
+		FreeImage_SetTagKey(tag, "OriginalJPEGHeight");
+		FreeImage_SetTagLength(tag, length);
+		FreeImage_SetTagCount(tag, length);
+		FreeImage_SetTagType(tag, FIDT_ASCII);
+		FreeImage_SetTagValue(tag, buffer);
+		FreeImage_SetMetadata(FIMD_COMMENTS, dib, FreeImage_GetTagKey(tag), tag);
+		// destroy the tag
+		FreeImage_DeleteTag(tag);
+	}
+}
+
 // ==========================================================
 // Plugin Implementation
 // ==========================================================
@@ -911,30 +945,50 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			jpeg_read_header(&cinfo, TRUE);
 
-			// step 4a: set parameters for decompression
+			// step 4: set parameters for decompression
+
+			unsigned int scale_denom = 1;		// fraction by which to scale image
+			int	requested_size = flags >> 16;	// requested user size in pixels
+			if(requested_size > 0) {
+				// the JPEG codec can perform x2, x4 or x8 scaling on loading
+				// try to find the more appropriate scaling according to user's need
+				double scale = MAX((double)cinfo.image_width, (double)cinfo.image_height) / (double)requested_size;
+				if(scale >= 8) {
+					scale_denom = 8;
+				} else if(scale >= 4) {
+					scale_denom = 4;
+				} else if(scale >= 2) {
+					scale_denom = 2;
+				}
+			}
+			cinfo.scale_denom = scale_denom;
 
 			if ((flags & JPEG_ACCURATE) != JPEG_ACCURATE) {
 				cinfo.dct_method          = JDCT_IFAST;
 				cinfo.do_fancy_upsampling = FALSE;
 			}
 
-			// step 4b: allocate dib and init header
+			// step 5a: start decompressor and calculate output width and height
+
+			jpeg_start_decompress(&cinfo);
+
+			// step 5b: allocate dib and init header
 
 			if((cinfo.num_components == 4) && (cinfo.out_color_space == JCS_CMYK)) {
 				// CMYK image
 				if((flags & JPEG_CMYK) == JPEG_CMYK) {
 					// load as CMYK
-					dib = FreeImage_Allocate(cinfo.image_width, cinfo.image_height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+					dib = FreeImage_Allocate(cinfo.output_width, cinfo.output_height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 					if(!dib) return NULL;
 					FreeImage_GetICCProfile(dib)->flags |= FIICC_COLOR_IS_CMYK;
 				} else {
 					// load as CMYK and convert to RGB
-					dib = FreeImage_Allocate(cinfo.image_width, cinfo.image_height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+					dib = FreeImage_Allocate(cinfo.output_width, cinfo.output_height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 					if(!dib) return NULL;
 				}
 			} else {
 				// RGB or greyscale image
-				dib = FreeImage_Allocate(cinfo.image_width, cinfo.image_height, 8 * cinfo.num_components, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+				dib = FreeImage_Allocate(cinfo.output_width, cinfo.output_height, 8 * cinfo.num_components, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 				if(!dib) return NULL;
 
 				if (cinfo.num_components == 1) {
@@ -948,8 +1002,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 				}
 			}
+			if(scale_denom != 1) {
+				// store original size info if a scaling was requested
+				store_size_info(dib, cinfo.image_width, cinfo.image_height);
+			}
 
-			// step 4c: handle metrices
+			// step 5c: handle metrices
 
 			BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
 
@@ -964,10 +1022,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				pInfoHeader->biXPelsPerMeter = cinfo.X_density * 100;
 				pInfoHeader->biYPelsPerMeter = cinfo.Y_density * 100;
 			}
-
-			// step 5: start decompressor
-
-			jpeg_start_decompress(&cinfo);
 
 			// step 6a: while (scan lines remain to be read) jpeg_read_scanlines(...);
 
