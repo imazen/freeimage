@@ -121,9 +121,10 @@ typedef struct tagPSDInfo {
 
 static BYTE
 Read8(FreeImageIO *io, fi_handle handle) {
-	BYTE i = 0;
-	io->read_proc(&i, 1, 1, handle);
-	return i;
+	BYTE value = 0;
+	if(io->read_proc(&value, 1, 1, handle) != 1)
+		return 0;
+	return value;
 }
 
 static WORD
@@ -131,9 +132,13 @@ Read16(FreeImageIO *io, fi_handle handle) {
 	// reads a two-byte big-endian integer from the given file and returns its value.
 	// assumes unsigned.
 
-	BYTE hi = Read8(io, handle);
-	BYTE lo = Read8(io, handle);
-	return (WORD)(lo + (hi << 8));
+	WORD value = 0;
+	if(io->read_proc(&value, 2, 1, handle) != 1) 
+		return 0;
+#ifndef FREEIMAGE_BIGENDIAN
+	SwapShort(&value);
+#endif
+	return value;
 }
 
 static DWORD
@@ -141,11 +146,13 @@ Read32(FreeImageIO *io, fi_handle handle) {
 	// reads a four-byte big-endian integer from the given file and returns its value.
 	// assumes unsigned.
 
-	unsigned b3 = Read8(io, handle);
-	unsigned b2 = Read8(io, handle);
-	unsigned b1 = Read8(io, handle);
-	unsigned b0 = Read8(io, handle);
-	return (b3 << 24) + (b2 << 16) + (b1 << 8) + b0;
+	DWORD value = 0;
+	if(io->read_proc(&value, 4, 1, handle) != 1)
+		return 0;
+#ifndef FREEIMAGE_BIGENDIAN
+	SwapLong(&value);
+#endif
+	return value;
 }
 
 // ----------------------------------------------------------
@@ -282,8 +289,8 @@ ReadLayerInfo(FreeImageIO *io, fi_handle handle, PSDLayerInfo &layer_info) {
 	int ranges_length = Read32(io, handle);
 	layer_info.ranges.resize(ranges_length);
 
-	for (j = 0; j < (ranges_length / (int)sizeof(int)); ++j)
-		layer_info.ranges[j] = Read32(io, handle);
+	for (int k = 0; k < (ranges_length / (int)sizeof(int)); ++k)
+		layer_info.ranges[k] = Read32(io, handle);
 
 	extra_data_size -= 4 + ranges_length;
 
