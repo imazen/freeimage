@@ -9,10 +9,12 @@ Month day, 2006 - 3.9.3
 ! FreeImage now uses libPNG 1.2.15
 ! [Ryan Rubley] reworked the MacOSX makefile in order to fully support Universal Binary builds of FreeImage
 ! [Herve Drolon] makefiles are now generated from VS2003 project files instead of VS6 project files
+! [Herve Drolon] changed JPEG load/save flag option values
 + [Herve Drolon] added support for RGBAF images to FreeImage_ConvertToRGBF
 + [Herve Drolon] FreeImage_Paste now works with any bitmap type
 + [Floris van den Berg] added multipage support to the PSD plugin (read only)
 + [Herve Drolon] added full support for 64-bit RGBA images to the PNG and TIFF plugins
++ [Jascha Wetzel] added JPEG downsampling feature to PluginJPEG:Load
 * [Thomas Chmielewski] fixed a bug in FreeImage_Dither and Bayer dithering, added FID_BAYER16x16
 * [Raphael Gaquer] greatly improved the speed of the GIF encoder
 * [Herve Drolon] fixed saving of metadata in the PNG plugin
