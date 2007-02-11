@@ -19,6 +19,7 @@
 // Use at your own risk!
 // ==========================================================
 
+#include <string.h>
 #include "FreeImagePlus.h"
 
 fipTag::fipTag() {
