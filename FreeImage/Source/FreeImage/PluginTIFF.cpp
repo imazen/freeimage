@@ -1074,6 +1074,8 @@ FindLoadMethod(TIFF *tif, FREE_IMAGE_TYPE image_type, int flags) {
 				loadMethod = LoadAsCMYK;
 			}
 			break;
+		case PHOTOMETRIC_MINISWHITE:
+		case PHOTOMETRIC_MINISBLACK:
 		case PHOTOMETRIC_PALETTE:
 			// When samplesperpixel = 2 and bitspersample = 8, set the image as a
 			// 8-bit indexed image + 8-bit alpha layer image
