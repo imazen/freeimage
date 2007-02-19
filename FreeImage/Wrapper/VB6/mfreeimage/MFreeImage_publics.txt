@@ -14,25 +14,35 @@
 '--------------------------------------------------------------------------------
 
 '--------------------------------------------------------------------------------
-' New public objects in this release (1.8/1.9)
+' New public objects in this release (2.0)
 '--------------------------------------------------------------------------------
+FreeImage_GetBackgroundColorAsLongInt()   (Declared Function)
+FreeImage_SetBackgroundColorAsLongInt()   (Declared Function)
+FreeImage_GetLockedPageNumbersEx()        (Function)
+FreeImage_GetBackgroundColorAsLong()      (Function)
+FreeImage_GetBackgroundColorEx()          (Function)
+FREE_IMAGE_ICC_COLOR_MODEL                (Enumeration)
+FreeImage_GetICCProfile()                 (Function)
+FreeImage_GetICCProfileColorModel()       (Function)
+FreeImage_GetICCProfileSize()             (Function)
+FreeImage_GetICCProfileDataPointer()      (Function)
+FreeImage_HasICCProfile()                 (Function)
+
+
+'--------------------------------------------------------------------------------
+' Changed public objects in this release (2.0)
+'--------------------------------------------------------------------------------
+FreeImage_GetBackgroundColor()            (Function)
+FreeImage_SetBackgroundColor()            (Function)
+FreeImage_GetBackgroundColorInt()         (Declared Function)
+FreeImage_GetFIFFromFilenameUInt()        (Declared Function)
+FreeImage_GetFileTypeUInt()               (Declared Function)
+FreeImage_RescaleEx()                     (Function)
+FreeImage_GetICCProfile()                 (Declared Function)
+    and all functions derived from
+FreeImage 3 Load/Save flag constants
 FREE_IMAGE_LOAD_OPTIONS                   (Enumeration)
-FreeImage_LoadEx()                        (Function) 
-FreeImage_SaveEx()                        (Function)
-FreeImage_CreateFromScreen()              (Function)
-FreeImage_LoadMultiBitmapFromMemoryEx()   (Function)
-
-
-'--------------------------------------------------------------------------------
-' Changed public objects in this release (1.8/1.9)
-'--------------------------------------------------------------------------------
-FREE_IMAGE_SAVE_OPTIONS                   (Enumeration)
-FreeImage_LoadPictureEx()                 (Function)
-FreeImage_SavePictureEx()                 (Function)
-FreeImage_UnlockPage()                    (Function)
-All functions having a parameter 'flags' in
-the meaning of image loading or saving flags.
-
+FREE_IMAGE_SAVE_OPTIONS                   (Enumeration) 
 
 
 '--------------------------------------------------------------------------------
@@ -78,6 +88,7 @@ FreeImage_LoadFromMemoryEx()
 FreeImage_SaveToMemoryEx()
 FreeImage_SaveToMemoryEx2()
 FreeImage_LoadMultiBitmapFromMemoryEx()
+FreeImage_GetLockedPageNumbersEx()
 FreeImage_AcquireMemoryEx()
 FreeImage_AdjustCurveEx()
 
@@ -129,6 +140,10 @@ FreeImage_GetResolutionX()
 FreeImage_SetResolutionX()
 FreeImage_GetResolutionY()
 FreeImage_SetResolutionY()
+FreeImage_GetICCProfile()
+FreeImage_GetICCProfileColorModel()
+FreeImage_GetICCProfileSize()
+FreeImage_GetICCProfileDataPointer()
 FreeImage_ConvertColorDepth()
 FreeImage_RescaleEx()
 FreeImage_RescaleByPixel()
@@ -189,6 +204,8 @@ FreeImage_CompareColorsRGBQUADLong()
 FreeImage_SearchPalette()
 FreeImage_SwapColorLong()
 FreeImage_IsTransparencyTableTransparent()
+FreeImage_GetBackgroundColorAsLong()
+FreeImage_GetBackgroundColorEx()
 
 
 '--------------------------------------------------------------------------------

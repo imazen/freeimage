@@ -5,6 +5,45 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+February 16, 2007 - 2.0
+! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 3 to match current version 3.9.3
+! [Carsten Klein] changed JPEG load/save flag option values: changed constants and both enumerations FREE_IMAGE_LOAD_OPTIONS and FREE_IMAGE_SAVE_OPTIONS.
++ [Carsten Klein] added ICC Color Profile support:
+!                 changed signature of declared function FreeImage_GetICCProfile(): is now declared 'Private' and suffixed with '...Int()'.
++                 added wrapper function FreeImage_GetICCProfile(): is the public wrapper function for private function FreeImage_GetICCProfileInt(), returing a real FIICCPROFILE structure.
++                 added constant FREE_IMAGE_ICC_COLOR_MODEL_MASK.
++                 added enumeration FREE_IMAGE_ICC_COLOR_MODEL.
++                 added wrapper function FreeImage_GetICCProfileColorModel(): returns the color profile's color model (FIICCPROFILE.flags member).
++                 added wrapper function FreeImage_GetICCProfileSize(): returns the color profile data's size in bytes.
++                 added wrapper function FreeImage_GetICCProfileDataPointer(): returns the pointer to the color profile data.
++                 added wrapper function FreeImage_HasICCProfile(): returns whether a color profile is available for a dib or not.
+! [Carsten Klein] changed behaviour of wrapper function FreeImage_RescaleEx() and all it's derived functions: no clone is returned if the actual and desired image size are the same.
++ [Carsten Klein] added parameter 'bForceCloneCreation' to wrapper function FreeImage_RescaleEx() and all it's derived functions.
+
+! now FreeImage version 3.9.3
+
+January 09, 2007 - 1.9.4
+! [Carsten Klein] changed scope of declared function FreeImage_GetFileTypeUInt(): is now private according to all other '...Int' functions wrapped by a VB-friendly function.
+! [Carsten Klein] changed scope of declared function FreeImage_GetFIFFromFilenameUInt(): is now private according to all other '...Int' functions wrapped by a VB-friendly function.
+! [Carsten Klein] changed signature of declared functions FreeImage_GetBackgroundColorInt() and FreeImage_SetBackgroundColorInt(): now both have a 'ByRef bkcolor As RGBQUAD' parameter instead of 'ByVal bkcolor As Long'.
++ [Carsten Klein] added declared functions FreeImage_GetBackgroundColorAsLongInt(): this has a 'ByRef bkcolor As Long' parameter and provides the background color as a Long value.
++ [Carsten Klein] added declared functions FreeImage_SetBackgroundColorAsLongInt(): this has a 'ByRef bkcolor As Long' parameter and takes the background color as a Long value.
+! [Carsten Klein] changed signature of wrapper functions FreeImage_GetBackgroundColor() and FreeImage_SetBackgroundColor(): now both have a 'ByRef bkcolor As RGBQUAD' parameter instead of 'ByVal bkcolor As Long'.
++ [Carsten Klein] added wrapper functions FreeImage_GetBackgroundColorAsLong() and FreeImage_SetBackgroundColorAsLong(): both have a 'ByRef bkcolor As Long' parameter and so offer getting and setting the background color through a Long value.
++ [Carsten Klein] added wrapper functions FreeImage_GetBackgroundColorEx() and FreeImage_SetBackgroundColorEx(): both both take 4 ByRef Byte parameters 'Alpha', 'Red', 'Green' and 'Blue', one for each color component.
+
+January 05, 2007 - 1.9.3
++ [Carsten Klein] added wrapper function FreeImage_GetLockedPageNumbersEx(): this returns a real VB-style array of Longs containing the page numbers of all locked pages.
+
+January 02, 2007 - 1.9.2
+* [Carsten Klein] fixed a bug in inline description of function FreeImage_GetPaletteEx(): now tells to use function FreeImage_DestroyLockedArrayRGBQUAD() to free an array returned by this function.
+* [Carsten Klein] fixed some minor bugs in inline documentation.
+* [Carsten Klein] fixed a serious bug in function FreeImage_SaveEx(): parameter 'bUnloadSource' is now interpreted correctly under all circumstances.
+* [Carsten Klein] fixed some minor issues in function FreeImage_SaveEx().
+
+December 29, 2006 - 1.9.1
++ [Carsten Klein] added enumeration item FID_BAYER16x16: now supports Bayer ordered dispersed dot dithering (order 4 dithering matrix).
+
 October 31, 2006 - 1.9
 * [Carsten Klein] adjusted page numbers of the API documentation in header comments in FreeImage function declarations to match FreeImage 3.9.2 API documentation
 ! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 2 to match current version 3.9.2

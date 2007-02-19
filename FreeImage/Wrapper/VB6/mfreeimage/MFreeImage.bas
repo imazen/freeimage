@@ -152,8 +152,6 @@ Option Explicit
 
 ' ToDo: implement image alpha transparency helper functions
 
-' ToDo: implement ICC Profile function wrappers (do we need that?)
-
 
 '--------------------------------------------------------------------------------
 ' Change Log
@@ -164,11 +162,50 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'February 16, 2007 - 2.0
+'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 3 to match current version 3.9.3
+'! [Carsten Klein] changed JPEG load/save flag option values: changed constants and both enumerations FREE_IMAGE_LOAD_OPTIONS and FREE_IMAGE_SAVE_OPTIONS.
+'+ [Carsten Klein] added ICC Color Profile support:
+'!                 changed signature of declared function FreeImage_GetICCProfile(): is now declared 'Private' and suffixed with '...Int()'.
+'+                 added wrapper function FreeImage_GetICCProfile(): is the public wrapper function for private function FreeImage_GetICCProfileInt(), returing a real FIICCPROFILE structure.
+'+                 added constant FREE_IMAGE_ICC_COLOR_MODEL_MASK.
+'+                 added enumeration FREE_IMAGE_ICC_COLOR_MODEL.
+'+                 added wrapper function FreeImage_GetICCProfileColorModel(): returns the color profile's color model (FIICCPROFILE.flags member).
+'+                 added wrapper function FreeImage_GetICCProfileSize(): returns the color profile data's size in bytes.
+'+                 added wrapper function FreeImage_GetICCProfileDataPointer(): returns the pointer to the color profile data.
+'+                 added wrapper function FreeImage_HasICCProfile(): returns whether a color profile is available for a dib or not.
+'! [Carsten Klein] changed behaviour of wrapper function FreeImage_RescaleEx() and all it's derived functions: no clone is returned if the actual and desired image size are the same.
+'+ [Carsten Klein] added parameter 'bForceCloneCreation' to wrapper function FreeImage_RescaleEx() and all it's derived functions.
+'
+'! now FreeImage version 3.9.3
+'
+'January 09, 2007 - 1.9.4
+'! [Carsten Klein] changed scope of declared function FreeImage_GetFileTypeUInt(): is now private according to all other '...Int' functions wrapped by a VB-friendly function.
+'! [Carsten Klein] changed scope of declared function FreeImage_GetFIFFromFilenameUInt(): is now private according to all other '...Int' functions wrapped by a VB-friendly function.
+'! [Carsten Klein] changed signature of declared functions FreeImage_GetBackgroundColorInt() and FreeImage_SetBackgroundColorInt(): now both have a 'ByRef bkcolor As RGBQUAD' parameter instead of 'ByVal bkcolor As Long'.
+'+ [Carsten Klein] added declared functions FreeImage_GetBackgroundColorAsLongInt(): this has a 'ByRef bkcolor As Long' parameter and provides the background color as a Long value.
+'+ [Carsten Klein] added declared functions FreeImage_SetBackgroundColorAsLongInt(): this has a 'ByRef bkcolor As Long' parameter and takes the background color as a Long value.
+'! [Carsten Klein] changed signature of wrapper functions FreeImage_GetBackgroundColor() and FreeImage_SetBackgroundColor(): now both have a 'ByRef bkcolor As RGBQUAD' parameter instead of 'ByVal bkcolor As Long'.
+'+ [Carsten Klein] added wrapper functions FreeImage_GetBackgroundColorAsLong() and FreeImage_SetBackgroundColorAsLong(): both have a 'ByRef bkcolor As Long' parameter and so offer getting and setting the background color through a Long value.
+'+ [Carsten Klein] added wrapper functions FreeImage_GetBackgroundColorEx() and FreeImage_SetBackgroundColorEx(): both both take 4 ByRef Byte parameters 'Alpha', 'Red', 'Green' and 'Blue', one for each color component.
+'
+'January 05, 2007 - 1.9.3
+'+ [Carsten Klein] added wrapper function FreeImage_GetLockedPageNumbersEx(): this returns a real VB-style array of Longs containing the page numbers of all locked pages.
+'
+'January 02, 2007 - 1.9.2
+'* [Carsten Klein] fixed a bug in inline description of function FreeImage_GetPaletteEx(): now tells to use function FreeImage_DestroyLockedArrayRGBQUAD() to free an array returned by this function.
+'* [Carsten Klein] fixed some minor bugs in inline documentation.
+'* [Carsten Klein] fixed a serious bug in function FreeImage_SaveEx(): parameter 'bUnloadSource' is now interpreted correctly under all circumstances.
+'* [Carsten Klein] fixed some minor issues in function FreeImage_SaveEx().
+'
+'December 29, 2006 - 1.9.1
+'+ [Carsten Klein] added enumeration item FID_BAYER16x16: now supports Bayer ordered dispersed dot dithering (order 4 dithering matrix).
+'
 'October 31, 2006 - 1.9
 '* [Carsten Klein] adjusted page numbers of the API documentation in header comments in FreeImage function declarations to match FreeImage 3.9.2 API documentation
 '! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 2 to match current version 3.9.2
 '+ [Carsten Klein] added function declaration for FreeImage_JPEGCrop(): added both declaration and Boolean returning wrapper function.
-'! [Carsten Klein] changed data type of all occurences of parameter 'Flags' from Long to either FREE_IMAGE_LOAD_OPTIONS or FREE_IMAGE_SAVE_OPTIONS enum. This is true for declared funcitons as well as for wrapper functions.
+'! [Carsten Klein] changed data type of all occurences of parameter 'Flags' from Long to either FREE_IMAGE_LOAD_OPTIONS or FREE_IMAGE_SAVE_OPTIONS enum. This is true for declared functions as well as for wrapper functions.
 '+ [Carsten Klein] added function declaration for FreeImage_LoadMultiBitmapFromMemory().
 '+ [Carsten Klein] added wrapper function FreeImage_LoadMultiBitmapFromMemoryEx(): this is dealing with a VB style array (SAFEARRAY) like FreeImage_LoadFromMemoryEx() does.
 '
@@ -585,8 +622,8 @@ Private Declare Function SafeArrayAllocDescriptor Lib "oleaut32.dll" ( _
     ByVal cDims As Long, _
     ByRef ppsaOut As Long) As Long
     
-Private Declare Sub SafeArrayDestroyDescriptor Lib "oleaut32.dll" ( _
-    ByVal psa As Long)
+Private Declare Function SafeArrayDestroyDescriptor Lib "oleaut32.dll" ( _
+    ByVal psa As Long) As Long
     
 Private Declare Sub SafeArrayDestroyData Lib "oleaut32.dll" ( _
     ByVal psa As Long)
@@ -637,6 +674,26 @@ Private Declare Function GetDesktopWindow Lib "user32.dll" () As Long
 
 Private Declare Function GetWindowDC Lib "user32.dll" ( _
     ByVal hWnd As Long) As Long
+    
+Private Declare Function GetDCEx Lib "user32.dll" ( _
+    ByVal hWnd As Long, _
+    ByVal hrgnclip As Long, _
+    ByVal fdwOptions As Long) As Long
+
+Private Const DCX_CACHE As Long = &H2&
+Private Const DCX_CLIPCHILDREN As Long = &H8&
+Private Const DCX_CLIPSIBLINGS As Long = &H10&
+Private Const DCX_EXCLUDERGN As Long = &H40&
+Private Const DCX_EXCLUDEUPDATE As Long = &H100&
+Private Const DCX_INTERSECTRGN As Long = &H80&
+Private Const DCX_INTERSECTUPDATE As Long = &H200&
+Private Const DCX_LOCKWINDOWUPDATE As Long = &H400&
+Private Const DCX_NORECOMPUTE As Long = &H100000
+Private Const DCX_NORESETATTRS As Long = &H4&
+Private Const DCX_PARENTCLIP As Long = &H20&
+Private Const DCX_VALIDATE As Long = &H200000
+Private Const DCX_WINDOW As Long = &H1&
+   
 
 Private Declare Function GetClientRect Lib "user32.dll" ( _
     ByVal hWnd As Long, _
@@ -867,7 +924,7 @@ End Enum
 ' Version information
 Public Const FREEIMAGE_MAJOR_VERSION As Long = 3
 Public Const FREEIMAGE_MINOR_VERSION As Long = 9
-Public Const FREEIMAGE_RELEASE_SERIAL As Long = 2
+Public Const FREEIMAGE_RELEASE_SERIAL As Long = 3
 
 ' Memory stream pointer operation flags
 Public Const SEEK_SET As Long = 0
@@ -908,6 +965,12 @@ Public Const FI16_565_BLUE_SHIFT As Long = 0
 Public Const FIICC_DEFAULT As Long = &H0
 Public Const FIICC_COLOR_IS_CMYK As Long = &H1
 
+Private Const FREE_IMAGE_ICC_COLOR_MODEL_MASK As Long = &H1
+Public Enum FREE_IMAGE_ICC_COLOR_MODEL
+   FIICC_COLOR_MODEL_RGB = &H0
+   FIICC_COLOR_MODEL_CMYK = &H1
+End Enum
+
 ' Load / Save flag constants
 Public Const BMP_DEFAULT As Long = 0
 Public Const BMP_SAVE_RLE As Long = 1
@@ -921,15 +984,16 @@ Public Const HDR_DEFAULT As Long = 0
 Public Const ICO_DEFAULT As Long = 0
 Public Const ICO_MAKEALPHA As Long = 1            ' convert to 32bpp and create an alpha channel from the AND-mask when loading
 Public Const IFF_DEFAULT As Long = 0
-Public Const JPEG_DEFAULT As Long = 0
-Public Const JPEG_FAST As Long = 1
-Public Const JPEG_ACCURATE As Long = 2
-Public Const JPEG_QUALITYSUPERB As Long = &H80
-Public Const JPEG_QUALITYGOOD As Long = &H100
-Public Const JPEG_QUALITYNORMAL As Long = &H200
-Public Const JPEG_QUALITYAVERAGE As Long = &H400
-Public Const JPEG_QUALITYBAD As Long = &H800
-Public Const JPEG_CMYK As Long = &H1000           ' load separated CMYK "as is" (use 'OR' to combine with other flags)
+Public Const JPEG_DEFAULT As Long = 0             ' loading (see JPEG_FAST); saving (see JPEG_QUALITYGOOD)
+Public Const JPEG_FAST As Long = &H1              ' load the file as fast as possible, sacrificing some quality
+Public Const JPEG_ACCURATE As Long = &H2          ' load the file with the best quality, sacrificing some speed
+Public Const JPEG_CMYK As Long = &H4              ' load separated CMYK "as is" (use 'OR' to combine with other flags)
+Public Const JPEG_QUALITYSUPERB As Long = &H80    ' save with superb quality (100:1)
+Public Const JPEG_QUALITYGOOD As Long = &H100     ' save with good quality (75:1)
+Public Const JPEG_QUALITYNORMAL As Long = &H200   ' save with normal quality (50:1)
+Public Const JPEG_QUALITYAVERAGE As Long = &H400  ' save with average quality (25:1)
+Public Const JPEG_QUALITYBAD As Long = &H800      ' save with bad quality (10:1)
+Public Const JPEG_PROGRESSIVE As Long = &H2000    ' save as a progressive-JPEG (use 'OR' to combine with other save flags)
 Public Const KOALA_DEFAULT As Long = 0
 Public Const LBM_DEFAULT As Long = 0
 Public Const MNG_DEFAULT As Long = 0
@@ -1032,24 +1096,24 @@ End Enum
 Public Enum FREE_IMAGE_LOAD_OPTIONS
    FILO_LOAD_DEFAULT = 0
    FILO_GIF_DEFAULT = GIF_DEFAULT
-   FILO_GIF_LOAD256 = GIF_LOAD256                ' load the image as a 256 color image with ununsed palette entries, if it's 16 or 2 color
-   FILO_GIF_PLAYBACK = GIF_PLAYBACK              ' 'play' the GIF to generate each frame (as 32bpp) instead of returning raw frame data when loading
+   FILO_GIF_LOAD256 = GIF_LOAD256                 ' load the image as a 256 color image with ununsed palette entries, if it's 16 or 2 color
+   FILO_GIF_PLAYBACK = GIF_PLAYBACK               ' 'play' the GIF to generate each frame (as 32bpp) instead of returning raw frame data when loading
    FILO_ICO_DEFAULT = ICO_DEFAULT
-   FILO_ICO_MAKEALPHA = ICO_MAKEALPHA            ' convert to 32bpp and create an alpha channel from the AND-mask when loading
-   FILO_JPEG_DEFAULT = JPEG_DEFAULT
-   FILO_JPEG_FAST = JPEG_FAST
-   FILO_JPEG_ACCURATE = JPEG_ACCURATE
-   FILO_JPEG_CMYK = JPEG_CMYK                    ' load separated CMYK "as is" (use 'OR' to combine with other flags)
+   FILO_ICO_MAKEALPHA = ICO_MAKEALPHA             ' convert to 32bpp and create an alpha channel from the AND-mask when loading
+   FILO_JPEG_DEFAULT = JPEG_DEFAULT               ' for loading this is a synonym for FILO_JPEG_FAST
+   FILO_JPEG_FAST = JPEG_FAST                     ' load the file as fast as possible, sacrificing some quality
+   FILO_JPEG_ACCURATE = JPEG_ACCURATE             ' load the file with the best quality, sacrificing some speed
+   FILO_JPEG_CMYK = JPEG_CMYK                     ' load separated CMYK "as is" (use 'OR' to combine with other load flags)
    FILO_PCD_DEFAULT = PCD_DEFAULT
-   FILO_PCD_BASE = PCD_BASE                      ' load the bitmap sized 768 x 512
-   FILO_PCD_BASEDIV4 = PCD_BASEDIV4              ' load the bitmap sized 384 x 256
-   FILO_PCD_BASEDIV16 = PCD_BASEDIV16            ' load the bitmap sized 192 x 128
+   FILO_PCD_BASE = PCD_BASE                       ' load the bitmap sized 768 x 512
+   FILO_PCD_BASEDIV4 = PCD_BASEDIV4               ' load the bitmap sized 384 x 256
+   FILO_PCD_BASEDIV16 = PCD_BASEDIV16             ' load the bitmap sized 192 x 128
    FILO_PNG_DEFAULT = PNG_DEFAULT
-   FILO_PNG_IGNOREGAMMA = PNG_IGNOREGAMMA        ' avoid gamma correction
+   FILO_PNG_IGNOREGAMMA = PNG_IGNOREGAMMA         ' avoid gamma correction
    FILO_TARGA_DEFAULT = TARGA_LOAD_RGB888
-   FILO_TARGA_LOAD_RGB888 = TARGA_LOAD_RGB888    ' if set the loader converts RGB555 and ARGB8888 -> RGB888
+   FILO_TARGA_LOAD_RGB888 = TARGA_LOAD_RGB888     ' if set the loader converts RGB555 and ARGB8888 -> RGB888
    FISO_TIFF_DEFAULT = TIFF_DEFAULT
-   FISO_TIFF_CMYK = TIFF_CMYK                    ' reads tags for separated CMYK
+   FISO_TIFF_CMYK = TIFF_CMYK                     ' reads tags for separated CMYK
 End Enum
 #If False Then
    Const FILO_LOAD_DEFAULT = 0
@@ -1078,25 +1142,26 @@ Public Enum FREE_IMAGE_SAVE_OPTIONS
    FISO_SAVE_DEFAULT = 0
    FISO_BMP_DEFAULT = BMP_DEFAULT
    FISO_BMP_SAVE_RLE = BMP_SAVE_RLE
-   FISO_JPEG_DEFAULT = JPEG_DEFAULT
-   FISO_JPEG_QUALITYSUPERB = JPEG_QUALITYSUPERB
-   FISO_JPEG_QUALITYGOOD = JPEG_QUALITYGOOD
-   FISO_JPEG_QUALITYNORMAL = JPEG_QUALITYNORMAL
-   FISO_JPEG_QUALITYAVERAGE = JPEG_QUALITYAVERAGE
-   FISO_JPEG_QUALITYBAD = JPEG_QUALITYBAD
+   FISO_JPEG_DEFAULT = JPEG_DEFAULT               ' for saving this is a synonym for FISO_JPEG_QUALITYGOOD
+   FISO_JPEG_QUALITYSUPERB = JPEG_QUALITYSUPERB   ' save with superb quality (100:1)
+   FISO_JPEG_QUALITYGOOD = JPEG_QUALITYGOOD       ' save with good quality (75:1)
+   FISO_JPEG_QUALITYNORMAL = JPEG_QUALITYNORMAL   ' save with normal quality (50:1)
+   FISO_JPEG_QUALITYAVERAGE = JPEG_QUALITYAVERAGE ' save with average quality (25:1)
+   FISO_JPEG_QUALITYBAD = JPEG_QUALITYBAD         ' save with bad quality (10:1)
+   FISO_JPEG_PROGRESSIVE = JPEG_PROGRESSIVE       ' save as a progressive-JPEG (use 'OR' to combine with other save flags)
    FISO_PNM_DEFAULT = PNM_DEFAULT
-   FISO_PNM_SAVE_RAW = PNM_SAVE_RAW              ' if set the writer saves in RAW format (i.e. P4, P5 or P6)
-   FISO_PNM_SAVE_ASCII = PNM_SAVE_ASCII          ' if set the writer saves in ASCII format (i.e. P1, P2 or P3)
+   FISO_PNM_SAVE_RAW = PNM_SAVE_RAW               ' if set the writer saves in RAW format (i.e. P4, P5 or P6)
+   FISO_PNM_SAVE_ASCII = PNM_SAVE_ASCII           ' if set the writer saves in ASCII format (i.e. P1, P2 or P3)
    FISO_TIFF_DEFAULT = TIFF_DEFAULT
-   FISO_TIFF_CMYK = TIFF_CMYK                    ' stores tags for separated CMYK (use 'OR' to combine with compression flags)
-   FISO_TIFF_PACKBITS = TIFF_PACKBITS            ' save using PACKBITS compression
-   FISO_TIFF_DEFLATE = TIFF_DEFLATE              ' save using DEFLATE compression (a.k.a. ZLIB compression)
-   FISO_TIFF_ADOBE_DEFLATE = TIFF_ADOBE_DEFLATE  ' save using ADOBE DEFLATE compression
-   FISO_TIFF_NONE = TIFF_NONE                    ' save without any compression
-   FISO_TIFF_CCITTFAX3 = TIFF_CCITTFAX3          ' save using CCITT Group 3 fax encoding
-   FISO_TIFF_CCITTFAX4 = TIFF_CCITTFAX4          ' save using CCITT Group 4 fax encoding
-   FISO_TIFF_LZW = TIFF_LZW                      ' save using LZW compression
-   FISO_TIFF_JPEG = TIFF_JPEG                    ' save using JPEG compression
+   FISO_TIFF_CMYK = TIFF_CMYK                     ' stores tags for separated CMYK (use 'OR' to combine with compression flags)
+   FISO_TIFF_PACKBITS = TIFF_PACKBITS             ' save using PACKBITS compression
+   FISO_TIFF_DEFLATE = TIFF_DEFLATE               ' save using DEFLATE compression (a.k.a. ZLIB compression)
+   FISO_TIFF_ADOBE_DEFLATE = TIFF_ADOBE_DEFLATE   ' save using ADOBE DEFLATE compression
+   FISO_TIFF_NONE = TIFF_NONE                     ' save without any compression
+   FISO_TIFF_CCITTFAX3 = TIFF_CCITTFAX3           ' save using CCITT Group 3 fax encoding
+   FISO_TIFF_CCITTFAX4 = TIFF_CCITTFAX4           ' save using CCITT Group 4 fax encoding
+   FISO_TIFF_LZW = TIFF_LZW                       ' save using LZW compression
+   FISO_TIFF_JPEG = TIFF_JPEG                     ' save using JPEG compression
 End Enum
 #If False Then
    Const FISO_SAVE_DEFAULT = 0
@@ -1108,6 +1173,7 @@ End Enum
    Const FISO_JPEG_QUALITYNORMAL = JPEG_QUALITYNORMAL
    Const FISO_JPEG_QUALITYAVERAGE = JPEG_QUALITYAVERAGE
    Const FISO_JPEG_QUALITYBAD = JPEG_QUALITYBAD
+   Const FISO_JPEG_PROGRESSIVE = JPEG_PROGRESSIVE
    Const FISO_PNM_DEFAULT = PNM_DEFAULT
    Const FISO_PNM_SAVE_RAW = PNM_SAVE_RAW
    Const FISO_PNM_SAVE_ASCII = PNM_SAVE_ASCII
@@ -1187,6 +1253,7 @@ Public Enum FREE_IMAGE_DITHER
    FID_CLUSTER6x6 = 3        ' Ordered clustered dot dithering (order 3 - 6x6 matrix)
    FID_CLUSTER8x8 = 4        ' Ordered clustered dot dithering (order 4 - 8x8 matrix)
    FID_CLUSTER16x16 = 5      ' Ordered clustered dot dithering (order 8 - 16x16 matrix)
+   FID_BAYER16x16 = 6        ' Bayer ordered dispersed dot dithering (order 4 dithering matrix)
 End Enum
 #If False Then
    Const FID_FS = 0
@@ -1195,6 +1262,7 @@ End Enum
    Const FID_CLUSTER6x6 = 3
    Const FID_CLUSTER8x8 = 4
    Const FID_CLUSTER16x16 = 5
+   Const FID_BAYER16x16 = 6
 #End If
 
 Public Enum FREE_IMAGE_JPEG_OPERATION
@@ -1819,14 +1887,22 @@ Private Declare Function FreeImage_IsTransparentInt Lib "FreeImage.dll" Alias "_
 
 Private Declare Function FreeImage_HasBackgroundColorInt Lib "FreeImage.dll" Alias "_FreeImage_HasBackgroundColor@4" ( _
            ByVal dib As Long) As Long
-
+           
 Private Declare Function FreeImage_GetBackgroundColorInt Lib "FreeImage.dll" Alias "_FreeImage_GetBackgroundColor@8" ( _
            ByVal dib As Long, _
-           ByVal bkcolor As Long) As Long
+           ByRef bkcolor As RGBQUAD) As Long
+
+Private Declare Function FreeImage_GetBackgroundColorAsLongInt Lib "FreeImage.dll" Alias "_FreeImage_GetBackgroundColor@8" ( _
+           ByVal dib As Long, _
+           ByRef bkcolor As Long) As Long
 
 Private Declare Function FreeImage_SetBackgroundColorInt Lib "FreeImage.dll" Alias "_FreeImage_SetBackgroundColor@8" ( _
            ByVal dib As Long, _
-           ByVal bkcolor As Long) As Long
+           ByRef bkcolor As RGBQUAD) As Long
+           
+Private Declare Function FreeImage_SetBackgroundColorAsLongInt Lib "FreeImage.dll" Alias "_FreeImage_SetBackgroundColor@8" ( _
+           ByVal dib As Long, _
+           ByRef bkcolor As Long) As Long
 
 
 ' Filetype functions (p. 19 to 20)
@@ -1834,7 +1910,7 @@ Public Declare Function FreeImage_GetFileType Lib "FreeImage.dll" Alias "_FreeIm
            ByVal Filename As String, _
   Optional ByVal Size As Long = 0) As FREE_IMAGE_FORMAT
   
-Public Declare Function FreeImage_GetFileTypeUInt Lib "FreeImage.dll" Alias "_FreeImage_GetFileTypeU@8" ( _
+Private Declare Function FreeImage_GetFileTypeUInt Lib "FreeImage.dll" Alias "_FreeImage_GetFileTypeU@8" ( _
            ByVal Filename As Long, _
   Optional ByVal Size As Long = 0) As FREE_IMAGE_FORMAT
 
@@ -1988,7 +2064,7 @@ Public Declare Function FreeImage_TmoReinhard05 Lib "FreeImage.dll" Alias "_Free
 
 
 ' ICC profile functions (p. 35 to 36)
-Public Declare Function FreeImage_GetICCProfile Lib "FreeImage.dll" Alias "_FreeImage_GetICCProfile@4" ( _
+Private Declare Function FreeImage_GetICCProfileInt Lib "FreeImage.dll" Alias "_FreeImage_GetICCProfile@4" ( _
            ByVal dib As Long) As Long
 
 Public Declare Function FreeImage_CreateICCProfile Lib "FreeImage.dll" Alias "_FreeImage_CreateICCProfile@12" ( _
@@ -2034,7 +2110,7 @@ Private Declare Function FreeImage_GetFIFRegExprInt Lib "FreeImage.dll" Alias "_
 Public Declare Function FreeImage_GetFIFFromFilename Lib "FreeImage.dll" Alias "_FreeImage_GetFIFFromFilename@4" ( _
            ByVal Filename As String) As FREE_IMAGE_FORMAT
            
-Public Declare Function FreeImage_GetFIFFromFilenameUInt Lib "FreeImage.dll" Alias "_FreeImage_GetFIFFromFilenameU@4" ( _
+Private Declare Function FreeImage_GetFIFFromFilenameUInt Lib "FreeImage.dll" Alias "_FreeImage_GetFIFFromFilenameU@4" ( _
            ByVal Filename As Long) As FREE_IMAGE_FORMAT
 
 Private Declare Function FreeImage_FIFSupportsReadingInt Lib "FreeImage.dll" Alias "_FreeImage_FIFSupportsReading@4" ( _
@@ -2864,7 +2940,7 @@ Public Function FreeImage_HasBackgroundColor(ByVal dib As Long) As Boolean
 End Function
 
 Public Function FreeImage_GetBackgroundColor(ByVal dib As Long, _
-                                             ByVal bkcolor As Long) As Boolean
+                                             ByRef bkcolor As RGBQUAD) As Boolean
    
    ' Thin wrapper function returning a real VB Boolean value
 
@@ -2872,13 +2948,76 @@ Public Function FreeImage_GetBackgroundColor(ByVal dib As Long, _
    
 End Function
 
+Public Function FreeImage_GetBackgroundColorAsLong(ByVal dib As Long, _
+                                                   ByVal bkcolor As Long) As Boolean
+   
+   ' This function gets the background color of an image as FreeImage_GetBackgroundColor() does but
+   ' provides it's result as a Long value.
+
+   FreeImage_GetBackgroundColorAsLong = (FreeImage_GetBackgroundColorAsLongInt(dib, bkcolor) = 1)
+   
+End Function
+
+Public Function FreeImage_GetBackgroundColorEx(ByVal dib As Long, _
+                                               ByRef Alpha As Byte, _
+                                               ByRef Red As Byte, _
+                                               ByRef Green As Byte, _
+                                               ByRef Blue As Byte) As Boolean
+                                              
+Dim bkcolor As RGBQUAD
+
+   ' This function gets the background color of an image as FreeImage_GetBackgroundColor() does but
+   ' provides it's result as four different byte values, one for each color component.
+                                              
+   FreeImage_GetBackgroundColorEx = (FreeImage_GetBackgroundColorInt(dib, bkcolor) = 1)
+   With bkcolor
+      Alpha = .rgbReserved
+      Red = .rgbRed
+      Green = .rgbGreen
+      Blue = .rgbBlue
+   End With
+
+End Function
+
 Public Function FreeImage_SetBackgroundColor(ByVal dib As Long, _
-                                             ByVal bkcolor As Long) As Boolean
+                                             ByRef bkcolor As RGBQUAD) As Boolean
                                              
    ' Thin wrapper function returning a real VB Boolean value
 
    FreeImage_SetBackgroundColor = (FreeImage_SetBackgroundColorInt(dib, bkcolor) = 1)
                                              
+End Function
+
+Public Function FreeImage_SetBackgroundColorAsLong(ByVal dib As Long, _
+                                                   ByVal bkcolor As Long) As Boolean
+                                             
+   ' This function sets the background color of an image as FreeImage_SetBackgroundColor() does but
+   ' the color value to set must be provided as a Long value.
+
+   FreeImage_SetBackgroundColorAsLong = (FreeImage_SetBackgroundColorAsLongInt(dib, bkcolor) = 1)
+                                             
+End Function
+
+Public Function FreeImage_SetBackgroundColorEx(ByVal dib As Long, _
+                                               ByVal Alpha As Byte, _
+                                               ByVal Red As Byte, _
+                                               ByVal Green As Byte, _
+                                               ByVal Blue As Byte) As Boolean
+                                              
+Dim bkcolor As RGBQUAD
+
+   ' This function sets the color at position (x|y) as FreeImage_SetPixelColor() does but
+   ' the color value to set must be provided four different byte values, one for each
+   ' color component.
+                                             
+   With bkcolor
+      .rgbReserved = Alpha
+      .rgbRed = Red
+      .rgbGreen = Green
+      .rgbBlue = Blue
+   End With
+   FreeImage_SetBackgroundColorEx = (FreeImage_SetBackgroundColorInt(dib, bkcolor) = 1)
+
 End Function
 
 Public Function FreeImage_GetPixelIndex(ByVal dib As Long, _
@@ -2908,7 +3047,7 @@ Public Function FreeImage_GetPixelColorByLong(ByVal dib As Long, _
                                               ByVal Y As Long, _
                                               ByRef Value As Long) As Boolean
                                               
-   ' This function gets the color at position (x|y) as FreeImage_GetPixelColor does but
+   ' This function gets the color at position (x|y) as FreeImage_GetPixelColor() does but
    ' provides it's result as a Long value.
                                               
    FreeImage_GetPixelColorByLong = (FreeImage_GetPixelColorByLongInt(dib, X, Y, Value) = 1)
@@ -2925,7 +3064,7 @@ Public Function FreeImage_GetPixelColorEx(ByVal dib As Long, _
                                               
 Dim Value As RGBQUAD
 
-   ' This function gets the color at position (x|y) as FreeImage_GetPixelColor does but
+   ' This function gets the color at position (x|y) as FreeImage_GetPixelColor() does but
    ' provides it's result as four different byte values, one for each color component.
                                               
    FreeImage_GetPixelColorEx = (FreeImage_GetPixelColorInt(dib, X, Y, Value) = 1)
@@ -2965,7 +3104,7 @@ Public Function FreeImage_SetPixelColorByLong(ByVal dib As Long, _
                                               ByVal Y As Long, _
                                               ByRef Value As Long) As Boolean
                                               
-   ' This function sets the color at position (x|y) as FreeImage_SetPixelColor does but
+   ' This function sets the color at position (x|y) as FreeImage_SetPixelColor() does but
    ' the color value to set must be provided as a Long value.
    
    FreeImage_SetPixelColorByLong = (FreeImage_SetPixelColorByLongInt(dib, X, Y, Value) = 1)
@@ -2982,7 +3121,7 @@ Public Function FreeImage_SetPixelColorEx(ByVal dib As Long, _
                                               
 Dim Value As RGBQUAD
 
-   ' This function sets the color at position (x|y) as FreeImage_SetPixelColor does but
+   ' This function sets the color at position (x|y) as FreeImage_SetPixelColor() does but
    ' the color value to set must be provided four different byte values, one for each
    ' color component.
                                              
@@ -3338,7 +3477,7 @@ Dim lpSA As Long
    
    ' To reuse the caller's array variable, this function's result was assigned to,
    ' before it goes out of scope, the caller's array variable must be destroyed with
-   ' the 'FreeImage_DestroyLockedArray' function.
+   ' the 'FreeImage_DestroyLockedArrayRGBQUAD' function.
    
    
    If (dib) Then
@@ -3701,6 +3840,32 @@ Dim lSizeInBytes As Long
    
    If ((lpLUTData <> 0) And (lSizeInBytes = 256)) Then
       FreeImage_AdjustCurveEx = (FreeImage_AdjustCurveInt(dib, lpLUTData, channel) = 1)
+   End If
+
+End Function
+
+Public Function FreeImage_GetLockedPageNumbersEx(ByVal BITMAP As Long, _
+                                        Optional ByRef Count As Long) As Long()
+                                        
+Dim lpPages As Long
+Dim alResult() As Long
+
+   ' This function extends the FreeImage function FreeImage_GetLockedPageNumbers()
+   ' to a more VB suitable function. The original FreeImage parameter 'pages', which
+   ' is a pointer to an array of Long, containing all locked page numbers, was turned
+   ' into a return value, which is a real VB-style array of type Long. The original
+   ' Boolean return value, indicating if there are any locked pages, was dropped from
+   ' this function. The caller has to check the 'Count' parameter, which works according
+   ' to the FreeImage API documentation.
+   
+   ' This function returns an array of Longs, dimensioned from 0 to (Count - 1), that
+   ' contains the page numbers of all currently locked pages of 'BITMAP', if 'Count' is
+   ' greater than 0 after the function returns. If 'Count' is 0, there are no pages
+   ' locked and the function returns an uninitialized array.
+
+   If (FreeImage_GetLockedPageNumbersInt(BITMAP, lpPages, Count) = 1) Then
+      ReDim alResult(Count - 1)
+      Call CopyMemory(alResult(0), ByVal lpPages, Count * 4)
    End If
 
 End Function
@@ -4306,7 +4471,7 @@ Dim lpTag As Long
 End Function
 
 Public Function FreeImage_TagExistsEx(ByVal dib As Long, _
-                                    ByRef Tag As FREE_IMAGE_TAG) As Boolean
+                                      ByRef Tag As FREE_IMAGE_TAG) As Boolean
 
    ' This function is a FREE_IMAGE_TAG based wrapper for FreeImage_TagExists()
    
@@ -4866,6 +5031,8 @@ End Function
 ' Derived and hopefully useful functions
 '--------------------------------------------------------------------------------
 
+' Plugin and filename functions
+
 Public Function FreeImage_IsExtensionValidForFIF(ByVal fif As FREE_IMAGE_FORMAT, _
                                                  ByVal extension As String, _
                                         Optional ByVal compare As VbCompareMethod = vbBinaryCompare) As Boolean
@@ -4966,6 +5133,8 @@ Dim i As Long
 
 End Function
 
+' Bitmap resolution functions
+
 Public Function FreeImage_GetResolutionX(ByVal dib As Long) As Long
 
    ' This function gets a DIB's resolution in X-direction measured
@@ -5001,6 +5170,80 @@ Public Sub FreeImage_SetResolutionY(ByVal dib As Long, ByVal res As Long)
    Call FreeImage_SetDotsPerMeterY(dib, Int(res / 0.0254 + 0.5))
 
 End Sub
+
+' ICC Color Profile functions
+
+Public Function FreeImage_GetICCProfile(ByVal dib As Long) As FIICCPROFILE
+
+   ' This function is a wrapper for the FreeImage_GetICCProfile() function, returning
+   ' a real FIICCPROFILE structure.
+   
+   ' Since the original FreeImage function returns a pointer to the FIICCPROFILE
+   ' structure (FIICCPROFILE *), as with string returning functions, this wrapper is
+   ' needed as VB can't declare a function returning a pointer to anything. So,
+   ' analogous to string returning functions, FreeImage_GetICCProfile() is declared
+   ' private as FreeImage_GetICCProfileInt() and made publicly available with this
+   ' wrapper function.
+
+   Call CopyMemory(FreeImage_GetICCProfile, _
+                   ByVal FreeImage_GetICCProfileInt(dib), _
+                   LenB(FreeImage_GetICCProfile))
+
+End Function
+
+Public Function FreeImage_GetICCProfileColorModel(ByVal dib As Long) As FREE_IMAGE_ICC_COLOR_MODEL
+
+   ' This function is a thin wrapper around FreeImage_GetICCProfile() returning
+   ' the color model in which the ICC color profile data is in, if there is actually
+   ' a ICC color profile available for the dib specified.
+   
+   ' If there is NO color profile along with that bitmap, this function returns the color
+   ' model that should (or must) be used for any color profile data to be assigned to the
+   ' dib. That depends on the bitmap's color type.
+
+   If (FreeImage_HasICCProfile(dib)) Then
+      FreeImage_GetICCProfileColorModel = (deref(FreeImage_GetICCProfileInt(dib)) _
+                                                        And FREE_IMAGE_ICC_COLOR_MODEL_MASK)
+   Else
+      ' use FreeImage_GetColorType() to determine, whether this is a CMYK bitmap or not
+      If (FreeImage_GetColorType(dib) = FIC_CMYK) Then
+         FreeImage_GetICCProfileColorModel = FIICC_COLOR_MODEL_CMYK
+      Else
+         FreeImage_GetICCProfileColorModel = FIICC_COLOR_MODEL_RGB
+      End If
+   End If
+
+End Function
+
+Public Function FreeImage_GetICCProfileSize(ByVal dib As Long) As Long
+
+   ' This function is a thin wrapper around FreeImage_GetICCProfile() returning
+   ' only the size in bytes of the ICC profile data for the dib specified or zero,
+   ' if there is no ICC profile data for the dib.
+
+   FreeImage_GetICCProfileSize = deref(FreeImage_GetICCProfileInt(dib) + 4)
+
+End Function
+
+Public Function FreeImage_GetICCProfileDataPointer(ByVal dib As Long) As Long
+
+   ' This function is a thin wrapper around FreeImage_GetICCProfile() returning
+   ' only the pointer (the address) of the ICC profile data for the dib specified,
+   ' or zero if there is no ICC profile data for the dib.
+
+   FreeImage_GetICCProfileDataPointer = deref(FreeImage_GetICCProfileInt(dib) + 8)
+
+End Function
+
+Public Function FreeImage_HasICCProfile(ByVal dib As Long) As Boolean
+
+   ' This function is a thin wrapper around FreeImage_GetICCProfile() returning
+   ' True, if there is an ICC color profile available for the dib specified or
+   ' returns False otherwise.
+
+   FreeImage_HasICCProfile = (FreeImage_GetICCProfileSize(dib) <> 0)
+
+End Function
 
 ' Image color depth conversion wrapper
 
@@ -5187,12 +5430,15 @@ Dim bAdjustReservePaletteSize As Boolean
 
 End Function
 
+' Image Rescale wrapper functions
+
 Public Function FreeImage_RescaleEx(ByVal hDIB As Long, _
                            Optional ByVal vntDstWidth As Variant, _
                            Optional ByVal vntDstHeight As Variant, _
                            Optional ByVal bIsPercentValue As Boolean, _
                            Optional ByVal bUnloadSource As Boolean, _
-                           Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+                           Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC, _
+                           Optional ByVal bForceCloneCreation As Boolean) As Long
                      
 Dim lNewWidth As Long
 Dim lNewHeight As Long
@@ -5235,7 +5481,15 @@ Dim hDIBNew As Long
    ' you can "change" an image with this function rather than getting a new DIB
    ' pointer. There is no more need for a second DIB variable at the caller's site.
    
-   ' Since this diversity my be confusing to VB developers, this function is also
+   ' As of version 2.0 of the FreeImage VB wrapper, this function and all it's derived
+   ' functions like FreeImage_RescaleByPixel() or FreeImage_RescaleByPercent(), do NOT
+   ' return a clone of the image, if the new size desired is the same as the source
+   ' image's size. That behaviour can be forced by setting the new parameter
+   ' 'bForceCloneCreation' to True. Then, an image is also rescaled (and so
+   ' effectively cloned), if the new width and height is exactly the same as the source
+   ' image's width and height.
+   
+   ' Since this diversity may be confusing to VB developers, this function is also
    ' callable through three different functions called 'FreeImage_RescaleByPixel',
    ' 'FreeImage_RescaleByPercent' and 'FreeImage_RescaleByFactor'.
 
@@ -5269,17 +5523,29 @@ Dim hDIBNew As Long
       End Select
    End If
    
-   If ((lNewWidth > 0) And _
-       (lNewHeight > 0)) Then
-      hDIBNew = FreeImage_Rescale(hDIB, lNewWidth, lNewHeight, eFilter)
+   If ((lNewWidth > 0) And (lNewHeight > 0)) Then
+      If (bForceCloneCreation) Then
+         hDIBNew = FreeImage_Rescale(hDIB, lNewWidth, lNewHeight, eFilter)
+      
+      ElseIf (lNewWidth <> FreeImage_GetWidth(hDIB)) Then
+         If (lNewHeight <> FreeImage_GetHeight(hDIB)) Then
+            hDIBNew = FreeImage_Rescale(hDIB, lNewWidth, lNewHeight, eFilter)
+         End If
+      End If
        
    ElseIf (lNewWidth > 0) Then
-      lNewHeight = lNewWidth / (FreeImage_GetWidth(hDIB) / FreeImage_GetHeight(hDIB))
-      hDIBNew = FreeImage_Rescale(hDIB, lNewWidth, lNewHeight, eFilter)
+      If ((lNewWidth <> FreeImage_GetWidth(hDIB)) Or _
+          (bForceCloneCreation)) Then
+         lNewHeight = lNewWidth / (FreeImage_GetWidth(hDIB) / FreeImage_GetHeight(hDIB))
+         hDIBNew = FreeImage_Rescale(hDIB, lNewWidth, lNewHeight, eFilter)
+      End If
    
    ElseIf (lNewHeight > 0) Then
-      lNewWidth = lNewHeight * (FreeImage_GetWidth(hDIB) / FreeImage_GetHeight(hDIB))
-      hDIBNew = FreeImage_Rescale(hDIB, lNewWidth, lNewHeight, eFilter)
+      If ((lNewHeight <> FreeImage_GetHeight(hDIB)) Or _
+          (bForceCloneCreation)) Then
+         lNewWidth = lNewHeight * (FreeImage_GetWidth(hDIB) / FreeImage_GetHeight(hDIB))
+         hDIBNew = FreeImage_Rescale(hDIB, lNewWidth, lNewHeight, eFilter)
+      End If
    
    End If
    
@@ -5298,7 +5564,8 @@ Public Function FreeImage_RescaleByPixel(ByVal hDIB As Long, _
                                 Optional ByVal lDstWidthPixel As Long, _
                                 Optional ByVal lDstHeightPixel As Long, _
                                 Optional ByVal bUnloadSource As Boolean, _
-                                Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+                                Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC, _
+                                Optional ByVal bForceCloneCreation As Boolean) As Long
                                 
    ' Thin wrapper for function 'FreeImage_RescaleEx' for removing method
    ' overload fake. This function rescales the image directly to the size
@@ -5309,7 +5576,8 @@ Public Function FreeImage_RescaleByPixel(ByVal hDIB As Long, _
                                                   lDstHeightPixel, _
                                                   False, _
                                                   bUnloadSource, _
-                                                  eFilter)
+                                                  eFilter, _
+                                                  bForceCloneCreation)
 
 End Function
 
@@ -5317,7 +5585,8 @@ Public Function FreeImage_RescaleByPercent(ByVal hDIB As Long, _
                                   Optional ByVal dblDstWidthPercent As Double, _
                                   Optional ByVal dblDstHeightPercent As Double, _
                                   Optional ByVal bUnloadSource As Boolean, _
-                                  Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+                                  Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC, _
+                                  Optional ByVal bForceCloneCreation As Boolean) As Long
 
    ' Thin wrapper for function 'FreeImage_RescaleEx' for removing method
    ' overload fake. This function rescales the image by a percent value
@@ -5328,7 +5597,8 @@ Public Function FreeImage_RescaleByPercent(ByVal hDIB As Long, _
                                                     dblDstHeightPercent, _
                                                     True, _
                                                     bUnloadSource, _
-                                                    eFilter)
+                                                    eFilter, _
+                                                    bForceCloneCreation)
 
 End Function
 
@@ -5336,7 +5606,8 @@ Public Function FreeImage_RescaleByFactor(ByVal hDIB As Long, _
                                  Optional ByVal dblDstWidthFactor As Double, _
                                  Optional ByVal dblDstHeightFactor As Double, _
                                  Optional ByVal bUnloadSource As Boolean, _
-                                 Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As Long
+                                 Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC, _
+                                 Optional ByVal bForceCloneCreation As Boolean) As Long
 
    ' Thin wrapper for function 'FreeImage_RescaleEx' for removing method
    ' overload fake. This function rescales the image by a factor
@@ -5347,9 +5618,12 @@ Public Function FreeImage_RescaleByFactor(ByVal hDIB As Long, _
                                                    dblDstHeightFactor, _
                                                    False, _
                                                    bUnloadSource, _
-                                                   eFilter)
+                                                   eFilter, _
+                                                   bForceCloneCreation)
 
 End Function
+
+' Painting functions
 
 Public Function FreeImage_PaintDC(ByVal hDC As Long, _
                                   ByVal hDIB As Long, _
@@ -5815,7 +6089,7 @@ Dim lpSA As Long
          End With
          
          ' For a complete source code documentation have a
-         ' look at the funciton 'FreeImage_GetScanLineEx'
+         ' look at the function 'FreeImage_GetScanLineEx'
          Call SafeArrayAllocDescriptor(1, lpSA)
          Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
          Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineBITMAP16), lpSA, 4)
@@ -5861,7 +6135,7 @@ Dim lpSA As Long
          End With
          
          ' For a complete source code documentation have a
-         ' look at the funciton 'FreeImage_GetScanLineEx'
+         ' look at the function 'FreeImage_GetScanLineEx'
          Call SafeArrayAllocDescriptor(1, lpSA)
          Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
          Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineBITMAP24), lpSA, 4)
@@ -5907,7 +6181,7 @@ Dim lpSA As Long
          End With
          
          ' For a complete source code documentation have a
-         ' look at the funciton 'FreeImage_GetScanLineEx'
+         ' look at the function 'FreeImage_GetScanLineEx'
          Call SafeArrayAllocDescriptor(1, lpSA)
          Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
          Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineBITMAP32), lpSA, 4)
@@ -5960,7 +6234,7 @@ Dim eImageType As FREE_IMAGE_TYPE
       End With
       
       ' For a complete source code documentation have a
-      ' look at the funciton 'FreeImage_GetScanLineEx'
+      ' look at the function 'FreeImage_GetScanLineEx'
       Call SafeArrayAllocDescriptor(1, lpSA)
       Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
       Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineINT16), lpSA, 4)
@@ -6012,7 +6286,7 @@ Dim eImageType As FREE_IMAGE_TYPE
       End With
       
       ' For a complete source code documentation have a
-      ' look at the funciton 'FreeImage_GetScanLineEx'
+      ' look at the function 'FreeImage_GetScanLineEx'
       Call SafeArrayAllocDescriptor(1, lpSA)
       Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
       Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineINT32), lpSA, 4)
@@ -6058,7 +6332,7 @@ Dim eImageType As FREE_IMAGE_TYPE
       End With
       
       ' For a complete source code documentation have a
-      ' look at the funciton 'FreeImage_GetScanLineEx'
+      ' look at the function 'FreeImage_GetScanLineEx'
       Call SafeArrayAllocDescriptor(1, lpSA)
       Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
       Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineFLOAT), lpSA, 4)
@@ -6104,7 +6378,7 @@ Dim eImageType As FREE_IMAGE_TYPE
       End With
       
       ' For a complete source code documentation have a
-      ' look at the funciton 'FreeImage_GetScanLineEx'
+      ' look at the function 'FreeImage_GetScanLineEx'
       Call SafeArrayAllocDescriptor(1, lpSA)
       Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
       Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineDOUBLE), lpSA, 4)
@@ -6150,7 +6424,7 @@ Dim eImageType As FREE_IMAGE_TYPE
       End With
       
       ' For a complete source code documentation have a
-      ' look at the funciton 'FreeImage_GetScanLineEx'
+      ' look at the function 'FreeImage_GetScanLineEx'
       Call SafeArrayAllocDescriptor(1, lpSA)
       Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
       Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineCOMPLEX), lpSA, 4)
@@ -6196,7 +6470,7 @@ Dim eImageType As FREE_IMAGE_TYPE
       End With
       
       ' For a complete source code documentation have a
-      ' look at the funciton 'FreeImage_GetScanLineEx'
+      ' look at the function 'FreeImage_GetScanLineEx'
       Call SafeArrayAllocDescriptor(1, lpSA)
       Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
       Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineRGB16), lpSA, 4)
@@ -6242,7 +6516,7 @@ Dim eImageType As FREE_IMAGE_TYPE
       End With
       
       ' For a complete source code documentation have a
-      ' look at the funciton 'FreeImage_GetScanLineEx'
+      ' look at the function 'FreeImage_GetScanLineEx'
       Call SafeArrayAllocDescriptor(1, lpSA)
       Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
       Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineRGBA16), lpSA, 4)
@@ -6288,7 +6562,7 @@ Dim eImageType As FREE_IMAGE_TYPE
       End With
       
       ' For a complete source code documentation have a
-      ' look at the funciton 'FreeImage_GetScanLineEx'
+      ' look at the function 'FreeImage_GetScanLineEx'
       Call SafeArrayAllocDescriptor(1, lpSA)
       Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
       Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineRGBF), lpSA, 4)
@@ -6334,7 +6608,7 @@ Dim eImageType As FREE_IMAGE_TYPE
       End With
       
       ' For a complete source code documentation have a
-      ' look at the funciton 'FreeImage_GetScanLineEx'
+      ' look at the function 'FreeImage_GetScanLineEx'
       Call SafeArrayAllocDescriptor(1, lpSA)
       Call CopyMemory(ByVal lpSA, tSA, Len(tSA))
       Call CopyMemory(ByVal VarPtrArray(FreeImage_GetScanLineRGBAF), lpSA, 4)
@@ -6677,7 +6951,8 @@ Dim hDIB As Long
    End If
    
    ' get screen DC
-   hScreenDC = GetWindowDC(hWnd)
+   'hScreenDC = GetWindowDC(hWnd)
+   hScreenDC = GetDCEx(hWnd, 0, 0)
    ' get screen's width and height
    lScreenWidth = GetDeviceCaps(hScreenDC, HORZRES)
    lScreenHeight = GetDeviceCaps(hScreenDC, VERTRES)
@@ -7907,7 +8182,7 @@ Public Function AdjustPicture(ByRef Control As Object, _
 End Function
 
 Public Function FreeImage_LoadEx(ByVal Filename As String, _
-                        Optional ByVal Options As FREE_IMAGE_LOAD_OPTIONS, _
+                        Optional ByVal Options As FREE_IMAGE_LOAD_OPTIONS = FILO_LOAD_DEFAULT, _
                         Optional ByVal Width As Variant, _
                         Optional ByVal Height As Variant, _
                         Optional ByVal InPercent As Boolean = False, _
@@ -7959,7 +8234,7 @@ Const vbInvalidPictureError As Long = 481
 End Function
 
 Public Function LoadPictureEx(Optional ByRef Filename As Variant, _
-                              Optional ByRef Options As FREE_IMAGE_LOAD_OPTIONS, _
+                              Optional ByRef Options As FREE_IMAGE_LOAD_OPTIONS = FILO_LOAD_DEFAULT, _
                               Optional ByRef Width As Variant, _
                               Optional ByRef Height As Variant, _
                               Optional ByRef InPercent As Boolean = False, _
@@ -7996,13 +8271,15 @@ Public Function FreeImage_SaveEx(ByVal dib As Long, _
                         Optional ByVal bUnloadSource As Boolean) As Boolean
                      
 Dim hDIBRescale As Long
+Dim bHaveBPPOrg As Boolean
 Dim bConvertedForRescale As Boolean
+Dim bIsNewDIB As Boolean
 Dim lBPPOrg As Long
 Dim lBPP As Long
 Dim strExtension As String
 
-   ' This functions is an easy to use replacement for FreeImage's FreeImage_Save()
-   ' funciton which supports inline size- and color conversions as well as an
+   ' This function is an easy to use replacement for FreeImage's FreeImage_Save()
+   ' function which supports inline size- and color conversions as well as an
    ' auto image format detection algorithm that determines the desired image format
    ' by the given filename. An even more sophisticated algorithm may auto-detect
    ' the proper color depth for a explicitly given or auto-detected image format.
@@ -8052,11 +8329,14 @@ Dim strExtension As String
           (Not IsMissing(Height))) Then
           
          lBPPOrg = FreeImage_GetBPP(dib)
-         hDIBRescale = FreeImage_ConvertColorDepth(dib, FICF_PREPARE_RESCALE, True)
-         bConvertedForRescale = (hDIBRescale <> dib)
+         bHaveBPPOrg = True
+         hDIBRescale = FreeImage_ConvertColorDepth(dib, FICF_PREPARE_RESCALE, bUnloadSource)
+         bIsNewDIB = (hDIBRescale <> dib)
+         bConvertedForRescale = bIsNewDIB
          dib = hDIBRescale
-         hDIBRescale = 0
-         dib = FreeImage_RescaleEx(dib, Width, Height, InPercent, True, Filter)
+         hDIBRescale = FreeImage_RescaleEx(dib, Width, Height, InPercent, (bUnloadSource Or bIsNewDIB), Filter)
+         bIsNewDIB = (hDIBRescale <> dib)
+         dib = hDIBRescale
       End If
       
       If (Format = FIF_UNKNOWN) Then
@@ -8084,12 +8364,15 @@ Dim strExtension As String
                                       FreeImage_GetFormatFromFIF(Format) & "' " & _
                                  "is unable to write images with a color depth " & _
                                  "of " & ColorDepth & " bpp.")
-               Else
-                  dib = FreeImage_ConvertColorDepth(dib, ColorDepth, True)
+               
+               ElseIf (FreeImage_GetBPP(dib) <> ColorDepth) Then
+                  dib = FreeImage_ConvertColorDepth(dib, ColorDepth, (bUnloadSource Or bIsNewDIB))
+                  bIsNewDIB = True
+               
                End If
             Else
             
-               If (bConvertedForRescale) Then
+               If (bHaveBPPOrg) Then
                   lBPP = lBPPOrg
                Else
                   lBPP = FreeImage_GetBPP(dib)
@@ -8102,7 +8385,7 @@ Dim strExtension As String
                   Loop While ((Not FreeImage_FIFSupportsExportBPP(Format, lBPP)) Or _
                               (lBPP = 0))
                   If (lBPP = 0) Then
-                     lBPPOrg = lBPP
+                     lBPP = lBPPOrg
                      Do
                         lBPP = pGetNextColorDepth(lBPP)
                      Loop While ((Not FreeImage_FIFSupportsExportBPP(Format, lBPP)) Or _
@@ -8110,16 +8393,22 @@ Dim strExtension As String
                   End If
                   
                   If (lBPP <> 0) Then
-                     dib = FreeImage_ConvertColorDepth(dib, lBPP, True)
+                     dib = FreeImage_ConvertColorDepth(dib, lBPP, (bUnloadSource Or bIsNewDIB))
+                     bIsNewDIB = True
                   End If
                
                ElseIf (bConvertedForRescale) Then
+                  ' always unload current DIB here, since 'bIsNewDIB' is
+                  ' also True if 'bConvertedForRescale' is.
                   dib = FreeImage_ConvertColorDepth(dib, lBPPOrg, True)
                   
                End If
             End If
             
             FreeImage_SaveEx = FreeImage_Save(Format, dib, Filename & strExtension, Options)
+            If (bIsNewDIB) Then
+               Call FreeImage_Unload(dib)
+            End If
          Else
             Call Err.Raise(5, _
                            "MFreeImage", _
@@ -8136,10 +8425,6 @@ Dim strExtension As String
                         "Unknown image format. Neither an explicit image format " & _
                         "was specified nor any known image format was parsed " & _
                         "from the filename given.")
-      End If
-      
-      If (bUnloadSource) Then
-         Call FreeImage_Unload(dib)
       End If
    End If
 
@@ -8227,7 +8512,8 @@ Public Function FreeImage_RescaleIOP(ByRef IOlePicture As IPicture, _
                             Optional ByVal vntDstWidth As Variant, _
                             Optional ByVal vntDstHeight As Variant, _
                             Optional ByVal bIsPercentValue As Boolean, _
-                            Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As IPicture
+                            Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC, _
+                            Optional ByVal bForceCloneCreation As Boolean) As IPicture
                             
 Dim hDIB As Long
 
@@ -8236,7 +8522,8 @@ Dim hDIB As Long
    hDIB = FreeImage_CreateFromOlePicture(IOlePicture)
    If (hDIB) Then
       hDIB = FreeImage_ConvertColorDepth(hDIB, FICF_PREPARE_RESCALE, True)
-      hDIB = FreeImage_RescaleEx(hDIB, vntDstWidth, vntDstHeight, bIsPercentValue, True, eFilter)
+      hDIB = FreeImage_RescaleEx(hDIB, vntDstWidth, vntDstHeight, _
+                                 bIsPercentValue, True, eFilter, bForceCloneCreation)
       Set FreeImage_RescaleIOP = FreeImage_GetOlePicture(hDIB, , True)
    End If
 
@@ -8245,7 +8532,8 @@ End Function
 Public Function FreeImage_RescaleByPixelIOP(ByRef IOlePicture As IPicture, _
                                    Optional ByVal lDstWidthPixel As Long, _
                                    Optional ByVal lDstHeightPixel As Long, _
-                                   Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As IPicture
+                                   Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC, _
+                                   Optional ByVal bForceCloneCreation As Boolean) As IPicture
                                 
    ' Thin wrapper for function 'FreeImage_RescaleExIOP' for removing method
    ' overload fake. This function rescales the image directly to the size
@@ -8255,14 +8543,16 @@ Public Function FreeImage_RescaleByPixelIOP(ByRef IOlePicture As IPicture, _
                                                           lDstWidthPixel, _
                                                           lDstHeightPixel, _
                                                           False, _
-                                                          eFilter)
+                                                          eFilter, _
+                                                          bForceCloneCreation)
 
 End Function
 
 Public Function FreeImage_RescaleByPercentIOP(ByRef IOlePicture As IPicture, _
                                      Optional ByVal dblDstWidthPercent As Double, _
                                      Optional ByVal dblDstHeightPercent As Double, _
-                                     Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As IPicture
+                                     Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC, _
+                                     Optional ByVal bForceCloneCreation As Boolean) As IPicture
 
    ' Thin wrapper for function 'FreeImage_RescaleExIOP' for removing method
    ' overload fake. This function rescales the image by a percent value
@@ -8272,14 +8562,16 @@ Public Function FreeImage_RescaleByPercentIOP(ByRef IOlePicture As IPicture, _
                                                             dblDstWidthPercent, _
                                                             dblDstHeightPercent, _
                                                             True, _
-                                                            eFilter)
+                                                            eFilter, _
+                                                            bForceCloneCreation)
 
 End Function
 
 Public Function FreeImage_RescaleByFactorIOP(ByRef IOlePicture As IPicture, _
                                     Optional ByVal dblDstWidthFactor As Double, _
                                     Optional ByVal dblDstHeightFactor As Double, _
-                                    Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC) As IPicture
+                                    Optional ByVal eFilter As FREE_IMAGE_FILTER = FILTER_BICUBIC, _
+                                    Optional ByVal bForceCloneCreation As Boolean) As IPicture
 
    ' Thin wrapper for function 'FreeImage_RescaleExIOP' for removing method
    ' overload fake. This function rescales the image by a factor
@@ -8289,7 +8581,8 @@ Public Function FreeImage_RescaleByFactorIOP(ByRef IOlePicture As IPicture, _
                                                            dblDstWidthFactor, _
                                                            dblDstHeightFactor, _
                                                            False, _
-                                                           eFilter)
+                                                           eFilter, _
+                                                           bForceCloneCreation)
 
 End Function
 
@@ -10162,7 +10455,7 @@ Dim lLength As Long
       ' get the length of the ANSI string pointed to by lPtr
       lLength = lstrlen(lPtr)
       If (lLength) Then
-         ' copy charcters to a byte array
+         ' copy characters to a byte array
          ReDim abBuffer(lLength - 1)
          Call CopyMemory(abBuffer(0), ByVal lPtr, lLength)
          ' convert from byte array to unicode BSTR
