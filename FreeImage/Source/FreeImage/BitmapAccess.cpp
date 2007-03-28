@@ -27,6 +27,7 @@
 #endif 
 
 #include <stdlib.h>
+#include <malloc.h>
 
 #include "FreeImage.h"
 #include "FreeImageIO.h"
@@ -78,6 +79,18 @@ FI_STRUCT (FREEIMAGEHEADER) {
 //  Memory allocation on a specified alignment boundary
 // ----------------------------------------------------------
 
+#if defined(_WIN32) || defined(_WIN64)
+
+void* FreeImage_Aligned_Malloc(size_t amount, size_t alignment) {
+	return _aligned_malloc(amount, alignment);
+}
+
+void FreeImage_Aligned_Free(void* mem) {
+	_aligned_free(mem);
+}
+
+#else
+
 void* FreeImage_Aligned_Malloc(size_t amount, size_t alignment) {
 	/*
 	In some rare situations, the malloc routines can return misaligned memory. 
@@ -105,6 +118,8 @@ void* FreeImage_Aligned_Malloc(size_t amount, size_t alignment) {
 void FreeImage_Aligned_Free(void* mem) {
 	free((void*)*((long*)mem - 1));
 }
+
+#endif // _WIN32 || _WIN64
 
 // ----------------------------------------------------------
 //  DIB information functions
