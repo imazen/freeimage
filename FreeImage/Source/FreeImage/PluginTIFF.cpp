@@ -987,7 +987,7 @@ Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 	}
 	if(fio->tif == NULL) {
 		free(fio);
-		FreeImage_OutputMessageProc(s_format_id, "data is invalid");
+		FreeImage_OutputMessageProc(s_format_id, "Error while opening TIFF: data is invalid");
 		return NULL;
 	}
 	return fio;
@@ -1022,6 +1022,46 @@ PageCount(FreeImageIO *io, fi_handle handle, void *data) {
 }
 
 // ----------------------------------------------------------
+
+/**
+check for uncommon bitspersample values (e.g. 10, 12, ...)
+@param photometric TIFFTAG_PHOTOMETRIC tiff tag
+@param bitspersample TIFFTAG_BITSPERSAMPLE tiff tag
+@return Returns FALSE if a uncommon bit-depth is encountered, returns TRUE otherwise
+*/
+static BOOL IsValidBitsPerSample(uint16 photometric, uint16 bitspersample) {
+	switch(bitspersample) {
+		case 1:
+		case 4:
+			if((photometric == PHOTOMETRIC_MINISWHITE) || (photometric == PHOTOMETRIC_MINISBLACK) || (photometric == PHOTOMETRIC_PALETTE)) { 
+				return TRUE;
+			} else {
+				return FALSE;
+			}
+			break;
+		case 8:
+			return TRUE;
+		case 16:
+			if(photometric != PHOTOMETRIC_PALETTE) { 
+				return TRUE;
+			} else {
+				return FALSE;
+			}
+			break;
+		case 32:
+			return TRUE;
+		case 64:
+		case 128:
+			if(photometric == PHOTOMETRIC_MINISBLACK) { 
+				return TRUE;
+			} else {
+				return FALSE;
+			}
+			break;
+		default:
+			return FALSE;
+	}
+}
 
 static TIFFLoadMethod  
 FindLoadMethod(TIFF *tif, FREE_IMAGE_TYPE image_type, int flags) {
@@ -1143,6 +1183,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			if((photometric == PHOTOMETRIC_SEPARATED) && (bitspersample == 16))
 				throw "Unable to handle 16-bit CMYK TIFF";
+
+			if(IsValidBitsPerSample(photometric, bitspersample) == FALSE) {
+				FreeImage_OutputMessageProc(s_format_id, 
+					"Unable to handle this format: bitspersample = %d, samplesperpixel = %d, photometric = %d", 
+					(int)bitspersample, (int)samplesperpixel, (int)photometric);
+				throw (char*)NULL;
+			}
 
 			// ---------------------------------------------------------------------------------
 
@@ -1734,7 +1781,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		} catch (const char *message) {			
 			if(dib)	FreeImage_Unload(dib);
-			FreeImage_OutputMessageProc(s_format_id, message);
+			if(message) FreeImage_OutputMessageProc(s_format_id, message);
 			return NULL;
 		}
 	}
