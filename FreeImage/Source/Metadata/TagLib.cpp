@@ -763,6 +763,7 @@ static TagInfo
     {  0x0205, (char *) "ObjectName", (char *) "Title"},
     {  0x0237, (char *) "DateCreated", (char *) "Date Created"},
     {  0x025A, (char *) "City", (char *) "City"},
+	{  0x025C, (char *) "Sublocation", (char*) "Sub Location"}, 
     {  0x025F, (char *) "Province/State", (char *) "State/Province"},
     {  0x0264, (char *) "Country/PrimaryLocationCode", (char *) "Country Code"},
 	{  0x0265, (char *) "Country/PrimaryLocationName", (char *) "Country Name"},
