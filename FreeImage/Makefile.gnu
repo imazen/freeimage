@@ -14,7 +14,7 @@ INSTALLDIR = /usr/lib
 # Converts cr/lf to just lf
 DOS2UNIX = dos2unix
 
-COMPILERFLAGS = -O3 -fPIC
+COMPILERFLAGS = -O3 -fPIC -fexceptions
 LIBRARIES = -lstdc++
 
 MODULES = $(SRCS:.c=.o)
