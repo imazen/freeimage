@@ -10,6 +10,7 @@ Month day, 2007 - 3.9.4
 + [Floris van den Berg] added multipage support to the PSD plugin (read only)
 * [Herve Drolon] fixed a bug in TIFF plugin when reading 8-bit + 8-bit alpha images
 * [Herve Drolon] fixed a bug in TIFF plugin when reading images with uncommon bitdepths
+* [rodrigo] fixed FreeImage exception handling under gcc (added -fexceptions to gcc compiler flags)
 
 February 11th, 2007 - 3.9.3
 ! FreeImage now uses libPNG 1.2.16
