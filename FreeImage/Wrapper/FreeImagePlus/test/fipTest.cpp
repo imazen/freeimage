@@ -39,7 +39,7 @@ void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char *message) {
 // ----------------------------------------------------------
 
 int main(int argc, char *argv[]) {
-	char *lpszTestFile = "test.jpeg";
+	char *lpszTestFile = "test.jpg";
 	char *lpszMultiPage = "test.tif";
 
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 	FreeImage_SetOutputMessage(FreeImageErrorHandler);
 
 	// test memory IO
-	//testMemIO(lpszTestFile);
+	testMemIO(lpszTestFile);
 
 	// test multipage IO
 	testMultiPage(lpszMultiPage);
