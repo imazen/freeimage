@@ -47,8 +47,8 @@
 // Version information ------------------------------------------------------
 
 #define FREEIMAGE_MAJOR_VERSION   3
-#define FREEIMAGE_MINOR_VERSION   9
-#define FREEIMAGE_RELEASE_SERIAL  3
+#define FREEIMAGE_MINOR_VERSION   10
+#define FREEIMAGE_RELEASE_SERIAL  0
 
 // Compiler options ---------------------------------------------------------
 
@@ -352,7 +352,10 @@ FI_ENUM(FREE_IMAGE_FORMAT) {
 	FIF_GIF     = 25,
 	FIF_HDR		= 26,
 	FIF_FAXG3	= 27,
-	FIF_SGI		= 28
+	FIF_SGI		= 28,
+	FIF_EXR		= 29,
+	FIF_J2K		= 30,
+	FIF_JP2		= 31
 };
 
 /** Image type used in FreeImage.
@@ -425,6 +428,7 @@ Constants used in FreeImage_ToneMapping.
 FI_ENUM(FREE_IMAGE_TMO) {
     FITMO_DRAGO03	 = 0,	// Adaptive logarithmic mapping (F. Drago, 2003)
 	FITMO_REINHARD05 = 1,	// Dynamic range reduction inspired by photoreceptor physiology (E. Reinhard, 2005)
+	FITMO_FATTAL02	 = 2	// Gradient domain high dynamic range compression (R. Fattal, 2002)
 };
 
 /** Upsampling / downsampling filters. 
@@ -595,6 +599,14 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define BMP_SAVE_RLE        1
 #define CUT_DEFAULT         0
 #define DDS_DEFAULT			0
+#define EXR_DEFAULT			0		// save data as half with piz-based wavelet compression
+#define EXR_FLOAT			0x0001	// save data as float instead of as half (not recommended)
+#define EXR_NONE			0x0002	// save with no compression
+#define EXR_ZIP				0x0004	// save with zlib compression, in blocks of 16 scan lines
+#define EXR_PIZ				0x0008	// save with piz-based wavelet compression
+#define EXR_PXR24			0x0010	// save with lossy 24-bit float compression
+#define EXR_B44				0x0020	// save with lossy 44% float compression - goes to 22% when combined with EXR_LC
+#define EXR_LC				0x0040	// save images with one luminance and two chroma channels, rather than as RGB (lossy compression)
 #define FAXG3_DEFAULT		0
 #define GIF_DEFAULT			0
 #define GIF_LOAD256			1		// Load the image as a 256 color image with ununsed palette entries, if it's 16 or 2 color
@@ -603,6 +615,8 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define ICO_DEFAULT         0
 #define ICO_MAKEALPHA		1		// convert to 32bpp and create an alpha channel from the AND-mask when loading
 #define IFF_DEFAULT         0
+#define J2K_DEFAULT			0		// save with a 16:1 rate
+#define JP2_DEFAULT			0		// save with a 16:1 rate
 #define JPEG_DEFAULT        0		// loading (see JPEG_FAST); saving (see JPEG_QUALITYGOOD)
 #define JPEG_FAST           0x0001	// load the file as fast as possible, sacrificing some quality
 #define JPEG_ACCURATE       0x0002	// load the file with the best quality, sacrificing some speed
@@ -863,8 +877,9 @@ DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE
 
 // tone mapping operators
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ToneMapping(FIBITMAP *dib, FREE_IMAGE_TMO tmo, double first_param FI_DEFAULT(0), double second_param FI_DEFAULT(0));
-DLL_API FIBITMAP* DLL_CALLCONV FreeImage_TmoDrago03(FIBITMAP *src, double gamma FI_DEFAULT(2.2), double exposure FI_DEFAULT(0));
-DLL_API FIBITMAP* DLL_CALLCONV FreeImage_TmoReinhard05(FIBITMAP *src, double intensity FI_DEFAULT(0), double contrast FI_DEFAULT(0));
+DLL_API FIBITMAP *DLL_CALLCONV FreeImage_TmoDrago03(FIBITMAP *src, double gamma FI_DEFAULT(2.2), double exposure FI_DEFAULT(0));
+DLL_API FIBITMAP *DLL_CALLCONV FreeImage_TmoReinhard05(FIBITMAP *src, double intensity FI_DEFAULT(0), double contrast FI_DEFAULT(0));
+DLL_API FIBITMAP *DLL_CALLCONV FreeImage_TmoFattal02(FIBITMAP *src, double color_saturation FI_DEFAULT(0.5), double attenuation FI_DEFAULT(0.85));
 
 // ZLib interface -----------------------------------------------------------
 
