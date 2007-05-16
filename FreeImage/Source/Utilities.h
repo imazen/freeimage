@@ -44,6 +44,7 @@
 #include <vector>
 #include <stack>
 #include <sstream>
+#include <algorithm>
 
 // ==========================================================
 //   Bitmap palette and pixels alignment
