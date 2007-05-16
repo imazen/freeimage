@@ -376,4 +376,62 @@ LuminanceFromY(FIBITMAP *dib, float *maxLum, float *minLum, float *worldLum) {
 
 	return TRUE;
 }
+// --------------------------------------------------------------------------
 
+static void findMaxMinPercentile(FIBITMAP *Y, float minPrct, float *minLum, float maxPrct, float *maxLum) {
+	int x, y;
+	int width = FreeImage_GetWidth(Y);
+	int height = FreeImage_GetHeight(Y);
+	int pitch = FreeImage_GetPitch(Y);
+
+	std::vector<float> vY(width * height);
+
+	BYTE *bits = (BYTE*)FreeImage_GetBits(Y);
+	for(y = 0; y < height; y++) {
+		float *pixel = (float*)bits;
+		for(x = 0; x < width; x++) {
+			if(pixel[x] != 0) {
+				vY.push_back(pixel[x]);
+			}
+		}
+		bits += pitch;
+	}
+
+	std::sort(vY.begin(), vY.end());
+	
+	*minLum = vY.at( int(minPrct * vY.size()) );
+	*maxLum = vY.at( int(maxPrct * vY.size()) );
+}
+
+/**
+Clipping function<br>
+Remove any extremely bright and/or extremely dark pixels 
+and normalize between 0 and 1. 
+@param Y Input/Output image
+@param minPrct Minimum percentile
+@param maxPrct Maximum percentile
+*/
+void 
+NormalizeY(FIBITMAP *Y, float minPrct, float maxPrct) {
+	int x, y;
+	int width = FreeImage_GetWidth(Y);
+	int height = FreeImage_GetHeight(Y);
+	int pitch = FreeImage_GetPitch(Y);
+
+	// find max & min luminance values
+	float maxLum = 0, minLum = 0;
+	findMaxMinPercentile(Y, minPrct, &minLum, maxPrct, &maxLum);
+
+	// normalize to range 0..1 
+	BYTE *bits = (BYTE*)FreeImage_GetBits(Y);
+	for(y = 0; y < height; y++) {
+		float *pixel = (float*)bits;
+		for(x = 0; x < width; x++) {
+			pixel[x] = (pixel[x] - minLum) / (maxLum - minLum);
+			if(pixel[x] <= 0) pixel[x] = EPSILON;
+			if(pixel[x] > 1) pixel[x] = 1;
+		}
+		// next line
+		bits += pitch;
+	}
+}

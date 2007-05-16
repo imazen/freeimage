@@ -56,6 +56,15 @@ FreeImage_ToneMapping(FIBITMAP *dib, FREE_IMAGE_TMO tmo, double first_param, dou
 					return FreeImage_TmoReinhard05(dib, first_param, second_param);
 				}
 				break;
+			// Gradient Domain HDR Compression (R. Fattal, 2002)
+			case FITMO_FATTAL02:
+				if((first_param == 0) && (second_param == 0)) {
+					// use default values by setting color saturation to 0.5 and attenuation to 0.85
+					return FreeImage_TmoFattal02(dib, 0.5, 0.85);
+				} else {
+					// use user's value
+					return FreeImage_TmoFattal02(dib, first_param, second_param);
+				}
 		}
 	}
 
