@@ -21,8 +21,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\;..\ZLib;..\DeprecationManager"
-				PreprocessorDefinitions="WIN32;_DEBUG;FREEIMAGE_LIB;_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories="..\;..\ZLib;..\DeprecationManager;..\OpenEXR\Half;..\OpenEXR\Iex;..\OpenEXR\IlmImf;..\OpenEXR\Imath;..\OpenEXR\IlmThread"
+				PreprocessorDefinitions="WIN32;_DEBUG;OPJ_STATIC;FREEIMAGE_LIB;_SECURE_NO_DEPRECATE"
 				StringPooling="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -82,8 +82,8 @@ copy ..\FreeImage.h ..\..\Dist
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="3"
-				AdditionalIncludeDirectories="..\;..\ZLib;..\DeprecationManager"
-				PreprocessorDefinitions="WIN32;NDEBUG;FREEIMAGE_LIB;_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories="..\;..\ZLib;..\DeprecationManager;..\OpenEXR\Half;..\OpenEXR\Iex;..\OpenEXR\IlmImf;..\OpenEXR\Imath;..\OpenEXR\IlmThread"
+				PreprocessorDefinitions="WIN32;NDEBUG;OPJ_STATIC;FREEIMAGE_LIB;_SECURE_NO_DEPRECATE"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="FALSE"
@@ -203,6 +203,9 @@ copy ..\FreeImage.h ..\..\Dist
 					RelativePath="..\FreeImage\tmoDrago03.cpp">
 				</File>
 				<File
+					RelativePath="..\FreeImage\tmoFattal02.cpp">
+				</File>
+				<File
 					RelativePath="..\FreeImage\tmoReinhard05.cpp">
 				</File>
 				<File
@@ -212,6 +215,9 @@ copy ..\FreeImage.h ..\..\Dist
 			<Filter
 				Name="Plugins"
 				Filter="">
+				<File
+					RelativePath="..\FreeImage\J2KHelper.cpp">
+				</File>
 				<File
 					RelativePath="..\FreeImage\Plugin.cpp">
 				</File>
@@ -223,6 +229,9 @@ copy ..\FreeImage.h ..\..\Dist
 				</File>
 				<File
 					RelativePath="..\FreeImage\PluginDDS.cpp">
+				</File>
+				<File
+					RelativePath="..\FreeImage\PluginEXR.cpp">
 				</File>
 				<File
 					RelativePath="..\FreeImage\PluginG3.cpp">
@@ -238,6 +247,12 @@ copy ..\FreeImage.h ..\..\Dist
 				</File>
 				<File
 					RelativePath="..\FreeImage\PluginIFF.cpp">
+				</File>
+				<File
+					RelativePath="..\FreeImage\PluginJ2K.cpp">
+				</File>
+				<File
+					RelativePath="..\FreeImage\PluginJP2.cpp">
 				</File>
 				<File
 					RelativePath="..\FreeImage\PluginJPEG.cpp">
@@ -356,6 +371,9 @@ copy ..\FreeImage.h ..\..\Dist
 				RelativePath="..\Plugin.h">
 			</File>
 			<File
+				RelativePath="..\PoissonSolver.h">
+			</File>
+			<File
 				RelativePath="..\Quantizers.h">
 			</File>
 			<File
@@ -391,6 +409,9 @@ copy ..\FreeImage.h ..\..\Dist
 			</File>
 			<File
 				RelativePath="..\FreeImageToolkit\JPEGTransform.cpp">
+			</File>
+			<File
+				RelativePath="..\FreeImageToolkit\PoissonSolver.cpp">
 			</File>
 			<File
 				RelativePath="..\FreeImageToolkit\Rescale.cpp">
