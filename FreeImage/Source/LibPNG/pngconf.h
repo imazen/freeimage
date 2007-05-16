@@ -1,7 +1,7 @@
 
 /* pngconf.h - machine configurable file for libpng
  *
- * libpng version 1.2.16 - January 31, 2007
+ * libpng version 1.2.18 - May 15, 2007
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2007 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
@@ -34,6 +34,7 @@
 #define PNG_NO_MMX_CODE
 #endif // _WIN32
 /* ------------------------------------------------ */
+
 
 /* 
  * PNG_USER_CONFIG has to be defined on the compiler command line. This
@@ -1474,9 +1475,9 @@ typedef z_stream FAR *  png_zstreamp;
  * MMX will be detected at run time and used if present.
  */
 #ifdef PNG_USE_PNGVCRD
-#  define PNG_HAVE_ASSEMBLER_COMBINE_ROW
-#  define PNG_HAVE_ASSEMBLER_READ_INTERLACE
-#  define PNG_HAVE_ASSEMBLER_READ_FILTER_ROW
+#  define PNG_HAVE_MMX_COMBINE_ROW
+#  define PNG_HAVE_MMX_READ_INTERLACE
+#  define PNG_HAVE_MMX_READ_FILTER_ROW
 #endif
 
 /* Set this in the makefile for gcc/as on Pentium, not here. */
@@ -1484,9 +1485,9 @@ typedef z_stream FAR *  png_zstreamp;
  * MMX will be detected at run time and used if present.
  */
 #ifdef PNG_USE_PNGGCCRD
-#  define PNG_HAVE_ASSEMBLER_COMBINE_ROW
-#  define PNG_HAVE_ASSEMBLER_READ_INTERLACE
-#  define PNG_HAVE_ASSEMBLER_READ_FILTER_ROW
+#  define PNG_HAVE_MMX_COMBINE_ROW
+#  define PNG_HAVE_MMX_READ_INTERLACE
+#  define PNG_HAVE_MMX_READ_FILTER_ROW
 #endif
 /* - see pnggccrd.c for info about what is currently enabled */
 
