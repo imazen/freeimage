@@ -16,6 +16,10 @@ rd Source\LibTIFF\Debug /s /q
 rd Source\LibTIFF\Release /s /q
 rd Source\Zlib\Debug /s /q
 rd Source\Zlib\Release /s /q
+rd Source\OpenEXR\Debug /s /q
+rd Source\OpenEXR\Release /s /q
+rd Source\LibOpenJPEG\Debug /s /q
+rd Source\LibOpenJPEG\Release /s /q
 rd TestAPI\Debug /s /q
 rd TestAPI\Release /s /q
 del TestAPI\blob.png

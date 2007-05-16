@@ -17,6 +17,10 @@ rm -rf Source/LibTIFF/Debug
 rm -rf Source/LibTIFF/Release
 rm -rf Source/Zlib/Debug
 rm -rf Source/Zlib/Release
+rm -rf Source\OpenEXR\Debug
+rm -rf Source\OpenEXR\Release
+rm -rf Source\LibOpenJPEG\Debug
+rm -rf Source\LibOpenJPEG\Release
 rm -rf TestAPI/Debug
 rm -rf TestAPI/Release
 find . -name '*.pch' -exec rm -f {} ";"
