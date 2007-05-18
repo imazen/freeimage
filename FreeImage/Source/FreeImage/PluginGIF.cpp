@@ -199,6 +199,9 @@ void StringTable::Initialize(int minCodeSize)
 	m_bpp = 8;
 	m_minCodeSize = minCodeSize;
 	m_clearCode = 1 << m_minCodeSize;
+	if(m_clearCode > MAX_LZW_CODE) {
+		m_clearCode = MAX_LZW_CODE;
+	}
 	m_endCode = m_clearCode + 1;
 
 	m_partial = 0;
