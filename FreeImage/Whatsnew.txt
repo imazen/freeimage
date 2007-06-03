@@ -19,6 +19,7 @@ Month day, 2007 - 3.10.0
 * [Herve Drolon] fixed a bug in TIFF plugin when reading images with uncommon bitdepths
 * [rodrigo] fixed FreeImage exception handling under gcc (added -fexceptions to gcc compiler flags)
 * [Martin Dyring-Andersen] fixed GIF plugin crashing on some corrupted files
+* [Herve Drolon] fixed a bug with RLE encoding for 8-bit BMP images
 
 February 11th, 2007 - 3.9.3
 ! FreeImage now uses libPNG 1.2.16
