@@ -1127,8 +1127,9 @@ RLEEncodeLine(BYTE *target, BYTE *source, int size) {
 			// find a solid block of same bytes
 
 			int j = i + 1;
+			int jmax = 254 + i;
 
-			while ((j < size - 1) && (source[j] == source[j + 1]))
+			while ((j < size - 1) && (j < jmax) && (source[j] == source[j + 1]))
 				++j;
 
 			// if the block is larger than 3 bytes, use it
@@ -1284,7 +1285,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		// update the bitmap info header
 
-		BITMAPINFOHEADER bih = *FreeImage_GetInfoHeader(dib);
+		BITMAPINFOHEADER bih;
+		memcpy(&bih, FreeImage_GetInfoHeader(dib), sizeof(BITMAPINFOHEADER));
 
 		if (bit_fields)
 			bih.biCompression = BI_BITFIELDS;
