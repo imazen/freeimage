@@ -44,9 +44,6 @@ in T1.C are used by some function in TCD.C.
 /* ----------------------------------------------------------------------- */
 #define T1_NMSEDEC_BITS 7
 
-#define T1_MAXCBLKW 1024	/**< Maximum size of code-block (width) */
-#define T1_MAXCBLKH 1024	/**< Maximum size of code-block (heigth) */
-
 #define T1_SIG_NE 0x0001	/**< Context orientation : North-East direction */
 #define T1_SIG_SE 0x0002	/**< Context orientation : South-East direction */
 #define T1_SIG_SW 0x0004	/**< Context orientation : South-West direction */
@@ -88,6 +85,8 @@ in T1.C are used by some function in TCD.C.
 
 /* ----------------------------------------------------------------------- */
 
+typedef short flag_t;
+
 /**
 Tier-1 coding (coding of code-block coefficients)
 */
@@ -100,19 +99,16 @@ typedef struct opj_t1 {
 	/** RAW component */
 	opj_raw_t *raw;
 
-	int lut_ctxno_zc[1024];
-	int lut_ctxno_sc[256];
-	int lut_ctxno_mag[4096];
-	int lut_spb[256];
-	int lut_nmsedec_sig[1 << T1_NMSEDEC_BITS];
-	int lut_nmsedec_sig0[1 << T1_NMSEDEC_BITS];
-	int lut_nmsedec_ref[1 << T1_NMSEDEC_BITS];
-	int lut_nmsedec_ref0[1 << T1_NMSEDEC_BITS];
-
-	int data[T1_MAXCBLKH][T1_MAXCBLKW];
-	int flags[T1_MAXCBLKH + 2][T1_MAXCBLKW + 2];
-
+	int *data;
+	flag_t *flags;
+	int w;
+	int h;
+	int datasize;
+	int flagssize;
+	int flags_stride;
 } opj_t1_t;
+
+#define MACRO_t1_flags(x,y) t1->flags[((x)*(t1->flags_stride))+(y)]
 
 /** @name Exported functions */
 /*@{*/

@@ -5,6 +5,32 @@ What's New for OpenJPEG
 ! : changed
 + : added
 
+----------------------
+MAY 4, 2007
+VERSION 1.2.0 RELEASED
+----------------------
+
+May 4, 2007
+* [FOD] Bugs corrected in decoding of command line (getopt.c), in the handling of 16 bit files (t1.c and tcd.c) and the calculation of elapsed time for multiple tiles parts (tcd.c and tdc.h).
+
+June 2, 2007
++ [GB] OPJViewer opens now BMP, PNG, GIF, PNM, TIFF (with wxWidgets internals); added an encoder settings tab, for future integration with "save file as..." in JPEG 2000 format
+
+May 31, 2007
+* [FOD] Fixed the handling of 16bit TIFF files for cinema compression. Modified "convert.c"
+* [FOD] Fixed the parameters used for cinema compression (9-7 transform used instead of 5-3). Modified "image_to_j2k.c"
+
+May 24, 2007
+* [FOD] Bug fixed by Sylvain Munaut. Change in the reading of the POC marker. Since COD/COC can be anywhere in the header, the decoder cannot always know while decoding the POC marker the value of numlayers and numresolution.
+
+May 23, 2007
+! [FOD] Patch suggested by Callum Lerwick <seg@haxxed.com>: "This makes the t1 data arrays dynamic, which greatly reduces cache thrashing. Also, some minor cleanup to prevent unnecessary casts"
+
+May 22, 2007
+! [FOD] Patch suggested by Callum Lerwick <seg@haxxed.com>: "Some formatting cleanups, so that the long function definitions and calls fit on screen. Use of prefix increment which is theoretically faster, in practice any sane compiler can optimize a postfix increment but its best not to count on such things. Consolidation of some redundant calculations in the inner loops, which becomes very useful in the future autovectorize patch."
+! [FOD] Patch suggested by Callum Lerwick <seg@haxxed.com>: "This changes the flag code in t1 to use a flag_t type, which can then be changed to reduce RAM usage. It is now typedef to a short."
+! [FOD] Patch suggested by Callum Lerwick <seg@haxxed.com>: "This patch makes the t1 LUTs static. I actually intend this as a prelude to possibly eliminating some or all of the LUTs entirely."
+
 May 11, 2007
 - [FOD]	JP3D library Binaries removed from SVN.
 ! [FOD] MJ2 codec updated from LibOpenJPEG version 0.97 to LibOpenJPEG version 1. Hence, the MJ2 codec will now take advantage of all the improvements and optimizations done on the LibOpenJPEG library.
@@ -97,9 +123,13 @@ February 26, 2007
 + [Parvatha] Option to read images from a Folder whose path is specified in the Input parameters by "-ImgDir" along with output decod format specified by "-OutFor" . Modifications in image_to_j2k.c, j2k_to_image.c, getopt.c, getopt.h
 + [Parvatha] Enabling use of multi character input parameters in the codec. Modifications in image_to_j2k.c, j2k_to_image.c, getopt.c, getopt.h
 
+----------------------
+February 23, 2007
+VERSION 1.1.1 RELEASED
+----------------------
+
 February 23, 2007
 * [GB] Fixed a copy-and-paste type assignment error (bool instead of int) in the JPWL section of decoder parameters structure in openjpeg.h; minor type-casting in jpwl_lib.c. As a result, now OPJViewer should run correctly when built against the most current SVN trunk of LibOpenJPEG.lib
-* [FOD] Changed version number from 1.1.0 to 1.1.1 in openjpeg.h
 + [GB] Linux makefile for the JPWL module; newlines at end of JPWL files
 
 February 22, 2007
