@@ -5,6 +5,9 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+June 29th, 2007
+[Herve Drolon] updated the wrapper for FreeImage 3.9.10
+
 January 27th, 2007
 ! [czerwinski1977] fixed FreeImage_GetPalette definition (changed by GetRawPalette/GetPaletteCopy)
 

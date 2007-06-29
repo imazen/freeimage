@@ -176,6 +176,14 @@ namespace FreeImageAPI
 		BMP_SAVE_RLE		= 1,
 		CUT_DEFAULT			= 0,
 		DDS_DEFAULT			= 0,
+		EXR_DEFAULT			= 0,		// save data as half with piz-based wavelet compression
+		EXR_FLOAT			= 0x0001,	// save data as float instead of as half (not recommended)
+		EXR_NONE			= 0x0002,	// save with no compression
+		EXR_ZIP				= 0x0004,	// save with zlib compression, in blocks of 16 scan lines
+		EXR_PIZ				= 0x0008,	// save with piz-based wavelet compression
+		EXR_PXR24			= 0x0010,	// save with lossy 24-bit float compression
+		EXR_B44				= 0x0020,	// save with lossy 44% float compression - goes to 22% when combined with EXR_LC
+		EXR_LC				= 0x0040,	// save images with one luminance and two chroma channels, rather than as RGB (lossy compression)
 		FAXG3_DEFAULT		= 0,
 		GIF_DEFAULT			= 0,
 		GIF_LOAD256			= 1,		// Load	the	image as a 256 color image with	ununsed	palette	entries, if	it's 16	or 2 color
@@ -184,6 +192,8 @@ namespace FreeImageAPI
 		ICO_DEFAULT			= 0,
 		ICO_MAKEALPHA		= 1,		// convert to 32bpp	and	create an alpha	channel	from the AND-mask when loading
 		IFF_DEFAULT			= 0,
+		J2K_DEFAULT			= 0,		// save with a 16:1 rate
+		JP2_DEFAULT			= 0,		// save with a 16:1 rate
 		JPEG_DEFAULT		= 0,
 		JPEG_FAST			= 1,
 		JPEG_ACCURATE		= 2,
@@ -258,7 +268,10 @@ namespace FreeImageAPI
 		FIF_GIF     = 25,
 		FIF_HDR		= 26,
 		FIF_FAXG3	= 27,
-		FIF_SGI		= 28
+		FIF_SGI		= 28,
+		FIF_EXR		= 29,
+		FIF_J2K		= 30,
+		FIF_JP2		= 31		
 	}
 
 	/** Image type used in FreeImage.
@@ -330,6 +343,7 @@ namespace FreeImageAPI
 	public enum FREE_IMAGE_TMO {
 		FITMO_DRAGO03	 = 0,	// Adaptive logarithmic mapping (F. Drago, 2003)
 		FITMO_REINHARD05 = 1,	// Dynamic range reduction inspired by photoreceptor physiology (E. Reinhard, 2005)
+		FITMO_FATTAL02	 = 2	// Gradient domain high dynamic range compression (R. Fattal, 2002)
 	};
 
 	/** Upsampling / downsampling filters. 
@@ -662,6 +676,12 @@ namespace FreeImageAPI
 		[DllImport(dllName, EntryPoint="FreeImage_GetDotsPerMeterY")]
 		public static extern uint GetDotsPerMeterY(FIBITMAP dib);
 		
+		[DllImport(dllName, EntryPoint="FreeImage_SetDotsPerMeterX")]
+		public static extern void SetDotsPerMeterX(FIBITMAP dib, uint res);
+		
+		[DllImport(dllName, EntryPoint="FreeImage_SetDotsPerMeterY")]
+		public static extern void SetDotsPerMeterY(FIBITMAP dib, uint res);
+
 		[DllImport(dllName, EntryPoint = "FreeImage_GetInfoHeader")]
 		public static extern IntPtr FreeImage_GetInfoHeader(FIBITMAP dib);
 
