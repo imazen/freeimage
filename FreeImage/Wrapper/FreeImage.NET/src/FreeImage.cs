@@ -44,6 +44,10 @@ namespace FreeImageAPI
 	Handle to a memory I/O stream
 	*/
 	using FIMEMORY = UInt32;
+	/**
+	  Handle to a metadata model
+	*/
+	using FIMETADATA = UInt32;
 	/** 
 	Handle to a FreeImage tag
 	*/
