@@ -44,6 +44,10 @@ namespace FreeImageAPI
 	Handle to a memory I/O stream
 	*/
 	using FIMEMORY = UInt32;
+	/** 
+	Handle to a FreeImage tag
+	*/
+	using FITAG = UInt32;
 
 	/*	[StructLayout(LayoutKind.Sequential)]
 		public class FreeImageIO
@@ -373,6 +377,49 @@ namespace FreeImageAPI
 		FICC_MAG	= 8,	// Complex images: use magnitude
 		FICC_PHASE	= 9		// Complex images: use phase
 	}
+
+	// Metadata support ---------------------------------------------------------
+	
+	/**
+	  Tag data type information (based on TIFF specifications)
+	
+	  Note: RATIONALs are the ratio of two 32-bit integer values.
+	*/
+	public enum FREE_IMAGE_MDTYPE {
+		FIDT_NOTYPE		= 0,	// placeholder 
+		FIDT_BYTE		= 1,	// 8-bit unsigned integer 
+		FIDT_ASCII		= 2,	// 8-bit bytes w/ last byte null 
+		FIDT_SHORT		= 3,	// 16-bit unsigned integer 
+		FIDT_LONG		= 4,	// 32-bit unsigned integer 
+		FIDT_RATIONAL	= 5,	// 64-bit unsigned fraction 
+		FIDT_SBYTE		= 6,	// 8-bit signed integer 
+		FIDT_UNDEFINED	= 7,	// 8-bit untyped data 
+		FIDT_SSHORT		= 8,	// 16-bit signed integer 
+		FIDT_SLONG		= 9,	// 32-bit signed integer 
+		FIDT_SRATIONAL	= 10,	// 64-bit signed fraction 
+		FIDT_FLOAT		= 11,	// 32-bit IEEE floating point 
+		FIDT_DOUBLE		= 12,	// 64-bit IEEE floating point 
+		FIDT_IFD		= 13,	// 32-bit unsigned integer (offset) 
+		FIDT_PALETTE	= 14	// 32-bit RGBQUAD 
+	};
+
+	/**
+	  Metadata models supported by FreeImage
+	*/
+	public enum FREE_IMAGE_MDMODEL {
+		FIMD_NODATA			= -1,
+		FIMD_COMMENTS		= 0,	// single comment or keywords
+		FIMD_EXIF_MAIN		= 1,	// Exif-TIFF metadata
+		FIMD_EXIF_EXIF		= 2,	// Exif-specific metadata
+		FIMD_EXIF_GPS		= 3,	// Exif GPS metadata
+		FIMD_EXIF_MAKERNOTE = 4,	// Exif maker note metadata
+		FIMD_EXIF_INTEROP	= 5,	// Exif interoperability metadata
+		FIMD_IPTC			= 6,	// IPTC/NAA metadata
+		FIMD_XMP			= 7,	// Abobe XMP metadata
+		FIMD_GEOTIFF		= 8,	// GeoTIFF metadata
+		FIMD_ANIMATION		= 9,	// Animation metadata
+		FIMD_CUSTOM			= 10	// Used to attach other metadata types to a dib
+	};
 
 
 	// Message output function --------------------------------------------------
