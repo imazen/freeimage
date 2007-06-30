@@ -11,6 +11,7 @@ Month day, 2007 - 3.10.0
 ! FreeImage now uses OpenEXR 1.5.0
 ! FreeImage now uses libPNG 1.2.18
 - [Herve Drolon] removed VS C+ 6.0 project files : this IDE is no longer supported because of OpenEXR
++ [Herve Drolon] added VS 2005 project files
 + [Floris van den Berg] added multipage support to the PSD plugin (read only)
 + [Herve Drolon] added full support for the OpenEXR format
 + [Herve Drolon] added full support for the JPEG-2000 format
