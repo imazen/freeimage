@@ -38,6 +38,7 @@
 /**
 nominal CRT primaries 
 */
+/*
 static const float CIE_x_r = 0.640F;
 static const float CIE_y_r = 0.330F;
 static const float CIE_x_g = 0.290F;
@@ -46,7 +47,18 @@ static const float CIE_x_b = 0.150F;
 static const float CIE_y_b = 0.060F;
 static const float CIE_x_w = 0.3333F;	// use true white
 static const float CIE_y_w = 0.3333F;
-
+*/
+/**
+sRGB primaries
+*/
+static const float CIE_x_r = 0.640F;
+static const float CIE_y_r = 0.330F;
+static const float CIE_x_g = 0.300F;
+static const float CIE_y_g = 0.600F;
+static const float CIE_x_b = 0.150F;
+static const float CIE_y_b = 0.060F;
+static const float CIE_x_w = 0.3127F;	// Illuminant D65
+static const float CIE_y_w = 0.3290F;
 
 static const float CIE_D = ( CIE_x_r*(CIE_y_g - CIE_y_b) + CIE_x_g*(CIE_y_b - CIE_y_r) + CIE_x_b*(CIE_y_r - CIE_y_g) );
 static const float CIE_C_rD = ( (1/CIE_y_w) * ( CIE_x_w*(CIE_y_g - CIE_y_b) - CIE_y_w*(CIE_x_g - CIE_x_b) + CIE_x_g*CIE_y_b - CIE_x_b*CIE_y_g) );
@@ -101,6 +113,18 @@ static const float XYZ2RGB[3][3] = {
 	{ 2.56562F, -1.16699F, -0.398511F },
 	{ -1.02209F, 1.97826F, 0.0438210F }, 
 	{ 0.0746980F, -0.251851F, 1.17680F } 
+};
+*/
+/*
+static const float RGB2XYZ[3][3] = { 
+	{ 0.412391F, 0.357584F, 0.180481F },
+	{ 0.212639F, 0.715169F, 0.0721923F },
+	{ 0.0193308F, 0.119195F, 0.950532F }
+};
+static const float XYZ2RGB[3][3] = { 
+	{ 3.24097F, -1.53738F, -0.498611F },
+	{ -0.969244F, 1.87597F, 0.0415551F }, 
+	{ 0.0556300F, -0.203977F, 1.05697F } 
 };
 */
 
