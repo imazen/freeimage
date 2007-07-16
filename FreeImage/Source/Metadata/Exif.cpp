@@ -472,7 +472,7 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 	// when recursive/cyclic directory structures exist. 
 	// This kind of recursive Exif file was encountered with Kodak images coming from 
 	// KODAK PROFESSIONAL DCS Photo Desk JPEG Export v3.2 W
-	std::map<BYTE*, int> visitedIFD;
+	std::map<DWORD, int> visitedIFD;
 
     #define DIR_ENTRY_ADDR(_start, _entry) (_start + 2 + (12 * _entry))
 
@@ -495,10 +495,11 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned int offset, unsign
 		}
 
 		// remember that we've visited this directory so that we don't visit it again later
-		if(visitedIFD.find(ifdp) != visitedIFD.end()) {
+		DWORD visited = (((DWORD)ifdp & 0xFFFF) << 16) | (DWORD)de;
+		if(visitedIFD.find(visited) != visitedIFD.end()) {
 			continue;
 		} else {
-			visitedIFD[ifdp] = 1;	// processed
+			visitedIFD[visited] = 1;	// processed
 		}
 
 		// determine how many entries there are in the current IFD
