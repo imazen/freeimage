@@ -6,8 +6,8 @@ What's New for FreeImage
 + : added
 
 Month day, 2007 - 3.10.0
-! FreeImage now uses libTIFF 3.9.0 (CVS patch 2007-05-01)
-! FreeImage now uses OpenJPEG 1.2.0 (SVN patch 2007-06-04)
+! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-07-13)
+! FreeImage now uses OpenJPEG 1.2.0 (SVN patch 2007-07-13)
 ! FreeImage now uses OpenEXR 1.5.0
 ! FreeImage now uses libPNG 1.2.18
 - [Herve Drolon] removed VS C+ 6.0 project files : this IDE is no longer supported because of OpenEXR
@@ -21,6 +21,8 @@ Month day, 2007 - 3.10.0
 * [rodrigo] fixed FreeImage exception handling under gcc (added -fexceptions to gcc compiler flags)
 * [Martin Dyring-Andersen] fixed GIF plugin crashing on some corrupted files
 * [Herve Drolon] fixed a bug with RLE encoding for 8-bit BMP images
+* [Herve Drolon] fixed GPS metadata being skipped when reading metadata in Exif images
+* [Herve Drolon] fixed a bug when reading OS/2 BMP images with a negative height
 
 February 11th, 2007 - 3.9.3
 ! FreeImage now uses libPNG 1.2.16
