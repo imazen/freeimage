@@ -5,6 +5,31 @@ What's New for OpenJPEG
 ! : changed
 + : added
 
+July 13, 2007
+! [FOD] Modified the memory allocation for codestreams containing multiple tiles. The memory is now allocated for each tile indenpendently, leading to an important decrease of the virtual memory needed. [j2k.c tcd.h tcd.c]
+! [FOD] Modified old comments about the ability to decode mega-images and comments about the disk size necessary to do this. [image_to_j2k.c and frames_to_mj2.c]
+* [FOD] Added 2000 bytes for the memory allocation in cio.c for the minimum size of headers (useful in case of very small images) [cio.c]
+
+July 12, 2007
+* [GB] fixed a bug in JPWL module, which prevented to exploit the full error correction capability of RS codes (e.g. it gave up at 5 errors, even if 6 were correctable); defined a JPWL_MAXIMUM_EPB_ROOM for better customization of the maximum dimension of EPBs (the dimension is pre-calculated on an hypothesis, if it goes beyond 65535 there will be problems, thus we give a little less than the max, let's say 65450)
+
+July 8, 2007
+* [ANTONIN] fixed the size of the memory allocation in cio.c (confusion between bits and bytes)
+
+June 21, 2007
+* [FOD] Output image color space set when decoding a JP2 file in jp2.c
++ [GB] Previous, home, and next frame buttons for exploring MJ2 files in OPJViewer
+
+June 18, 2007
+* [GB] Reload image doesn't crash in OPJViewer; more settings saved to registry
+ 
+June 16, 2007
++ [GB] Possibility to disable parsing in OPJViewer; also, saves common settings to the registry
+
+June 15, 2007
+* [FOD] Fixed the generation of index files 
+
+
 ----------------------
 MAY 4, 2007
 VERSION 1.2.0 RELEASED
