@@ -140,6 +140,51 @@ SwapFileHeader(BITMAPFILEHEADER *header) {
 }
 #endif
 
+static void 
+LoadPixelData(FreeImageIO *io, fi_handle handle, FIBITMAP *dib, int height, int pitch, int bit_count) {
+	// Load pixel data
+	// NB: height can be < 0 for BMP data
+	if (height > 0) {
+		io->read_proc((void *)FreeImage_GetBits(dib), height * pitch, 1, handle);
+	} else {
+		int positiveHeight = abs(height);
+		for (int c = 0; c < positiveHeight; ++c) {
+			io->read_proc((void *)FreeImage_GetScanLine(dib, positiveHeight - c - 1), pitch, 1, handle);
+		}
+	}
+#ifdef FREEIMAGE_BIGENDIAN
+	// swap as needed for Big Endian OS
+	switch(bit_count) {
+		case 16:
+		{            
+			for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
+				WORD *pixel = (WORD *)FreeImage_GetScanLine(dib, y);
+				for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
+					SwapShort(pixel);
+					pixel++;
+				}
+			}
+		}
+		break;
+
+		case 24:
+		case 32:
+		{
+			for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
+				BYTE *pixel = FreeImage_GetScanLine(dib, y);
+				for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
+					INPLACESWAP(pixel[0], pixel[2]);
+					pixel += (bit_count >> 3);
+				}
+			}
+		}
+
+		default:
+			break;
+	}
+#endif
+}
+
 static FIBITMAP *
 LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_offset) {
 	FIBITMAP *dib = NULL;
@@ -158,7 +203,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 		int used_colors = bih.biClrUsed;
 		int width       = bih.biWidth;
-		int height      = bih.biHeight;
+		int height      = bih.biHeight;		// WARNING: height can be < 0 => check each call using 'height' as a parameter
 		int bit_count   = bih.biBitCount;
 		int compression = bih.biCompression;
 		int pitch       = CalculatePitch(CalculateLine(width, bit_count));
@@ -178,9 +223,9 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 				if (dib == NULL)
 					throw "DIB allocation failed";
 
-				BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-				pInfoHeader->biXPelsPerMeter = bih.biXPelsPerMeter;
-				pInfoHeader->biYPelsPerMeter = bih.biYPelsPerMeter;
+				// set resolution information
+				FreeImage_SetDotsPerMeterX(dib, bih.biXPelsPerMeter);
+				FreeImage_SetDotsPerMeterY(dib, bih.biYPelsPerMeter);
 				
 				// load the palette
 
@@ -202,16 +247,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 				switch (compression) {
 					case BI_RGB :
-						if (height > 0) {
-							io->read_proc((void *)FreeImage_GetBits(dib), height * pitch, 1, handle);
-						} else {
-							int tmp = abs(height);
-
-							for (int c = 0; c < tmp; ++c) {
-								io->read_proc((void *)FreeImage_GetScanLine(dib, tmp - c - 1), pitch, 1, handle);
-							}
-						}
-						
+						LoadPixelData(io, handle, dib, height, pitch, bit_count);				
 						return dib;
 
 					case BI_RLE4 :
@@ -358,7 +394,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 										default :
 										{
-											if(scanline >= height) {
+											if(scanline >= abs(height)) {
 												return dib;
 											}
 
@@ -381,7 +417,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 								default :
 								{
-									if(scanline >= height) {
+									if(scanline >= abs(height)) {
 										return dib;
 									}
 
@@ -427,20 +463,12 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 				if (dib == NULL)
 					throw "DIB allocation failed";						
 
-				BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-				pInfoHeader->biXPelsPerMeter = bih.biXPelsPerMeter;
-				pInfoHeader->biYPelsPerMeter = bih.biYPelsPerMeter;
+				// set resolution information
+				FreeImage_SetDotsPerMeterX(dib, bih.biXPelsPerMeter);
+				FreeImage_SetDotsPerMeterY(dib, bih.biYPelsPerMeter);
 
-				io->read_proc(FreeImage_GetBits(dib), height * pitch, 1, handle);
-#ifdef FREEIMAGE_BIGENDIAN
-				for(int y = 0; y < FreeImage_GetHeight(dib); y++) {
-					WORD *pixel = (WORD *)FreeImage_GetScanLine(dib, y);
-					for(int x = 0; x < FreeImage_GetWidth(dib); x++) {
-						SwapShort(pixel);
-						pixel++;
-					}
-				}
-#endif
+				// load pixel data and swap as needed if OS is Big Endian
+				LoadPixelData(io, handle, dib, height, pitch, bit_count);
 
 				return dib;
 			}
@@ -465,31 +493,22 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 				if (dib == NULL)
 					throw "DIB allocation failed";
 
-				BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-				pInfoHeader->biXPelsPerMeter = bih.biXPelsPerMeter;
-				pInfoHeader->biYPelsPerMeter = bih.biYPelsPerMeter;
+				// set resolution information
+				FreeImage_SetDotsPerMeterX(dib, bih.biXPelsPerMeter);
+				FreeImage_SetDotsPerMeterY(dib, bih.biYPelsPerMeter);
 
 				// Skip over the optional palette 
 				// A 24 or 32 bit DIB may contain a palette for faster color reduction
 
-				if (pInfoHeader->biClrUsed > 0) {
-				    io->seek_proc(handle, pInfoHeader->biClrUsed * sizeof(RGBQUAD), SEEK_CUR);
+				if (FreeImage_GetColorsUsed(dib) > 0) {
+				    io->seek_proc(handle, FreeImage_GetColorsUsed(dib) * sizeof(RGBQUAD), SEEK_CUR);
 				} else if ((bih.biCompression != BI_BITFIELDS) && (bitmap_bits_offset > sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER))) {
 					io->seek_proc(handle, bitmap_bits_offset, SEEK_SET);
 				}
 
 				// read in the bitmap bits
-
-				io->read_proc(FreeImage_GetBits(dib), height * pitch, 1, handle);
-#ifdef FREEIMAGE_BIGENDIAN
-				for(int y = 0; y < FreeImage_GetHeight(dib); y++) {
-					BYTE *pixel = FreeImage_GetScanLine(dib, y);
-					for(int x = 0; x < FreeImage_GetWidth(dib); x++) {
-						INPLACESWAP(pixel[0], pixel[2]);
-						pixel += (bit_count>>3);
-					}
-				}
-#endif
+				// load pixel data and swap as needed if OS is Big Endian
+				LoadPixelData(io, handle, dib, height, pitch, bit_count);
 
 				// check if the bitmap contains transparency, if so enable it in the header
 
@@ -526,7 +545,7 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 
 		int used_colors = bih.biClrUsed;
 		int width       = bih.biWidth;
-		int height      = bih.biHeight;
+		int height      = bih.biHeight;		// WARNING: height can be < 0 => check each read_proc using 'height' as a parameter
 		int bit_count   = bih.biBitCount;
 		int compression = bih.biCompression;
 		int pitch       = CalculatePitch(CalculateLine(width, bit_count));
@@ -546,9 +565,9 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				if (dib == NULL)
 					throw "DIB allocation failed";
 
-				BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-				pInfoHeader->biXPelsPerMeter = bih.biXPelsPerMeter;
-				pInfoHeader->biYPelsPerMeter = bih.biYPelsPerMeter;
+				// set resolution information
+				FreeImage_SetDotsPerMeterX(dib, bih.biXPelsPerMeter);
+				FreeImage_SetDotsPerMeterY(dib, bih.biYPelsPerMeter);
 				
 				// load the palette
 
@@ -561,9 +580,9 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 
 					io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
 					
-					pal[count].rgbRed = bgr.r;
+					pal[count].rgbRed	= bgr.r;
 					pal[count].rgbGreen = bgr.g;
-					pal[count].rgbBlue = bgr.b;
+					pal[count].rgbBlue	= bgr.b;
 				}
 
 				// seek to the actual pixel data.
@@ -576,13 +595,8 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 
 				switch (compression) {
 					case BI_RGB :
-						if (height > 0) {
-							io->read_proc((void *)FreeImage_GetBits(dib), height * pitch, 1, handle);
-						} else {
-							for (int c = 0; c < abs(height); ++c) {
-								io->read_proc((void *)FreeImage_GetScanLine(dib, height - c - 1), pitch, 1, handle);								
-							}
-						}
+						// load pixel data 
+						LoadPixelData(io, handle, dib, height, pitch, bit_count);
 						
 						return dib;
 
@@ -749,7 +763,7 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 									}
 
 									break;
-							};
+							}
 						}
 
 						break;
@@ -777,23 +791,17 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				if (dib == NULL)
 					throw "DIB allocation failed";						
 
-				BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-				pInfoHeader->biXPelsPerMeter = bih.biXPelsPerMeter;
-				pInfoHeader->biYPelsPerMeter = bih.biYPelsPerMeter;
+				// set resolution information
+				FreeImage_SetDotsPerMeterX(dib, bih.biXPelsPerMeter);
+				FreeImage_SetDotsPerMeterY(dib, bih.biYPelsPerMeter);
 
-				if (bitmap_bits_offset > (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + (used_colors * 3)))
+				if (bitmap_bits_offset > (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + (used_colors * 3))) {
 					io->seek_proc(handle, bitmap_bits_offset, SEEK_SET);
-
-				io->read_proc(FreeImage_GetBits(dib), height * pitch, 1, handle);
-#ifdef FREEIMAGE_BIGENDIAN
-				for(int y = 0; y < FreeImage_GetHeight(dib); y++) {
-					WORD *pixel = (WORD *)FreeImage_GetScanLine(dib, y);
-					for(int x = 0; x < FreeImage_GetWidth(dib); x++) {
-						SwapShort(pixel);
-						pixel++;
-					}
 				}
-#endif
+
+				// load pixel data and swap as needed if OS is Big Endian
+				LoadPixelData(io, handle, dib, height, pitch, bit_count);
+
 				return dib;
 			}
 
@@ -809,9 +817,9 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				if (dib == NULL)
 					throw "DIB allocation failed";
 				
-				BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-				pInfoHeader->biXPelsPerMeter = bih.biXPelsPerMeter;
-				pInfoHeader->biYPelsPerMeter = bih.biYPelsPerMeter;
+				// set resolution information
+				FreeImage_SetDotsPerMeterX(dib, bih.biXPelsPerMeter);
+				FreeImage_SetDotsPerMeterY(dib, bih.biYPelsPerMeter);
 
 				// Skip over the optional palette 
 				// A 24 or 32 bit DIB may contain a palette for faster color reduction
@@ -820,17 +828,8 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 					io->seek_proc(handle, bitmap_bits_offset, SEEK_SET);
 				
 				// read in the bitmap bits
-
-				io->read_proc(FreeImage_GetBits(dib), height * pitch, 1, handle);
-#ifdef FREEIMAGE_BIGENDIAN
-				for(int y = 0; y < FreeImage_GetHeight(dib); y++) {
-					BYTE *pixel = FreeImage_GetScanLine(dib, y);
-					for(int x = 0; x < FreeImage_GetWidth(dib); x++) {
-						INPLACESWAP(pixel[0], pixel[2]);
-						pixel += (bit_count>>3);
-					}
-				}
-#endif
+				// load pixel data and swap as needed if OS is Big Endian
+				LoadPixelData(io, handle, dib, height, pitch, bit_count);
 
 				// check if the bitmap contains transparency, if so enable it in the header
 
@@ -864,7 +863,7 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 
 		int used_colors = 0;
 		int width       = bios2_1x.biWidth;
-		int height      = bios2_1x.biHeight;
+		int height      = bios2_1x.biHeight;	// WARNING: height can be < 0 => check each read_proc using 'height' as a parameter
 		int bit_count   = bios2_1x.biBitCount;
 		int pitch       = CalculatePitch(CalculateLine(width, bit_count));
 		
@@ -882,9 +881,9 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				if (dib == NULL)
 					throw "DIB allocation failed";						
 
-				BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-				pInfoHeader->biXPelsPerMeter = 0;
-				pInfoHeader->biYPelsPerMeter = 0;
+				// set resolution information to default values (72 dpi in english units)
+				FreeImage_SetDotsPerMeterX(dib, 2835);
+				FreeImage_SetDotsPerMeterY(dib, 2835);
 				
 				// load the palette
 
@@ -895,9 +894,9 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 
 					io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
 					
-					pal[count].rgbRed = bgr.r;
+					pal[count].rgbRed	= bgr.r;
 					pal[count].rgbGreen = bgr.g;
-					pal[count].rgbBlue = bgr.b;
+					pal[count].rgbBlue	= bgr.b;
 				}
 
 				// Skip over the optional palette 
@@ -907,13 +906,8 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				
 				// read the pixel data
 
-				if (height > 0) {
-					io->read_proc((void *)FreeImage_GetBits(dib), height * pitch, 1, handle);
-				} else {
-					for (int c = 0; c < abs(height); ++c) {
-						io->read_proc((void *)FreeImage_GetScanLine(dib, height - c - 1), pitch, 1, handle);								
-					}
-				}
+				// load pixel data 
+				LoadPixelData(io, handle, dib, height, pitch, bit_count);
 						
 				return dib;
 			}
@@ -925,20 +919,12 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				if (dib == NULL)
 					throw "DIB allocation failed";						
 
-				BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-				pInfoHeader->biXPelsPerMeter = 0;
-				pInfoHeader->biYPelsPerMeter = 0;
+				// set resolution information to default values (72 dpi in english units)
+				FreeImage_SetDotsPerMeterX(dib, 2835);
+				FreeImage_SetDotsPerMeterY(dib, 2835);
 
-				io->read_proc(FreeImage_GetBits(dib), height * pitch, 1, handle);
-#ifdef FREEIMAGE_BIGENDIAN
-				for(int y = 0; y < FreeImage_GetHeight(dib); y++) {
-					WORD *pixel = (WORD *)FreeImage_GetScanLine(dib, y);
-					for(int x = 0; x < FreeImage_GetWidth(dib); x++) {
-						SwapShort(pixel);
-						pixel++;
-					}
-				}
-#endif
+				// load pixel data and swap as needed if OS is Big Endian
+				LoadPixelData(io, handle, dib, height, pitch, bit_count);
 
 				return dib;
 			}
@@ -955,23 +941,15 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				if (dib == NULL)
 					throw "DIB allocation failed";						
 
-				BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-				pInfoHeader->biXPelsPerMeter = 0;
-				pInfoHeader->biYPelsPerMeter = 0;
+				// set resolution information to default values (72 dpi in english units)
+				FreeImage_SetDotsPerMeterX(dib, 2835);
+				FreeImage_SetDotsPerMeterY(dib, 2835);
 
 				// Skip over the optional palette 
 				// A 24 or 32 bit DIB may contain a palette for faster color reduction
 
-				io->read_proc(FreeImage_GetBits(dib), height * pitch, 1, handle);
-#ifdef FREEIMAGE_BIGENDIAN
-				for(int y = 0; y < FreeImage_GetHeight(dib); y++) {
-					BYTE *pixel = FreeImage_GetScanLine(dib, y);
-					for(int x = 0; x < FreeImage_GetWidth(dib); x++) {
-						INPLACESWAP(pixel[0], pixel[2]);
-						pixel += (bit_count>>3);
-					}
-				}
-#endif
+				// load pixel data and swap as needed if OS is Big Endian
+				LoadPixelData(io, handle, dib, height, pitch, bit_count);
 
 				// check if the bitmap contains transparency, if so enable it in the header
 
