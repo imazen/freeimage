@@ -81,6 +81,15 @@
 #define FREEIMAGE_BIGENDIAN
 #endif // BYTE_ORDER
 
+// This really only affects 24 and 32 bit formats, the rest are always RGB order.
+#define FREEIMAGE_COLORORDER_BGR	0
+#define FREEIMAGE_COLORORDER_RGB	1
+#if defined(__APPLE__) || defined(FREEIMAGE_BIGENDIAN)
+#define FREEIMAGE_COLORORDER FREEIMAGE_COLORORDER_RGB
+#else
+#define FREEIMAGE_COLORORDER FREEIMAGE_COLORORDER_BGR
+#endif
+
 // Ensure 4-byte enums if we're using Borland C++ compilers
 #if defined(__BORLANDC__)
 #pragma option push -b
@@ -148,28 +157,28 @@ typedef long LONG;
 #endif // WIN32
 
 typedef struct tagRGBQUAD {
-#ifdef FREEIMAGE_BIGENDIAN
-  BYTE rgbRed;
-  BYTE rgbGreen;
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
   BYTE rgbBlue;
+  BYTE rgbGreen;
+  BYTE rgbRed;
 #else
-  BYTE rgbBlue;
-  BYTE rgbGreen;
   BYTE rgbRed;
-#endif // FREEIMAGE_BIGENDIAN
+  BYTE rgbGreen;
+  BYTE rgbBlue;
+#endif // FREEIMAGE_COLORORDER
   BYTE rgbReserved;
 } RGBQUAD;
 
 typedef struct tagRGBTRIPLE {
-#ifdef FREEIMAGE_BIGENDIAN
-  BYTE rgbtRed;
-  BYTE rgbtGreen;
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
   BYTE rgbtBlue;
+  BYTE rgbtGreen;
+  BYTE rgbtRed;
 #else
-  BYTE rgbtBlue;
-  BYTE rgbtGreen;
   BYTE rgbtRed;
-#endif // FREEIMAGE_BIGENDIAN
+  BYTE rgbtGreen;
+  BYTE rgbtBlue;
+#endif // FREEIMAGE_COLORORDER
 } RGBTRIPLE;
 
 #if (defined(_WIN32) || defined(__WIN32__))
@@ -260,6 +269,7 @@ typedef struct tagFICOMPLEX {
 // These coincide with the order of RGBQUAD and RGBTRIPLE -------------------
 
 #ifndef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 // Little Endian (x86 / MS Windows, Linux) : BGR(A) order
 #define FI_RGBA_RED				2
 #define FI_RGBA_GREEN			1
@@ -274,6 +284,36 @@ typedef struct tagFICOMPLEX {
 #define FI_RGBA_BLUE_SHIFT		0
 #define FI_RGBA_ALPHA_SHIFT		24
 #else
+// Little Endian (x86 / MaxOSX) : RGB(A) order
+#define FI_RGBA_RED				0
+#define FI_RGBA_GREEN			1
+#define FI_RGBA_BLUE			2
+#define FI_RGBA_ALPHA			3
+#define FI_RGBA_RED_MASK		0x000000FF
+#define FI_RGBA_GREEN_MASK		0x0000FF00
+#define FI_RGBA_BLUE_MASK		0x00FF0000
+#define FI_RGBA_ALPHA_MASK		0xFF000000
+#define FI_RGBA_RED_SHIFT		0
+#define FI_RGBA_GREEN_SHIFT		8
+#define FI_RGBA_BLUE_SHIFT		16
+#define FI_RGBA_ALPHA_SHIFT		24
+#endif // FREEIMAGE_COLORORDER
+#else
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
+// Big Endian (PPC / none) : BGR(A) order
+#define FI_RGBA_RED				2
+#define FI_RGBA_GREEN			1
+#define FI_RGBA_BLUE			0
+#define FI_RGBA_ALPHA			3
+#define FI_RGBA_RED_MASK		0x0000FF00
+#define FI_RGBA_GREEN_MASK		0x00FF0000
+#define FI_RGBA_BLUE_MASK		0xFF000000
+#define FI_RGBA_ALPHA_MASK		0x000000FF
+#define FI_RGBA_RED_SHIFT		8
+#define FI_RGBA_GREEN_SHIFT		16
+#define FI_RGBA_BLUE_SHIFT		24
+#define FI_RGBA_ALPHA_SHIFT		0
+#else
 // Big Endian (PPC / Linux, MaxOSX) : RGB(A) order
 #define FI_RGBA_RED				0
 #define FI_RGBA_GREEN			1
@@ -287,6 +327,7 @@ typedef struct tagFICOMPLEX {
 #define FI_RGBA_GREEN_SHIFT		16
 #define FI_RGBA_BLUE_SHIFT		8
 #define FI_RGBA_ALPHA_SHIFT		0
+#endif // FREEIMAGE_COLORORDER
 #endif // FREEIMAGE_BIGENDIAN
 
 #define FI_RGBA_RGB_MASK		(FI_RGBA_RED_MASK|FI_RGBA_GREEN_MASK|FI_RGBA_BLUE_MASK)

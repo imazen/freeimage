@@ -892,7 +892,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		//Image Data Sub-blocks
 		int x = 0, xpos = 0, y = 0, shift = 8 - bpp, mask = (1 << bpp) - 1, interlacepass = 0;
 		BYTE *scanline = FreeImage_GetScanLine(dib, height - 1);
-		BYTE buf[1024];
+		BYTE buf[4096];
 		io->read_proc(&b, 1, 1, handle);
 		while( b ) {
 			io->read_proc(stringtable->FillInputBuffer(b), b, 1, handle);
