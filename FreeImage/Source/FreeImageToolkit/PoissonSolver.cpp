@@ -36,14 +36,14 @@ static BOOL Poisson2D_SOR(Array2D& Lap, int maxCount, int bound, double maxErr, 
 	int i, j, k, imax, jmax;
 	int isOdd, chk;					// Checkerboard generator.
 	double err2sum;					// squared error sum in output's Laplacian
-	double rjac, rjac2;				// Radius of Convergence for the Jacobi method 
-									// which is known analytically for the Poisson
-									// solver (pg 869, eqn 19.5.24, Num. Recipes)
 	float chebW;					// Chebyshev acceleration weight.
 
 	const int JT_BORD = 1;			// Width of zero-valued border around image.
 
 	if(!Lap.isValid()) return FALSE;
+
+	// maximum acceptable squared error
+	const double maxSquaredError = maxErr * maxErr;
 
 	// Make a single output image buffer that can hold Lap plus a border 
 	// of 'JT_BORD' pixels wide on all 4 sides:
@@ -65,19 +65,22 @@ static BOOL Poisson2D_SOR(Array2D& Lap, int maxCount, int bound, double maxErr, 
 		buffer.setConst((float)0.5);	
 	}								
 
+	// Radius of Convergence for the Jacobi method 
+	// which is known analytically for the Poisson solver (pg 869, eqn 19.5.24, Num. Recipes)
+
 	// To compute the Chebyshev acceleration weight chebW we need to know the
 	// radius of convergence for Jacobi iterations for our solver. Rectangular
 	// boundaries (like ours) with either Dirichlet or VonNeumann conditions
 	// used in solution to a Poisson equation have a radius of convergence given
 	// by an analytical expression (eqn. 19.5.24, pg. 869, Numerical Recipes)
-	rjac = (cos(M_PI/imax) + cos(M_PI/jmax)) / 2.0;
-	rjac2 = rjac * rjac;
+	const double rjac = (cos(M_PI/imax) + cos(M_PI/jmax)) / 2.0;
+	const double rjac2 = rjac * rjac;
 
 	// (Note rjac is asymptotically 1.0 as imax and jmax grows.)
 	chebW = (float)1.0;			// for 1st pass, no acceleration.
 
 	for(k = 0; k < maxCount; k++) {	
-		// Iteratively modify the output buffer so the Laplacian at each pix matches Lap values:
+		// Iteratively modify the output buffer so the Laplacian at each pixel matches Lap values:
 
 		err2sum = 0.0;	// clear the max-error-finder for this pass.
 
@@ -87,26 +90,29 @@ static BOOL Poisson2D_SOR(Array2D& Lap, int maxCount, int bound, double maxErr, 
 			chk = isOdd;	// (starting pixel for current scanline)
 
 			for(j = JT_BORD; j < jmax; j++) {				// update every scanline,
-				for(i = JT_BORD + chk; i < imax; i += 2) {	// but only half the pixels,
+				for(i = JT_BORD + chk; i < imax; i += 2) {	// but only half the pixels
+
+					// current pixel value at (col, row)
+					const float pixelValue = buffer(i, j);
 
 					// desired Laplacian
 					const float lapWanted = Lap(i-JT_BORD, j-JT_BORD); 
 					// sum NSEW neighbors
-					// => current local average
-					const float lapAvg = (buffer(i+1, j) + buffer(i-1, j) + buffer(i, j+1) + buffer(i, j-1));
+					// => current local average = (buffer(i+1, j) + buffer(i-1, j) + buffer(i, j+1) + buffer(i, j-1))
+					const float lapAvg = buffer.localAverage(i, j);
 
 					// current Laplacian
-					const float lapNow = lapAvg - (float)4.0 * buffer(i,j);	
+					const float lapNow = lapAvg - (float)4.0 * pixelValue;	
 					// how far wrong it is
 					const float lapErr = lapWanted - lapNow;
 
 					// in-place correction of 1/4 of the Laplacian error
 					// but exaggerate the correction by chebW factor,
 					// which grows as large as 2.0.
-					buffer(i, j) = buffer(i, j) - (float)0.25 *chebW * lapErr;
+					buffer(i, j) = pixelValue - (float)0.25 * chebW * lapErr;
 
 					// (compute the error).
-					err2sum += (double)(lapErr*lapErr);	// sum-of-square err
+					err2sum += (double)lapErr*lapErr;	// sum-of-square err
 
 				} // end of one scanline,
 
@@ -164,7 +170,7 @@ static BOOL Poisson2D_SOR(Array2D& Lap, int maxCount, int bound, double maxErr, 
 			
 		} // go on to the next iteration.
 
-		if(err2sum < maxErr*maxErr) {	// Are we below the error maximum ?
+		if(err2sum < maxSquaredError) {	// Are we below the error maximum ?
 			break;						// Yes. Stop.  Answer is in 'oldB' buffer.
 		}								// No; keep going.
 	}

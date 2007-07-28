@@ -103,6 +103,15 @@ public:
 			scanline += m_pitch;
 		}
 	}
+
+	inline const float localAverage(int col, int row) {
+		// compute ( buffer(col+1, row) + buffer(col-1, row) + buffer(col, row+1) + buffer(col, row-1) )
+		// try to minimize pointer calculations
+		float *center = m_bits + row * m_pitch + col;
+		float *north = center - m_pitch; 
+		float *south = center + m_pitch;
+		return ( *(center -1) + *(center + 1) + *north + *south );
+	}
 };
 
 

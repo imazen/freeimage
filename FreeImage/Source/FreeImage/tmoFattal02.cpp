@@ -562,7 +562,10 @@ static FIBITMAP* tmoFattal02(FIBITMAP *Y, float alpha, float beta) {
 		FreeImage_Unload(phy); phy = NULL;
 
 		// solve the PDE (Poisson equation) using a Poisson solver and Dirichlet boundary conditions
+
+		// we need at least 1000 iterations in order to have a numericcaly consistent result
 		int maxCount = MAX(1000, width * height);
+		// fixing the error to 0.01 is a good compromise between speed and quality ... 
 		double maxError = 0.01;
 		FIBITMAP *U = FreeImage_PoissonSolver(divG, maxError, maxCount);
 		if(!U) throw(1);
