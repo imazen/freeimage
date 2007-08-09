@@ -1064,7 +1064,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// The default behavior of the JPEG library is kept "as is" because LibTIFF uses 
 				// LibJPEG "as is".
 
-#ifndef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 				if(cinfo.num_components == 3) {
 					for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
 						BYTE *target = FreeImage_GetScanLine(dib, y);
@@ -1219,7 +1219,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				while (cinfo.next_scanline < cinfo.image_height) {
 					// get a copy of the scanline
 					memcpy(target, FreeImage_GetScanLine(dib, FreeImage_GetHeight(dib) - cinfo.next_scanline - 1), pitch);
-#ifndef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 					// swap R and B channels
 					BYTE *target_p = target;
 					for(unsigned x = 0; x < cinfo.image_width; x++) {
@@ -1251,7 +1251,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					BYTE *source = FreeImage_GetScanLine(dib, FreeImage_GetHeight(dib) - cinfo.next_scanline - 1);
 					FreeImage_ConvertLine8To24(target, source, cinfo.image_width, palette);
 
-#ifndef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 					// swap R and B channels
 					BYTE *target_p = target;
 					for(unsigned x = 0; x < cinfo.image_width; x++) {

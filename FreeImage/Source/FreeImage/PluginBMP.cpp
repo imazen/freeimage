@@ -152,35 +152,28 @@ LoadPixelData(FreeImageIO *io, fi_handle handle, FIBITMAP *dib, int height, int 
 			io->read_proc((void *)FreeImage_GetScanLine(dib, positiveHeight - c - 1), pitch, 1, handle);
 		}
 	}
+
+	// swap as needed
 #ifdef FREEIMAGE_BIGENDIAN
-	// swap as needed for Big Endian OS
-	switch(bit_count) {
-		case 16:
-		{            
-			for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
-				WORD *pixel = (WORD *)FreeImage_GetScanLine(dib, y);
-				for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
-					SwapShort(pixel);
-					pixel++;
-				}
+	if (bit_count == 16) {
+		for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
+			WORD *pixel = (WORD *)FreeImage_GetScanLine(dib, y);
+			for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
+				SwapShort(pixel);
+				pixel++;
 			}
 		}
-		break;
-
-		case 24:
-		case 32:
-		{
-			for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
-				BYTE *pixel = FreeImage_GetScanLine(dib, y);
-				for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
-					INPLACESWAP(pixel[0], pixel[2]);
-					pixel += (bit_count >> 3);
-				}
+	}
+#endif
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
+	if (bit_count == 24 || bit_count == 32) {
+		for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
+			BYTE *pixel = FreeImage_GetScanLine(dib, y);
+			for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
+				INPLACESWAP(pixel[0], pixel[2]);
+				pixel += (bit_count >> 3);
 			}
 		}
-
-		default:
-			break;
 	}
 #endif
 }
@@ -230,7 +223,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 				// load the palette
 
 				io->read_proc(FreeImage_GetPalette(dib), used_colors * sizeof(RGBQUAD), 1, handle);
-#ifdef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 				RGBQUAD *pal = FreeImage_GetPalette(dib);
 				for(int i = 0; i < used_colors; i++) {
 					INPLACESWAP(pal[i].rgbRed, pal[i].rgbBlue);
@@ -1353,6 +1346,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						return FALSE;
 				}
 			}
+#endif
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 		} else if (bpp == 24) {
 			FILE_BGR bgr;
 			for(int y = 0; y < FreeImage_GetHeight(dib); y++) {

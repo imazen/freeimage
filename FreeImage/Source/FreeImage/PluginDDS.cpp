@@ -399,7 +399,7 @@ LoadRGB (DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int page, int 
 	if (dib == NULL)
 		return NULL;
 
-#ifdef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 		// Calculate the number of bytes per pixel (3 for 24-bit or 4 for 32-bit)
 		int bytespp = FreeImage_GetLine(dib) / FreeImage_GetWidth(dib);
 #endif
@@ -412,7 +412,7 @@ LoadRGB (DDSURFACEDESC2 &desc, FreeImageIO *io, fi_handle handle, int page, int 
 		BYTE *pixels = FreeImage_GetScanLine(dib, height - i - 1);
 		io->read_proc (pixels, 1, line, handle);
 		io->seek_proc (handle, delta, SEEK_CUR);
-#ifdef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
  		for(int x = 0; x < width; x++) {
 			INPLACESWAP(pixels[FI_RGBA_RED],pixels[FI_RGBA_BLUE]);
 			pixels += bytespp;

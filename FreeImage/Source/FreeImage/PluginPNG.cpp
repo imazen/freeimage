@@ -350,7 +350,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			switch(color_type) {
 				case PNG_COLOR_TYPE_RGB:
 				case PNG_COLOR_TYPE_RGB_ALPHA:
-#ifndef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 					// flip the RGB pixels to BGR (or RGBA to BGRA)
 
 					if(image_type == FIT_BITMAP)
@@ -382,7 +382,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					// expand 8-bit greyscale + 8-bit alpha to 32-bit
 
 					png_set_gray_to_rgb(png_ptr);
-#ifndef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 					// flip the RGBA pixels to BGRA
 
 					png_set_bgr(png_ptr);
@@ -739,7 +739,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						PNG_COLOR_TYPE_RGBA, interlace_type, 
 						PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
-#ifndef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 					// flip BGR pixels to RGB
 					if(image_type == FIT_BITMAP)
 						png_set_bgr(png_ptr);
@@ -751,7 +751,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						PNG_COLOR_TYPE_RGB, interlace_type, 
 						PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
-#ifndef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 					// flip BGR pixels to RGB
 					if(image_type == FIT_BITMAP)
 						png_set_bgr(png_ptr);

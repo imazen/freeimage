@@ -316,7 +316,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if( bmih.biBitCount <= 8 ) {
 					// read the palette data
 					io->read_proc(FreeImage_GetPalette(dib), CalculateUsedPaletteEntries(bit_count) * sizeof(RGBQUAD), 1, handle);
-#ifdef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 					RGBQUAD *pal = FreeImage_GetPalette(dib);
 					for(int i = 0; i < CalculateUsedPaletteEntries(bit_count); i++) {
 						INPLACESWAP(pal[i].rgbRed, pal[i].rgbBlue);
@@ -328,32 +328,25 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				io->read_proc(FreeImage_GetBits(dib), height * pitch, 1, handle);
 
 #ifdef FREEIMAGE_BIGENDIAN
-				switch( bit_count ) {
-					case 16:
-					{
-						for(int y = 0; y < height; y++) {
-							WORD *pixel = (WORD *)FreeImage_GetScanLine(dib, y);
-							for(int x = 0; x < width; x++) {
-								SwapShort(pixel);
-								pixel++;
-							}
+				if (bit_count == 16) {
+					for(int y = 0; y < height; y++) {
+						WORD *pixel = (WORD *)FreeImage_GetScanLine(dib, y);
+						for(int x = 0; x < width; x++) {
+							SwapShort(pixel);
+							pixel++;
 						}
-						break;
 					}
-					case 24:
-					case 32:
-					{
-						for(int y = 0; y < height; y++) {
-							BYTE *pixel = FreeImage_GetScanLine(dib, y);
-							for(int x = 0; x < width; x++) {
-								INPLACESWAP(pixel[0], pixel[2]);
-								pixel += (bit_count>>3);
-							}
+				}
+#endif
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
+				if (bit_count == 24 || bit_count == 32) {
+					for(int y = 0; y < height; y++) {
+						BYTE *pixel = FreeImage_GetScanLine(dib, y);
+						for(int x = 0; x < width; x++) {
+							INPLACESWAP(pixel[0], pixel[2]);
+							pixel += (bit_count>>3);
 						}
-						break;
 					}
-					default:
-						break;
 				}
 #endif
 				// bitmap has been loaded successfully!
@@ -537,7 +530,10 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 							return FALSE;
 					}
 				}
-			} else if (bit_count == 24) {
+			} else
+#endif
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
+			if (bit_count == 24) {
 				FILE_BGR bgr;
 				for(int y = 0; y < FreeImage_GetHeight(icon_dib); y++) {
 					BYTE *line = FreeImage_GetScanLine(icon_dib, y);
@@ -564,11 +560,14 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 							return FALSE;
 					}
 				}
-			} else {
+			} else
+#endif
+#if defined(FREEIMAGE_BIGENDIAN) || FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
+			{
 #endif
 				BYTE *xor_mask = FreeImage_GetBits(icon_dib);
 				io->write_proc(xor_mask, size_xor, 1, handle);
-#ifdef FREEIMAGE_BIGENDIAN
+#if defined(FREEIMAGE_BIGENDIAN) || FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 			}
 #endif
 			// AND mask

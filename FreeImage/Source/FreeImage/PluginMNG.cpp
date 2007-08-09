@@ -81,7 +81,7 @@ mymngprocessheader(mng_handle mng, mng_uint32 width, mng_uint32 height) {
 
 	// tell the mng decoder about our bit-depth choice
 
-#ifdef FREEIMAGE_BIGENDIAN
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 	mng_set_canvasstyle(mng, MNG_CANVAS_RGB8);
 #else
 	mng_set_canvasstyle(mng, MNG_CANVAS_BGR8);
