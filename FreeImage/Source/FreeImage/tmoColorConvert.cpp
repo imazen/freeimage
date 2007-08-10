@@ -438,20 +438,46 @@ and normalize between 0 and 1.
 void 
 NormalizeY(FIBITMAP *Y, float minPrct, float maxPrct) {
 	int x, y;
+	float maxLum, minLum;
+
+	if(minPrct > maxPrct) {
+		// swap values
+		float t = minPrct; minPrct = maxPrct; maxPrct = t;
+	}
+	if(minPrct < 0) minPrct = 0;
+	if(maxPrct > 1) maxPrct = 1;
+
 	int width = FreeImage_GetWidth(Y);
 	int height = FreeImage_GetHeight(Y);
 	int pitch = FreeImage_GetPitch(Y);
 
 	// find max & min luminance values
-	float maxLum = 0, minLum = 0;
-	findMaxMinPercentile(Y, minPrct, &minLum, maxPrct, &maxLum);
+	if((minPrct > 0) || (maxPrct < 1)) {
+		maxLum = 0, minLum = 0;
+		findMaxMinPercentile(Y, minPrct, &minLum, maxPrct, &maxLum);
+	} else {
+		maxLum = -1e20F, minLum = 1e20F;
+		BYTE *bits = (BYTE*)FreeImage_GetBits(Y);
+		for(y = 0; y < height; y++) {
+			const float *pixel = (float*)bits;
+			for(x = 0; x < width; x++) {
+				const float value = pixel[x];
+				maxLum = (maxLum < value) ? value : maxLum;	// max Luminance in the scene
+				minLum = (minLum < value) ? minLum : value;	// min Luminance in the scene
+			}
+			// next line
+			bits += pitch;
+		}
+	}
+	if(maxLum == minLum) return;
 
 	// normalize to range 0..1 
+	const float divider = maxLum - minLum;
 	BYTE *bits = (BYTE*)FreeImage_GetBits(Y);
 	for(y = 0; y < height; y++) {
 		float *pixel = (float*)bits;
 		for(x = 0; x < width; x++) {
-			pixel[x] = (pixel[x] - minLum) / (maxLum - minLum);
+			pixel[x] = (pixel[x] - minLum) / divider;
 			if(pixel[x] <= 0) pixel[x] = EPSILON;
 			if(pixel[x] > 1) pixel[x] = 1;
 		}

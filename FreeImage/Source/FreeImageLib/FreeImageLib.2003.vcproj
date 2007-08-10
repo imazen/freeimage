@@ -411,7 +411,7 @@ copy ..\FreeImage.h ..\..\Dist
 				RelativePath="..\FreeImageToolkit\JPEGTransform.cpp">
 			</File>
 			<File
-				RelativePath="..\FreeImageToolkit\PoissonSolver.cpp">
+				RelativePath="..\FreeImageToolkit\MultigridPoissonSolver.cpp">
 			</File>
 			<File
 				RelativePath="..\FreeImageToolkit\Rescale.cpp">

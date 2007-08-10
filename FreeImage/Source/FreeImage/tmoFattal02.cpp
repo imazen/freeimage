@@ -22,7 +22,6 @@
 #include "FreeImage.h"
 #include "Utilities.h"
 #include "ToneMapping.h"
-#include "PoissonSolver.h"
 
 // ----------------------------------------------------------
 // Gradient domain HDR compression
@@ -561,13 +560,8 @@ static FIBITMAP* tmoFattal02(FIBITMAP *Y, float alpha, float beta) {
 		FreeImage_Unload(H); H = NULL;
 		FreeImage_Unload(phy); phy = NULL;
 
-		// solve the PDE (Poisson equation) using a Poisson solver and Dirichlet boundary conditions
-
-		// we need at least 1000 iterations in order to have a numericcaly consistent result
-		int maxCount = MAX(1000, width * height);
-		// fixing the error to 0.01 is a good compromise between speed and quality ... 
-		double maxError = 0.01;
-		FIBITMAP *U = FreeImage_PoissonSolver(divG, maxError, maxCount);
+		// solve the PDE (Poisson equation) using a multigrid solver and 3 cycles
+		FIBITMAP *U = FreeImage_MultigridPoissonSolver(divG, 3);
 		if(!U) throw(1);
 
 		FreeImage_Unload(divG);
@@ -638,7 +632,8 @@ FreeImage_TmoFattal02(FIBITMAP *dib, double color_saturation, double attenuation
 		if(!Yout) throw(1);
 
 		// clip low and high values and normalize to [0..1]
-		NormalizeY(Yout, 0.001F, 0.995F);
+		//NormalizeY(Yout, 0.001F, 0.995F);
+		NormalizeY(Yout, 0, 1);
 
 		// compress the dynamic range
 
@@ -658,7 +653,7 @@ FreeImage_TmoFattal02(FIBITMAP *dib, double color_saturation, double attenuation
 			float *color = (float*)bits;
 			for(x = 0; x < width; x++) {
 				for(int c = 0; c < 3; c++) {
-					*color = pow(*color/Lin[x], s) * Lout[x];
+					*color = (Lin[x] > 0) ? pow(*color/Lin[x], s) * Lout[x] : 0;
 					color++;
 				}
 			}

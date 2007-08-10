@@ -65,6 +65,7 @@ FreeImage_ToneMapping(FIBITMAP *dib, FREE_IMAGE_TMO tmo, double first_param, dou
 					// use user's value
 					return FreeImage_TmoFattal02(dib, first_param, second_param);
 				}
+				break;
 		}
 	}
 

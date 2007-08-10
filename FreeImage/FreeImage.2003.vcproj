@@ -408,9 +408,6 @@ copy Source\FreeImage.h Dist
 				RelativePath="Source\Plugin.h">
 			</File>
 			<File
-				RelativePath=".\Source\PoissonSolver.h">
-			</File>
-			<File
 				RelativePath="Source\Quantizers.h">
 			</File>
 			<File
@@ -448,7 +445,7 @@ copy Source\FreeImage.h Dist
 				RelativePath="Source\FreeImageToolkit\JPEGTransform.cpp">
 			</File>
 			<File
-				RelativePath=".\Source\FreeImageToolkit\PoissonSolver.cpp">
+				RelativePath=".\Source\FreeImageToolkit\MultigridPoissonSolver.cpp">
 			</File>
 			<File
 				RelativePath="Source\FreeImageToolkit\Rescale.cpp">

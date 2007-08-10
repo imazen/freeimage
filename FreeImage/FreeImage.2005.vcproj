@@ -540,10 +540,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\PoissonSolver.h"
-				>
-			</File>
-			<File
 				RelativePath="Source\Quantizers.h"
 				>
 			</File>
@@ -592,7 +588,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\FreeImageToolkit\PoissonSolver.cpp"
+				RelativePath=".\Source\FreeImageToolkit\MultigridPoissonSolver.cpp"
 				>
 			</File>
 			<File
