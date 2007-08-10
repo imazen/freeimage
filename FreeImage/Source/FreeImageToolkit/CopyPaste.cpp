@@ -457,20 +457,28 @@ CombineSameType(FIBITMAP *dst_dib, FIBITMAP *src_dib, WORD x, WORD y) {
 		return FALSE;
 	}
 
+	int src_width  = FreeImage_GetWidth(src_dib);
+	int src_height = FreeImage_GetHeight(src_dib);
+	int src_pitch  = FreeImage_GetPitch(src_dib);
+	int src_line   = FreeImage_GetLine(src_dib);
+	int dst_width  = FreeImage_GetWidth(dst_dib);
+	int dst_height = FreeImage_GetHeight(dst_dib);
+	int dst_pitch  = FreeImage_GetPitch(dst_dib);
+	
 	// check the size of src image
-	if((x + FreeImage_GetWidth(src_dib) > FreeImage_GetWidth(dst_dib)) || (y + FreeImage_GetHeight(src_dib) > FreeImage_GetHeight(dst_dib))) {
+	if((x + src_width > dst_width) || (y + src_height > dst_height)) {
 		return FALSE;
-	}
+	}	
 
-	BYTE *dst_bits = FreeImage_GetBits(dst_dib) + ((FreeImage_GetHeight(dst_dib) - FreeImage_GetHeight(src_dib) - y) * FreeImage_GetPitch(dst_dib)) + (x);
+	BYTE *dst_bits = FreeImage_GetBits(dst_dib) + ((dst_height - src_height - y) * dst_pitch) + (x * (src_line / src_width));
 	BYTE *src_bits = FreeImage_GetBits(src_dib);	
 
-	// combine images
-	for(WORD rows = 0; rows < FreeImage_GetHeight(src_dib); rows++) {
-		memcpy(dst_bits, src_bits, FreeImage_GetLine(src_dib));
+	// combine images	
+	for(WORD rows = 0; rows < src_height; rows++) {
+		memcpy(dst_bits, src_bits, src_line);
 
-		dst_bits += FreeImage_GetPitch(dst_dib);
-		src_bits += FreeImage_GetPitch(src_dib);
+		dst_bits += dst_pitch;
+		src_bits += src_pitch;
 	}
 
 	return TRUE;
