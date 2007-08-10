@@ -17,6 +17,7 @@ Month day, 2007 - 3.10.0
 + [Herve Drolon] added full support for the JPEG-2000 format
 + [Herve Drolon] added FreeImage_TmoFattal02 tone mapping operator
 + [Ryan Rubley] added support for RGB vs BGR regardless of endian
++ [Herve Drolon] added FreeImage_MultigridPoissonSolver
 * [Herve Drolon] fixed a bug in TIFF plugin when reading 8-bit + 8-bit alpha images
 * [Herve Drolon] fixed a bug in TIFF plugin when reading images with uncommon bitdepths
 * [rodrigo] fixed FreeImage exception handling under gcc (added -fexceptions to gcc compiler flags)
@@ -26,6 +27,7 @@ Month day, 2007 - 3.10.0
 * [Herve Drolon] fixed a bug when reading OS/2 BMP images with a negative height
 * [Ryan Rubley] fixed a bug with loading of GIFs with large amounts of solid color areas
 * [Ryan Rubley] fixed OS X compile error in BitmapAccess.cpp
+* [Herve Drolon] fixed a bug in FreeImage_Paste when pasting non-standard image types
 
 February 11th, 2007 - 3.9.3
 ! FreeImage now uses libPNG 1.2.16
