@@ -84,6 +84,7 @@ FI_STRUCT (FREEIMAGEHEADER) {
 #if defined(_WIN32) || defined(_WIN64)
 
 void* FreeImage_Aligned_Malloc(size_t amount, size_t alignment) {
+	assert(alignment == FIBITMAP_ALIGNMENT);
 	return _aligned_malloc(amount, alignment);
 }
 
@@ -94,6 +95,7 @@ void FreeImage_Aligned_Free(void* mem) {
 #else
 
 void* FreeImage_Aligned_Malloc(size_t amount, size_t alignment) {
+	assert(alignment == FIBITMAP_ALIGNMENT);
 	/*
 	In some rare situations, the malloc routines can return misaligned memory. 
 	The routine FreeImage_Aligned_Malloc allocates a bit more memory to do
@@ -626,7 +628,7 @@ FreeImage_CreateICCProfile(FIBITMAP *dib, void *data, long size) {
 	FreeImage_DestroyICCProfile(dib);
 	// create the new profile
 	FIICCPROFILE *profile = FreeImage_GetICCProfile(dib);
-	if(size) {
+	if(size && profile) {
 		profile->data = malloc(size);
 		if(profile->data) {
 			memcpy(profile->data, data, profile->size = size);
@@ -638,12 +640,14 @@ FreeImage_CreateICCProfile(FIBITMAP *dib, void *data, long size) {
 void DLL_CALLCONV
 FreeImage_DestroyICCProfile(FIBITMAP *dib) {
 	FIICCPROFILE *profile = FreeImage_GetICCProfile(dib);
-	if (profile->data) {
-		free (profile->data);
+	if(profile) {
+		if (profile->data) {
+			free (profile->data);
+		}
+		// clear the profile but preserve profile->flags
+		profile->data = NULL;
+		profile->size = 0;
 	}
-	// clear the profile but preserve profile->flags
-	profile->data = NULL;
-	profile->size = 0;
 }
 
 // ----------------------------------------------------------
