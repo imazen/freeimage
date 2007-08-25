@@ -640,21 +640,21 @@ WriteCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint1
 	uint16 compression;
 	uint16 bitsperpixel = bitspersample * samplesperpixel;
 
-	if ((flags & TIFF_PACKBITS) == TIFF_PACKBITS)
+	if ((flags & TIFF_PACKBITS) == TIFF_PACKBITS) {
 		compression = COMPRESSION_PACKBITS;
-	else if ((flags & TIFF_DEFLATE) == TIFF_DEFLATE)
+	} else if ((flags & TIFF_DEFLATE) == TIFF_DEFLATE) {
 		compression = COMPRESSION_DEFLATE;
-	else if ((flags & TIFF_ADOBE_DEFLATE) == TIFF_ADOBE_DEFLATE)
+	} else if ((flags & TIFF_ADOBE_DEFLATE) == TIFF_ADOBE_DEFLATE) {
 		compression = COMPRESSION_ADOBE_DEFLATE;
-	else if ((flags & TIFF_NONE) == TIFF_NONE)
+	} else if ((flags & TIFF_NONE) == TIFF_NONE) {
 		compression = COMPRESSION_NONE;
-	else if ((flags & TIFF_CCITTFAX3) == TIFF_CCITTFAX3)
+	} else if ((bitsperpixel == 1) && ((flags & TIFF_CCITTFAX3) == TIFF_CCITTFAX3)) {
 		compression = COMPRESSION_CCITTFAX3;
-	else if ((flags & TIFF_CCITTFAX4) == TIFF_CCITTFAX4)
+	} else if ((bitsperpixel == 1) && ((flags & TIFF_CCITTFAX4) == TIFF_CCITTFAX4)) {
 		compression = COMPRESSION_CCITTFAX4;
-	else if ((flags & TIFF_LZW) == TIFF_LZW)
+	} else if ((flags & TIFF_LZW) == TIFF_LZW) {
 		compression = COMPRESSION_LZW;
-	else if ((flags & TIFF_JPEG) == TIFF_JPEG) {
+	} else if ((flags & TIFF_JPEG) == TIFF_JPEG) {
 		if(((bitsperpixel == 8) && (photometric != PHOTOMETRIC_PALETTE)) || (bitsperpixel == 24)) {
 			compression = COMPRESSION_JPEG;
 			// RowsPerStrip must be multiple of 8 for JPEG
@@ -716,7 +716,14 @@ WriteCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint1
 			TIFFSetField(tiff, TIFFTAG_PREDICTOR, 1);
 		}
 	}
-
+	else if(compression == COMPRESSION_CCITTFAX3) {
+		// try to be compliant with the TIFF Class F specification
+		// that documents the TIFF tags specific to FAX applications
+		// see http://palimpsest.stanford.edu/bytopic/imaging/std/tiff-f.html
+		uint32 group3options = GROUP3OPT_2DENCODING | GROUP3OPT_FILLBITS;	
+		TIFFSetField(tiff, TIFFTAG_GROUP3OPTIONS, group3options);	// 2d-encoded, has aligned EOL
+		TIFFSetField(tiff, TIFFTAG_FILLORDER, FILLORDER_LSB2MSB);	// lsb-to-msb fillorder
+	}
 }
 
 // ==========================================================
