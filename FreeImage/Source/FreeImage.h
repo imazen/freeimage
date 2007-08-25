@@ -54,24 +54,38 @@
 
 #include <wchar.h>	// needed for UNICODE functions
 
-#if defined(FREEIMAGE_LIB) || !(defined(_WIN32) || defined(__WIN32__))
-#define DLL_API
-#define DLL_CALLCONV
+#if defined(FREEIMAGE_LIB)
+	#define DLL_API
+	#define DLL_CALLCONV
 #else
-
-#define DLL_CALLCONV __stdcall
-// The following ifdef block is the standard way of creating macros which make exporting 
-// from a DLL simpler. All files within this DLL are compiled with the FREEIMAGE_EXPORTS
-// symbol defined on the command line. this symbol should not be defined on any project
-// that uses this DLL. This way any other project whose source files include this file see 
-// DLL_API functions as being imported from a DLL, wheras this DLL sees symbols
-// defined with this macro as being exported.
-#ifdef FREEIMAGE_EXPORTS
-#define DLL_API __declspec(dllexport)
-#else
-#define DLL_API __declspec(dllimport)
-#endif // FREEIMAGE_EXPORTS
-#endif // FREEIMAGE_LIB || !WIN32
+	#if defined(_WIN32) || defined(__WIN32__)
+		#define DLL_CALLCONV __stdcall
+		// The following ifdef block is the standard way of creating macros which make exporting 
+		// from a DLL simpler. All files within this DLL are compiled with the FREEIMAGE_EXPORTS
+		// symbol defined on the command line. this symbol should not be defined on any project
+		// that uses this DLL. This way any other project whose source files include this file see 
+		// DLL_API functions as being imported from a DLL, wheras this DLL sees symbols
+		// defined with this macro as being exported.
+		#ifdef FREEIMAGE_EXPORTS
+			#define DLL_API __declspec(dllexport)
+		#else
+			#define DLL_API __declspec(dllimport)
+		#endif // FREEIMAGE_EXPORTS
+	#else 
+		// try the gcc visibility support (see http://gcc.gnu.org/wiki/Visibility)
+		#if defined(__GNUC__) && ((__GNUC__ >= 4) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
+			#ifndef GCC_HASCLASSVISIBILITY
+				#define GCC_HASCLASSVISIBILITY
+			#endif
+		#endif // __GNUC__
+		#define DLL_CALLCONV
+		#if defined(GCC_HASCLASSVISIBILITY)
+			#define DLL_API __attribute__ ((visibility("default")))
+		#else
+			#define DLL_API
+		#endif		
+	#endif // WIN32 / !WIN32
+#endif // FREEIMAGE_LIB
 
 // Some versions of gcc may have BYTE_ORDER or __BYTE_ORDER defined
 // If your big endian system isn't being detected, add an OS specific check
@@ -1005,6 +1019,7 @@ DLL_API FIBITMAP *DLL_CALLCONV FreeImage_Copy(FIBITMAP *dib, int left, int top, 
 DLL_API BOOL DLL_CALLCONV FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha);
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg FI_DEFAULT(FALSE), RGBQUAD *appBkColor FI_DEFAULT(NULL), FIBITMAP *bg FI_DEFAULT(NULL));
 DLL_API BOOL DLL_CALLCONV FreeImage_JPEGCrop(const char *src_file, const char *dst_file, int left, int top, int right, int bottom);
+DLL_API BOOL DLL_CALLCONV FreeImage_PreMultiplyWithAlpha(FIBITMAP *dib);
 
 // miscellaneous algorithms
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_MultigridPoissonSolver(FIBITMAP *Laplacian, int ncycle FI_DEFAULT(3));

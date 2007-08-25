@@ -10,6 +10,10 @@ The library will run on 10.3 PPC, but probably not 10.2 or below anymore. wchar.
 
 FreeImage is now built with gcc 4.0 and will thus only run on 10.3.9 or above (some libraries may not exist on 10.3.8 and below).
 
+The FreeImage makefile makes use of the gcc "-fvisibility=hidden" in order to avoid incompatibilities between 
+internal third party libraries and the OS libraries. This feature is available with gcc 4 or greater. 
+
+
 Ryan Rubley
 
 Building the Library

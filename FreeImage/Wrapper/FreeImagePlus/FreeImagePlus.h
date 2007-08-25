@@ -30,24 +30,39 @@
 
 // Compiler options ---------------------------------------------------------
 
-#if defined(FREEIMAGE_LIB) || !defined(_WIN32)
-#define FIP_API
-#define FIP_CALLCONV
+#if defined(FREEIMAGE_LIB)
+	#define FIP_API
+	#define FIP_CALLCONV
 #else
-#define WIN32_LEAN_AND_MEAN
-#define FIP_CALLCONV __stdcall
-// The following ifdef block is the standard way of creating macros which make exporting 
-// from a DLL simpler. All files within this DLL are compiled with the FIP_EXPORTS
-// symbol defined on the command line. this symbol should not be defined on any project
-// that uses this DLL. This way any other project whose source files include this file see 
-// FIP_API functions as being imported from a DLL, wheras this DLL sees symbols
-// defined with this macro as being exported.
-#ifdef FIP_EXPORTS
-#define FIP_API __declspec(dllexport)
-#else
-#define FIP_API __declspec(dllimport)
-#endif // FIP_EXPORTS
-#endif // FREEIMAGE_LIB || !_WIN32
+	#if defined(_WIN32) || defined(__WIN32__)
+		#define WIN32_LEAN_AND_MEAN
+		#define FIP_CALLCONV __stdcall
+		// The following ifdef block is the standard way of creating macros which make exporting 
+		// from a DLL simpler. All files within this DLL are compiled with the FIP_EXPORTS
+		// symbol defined on the command line. this symbol should not be defined on any project
+		// that uses this DLL. This way any other project whose source files include this file see 
+		// FIP_API functions as being imported from a DLL, wheras this DLL sees symbols
+		// defined with this macro as being exported.
+		#ifdef FIP_EXPORTS
+			#define FIP_API __declspec(dllexport)
+		#else
+			#define FIP_API __declspec(dllimport)
+		#endif // FIP_EXPORTS
+	#else
+		// try the gcc visibility support (see http://gcc.gnu.org/wiki/Visibility)
+		#if defined(__GNUC__) && ((__GNUC__ >= 4) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
+			#ifndef GCC_HASCLASSVISIBILITY
+				#define GCC_HASCLASSVISIBILITY
+			#endif
+		#endif	
+		#define FIP_CALLCONV
+		#if defined(GCC_HASCLASSVISIBILITY)
+			#define FIP_API __attribute__ ((visibility("default")))
+		#else
+			#define FIP_API
+		#endif
+	#endif // WIN32 / !WIN32
+#endif // FREEIMAGE_LIB
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 

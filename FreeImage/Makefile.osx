@@ -9,7 +9,7 @@ CC_PPC = gcc-4.0
 CC_I386 = gcc-4.0
 CPP_PPC = g++-4.0
 CPP_I386 = g++-4.0
-COMPILERFLAGS = -Os -fexceptions
+COMPILERFLAGS = -Os -fexceptions -fvisibility=hidden
 COMPILERFLAGS_PPC = -arch ppc
 COMPILERFLAGS_I386 = -arch i386
 COMPILERPPFLAGS = -Wno-ctor-dtor-privacy
