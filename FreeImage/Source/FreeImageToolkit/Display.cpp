@@ -178,6 +178,50 @@ FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP
 		}
 	}
 
-	return composite;
-	
+	return composite;	
 }
+
+/**
+Pre-multiplies a 32-bit image's red-, green- and blue channels with it's alpha channel 
+for to be used with e.g. the Windows GDI function AlphaBlend(). 
+The transformation changes the red-, green- and blue channels according to the following equation:  
+channel(x, y) = channel(x, y) * alpha_channel(x, y) / 255  
+@param dib Input/Output dib to be premultiplied
+@return Returns TRUE on success, FALSE otherwise (e.g. when the bitdepth of the source dib cannot be handled). 
+*/
+BOOL DLL_CALLCONV 
+FreeImage_PreMultiplyWithAlpha(FIBITMAP *dib) {
+	if (!dib) return FALSE;
+	
+	if (FreeImage_GetBPP(dib) != 32) {
+		return FALSE;
+	}
+
+	int width = FreeImage_GetWidth(dib);
+	int height = FreeImage_GetHeight(dib);
+
+	for(int y = 0; y < height; y++) {
+		BYTE *bits = FreeImage_GetScanLine(dib, y);
+		for (int x = 0; x < width; x++, bits += 4) {
+			const BYTE alpha = bits[FI_RGBA_ALPHA];
+			// slightly faster: care for two special cases
+			if(alpha == 0x00) {
+				// special case for alpha == 0x00
+				// color * 0x00 / 0xFF = 0x00
+				bits[FI_RGBA_BLUE] = 0x00;
+				bits[FI_RGBA_GREEN] = 0x00;
+				bits[FI_RGBA_RED] = 0x00;
+			} else if(alpha == 0xFF) {
+				// nothing to do for alpha == 0xFF
+				// color * 0xFF / 0xFF = color
+				continue;
+			} else {
+				bits[FI_RGBA_BLUE] = (BYTE)((alpha * (WORD)bits[FI_RGBA_BLUE]) / 255);
+				bits[FI_RGBA_GREEN] = (BYTE)((alpha * (WORD)bits[FI_RGBA_GREEN]) / 255);
+				bits[FI_RGBA_RED] = (BYTE)((alpha * (WORD)bits[FI_RGBA_RED]) / 255);
+			}
+		}
+	}
+	return TRUE;
+}
+
