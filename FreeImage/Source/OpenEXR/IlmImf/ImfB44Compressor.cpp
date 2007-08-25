@@ -55,7 +55,7 @@
 //         computed by subtracting adjacent pixel values and right-
 //	   shifting the differences according to the stored shift value.
 //
-//	   Differences are between adjacent pixels are computed according
+//	   Differences between adjacent pixels are computed according
 //	   to the following diagram:
 //
 //		 0 -------->  1 -------->  2 -------->  3
@@ -85,6 +85,12 @@
 //                     8
 //
 //	    means that r[8] is the difference between t[5] and t[6].
+//
+//	 - optionally, a 4-by-4 pixel block where all pixels have the
+//	   same value can be treated as a special case, where the
+//	   compressed block contains only 3 instead of 14 bytes:
+//	   t[0], followed by an "impossible" 6-bit shift value and
+//	   two padding bits.
 //
 //	This compressor can handle positive and negative pixel values.
 //	NaNs and infinities are replaced with zeroes before compression.
@@ -143,9 +149,39 @@ convertToLinear (unsigned short s[16])
 }
 
 
-void
-pack (const unsigned short s[16], unsigned char b[14])
+inline int
+shiftAndRound (int x, int shift)
 {
+    //
+    // Compute
+    //
+    //     y = x * pow (2, -shift),
+    //
+    // then round y to the nearest integer.
+    // In case of a tie, where y is exactly
+    // halfway between two integers, round
+    // to the even one.
+    //
+
+    x <<= 1;
+    int a = (1 << shift) - 1;
+    shift += 1;
+    int b = (x >> shift) & 1;
+    return (x + a + b) >> shift;
+}
+
+
+int
+pack (const unsigned short s[16],
+      unsigned char b[14],
+      bool optFlatFields,
+      bool exactMax)
+{
+    //
+    // Pack a block of 4 by 4 16-bit pixels (32 bytes) into
+    // either 14 or 3 bytes.
+    //
+
     //
     // Integers s[0] ... s[15] represent floating-point numbers
     // in what is essentially a sign-magnitude format.  Convert
@@ -223,6 +259,8 @@ pack (const unsigned short s[16], unsigned char b[14])
     int rMin;
     int rMax;
 
+    const int bias = 0x20;
+
     do
     {
 	shift += 1;
@@ -234,16 +272,12 @@ pack (const unsigned short s[16], unsigned char b[14])
 	// Shift and round the absolute differences.
 	//
 
-	int h = (1 << shift) >> 1;
-
 	for (int i = 0; i < 16; ++i)
-	    d[i] = (tMax - t[i] + h) >> shift;
+	    d[i] = shiftAndRound (tMax - t[i], shift);
 
 	//
 	// Convert d[0] .. d[15] into running differences
 	//
-
-	int bias = 0x20;
 
 	r[ 0] = d[ 0] - d[ 4] + bias;
 	r[ 1] = d[ 4] - d[ 8] + bias;
@@ -278,12 +312,31 @@ pack (const unsigned short s[16], unsigned char b[14])
     }
     while (rMin < 0 || rMax > 0x3f);
 
-    //
-    // Adjust t[0] so that the pixel whose value is equal
-    // to tMax gets represented as accurately as possible.
-    //
+    if (rMin == bias && rMax == bias && optFlatFields)
+    {
+	//
+	// Special case - all pixels have the same value.
+	// We encode this in 3 instead of 14 bytes by
+	// storing the value 0xfc in the third output byte,
+	// which cannot occur in the 14-byte encoding.
+	//
 
-    t[0] = tMax - (d[0] << shift);
+	b[0] = (t[0] >> 8);
+	b[1] =  t[0];
+	b[2] = 0xfc;
+
+	return 3;
+    }
+
+    if (exactMax)
+    {
+	//
+	// Adjust t[0] so that the pixel whose value is equal
+	// to tMax gets represented as accurately as possible.
+	//
+
+	t[0] = tMax - (d[0] << shift);
+    }
 
     //
     // Pack t[0], shift and r[0] ... r[14] into 14 bytes:
@@ -307,13 +360,23 @@ pack (const unsigned short s[16], unsigned char b[14])
     b[11] = (unsigned char) ((r[11] << 2) | (r[12] >> 4));
     b[12] = (unsigned char) ((r[12] << 4) | (r[13] >> 2));
     b[13] = (unsigned char) ((r[13] << 6) |  r[14]      );
+
+    return 14;
 }
 
 
 inline
 void
-unpack (const unsigned char b[14], unsigned short s[16])
+unpack14 (const unsigned char b[14], unsigned short s[16])
 {
+    //
+    // Unpack a 14-byte block into 4 by 4 16-bit pixels.
+    //
+
+    #if defined (DEBUG)
+	assert (b[2] != 0xfc);
+    #endif
+
     s[ 0] = (b[0] << 8) | b[1];
 
     unsigned short shift = (b[ 2] >> 2);
@@ -345,6 +408,30 @@ unpack (const unsigned char b[14], unsigned short s[16])
 	else
 	    s[i] = ~s[i];
     }
+}
+
+
+inline
+void
+unpack3 (const unsigned char b[3], unsigned short s[16])
+{
+    //
+    // Unpack a 3-byte block into 4 by 4 identical 16-bit pixels.
+    //
+
+    #if defined (DEBUG)
+	assert (b[2] == 0xfc);
+    #endif
+
+    s[0] = (b[0] << 8) | b[1];
+
+    if (s[0] & 0x8000)
+	s[0] &= 0x7fff;
+    else
+	s[0] = ~s[0];
+
+    for (int i = 1; i < 16; ++i)
+	s[i] = s[0];
 }
 
 
@@ -382,10 +469,12 @@ struct B44Compressor::ChannelData
 B44Compressor::B44Compressor
     (const Header &hdr,
      int maxScanLineSize,
-     int numScanLines)
+     int numScanLines,
+     bool optFlatFields)
 :
     Compressor (hdr),
     _maxScanLineSize (maxScanLineSize),
+    _optFlatFields (optFlatFields),
     _format (XDR),
     _numScanLines (numScanLines),
     _tmpBuffer (0),
@@ -536,7 +625,7 @@ B44Compressor::compress (const char *inPtr,
     //
     // Compress a block of pixel data:  First copy the input pixels
     // from the input buffer into _tmpBuffer, rearranging them such
-    // that blocks of 4x4 pixels of a singe channel can be accessed
+    // that blocks of 4x4 pixels of a single channel can be accessed
     // conveniently.  Then compress each 4x4 block of HALF pixel data
     // and append the result to the output buffer.  Copy UINT and
     // FLOAT data to the output buffer without compressing them.
@@ -759,8 +848,8 @@ B44Compressor::compress (const char *inPtr,
 		if (cd.pLinear)
 		    convertFromLinear (s);
 
-		pack (s, (unsigned char *) outEnd);
-		outEnd += 14;
+		outEnd += pack (s, (unsigned char *) outEnd,
+				_optFlatFields, !cd.pLinear);
 	    }
 	}
     }
@@ -850,13 +939,26 @@ B44Compressor::uncompress (const char *inPtr,
 
 	    for (int x = 0; x < cd.nx; x += 4)
 	    {
-		if (inSize < 14)
+		unsigned short s[16]; 
+
+		if (inSize < 3)
 		    notEnoughData();
 
-		unsigned short s[16]; 
-		unpack ((const unsigned char *)inPtr, s);
-		inPtr += 14;
-		inSize -= 14;
+		if (((const unsigned char *)inPtr)[2] == 0xfc)
+		{
+		    unpack3 ((const unsigned char *)inPtr, s);
+		    inPtr += 3;
+		    inSize -= 3;
+		}
+		else
+		{
+		    if (inSize < 14)
+			notEnoughData();
+
+		    unpack14 ((const unsigned char *)inPtr, s);
+		    inPtr += 14;
+		    inSize -= 14;
+		}
 
 		if (cd.pLinear)
 		    convertToLinear (s);

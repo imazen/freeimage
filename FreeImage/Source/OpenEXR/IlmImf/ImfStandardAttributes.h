@@ -62,6 +62,7 @@
 #include <ImfKeyCodeAttribute.h>
 #include <ImfTimeCodeAttribute.h>
 #include <ImfRationalAttribute.h>
+#include <ImfVecAttribute.h>
 
 
 #define IMF_STD_ATTRIBUTE_DEF(name,suffix,type)				      \
@@ -96,6 +97,26 @@ IMF_STD_ATTRIBUTE_DEF (chromaticities, Chromaticities, Chromaticities)
 //
 
 IMF_STD_ATTRIBUTE_DEF (whiteLuminance, WhiteLuminance, float)
+
+
+//
+// adoptedNeutral -- specifies the CIE (x,y) coordinates that should
+// be considered neutral during color rendering.  Pixels in the image
+// file whose (x,y) coordinates match the adoptedNeutral value should
+// be mapped to neutral values on the display.
+//
+
+IMF_STD_ATTRIBUTE_DEF (adoptedNeutral, AdoptedNeutral, Imath::V2f)
+
+
+//
+// renderingTransform, lookModTransform -- specify the names of the
+// CTL functions that implements the intended color rendering and look
+// modification transforms for this image.
+// 
+
+IMF_STD_ATTRIBUTE_DEF (renderingTransform, RenderingTransform, std::string)
+IMF_STD_ATTRIBUTE_DEF (lookModTransform, LookModTransform, std::string)
 
 
 //
@@ -264,7 +285,6 @@ IMF_STD_ATTRIBUTE_DEF (wrapmodes, Wrapmodes, std::string)
 //
 
 IMF_STD_ATTRIBUTE_DEF (framesPerSecond, FramesPerSecond, Rational)
-
 
 } // namespace Imf
 

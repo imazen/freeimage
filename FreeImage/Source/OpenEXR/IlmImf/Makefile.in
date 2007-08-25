@@ -46,7 +46,8 @@ DIST_COMMON = $(libIlmImfinclude_HEADERS) $(noinst_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/compilelinkrun.m4 \
-	$(top_srcdir)/m4/path.pkgconfig.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/path.pkgconfig.m4 $(top_srcdir)/m4/threads.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -149,6 +150,7 @@ F77 = @F77@
 FFLAGS = @FFLAGS@
 ILMBASE_CXXFLAGS = @ILMBASE_CXXFLAGS@
 ILMBASE_LDFLAGS = @ILMBASE_LDFLAGS@
+ILMBASE_LIBS = @ILMBASE_LIBS@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -174,6 +176,9 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
+PTHREAD_CC = @PTHREAD_CC@
+PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
+PTHREAD_LIBS = @PTHREAD_LIBS@
 RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -185,6 +190,7 @@ ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
 ac_ct_RANLIB = @ac_ct_RANLIB@
 ac_ct_STRIP = @ac_ct_STRIP@
+acx_pthread_config = @acx_pthread_config@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
 am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
@@ -282,7 +288,7 @@ libIlmImf_la_SOURCES = ImfAttribute.cpp ImfBoxAttribute.cpp ImfCRgbaFile.cpp \
 libIlmImf_la_LDFLAGS = @ILMBASE_LDFLAGS@ -version-info @LIBTOOL_VERSION@ \
 			-no-undefined
 
-libIlmImf_la_LIBADD = -lz
+libIlmImf_la_LIBADD = -lz @ILMBASE_LIBS@
 libIlmImfincludedir = $(includedir)/OpenEXR
 libIlmImfinclude_HEADERS = ImfAttribute.h ImfBoxAttribute.h \
 			   ImfCRgbaFile.h ImfChannelList.h \
@@ -327,7 +333,7 @@ INCLUDES = @ILMBASE_CXXFLAGS@ \
 
 CLEANFILES = b44ExpLogTable b44ExpLogTable.h
 b44ExpLogTable_SOURCES = b44ExpLogTable.cpp
-b44ExpLogTable_LDADD = @ILMBASE_LDFLAGS@
+b44ExpLogTable_LDADD = @ILMBASE_LDFLAGS@ @ILMBASE_LIBS@
 BUILT_SOURCES = b44ExpLogTable.h
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
