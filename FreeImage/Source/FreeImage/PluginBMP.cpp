@@ -140,6 +140,17 @@ SwapFileHeader(BITMAPFILEHEADER *header) {
 }
 #endif
 
+// --------------------------------------------------------------------------
+
+/**
+Load uncompressed image pixels for 1-, 4-, 8-, 16-, 24- and 32-bit dib
+@param io FreeImage IO
+@param handle FreeImage IO handle
+@param dib Image to be loaded 
+@param height Image height
+@param pitch Image pitch
+@param bit_count Image bit-depth (1-, 4-, 8-, 16-, 24- or 32-bit)
+*/
 static void 
 LoadPixelData(FreeImageIO *io, fi_handle handle, FIBITMAP *dib, int height, int pitch, int bit_count) {
 	// Load pixel data
@@ -177,6 +188,265 @@ LoadPixelData(FreeImageIO *io, fi_handle handle, FIBITMAP *dib, int height, int 
 	}
 #endif
 }
+
+/**
+Load image pixels for 4-bit RLE compressed dib
+@param io FreeImage IO
+@param handle FreeImage IO handle
+@param width Image width
+@param height Image height
+@param dib Image to be loaded 
+@return Returns TRUE if successful, returns FALSE otherwise
+*/
+static BOOL 
+LoadPixelDataRLE4(FreeImageIO *io, fi_handle handle, int width, int height, FIBITMAP *dib) {
+	int status_byte = 0;
+	BYTE second_byte = 0;
+	int bits = 0;
+
+	BYTE *pixels = NULL;	// temporary 8-bit buffer
+
+	try {
+		height = abs(height);
+
+		pixels = (BYTE*)malloc(width * height * sizeof(BYTE));
+		if(!pixels) throw(1);
+		memset(pixels, 0, width * height * sizeof(BYTE));
+
+		BYTE *q = pixels;
+		BYTE *end = pixels + height * width;
+
+		for (int scanline = 0; scanline < height; ) {
+			if (q < pixels || q  >= end) {
+				break;
+			}
+			if(io->read_proc(&status_byte, sizeof(BYTE), 1, handle) != 1) {
+				throw(1);
+			}
+			if (status_byte != 0)	{
+				status_byte = MIN(status_byte, end - q);
+				// Encoded mode
+				if(io->read_proc(&second_byte, sizeof(BYTE), 1, handle) != 1) {
+					throw(1);
+				}
+				for (int i = 0; i < status_byte; i++)	{
+					*q++=(BYTE)((i & 0x01) ? (second_byte & 0x0f) : ((second_byte >> 4) & 0x0f));
+				}
+				bits += status_byte;
+			}
+			else {
+				// Escape mode
+				if(io->read_proc(&status_byte, sizeof(BYTE), 1, handle) != 1) {
+					throw(1);
+				}
+				switch (status_byte) {
+					case RLE_ENDOFLINE:
+					{
+						// End of line
+						bits = 0;
+						scanline++;
+						q = pixels + scanline*width;
+					}
+					break;
+
+					case RLE_ENDOFBITMAP:
+						// End of bitmap
+						q = end;
+						break;
+
+					case RLE_DELTA:
+					{
+						// read the delta values
+
+						BYTE delta_x = 0;
+						BYTE delta_y = 0;
+
+						if(io->read_proc(&delta_x, sizeof(BYTE), 1, handle) != 1) {
+							throw(1);
+						}
+						if(io->read_proc(&delta_y, sizeof(BYTE), 1, handle) != 1) {
+							throw(1);
+						}
+
+						// apply them
+
+						bits += delta_x;
+						scanline += delta_y;
+						q = pixels + scanline*width+bits;
+					}
+					break;
+
+					default:
+					{
+						// Absolute mode
+						status_byte = MIN(status_byte, end - q);
+						for (int i = 0; i < status_byte; i++) {
+							if ((i & 0x01) == 0) {
+								if(io->read_proc(&second_byte, sizeof(BYTE), 1, handle) != 1) {
+									throw(1);
+								}
+							}
+							*q++=(BYTE)((i & 0x01) ? (second_byte & 0x0f) : ((second_byte >> 4) & 0x0f));
+						}
+						bits += status_byte;
+						// Read pad byte
+						if (((status_byte & 0x03) == 1) || ((status_byte & 0x03) == 2)) {
+							BYTE padding = 0;
+							if(io->read_proc(&padding, sizeof(BYTE), 1, handle) != 1) {
+								throw(1);
+							}
+						}
+					}
+					break;
+				}
+			}
+		}
+		
+		{
+			// Convert to 4-bit
+			for(int y = 0; y < height; y++) {
+				const BYTE *src = (BYTE*)pixels + y * width;
+				BYTE *dst = FreeImage_GetScanLine(dib, y);
+
+				BOOL hinibble = TRUE;
+
+				for (int cols = 0; cols < width; cols++){
+					if (hinibble) {
+						dst[cols >> 1] = (src[cols] << 4);
+					} else {
+						dst[cols >> 1] |= src[cols];
+					}
+
+					hinibble = !hinibble;
+				}
+			}
+		}
+
+		free(pixels);
+
+		return TRUE;
+
+	} catch(int) {
+		if(pixels) free(pixels);
+		return FALSE;
+	}
+}
+
+/**
+Load image pixels for 8-bit RLE compressed dib
+@param io FreeImage IO
+@param handle FreeImage IO handle
+@param width Image width
+@param height Image height
+@param dib Image to be loaded 
+@return Returns TRUE if successful, returns FALSE otherwise
+*/
+static BOOL 
+LoadPixelDataRLE8(FreeImageIO *io, fi_handle handle, int width, int height, FIBITMAP *dib) {
+	BYTE status_byte = 0;
+	BYTE second_byte = 0;
+	int scanline = 0;
+	int bits = 0;
+
+	for (;;) {
+		if( io->read_proc(&status_byte, sizeof(BYTE), 1, handle) != 1) {
+			return FALSE;
+		}
+
+		switch (status_byte) {
+			case RLE_COMMAND :
+				if(io->read_proc(&status_byte, sizeof(BYTE), 1, handle) != 1) {
+					return FALSE;
+				}
+
+				switch (status_byte) {
+					case RLE_ENDOFLINE :
+						bits = 0;
+						scanline++;
+						break;
+
+					case RLE_ENDOFBITMAP :
+						return TRUE;
+
+					case RLE_DELTA :
+					{
+						// read the delta values
+
+						BYTE delta_x = 0;
+						BYTE delta_y = 0;
+
+						if(io->read_proc(&delta_x, sizeof(BYTE), 1, handle) != 1) {
+							return FALSE;
+						}
+						if(io->read_proc(&delta_y, sizeof(BYTE), 1, handle) != 1) {
+							return FALSE;
+						}
+
+						// apply them
+
+						bits     += delta_x;
+						scanline += delta_y;
+
+						break;
+					}
+
+					default :
+					{
+						if(scanline >= abs(height)) {
+							return TRUE;
+						}
+
+						int count = MIN((int)status_byte, width - bits);
+
+						BYTE *sline = FreeImage_GetScanLine(dib, scanline);
+
+						if(io->read_proc((void *)(sline + bits), sizeof(BYTE) * count, 1, handle) != 1) {
+							return FALSE;
+						}
+						
+						// align run length to even number of bytes 
+
+						if ((status_byte & 1) == 1) {
+							if(io->read_proc(&second_byte, sizeof(BYTE), 1, handle) != 1) {
+								return FALSE;
+							}
+						}
+
+						bits += status_byte;													
+
+						break;	
+					}
+				}
+
+				break;
+
+			default :
+			{
+				if(scanline >= abs(height)) {
+					return TRUE;
+				}
+
+				int count = MIN((int)status_byte, width - bits);
+
+				BYTE *sline = FreeImage_GetScanLine(dib, scanline);
+
+				if(io->read_proc(&second_byte, sizeof(BYTE), 1, handle) != 1) {
+					return FALSE;
+				}
+
+				for (int i = 0; i < count; i++) {
+					*(sline + bits) = second_byte;
+
+					bits++;					
+				}
+
+				break;
+			}
+		}
+	}
+}
+
+// --------------------------------------------------------------------------
 
 static FIBITMAP *
 LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_offset) {
@@ -244,202 +514,26 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 						return dib;
 
 					case BI_RLE4 :
-					{
-						BYTE status_byte = 0;
-						BYTE second_byte = 0;
-						int scanline = 0;
-						int bits = 0;
-						int align = 0;
-						BOOL low_nibble = FALSE;
-
-						for (;;) {
-							io->read_proc(&status_byte, sizeof(BYTE), 1, handle);
-
-							switch (status_byte) {
-								case RLE_COMMAND :
-									io->read_proc(&status_byte, sizeof(BYTE), 1, handle);
-
-									switch (status_byte) {
-										case RLE_ENDOFLINE :
-											bits = 0;
-											scanline++;
-											low_nibble = FALSE;
-											break;
-
-										case RLE_ENDOFBITMAP :
-											return (FIBITMAP *)dib;
-
-										case RLE_DELTA :
-										{
-											// read the delta values
-
-											BYTE delta_x = 0;
-											BYTE delta_y = 0;
-
-											io->read_proc(&delta_x, sizeof(BYTE), 1, handle);
-											io->read_proc(&delta_y, sizeof(BYTE), 1, handle);
-
-											// apply them
-
-											bits     += delta_x / 2;
-											scanline += delta_y;
-											break;
-										}
-
-										default :
-										{
-											io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
-
-											BYTE *sline = FreeImage_GetScanLine(dib, scanline);
-
-											for (int i = 0; i < status_byte; i++) {
-												if (low_nibble) {
-													*(sline + bits) |= LOWNIBBLE(second_byte);
-
-													if (i != status_byte - 1)
-														io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
-
-													bits++;
-												} else {
-													*(sline + bits) |= HINIBBLE(second_byte);
-												}
-												
-												low_nibble = !low_nibble;
-											}
-
-											// align run length to even number of bytes 
-
-											align = status_byte % 4;
-											if((align == 1) || (align == 2)) {
-												io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
-											}
-
-											break;
-										}
-									}
-
-									break;
-
-								default :
-								{
-									BYTE *sline = FreeImage_GetScanLine(dib, scanline);
-
-									io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
-
-									for (unsigned i = 0; i < status_byte; i++) {
-										if (low_nibble) {
-											*(sline + bits) |= LOWNIBBLE(second_byte);
-
-											bits++;
-										} else {
-											*(sline + bits) |= HINIBBLE(second_byte);
-										}				
-										
-										low_nibble = !low_nibble;
-									}
-								}
-
-								break;
-							}
+						if( LoadPixelDataRLE4(io, handle, width, height, dib) ) {
+							return dib;
+						} else {
+							throw "Error encountered while decoding RLE4 BMP data";
 						}
-					}
+						break;
 
 					case BI_RLE8 :
-					{
-						BYTE status_byte = 0;
-						BYTE second_byte = 0;
-						int scanline = 0;
-						int bits = 0;
-
-						for (;;) {
-							io->read_proc(&status_byte, sizeof(BYTE), 1, handle);
-
-							switch (status_byte) {
-								case RLE_COMMAND :
-									io->read_proc(&status_byte, sizeof(BYTE), 1, handle);
-
-									switch (status_byte) {
-										case RLE_ENDOFLINE :
-											bits = 0;
-											scanline++;
-											break;
-
-										case RLE_ENDOFBITMAP :
-											return (FIBITMAP *)dib;
-
-										case RLE_DELTA :
-										{
-											// read the delta values
-
-											BYTE delta_x = 0;
-											BYTE delta_y = 0;
-
-											io->read_proc(&delta_x, sizeof(BYTE), 1, handle);
-											io->read_proc(&delta_y, sizeof(BYTE), 1, handle);
-
-											// apply them
-
-											bits     += delta_x;
-											scanline += delta_y;
-
-											break;
-										}
-
-										default :
-										{
-											if(scanline >= abs(height)) {
-												return dib;
-											}
-
-											int count = MIN((int)status_byte, width - bits);
-
-											io->read_proc((void *)(FreeImage_GetScanLine(dib, scanline) + bits), sizeof(BYTE) * count, 1, handle);
-											
-											// align run length to even number of bytes 
-
-											if ((status_byte & 1) == 1)
-												io->read_proc(&second_byte, sizeof(BYTE), 1, handle);												
-
-											bits += status_byte;													
-
-											break;	
-										}
-									}
-
-									break;
-
-								default :
-								{
-									if(scanline >= abs(height)) {
-										return dib;
-									}
-
-									int count = MIN((int)status_byte, width - bits);
-
-									BYTE *sline = FreeImage_GetScanLine(dib, scanline);
-
-									io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
-
-									for (int i = 0; i < count; i++) {
-										*(sline + bits) = second_byte;
-
-										bits++;					
-									}
-
-									break;
-								}
-							}
+						if( LoadPixelDataRLE8(io, handle, width, height, dib) ) {
+							return dib;
+						} else {
+							throw "Error encountered while decoding RLE8 BMP data";
 						}
-
 						break;
-					}
 
 					default :
 						throw "compression type not supported";
 				}
-
-				break;
 			}
+			break; // 1-, 4-, 8-bit
 
 			case 16 :
 			{
@@ -465,6 +559,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 				return dib;
 			}
+			break; // 16-bit
 
 			case 24 :
 			case 32 :
@@ -509,16 +604,21 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 				return dib;
 			}
+			break; // 24-, 32-bit
 		}
 	} catch(const char *message) {
-		if(dib)
+		if(dib) {
 			FreeImage_Unload(dib);
-
-		FreeImage_OutputMessageProc(s_format_id, message);
+		}
+		if(message) {
+			FreeImage_OutputMessageProc(s_format_id, message);
+		}
 	}
 
 	return NULL;
 }
+
+// --------------------------------------------------------------------------
 
 static FIBITMAP *
 LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_offset) {
@@ -589,184 +689,28 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				switch (compression) {
 					case BI_RGB :
 						// load pixel data 
-						LoadPixelData(io, handle, dib, height, pitch, bit_count);
-						
+						LoadPixelData(io, handle, dib, height, pitch, bit_count);						
 						return dib;
 
 					case BI_RLE4 :
-					{
-						BYTE status_byte = 0;
-						BYTE second_byte = 0;
-						int scanline = 0;
-						int bits = 0;
-						BOOL low_nibble = FALSE;
-
-						for (;;) {
-							io->read_proc(&status_byte, sizeof(BYTE), 1, handle);
-
-							switch (status_byte) {
-								case RLE_COMMAND :
-									io->read_proc(&status_byte, sizeof(BYTE), 1, handle);
-
-									switch (status_byte) {
-										case RLE_ENDOFLINE :
-											bits = 0;
-											scanline++;
-											low_nibble = FALSE;
-											break;
-
-										case RLE_ENDOFBITMAP :
-											return (FIBITMAP *)dib;
-
-										case RLE_DELTA :
-										{
-											// read the delta values
-
-											BYTE delta_x;
-											BYTE delta_y;
-
-											io->read_proc(&delta_x, sizeof(BYTE), 1, handle);
-											io->read_proc(&delta_y, sizeof(BYTE), 1, handle);
-
-											// apply them
-
-											bits       += delta_x / 2;
-											scanline   += delta_y;
-											break;
-										}
-
-										default :
-											io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
-
-											BYTE *sline = FreeImage_GetScanLine(dib, scanline);
-
-											for (int i = 0; i < status_byte; i++) {
-												if (low_nibble) {
-													*(sline + bits) |= LOWNIBBLE(second_byte);
-
-													if (i != status_byte - 1)
-														io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
-
-													bits++;
-												} else {
-													*(sline + bits) |= HINIBBLE(second_byte);
-												}
-												
-												low_nibble = !low_nibble;
-											}
-
-											if (((status_byte / 2) & 1 ) == 1)
-												io->read_proc(&second_byte, sizeof(BYTE), 1, handle);												
-
-											break;
-									};
-
-									break;
-
-								default :
-								{
-									BYTE *sline = FreeImage_GetScanLine(dib, scanline);
-
-									io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
-
-									for (unsigned i = 0; i < status_byte; i++) {
-										if (low_nibble) {
-											*(sline + bits) |= LOWNIBBLE(second_byte);
-
-											bits++;
-										} else {
-											*(sline + bits) |= HINIBBLE(second_byte);
-										}				
-										
-										low_nibble = !low_nibble;
-									}
-								}
-
-								break;
-							};
+						if( LoadPixelDataRLE4(io, handle, width, height, dib) ) {
+							return dib;
+						} else {
+							throw "Error encountered while decoding RLE4 BMP data";
 						}
-
 						break;
-					}
 
 					case BI_RLE8 :
-					{
-						BYTE status_byte = 0;
-						BYTE second_byte = 0;
-						int scanline = 0;
-						int bits = 0;
-
-						for (;;) {
-							io->read_proc(&status_byte, sizeof(BYTE), 1, handle);
-
-							switch (status_byte) {
-								case RLE_COMMAND :
-									io->read_proc(&status_byte, sizeof(BYTE), 1, handle);
-
-									switch (status_byte) {
-										case RLE_ENDOFLINE :
-											bits = 0;
-											scanline++;
-											break;
-
-										case RLE_ENDOFBITMAP :
-											return (FIBITMAP *)dib;
-
-										case RLE_DELTA :
-										{
-											// read the delta values
-
-											BYTE delta_x;
-											BYTE delta_y;
-
-											io->read_proc(&delta_x, sizeof(BYTE), 1, handle);
-											io->read_proc(&delta_y, sizeof(BYTE), 1, handle);
-
-											// apply them
-
-											bits     += delta_x;
-											scanline += delta_y;
-											break;
-										}
-
-										default :
-											io->read_proc((void *)(FreeImage_GetScanLine(dib, scanline) + bits), sizeof(BYTE) * status_byte, 1, handle);
-											
-											// align run length to even number of bytes 
-
-											if ((status_byte & 1) == 1)
-												io->read_proc(&second_byte, sizeof(BYTE), 1, handle);												
-
-											bits += status_byte;
-
-											break;								
-									};
-
-									break;
-
-								default :
-									BYTE *sline = FreeImage_GetScanLine(dib, scanline);
-
-									io->read_proc(&second_byte, sizeof(BYTE), 1, handle);
-
-									for (unsigned i = 0; i < status_byte; i++) {
-										*(sline + bits) = second_byte;
-
-										bits++;
-									}
-
-									break;
-							}
+						if( LoadPixelDataRLE8(io, handle, width, height, dib) ) {
+							return dib;
+						} else {
+							throw "Error encountered while decoding RLE8 BMP data";
 						}
-
 						break;
-					}
 
 					default :		
 						throw "compression type not supported";
-				}						
-
-				break;
+				}	
 			}
 
 			case 16 :
@@ -840,6 +784,8 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 
 	return NULL;
 }
+
+// --------------------------------------------------------------------------
 
 static FIBITMAP *
 LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_offset) {
@@ -1087,6 +1033,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 // ----------------------------------------------------------
 
+/**
+Encode a 8-bit source buffer into a 8-bit target buffer using a RLE compression algorithm. 
+The size of the target buffer must be equal to the size of the source buffer. 
+On return, the function will return the real size of the target buffer, which should be less that or equal to the source buffer size. 
+@param target 8-bit Target buffer
+@param source 8-bit Source buffer
+@param size Source/Target input buffer size
+@return Returns the target buffer size
+*/
 static int
 RLEEncodeLine(BYTE *target, BYTE *source, int size) {
 	BYTE buffer[256];
