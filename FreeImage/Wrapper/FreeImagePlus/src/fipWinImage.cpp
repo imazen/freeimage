@@ -357,7 +357,7 @@ BOOL fipWinImage::captureWindow(HWND hWndApplicationWindow, HWND hWndSelectedWin
 
 	// Free objects
 	DeleteObject(SelectObject(memDC, oldbm));
-	DeleteObject(memDC);
+	DeleteDC(memDC);
 
 	// Convert 32-bit images to 24-bit
 	if(getBitsPerPixel() == 32) {

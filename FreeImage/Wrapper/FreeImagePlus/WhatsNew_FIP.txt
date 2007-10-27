@@ -5,6 +5,9 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+October 10th, 2007
+* [Terry Russell] fixed a memory leak in fipWinImage::captureWindow
+
 January 20th, 2007
 + [Herve Drolon] added support for 64-bit RGBA images
 
