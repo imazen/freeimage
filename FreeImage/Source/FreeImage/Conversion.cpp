@@ -97,15 +97,13 @@ FreeImage_ConvertFromRawBits(BYTE *bits, int width, int height, int pitch, unsig
 
 	if (dib != NULL) {
 		if (topdown) {
-			for (int i = 0; i < height; ++i) {
+			for (int i = height - 1; i >= 0; --i) {
 				memcpy(FreeImage_GetScanLine(dib, i), bits, FreeImage_GetLine(dib));
-
 				bits += pitch;
 			}
 		} else {
-			for (int i = height - 1; i >= 0; --i) {
+			for (int i = 0; i < height; ++i) {			
 				memcpy(FreeImage_GetScanLine(dib, i), bits, FreeImage_GetLine(dib));
-
 				bits += pitch;
 			}
 		}
@@ -118,7 +116,7 @@ void DLL_CALLCONV
 FreeImage_ConvertToRawBits(BYTE *bits, FIBITMAP *dib, int pitch, unsigned bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask, BOOL topdown) {
 	if ((dib != NULL) && (bits != NULL)) {
 		for (unsigned i = 0; i < FreeImage_GetHeight(dib); ++i) {
-			BYTE *scanline = FreeImage_GetScanLine(dib, topdown ? i : FreeImage_GetHeight(dib) - i - 1);
+			BYTE *scanline = FreeImage_GetScanLine(dib, topdown ? (FreeImage_GetHeight(dib) - i - 1) : i);
 
 			if ((bpp == 16) && (FreeImage_GetBPP(dib) == 16)) {
 				// convert 555 to 565 or vice versa

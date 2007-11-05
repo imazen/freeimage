@@ -5,7 +5,7 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month day, 2007 - 3.10.0
+November th, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-07-13)
 ! FreeImage now uses OpenJPEG 1.2.0 (SVN patch 2007-07-13)
 ! FreeImage now uses OpenEXR 1.6.0
@@ -20,6 +20,7 @@ Month day, 2007 - 3.10.0
 + [Ryan Rubley] added support for RGB vs BGR regardless of endian
 + [Herve Drolon] added FreeImage_MultigridPoissonSolver
 + [Carsten Klein] added FreeImage_PreMultiplyWithAlpha
++ [Carsten Klein] added __stdcall version of FreeImage_OutputMessage
 * [Herve Drolon] fixed a bug in TIFF plugin when reading 8-bit + 8-bit alpha images
 * [Herve Drolon] fixed a bug in TIFF plugin when reading images with uncommon bitdepths
 * [rodrigo] fixed FreeImage exception handling under gcc (added -fexceptions to gcc compiler flags)
@@ -31,6 +32,7 @@ Month day, 2007 - 3.10.0
 * [Ryan Rubley] fixed OS X compile error in BitmapAccess.cpp
 * [Herve Drolon] fixed a bug in FreeImage_Paste when pasting non-standard image types
 * [Herve Drolon] saving 1-bit TIF with the TIFF_CCITTFAX3 flag is now compliant with the TIFF Class F specification
+* [Carsten Klein] fixed topdown parameter in FreeImage_ConvertFromRawBits and FreeImage_ConvertToRawBits being handled in reverse
 * [Herve Drolon] fixed a bug when reading some RLE-4 encoded BMP data
 
 February 11th, 2007 - 3.9.3
