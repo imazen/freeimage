@@ -9,7 +9,7 @@ Month day, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-07-13)
 ! FreeImage now uses OpenJPEG 1.2.0 (SVN patch 2007-07-13)
 ! FreeImage now uses OpenEXR 1.6.0
-! FreeImage now uses libPNG 1.2.18
+! FreeImage now uses libPNG 1.2.22
 ! FreeImage now hides its internal functions and internal libraries when compiled with gcc
 - [Herve Drolon] removed VS C+ 6.0 project files : this IDE is no longer supported because of OpenEXR
 + [Herve Drolon] added VS 2005 project files
@@ -31,6 +31,7 @@ Month day, 2007 - 3.10.0
 * [Ryan Rubley] fixed OS X compile error in BitmapAccess.cpp
 * [Herve Drolon] fixed a bug in FreeImage_Paste when pasting non-standard image types
 * [Herve Drolon] saving 1-bit TIF with the TIFF_CCITTFAX3 flag is now compliant with the TIFF Class F specification
+* [Herve Drolon] fixed a bug when reading some RLE-4 encoded BMP data
 
 February 11th, 2007 - 3.9.3
 ! FreeImage now uses libPNG 1.2.16
