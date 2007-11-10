@@ -6,7 +6,7 @@ What's New for FreeImage
 + : added
 
 November th, 2007 - 3.10.0
-! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-07-13)
+! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-10-05)
 ! FreeImage now uses OpenJPEG 1.2.0 (SVN patch 2007-07-13)
 ! FreeImage now uses OpenEXR 1.6.0
 ! FreeImage now uses libPNG 1.2.22
