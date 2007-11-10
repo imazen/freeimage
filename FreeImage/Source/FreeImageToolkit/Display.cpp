@@ -193,7 +193,7 @@ BOOL DLL_CALLCONV
 FreeImage_PreMultiplyWithAlpha(FIBITMAP *dib) {
 	if (!dib) return FALSE;
 	
-	if (FreeImage_GetBPP(dib) != 32) {
+	if ((FreeImage_GetBPP(dib) != 32) || (FreeImage_GetImageType(dib) != FIT_BITMAP)) {
 		return FALSE;
 	}
 
