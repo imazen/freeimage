@@ -21,6 +21,15 @@ November th, 2007 - 3.10.0
 + [Herve Drolon] added FreeImage_MultigridPoissonSolver
 + [Carsten Klein] added FreeImage_PreMultiplyWithAlpha
 + [Carsten Klein] added __stdcall version of FreeImage_OutputMessage
++ [Carsten Klein] added new palette and color manipulation functions (see below) : 
+                  added FreeImage_SetTransparentIndex
+                  added FreeImage_GetTransparentIndex
+                  added FreeImage_GetAdjustColorsLookupTable
+                  added FreeImage_AdjustColors
+                  added FreeImage_ApplyColorMapping
+                  added FreeImage_SwapColors
+                  added FreeImage_ApplyPaletteIndexMapping
+                  added FreeImage_SwapPaletteIndices
 * [Herve Drolon] fixed a bug in TIFF plugin when reading 8-bit + 8-bit alpha images
 * [Herve Drolon] fixed a bug in TIFF plugin when reading images with uncommon bitdepths
 * [rodrigo] fixed FreeImage exception handling under gcc (added -fexceptions to gcc compiler flags)
