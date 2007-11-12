@@ -6,6 +6,7 @@
 // - Hervé Drolon (drolon@infonie.fr)
 // - Detlev Vendt (detlev.vendt@brillit.de)
 // - Petr Supina (psup@centrum.cz)
+// - Carsten Klein (c.klein@datagis.com)
 //
 // This file is part of FreeImage 3
 //
@@ -612,6 +613,67 @@ FreeImage_SetTransparencyTable(FIBITMAP *dib, BYTE *table, int count) {
 			}
 		} 
 	}
+}
+
+/** @brief Sets the index of the palette entry to be used as transparent color
+ for the image specified. Does nothing on high color images. 
+ 
+ This method sets the index of the palette entry to be used as single transparent
+ color for the image specified. This works on palletised images only and does
+ nothing for high color images.
+ 
+ Although it is possible for palletised images to have more than one transparent
+ color, this method sets the palette entry specified as the single transparent
+ color for the image. All other colors will be set to be non-transparent by this
+ method.
+ 
+ As with FreeImage_SetTransparencyTable(), this method also sets the image's
+ transparency property to TRUE (as it is set and obtained by
+ FreeImage_SetTransparent() and FreeImage_IsTransparent() respectively) for
+ palletised images.
+ 
+ @param dib Input image, whose transparent color is to be set.
+ @param index The index of the palette entry to be set as transparent color.
+ */
+void DLL_CALLCONV
+FreeImage_SetTransparentIndex(FIBITMAP *dib, int index) {
+	if (dib) {
+		int count = FreeImage_GetColorsUsed(dib);
+		if (count) {
+			BYTE *new_tt = (BYTE *)malloc((count - 1) * sizeof(BYTE));
+			memset(new_tt, 0xFF, count);
+			if ((index >= 0) && (index <= count)) {
+				new_tt[index] = 0x00;
+			}
+			FreeImage_SetTransparencyTable(dib, new_tt, count);
+			free(new_tt);
+		}
+	}
+}
+
+/** @brief Returns the palette entry used as transparent color for the image
+ specified. Works for palletised images only and returns -1 for high color
+ images or if the image has no color set to be transparent. 
+ 
+ Although it is possible for palletised images to have more than one transparent
+ color, this function always returns the index of the first palette entry, set
+ to be transparent. 
+ 
+ @param dib Input image, whose transparent color is to be returned.
+ @return Returns the index of the palette entry used as transparent color for
+ the image specified or -1 if there is no transparent color found (e.g. the image
+ is a high color image).
+ */
+int DLL_CALLCONV
+FreeImage_GetTransparentIndex(FIBITMAP *dib) {
+	int count = FreeImage_GetTransparencyCount(dib);
+	BYTE *tt = FreeImage_GetTransparencyTable(dib);
+	for (int i = 0; i < count; i++) {
+		if (tt[i] == 0) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 // ----------------------------------------------------------
