@@ -304,12 +304,6 @@ readTileData (TiledInputFile::Data *ifd,
     if (ifd->currentPosition != tileOffset)
         ifd->is->seekg (tileOffset);
 
-    #ifdef DEBUG
-
-	assert (ifd->is->tellg() == tileOffset);
-
-    #endif
-
     //
     // Read the first few bytes of the tile (the header).
     // Verify that the tile coordinates and the level number
@@ -656,6 +650,11 @@ TiledInputFile::TiledInputFile (const char fileName[], int numThreads):
 			"\"" << fileName << "\". " << e);
 	throw;
     }
+    catch (...)
+    {
+	delete _data;
+        throw;
+    }
 }
 
 
@@ -680,6 +679,11 @@ TiledInputFile::TiledInputFile (IStream &is, int numThreads):
 	REPLACE_EXC (e, "Cannot open image file "
 			"\"" << is.fileName() << "\". " << e);
 	throw;
+    }
+    catch (...)
+    {
+	delete _data;
+        throw;
     }
 }
 

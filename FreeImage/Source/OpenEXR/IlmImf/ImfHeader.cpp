@@ -81,6 +81,12 @@ using IlmThread::Lock;
 
 namespace {
 
+int maxImageWidth = 0;
+int maxImageHeight = 0;
+int maxTileWidth = 0;
+int maxTileHeight = 0;
+
+
 void
 initialize (Header &header,
 	    const Box2i &displayWindow,
@@ -515,21 +521,50 @@ void
 Header::sanityCheck (bool isTiled) const
 {
     //
-    // The display window and the data window
-    // must contain at least one pixel each.
+    // The display window and the data window must each
+    // contain at least one pixel.  In addition, the
+    // coordinates of the window corners must be small
+    // enough to keep expressions like max-min+1 or
+    // max+min from overflowing.
     //
 
     const Box2i &displayWindow = this->displayWindow();
 
     if (displayWindow.min.x > displayWindow.max.x ||
-	displayWindow.min.y > displayWindow.max.y)
+	displayWindow.min.y > displayWindow.max.y ||
+	displayWindow.min.x <= -(INT_MAX / 2) ||
+	displayWindow.min.y <= -(INT_MAX / 2) ||
+	displayWindow.max.x >=  (INT_MAX / 2) ||
+	displayWindow.max.y >=  (INT_MAX / 2))
+    {
 	throw Iex::ArgExc ("Invalid display window in image header.");
+    }
 
     const Box2i &dataWindow = this->dataWindow();
 
     if (dataWindow.min.x > dataWindow.max.x ||
-	dataWindow.min.y > dataWindow.max.y)
+	dataWindow.min.y > dataWindow.max.y ||
+	dataWindow.min.x <= -(INT_MAX / 2) ||
+	dataWindow.min.y <= -(INT_MAX / 2) ||
+	dataWindow.max.x >=  (INT_MAX / 2) ||
+	dataWindow.max.y >=  (INT_MAX / 2))
+    {
 	throw Iex::ArgExc ("Invalid data window in image header.");
+    }
+
+    if (maxImageWidth > 0 &&
+	maxImageWidth < dataWindow.max.x - dataWindow.min.x + 1)
+    {
+	THROW (Iex::ArgExc, "The width of the data window exceeds the "
+			    "maximum width of " << maxImageWidth << "pixels.");
+    }
+
+    if (maxImageHeight > 0 &&
+	maxImageHeight < dataWindow.max.y - dataWindow.min.y + 1)
+    {
+	THROW (Iex::ArgExc, "The width of the data window exceeds the "
+			    "maximum width of " << maxImageHeight << "pixels.");
+    }
 
     //
     // The pixel aspect ratio must be greater than 0.
@@ -587,6 +622,20 @@ Header::sanityCheck (bool isTiled) const
 
 	if (tileDesc.xSize <= 0 || tileDesc.ySize <= 0)
 	    throw Iex::ArgExc ("Invalid tile size in image header.");
+
+	if (maxTileWidth > 0 &&
+	    maxTileWidth < tileDesc.xSize)
+	{
+	    THROW (Iex::ArgExc, "The width of the tiles exceeds the maximum "
+				"width of " << maxTileWidth << "pixels.");
+	}
+
+	if (maxTileHeight > 0 &&
+	    maxTileHeight < tileDesc.ySize)
+	{
+	    THROW (Iex::ArgExc, "The width of the tiles exceeds the maximum "
+				"width of " << maxTileHeight << "pixels.");
+	}
 
 	if (tileDesc.mode != ONE_LEVEL &&
 	    tileDesc.mode != MIPMAP_LEVELS &&
@@ -723,6 +772,22 @@ Header::sanityCheck (bool isTiled) const
 	    }
 	}
     }
+}
+
+
+void		
+Header::setMaxImageSize (int maxWidth, int maxHeight)
+{
+    maxImageWidth = maxWidth;
+    maxImageHeight = maxHeight;
+}
+
+
+void		
+Header::setMaxTileSize (int maxWidth, int maxHeight)
+{
+    maxTileWidth = maxWidth;
+    maxTileHeight = maxHeight;
 }
 
 

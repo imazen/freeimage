@@ -1,3 +1,17 @@
+Version 1.6.1:
+	* Removed Windows .suo files from distribution.
+	  (Eric Wimmer)
+	* Bug fix: crashes, memory leaks and file descriptor leaks
+	  when reading damaged image files (some reported by Apple,
+	  others found by running IlmImfFuzzTest).
+	  (Florian Kainz)
+	* Added new IlmImfFuzzTest program to test how resilient the
+	  IlmImf library is with respect broken input files: the program
+	  first damages OpenEXR files by partially overwriting them with
+	  random data; then it tries to read the damaged files.  If all
+	  goes well, the program doesn't crash.
+	  (Florian Kainz)
+
 Version 1.6.0:
 	* Bumped DSO version number to 6.0
 	  (Florian Kainz)
