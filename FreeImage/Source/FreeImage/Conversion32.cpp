@@ -132,6 +132,14 @@ FreeImage_ConvertLine24To32(BYTE *target, BYTE *source, int width_in_pixels) {
 // ----------------------------------------------------------
 
 static void DLL_CALLCONV
+MapTransparentTableToAlpha1(RGBQUAD *target, BYTE *source, BYTE *table, int transparent_pixels, int width_in_pixels) {
+	for (int cols = 0 ; cols < width_in_pixels ; cols++) {
+		int index = (source[cols>>3] & (0x80 >> (cols & 0x07))) != 0 ? 1 : 0;
+		target[cols].rgbReserved = (index < transparent_pixels) ? table[index] : 255;
+    }
+}
+
+static void DLL_CALLCONV
 MapTransparentTableToAlpha4(RGBQUAD *target, BYTE *source, BYTE *table, int transparent_pixels, int width_in_pixels) {
     BOOL low_nibble = FALSE;
     int x = 0;
@@ -174,10 +182,15 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 			{
 				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
-				if (new_dib != NULL)
-					for (int rows = 0; rows < height; rows++)
+				if (new_dib != NULL) {
+					for (int rows = 0; rows < height; rows++) {
 						FreeImage_ConvertLine1To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
-				
+						
+						if (FreeImage_IsTransparent(dib)) {
+							MapTransparentTableToAlpha1((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
+						}
+					}
+				}
 				return new_dib;
 			}
 
@@ -237,10 +250,11 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 			{
 				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
-				if (new_dib != NULL)
-					for (int rows = 0; rows < height; rows++)
+				if (new_dib != NULL) {
+					for (int rows = 0; rows < height; rows++) {
 						FreeImage_ConvertLine24To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-				
+					}
+				}
 				return new_dib;
 			}
 
