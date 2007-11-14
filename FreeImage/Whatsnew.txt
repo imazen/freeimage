@@ -43,6 +43,7 @@ November th, 2007 - 3.10.0
 * [Herve Drolon] saving 1-bit TIF with the TIFF_CCITTFAX3 flag is now compliant with the TIFF Class F specification
 * [Carsten Klein] fixed topdown parameter in FreeImage_ConvertFromRawBits and FreeImage_ConvertToRawBits being handled in reverse
 * [Herve Drolon] fixed a bug when reading some RLE-4 encoded BMP data
+* [Carsten Klein] conversion from 1-bit to 32-bit now keep possibly present transparency
 
 February 11th, 2007 - 3.9.3
 ! FreeImage now uses libPNG 1.2.16
