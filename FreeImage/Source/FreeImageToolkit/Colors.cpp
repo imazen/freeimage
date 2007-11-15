@@ -496,7 +496,7 @@ FreeImage_GetAdjustColorsLookupTable(BYTE *LUT, double brightness, double contra
 
 	if (contrast != 0.0) {
 		// modify lookup table with contrast adjustment data
-		double v = (100.0 + contrast) / 100.0;
+		const double v = (100.0 + contrast) / 100.0;
 		for (int i = 0; i < 256; i++) {
 			dblLUT[i] = 128 + (dblLUT[i] - 128) * v;
 		}
@@ -505,7 +505,7 @@ FreeImage_GetAdjustColorsLookupTable(BYTE *LUT, double brightness, double contra
 
 	if (brightness != 0.0) {
 		// modify lookup table with brightness adjustment data
-		double v = (100.0 + brightness) / 100.0;
+		const double v = (100.0 + brightness) / 100.0;
 		for (int i = 0; i < 256; i++) {
 			dblLUT[i] = dblLUT[i] * v;
 		}
@@ -515,7 +515,7 @@ FreeImage_GetAdjustColorsLookupTable(BYTE *LUT, double brightness, double contra
 	if (gamma != 1.0) {
 		// modify lookup table with gamma adjustment data
 		double exponent = 1 / gamma;
-		double v = 255.0 * (double)pow((double)255, -exponent);
+		const double v = 255.0 * (double)pow((double)255, -exponent);
 		for (int i = 0; i < 256; i++) {
 			dblLUT[i] = pow(dblLUT[i], exponent) * v;
 		}
@@ -656,12 +656,12 @@ FreeImage_ApplyColorMapping(FIBITMAP *dib, RGBQUAD *srccolors, RGBQUAD *dstcolor
 			unsigned size = FreeImage_GetColorsUsed(dib);
 			RGBQUAD *pal = FreeImage_GetPalette(dib);
 			RGBQUAD *a, *b;
-			for (unsigned i = 0; i < size; i++) {
+			for (unsigned x = 0; x < size; x++) {
 				for (unsigned j = 0; j < count; j++) {
 					a = srccolors;
 					b = dstcolors;
-					for (int x = ((swap) ? 0 : 1); x < 2; x++) {
-						if ((pal[x].rgbBlue == a[j].rgbBlue) && (pal[x].rgbGreen == a[j].rgbGreen) && (pal[x].rgbRed== a[j].rgbRed)) {
+					for (int i = (swap ? 0 : 1); i < 2; i++) {
+						if ((pal[x].rgbBlue == a[j].rgbBlue)&&(pal[x].rgbGreen == a[j].rgbGreen) &&(pal[x].rgbRed== a[j].rgbRed)) {
 							pal[x].rgbBlue = b[j].rgbBlue;
 							pal[x].rgbGreen = b[j].rgbGreen;
 							pal[x].rgbRed = b[j].rgbRed;
@@ -702,9 +702,9 @@ FreeImage_ApplyColorMapping(FIBITMAP *dib, RGBQUAD *srccolors, RGBQUAD *dstcolor
 					for (unsigned j = 0; j < count; j++) {
 						a = src16;
 						b = dst16;
-						for (int i = ((swap) ? 0 : 1); i < 2; i++) {
-							if (*bits == src16[j]) {
-								*bits = dst16[j];
+						for (int i = (swap ? 0 : 1); i < 2; i++) {
+							if (*bits == a[j]) {
+								*bits = b[j];
 								result++;
 								j = count;
 								break;
@@ -729,8 +729,8 @@ FreeImage_ApplyColorMapping(FIBITMAP *dib, RGBQUAD *srccolors, RGBQUAD *dstcolor
 					for (unsigned j = 0; j < count; j++) {
 						a = srccolors;
 						b = dstcolors;
-						for (int i = ((swap) ? 0 : 1); i < 2; i++) {
-							if ((bits[FI_RGBA_BLUE] == a[j].rgbBlue) && (bits[FI_RGBA_GREEN] == a[j].rgbGreen) && (bits[FI_RGBA_RED] == a[j].rgbRed)) {
+						for (int i = (swap ? 0 : 1); i < 2; i++) {
+							if ((bits[FI_RGBA_BLUE] == a[j].rgbBlue) && (bits[FI_RGBA_GREEN] == a[j].rgbGreen) &&(bits[FI_RGBA_RED] == a[j].rgbRed)) {
 								bits[FI_RGBA_BLUE] = b[j].rgbBlue;
 								bits[FI_RGBA_GREEN] = b[j].rgbGreen;
 								bits[FI_RGBA_RED] = b[j].rgbRed;
@@ -756,9 +756,9 @@ FreeImage_ApplyColorMapping(FIBITMAP *dib, RGBQUAD *srccolors, RGBQUAD *dstcolor
 					for (unsigned j = 0; j < count; j++) {
 						a = srccolors;
 						b = dstcolors;
-						for (int x = ((swap) ? 0 : 1); x < 2; x++, bits += 4) {
-							if ((bits[FI_RGBA_BLUE] == a[j].rgbBlue) && (bits[FI_RGBA_GREEN] == a[j].rgbGreen) && (bits[FI_RGBA_RED] == a[j].rgbRed)
-									&& ((ignore_alpha) || (bits[FI_RGBA_ALPHA] == a[j].rgbReserved))) {
+						for (int i = (swap ? 0 : 1); i < 2; i++) {
+							if ((bits[FI_RGBA_BLUE] == a[j].rgbBlue) &&(bits[FI_RGBA_GREEN] == a[j].rgbGreen) &&(bits[FI_RGBA_RED] == a[j].rgbRed)
+								&&((ignore_alpha) || (bits[FI_RGBA_ALPHA] == a[j].rgbReserved))) {
 								bits[FI_RGBA_BLUE] = b[j].rgbBlue;
 								bits[FI_RGBA_GREEN] = b[j].rgbGreen;
 								bits[FI_RGBA_RED] = b[j].rgbRed;
