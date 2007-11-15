@@ -253,10 +253,6 @@
 				>
 			</File>
 			<File
-				RelativePath="pngasmrd.h"
-				>
-			</File>
-			<File
 				RelativePath="pngconf.h"
 				>
 			</File>
