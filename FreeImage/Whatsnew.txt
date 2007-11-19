@@ -5,7 +5,10 @@ What's New for FreeImage
 ! : changed
 + : added
 
-November th, 2007 - 3.10.0
+Month day, 2007 - 3.10.1
++ [Floris van den Berg] added multipage support to the PSD plugin (read only)
+
+November 19th, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-10-05)
 ! FreeImage now uses OpenJPEG 1.2.0 (SVN patch 2007-07-13)
 ! FreeImage now uses OpenEXR 1.6.1
@@ -13,7 +16,6 @@ November th, 2007 - 3.10.0
 ! FreeImage now hides its internal functions and internal libraries when compiled with gcc
 - [Herve Drolon] removed VS C+ 6.0 project files : this IDE is no longer supported because of OpenEXR
 + [Herve Drolon] added VS 2005 project files
-+ [Floris van den Berg] added multipage support to the PSD plugin (read only)
 + [Herve Drolon] added full support for the OpenEXR format
 + [Herve Drolon] added full support for the JPEG-2000 format
 + [Herve Drolon] added FreeImage_TmoFattal02 tone mapping operator
