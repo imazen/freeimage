@@ -1,0 +1,9 @@
+What's New for FreeImage.NET
+
+* : fixed
+- : removed
+! : changed
++ : added
+
+November 12, 2007 - 1.00
++ [Jean-Philippe Goerke] Initial release
