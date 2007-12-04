@@ -39,18 +39,6 @@ Additional notes
 
 Building on Mac OS X Leopard : 
 
-1) 
 Install the xcode dev tools from the Leopard disk. 
 When installing the dev tools make sure to have installed 10.3.9 SDK (it's not selected by default). 
-
-2) 
-change in Makefile.osx this: 
- 
-LIBRARIES_PPC = -Wl,-syslibroot /Developer/SDKs/MacOSX10.3.9.sdk 
-LIBRARIES_I386 = -Wl,-syslibroot /Developer/SDKs/MacOSX10.4u.sdk 
- 
-to this 
- 
-LIBRARIES_PPC = -Wl,-syslibroot /Developer/SDKs/MacOSX10.3.9.sdk/usr/lib 
-LIBRARIES_I386 = -Wl,-syslibroot /Developer/SDKs/MacOSX10.4u.sdk/usr/lib 
 
