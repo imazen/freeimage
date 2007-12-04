@@ -654,6 +654,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opj_malloc.h"
+				>
+			</File>
+			<File
 				RelativePath="pi.h"
 				>
 			</File>
