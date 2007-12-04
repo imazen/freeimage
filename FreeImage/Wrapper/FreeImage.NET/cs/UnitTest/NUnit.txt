@@ -10,5 +10,6 @@ under Source\UnitTest, must be compiled in 'Debug' mode prior to opening
 the NUnit project.
 
 The FreeImage .NET wrapper unit test project UnitTest.csproj currently
-relies on the FreeImage .NET wrapper single source file, created by the
-Source File Merger, located in the Source\SourceFileMerger folder.
+relies on the FreeImage .NET wrapper single source file 'FreeImage.cs',
+created by the Source File Merger, located in the Source\SourceFileMerger
+folder.
