@@ -6,7 +6,9 @@ What's New for FreeImage
 + : added
 
 Month day, 2007 - 3.10.1
+! FreeImage now uses OpenJPEG 1.2.0 (SVN patch 2007-11-29)
 + [Floris van den Berg] added multipage support to the PSD plugin (read only)
+* [Will Bryant] fixed makefile for MacOSX Tiger and Leopard
 
 November 19th, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-10-05)
