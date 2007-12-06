@@ -3,7 +3,7 @@
 IF NOT EXIST Doc GOTO nodoc
 
 cd Doc
-call clear.bat
+call clean.bat
 cd ..
 
 :nodoc
