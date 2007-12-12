@@ -152,6 +152,9 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'December 12, 2007 - 2.2
+'* [Carsten Klein] Fixed a small bug in FreeImage_PaintTransparent, which now calls function FreeImage_ConvertTo32Bits instead of FreeImage_ConvertTo32Bits2.
+'
 'November 15, 2007 - 2.1
 '* [Carsten Klein] adjusted page numbers of the API documentation in FreeImage function declarations to match FreeImage 3.10.0 API documentation
 '- [Carsten Klein] removed parameter 'bUnloadSource' from function FreeImage_GetOlePictureIcon(): an hIcon should not be destroyed if OleCreatePictureIndirect() is called with fOwn = True.
@@ -2254,7 +2257,7 @@ Public Declare Function FreeImage_RegisterLocalPlugin Lib "FreeImage.dll" Alias 
   Optional ByVal regexpr As String = 0) As FREE_IMAGE_FORMAT
 
 Public Declare Function FreeImage_RegisterExternalPlugin Lib "FreeImage.dll" Alias "_FreeImage_RegisterExternalPlugin@20" ( _
-           ByVal path As String, _
+           ByVal Path As String, _
   Optional ByVal Format As String = 0, _
   Optional ByVal Description As String = 0, _
   Optional ByVal extension As String = 0, _
@@ -6286,7 +6289,7 @@ Dim lpPalette As Long
             
             ' set premultiplied palette and convert to 32 bits
             Call CopyMemory(ByVal lpPalette, alPalMod(0), lPaletteSize)
-            hDIB = FreeImage_ConvertTo32Bits2(hDIB)
+            hDIB = FreeImage_ConvertTo32Bits(hDIB)
             
             ' restore original palette
             Call CopyMemory(ByVal lpPalette, alPalOrg(0), lPaletteSize)
@@ -8963,7 +8966,7 @@ Dim strExtension As String
    
    ' The function checks, whether the given filename has a valid extension or
    ' not. If not, the "primary" extension for the used image format will be
-   ' appended to the filename. The parameter 'FileName' remains untouched in
+   ' appended to the filename. The parameter 'Filename' remains untouched in
    ' this case.
    
    ' To learn more about the "primary" extension, read the documentation for
