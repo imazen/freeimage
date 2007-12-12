@@ -25,7 +25,7 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_Rescale(FIBITMAP *src, int dst_width, int dst_height, FREE_IMAGE_FILTER filter) {
 	FIBITMAP *dst = NULL;
 
-	if (!src || (dst_width <= 0) || (dst_height <= 0)) {
+	if (!src || (dst_width <= 0) || (dst_height <= 0) || (FreeImage_GetWidth(src) <= 0) || (FreeImage_GetHeight(src) <= 0)) {
 		return NULL;
 	}
 

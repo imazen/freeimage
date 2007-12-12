@@ -237,7 +237,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		if((id_two == '2') || (id_two == '5') || (id_two == '3') || (id_two == '6')) {
 			maxval = GetInt(io, handle);
-			if((maxval < 0) || (maxval > 65535)) throw PNM_ERROR_MAXVALUE;
+			if((maxval <= 0) || (maxval > 65535)) throw PNM_ERROR_MAXVALUE;
 		}
 
 		// Create a new DIB
