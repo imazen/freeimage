@@ -292,6 +292,10 @@ namespace FreeImageAPI
 
 			// Register the plugin. The result will be saved and can be accessed later.
 			registered = FreeImage.RegisterLocalPlugin(initProc, null, null, null, null) != FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+			if (registered)
+			{
+				PluginRepository.RegisterLocalPlugin(this);
+			}
 		}
 
 		~LocalPlugin()
