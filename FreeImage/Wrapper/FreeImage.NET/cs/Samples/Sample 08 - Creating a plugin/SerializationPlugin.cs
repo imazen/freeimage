@@ -138,7 +138,7 @@ namespace Sample08
 				(int)sdib.width, (int)sdib.height, sdib.pitch, sdib.bpp,
 				sdib.red_mask, sdib.green_mask, sdib.blue_mask,
 				false);
-			
+
 			// Unload the temporary stream
 			stream.Dispose();
 
@@ -161,7 +161,7 @@ namespace Sample08
 			sdib.green_mask = FreeImage.GetGreenMask(dib);
 			sdib.blue_mask = FreeImage.GetBlueMask(dib);
 			sdib.data = new byte[size];
-			
+
 			// Copy the bitmaps data into the structures byte-array
 			// The marshaller is used to create an IntPtr for using
 			// 'ConvertToRawBits'.
@@ -173,13 +173,13 @@ namespace Sample08
 			// Use the healper function to write the header to the destination
 			if (Write(io, handle, (uint)header.Length, 1, ref header) != 1)
 				return false;
-			
+
 			// Create a serializer
 			BinaryFormatter formatter = new BinaryFormatter();
 
 			// Create a temporary stream
 			MemoryStream stream = new MemoryStream();
-			
+
 			// Create a compression stream
 			GZipStream zipStream = new GZipStream(stream, CompressionMode.Compress);
 
