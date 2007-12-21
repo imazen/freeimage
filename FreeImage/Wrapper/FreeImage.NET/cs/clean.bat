@@ -41,6 +41,9 @@ rd "Samples\Sample 09 - Working with streams\obj" /s /q
 rd "Samples\Sample 10 - Metadata\bin" /s /q
 rd "Samples\Sample 10 - Metadata\obj" /s /q
 
+rd "Samples\Sample 11 - Using the FreeImageBitmap class\bin" /s /q
+rd "Samples\Sample 11 - Using the FreeImageBitmap class\obj" /s /q
+
 rd "SourceFileMerger\bin" /s /q
 rd "SourceFileMerger\obj" /s /q
 

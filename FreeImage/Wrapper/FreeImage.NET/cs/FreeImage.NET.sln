@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 09 - Working with st
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 10 - Metadata", "Samples\Sample 10 - Metadata\Sample 10 - Metadata.csproj", "{55DCC37A-E56C-44D9-9C44-8DAB10CD3003}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 11 - Using the FreeImageBitmap class", "Samples\Sample 11 - Using the FreeImageBitmap class\Sample 11 - Using the FreeImageBitmap class.csproj", "{996068CD-D07A-42E0-856F-ACC71E8565EF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,10 @@ Global
 		{55DCC37A-E56C-44D9-9C44-8DAB10CD3003}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55DCC37A-E56C-44D9-9C44-8DAB10CD3003}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{55DCC37A-E56C-44D9-9C44-8DAB10CD3003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{996068CD-D07A-42E0-856F-ACC71E8565EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{996068CD-D07A-42E0-856F-ACC71E8565EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{996068CD-D07A-42E0-856F-ACC71E8565EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{996068CD-D07A-42E0-856F-ACC71E8565EF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
