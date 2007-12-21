@@ -36,7 +36,7 @@ namespace Sample07
 			}
 
 			// Get the bitmaps ICC-Profile.
-			FIICCPROFILE icc = FreeImage.GetICCProfile(dib);
+			FIICCPROFILE icc = FreeImage.GetICCProfileEx(dib);
 
 			// Print the profiles address.
 			Console.WriteLine("The profiles memory-address is : 0x{0}", icc.DataPointer.ToString("X"));
