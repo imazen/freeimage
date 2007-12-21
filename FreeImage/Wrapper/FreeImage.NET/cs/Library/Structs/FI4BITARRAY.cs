@@ -138,6 +138,36 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
+		/// Returns the palette-index at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <returns>Data at the index.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe byte GetIndexUnsafe(int index)
+		{
+			if ((index % 2) == 0)
+				return (byte)(((byte*)baseAddress)[index / 2] >> 4);
+			else
+				return (byte)(((byte*)baseAddress)[index / 2] & 0x0F);
+		}
+
+		/// <summary>
+		/// Sets the palette-index at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <param name="value">The new data.</param>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe void SetIndexUnsafe(int index, byte value)
+		{
+			if ((index % 2) == 0)
+				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0x0F) | (value << 4));
+			else
+				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0xF0) | (value & 0x0F));
+		}
+
+		/// <summary>
 		/// Returns an array of byte.
 		/// In each byte the lower 4 bits are representing the value (0x0F).
 		/// Changes to the array will NOT be applied to the bitmap directly.

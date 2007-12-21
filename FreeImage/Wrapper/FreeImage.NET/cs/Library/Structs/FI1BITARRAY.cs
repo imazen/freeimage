@@ -143,6 +143,39 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
+		/// Returns the bit at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <returns>Data at the index.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe byte GetIndexUnsafe(int index)
+		{
+			byte mask = (byte)(1 << (7 - (index % 8)));
+			return ((((byte*)baseAddress)[index / 8] & mask) > 0) ? FI1BITARRAY.One : FI1BITARRAY.Zero;
+		}
+
+		/// <summary>
+		/// Sets the bit at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <param name="value">The new data.</param>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe void SetIndexUnsafe(int index, byte value)
+		{
+			int mask = 1 << (7 - (index % 8));
+			if ((value & 0x01) > 0)
+			{
+				((byte*)baseAddress)[index / 8] |= (byte)mask;
+			}
+			else
+			{
+				((byte*)baseAddress)[index / 8] &= (byte)(~mask);
+			}
+		}
+
+		/// <summary>
 		/// Returns an array of byte.
 		/// In each byte the lowest bit is representing the value (0x01).
 		/// Changes to the array will NOT be applied to the bitmap directly.
