@@ -11,6 +11,8 @@ using System.Net;
 using FreeImageNETUnitTest;
 using System.Reflection;
 using System.Threading;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Collections;
 
 namespace FreeImageNETUnitTest
 {
@@ -488,7 +490,7 @@ namespace FreeImageNETUnitTest
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
 			Assert.AreNotEqual(0, dib);
 			new FIICCPROFILE(dib, new byte[] { 0xFF, 0xAA, 0x00, 0x33 });
-			FIICCPROFILE p = FreeImage.GetICCProfile(dib);
+			FIICCPROFILE p = FreeImage.GetICCProfileEx(dib);
 			Assert.AreEqual(4, p.Size);
 			Assert.AreEqual(0xAA, p.Data[1]);
 			FreeImage.UnloadEx(ref dib);
@@ -1538,7 +1540,6 @@ namespace FreeImageNETUnitTest
 		[Test]
 		public void FreeImage_ApplyPaletteIndexMapping()
 		{
-
 			// alle farbtiefen
 
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_04);
@@ -1960,7 +1961,7 @@ namespace FreeImageNETUnitTest
 			byte[] data = new byte[512];
 			rand.NextBytes(data);
 
-			var = FreeImage.GetICCProfile(dib);
+			var = FreeImage.GetICCProfileEx(dib);
 			Assert.AreEqual(0, var.Size);
 
 			var = new FIICCPROFILE(dib, data, 256);
@@ -1973,7 +1974,7 @@ namespace FreeImageNETUnitTest
 					Assert.Fail();
 
 			FreeImage.DestroyICCProfile(dib);
-			var = FreeImage.GetICCProfile(dib);
+			var = FreeImage.GetICCProfileEx(dib);
 			Assert.AreEqual(0, var.Size);
 
 			var = new FIICCPROFILE(dib, data);
@@ -1985,13 +1986,13 @@ namespace FreeImageNETUnitTest
 				if (data[i] != dataComp[i])
 					Assert.Fail();
 
-			var = FreeImage.GetICCProfile(dib);
+			var = FreeImage.GetICCProfileEx(dib);
 			Assert.AreEqual(512, var.Data.Length);
 			Assert.AreNotEqual(IntPtr.Zero, var.DataPointer);
 			Assert.AreEqual(512, var.Size);
 
 			FreeImage.DestroyICCProfile(dib);
-			var = FreeImage.GetICCProfile(dib);
+			var = FreeImage.GetICCProfileEx(dib);
 			Assert.AreEqual(0, var.Size);
 
 			FreeImage.UnloadEx(ref dib);
@@ -2723,7 +2724,7 @@ namespace FreeImageNETUnitTest
 			Assert.That(rational1 == 0);
 		}
 
-		[Test]
+		[Ignore]
 		public void StreamWrapper()
 		{
 			string url = @"http://freeimage.sourceforge.net/images/logo.jpg";
@@ -2735,7 +2736,16 @@ namespace FreeImageNETUnitTest
 			HttpWebRequest req = (HttpWebRequest)HttpWebRequest.Create(url);
 			Assert.IsNotNull(req);
 
-			HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
+			req.Timeout = 1000;
+			HttpWebResponse resp;
+			try
+			{
+				resp = (HttpWebResponse)req.GetResponse();
+			}
+			catch
+			{
+				return;
+			}
 			Assert.IsNotNull(resp);
 
 			Stream stream = resp.GetResponseStream();
@@ -3989,7 +3999,6 @@ namespace FreeImageNETUnitTest
 
 			MetadataModel model = new MDM_GEOTIFF(dib);
 			Assert.AreEqual(0, model.Count);
-			Assert.AreEqual(dib, model.Dib);
 			Assert.IsFalse(model.Exists);
 			Assert.IsEmpty(model.List);
 			Assert.AreEqual(model.Model, FREE_IMAGE_MDMODEL.FIMD_GEOTIFF);
@@ -4002,14 +4011,12 @@ namespace FreeImageNETUnitTest
 			Assert.IsTrue(model.AddTag(tag));
 
 			Assert.AreEqual(1, model.Count);
-			Assert.AreEqual(dib, model.Dib);
 			Assert.IsTrue(model.Exists);
 			Assert.IsNotEmpty(model.List);
 			Assert.AreEqual(model.Model, FREE_IMAGE_MDMODEL.FIMD_GEOTIFF);
 
 			Assert.IsTrue(model.DestoryModel());
 			Assert.AreEqual(0, model.Count);
-			Assert.AreEqual(dib, model.Dib);
 			Assert.IsFalse(model.Exists);
 			Assert.IsEmpty(model.List);
 			Assert.AreEqual(model.Model, FREE_IMAGE_MDMODEL.FIMD_GEOTIFF);
@@ -4502,7 +4509,7 @@ namespace FreeImageNETUnitTest
 			Assert.AreEqual(FreeImage.GetHeight(dib), bitmap.Height);
 
 			bitmap.Dispose();
-			FreeImage.DeleteObject(hBitmap);
+			FreeImage.FreeHbitmap(hBitmap);
 			FreeImage.UnloadEx(ref dib);
 
 			hBitmap = FreeImage.GetHbitmap(dib, IntPtr.Zero, false);
@@ -4829,7 +4836,7 @@ namespace FreeImageNETUnitTest
 			dib = FreeImage.AllocateT(FREE_IMAGE_TYPE.FIT_BITMAP, 1, 1, 1, 0, 0, 0);
 			Assert.IsFalse(dib.IsNull);
 
-			prof = FreeImage.GetICCProfile(dib);
+			prof = FreeImage.GetICCProfileEx(dib);
 			Assert.That(prof.DataPointer == IntPtr.Zero);
 
 			rand.NextBytes(data);
@@ -4840,11 +4847,11 @@ namespace FreeImageNETUnitTest
 					Assert.Fail();
 
 			FreeImage.DestroyICCProfile(dib);
-			prof = FreeImage.GetICCProfile(dib);
+			prof = FreeImage.GetICCProfileEx(dib);
 			Assert.That(prof.DataPointer == IntPtr.Zero);
 
 			FreeImage.CreateICCProfileEx(dib, new byte[0], 0);
-			prof = FreeImage.GetICCProfile(dib);
+			prof = FreeImage.GetICCProfileEx(dib);
 			Assert.That(prof.DataPointer == IntPtr.Zero);
 
 			FreeImage.UnloadEx(ref dib);
@@ -4914,7 +4921,7 @@ namespace FreeImageNETUnitTest
 		}
 
 		[Test]
-		public void FreeImage_PtrToStr()
+		public unsafe void FreeImage_PtrToStr()
 		{
 			string testString;
 			string resString;
@@ -4930,7 +4937,7 @@ namespace FreeImageNETUnitTest
 			}
 			Marshal.WriteByte(buffer, index, (byte)0);
 
-			resString = FreeImage.PtrToStr((uint)buffer);
+			resString = FreeImage.PtrToStr((byte*)buffer);
 			Assert.That(resString == testString);
 
 			Marshal.FreeHGlobal(buffer);
@@ -4944,7 +4951,7 @@ namespace FreeImageNETUnitTest
 			}
 			Marshal.WriteByte(buffer, index, (byte)0);
 
-			resString = FreeImage.PtrToStr((uint)buffer);
+			resString = FreeImage.PtrToStr((byte*)buffer);
 			Assert.That(resString == testString);
 
 			Marshal.FreeHGlobal(buffer);
@@ -5194,13 +5201,1098 @@ namespace FreeImageNETUnitTest
 		[Test]
 		public void FreeImage_GetUniqueColors()
 		{
-			// TODO
+			RGBQUADARRAY palette;
+
+			//
+			// 1bpp
+			//
+
+			dib = FreeImage.Allocate(10, 1, 1, 0, 0, 0);
+			Assert.IsFalse(dib.IsNull);
+
+			palette = new RGBQUADARRAY(dib);
+			palette.SetRGBQUAD(0, new RGBQUAD(Color.FromArgb(43, 255, 255, 255)));
+			palette.SetRGBQUAD(1, new RGBQUAD(Color.FromArgb(222, 0, 0, 0)));
+
+			FI1BITARRAY sl1bit = new FI1BITARRAY(dib, 0);
+			for (int x = 0; x < sl1bit.Length; x++)
+			{
+				sl1bit.SetIndex(x, 0);
+			}
+
+			Assert.AreEqual(1, FreeImage.GetUniqueColors(dib));
+
+			sl1bit.SetIndex(5, 1);
+			Assert.AreEqual(2, FreeImage.GetUniqueColors(dib));
+
+			palette.SetRGBQUAD(1, new RGBQUAD(Color.FromArgb(222, 255, 255, 255)));
+			Assert.AreEqual(1, FreeImage.GetUniqueColors(dib));
+
+			sl1bit.SetIndex(5, 0);
+			Assert.AreEqual(1, FreeImage.GetUniqueColors(dib));
+
+			FreeImage.UnloadEx(ref dib);
+
+			//
+			// 4bpp
+			//
+
+			dib = FreeImage.Allocate(10, 1, 4, 0, 0, 0);
+			Assert.IsFalse(dib.IsNull);
+
+			palette = new RGBQUADARRAY(dib);
+			palette.SetRGBQUAD(0, new RGBQUAD(Color.FromArgb(43, 255, 255, 255)));
+			palette.SetRGBQUAD(1, new RGBQUAD(Color.FromArgb(222, 51, 2, 211)));
+			palette.SetRGBQUAD(2, new RGBQUAD(Color.FromArgb(29, 25, 31, 52)));
+			palette.SetRGBQUAD(3, new RGBQUAD(Color.FromArgb(173, 142, 61, 178)));
+			palette.SetRGBQUAD(4, new RGBQUAD(Color.FromArgb(143, 41, 67, 199)));
+			palette.SetRGBQUAD(5, new RGBQUAD(Color.FromArgb(2, 0, 2, 221)));
+
+			FI4BITARRAY sl4bit = new FI4BITARRAY(dib, 0);
+
+			for (int x = 0; x < sl4bit.Length; x++)
+			{
+				sl4bit.SetIndex(x, 0);
+			}
+
+			Assert.AreEqual(1, FreeImage.GetUniqueColors(dib));
+
+			sl4bit.SetIndex(1, 1);
+			Assert.AreEqual(2, FreeImage.GetUniqueColors(dib));
+
+			sl4bit.SetIndex(2, 1);
+			Assert.AreEqual(2, FreeImage.GetUniqueColors(dib));
+
+			sl4bit.SetIndex(3, 2);
+			Assert.AreEqual(3, FreeImage.GetUniqueColors(dib));
+
+			sl4bit.SetIndex(4, 3);
+			Assert.AreEqual(4, FreeImage.GetUniqueColors(dib));
+
+			sl4bit.SetIndex(5, 4);
+			Assert.AreEqual(5, FreeImage.GetUniqueColors(dib));
+
+			sl4bit.SetIndex(6, 5);
+			Assert.AreEqual(6, FreeImage.GetUniqueColors(dib));
+
+			sl4bit.SetIndex(7, 6);
+			Assert.AreEqual(7, FreeImage.GetUniqueColors(dib));
+
+			sl4bit.SetIndex(8, 7);
+			Assert.AreEqual(7, FreeImage.GetUniqueColors(dib));
+
+			sl4bit.SetIndex(9, 7);
+			Assert.AreEqual(7, FreeImage.GetUniqueColors(dib));
+
+			FreeImage.UnloadEx(ref dib);
+
+			//
+			// 8bpp
+			//
+
+			dib = FreeImage.Allocate(10, 1, 8, 0, 0, 0);
+			Assert.IsFalse(dib.IsNull);
+
+			palette = new RGBQUADARRAY(dib);
+			palette.SetRGBQUAD(0, new RGBQUAD(Color.FromArgb(43, 255, 255, 255)));
+			palette.SetRGBQUAD(1, new RGBQUAD(Color.FromArgb(222, 51, 2, 211)));
+			palette.SetRGBQUAD(2, new RGBQUAD(Color.FromArgb(29, 25, 31, 52)));
+			palette.SetRGBQUAD(3, new RGBQUAD(Color.FromArgb(173, 142, 61, 178)));
+			palette.SetRGBQUAD(4, new RGBQUAD(Color.FromArgb(143, 41, 67, 199)));
+			palette.SetRGBQUAD(5, new RGBQUAD(Color.FromArgb(2, 0, 2, 221)));
+
+			FI8BITARRAY sl8bit = new FI8BITARRAY(dib, 0);
+
+			for (int x = 0; x < sl8bit.Length; x++)
+			{
+				sl8bit.SetIndex(x, 0);
+			}
+
+			Assert.AreEqual(1, FreeImage.GetUniqueColors(dib));
+
+			sl8bit.SetIndex(1, 1);
+			Assert.AreEqual(2, FreeImage.GetUniqueColors(dib));
+
+			sl8bit.SetIndex(2, 2);
+			Assert.AreEqual(3, FreeImage.GetUniqueColors(dib));
+
+			sl8bit.SetIndex(3, 3);
+			Assert.AreEqual(4, FreeImage.GetUniqueColors(dib));
+
+			sl8bit.SetIndex(4, 4);
+			Assert.AreEqual(5, FreeImage.GetUniqueColors(dib));
+
+			sl8bit.SetIndex(5, 6);
+			Assert.AreEqual(6, FreeImage.GetUniqueColors(dib));
+
+			sl8bit.SetIndex(5, 7);
+			Assert.AreEqual(6, FreeImage.GetUniqueColors(dib));
+
+			sl8bit.SetIndex(5, 8);
+			Assert.AreEqual(6, FreeImage.GetUniqueColors(dib));
+
+			FreeImage.UnloadEx(ref dib);
+
+			//
+			// 16bpp
+			//
+
+			dib = FreeImage.Allocate(10, 1, 16, FreeImage.FI16_555_RED_MASK, FreeImage.FI16_565_GREEN_MASK, FreeImage.FI16_565_BLUE_MASK);
+			Assert.IsFalse(dib.IsNull);
+
+			FI16RGBARRAY sl16bit = new FI16RGBARRAY(dib, 0);
+
+			for (int x = 0; x < sl16bit.Length; x++)
+			{
+				sl16bit.SetUShort(x, 0);
+			}
+
+			Assert.AreEqual(1, FreeImage.GetUniqueColors(dib));
+
+			for (int x = 0; x < sl16bit.Length; x++)
+			{
+				sl16bit.SetUShort(x, (ushort)x);
+				Assert.AreEqual(1 + x, FreeImage.GetUniqueColors(dib));
+			}
+
+			sl16bit.SetUShort(3, (ushort)5);
+			Assert.AreEqual(9, FreeImage.GetUniqueColors(dib));
+
+			sl16bit.SetUShort(7, (ushort)5);
+			Assert.AreEqual(8, FreeImage.GetUniqueColors(dib));
+
+			sl16bit.SetUShort(1, (ushort)5);
+			Assert.AreEqual(7, FreeImage.GetUniqueColors(dib));
+
+			FreeImage.UnloadEx(ref dib);
+
+			//
+			// 24bpp
+			//
+
+			dib = FreeImage.Allocate(10, 1, 24, FreeImage.FI_RGBA_RED_MASK, FreeImage.FI_RGBA_GREEN_MASK, FreeImage.FI_RGBA_BLUE_MASK);
+			Assert.IsFalse(dib.IsNull);
+
+			RGBTRIPLEARRAY sl24bit = new RGBTRIPLEARRAY(dib, 0);
+
+			for (int x = 0; x < sl24bit.Length; x++)
+			{
+				sl24bit.SetUIntColor(x, 0x00000000);
+			}
+
+			Assert.AreEqual(1, FreeImage.GetUniqueColors(dib));
+
+			for (int x = 0; x < sl24bit.Length; x++)
+			{
+				sl24bit.SetUIntColor(x, (uint)x);
+				Assert.AreEqual(1 + x, FreeImage.GetUniqueColors(dib));
+			}
+
+			sl24bit.SetUIntColor(3, (uint)2);
+			Assert.AreEqual(9, FreeImage.GetUniqueColors(dib));
+
+			sl24bit.SetUIntColor(1, (uint)5);
+			Assert.AreEqual(8, FreeImage.GetUniqueColors(dib));
+
+			sl24bit.SetUIntColor(7, (uint)9);
+			Assert.AreEqual(7, FreeImage.GetUniqueColors(dib));
+
+			sl24bit.SetUIntColor(4, (uint)8);
+			Assert.AreEqual(6, FreeImage.GetUniqueColors(dib));
+
+			FreeImage.UnloadEx(ref dib);
+
+			//
+			// 32bpp
+			//
+
+			dib = FreeImage.Allocate(10, 1, 32, FreeImage.FI_RGBA_RED_MASK, FreeImage.FI_RGBA_GREEN_MASK, FreeImage.FI_RGBA_BLUE_MASK);
+			Assert.IsFalse(dib.IsNull);
+
+			RGBQUADARRAY sl32bit = new RGBQUADARRAY(dib, 0);
+
+			for (int x = 0; x < sl32bit.Length; x++)
+			{
+				sl32bit.SetUIntColor(x, 0x00000000);
+			}
+
+			Assert.AreEqual(1, FreeImage.GetUniqueColors(dib));
+
+			for (int x = 0; x < sl32bit.Length; x++)
+			{
+				sl32bit.SetUIntColor(x, (uint)x);
+				Assert.AreEqual(1 + x, FreeImage.GetUniqueColors(dib));
+			}
+
+			sl32bit.SetUIntColor(3, (uint)(2 | 0xDE000000));
+			Assert.AreEqual(9, FreeImage.GetUniqueColors(dib));
+
+			sl32bit.SetUIntColor(1, (uint)(5 | 0x31000000));
+			Assert.AreEqual(8, FreeImage.GetUniqueColors(dib));
+
+			sl32bit.SetUIntColor(7, (uint)(9 | 0x11000000));
+			Assert.AreEqual(7, FreeImage.GetUniqueColors(dib));
+
+			sl32bit.SetUIntColor(4, (uint)(8 | 0x9A000000));
+			Assert.AreEqual(6, FreeImage.GetUniqueColors(dib));
+
+			FreeImage.UnloadEx(ref dib);
 		}
 
 		[Test]
 		public void FreeImage_CreateShrunkenPaletteLUT()
 		{
-			// TODO
+			Random rand = new Random();
+			dib = FreeImage.Allocate(1, 1, 8, 0, 0, 0);
+			Assert.IsFalse(dib.IsNull);
+
+			RGBQUADARRAY palette = new RGBQUADARRAY(dib);
+			byte[] lut;
+			int colors;
+
+			for (int x = 0; x < palette.Length; x++)
+			{
+				palette.SetUIntColor(x, 0xFF000000);
+			}
+
+			lut = FreeImage.CreateShrunkenPaletteLUT(dib, out colors);
+			Assert.AreEqual(1, colors);
+
+			for (int x = 0; x < palette.Length; x++)
+			{
+				Assert.AreEqual(0, lut[x]);
+			}
+
+			palette.SetUIntColor(1, 0x00000001);
+			lut = FreeImage.CreateShrunkenPaletteLUT(dib, out colors);
+			Assert.AreEqual(2, colors);
+
+			Assert.AreEqual(0, lut[0]);
+			Assert.AreEqual(1, lut[1]);
+
+			for (int x = 2; x < palette.Length; x++)
+			{
+				Assert.AreEqual(0, lut[x]);
+			}
+
+			for (int x = 0; x < palette.Length; x++)
+			{
+				palette.SetUIntColor(x, (uint)x);
+			}
+
+			lut = FreeImage.CreateShrunkenPaletteLUT(dib, out colors);
+			Assert.AreEqual(256, colors);
+
+			for (int x = 0; x < palette.Length; x++)
+			{
+				Assert.AreEqual(x, lut[x]);
+			}
+
+			uint[] testColors = new uint[] { 0xFF4F387C, 0xFF749178, 0xFF84D51A, 0xFF746B71, 0x74718163, 0x91648106 };
+			palette.SetUIntColor(0, testColors[0]);
+			palette.SetUIntColor(1, testColors[1]);
+			palette.SetUIntColor(2, testColors[2]);
+			palette.SetUIntColor(3, testColors[3]);
+			palette.SetUIntColor(4, testColors[4]);
+			palette.SetUIntColor(5, testColors[5]);
+
+			for (int x = testColors.Length; x < palette.Length; x++)
+			{
+				palette.SetUIntColor(x, testColors[rand.Next(0, testColors.Length - 1)]);
+			}
+
+			lut = FreeImage.CreateShrunkenPaletteLUT(dib, out colors);
+			Assert.AreEqual(testColors.Length, colors);
+
+			FreeImage.UnloadEx(ref dib);
+		}
+
+		[Test]
+		public void FreeImage_Rotate4bit()
+		{
+			RGBQUADARRAY orgPal, rotPal;
+			FIBITMAP rotated;
+			byte index;
+			dib = FreeImage.Allocate(2, 3, 4, 0, 0, 0);
+			Assert.IsFalse(dib.IsNull);
+
+			index = 1; if (!FreeImage.SetPixelIndex(dib, 0, 0, ref index)) throw new Exception();
+			index = 2; if (!FreeImage.SetPixelIndex(dib, 1, 0, ref index)) throw new Exception();
+			index = 3; if (!FreeImage.SetPixelIndex(dib, 0, 1, ref index)) throw new Exception();
+			index = 4; if (!FreeImage.SetPixelIndex(dib, 1, 1, ref index)) throw new Exception();
+			index = 5; if (!FreeImage.SetPixelIndex(dib, 0, 2, ref index)) throw new Exception();
+			index = 6; if (!FreeImage.SetPixelIndex(dib, 1, 2, ref index)) throw new Exception();
+
+			//
+			// 90 deg
+			//
+
+			rotated = FreeImage.Rotate4bit(dib, 90d);
+			Assert.IsFalse(rotated.IsNull);
+			Assert.AreEqual(3, FreeImage.GetWidth(rotated));
+			Assert.AreEqual(2, FreeImage.GetHeight(rotated));
+			Assert.AreEqual(FREE_IMAGE_TYPE.FIT_BITMAP, FreeImage.GetImageType(rotated));
+			Assert.AreEqual(4, FreeImage.GetBPP(rotated));
+			orgPal = new RGBQUADARRAY(dib);
+			rotPal = new RGBQUADARRAY(rotated);
+			Assert.IsNotNull(orgPal);
+			Assert.IsNotNull(rotPal);
+			Assert.AreEqual(orgPal.Length, rotPal.Length);
+			for (int i = 0; i < orgPal.Length; i++)
+			{
+				Assert.AreEqual(orgPal[i], rotPal[i]);
+			}
+
+			FreeImage.GetPixelIndex(rotated, 0, 0, out index);
+			Assert.AreEqual(5, index);
+			FreeImage.GetPixelIndex(rotated, 1, 0, out index);
+			Assert.AreEqual(3, index);
+			FreeImage.GetPixelIndex(rotated, 2, 0, out index);
+			Assert.AreEqual(1, index);
+			FreeImage.GetPixelIndex(rotated, 0, 1, out index);
+			Assert.AreEqual(6, index);
+			FreeImage.GetPixelIndex(rotated, 1, 1, out index);
+			Assert.AreEqual(4, index);
+			FreeImage.GetPixelIndex(rotated, 2, 1, out index);
+			Assert.AreEqual(2, index);
+			FreeImage.UnloadEx(ref rotated);
+
+			//
+			// 180 deg
+			//
+
+			rotated = FreeImage.Rotate4bit(dib, 180d);
+			Assert.IsFalse(rotated.IsNull);
+			Assert.AreEqual(FreeImage.GetWidth(dib), FreeImage.GetWidth(rotated));
+			Assert.AreEqual(FreeImage.GetHeight(dib), FreeImage.GetHeight(rotated));
+			Assert.AreEqual(FREE_IMAGE_TYPE.FIT_BITMAP, FreeImage.GetImageType(rotated));
+			Assert.AreEqual(4, FreeImage.GetBPP(rotated));
+			orgPal = new RGBQUADARRAY(dib);
+			rotPal = new RGBQUADARRAY(rotated);
+			Assert.IsNotNull(orgPal);
+			Assert.IsNotNull(rotPal);
+			Assert.AreEqual(orgPal.Length, rotPal.Length);
+			for (int i = 0; i < orgPal.Length; i++)
+			{
+				Assert.AreEqual(orgPal[i], rotPal[i]);
+			}
+
+			FreeImage.GetPixelIndex(rotated, 0, 0, out index);
+			Assert.AreEqual(6, index);
+			FreeImage.GetPixelIndex(rotated, 1, 0, out index);
+			Assert.AreEqual(5, index);
+			FreeImage.GetPixelIndex(rotated, 0, 1, out index);
+			Assert.AreEqual(4, index);
+			FreeImage.GetPixelIndex(rotated, 1, 1, out index);
+			Assert.AreEqual(3, index);
+			FreeImage.GetPixelIndex(rotated, 0, 2, out index);
+			Assert.AreEqual(2, index);
+			FreeImage.GetPixelIndex(rotated, 1, 2, out index);
+			Assert.AreEqual(1, index);
+			FreeImage.UnloadEx(ref rotated);
+
+			//
+			// 270 deg
+			//
+
+			rotated = FreeImage.Rotate4bit(dib, 270d);
+			Assert.IsFalse(rotated.IsNull);
+			Assert.AreEqual(3, FreeImage.GetWidth(rotated));
+			Assert.AreEqual(2, FreeImage.GetHeight(rotated));
+			Assert.AreEqual(FREE_IMAGE_TYPE.FIT_BITMAP, FreeImage.GetImageType(rotated));
+			Assert.AreEqual(4, FreeImage.GetBPP(rotated));
+			orgPal = new RGBQUADARRAY(dib);
+			rotPal = new RGBQUADARRAY(rotated);
+			Assert.IsNotNull(orgPal);
+			Assert.IsNotNull(rotPal);
+			Assert.AreEqual(orgPal.Length, rotPal.Length);
+			for (int i = 0; i < orgPal.Length; i++)
+			{
+				Assert.AreEqual(orgPal[i], rotPal[i]);
+			}
+
+			FreeImage.GetPixelIndex(rotated, 0, 0, out index);
+			Assert.AreEqual(2, index);
+			FreeImage.GetPixelIndex(rotated, 1, 0, out index);
+			Assert.AreEqual(4, index);
+			FreeImage.GetPixelIndex(rotated, 2, 0, out index);
+			Assert.AreEqual(6, index);
+			FreeImage.GetPixelIndex(rotated, 0, 1, out index);
+			Assert.AreEqual(1, index);
+			FreeImage.GetPixelIndex(rotated, 1, 1, out index);
+			Assert.AreEqual(3, index);
+			FreeImage.GetPixelIndex(rotated, 2, 1, out index);
+			Assert.AreEqual(5, index);
+			FreeImage.UnloadEx(ref rotated);
+
+			FreeImage.UnloadEx(ref dib);
+		}
+	}
+
+	[TestFixture]
+	public class FreeImageBitmapTest
+	{
+		ImageManager iManager = new ImageManager();
+		FIBITMAP dib = 0;
+		string freeImageCallback = null;
+
+		[TestFixtureSetUp]
+		public void Init()
+		{
+			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+		}
+
+		[TestFixtureTearDown]
+		public void DeInit()
+		{
+			FreeImage.Message -= new OutputMessageFunction(FreeImage_Message);
+		}
+
+		[SetUp]
+		public void InitEachTime()
+		{
+		}
+
+		[TearDown]
+		public void DeInitEachTime()
+		{
+		}
+
+		void FreeImage_Message(FREE_IMAGE_FORMAT fif, string message)
+		{
+			freeImageCallback = message;
+		}
+
+		[Test]
+		public void FreeImageBitmapConstructors()
+		{
+			Image bitmap;
+			FreeImageBitmap fib, fib2;
+			Stream stream;
+			Graphics g;
+			string filename = iManager.GetBitmapPath(ImageType.Odd, ImageColorType.Type_24);
+			Assert.IsNotNull(filename);
+			Assert.IsTrue(File.Exists(filename));
+
+			bitmap = new Bitmap(filename);
+			Assert.IsNotNull(bitmap);
+
+			fib = new FreeImageBitmap(bitmap);
+			Assert.AreEqual(bitmap.Width, fib.Width);
+			Assert.AreEqual(bitmap.Height, fib.Height);
+			fib.Dispose();
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(bitmap, new Size(100, 100));
+			Assert.AreEqual(100, fib.Width);
+			Assert.AreEqual(100, fib.Height);
+			fib.Dispose();
+			bitmap.Dispose();
+
+			fib = new FreeImageBitmap(filename);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(filename, FREE_IMAGE_LOAD_FLAGS.DEFAULT);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(filename, FREE_IMAGE_FORMAT.FIF_UNKNOWN);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(filename, FREE_IMAGE_FORMAT.FIF_UNKNOWN, FREE_IMAGE_LOAD_FLAGS.DEFAULT);
+			fib.Dispose();
+
+			stream = new FileStream(filename, FileMode.Open);
+			Assert.IsNotNull(stream);
+
+			fib = new FreeImageBitmap(stream);
+			fib.Dispose();
+			stream.Seek(0, SeekOrigin.Begin);
+
+			fib = new FreeImageBitmap(stream, FREE_IMAGE_FORMAT.FIF_UNKNOWN);
+			fib.Dispose();
+			stream.Seek(0, SeekOrigin.Begin);
+
+			fib = new FreeImageBitmap(stream, FREE_IMAGE_LOAD_FLAGS.DEFAULT);
+			fib.Dispose();
+			stream.Seek(0, SeekOrigin.Begin);
+
+			fib = new FreeImageBitmap(stream, FREE_IMAGE_FORMAT.FIF_UNKNOWN, FREE_IMAGE_LOAD_FLAGS.DEFAULT);
+			fib.Dispose();
+			stream.Dispose();
+
+			fib = new FreeImageBitmap(100, 100);
+			Assert.AreEqual(24, fib.ColorDepth);
+			Assert.AreEqual(100, fib.Width);
+			Assert.AreEqual(100, fib.Height);
+			fib.Dispose();
+
+			using (bitmap = new Bitmap(filename))
+			{
+				Assert.IsNotNull(bitmap);
+				using (g = Graphics.FromImage(bitmap))
+				{
+					Assert.IsNotNull(g);
+					fib = new FreeImageBitmap(100, 100, g);
+				}
+			}
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(100, 100, PixelFormat.Format1bppIndexed);
+			Assert.AreEqual(PixelFormat.Format1bppIndexed, fib.PixelFormat);
+			Assert.AreEqual(100, fib.Width);
+			Assert.AreEqual(100, fib.Height);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(100, 100, PixelFormat.Format4bppIndexed);
+			Assert.AreEqual(PixelFormat.Format4bppIndexed, fib.PixelFormat);
+			Assert.AreEqual(100, fib.Width);
+			Assert.AreEqual(100, fib.Height);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(100, 100, PixelFormat.Format8bppIndexed);
+			Assert.AreEqual(PixelFormat.Format8bppIndexed, fib.PixelFormat);
+			Assert.AreEqual(100, fib.Width);
+			Assert.AreEqual(100, fib.Height);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(100, 100, PixelFormat.Format16bppRgb555);
+			Assert.AreEqual(PixelFormat.Format16bppRgb555, fib.PixelFormat);
+			Assert.AreEqual(100, fib.Width);
+			Assert.AreEqual(100, fib.Height);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(100, 100, PixelFormat.Format16bppRgb565);
+			Assert.AreEqual(PixelFormat.Format16bppRgb565, fib.PixelFormat);
+			Assert.AreEqual(100, fib.Width);
+			Assert.AreEqual(100, fib.Height);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(100, 100, PixelFormat.Format24bppRgb);
+			Assert.AreEqual(PixelFormat.Format24bppRgb, fib.PixelFormat);
+			Assert.AreEqual(100, fib.Width);
+			Assert.AreEqual(100, fib.Height);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(100, 100, PixelFormat.Format32bppArgb);
+			Assert.AreEqual(PixelFormat.Format32bppArgb, fib.PixelFormat);
+			Assert.AreEqual(100, fib.Width);
+			Assert.AreEqual(100, fib.Height);
+
+			stream = new MemoryStream();
+			BinaryFormatter formatter = new BinaryFormatter();
+
+			formatter.Serialize(stream, fib);
+			Assert.Greater(stream.Length, 0);
+			stream.Position = 0;
+
+			fib2 = formatter.Deserialize(stream) as FreeImageBitmap;
+			stream.Dispose();
+			fib.Dispose();
+			fib2.Dispose();
+
+			fib = new FreeImageBitmap(filename);
+			fib2 = new FreeImageBitmap(fib);
+			fib2.Dispose();
+
+			fib2 = new FreeImageBitmap(fib, new Size(31, 22));
+			Assert.AreEqual(31, fib2.Width);
+			Assert.AreEqual(22, fib2.Height);
+			fib2.Dispose();
+			fib.Dispose();
+
+			dib = FreeImage.Allocate(1000, 800, 24, 0xFF0000, 0xFF00, 0xFF);
+			Assert.IsFalse(dib.IsNull);
+
+			fib = new FreeImageBitmap(1000, 800, -(int)FreeImage.GetPitch(dib), FreeImage.GetPixelFormat(dib), FreeImage.GetScanLine(dib, 0));
+			fib.Dispose();
+			FreeImage.UnloadEx(ref dib);
+		}
+
+		[Test]
+		public unsafe void Properties()
+		{
+			string filename = iManager.GetBitmapPath(ImageType.Even, ImageColorType.Type_32);
+			Assert.IsNotNull(filename);
+			Assert.IsTrue(File.Exists(filename));
+
+			FreeImageBitmap fib = new FreeImageBitmap(filename);
+			Assert.IsFalse(fib.HasPalette);
+
+			try
+			{
+				RGBQUADARRAY palette = fib.Palette;
+				Assert.Fail();
+			}
+			catch
+			{
+			}
+
+			Assert.IsFalse(fib.HasBackgroundColor);
+			fib.BackgroundColor = Color.LightSeaGreen;
+			Assert.IsTrue(fib.HasBackgroundColor);
+			Assert.That(
+				Color.LightSeaGreen.B == fib.BackgroundColor.Value.B &&
+				Color.LightSeaGreen.G == fib.BackgroundColor.Value.G &&
+				Color.LightSeaGreen.R == fib.BackgroundColor.Value.R);
+			fib.BackgroundColor = null;
+			Assert.IsFalse(fib.HasBackgroundColor);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(100, 100, PixelFormat.Format1bppIndexed);
+			ImageFlags flags = (ImageFlags)fib.Flags;
+			Assert.That((flags & ImageFlags.ColorSpaceRgb) == ImageFlags.ColorSpaceRgb);
+			Assert.That((flags & ImageFlags.HasAlpha) != ImageFlags.HasAlpha);
+			Assert.That((flags & ImageFlags.HasRealDpi) != ImageFlags.HasRealDpi);
+			Assert.That((flags & ImageFlags.HasTranslucent) != ImageFlags.HasTranslucent);
+			fib.Dispose();
+
+			dib = FreeImage.Allocate(100, 100, 32, 0xFF0000, 0xFF00, 0xFF);
+			FIICCPROFILE* prof = (FIICCPROFILE*)FreeImage.CreateICCProfile(dib, new byte[] { 0, 1, 2, 3 }, 4);
+			(*prof).Flags = ICC_FLAGS.FIICC_COLOR_IS_CMYK;
+			fib = new FreeImageBitmap(dib);
+			RGBQUADARRAY sc = (RGBQUADARRAY)fib.GetScanline(0);
+			sc.SetAlpha(0, 127);
+			flags = (ImageFlags)fib.Flags;
+			Assert.That((flags & ImageFlags.ColorSpaceCmyk) == ImageFlags.ColorSpaceCmyk);
+			Assert.That((flags & ImageFlags.HasAlpha) == ImageFlags.HasAlpha);
+			Assert.That((flags & ImageFlags.HasRealDpi) != ImageFlags.HasRealDpi);
+			Assert.That((flags & ImageFlags.HasTranslucent) == ImageFlags.HasTranslucent);
+			fib.Dispose();
+			fib = null;
+			GC.Collect(2, GCCollectionMode.Forced);
+			GC.WaitForPendingFinalizers();
+
+			fib = new FreeImageBitmap(filename);
+			flags = (ImageFlags)fib.Flags;
+			Assert.That((flags & ImageFlags.HasRealDpi) == ImageFlags.HasRealDpi);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(iManager.GetBitmapPath(ImageType.Metadata, ImageColorType.Type_01_Dither));
+			int[] propList = fib.PropertyIdList;
+			Assert.IsNotNull(propList);
+			Assert.Greater(propList.Length, 0);
+			PropertyItem[] propItemList = fib.PropertyItems;
+			Assert.IsNotNull(propItemList);
+			Assert.Greater(propItemList.Length, 0);
+			Assert.IsNotNull(fib.RawFormat);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(iManager.GetBitmapPath(ImageType.Multipaged, ImageColorType.Type_01_Dither));
+			Assert.Greater(fib.FrameCount, 1);
+			fib.Dispose();
+		}
+
+		[Test]
+		public void GetBounds()
+		{
+			Random rand = new Random();
+			int height = rand.Next(0, 100), width = rand.Next(0, 100);
+			FreeImageBitmap fib = new FreeImageBitmap(width, height, PixelFormat.Format24bppRgb);
+
+			Assert.AreEqual(fib.VerticalResolution, fib.HorizontalResolution);
+			GraphicsUnit unit;
+			RectangleF rect;
+
+			unit = GraphicsUnit.Display;
+			rect = fib.GetBounds(ref unit);
+
+			Assert.AreEqual(GraphicsUnit.Pixel, unit);
+			Assert.AreEqual(width, (int)rect.Width);
+			Assert.AreEqual(height, (int)rect.Height);
+			fib.Dispose();
+		}
+
+		[Test]
+		public void GetPropertyItem()
+		{
+			FreeImageBitmap fib = new FreeImageBitmap(iManager.GetBitmapPath(ImageType.Metadata, ImageColorType.Type_01_Dither));
+			int[] list = fib.PropertyIdList;
+			Assert.IsNotNull(list);
+			Assert.Greater(list.Length, 0);
+
+			for (int i = 0; i < list.Length; i++)
+			{
+				PropertyItem item = fib.GetPropertyItem(list[i]);
+				Assert.IsNotNull(item);
+			}
+		}
+
+		[Test]
+		public void RemovePropertyItem()
+		{
+			FreeImageBitmap fib = new FreeImageBitmap(iManager.GetBitmapPath(ImageType.Metadata, ImageColorType.Type_01_Dither));
+			Random rand = new Random();
+			int[] list = fib.PropertyIdList;
+			int length = list.Length;
+			Assert.Greater(list.Length, 0);
+
+			int id = list[rand.Next(0, list.Length - 1)];
+			Assert.IsNotNull(fib.GetPropertyItem(id));
+			fib.RemovePropertyItem(id);
+			list = fib.PropertyIdList;
+			Assert.That((list.Length + 1) == length);
+			fib.Dispose();
+		}
+
+		[Test]
+		public unsafe void RotateFlip()
+		{
+			FreeImageBitmap fib = new FreeImageBitmap(2, 2, PixelFormat.Format32bppArgb);
+
+			ResetRotateBitmap(fib);
+			fib.RotateFlip(RotateFlipType.RotateNoneFlipX);
+			Assert.AreEqual(0x00000002, ((int*)fib.GetScanlinePointer(0))[0]);
+			Assert.AreEqual(0x00000001, ((int*)fib.GetScanlinePointer(0))[1]);
+			Assert.AreEqual(0x00000004, ((int*)fib.GetScanlinePointer(1))[0]);
+			Assert.AreEqual(0x00000003, ((int*)fib.GetScanlinePointer(1))[1]);
+
+			ResetRotateBitmap(fib);
+			fib.RotateFlip(RotateFlipType.RotateNoneFlipY);
+			Assert.AreEqual(0x00000003, ((int*)fib.GetScanlinePointer(0))[0]);
+			Assert.AreEqual(0x00000004, ((int*)fib.GetScanlinePointer(0))[1]);
+			Assert.AreEqual(0x00000001, ((int*)fib.GetScanlinePointer(1))[0]);
+			Assert.AreEqual(0x00000002, ((int*)fib.GetScanlinePointer(1))[1]);
+
+			ResetRotateBitmap(fib);
+			fib.RotateFlip(RotateFlipType.RotateNoneFlipXY);
+			Assert.AreEqual(0x00000004, ((int*)fib.GetScanlinePointer(0))[0]);
+			Assert.AreEqual(0x00000003, ((int*)fib.GetScanlinePointer(0))[1]);
+			Assert.AreEqual(0x00000002, ((int*)fib.GetScanlinePointer(1))[0]);
+			Assert.AreEqual(0x00000001, ((int*)fib.GetScanlinePointer(1))[1]);
+
+			ResetRotateBitmap(fib);
+			fib.RotateFlip(RotateFlipType.Rotate90FlipNone);
+			Assert.AreEqual(0x00000003, ((int*)fib.GetScanlinePointer(0))[0]);
+			Assert.AreEqual(0x00000001, ((int*)fib.GetScanlinePointer(0))[1]);
+			Assert.AreEqual(0x00000004, ((int*)fib.GetScanlinePointer(1))[0]);
+			Assert.AreEqual(0x00000002, ((int*)fib.GetScanlinePointer(1))[1]);
+
+			ResetRotateBitmap(fib);
+			fib.RotateFlip(RotateFlipType.Rotate90FlipX);
+			Assert.AreEqual(0x00000001, ((int*)fib.GetScanlinePointer(0))[0]);
+			Assert.AreEqual(0x00000003, ((int*)fib.GetScanlinePointer(0))[1]);
+			Assert.AreEqual(0x00000002, ((int*)fib.GetScanlinePointer(1))[0]);
+			Assert.AreEqual(0x00000004, ((int*)fib.GetScanlinePointer(1))[1]);
+
+			ResetRotateBitmap(fib);
+			fib.RotateFlip(RotateFlipType.Rotate90FlipY);
+			Assert.AreEqual(0x00000004, ((int*)fib.GetScanlinePointer(0))[0]);
+			Assert.AreEqual(0x00000002, ((int*)fib.GetScanlinePointer(0))[1]);
+			Assert.AreEqual(0x00000003, ((int*)fib.GetScanlinePointer(1))[0]);
+			Assert.AreEqual(0x00000001, ((int*)fib.GetScanlinePointer(1))[1]);
+
+			fib.Dispose();
+		}
+
+		private unsafe void ResetRotateBitmap(FreeImageBitmap fib)
+		{
+			((int*)fib.GetScanlinePointer(0))[0] = 0x00000001;
+			((int*)fib.GetScanlinePointer(0))[1] = 0x00000002;
+			((int*)fib.GetScanlinePointer(1))[0] = 0x00000003;
+			((int*)fib.GetScanlinePointer(1))[1] = 0x00000004;
+		}
+
+		[Test]
+		public unsafe void GetSetPixel()
+		{
+			Random rand = new Random();
+			FreeImageBitmap fib = new FreeImageBitmap(2, 1, PixelFormat.Format1bppIndexed);
+			RGBQUADARRAY palette = fib.Palette;
+			for (int i = 0; i < palette.Length; i++)
+			{
+				palette.SetUIntColor(i, (uint)rand.Next(int.MinValue, int.MaxValue));
+				fib.SetPixel(i, 0, palette[i]);
+			}
+			for (int i = 0; i < palette.Length; i++)
+			{
+				Assert.AreEqual(fib.GetPixel(i, 0), palette[i].color);
+			}
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(16, 1, PixelFormat.Format4bppIndexed);
+			palette = fib.Palette;
+			for (int i = 0; i < palette.Length; i++)
+			{
+				palette.SetUIntColor(i, (uint)rand.Next(int.MinValue, int.MaxValue));
+				fib.SetPixel(i, 0, palette[i]);
+			}
+			for (int i = 0; i < palette.Length; i++)
+			{
+				Assert.AreEqual(fib.GetPixel(i, 0), palette[i].color);
+			}
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(256, 1, PixelFormat.Format8bppIndexed);
+			palette = fib.Palette;
+			for (int i = 0; i < palette.Length; i++)
+			{
+				palette.SetUIntColor(i, (uint)rand.Next(int.MinValue, int.MaxValue));
+				fib.SetPixel(i, 0, palette[i]);
+			}
+			for (int i = 0; i < palette.Length; i++)
+			{
+				Assert.AreEqual(fib.GetPixel(i, 0), palette[i].color);
+			}
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(1000, 1, PixelFormat.Format16bppRgb555);
+			for (int i = 0; i < 1000; i++)
+			{
+				Color orgColor = Color.FromArgb(rand.Next(int.MinValue, int.MaxValue));
+				fib.SetPixel(i, 0, orgColor);
+				Color newColor = fib.GetPixel(i, 0);
+				Assert.That(Math.Abs(orgColor.B - newColor.B) <= 8);
+				Assert.That(Math.Abs(orgColor.G - newColor.G) <= 8);
+				Assert.That(Math.Abs(orgColor.R - newColor.R) <= 8);
+			}
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(1000, 1, PixelFormat.Format24bppRgb);
+			for (int i = 0; i < 1000; i++)
+			{
+				Color orgColor = Color.FromArgb(rand.Next(int.MinValue, int.MaxValue));
+				fib.SetPixel(i, 0, orgColor);
+				Color newColor = fib.GetPixel(i, 0);
+				Assert.AreEqual(orgColor.B, newColor.B);
+				Assert.AreEqual(orgColor.G, newColor.G);
+				Assert.AreEqual(orgColor.R, newColor.R);
+			}
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(1000, 1, PixelFormat.Format32bppArgb);
+			for (int i = 0; i < 1000; i++)
+			{
+				Color orgColor = Color.FromArgb(rand.Next(int.MinValue, int.MaxValue));
+				fib.SetPixel(i, 0, orgColor);
+				Color newColor = fib.GetPixel(i, 0);
+				Assert.AreEqual(orgColor.B, newColor.B);
+				Assert.AreEqual(orgColor.G, newColor.G);
+				Assert.AreEqual(orgColor.R, newColor.R);
+				Assert.AreEqual(orgColor.A, newColor.A);
+			}
+			fib.Dispose();
+		}
+
+		[Test]
+		public void SaveAdd()
+		{
+			string filename = @"saveadd.tif";
+			FreeImageBitmap fib = new FreeImageBitmap(100, 100, PixelFormat.Format24bppRgb);
+			try
+			{
+				fib.SaveAdd();
+				Assert.Fail();
+			}
+			catch { }
+			Assert.IsFalse(File.Exists(filename));
+			fib.Save(filename);
+			fib.AdjustBrightness(0.3d);
+			fib.SaveAdd();
+			FreeImageBitmap other = new FreeImageBitmap(100, 100, PixelFormat.Format24bppRgb);
+			foreach (RGBTRIPLEARRAY scanline in other)
+			{
+				for (int i = 0; i < scanline.Length; i++)
+				{
+					scanline.SetUIntColor(i, 0xFF339955);
+				}
+			}
+			fib.SaveAdd(other);
+			other.SaveAdd(filename);
+			other.Dispose();
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(filename);
+			Assert.AreEqual(4, fib.FrameCount);
+			fib.Dispose();
+			File.Delete(filename);
+			Assert.IsFalse(File.Exists(filename));
+		}
+
+		[Test]
+		public void Clone()
+		{
+			FreeImageBitmap fib = new FreeImageBitmap(iManager.GetBitmapPath(ImageType.Even, ImageColorType.Type_24));
+			object obj = new object();
+			fib.Tag = obj;
+			FreeImageBitmap clone = fib.Clone() as FreeImageBitmap;
+			Assert.IsNotNull(clone);
+			Assert.AreEqual(fib.Width, clone.Width);
+			Assert.AreEqual(fib.Height, clone.Height);
+			Assert.AreEqual(fib.ColorDepth, clone.ColorDepth);
+			Assert.AreSame(fib.Tag, clone.Tag);
+			Assert.AreEqual(fib.ImageFormat, clone.ImageFormat);
+			clone.Dispose();
+			fib.Dispose();
+		}
+
+		[Ignore]
+		public void LockBits()
+		{
+		}
+
+		[Ignore]
+		public void UnlockBits()
+		{
+		}
+
+		[Test]
+		public void GetTypeConvertedInstance()
+		{
+			using (FreeImageBitmap fib = new FreeImageBitmap(10, 10, PixelFormat.Format8bppIndexed))
+			{
+				Assert.AreEqual(FREE_IMAGE_TYPE.FIT_BITMAP, fib.ImageType);
+				using (FreeImageBitmap conv = fib.GetTypeConvertedInstance(FREE_IMAGE_TYPE.FIT_DOUBLE, true))
+				{
+					Assert.IsNotNull(conv);
+					Assert.AreEqual(FREE_IMAGE_TYPE.FIT_DOUBLE, conv.ImageType);
+				}
+			}
+		}
+
+		[Test]
+		public void GetColorConvertedInstance()
+		{
+			using (FreeImageBitmap fib = new FreeImageBitmap(10, 10, PixelFormat.Format32bppArgb))
+			{
+				Assert.AreEqual(32, fib.ColorDepth);
+				using (FreeImageBitmap conv = fib.GetColorConvertedInstance(FREE_IMAGE_COLOR_DEPTH.FICD_24_BPP))
+				{
+					Assert.IsNotNull(conv);
+					Assert.AreEqual(24, conv.ColorDepth);
+				}
+			}
+		}
+
+		[Test]
+		public void GetScaledInstance()
+		{
+			using (FreeImageBitmap fib = new FreeImageBitmap(100, 80, PixelFormat.Format32bppArgb))
+			{
+				Assert.AreEqual(100, fib.Width);
+				Assert.AreEqual(80, fib.Height);
+				using (FreeImageBitmap conv = fib.GetScaledInstance(80, 60, FREE_IMAGE_FILTER.FILTER_BICUBIC))
+				{
+					Assert.IsNotNull(conv);
+					Assert.AreEqual(80, conv.Width);
+					Assert.AreEqual(60, conv.Height);
+				}
+			}
+		}
+
+		[Test]
+		public unsafe void GetRotatedInstance()
+		{
+			using (FreeImageBitmap fib = new FreeImageBitmap(2, 2, PixelFormat.Format32bppArgb))
+			{
+				((int*)fib.GetScanlinePointer(0))[0] = 0x1;
+				((int*)fib.GetScanlinePointer(0))[1] = 0x2;
+				((int*)fib.GetScanlinePointer(1))[0] = 0x3;
+				((int*)fib.GetScanlinePointer(1))[1] = 0x4;
+				using (FreeImageBitmap conv = fib.GetRotatedInstance(90d))
+				{
+					Assert.IsNotNull(conv);
+					Assert.AreEqual(((int*)conv.GetScanlinePointer(0))[0], 0x3);
+					Assert.AreEqual(((int*)conv.GetScanlinePointer(0))[1], 0x1);
+					Assert.AreEqual(((int*)conv.GetScanlinePointer(1))[0], 0x4);
+					Assert.AreEqual(((int*)conv.GetScanlinePointer(1))[1], 0x2);
+				}
+			}
+		}
+
+		[Test]
+		public void GetScanline()
+		{
+			FreeImageBitmap fib;
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format1bppIndexed);
+			FI1BITARRAY scanline1 = (FI1BITARRAY)fib.GetScanline(0);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format4bppIndexed);
+			FI4BITARRAY scanline2 = (FI4BITARRAY)fib.GetScanline(0);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format8bppIndexed);
+			FI8BITARRAY scanline3 = (FI8BITARRAY)fib.GetScanline(0);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format16bppRgb555);
+			FI16RGBARRAY scanline4 = (FI16RGBARRAY)fib.GetScanline(0);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format24bppRgb);
+			RGBTRIPLEARRAY scanline5 = (RGBTRIPLEARRAY)fib.GetScanline(0);
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format32bppArgb);
+			RGBQUADARRAY scanline6 = (RGBQUADARRAY)fib.GetScanline(0);
+			fib.Dispose();
+		}
+
+		[Test]
+		public void GetScanlines()
+		{
+			FreeImageBitmap fib;
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format1bppIndexed);
+			IList<FI1BITARRAY> scanline1 = (IList<FI1BITARRAY>)fib.GetScanlines();
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format4bppIndexed);
+			IList<FI4BITARRAY> scanline2 = (IList<FI4BITARRAY>)fib.GetScanlines();
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format8bppIndexed);
+			IList<FI8BITARRAY> scanline3 = (IList<FI8BITARRAY>)fib.GetScanlines();
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format16bppRgb555);
+			IList<FI16RGBARRAY> scanline4 = (IList<FI16RGBARRAY>)fib.GetScanlines();
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format24bppRgb);
+			IList<RGBTRIPLEARRAY> scanline5 = (IList<RGBTRIPLEARRAY>)fib.GetScanlines();
+			fib.Dispose();
+
+			fib = new FreeImageBitmap(10, 10, PixelFormat.Format32bppArgb);
+			IList<RGBQUADARRAY> scanline6 = (IList<RGBQUADARRAY>)fib.GetScanlines();
+			fib.Dispose();
+		}
+
+		[Test]
+		public void Operators()
+		{
+			FreeImageBitmap fib1 = null, fib2 = null;
+			Assert.IsTrue(fib1 == fib2);
+			Assert.IsFalse(fib1 != fib2);
+			Assert.IsTrue(fib1 == null);
+			Assert.IsFalse(fib1 != null);
+
+			fib1 = new FreeImageBitmap(10, 10, PixelFormat.Format24bppRgb);
+			Assert.IsFalse(fib1 == fib2);
+			Assert.IsTrue(fib1 != fib2);
+
+			fib2 = fib1;
+			fib1 = null;
+			Assert.IsFalse(fib1 == fib2);
+			Assert.IsTrue(fib1 != fib2);
+
+			fib1 = new FreeImageBitmap(10, 9, PixelFormat.Format24bppRgb);
+			Assert.IsFalse(fib1 == fib2);
+			Assert.IsTrue(fib1 != fib2);
+
+			fib2.Dispose();
+			fib2 = fib1;
+
+			Assert.IsTrue(fib1 == fib2);
+			Assert.IsFalse(fib1 != fib2);
+
+			fib2 = fib1.Clone() as FreeImageBitmap;
+			Assert.IsTrue(fib1 == fib2);
+			Assert.IsFalse(fib1 != fib2);
+			
+			fib1.Dispose();
+			fib2.Dispose();
 		}
 	}
 
@@ -5211,14 +6303,16 @@ namespace FreeImageNETUnitTest
 		static ImportedStructsTest ist = new ImportedStructsTest();
 		static WrapperStructsTest wst = new WrapperStructsTest();
 		static WrapperFunctionsTest wft = new WrapperFunctionsTest();
+		static FreeImageBitmapTest fib = new FreeImageBitmapTest();
 
 		public static void Main()
 		{
-			List<TestClass> classList = new List<TestClass>(4);
+			List<TestClass> classList = new List<TestClass>(5);
 			classList.Add(new TestClass(ift));
 			classList.Add(new TestClass(ist));
 			classList.Add(new TestClass(wst));
 			classList.Add(new TestClass(wft));
+			classList.Add(new TestClass(fib));
 
 			for (int i = 0; i < 10000; )
 			{
