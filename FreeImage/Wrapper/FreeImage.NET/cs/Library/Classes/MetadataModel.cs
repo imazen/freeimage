@@ -284,14 +284,6 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns the bitmap this instance is linked to.
-		/// </summary>
-		public FIBITMAP Dib
-		{
-			get { return dib; }
-		}
-
-		/// <summary>
 		/// Returns a String that represents the current Object.
 		/// </summary>
 		/// <returns>A String that represents the current Object.</returns>
