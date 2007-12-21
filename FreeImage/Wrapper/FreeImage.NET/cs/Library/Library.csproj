@@ -48,12 +48,16 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Classes\FreeImagePlugin.cs" />
+    <Compile Include="Classes\FreeImageBitmap.cs" />
+    <Compile Include="Classes\FreeImageEngine.cs" />
     <Compile Include="Classes\FreeImageStreamIO.cs" />
     <Compile Include="Classes\ImageMetadata.cs" />
     <Compile Include="Classes\LocalPlugin.cs" />
     <Compile Include="Classes\MetadataModel.cs" />
     <Compile Include="Classes\MetadataModels.cs" />
     <Compile Include="Classes\MetadataTag.cs" />
+    <Compile Include="Classes\PluginRepository.cs" />
     <Compile Include="Classes\StreamWrapper.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="Enumerations\FREE_IMAGE_DITHER.cs" />
@@ -74,6 +78,7 @@
     <Compile Include="Enumerations\FREE_IMAGE_COMPARE_FLAGS.cs" />
     <Compile Include="Enumerations\FREE_IMAGE_METADATA_COPY.cs" />
     <Compile Include="Enumerations\MD_SEARCH_FLAGS.cs" />
+    <Compile Include="Structs\BITMAP.cs" />
     <Compile Include="Structs\BITMAPINFO.cs" />
     <Compile Include="Structs\BITMAPINFOHEADER.cs" />
     <Compile Include="Structs\FI16RGBARRAY.cs" />
