@@ -80,6 +80,7 @@ namespace FreeImageAPI
 		public ICC_FLAGS Flags
 		{
 			get { return flags; }
+			set { flags = value; }
 		}
 
 		/// <summary>
@@ -116,7 +117,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Indicates whether the profile is CMYK.
 		/// </summary>
-		public bool isCMYK
+		public bool IsCMYK
 		{
 			get
 			{
