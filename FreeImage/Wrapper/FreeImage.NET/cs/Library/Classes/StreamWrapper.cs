@@ -79,7 +79,9 @@ namespace FreeImageAPI
 		public StreamWrapper(Stream stream, bool blocking)
 		{
 			if (!stream.CanRead)
+			{
 				throw new ArgumentException("stream is not capable of reading.");
+			}
 			this.stream = stream;
 			this.blocking = blocking;
 		}
@@ -122,7 +124,9 @@ namespace FreeImageAPI
 			{
 				checkDisposed();
 				if (!eos)
+				{
 					Fill();
+				}
 				return memoryStream.Length;
 			}
 		}
@@ -167,7 +171,9 @@ namespace FreeImageAPI
 						break;
 					}
 					if (!blocking)
+					{
 						break;
+					}
 				} while ((memoryBytes + streamBytes) < count);
 				// copy the bytes from the original stream into the memory stream
 				// if 0 bytes were read we write 0 so the memory-stream is not changed
@@ -193,7 +199,9 @@ namespace FreeImageAPI
 				case SeekOrigin.End:
 					// to seek from the end have have to read to the end first
 					if (!eos)
+					{
 						Fill();
+					}
 					newPosition = memoryStream.Length + offset;
 					break;
 				default:
@@ -238,17 +246,18 @@ namespace FreeImageAPI
 		// Reads the wrapped stream until its end.
 		private void Fill()
 		{
-			if (eos)
-				return;
-			memoryStream.Position = memoryStream.Length;
-			int bytesRead = 0;
-			byte[] buffer = new byte[1024];
-			do
+			if (!eos)
 			{
-				bytesRead = stream.Read(buffer, 0, buffer.Length);
-				memoryStream.Write(buffer, 0, bytesRead);
-			} while (bytesRead != 0);
-			eos = true;
+				memoryStream.Position = memoryStream.Length;
+				int bytesRead = 0;
+				byte[] buffer = new byte[1024];
+				do
+				{
+					bytesRead = stream.Read(buffer, 0, buffer.Length);
+					memoryStream.Write(buffer, 0, bytesRead);
+				} while (bytesRead != 0);
+				eos = true;
+			}
 		}
 
 		public new void Dispose()
