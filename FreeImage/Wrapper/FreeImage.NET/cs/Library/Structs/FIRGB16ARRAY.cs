@@ -75,7 +75,7 @@ namespace FreeImageAPI
 		{
 			if (dib.IsNull) throw new ArgumentNullException();
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP) throw new ArgumentException("dib");
-			if (FreeImage.GetBPP(dib) != 48) throw new ArgumentException("dib");
+			if (FreeImage.GetBPP(dib) != 16) throw new ArgumentException("dib");
 			baseAddress = (uint)FreeImage.GetScanLine(dib, scanline);
 			length = FreeImage.GetWidth(dib);
 		}
