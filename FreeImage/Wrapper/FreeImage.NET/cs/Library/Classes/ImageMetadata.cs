@@ -40,6 +40,9 @@ using System.Reflection;
 
 namespace FreeImageAPI
 {
+	/// <summary>
+	/// Class handling metadata of a FreeImage bitmap.
+	/// </summary>
 	public class ImageMetadata : IEnumerable, IComparable, IComparable<ImageMetadata>
 	{
 		private readonly List<MetadataModel> data;
@@ -190,17 +193,6 @@ namespace FreeImageAPI
 				{
 					return data.Count;
 				}
-			}
-		}
-
-		/// <summary>
-		/// Gets the bitmap this instance represents.
-		/// </summary>
-		public FIBITMAP Dib
-		{
-			get
-			{
-				return dib;
 			}
 		}
 
