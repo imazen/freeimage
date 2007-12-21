@@ -34,15 +34,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
+using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Resources;
 
 /////////////////////////////////////////////////////
 //                                                 //
@@ -1309,6 +1311,21 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
+	/// The BITMAP structure defines the type, width, height, color format, and bit values of a bitmap.
+	/// </summary>
+	[Serializable, StructLayout(LayoutKind.Sequential)]
+	public struct BITMAP
+	{
+		public int bmType;
+		public int bmWidth;
+		public int bmHeight;
+		public int bmWidthBytes;
+		public ushort bmPlanes;
+		public ushort bmBitsPixel;
+		public IntPtr bmBits;
+	}
+
+	/// <summary>
 	/// This structure contains information about the dimensions and color format of a device-independent bitmap (DIB).
 	/// </summary>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
@@ -1366,29 +1383,17 @@ namespace FreeImageAPI
 
 		public static bool operator ==(BITMAPINFOHEADER value1, BITMAPINFOHEADER value2)
 		{
-			if (value1.biSize != value2.biSize)
-				return false;
-			if (value1.biWidth != value2.biWidth)
-				return false;
-			if (value1.biHeight != value2.biHeight)
-				return false;
-			if (value1.biPlanes != value2.biPlanes)
-				return false;
-			if (value1.biBitCount != value2.biBitCount)
-				return false;
-			if (value1.biCompression != value2.biCompression)
-				return false;
-			if (value1.biSizeImage != value2.biSizeImage)
-				return false;
-			if (value1.biXPelsPerMeter != value2.biXPelsPerMeter)
-				return false;
-			if (value1.biYPelsPerMeter != value2.biYPelsPerMeter)
-				return false;
-			if (value1.biClrUsed != value2.biClrUsed)
-				return false;
-			if (value1.biClrImportant != value2.biClrImportant)
-				return false;
-			return true;
+			return !((value1.biSize != value2.biSize) ||
+					(value1.biWidth != value2.biWidth) ||
+					(value1.biHeight != value2.biHeight) ||
+					(value1.biPlanes != value2.biPlanes) ||
+					(value1.biBitCount != value2.biBitCount) ||
+					(value1.biCompression != value2.biCompression) ||
+					(value1.biSizeImage != value2.biSizeImage) ||
+					(value1.biXPelsPerMeter != value2.biXPelsPerMeter) ||
+					(value1.biYPelsPerMeter != value2.biYPelsPerMeter) ||
+					(value1.biClrUsed != value2.biClrUsed) ||
+					(value1.biClrImportant != value2.biClrImportant));
 		}
 
 		public static bool operator !=(BITMAPINFOHEADER value1, BITMAPINFOHEADER value2)
@@ -1506,6 +1511,7 @@ namespace FreeImageAPI
 		public ICC_FLAGS Flags
 		{
 			get { return flags; }
+			set { flags = value; }
 		}
 
 		/// <summary>
@@ -1542,7 +1548,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Indicates whether the profile is CMYK.
 		/// </summary>
-		public bool isCMYK
+		public bool IsCMYK
 		{
 			get
 			{
@@ -2587,7 +2593,7 @@ namespace FreeImageAPI
 		/// Initialises the library.
 		/// </summary>
 		/// <param name="load_local_plugins_only">
-		/// When the load_local_plugins_only parameter is true, FreeImage won�t make use of external plugins.
+		/// When the load_local_plugins_only parameter is true, FreeImage won't make use of external plugins.
 		/// </param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_Initialise")]
 		private static extern void Initialise(bool load_local_plugins_only);
@@ -2602,17 +2608,17 @@ namespace FreeImageAPI
 		/// Returns a string containing the current version of the library.
 		/// </summary>
 		/// <returns>The current version of the library.</returns>
-		public static string GetVersion() { return PtrToStr(GetVersion_()); }
+		public static unsafe string GetVersion() { return PtrToStr(GetVersion_()); }
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_GetVersion")]
-		private static extern uint GetVersion_();
+		private static unsafe extern byte* GetVersion_();
 
 		/// <summary>
 		/// Returns a string containing a standard copyright message.
 		/// </summary>
 		/// <returns>A standard copyright message.</returns>
-		public static string GetCopyrightMessage() { return PtrToStr(GetCopyrightMessage_()); }
+		public static unsafe string GetCopyrightMessage() { return PtrToStr(GetCopyrightMessage_()); }
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_GetCopyrightMessage")]
-		private static extern uint GetCopyrightMessage_();
+		private static unsafe extern byte* GetCopyrightMessage_();
 
 		/// <summary>
 		/// Calls the set error message function in FreeImage.
@@ -2643,13 +2649,13 @@ namespace FreeImageAPI
 		/// <param name="width">Width of the new bitmap.</param>
 		/// <param name="height">Height of the new bitmap.</param>
 		/// <param name="bpp">Bit depth of the new Bitmap.
-		/// Supported pixel depth: 1-, 4-, 8-, 16-, 32-bit per pixel for standard bitmap</param>
+		/// Supported pixel depth: 1-, 4-, 8-, 16-, 24-, 32-bit per pixel for standard bitmap</param>
 		/// <param name="red_mask">Red part of the color layout.
-		/// eg: 0xFF000000</param>
+		/// eg: 0xFF0000</param>
 		/// <param name="green_mask">Green part of the color layout.
-		/// eg: 0x00FF0000</param>
+		/// eg: 0x00FF00</param>
 		/// <param name="blue_mask">Blue part of the color layout.
-		/// eg: 0x0000FF00</param>
+		/// eg: 0x0000FF</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_Allocate")]
 		public static extern FIBITMAP Allocate(int width, int height, int bpp,
@@ -2662,13 +2668,13 @@ namespace FreeImageAPI
 		/// <param name="width">Width of the new bitmap.</param>
 		/// <param name="height">Height of the new bitmap.</param>
 		/// <param name="bpp">Bit depth of the new Bitmap.
-		/// Supported pixel depth: 1-, 4-, 8-, 16-, 32-bit per pixel for standard bitmap</param>
+		/// Supported pixel depth: 1-, 4-, 8-, 16-, 24-, 32-bit per pixel for standard bitmap</param>
 		/// <param name="red_mask">Red part of the color layout.
-		/// eg: 0xFF000000</param>
+		/// eg: 0xFF0000</param>
 		/// <param name="green_mask">Green part of the color layout.
-		/// eg: 0x00FF0000</param>
+		/// eg: 0x00FF00</param>
 		/// <param name="blue_mask">Blue part of the color layout.
-		/// eg: 0x0000FF00</param>
+		/// eg: 0x0000FF</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_AllocateT")]
 		public static extern FIBITMAP AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp,
@@ -2943,27 +2949,27 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="fif">The assigned FREE_IMAGE_FORMAT.</param>
 		/// <returns>The string that was used to register the plugin.</returns>
-		public static string GetFormatFromFIF(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFormatFromFIF_(fif)); }
+		public static unsafe string GetFormatFromFIF(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFormatFromFIF_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFormatFromFIF")]
-		private static extern uint GetFormatFromFIF_(FREE_IMAGE_FORMAT fif);
+		private static unsafe extern byte* GetFormatFromFIF_(FREE_IMAGE_FORMAT fif);
 
 		/// <summary>
 		/// Returns a comma-delimited file extension list describing the bitmap formats the given plugin can read and/or write.
 		/// </summary>
 		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
 		/// <returns>A comma-delimited file extension list.</returns>
-		public static string GetFIFExtensionList(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFExtensionList_(fif)); }
+		public static unsafe string GetFIFExtensionList(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFExtensionList_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFExtensionList")]
-		private static extern uint GetFIFExtensionList_(FREE_IMAGE_FORMAT fif);
+		private static unsafe extern byte* GetFIFExtensionList_(FREE_IMAGE_FORMAT fif);
 
 		/// <summary>
 		/// Returns a descriptive string that describes the bitmap formats the given plugin can read and/or write.
 		/// </summary>
 		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
 		/// <returns>A descriptive string that describes the bitmap formats.</returns>
-		public static string GetFIFDescription(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFDescription_(fif)); }
+		public static unsafe string GetFIFDescription(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFDescription_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFDescription")]
-		private static extern uint GetFIFDescription_(FREE_IMAGE_FORMAT fif);
+		private static unsafe extern byte* GetFIFDescription_(FREE_IMAGE_FORMAT fif);
 
 		/// <summary>
 		/// Returns a regular expression string that can be used by a regular expression engine to identify the bitmap.
@@ -2971,18 +2977,18 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
 		/// <returns>A regular expression string.</returns>
-		public static string GetFIFRegExpr(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFRegExpr_(fif)); }
+		public static unsafe string GetFIFRegExpr(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFRegExpr_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFRegExpr")]
-		private static extern uint GetFIFRegExpr_(FREE_IMAGE_FORMAT fif);
+		private static unsafe extern byte* GetFIFRegExpr_(FREE_IMAGE_FORMAT fif);
 
 		/// <summary>
 		/// Given a FREE_IMAGE_FORMAT identifier, returns a MIME content type string (MIME stands for Multipurpose Internet Mail Extension).
 		/// </summary>
 		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
 		/// <returns>A MIME content type string.</returns>
-		public static string GetFIFMimeType(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFMimeType_(fif)); }
+		public static unsafe string GetFIFMimeType(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFMimeType_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFMimeType")]
-		private static extern uint GetFIFMimeType_(FREE_IMAGE_FORMAT fif);
+		private static unsafe extern byte* GetFIFMimeType_(FREE_IMAGE_FORMAT fif);
 
 		/// <summary>
 		/// This function takes a filename or a file-extension and returns the plugin that can
@@ -3053,7 +3059,7 @@ namespace FreeImageAPI
 		/// Loads a FreeImage multi-paged bitmap.
 		/// Load flags can be provided by the flags parameter.
 		/// </summary>
-		/// <param name="fif">The format of image.</param>
+		/// <param name="fif">Format of the image.</param>
 		/// <param name="filename">The complete name of the file to load.</param>
 		/// <param name="create_new">When true a new bitmap is created.</param>
 		/// <param name="read_only">When true the bitmap will be loaded read only.</param>
@@ -3245,7 +3251,7 @@ namespace FreeImageAPI
 		public static extern IntPtr GetBits(FIBITMAP dib);
 
 		/// <summary>
-		/// Returns a pointer to the start of the given scanline in the bitmap�s data-bits.
+		/// Returns a pointer to the start of the given scanline in the bitmap's data-bits.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="scanline">Number of the scanline.</param>
@@ -3367,12 +3373,11 @@ namespace FreeImageAPI
 		public static extern uint GetDIBSize(FIBITMAP dib);
 
 		/// <summary>
-		/// Returns a pointer to the bitmap�s palette.
+		/// Returns a pointer to the bitmap's palette.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>Pointer to the bitmap�s palette.</returns>
+		/// <returns>Pointer to the bitmap's palette.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetPalette")]
-		//[return: MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)]
 		public static extern IntPtr GetPalette(FIBITMAP dib);
 
 		/// <summary>
@@ -3425,7 +3430,7 @@ namespace FreeImageAPI
 		public static extern IntPtr GetInfo(FIBITMAP dib);
 
 		/// <summary>
-		/// Investigates the color type of the bitmap by reading the bitmap�s pixel bits and analysing them.
+		/// Investigates the color type of the bitmap by reading the bitmap's pixel bits and analysing them.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>The color type of the bitmap.</returns>
@@ -3465,10 +3470,10 @@ namespace FreeImageAPI
 		public static extern uint GetTransparencyCount(FIBITMAP dib);
 
 		/// <summary>
-		/// Returns a pointer to the bitmap�s transparency table.
+		/// Returns a pointer to the bitmap's transparency table.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>Pointer to the bitmap�s transparency table.</returns>
+		/// <returns>Pointer to the bitmap's transparency table.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetTransparencyTable")]
 		public static extern IntPtr GetTransparencyTable(FIBITMAP dib);
 
@@ -3482,10 +3487,10 @@ namespace FreeImageAPI
 		public static extern void SetTransparent(FIBITMAP dib, bool enabled);
 
 		/// <summary>
-		/// Set the bitmap�s transparency table. Only affects palletised bitmaps.
+		/// Set the bitmap's transparency table. Only affects palletised bitmaps.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="table">Pointer to the bitmap�s new transparency table.</param>
+		/// <param name="table">Pointer to the bitmap's new transparency table.</param>
 		/// <param name="count">The number of transparent colors in the new transparency table.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetTransparencyTable")]
 		internal static extern void SetTransparencyTable_(FIBITMAP dib, byte[] table, int count);
@@ -3521,13 +3526,42 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Set the file background color of an image.
 		/// When saving an image to PNG, this background color is transparently saved to the PNG file.
-		/// When the bkcolor parameter is NULL, the background color is removed from the image.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="bkcolor">The new background color.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetBackgroundColor")]
-		public static extern bool SetBackgroundColor(FIBITMAP dib, ref RGBQUAD bkcolor);
+		public static unsafe extern bool SetBackgroundColor(FIBITMAP dib, ref RGBQUAD bkcolor);
+
+		/// <summary>
+		/// Set the file background color of an image.
+		/// When saving an image to PNG, this background color is transparently saved to the PNG file.
+		/// When the bkcolor parameter is null, the background color is removed from the image.
+		/// <para>
+		/// This overloaded version of the function with an array parameter is provided to allow
+		/// passing <c>null</c> in the <c>bkcolor</c> parameter. This is similar to the
+		/// original C/C++ function. Passing <c>null</c> as <c>bkcolor</c> parameter will
+		/// unset the dib's previously set background color.
+		/// </para> 
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="bkcolor">The new background color.
+		/// The first entry in the array is used.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		/// <example>
+		/// <code>
+		/// // create a RGBQUAD color
+		/// RGBQUAD color = new RGBQUAD(Color.Green);
+		/// 
+		/// // set the dib's background color (using the other version of the function)
+		/// FreeImage.SetBackgroundColor(dib, ref color);
+		/// 
+		/// // remove it again (this only works due to the array parameter RGBQUAD[])
+		/// FreeImage.SetBackgroundColor(dib, null);
+		/// </code>
+		/// </example>
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetBackgroundColor")]
+		public static unsafe extern bool SetBackgroundColor(FIBITMAP dib, RGBQUAD[] bkcolor);
 
 		/// <summary>
 		/// Sets the index of the palette entry to be used as transparent color
@@ -3560,9 +3594,16 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>The FIICCPROFILE data of the bitmap.</returns>
-		public static FIICCPROFILE GetICCProfile(FIBITMAP dib) { unsafe { return *(FIICCPROFILE*)FreeImage.GetICCProfile_(dib); } }
+		public static FIICCPROFILE GetICCProfileEx(FIBITMAP dib) { unsafe { return *(FIICCPROFILE*)FreeImage.GetICCProfile(dib); } }
+
+		/// <summary>
+		/// Retrieves a pointer to the FIICCPROFILE data of the bitmap.
+		/// This function can also be called safely, when the original format does not support profiles.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <returns>Pointer to the FIICCPROFILE data of the bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetICCProfile")]
-		private static extern IntPtr GetICCProfile_(FIBITMAP dib);
+		public static extern IntPtr GetICCProfile(FIBITMAP dib);
 
 		/// <summary>
 		/// Creates a new FIICCPROFILE block from ICC profile data previously read from a file
@@ -4032,18 +4073,18 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="tag">The tag field.</param>
 		/// <returns>The field name.</returns>
-		public static string GetTagKey(FITAG tag) { return PtrToStr(GetTagKey_(tag)); }
+		public static unsafe string GetTagKey(FITAG tag) { return PtrToStr(GetTagKey_(tag)); }
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_GetTagKey")]
-		private static extern uint GetTagKey_(FITAG tag);
+		private static unsafe extern byte* GetTagKey_(FITAG tag);
 
 		/// <summary>
 		/// Returns the tag description.
 		/// </summary>
 		/// <param name="tag">The tag field.</param>
 		/// <returns>The description or NULL if unavailable.</returns>
-		public static string GetTagDescription(FITAG tag) { return PtrToStr(GetTagDescription_(tag)); }
+		public static unsafe string GetTagDescription(FITAG tag) { return PtrToStr(GetTagDescription_(tag)); }
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_GetTagDescription")]
-		private static extern uint GetTagDescription_(FITAG tag);
+		private static unsafe extern byte* GetTagDescription_(FITAG tag);
 
 		/// <summary>
 		/// Returns the tag ID.
@@ -4230,9 +4271,9 @@ namespace FreeImageAPI
 		/// <param name="tag">The interpreted tag value.</param>
 		/// <param name="Make">Reserved.</param>
 		/// <returns>The representing string.</returns>
-		public static string TagToString(FREE_IMAGE_MDMODEL model, FITAG tag, uint Make) { return PtrToStr(TagToString_(model, tag, Make)); }
+		public static unsafe string TagToString(FREE_IMAGE_MDMODEL model, FITAG tag, uint Make) { return PtrToStr(TagToString_(model, tag, Make)); }
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_TagToString")]
-		private static extern uint TagToString_(FREE_IMAGE_MDMODEL model, FITAG tag, uint Make);
+		private static unsafe extern byte* TagToString_(FREE_IMAGE_MDMODEL model, FITAG tag, uint Make);
 
 		#endregion
 
@@ -4464,12 +4505,26 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="fg">Handle to a FreeImage bitmap.</param>
 		/// <param name="useFileBkg">When true the background of fg is used if it contains one.</param>
-		/// <param name="appBkColor">When true the application background is used if useFileBkg is false.</param>
-		/// <param name="bg">Image used as background when useFIleBkg is false or fg has no background
-		/// and appBkColor is false.</param>
+		/// <param name="appBkColor">The application background is used if useFileBkg is false.</param>
+		/// <param name="bg">Image used as background when useFileBkg is false or fg has no background
+		/// and appBkColor is null.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_Composite")]
 		public static extern FIBITMAP Composite(FIBITMAP fg, bool useFileBkg, ref RGBQUAD appBkColor, FIBITMAP bg);
+
+		/// <summary>
+		/// This function composite a transparent foreground image against a single background color or
+		/// against a background image.
+		/// </summary>
+		/// <param name="fg">Handle to a FreeImage bitmap.</param>
+		/// <param name="useFileBkg">When true the background of fg is used if it contains one.</param>
+		/// <param name="appBkColor">The application background is used if useFileBkg is false
+		/// and 'appBkColor' is not null.</param>
+		/// <param name="bg">Image used as background when useFileBkg is false or fg has no background
+		/// and appBkColor is null.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_Composite")]
+		public static extern FIBITMAP Composite(FIBITMAP fg, bool useFileBkg, RGBQUAD[] appBkColor, FIBITMAP bg);
 
 		/// <summary>
 		/// Performs a lossless crop on a JPEG file.
@@ -5782,7 +5837,7 @@ namespace FreeImageAPI
 		{
 			if (dib.IsNull) throw new ArgumentNullException();
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP) throw new ArgumentException("dib");
-			if (FreeImage.GetBPP(dib) != 48) throw new ArgumentException("dib");
+			if (FreeImage.GetBPP(dib) != 16) throw new ArgumentException("dib");
 			baseAddress = (uint)FreeImage.GetScanLine(dib, scanline);
 			length = FreeImage.GetWidth(dib);
 		}
@@ -7611,6 +7666,36 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
+		/// Returns the palette-index at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <returns>Data at the index.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe byte GetIndexUnsafe(int index)
+		{
+			if ((index % 2) == 0)
+				return (byte)(((byte*)baseAddress)[index / 2] >> 4);
+			else
+				return (byte)(((byte*)baseAddress)[index / 2] & 0x0F);
+		}
+
+		/// <summary>
+		/// Sets the palette-index at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <param name="value">The new data.</param>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe void SetIndexUnsafe(int index, byte value)
+		{
+			if ((index % 2) == 0)
+				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0x0F) | (value << 4));
+			else
+				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0xF0) | (value & 0x0F));
+		}
+
+		/// <summary>
 		/// Returns an array of byte.
 		/// In each byte the lower 4 bits are representing the value (0x0F).
 		/// Changes to the array will NOT be applied to the bitmap directly.
@@ -7826,6 +7911,39 @@ namespace FreeImageAPI
 		public unsafe void SetIndex(int index, byte value)
 		{
 			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+			int mask = 1 << (7 - (index % 8));
+			if ((value & 0x01) > 0)
+			{
+				((byte*)baseAddress)[index / 8] |= (byte)mask;
+			}
+			else
+			{
+				((byte*)baseAddress)[index / 8] &= (byte)(~mask);
+			}
+		}
+
+		/// <summary>
+		/// Returns the bit at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <returns>Data at the index.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe byte GetIndexUnsafe(int index)
+		{
+			byte mask = (byte)(1 << (7 - (index % 8)));
+			return ((((byte*)baseAddress)[index / 8] & mask) > 0) ? FI1BITARRAY.One : FI1BITARRAY.Zero;
+		}
+
+		/// <summary>
+		/// Sets the bit at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <param name="value">The new data.</param>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe void SetIndexUnsafe(int index, byte value)
+		{
 			int mask = 1 << (7 - (index % 8));
 			if ((value & 0x01) > 0)
 			{
@@ -9704,6 +9822,3284 @@ namespace FreeImageAPI
 
 	#region Classes
 
+	/// <summary>
+	/// Encapsulates a FreeImage-bitmap.
+	/// </summary>
+	[Serializable, Guid("64a4c935-b757-499c-ab8c-6110316a9e51")]
+	public class FreeImageBitmap : ICloneable, IDisposable, IEnumerable, ISerializable
+	{
+		private bool disposed = false;
+		private object tag = null;
+		private object lockObject = new object();
+		private SaveInformation saveInformation = new SaveInformation();
+		protected FREE_IMAGE_FORMAT originalFormat = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+		protected FIBITMAP dib = 0;
+		protected FIMULTIBITMAP mdib = 0;
+
+		#region Constructors and Destructor
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class.
+		/// </summary>
+		protected FreeImageBitmap()
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class.
+		/// For internal use only.
+		/// </summary>
+		internal FreeImageBitmap(FIBITMAP dib)
+		{
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+			this.dib = dib;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from a specified existing image.
+		/// </summary>
+		/// <param name="original">The original to clone from.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		public FreeImageBitmap(FreeImageBitmap original)
+		{
+			original.ThrowOnDisposed();
+			dib = FreeImage.Clone(original.dib);
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from a specified existing image with the specified size.
+		/// </summary>
+		/// <param name="original">The original to clone from.</param>
+		/// <param name="newSize">The Size structure that represent the
+		/// size of the new FreeImageBitmap.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="newSize.Width"/> or <paramref name="newSize.Height"/> are less than or zero.
+		/// </exception>
+		public FreeImageBitmap(FreeImageBitmap original, Size newSize)
+			: this(original, newSize.Width, newSize.Height)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from a specified existing image with the specified size.
+		/// </summary>
+		/// <param name="original">The original to clone from.</param>
+		/// <param name="width">Width of the new FreeImageBitmap.</param>
+		/// <param name="height">Height of the new FreeImageBitmap.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="width"/> or <paramref name="height"/> are less than or zero.</exception>
+		public FreeImageBitmap(FreeImageBitmap original, int width, int height)
+		{
+			if (original == null)
+			{
+				throw new ArgumentNullException("original");
+			}
+			if (width <= 0)
+			{
+				throw new ArgumentOutOfRangeException("width");
+			}
+			if (height <= 0)
+			{
+				throw new ArgumentOutOfRangeException("height");
+			}
+			original.ThrowOnDisposed();
+			dib = FreeImage.Rescale(original.dib, width, height, FREE_IMAGE_FILTER.FILTER_BICUBIC);
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from a specified existing image.
+		/// </summary>
+		/// <param name="original">The original to clone from.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		public FreeImageBitmap(Image original)
+			: this(original as Bitmap)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from a specified existing image with the specified size.
+		/// </summary>
+		/// <param name="original">The original to clone from.</param>
+		/// <param name="newSize">The Size structure that represent the
+		/// size of the new FreeImageBitmap.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="newSize.Width"/> or <paramref name="newSize.Height"/> are less than or zero.
+		/// </exception>
+		public FreeImageBitmap(Image original, Size newSize)
+			: this(original as Bitmap, newSize.Width, newSize.Height)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from a specified existing image with the specified size.
+		/// </summary>
+		/// <param name="original">The original to clone from.</param>
+		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="width"/> or <paramref name="height"/> are less than or zero.</exception>
+		public FreeImageBitmap(Image original, int width, int height)
+			: this(original as Bitmap, width, height)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from a specified existing image.
+		/// </summary>
+		/// <param name="original">The original to clone from.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		public FreeImageBitmap(Bitmap original)
+		{
+			if (original == null)
+			{
+				throw new ArgumentNullException("original");
+			}
+			dib = FreeImage.CreateFromBitmap(original, true);
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from a specified existing image with the specified size.
+		/// </summary>
+		/// <param name="original">The original to clone from.</param>
+		/// <param name="newSize">The Size structure that represent the
+		/// size of the new FreeImageBitmap.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="newSize.Width"/> or <paramref name="newSize.Height"/> are less than or zero.
+		/// </exception>
+		public FreeImageBitmap(Bitmap original, Size newSize)
+			: this(original, newSize.Width, newSize.Height)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from a specified existing image with the specified size.
+		/// </summary>
+		/// <param name="original">The original to clone from.</param>
+		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="width"/> or <paramref name="height"/> are less than or zero.</exception>
+		public FreeImageBitmap(Bitmap original, int width, int height)
+		{
+			if (original == null)
+			{
+				throw new ArgumentNullException("original");
+			}
+			if (width <= 0)
+			{
+				throw new ArgumentOutOfRangeException("width");
+			}
+			if (height <= 0)
+			{
+				throw new ArgumentOutOfRangeException("height");
+			}
+			FIBITMAP temp = FreeImage.CreateFromBitmap(original, true);
+			if (temp.IsNull)
+			{
+				throw new Exception();
+			}
+			else
+			{
+				dib = FreeImage.Rescale(temp, width, height, FREE_IMAGE_FILTER.FILTER_BICUBIC);
+				FreeImage.Unload(temp);
+				if (dib.IsNull)
+				{
+					throw new Exception();
+				}
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from the specified data stream.
+		/// </summary>
+		/// <param name="stream">Stream to read from.</param>
+		/// <param name="useIcm">Ignored.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
+		public FreeImageBitmap(Stream stream, bool useIcm)
+			: this(stream)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from the specified data stream.
+		/// </summary>
+		/// <param name="stream">Stream to read from.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
+		public FreeImageBitmap(Stream stream)
+			: this(stream, FREE_IMAGE_FORMAT.FIF_UNKNOWN, FREE_IMAGE_LOAD_FLAGS.DEFAULT)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from the specified data stream in the specified format.
+		/// </summary>
+		/// <param name="stream">Stream to read from.</param>
+		/// <param name="format">Format of the image.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
+		public FreeImageBitmap(Stream stream, FREE_IMAGE_FORMAT format)
+			: this(stream, format, FREE_IMAGE_LOAD_FLAGS.DEFAULT)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from the specified data stream with the specified loading flags.
+		/// </summary>
+		/// <param name="stream">Stream to read from.</param>
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
+		public FreeImageBitmap(Stream stream, FREE_IMAGE_LOAD_FLAGS flags)
+			: this(stream, FREE_IMAGE_FORMAT.FIF_UNKNOWN, flags)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// from the specified data stream in the specified format
+		/// with the specified loading flags.
+		/// </summary>
+		/// <param name="stream">Stream to read from.</param>
+		/// <param name="format">Format of the image.</param>
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
+		public FreeImageBitmap(Stream stream, FREE_IMAGE_FORMAT format, FREE_IMAGE_LOAD_FLAGS flags)
+		{
+			if (stream == null)
+			{
+				throw new ArgumentNullException("stream");
+			}
+			saveInformation.loadFlags = flags;
+
+			dib = FreeImage.LoadFromStream(ref format, stream, flags);
+
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+
+			originalFormat = format;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class from the specified file.
+		/// </summary>
+		/// <param name="filename">The complete name of the file to load.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="filename"/> is null.</exception>
+		/// <exception cref="FileNotFoundException"><paramref name="filename"/> does not exist.</exception>
+		public FreeImageBitmap(string filename)
+			: this(filename, FREE_IMAGE_LOAD_FLAGS.DEFAULT)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class from the specified file.
+		/// </summary>
+		/// <param name="filename">The complete name of the file to load.</param>
+		/// <param name="useIcm">Ignored.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="filename"/> is null.</exception>
+		/// <exception cref="FileNotFoundException"><paramref name="filename"/> does not exist.</exception>
+		public FreeImageBitmap(string filename, bool useIcm)
+			: this(filename)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class from the specified file
+		/// with the specified loading flags.
+		/// </summary>
+		/// <param name="filename">The complete name of the file to load.</param>
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="filename"/> is null.</exception>
+		/// <exception cref="FileNotFoundException"><paramref name="filename"/> does not exist.</exception>
+		public FreeImageBitmap(string filename, FREE_IMAGE_LOAD_FLAGS flags)
+			: this(filename, FREE_IMAGE_FORMAT.FIF_UNKNOWN, flags)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class from the specified file
+		/// in the specified format.
+		/// </summary>
+		/// <param name="filename">The complete name of the file to load.</param>
+		/// <param name="format">Format of the image.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="filename"/> is null.</exception>
+		/// <exception cref="FileNotFoundException"><paramref name="filename"/> does not exist.</exception>
+		public FreeImageBitmap(string filename, FREE_IMAGE_FORMAT format)
+			: this(filename, format, FREE_IMAGE_LOAD_FLAGS.DEFAULT)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class from the specified file
+		/// in the specified format with the specified loading flags.
+		/// </summary>
+		/// <param name="filename">The complete name of the file to load.</param>
+		/// <param name="format">Format of the image.</param>
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="filename"/> is null.</exception>
+		/// <exception cref="FileNotFoundException"><paramref name="filename"/> does not exist.</exception>
+		public FreeImageBitmap(string filename, FREE_IMAGE_FORMAT format, FREE_IMAGE_LOAD_FLAGS flags)
+		{
+			if (filename == null)
+			{
+				throw new ArgumentNullException("filename");
+			}
+			if (!File.Exists(filename))
+			{
+				throw new FileNotFoundException("filename");
+			}
+			saveInformation.loadFlags = flags;
+
+			mdib = FreeImage.OpenMultiBitmapEx(filename, ref format, flags, false, true, false);
+
+			if (mdib.IsNull)
+			{
+				throw new Exception();
+			}
+
+			originalFormat = format;
+
+			if (FreeImage.GetPageCount(mdib) != 0)
+			{
+				if (FreeImage.GetPageCount(mdib) == 1)
+				{
+					if (!FreeImage.CloseMultiBitmapEx(ref mdib, FREE_IMAGE_SAVE_FLAGS.DEFAULT))
+					{
+						throw new Exception();
+					}
+
+					dib = FreeImage.LoadEx(filename, flags, ref format);
+					if (dib.IsNull)
+					{
+						throw new Exception();
+					}
+
+					return;
+				}
+				else
+				{
+					dib = FreeImage.LockPage(mdib, 0);
+					if (!dib.IsNull)
+					{
+						return;
+					}
+				}
+			}
+
+			FreeImage.CloseMultiBitmap(mdib, FREE_IMAGE_SAVE_FLAGS.DEFAULT);
+			throw new Exception();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class
+		/// with the specified size.
+		/// </summary>
+		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		public FreeImageBitmap(int width, int height)
+		{
+			dib = FreeImage.Allocate(
+				width,
+				height,
+				24,
+				FreeImage.FI_RGBA_RED_MASK,
+				FreeImage.FI_RGBA_GREEN_MASK,
+				FreeImage.FI_RGBA_BLUE_MASK);
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class from a specified resource.
+		/// </summary>
+		/// <param name="type">The class used to extract the resource.</param>
+		/// <param name="resource">The name of the resource.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		public FreeImageBitmap(Type type, string resource)
+			: this(type.Module.Assembly.GetManifestResourceStream(type, resource))
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class with the specified size
+		/// and with the resolution of the specified Graphics object.
+		/// </summary>
+		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="g">The Graphics object that specifies the resolution for the new FreeImageBitmap.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="g"/> is null.</exception>
+		public FreeImageBitmap(int width, int height, Graphics g)
+			: this(width, height)
+		{
+			FreeImage.SetResolutionX(dib, (uint)g.DpiX);
+			FreeImage.SetResolutionX(dib, (uint)g.DpiY);
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class with the specified size and format.
+		/// </summary>
+		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="format">The PixelFormat enumeration for the new FreeImageBitmap.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		public FreeImageBitmap(int width, int height, PixelFormat format)
+		{
+			FREE_IMAGE_TYPE type;
+			uint bpp, redMask, greenMask, blueMask;
+			FreeImage.GetFormatParameters(format, out type, out bpp, out redMask, out greenMask, out blueMask);
+			dib = FreeImage.AllocateT(type, width, height, (int)bpp, redMask, greenMask, blueMask);
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class with the specified size,
+		/// pixel format, and pixel data.
+		/// </summary>
+		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="stride">nteger that specifies the byte offset between the beginning
+		/// of one scan line and the next. This is usually (but not necessarily)
+		/// the number of bytes in the pixel format (for example, 2 for 16 bits per pixel)
+		/// multiplied by the width of the bitmap. The value passed to this parameter must
+		/// be a multiple of four..</param>
+		/// <param name="format">The PixelFormat enumeration for the new FreeImageBitmap.</param>
+		/// <param name="scan0">Pointer to an array of bytes that contains the pixel data.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		public FreeImageBitmap(int width, int height, int stride, PixelFormat format, IntPtr scan0)
+		{
+			FREE_IMAGE_TYPE type;
+			uint bpp, redMask, greenMask, blueMask;
+			bool topDown = (stride > 0);
+			stride = (stride > 0) ? stride : (stride * -1);
+
+			FreeImage.GetFormatParameters(format, out type, out bpp, out redMask, out greenMask, out blueMask);
+
+			dib = FreeImage.ConvertFromRawBits(
+				scan0, width, height, stride, bpp, redMask, greenMask, blueMask, topDown);
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the FreeImageBitmap class.
+		/// </summary>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="SerializationException">The operation failed.</exception>
+		public FreeImageBitmap(SerializationInfo info, StreamingContext context)
+		{
+			try
+			{
+				byte[] data = (byte[])info.GetValue("Bitmap Data", typeof(byte[]));
+				if (data != null && data.Length > 0)
+				{
+					MemoryStream memory = new MemoryStream(data);
+					FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_TIFF;
+					dib = FreeImage.LoadFromStream(ref format, memory);
+				}
+				if (dib.IsNull)
+				{
+					throw new Exception();
+				}
+			}
+			catch
+			{
+				throw new SerializationException();
+			}
+		}
+
+		/// <summary>
+		/// Destructor
+		/// </summary>
+		~FreeImageBitmap()
+		{
+			Dispose(false);
+		}
+
+		#endregion
+
+		#region Operators
+
+		/// <summary>
+		/// The implicit conversion from FreeImageBitmap into Bitmap
+		/// allows to create an instance on the fly and use it as if
+		/// was a Bitmap. This way it can be directly used with a
+		/// PixtureBox for example without having to call any
+		/// conversion operations.
+		/// </summary>
+		public static implicit operator Bitmap(FreeImageBitmap value)
+		{
+			value.ThrowOnDisposed();
+			return FreeImage.GetBitmap(value.dib, true);
+		}
+
+		/// <summary>
+		/// The implicit conversion from Bitmap into FreeImageBitmap
+		/// allows to create an instance on the fly to perform
+		/// image processing operations and converting it back.
+		/// </summary>
+		public static implicit operator FreeImageBitmap(Bitmap value)
+		{
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.CreateFromBitmap(value, true);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		public static bool operator ==(FreeImageBitmap fib1, FreeImageBitmap fib2)
+		{
+			bool result;
+			if (object.ReferenceEquals(fib1, fib2))
+			{
+				result = true;
+			}
+			else if (object.ReferenceEquals(fib2, null) || object.ReferenceEquals(fib1, null))
+			{
+				result = false;
+			}
+			else
+			{
+				fib1.ThrowOnDisposed();
+				fib2.ThrowOnDisposed();
+				result = FreeImage.Compare(fib1.dib, fib2.dib, FREE_IMAGE_COMPARE_FLAGS.COMPLETE);
+			}
+			return result;
+		}
+
+		public static bool operator !=(FreeImageBitmap fib1, FreeImageBitmap fib2)
+		{
+			return !(fib1 == fib2);
+		}
+
+		#endregion
+
+		#region Properties
+
+		/// <summary>
+		/// Type of the bitmap.
+		/// </summary>
+		public FREE_IMAGE_TYPE ImageType
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetImageType(dib);
+			}
+		}
+
+		/// <summary>
+		/// Number of palette entries.
+		/// </summary>
+		public int ColorsUsed
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (int)FreeImage.GetColorsUsed(dib);
+			}
+		}
+
+		/// <summary>
+		/// The number of unique colors actually used by the bitmap. This might be different from
+		/// what ColorsUsed returns, which actually returns the
+		/// palette size for palletised images. Works for FIT_BITMAP type bitmaps only.
+		/// </summary>
+		public int UniqueColors
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetUniqueColors(dib);
+			}
+		}
+
+		/// <summary>
+		/// The size of one pixel in the bitmap in bits.
+		/// </summary>
+		public int ColorDepth
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (int)FreeImage.GetBPP(dib);
+			}
+		}
+
+		/// <summary>
+		/// Width of the bitmap in pixel units.
+		/// </summary>
+		public int Width
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (int)FreeImage.GetWidth(dib);
+			}
+		}
+
+		/// <summary>
+		/// Height of the bitmap in pixel units.
+		/// </summary>
+		public int Height
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (int)FreeImage.GetHeight(dib);
+			}
+		}
+
+		/// <summary>
+		/// Returns the width of the bitmap in bytes, rounded to the next 32-bit boundary.
+		/// </summary>
+		public int Pitch
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (int)FreeImage.GetPitch(dib);
+			}
+		}
+
+		/// <summary>
+		/// Size of the bitmap in memory.
+		/// </summary>
+		public int DataSize
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (int)FreeImage.GetDIBSize(dib);
+			}
+		}
+
+		/// <summary>
+		/// Returns a structure that wraps the palette of a FreeImage bitmap.
+		/// </summary>
+		/// <exception cref="Exception">'HasPalette' is false.</exception>
+		public RGBQUADARRAY Palette
+		{
+			get
+			{
+				ThrowOnDisposed();
+				if (HasPalette)
+				{
+					return FreeImage.GetPaletteEx(dib);
+				}
+				throw new Exception();
+			}
+		}
+
+		/// <summary>
+		/// Gets the horizontal resolution, in pixels per inch, of this bitmap.
+		/// </summary>
+		public float HorizontalResolution
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (float)FreeImage.GetResolutionX(dib);
+			}
+			private set
+			{
+				ThrowOnDisposed();
+				FreeImage.SetResolutionX(dib, (uint)value);
+			}
+		}
+
+		/// <summary>
+		/// Gets the vertical resolution, in pixels per inch, of this bitmap.
+		/// </summary>
+		public float VerticalResolution
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (float)FreeImage.GetResolutionY(dib);
+			}
+			private set
+			{
+				ThrowOnDisposed();
+				FreeImage.SetResolutionY(dib, (uint)value);
+			}
+		}
+
+		/// <summary>
+		/// Returns the BITMAPINFOHEADER structure of this bitmap.
+		/// </summary>
+		public BITMAPINFOHEADER InfoHeader
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetInfoHeaderEx(dib);
+			}
+		}
+
+		/// <summary>
+		/// Returns the BITMAPINFO structure of a this bitmap.
+		/// </summary>
+		public BITMAPINFO Info
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetInfoEx(dib);
+			}
+		}
+
+		/// <summary>
+		/// Investigates the color type of the bitmap
+		/// by reading the bitmap's pixel bits and analysing them.
+		/// </summary>
+		public FREE_IMAGE_COLOR_TYPE ColorType
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetColorType(dib);
+			}
+		}
+
+		/// <summary>
+		/// Bit pattern describing the red color component of a pixel in this bitmap.
+		/// </summary>
+		public uint RedMask
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetRedMask(dib);
+			}
+		}
+
+		/// <summary>
+		/// Bit pattern describing the green color component of a pixel in this bitmap.
+		/// </summary>
+		public uint GreenMask
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetGreenMask(dib);
+			}
+		}
+
+		/// <summary>
+		/// Bit pattern describing the blue color component of a pixel in this bitmap.
+		/// </summary>
+		public uint BlueMask
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetBlueMask(dib);
+			}
+		}
+
+		/// <summary>
+		/// Number of transparent colors in a palletised bitmap.
+		/// </summary>
+		public int TransparencyCount
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (int)FreeImage.GetTransparencyCount(dib);
+			}
+		}
+
+		/// <summary>
+		/// Get or sets the bitmap's transparency table.
+		/// </summary>
+		public byte[] TransparencyTable
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetTransparencyTableEx(dib);
+			}
+			set
+			{
+				ThrowOnDisposed();
+				FreeImage.SetTransparencyTable(dib, value);
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets whether this bitmap is transparent.
+		/// </summary>
+		public bool IsTransparent
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.IsTransparent(dib);
+			}
+			set
+			{
+				ThrowOnDisposed();
+				FreeImage.SetTransparent(dib, value);
+			}
+		}
+
+		/// <summary>
+		/// Gets whether this bitmap has a file background color.
+		/// </summary>
+		public bool HasBackgroundColor
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.HasBackgroundColor(dib);
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the bitmap's background color.
+		/// In case the value is null, the background color is removed.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">Get: There is no background color available.</exception>
+		/// <exception cref="Exception">Set: Setting background color failed.</exception>
+		public Color? BackgroundColor
+		{
+			get
+			{
+				ThrowOnDisposed();
+				if (!FreeImage.HasBackgroundColor(dib))
+				{
+					throw new InvalidOperationException("No background color available.");
+				}
+				RGBQUAD rgbq;
+				FreeImage.GetBackgroundColor(dib, out rgbq);
+				return rgbq.color;
+			}
+			set
+			{
+				ThrowOnDisposed();
+				if (!FreeImage.SetBackgroundColor(dib, (value.HasValue ? new RGBQUAD[] { value.Value } : null)))
+				{
+					throw new Exception("Setting background color failed.");
+				}
+			}
+		}
+
+		/// <summary>
+		/// Pointer to the data-bits of the bitmap.
+		/// </summary>
+		public IntPtr Bits
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetBits(dib);
+			}
+		}
+
+		/// <summary>
+		/// Width of the bitmap in bytes.
+		/// </summary>
+		public int Line
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (int)FreeImage.GetLine(dib);
+			}
+		}
+
+		/// <summary>
+		/// Pointer to the scanline of bitmap's top most pixel row.
+		/// </summary>
+		public IntPtr Scan0
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetScanLine(dib, (int)(FreeImage.GetHeight(dib) - 1));
+			}
+		}
+
+		/// <summary>
+		/// Width of the bitmap in bytes.
+		/// In case the bitmap is top down 'Stride' will be positive, else negative.
+		/// </summary>
+		public int Stride
+		{
+			get
+			{
+				return -Line;
+			}
+		}
+
+		/// <summary>
+		/// Gets attribute flags for the pixel data of this bitmap.
+		/// </summary>
+		public unsafe int Flags
+		{
+			get
+			{
+				ThrowOnDisposed();
+				int result = 0;
+				byte alpha;
+				int cd = ColorDepth;
+
+
+				if ((cd == 32) || (FreeImage.GetTransparencyCount(dib) != 0))
+				{
+					result += (int)ImageFlags.HasAlpha;
+				}
+
+				if (cd == 32)
+				{
+					uint width = FreeImage.GetWidth(dib);
+					uint height = FreeImage.GetHeight(dib);
+					for (int y = 0; y < height; y++)
+					{
+						RGBQUAD* scanline = (RGBQUAD*)FreeImage.GetScanLine(dib, y);
+						for (int x = 0; x < width; x++)
+						{
+							alpha = scanline[x].color.A;
+							if (alpha != byte.MinValue && alpha != byte.MaxValue)
+							{
+								result += (int)ImageFlags.HasTranslucent;
+								y = (int)height;
+								break;
+							}
+						}
+					}
+				}
+				else if (FreeImage.GetTransparencyCount(dib) != 0)
+				{
+					byte[] transTable = FreeImage.GetTransparencyTableEx(dib);
+					for (int i = 0; i < transTable.Length; i++)
+					{
+						if (transTable[i] != byte.MinValue && transTable[i] != byte.MaxValue)
+						{
+							result += (int)ImageFlags.HasTranslucent;
+							break;
+						}
+					}
+				}
+
+				if (FreeImage.GetICCProfileEx(dib).IsCMYK)
+				{
+					result += (int)ImageFlags.ColorSpaceCmyk;
+				}
+				else
+				{
+					result += (int)ImageFlags.ColorSpaceRgb;
+				}
+
+				if (FreeImage.GetColorType(dib) == FREE_IMAGE_COLOR_TYPE.FIC_MINISBLACK ||
+					FreeImage.GetColorType(dib) == FREE_IMAGE_COLOR_TYPE.FIC_MINISWHITE)
+				{
+					result += (int)ImageFlags.ColorSpaceGray;
+				}
+
+				if (originalFormat == FREE_IMAGE_FORMAT.FIF_BMP ||
+					originalFormat == FREE_IMAGE_FORMAT.FIF_FAXG3 ||
+					originalFormat == FREE_IMAGE_FORMAT.FIF_ICO ||
+					originalFormat == FREE_IMAGE_FORMAT.FIF_JPEG ||
+					originalFormat == FREE_IMAGE_FORMAT.FIF_PCX ||
+					originalFormat == FREE_IMAGE_FORMAT.FIF_PNG ||
+					originalFormat == FREE_IMAGE_FORMAT.FIF_PSD ||
+					originalFormat == FREE_IMAGE_FORMAT.FIF_TIFF)
+				{
+					result += (int)ImageFlags.HasRealDpi;
+				}
+
+				return result;
+			}
+		}
+
+		/// <summary>
+		/// Gets the width and height of this bitmap.
+		/// </summary>
+		public SizeF PhysicalDimension
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return new SizeF((float)FreeImage.GetWidth(dib), (float)FreeImage.GetHeight(dib));
+			}
+		}
+
+		/// <summary>
+		/// Gets the pixel format for this bitmap.
+		/// </summary>
+		public PixelFormat PixelFormat
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetPixelFormat(dib);
+			}
+		}
+
+		/// <summary>
+		/// Gets IDs of the property items stored in this bitmap.
+		/// </summary>
+		public int[] PropertyIdList
+		{
+			get
+			{
+				ThrowOnDisposed();
+				List<int> list = new List<int>();
+				ImageMetadata metaData = new ImageMetadata(dib, true);
+
+				foreach (MetadataModel metadataModel in metaData)
+				{
+					foreach (MetadataTag metadataTag in metadataModel)
+					{
+						list.Add(metadataTag.ID);
+					}
+				}
+
+				return list.ToArray();
+			}
+		}
+
+		/// <summary>
+		/// Gets all the property items (pieces of metadata) stored in this bitmap.
+		/// </summary>
+		public System.Drawing.Imaging.PropertyItem[] PropertyItems
+		{
+			get
+			{
+				ThrowOnDisposed();
+				List<PropertyItem> list = new List<PropertyItem>();
+				ImageMetadata metaData = new ImageMetadata(dib, true);
+
+				foreach (MetadataModel metadataModel in metaData)
+				{
+					foreach (MetadataTag metadataTag in metadataModel)
+					{
+						list.Add(metadataTag.GetPropertyItem());
+					}
+				}
+
+				return list.ToArray();
+			}
+		}
+
+		/// <summary>
+		/// Gets the format of this bitmap.
+		/// </summary>
+		public ImageFormat RawFormat
+		{
+			get
+			{
+				ThrowOnDisposed();
+				Attribute guidAttribute =
+					Attribute.GetCustomAttribute(
+						typeof(FreeImageBitmap), typeof(System.Runtime.InteropServices.GuidAttribute)
+					);
+				return (guidAttribute == null) ?
+					null :
+					new ImageFormat(new Guid(((GuidAttribute)guidAttribute).Value));
+			}
+		}
+
+		/// <summary>
+		/// Gets the width and height, in pixels, of this bitmap.
+		/// </summary>
+		public Size Size
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return new Size(Width, Height);
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets an object that provides additional data about the bitmap.
+		/// </summary>
+		public Object Tag
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return tag;
+			}
+			set
+			{
+				ThrowOnDisposed();
+				tag = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets whether the object has been disposed.
+		/// </summary>
+		public bool IsDisposed
+		{
+			get
+			{
+				return disposed;
+			}
+		}
+
+		/// <summary>
+		/// Gets a new instance of a metadata wrapping class.
+		/// </summary>
+		public ImageMetadata Metadata
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return new ImageMetadata(dib, true);
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the comment of the bitmap.
+		/// Supported formats are JPEG, PNG and GIF.
+		/// </summary>
+		public string Comment
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetImageComment(dib);
+			}
+			set
+			{
+				ThrowOnDisposed();
+				FreeImage.SetImageComment(dib, value);
+			}
+		}
+
+		/// <summary>
+		/// Returns whether the bitmap has a palette.
+		/// </summary>
+		public bool HasPalette
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return (FreeImage.GetPalette(dib) != IntPtr.Zero);
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the bitmap's palette entry used as transparent color.
+		/// Only works for 1-, 4- and 8-bpp.
+		/// </summary>
+		public int TransparentIndex
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetTransparentIndex(dib);
+			}
+			set
+			{
+				ThrowOnDisposed();
+				FreeImage.SetTransparentIndex(dib, value);
+			}
+		}
+
+		/// <summary>
+		/// Gets the number of frames in the bitmap.
+		/// </summary>
+		public int FrameCount
+		{
+			get
+			{
+				ThrowOnDisposed();
+				int result = 1;
+				if (!mdib.IsNull)
+				{
+					result = FreeImage.GetPageCount(mdib);
+				}
+				return result;
+			}
+		}
+
+		/// <summary>
+		/// Gets the ICCProfile structure of the bitmap.
+		/// </summary>
+		public FIICCPROFILE ICCProfile
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return FreeImage.GetICCProfileEx(dib);
+			}
+		}
+
+		/// <summary>
+		/// Gets the format of the original image in case
+		/// the bitmap was loaded from a file or stream.
+		/// </summary>
+		public FREE_IMAGE_FORMAT ImageFormat
+		{
+			get
+			{
+				ThrowOnDisposed();
+				return originalFormat;
+			}
+		}
+
+		#endregion
+
+		#region Methods
+
+		/// <summary>
+		/// Gets the bounds of the image in the specified unit.
+		/// </summary>
+		/// <param name="pageUnit">One of the GraphicsUnit values indicating
+		/// the unit of measure for the bounding rectangle.</param>
+		/// <returns>The RectangleF that represents the bounds of the image,
+		/// in the specified unit.</returns>
+		public RectangleF GetBounds(ref GraphicsUnit pageUnit)
+		{
+			ThrowOnDisposed();
+			pageUnit = GraphicsUnit.Pixel;
+			return new RectangleF(
+					0f,
+					0f,
+					(float)FreeImage.GetWidth(dib),
+					(float)FreeImage.GetHeight(dib));
+		}
+
+		/// <summary>
+		/// Gets the specified property item from this bitmap.
+		/// </summary>
+		/// <param name="propid">The ID of the property item to get.</param>
+		/// <returns>The PropertyItem this method gets.</returns>
+		public PropertyItem GetPropertyItem(int propid)
+		{
+			ThrowOnDisposed();
+			ImageMetadata metadata = new ImageMetadata(dib, true);
+			foreach (MetadataModel metadataModel in metadata)
+			{
+				foreach (MetadataTag tag in metadataModel)
+				{
+					if (tag.ID == propid)
+					{
+						return tag.GetPropertyItem();
+					}
+				}
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Returns a thumbnail for this FreeImageBitmap.
+		/// </summary>
+		/// <param name="thumbWidth">The width, in pixels, of the requested thumbnail image.</param>
+		/// <param name="thumbHeight">The height, in pixels, of the requested thumbnail image.</param>
+		/// <param name="callback">Ignored.</param>
+		/// <param name="callBackData">Ignored.</param>
+		/// <returns>A bitmap that represents the thumbnail.</returns>
+		public FreeImageBitmap GetThumbnailImage(int thumbWidth, int thumbHeight,
+			Image.GetThumbnailImageAbort callback, IntPtr callBackData)
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.Rescale(
+				dib, thumbWidth, thumbHeight, FREE_IMAGE_FILTER.FILTER_BICUBIC);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Returns a thumbnail for this FreeImageBitmap, keeping aspect ratio.
+		/// <paramref name="maxPixelSize"/> defines the maximum width or height
+		/// of the thumbnail.
+		/// </summary>
+		/// <param name="maxPixelSize">Thumbnail square size.</param>
+		/// <param name="convert">When true HDR images are transperantly
+		/// converted to standard images.</param>
+		/// <returns>The thumbnail in a new instance.</returns>
+		public FreeImageBitmap GetThumbnailImage(int maxPixelSize, bool convert)
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.MakeThumbnail(dib, maxPixelSize, convert);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Returns a structure, wrapping the bitmap's scanline.
+		/// Due to FreeImage bitmaps are bottum up, scanline 0 is the
+		/// bottom-most line of the image.
+		/// <para>
+		/// The structures are FI1BITARRAY (1bpp), FI4BITARRAY (4bpp),
+		/// FI8BITARRAY (8bpp), FI16RGBARRAY (16bpp), RGBTRIPLEARRAY (24bpp)
+		/// or RGBQUADARRAY (32bpp).
+		/// </para>
+		/// </summary>
+		/// <param name="scanline">Number of the scanline.</param>
+		/// <returns>Structure wrapping the scanline.</returns>
+		/// <exception cref="ArgumentException">
+		/// The bitmap's type or color depth are not supported.
+		/// </exception>
+		public object GetScanline(int scanline)
+		{
+			ThrowOnDisposed();
+			object result = null;
+
+			switch (FreeImage.GetBPP(dib))
+			{
+				case 1u: result = new FI1BITARRAY(dib, scanline); break;
+				case 4u: result = new FI4BITARRAY(dib, scanline); break;
+				case 8: result = new FI8BITARRAY(dib, scanline); break;
+				case 16u: result = new FI16RGBARRAY(dib, scanline); break;
+				case 24u: result = new RGBTRIPLEARRAY(dib, scanline); break;
+				case 32u: result = new RGBQUADARRAY(dib, scanline); break;
+				default: throw new ArgumentException("Color depth or type is not supported.");
+			}
+
+			return result;
+		}
+
+		/// <summary>
+		/// Returns a pointer to the specified scanline.
+		/// Due to FreeImage bitmaps are bottum up,
+		/// scanline 0 is the most bottom line of the image.
+		/// </summary>
+		/// <param name="scanline">Number of the scanline.</param>
+		/// <returns>Pointer to the scanline.</returns>
+		public IntPtr GetScanlinePointer(int scanline)
+		{
+			ThrowOnDisposed();
+			return FreeImage.GetScanLine(dib, scanline);
+		}
+
+		/// <summary>
+		/// Returns a list of structures, wrapping the bitmap's scanlines.
+		/// Due to FreeImage bitmaps are bottum up, scanline 0 is the
+		/// bottom-most line of the image.
+		/// Each color depth has a different wrapping structure
+		/// due to different memory layouts.
+		/// <para>
+		/// The structures are FI1BITARRAY (1bpp), FI4BITARRAY (4bpp),
+		/// FI8BITARRAY (8bpp), FI16RGBARRAY (16bpp), RGBTRIPLEARRAY (24bpp)
+		/// or RGBQUADARRAY (32bpp).
+		/// </para>
+		/// </summary>
+		/// <returns>A list containing structures wrapping the bitmap's
+		/// scanlines.</returns>
+		/// <remarks>
+		/// Instead of calling his method it is also possible to the
+		/// <c>foreach</c> clause to iterate over each scanline.
+		/// </remarks>
+		/// <exception cref="ArgumentException">
+		/// The bitmap's type or color depth are not supported.
+		/// </exception>
+		public IList GetScanlines()
+		{
+			ThrowOnDisposed();
+
+			IList list = null;
+			int height = (int)FreeImage.GetHeight(dib);
+
+			switch (FreeImage.GetBPP(dib))
+			{
+				case 1u:
+
+					list = new List<FI1BITARRAY>(height);
+					for (int i = 0; i < height; i++)
+					{
+						list.Add(new FI1BITARRAY(dib, i));
+					}
+					break;
+
+				case 4u:
+
+					list = new List<FI4BITARRAY>(height);
+					for (int i = 0; i < height; i++)
+					{
+						list.Add(new FI4BITARRAY(dib, i));
+					}
+					break;
+
+				case 8u:
+
+					list = new List<FI8BITARRAY>(height);
+					for (int i = 0; i < height; i++)
+					{
+						list.Add(new FI8BITARRAY(dib, i));
+					}
+					break;
+
+				case 16u:
+
+					list = new List<FI16RGBARRAY>(height);
+					for (int i = 0; i < height; i++)
+					{
+						list.Add(new FI16RGBARRAY(dib, i));
+					}
+					break;
+
+				case 24u:
+
+					list = new List<RGBTRIPLEARRAY>(height);
+					for (int i = 0; i < height; i++)
+					{
+						list.Add(new RGBTRIPLEARRAY(dib, i));
+					}
+					break;
+
+				case 32u:
+
+					list = new List<RGBQUADARRAY>(height);
+					for (int i = 0; i < height; i++)
+					{
+						list.Add(new RGBQUADARRAY(dib, i));
+					}
+					break;
+
+				default:
+
+					throw new ArgumentException("Color depth or type is not supported.");
+			}
+
+			return list;
+		}
+
+		/// <summary>
+		/// Removes the specified property item from this bitmap.
+		/// </summary>
+		/// <param name="propid">The ID of the property item to remove.</param>
+		public void RemovePropertyItem(int propid)
+		{
+			ThrowOnDisposed();
+			ImageMetadata mdata = new ImageMetadata(dib, true);
+			foreach (MetadataModel model in mdata)
+			{
+				foreach (MetadataTag tag in model)
+				{
+					if (tag.ID == propid)
+					{
+						model.RemoveTag(tag.Key);
+						return;
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// This method rotates, flips, or rotates and flips the bitmap.
+		/// </summary>
+		/// <param name="rotateFlipType">A RotateFlipType member
+		/// that specifies the type of rotation and flip to apply to the bitmap.</param>
+		public void RotateFlip(RotateFlipType rotateFlipType)
+		{
+			ThrowOnDisposed();
+
+			FIBITMAP newDib = 0;
+			uint bpp = FreeImage.GetBPP(dib);
+
+			switch (rotateFlipType)
+			{
+				case RotateFlipType.RotateNoneFlipX:
+
+					FreeImage.FlipHorizontal(dib);
+					break;
+
+				case RotateFlipType.RotateNoneFlipY:
+
+					FreeImage.FlipVertical(dib);
+					break;
+
+				case RotateFlipType.RotateNoneFlipXY:
+
+					FreeImage.FlipHorizontal(dib);
+					FreeImage.FlipVertical(dib);
+					break;
+
+				case RotateFlipType.Rotate90FlipNone:
+
+					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.RotateClassic(dib, 90d);
+					break;
+
+				case RotateFlipType.Rotate90FlipX:
+
+					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.RotateClassic(dib, 90d);
+					FreeImage.FlipHorizontal(newDib);
+					break;
+
+				case RotateFlipType.Rotate90FlipY:
+
+					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.RotateClassic(dib, 90d);
+					FreeImage.FlipVertical(newDib);
+					break;
+
+				case RotateFlipType.Rotate90FlipXY:
+
+					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.RotateClassic(dib, 90d);
+					FreeImage.FlipHorizontal(newDib);
+					FreeImage.FlipVertical(newDib);
+					break;
+
+				case RotateFlipType.Rotate180FlipXY:
+					newDib = FreeImage.Clone(dib);
+					break;
+			}
+			ReplaceDib(newDib);
+		}
+
+		/// <summary>
+		/// Saves this bitmap to the specified file.
+		/// </summary>
+		/// <param name="filename">A string that contains the name of the file to which
+		/// to save this bitmap.</param>
+		/// <exception cref="ArgumentException"><paramref name="filename"/> is null or empty.</exception>
+		/// <exception cref="Exception">Saving the image failed.</exception>
+		public void Save(string filename)
+		{
+			Save(filename, FREE_IMAGE_FORMAT.FIF_UNKNOWN, FREE_IMAGE_SAVE_FLAGS.DEFAULT);
+		}
+
+		/// <summary>
+		/// Saves this bitmap to the specified file in the specified format.
+		/// </summary>
+		/// <param name="filename">A string that contains the name of the file to which
+		/// to save this bitmap.</param>
+		/// <param name="format">An FREE_IMAGE_FORMAT that specifies the format of the saved image.</param>
+		/// <exception cref="ArgumentException"><paramref name="filename"/> is null or empty.</exception>
+		/// <exception cref="Exception">Saving the image failed.</exception>
+		public void Save(string filename, FREE_IMAGE_FORMAT format)
+		{
+			Save(filename, format, FREE_IMAGE_SAVE_FLAGS.DEFAULT);
+		}
+
+		/// <summary>
+		/// Saves this bitmap to the specified file in the specified format
+		/// using the specified saving flags.
+		/// </summary>
+		/// <param name="filename">A string that contains the name of the file to which
+		/// to save this bitmap.</param>
+		/// <param name="format">An FREE_IMAGE_FORMAT that specifies the format of the saved image.</param>
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <exception cref="ArgumentException"><paramref name="filename"/> is null or empty.</exception>
+		/// <exception cref="Exception">Saving the image failed.</exception>
+		public void Save(string filename, FREE_IMAGE_FORMAT format, FREE_IMAGE_SAVE_FLAGS flags)
+		{
+			ThrowOnDisposed();
+			if (string.IsNullOrEmpty(filename))
+			{
+				throw new ArgumentException("filename");
+			}
+			if (!FreeImage.SaveEx(dib, filename, format, flags))
+			{
+				throw new Exception();
+			}
+
+			saveInformation.filename = filename;
+			saveInformation.format = format;
+			saveInformation.saveFlags = flags;
+		}
+
+		/// <summary>
+		/// Saves this image to the specified stream in the specified format.
+		/// </summary>
+		/// <param name="stream">The stream where the image will be saved.</param>
+		/// <param name="format">An FREE_IMAGE_FORMAT that specifies the format of the saved image.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
+		/// <exception cref="Exception">Saving the image failed.</exception>
+		public void Save(Stream stream, FREE_IMAGE_FORMAT format)
+		{
+			Save(stream, format, FREE_IMAGE_SAVE_FLAGS.DEFAULT);
+		}
+
+		/// <summary>
+		/// Saves this image to the specified stream in the specified format
+		/// using the specified saving flags.
+		/// </summary>
+		/// <param name="stream">The stream where the image will be saved.</param>
+		/// <param name="format">An FREE_IMAGE_FORMAT that specifies the format of the saved image.</param>
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
+		/// <exception cref="Exception">Saving the image failed.</exception>
+		public void Save(Stream stream, FREE_IMAGE_FORMAT format, FREE_IMAGE_SAVE_FLAGS flags)
+		{
+			ThrowOnDisposed();
+			if (stream == null)
+			{
+				throw new ArgumentNullException("stream");
+			}
+			if (!FreeImage.SaveToStream(format, dib, stream, flags))
+			{
+				throw new Exception();
+			}
+
+			saveInformation.filename = null;
+		}
+
+		/// <summary>
+		/// Adds a frame to the file specified in a previous call to the Save method.
+		/// Use this method to save selected frames from a multiple-frame image to
+		/// another multiple-frame image.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">
+		/// This instance has not been saved to a file using Save(...) before.</exception>
+		public void SaveAdd()
+		{
+			SaveAdd(this);
+		}
+
+		/// <summary>
+		/// Adds a frame to the file specified in a previous call to the Save method.
+		/// Use this method to save selected frames from a multiple-frame image to
+		/// another multiple-frame image.
+		/// </summary>
+		/// <param name="bitmap">A FreeImageBitmap that contains the frame to add.</param>
+		/// <exception cref="InvalidOperationException">
+		/// This instance has not been saved to a file using Save(...) before.</exception>
+		public void SaveAdd(FreeImageBitmap bitmap)
+		{
+			if (saveInformation.filename == null)
+			{
+				throw new InvalidOperationException();
+			}
+
+			SaveAdd(
+				saveInformation.filename,
+				bitmap,
+				saveInformation.format,
+				saveInformation.loadFlags,
+				saveInformation.saveFlags);
+		}
+
+		/// <summary>
+		/// Adds a frame to the file specified.
+		/// Use this method to save selected frames from a multiple-frame image to
+		/// another multiple-frame image.
+		/// </summary>
+		/// <param name="filename">File to add this frame to.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="filename"/> is null.</exception>
+		/// <exception cref="FileNotFoundException"><paramref name="filename"/> does not exist.</exception>
+		/// <exception cref="Exception">Saving the image failed.</exception>
+		public void SaveAdd(string filename)
+		{
+			SaveAdd(
+				filename,
+				this,
+				FREE_IMAGE_FORMAT.FIF_UNKNOWN,
+				FREE_IMAGE_LOAD_FLAGS.DEFAULT,
+				FREE_IMAGE_SAVE_FLAGS.DEFAULT);
+		}
+
+		/// <summary>
+		/// Adds a frame to the file specified using the specified parameters.
+		/// Use this method to save selected frames from a multiple-frame image to
+		/// another multiple-frame image.
+		/// </summary>
+		/// <param name="filename">File to add this frame to.</param>
+		/// <param name="format">Format of the image.</param>
+		/// <param name="loadFlags">Flags to enable or disable plugin-features.</param>
+		/// <param name="saveFlags">Flags to enable or disable plugin-features.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="filename"/> is null.</exception>
+		/// <exception cref="FileNotFoundException"><paramref name="filename"/> does not exist.</exception>
+		/// <exception cref="Exception">Saving the image failed.</exception>
+		public void SaveAdd(
+			string filename,
+			FREE_IMAGE_FORMAT format,
+			FREE_IMAGE_LOAD_FLAGS loadFlags,
+			FREE_IMAGE_SAVE_FLAGS saveFlags)
+		{
+			SaveAdd(
+				filename,
+				this,
+				format,
+				loadFlags,
+				saveFlags);
+		}
+
+		/// <summary>
+		/// Selects the frame specified by the dimension and index.
+		/// </summary>
+		/// <param name="frameIndex">The index of the active frame.</param>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="frameIndex"/> is out of range.
+		/// </exception>
+		/// <exception cref="Exception">The operation failed.</exception>
+		public void SelectActiveFrame(int frameIndex)
+		{
+			ThrowOnDisposed();
+			if (frameIndex < 0)
+			{
+				throw new ArgumentOutOfRangeException("frameIndex");
+			}
+			if (!mdib.IsNull)
+			{
+				if (frameIndex >= FrameCount)
+				{
+					throw new ArgumentOutOfRangeException("frameIndex");
+				}
+				ReplaceDib(FreeImage.LockPage(mdib, frameIndex));
+				if (dib.IsNull)
+				{
+					throw new Exception();
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a GDI bitmap object from this FreeImageBitmap.
+		/// </summary>
+		/// <returns>A handle to the GDI bitmap object that this method creates.</returns>
+		public IntPtr GetHbitmap()
+		{
+			ThrowOnDisposed();
+			return FreeImage.GetHbitmap(dib, IntPtr.Zero, false);
+		}
+
+		/// <summary>
+		/// Creates a GDI bitmap object from this FreeImageBitmap.
+		/// </summary>
+		/// <param name="background">A Color structure that specifies the background color.
+		/// This parameter is ignored if the bitmap is totally opaque.</param>
+		/// <returns>A handle to the GDI bitmap object that this method creates.</returns>
+		public IntPtr GetHbitmap(Color background)
+		{
+			ThrowOnDisposed();
+			using (FreeImageBitmap temp = new FreeImageBitmap(this))
+			{
+				temp.BackgroundColor = background;
+				return temp.GetHbitmap();
+			}
+		}
+
+		/// <summary>
+		/// Returns the handle to an icon.
+		/// </summary>
+		/// <returns>A Windows handle to an icon with the same image as the FreeImageBitmap.</returns>
+		public IntPtr GetHicon()
+		{
+			ThrowOnDisposed();
+			using (Bitmap bitmap = FreeImage.GetBitmap(dib, true))
+			{
+				return bitmap.GetHicon();
+			}
+		}
+
+		/// <summary>
+		/// Creates a GDI bitmap object from this FreeImageBitmap with the same
+		/// color depth as the primary device.
+		/// </summary>
+		/// <returns>A handle to the GDI bitmap object that this method creates.</returns>
+		public IntPtr GetHbitmapForDevice()
+		{
+			ThrowOnDisposed();
+			return FreeImage.GetBitmapForDevice(dib, IntPtr.Zero, false);
+		}
+
+		/// <summary>
+		/// Gets the color of the specified pixel in this FreeImageBitmap.
+		/// </summary>
+		/// <param name="x">The x-coordinate of the pixel to retrieve.</param>
+		/// <param name="y">The y-coordinate of the pixel to retrieve.</param>
+		/// <returns>A Color structure that represents the color of the specified pixel.</returns>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="NotSupportedException">The type of this bitmap is not supported.</exception>
+		public unsafe Color GetPixel(int x, int y)
+		{
+			ThrowOnDisposed();
+			if (FreeImage.GetImageType(dib) == FREE_IMAGE_TYPE.FIT_BITMAP)
+			{
+				if (ColorDepth == 16 || ColorDepth == 24 || ColorDepth == 32)
+				{
+					RGBQUAD rgbq;
+					if (!FreeImage.GetPixelColor(dib, (uint)x, (uint)y, out rgbq))
+					{
+						throw new Exception();
+					}
+					return rgbq.color;
+				}
+				else if (ColorDepth == 1 || ColorDepth == 4 || ColorDepth == 8)
+				{
+					byte index;
+					if (!FreeImage.GetPixelIndex(dib, (uint)x, (uint)y, out index))
+					{
+						throw new Exception();
+					}
+					RGBQUAD* palette = (RGBQUAD*)FreeImage.GetPalette(dib);
+					return palette[index].color;
+				}
+			}
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		/// Makes the default transparent color transparent for this FreeImageBitmap.
+		/// </summary>
+		public void MakeTransparent()
+		{
+			ThrowOnDisposed();
+			MakeTransparent(Color.Transparent);
+		}
+
+		/// <summary>
+		/// Makes the specified color transparent for this FreeImageBitmap.
+		/// </summary>
+		/// <param name="transparentColor">The Color structure that represents
+		/// the color to make transparent.</param>
+		public void MakeTransparent(Color transparentColor)
+		{
+			ThrowOnDisposed();
+			throw new System.NotImplementedException();
+		}
+
+		/// <summary>
+		/// Sets the color of the specified pixel in this FreeImageBitmap.
+		/// </summary>
+		/// <param name="x">The x-coordinate of the pixel to set.</param>
+		/// <param name="y">The y-coordinate of the pixel to set.</param>
+		/// <param name="color">A Color structure that represents the color
+		/// to assign to the specified pixel.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="NotSupportedException">The type of this bitmap is not supported.</exception>
+		public unsafe void SetPixel(int x, int y, Color color)
+		{
+			ThrowOnDisposed();
+			if (FreeImage.GetImageType(dib) == FREE_IMAGE_TYPE.FIT_BITMAP)
+			{
+				if (ColorDepth == 16 || ColorDepth == 24 || ColorDepth == 32)
+				{
+					RGBQUAD rgbq = color;
+					if (!FreeImage.SetPixelColor(dib, (uint)x, (uint)y, ref rgbq))
+					{
+						throw new Exception();
+					}
+					return;
+				}
+				else if (ColorDepth == 1 || ColorDepth == 4 || ColorDepth == 8)
+				{
+					uint colorsUsed = FreeImage.GetColorsUsed(dib);
+					RGBQUAD* palette = (RGBQUAD*)FreeImage.GetPalette(dib);
+					for (int i = 0; i < colorsUsed; i++)
+					{
+						if (palette[i].color == color)
+						{
+							byte index = (byte)i;
+							if (!FreeImage.SetPixelIndex(dib, (uint)x, (uint)y, ref index))
+							{
+								throw new Exception();
+							}
+							return;
+						}
+					}
+					throw new ArgumentOutOfRangeException("color");
+				}
+			}
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		/// Sets the resolution for this FreeImageBitmap.
+		/// </summary>
+		/// <param name="xDpi">The horizontal resolution, in dots per inch, of the FreeImageBitmap.</param>
+		/// <param name="yDpi">The vertical resolution, in dots per inch, of the FreeImageBitmap.</param>
+		public void SetResolution(float xDpi, float yDpi)
+		{
+			ThrowOnDisposed();
+			FreeImage.SetResolutionX(dib, (uint)xDpi);
+			FreeImage.SetResolutionY(dib, (uint)yDpi);
+		}
+
+		/// <summary>
+		/// This function is not yet implemented.
+		/// </summary>
+		public BitmapData LockBits(Rectangle rect, ImageLockMode flags, PixelFormat format)
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// This function is not yet implemented.
+		/// </summary>
+		public BitmapData LockBits(Rectangle rect, ImageLockMode flags, PixelFormat format, BitmapData bitmapData)
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// This function is not yet implemented.
+		/// </summary>
+		public void UnlockBits(BitmapData bitmapdata)
+		{
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Converts this FreeImageBitmap into a different color depth.
+		/// The parameter 'bpp' specifies color depth, greyscale conversion
+		/// and palette reorder.
+		/// <para>Adding the 'FICD_FORCE_GREYSCALE' flag will first perform a
+		/// convesion to greyscale. This can be done with any target color depth.</para>
+		/// <para>Adding the 'FICD_REORDER_PALETTE' flag will allow the algorithm
+		/// to reorder the palette. This operation will not be performed to
+		/// non-greyscale images to prevent data lost by mistake.</para>
+		/// </summary>
+		/// <param name="bpp">A bitfield containing information about the conversion
+		/// to perform.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool ConvertColorDepth(FREE_IMAGE_COLOR_DEPTH bpp)
+		{
+			ThrowOnDisposed();
+			return ReplaceDib(FreeImage.ConvertColorDepth(dib, bpp, false));
+		}
+
+		/// <summary>
+		/// Converts this bitmap's FREE_IMAGE_TYPE to 'type' creating
+		/// a new instance.
+		/// In case source and destination type are the same, the operation fails.
+		/// An error message can be catched using the 'Message' event.
+		/// </summary>
+		/// <param name="type">Destination type.</param>
+		/// <param name="scaleLinear">True to scale linear, else false.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool ConvertType(FREE_IMAGE_TYPE type, bool scaleLinear)
+		{
+			ThrowOnDisposed();
+			return (ImageType == type) ? false : ReplaceDib(FreeImage.ConvertToType(dib, type, scaleLinear));
+		}
+
+		/// <summary>
+		/// Converts this bitmap's FREE_IMAGE_TYPE to 'type'.
+		/// In case source and destination type are the same, the operation fails.
+		/// An error message can be catched using the 'Message' event.
+		/// </summary>
+		/// <param name="type">Destination type.</param>
+		/// <param name="scaleLinear">True to scale linear, else false.</param>
+		/// <returns>The converted instance.</returns>
+		public FreeImageBitmap GetTypeConvertedInstance(FREE_IMAGE_TYPE type, bool scaleLinear)
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			if (ImageType != type)
+			{
+				FIBITMAP newDib = FreeImage.ConvertToType(dib, type, scaleLinear);
+				if (!newDib.IsNull)
+				{
+					result = new FreeImageBitmap();
+					result.dib = newDib;
+				}
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Converts this FreeImageBitmap into a different color depth creating
+		/// a new instance.
+		/// The parameter 'bpp' specifies color depth, greyscale conversion
+		/// and palette reorder.
+		/// <para>Adding the 'FICD_FORCE_GREYSCALE' flag will first perform a
+		/// convesion to greyscale. This can be done with any target color depth.</para>
+		/// <para>Adding the 'FICD_REORDER_PALETTE' flag will allow the algorithm
+		/// to reorder the palette. This operation will not be performed to
+		/// non-greyscale images to prevent data lost by mistake.</para>
+		/// </summary>
+		/// <param name="bpp">A bitfield containing information about the conversion
+		/// to perform.</param>
+		/// <returns>The converted instance.</returns>
+		public FreeImageBitmap GetColorConvertedInstance(FREE_IMAGE_COLOR_DEPTH bpp)
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.ConvertColorDepth(dib, bpp, false);
+			if (newDib == dib)
+			{
+				newDib = FreeImage.Clone(dib);
+			}
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Rescales this FreeImageBitmap to the specified size using the
+		/// specified filter.
+		/// </summary>
+		/// <param name="newSize">The Size structure that represent the
+		/// size of the new FreeImageBitmap.</param>
+		/// <param name="filter">Filter to use for resizing.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Rescale(Size newSize, FREE_IMAGE_FILTER filter)
+		{
+			return Rescale(newSize.Width, newSize.Height, filter);
+		}
+
+		/// <summary>
+		/// Rescales this FreeImageBitmap to the specified size using the
+		/// specified filter.
+		/// </summary>
+		/// <param name="width">Width of the new FreeImageBitmap.</param>
+		/// <param name="height">Height of the new FreeImageBitmap.</param>
+		/// <param name="filter">Filter to use for resizing.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Rescale(int width, int height, FREE_IMAGE_FILTER filter)
+		{
+			ThrowOnDisposed();
+			return ReplaceDib(FreeImage.Rescale(dib, width, height, filter));
+		}
+
+		/// <summary>
+		/// Rescales this FreeImageBitmap to the specified size using the
+		/// specified filter creating a new instance.
+		/// </summary>
+		/// <param name="newSize">The Size structure that represent the
+		/// size of the new FreeImageBitmap.</param>
+		/// <param name="filter">Filter to use for resizing.</param>
+		/// <returns>The rescaled instance.</returns>
+		public FreeImageBitmap GetScaledInstance(Size newSize, FREE_IMAGE_FILTER filter)
+		{
+			return GetScaledInstance(newSize.Width, newSize.Height, filter);
+		}
+
+		/// <summary>
+		/// Rescales this FreeImageBitmap to the specified size using the
+		/// specified filter creating a new instance.
+		/// </summary>
+		/// <param name="width">Width of the new FreeImageBitmap.</param>
+		/// <param name="height">Height of the new FreeImageBitmap.</param>
+		/// <param name="filter">Filter to use for resizing.</param>
+		/// <returns>The rescaled instance.</returns>
+		public FreeImageBitmap GetScaledInstance(int width, int height, FREE_IMAGE_FILTER filter)
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.Rescale(dib, width, height, filter);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Converts a High Dynamic Range image to a 24-bit RGB image using a global
+		/// operator based on logarithmic compression of luminance values, imitating the human response to light.
+		/// </summary>
+		/// <param name="gamma">A gamma correction that is applied after the tone mapping.
+		/// A value of 1 means no correction.</param>
+		/// <param name="exposure">Scale factor allowing to adjust the brightness of the output image.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool TmoDrago03(double gamma, double exposure)
+		{
+			ThrowOnDisposed();
+			return ReplaceDib(FreeImage.TmoDrago03(dib, gamma, exposure));
+		}
+
+		/// <summary>
+		/// Converts a High Dynamic Range image to a 24-bit RGB image using a global operator inspired
+		/// by photoreceptor physiology of the human visual system.
+		/// </summary>
+		/// <param name="intensity">Controls the overall image intensity in the range [-8, 8].</param>
+		/// <param name="contrast">Controls the overall image contrast in the range [0.3, 1.0[.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool TmoReinhard05(double intensity, double contrast)
+		{
+			ThrowOnDisposed();
+			return ReplaceDib(FreeImage.TmoReinhard05(dib, intensity, contrast));
+		}
+
+		/// <summary>
+		/// Apply the Gradient Domain High Dynamic Range Compression to a RGBF image and convert to 24-bit RGB.
+		/// </summary>
+		/// <param name="color_saturation">Color saturation (s parameter in the paper) in [0.4..0.6]</param>
+		/// <param name="attenuation">Atenuation factor (beta parameter in the paper) in [0.8..0.9]</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool TmoFattal02(double color_saturation, double attenuation)
+		{
+			ThrowOnDisposed();
+			return ReplaceDib(FreeImage.TmoFattal02(dib, color_saturation, attenuation));
+		}
+
+		/// <summary>
+		/// This method rotates a 1-, 4-, 8-bit greyscale or a 24-, 32-bit color image by means of 3 shears.
+		/// For 1- and 4-bit images, rotation is limited to angles whose value is an integer
+		/// multiple of 90.
+		/// </summary>
+		/// <param name="angle">The angle of rotation.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Rotate(double angle)
+		{
+			ThrowOnDisposed();
+			bool result = false;
+			if (ColorDepth == 4)
+			{
+				result = ReplaceDib(FreeImage.Rotate4bit(dib, angle));
+			}
+			else
+			{
+				result = ReplaceDib(FreeImage.RotateClassic(dib, angle));
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Rotates this FreeImageBitmap by the specified angle creating a new instance.
+		/// For 1- and 4-bit images, rotation is limited to angles whose value is an integer
+		/// multiple of 90.
+		/// </summary>
+		/// <param name="angle">The angle of rotation.</param>
+		/// <returns>The rotated instance.</returns>
+		public FreeImageBitmap GetRotatedInstance(double angle)
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib;
+			if (ColorDepth == 4)
+			{
+				newDib = FreeImage.Rotate4bit(dib, angle);
+			}
+			else
+			{
+				newDib = FreeImage.RotateClassic(dib, angle);
+			}
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// This method performs a rotation and / or translation of an 8-bit greyscale,
+		/// 24- or 32-bit image, using a 3rd order (cubic) B-Spline.
+		/// </summary>
+		/// <param name="angle">The angle of rotation.</param>
+		/// <param name="xShift">Horizontal image translation.</param>
+		/// <param name="yShift">Vertical image translation.</param>
+		/// <param name="xOrigin">Rotation center x-coordinate.</param>
+		/// <param name="yOrigin">Rotation center y-coordinate.</param>
+		/// <param name="useMask">When true the irrelevant part of the image is set to a black color,
+		/// otherwise, a mirroring technique is used to fill irrelevant pixels.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Rotate(double angle, double xShift, double yShift,
+			double xOrigin, double yOrigin, bool useMask)
+		{
+			ThrowOnDisposed();
+			return ReplaceDib(FreeImage.RotateEx(dib, angle, xShift, yShift, xOrigin, yOrigin, useMask));
+		}
+
+		/// <summary>
+		/// This method performs a rotation and / or translation of an 8-bit greyscale,
+		/// 24- or 32-bit image, using a 3rd order (cubic) B-Spline returning a new instance.
+		/// </summary>
+		/// <param name="angle">The angle of rotation.</param>
+		/// <param name="xShift">Horizontal image translation.</param>
+		/// <param name="yShift">Vertical image translation.</param>
+		/// <param name="xOrigin">Rotation center x-coordinate.</param>
+		/// <param name="yOrigin">Rotation center y-coordinate.</param>
+		/// <param name="useMask">When true the irrelevant part of the image is set to a black color,
+		/// otherwise, a mirroring technique is used to fill irrelevant pixels.</param>
+		/// <returns>The rotated instance.</returns>
+		public FreeImageBitmap GetRotatedInstance(double angle, double xShift, double yShift,
+			double xOrigin, double yOrigin, bool useMask)
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.RotateEx(
+				dib, angle, xShift, yShift, xOrigin, yOrigin, useMask);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Perfoms an histogram transformation on a 8-, 24- or 32-bit image.
+		/// </summary>
+		/// <param name="lookUpTable">The lookup table (LUT).
+		/// It's size is assumed to be 256 in length.</param>
+		/// <param name="channel">The color channel to be transformed.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool AdjustCurve(byte[] lookUpTable, FREE_IMAGE_COLOR_CHANNEL channel)
+		{
+			ThrowOnDisposed();
+			return FreeImage.AdjustCurve(dib, lookUpTable, channel);
+		}
+
+		/// <summary>
+		/// Performs gamma correction on a 8-, 24- or 32-bit image.
+		/// </summary>
+		/// <param name="gamma">The parameter represents the gamma value to use (gamma > 0).
+		/// A value of 1.0 leaves the image alone, less than one darkens it, and greater than one lightens it.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool AdjustGamma(double gamma)
+		{
+			ThrowOnDisposed();
+			return FreeImage.AdjustGamma(dib, gamma);
+		}
+
+		/// <summary>
+		/// Adjusts the brightness of a 8-, 24- or 32-bit image by a certain amount.
+		/// </summary>
+		/// <param name="percentage">A value 0 means no change,
+		/// less than 0 will make the image darker and greater than 0 will make the image brighter.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool AdjustBrightness(double percentage)
+		{
+			ThrowOnDisposed();
+			return FreeImage.AdjustBrightness(dib, percentage);
+		}
+
+		/// <summary>
+		/// Adjusts the contrast of a 8-, 24- or 32-bit image by a certain amount.
+		/// </summary>
+		/// <param name="percentage">A value 0 means no change,
+		/// less than 0 will decrease the contrast and greater than 0 will increase the contrast of the image.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool AdjustContrast(double percentage)
+		{
+			ThrowOnDisposed();
+			return FreeImage.AdjustContrast(dib, percentage);
+		}
+
+		/// <summary>
+		/// Inverts each pixel data.
+		/// </summary>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Invert()
+		{
+			ThrowOnDisposed();
+			return FreeImage.Invert(dib);
+		}
+
+		/// <summary>
+		/// Computes the image histogram.
+		/// </summary>
+		/// <param name="channel">Channel to compute from.</param>
+		/// <param name="histogram">Array of integers containing the histogram.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool GetHistogram(FREE_IMAGE_COLOR_CHANNEL channel, out int[] histogram)
+		{
+			ThrowOnDisposed();
+			histogram = new int[256];
+			return FreeImage.GetHistogram(dib, histogram, channel);
+		}
+
+		/// <summary>
+		/// Retrieves the red, green, blue or alpha channel of a 24- or 32-bit image.
+		/// </summary>
+		/// <param name="channel">The color channel to extract.</param>
+		/// <returns>The color channel in a new instance.</returns>
+		public FreeImageBitmap GetChannel(FREE_IMAGE_COLOR_CHANNEL channel)
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.GetChannel(dib, channel);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Insert a 8-bit dib into a 24- or 32-bit image.
+		/// Both images must have to same width and height.
+		/// </summary>
+		/// <param name="bitmap">The FreeImageBitmap to insert.</param>
+		/// <param name="channel">The color channel to replace.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool SetChannel(FreeImageBitmap bitmap, FREE_IMAGE_COLOR_CHANNEL channel)
+		{
+			ThrowOnDisposed();
+			bitmap.ThrowOnDisposed();
+			return FreeImage.SetChannel(dib, bitmap.dib, channel);
+		}
+
+		/// <summary>
+		/// Retrieves the real part, imaginary part, magnitude or phase of a complex image.
+		/// </summary>
+		/// <param name="channel">The color channel to extract.</param>
+		/// <returns>The color channel in a new instance.</returns>
+		public FreeImageBitmap GetComplexChannel(FREE_IMAGE_COLOR_CHANNEL channel)
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.GetComplexChannel(dib, channel);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Set the real or imaginary part of a complex image.
+		/// Both images must have to same width and height.
+		/// </summary>
+		/// <param name="bitmap">The FreeImageBitmap to insert.</param>
+		/// <param name="channel">The color channel to replace.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool SetComplexChannel(FreeImageBitmap bitmap, FREE_IMAGE_COLOR_CHANNEL channel)
+		{
+			ThrowOnDisposed();
+			bitmap.ThrowOnDisposed();
+			return FreeImage.SetComplexChannel(dib, bitmap.dib, channel);
+		}
+
+		/// <summary>
+		/// Copy a sub part of this FreeImageBitmap.
+		/// </summary>
+		/// <param name="rect">The subpart to copy.</param>
+		/// <returns>The sub part in a new instance.</returns>
+		public FreeImageBitmap Copy(Rectangle rect)
+		{
+			ThrowOnDisposed();
+			return Copy(rect.Left, rect.Top, rect.Right, rect.Bottom);
+		}
+
+		/// <summary>
+		/// Copy a sub part of this FreeImageBitmap.
+		/// </summary>
+		/// <param name="left">Specifies the left position of the cropped rectangle.</param>
+		/// <param name="top">Specifies the top position of the cropped rectangle.</param>
+		/// <param name="right">Specifies the right position of the cropped rectangle.</param>
+		/// <param name="bottom">Specifies the bottom position of the cropped rectangle.</param>
+		/// <returns>The sub part in a new instance.</returns>
+		public FreeImageBitmap Copy(int left, int top, int right, int bottom)
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.Copy(dib, left, top, right, bottom);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Alpha blend or combine a sub part image with the current image.
+		/// The bit depth of 'bitmap' must be greater than or equal to the bit depth this instance.
+		/// </summary>
+		/// <param name="bitmap">The FreeImageBitmap to paste into this instance.</param>
+		/// <param name="left">Specifies the left position of the sub image.</param>
+		/// <param name="top">Specifies the top position of the sub image.</param>
+		/// <param name="alpha">alpha blend factor.
+		/// The source and destination images are alpha blended if alpha=0..255.
+		/// If alpha > 255, then the source image is combined to the destination image.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Paste(FreeImageBitmap bitmap, int left, int top, int alpha)
+		{
+			ThrowOnDisposed();
+			bitmap.ThrowOnDisposed();
+			return FreeImage.Paste(dib, bitmap.dib, left, top, alpha);
+		}
+
+		/// <summary>
+		/// Alpha blend or combine a sub part image with the current image.
+		/// The bit depth of 'bitmap' must be greater than or equal to the bit depth this instance.
+		/// </summary>
+		/// <param name="bitmap">The FreeImageBitmap to paste into this instance.</param>
+		/// <param name="point">Specifies the position of the sub image.</param>
+		/// <param name="alpha">alpha blend factor.
+		/// The source and destination images are alpha blended if alpha=0..255.
+		/// If alpha > 255, then the source image is combined to the destination image.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Paste(FreeImageBitmap bitmap, Point point, int alpha)
+		{
+			ThrowOnDisposed();
+			return Paste(bitmap, point.X, point.Y, alpha);
+		}
+
+		/// <summary>
+		/// This method composite a transparent foreground image against a single background color or
+		/// against a background image.
+		/// In case 'useBitmapBackground' is false and 'applicationBackground' and 'bitmapBackGround'
+		/// are null, a checkerboard will be used as background.
+		/// </summary>
+		/// <param name="useBitmapBackground">When true the background of this instance is used
+		/// if it contains one.</param>
+		/// <param name="applicationBackground">Backgroundcolor used in case 'useBitmapBackground' is false
+		/// and 'applicationBackground' is not null.</param>
+		/// <param name="bitmapBackGround">Background used in case 'useBitmapBackground' is false and 
+		/// 'applicationBackground' is null.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Composite(bool useBitmapBackground, Color? applicationBackground, FreeImageBitmap bitmapBackGround)
+		{
+			ThrowOnDisposed();
+			bitmapBackGround.ThrowOnDisposed();
+			RGBQUAD? rgb = applicationBackground;
+			return ReplaceDib(
+				FreeImage.Composite(
+					dib,
+					useBitmapBackground,
+					rgb.HasValue ? new RGBQUAD[] { rgb.Value } : null,
+					bitmapBackGround.dib));
+		}
+
+		/// <summary>
+		/// Applies the alpha value of each pixel to its color components.
+		/// The aplha value stays unchanged.
+		/// Only works with 32-bits color depth.
+		/// </summary>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool PreMultiplyWithAlpha()
+		{
+			ThrowOnDisposed();
+			return FreeImage.PreMultiplyWithAlpha(dib);
+		}
+
+		/// <summary>
+		/// Solves a Poisson equation, remap result pixels to [0..1] and returns the solution.
+		/// </summary>
+		/// <param name="ncycle">Number of cycles in the multigrid algorithm (usually 2 or 3)</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool MultigridPoissonSolver(int ncycle)
+		{
+			ThrowOnDisposed();
+			return ReplaceDib(FreeImage.MultigridPoissonSolver(dib, ncycle));
+		}
+
+		/// <summary>
+		/// Adjusts an image's brightness, contrast and gamma as well as it may
+		/// optionally invert the image within a single operation.
+		/// </summary>
+		/// <param name="brightness">Percentage brightness value where -100 &lt;= brightness &lt;= 100.
+		/// <para>A value of 0 means no change, less than 0 will make the image darker and greater
+		/// than 0 will make the image brighter.</para></param>
+		/// <param name="contrast">Percentage contrast value where -100 &lt;= contrast &lt;= 100.
+		/// <para>A value of 0 means no change, less than 0 will decrease the contrast
+		/// and greater than 0 will increase the contrast of the image.</para></param>
+		/// <param name="gamma">Gamma value to be used for gamma correction.
+		/// <para>A value of 1.0 leaves the image alone, less than one darkens it,
+		/// and greater than one lightens it.</para>
+		/// This parameter must not be zero or smaller than zero.
+		/// If so, it will be ignored and no gamma correction will be performed on the image.</param>
+		/// <param name="invert">If set to true, the image will be inverted.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool AdjustColors(double brightness, double contrast, double gamma, bool invert)
+		{
+			ThrowOnDisposed();
+			return FreeImage.AdjustColors(dib, brightness, contrast, gamma, invert);
+		}
+
+		/// <summary>
+		/// Applies color mapping for one or several colors on a 1-, 4- or 8-bit
+		/// palletized or a 16-, 24- or 32-bit high color image.
+		/// </summary>
+		/// <param name="srccolors">Array of colors to be used as the mapping source.</param>
+		/// <param name="dstcolors">Array of colors to be used as the mapping destination.</param>
+		/// <param name="ignore_alpha">If true, 32-bit images and colors are treated as 24-bit.</param>
+		/// <param name="swap">If true, source and destination colors are swapped, that is,
+		/// each destination color is also mapped to the corresponding source color.</param>
+		/// <returns>The total number of pixels changed.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="srccolors"/> or <paramref name="dstcolors"/> is null.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		/// <paramref name="srccolors"/> has a different length than <paramref name="dstcolors"/>.
+		/// </exception>
+		public uint ApplyColorMapping(RGBQUAD[] srccolors, RGBQUAD[] dstcolors, bool ignore_alpha, bool swap)
+		{
+			ThrowOnDisposed();
+			if (srccolors == null)
+			{
+				throw new ArgumentNullException("srccolors");
+			}
+			if (dstcolors == null)
+			{
+				throw new ArgumentNullException("dstcolors");
+			}
+			if (srccolors.Length != dstcolors.Length)
+			{
+				throw new ArgumentException("srccolors and dstcolors must have the same length.");
+			}
+			return FreeImage.ApplyColorMapping(dib, srccolors, dstcolors, (uint)srccolors.Length, ignore_alpha, swap);
+		}
+
+		/// <summary>
+		/// Swaps two specified colors on a 1-, 4- or 8-bit palletized
+		/// or a 16-, 24- or 32-bit high color image.
+		/// </summary>
+		/// <param name="color_a">One of the two colors to be swapped.</param>
+		/// <param name="color_b">The other of the two colors to be swapped.</param>
+		/// <param name="ignore_alpha">If true, 32-bit images and colors are treated as 24-bit.</param>
+		/// <returns>The total number of pixels changed.</returns>
+		public uint SwapColors(RGBQUAD color_a, RGBQUAD color_b, bool ignore_alpha)
+		{
+			ThrowOnDisposed();
+			return FreeImage.SwapColors(dib, ref color_a, ref color_b, ignore_alpha);
+		}
+
+		/// <summary>
+		/// Applies palette index mapping for one or several indices
+		/// on a 1-, 4- or 8-bit palletized image.
+		/// </summary>
+		/// <param name="srcindices">Array of palette indices to be used as the mapping source.</param>
+		/// <param name="dstindices">Array of palette indices to be used as the mapping destination.</param>
+		/// <param name="count">The number of palette indices to be mapped. This is the size of both
+		/// srcindices and dstindices</param>
+		/// <param name="swap">If true, source and destination palette indices are swapped, that is,
+		/// each destination index is also mapped to the corresponding source index.</param>
+		/// <returns>The total number of pixels changed.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="srccolors"/> or <paramref name="dstcolors"/> is null.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		/// <paramref name="srccolors"/> has a different length than <paramref name="dstcolors"/>.
+		/// </exception>
+		public uint ApplyPaletteIndexMapping(byte[] srcindices, byte[] dstindices, uint count, bool swap)
+		{
+			ThrowOnDisposed();
+			if (srcindices == null)
+			{
+				throw new ArgumentNullException("srcindices");
+			}
+			if (dstindices == null)
+			{
+				throw new ArgumentNullException("dstindices");
+			}
+			if (srcindices.Length != dstindices.Length)
+			{
+				throw new ArgumentException("srcindices and dstindices must have the same length.");
+			}
+			return FreeImage.ApplyPaletteIndexMapping(dib, srcindices, dstindices, (uint)srcindices.Length, swap);
+		}
+
+		/// <summary>
+		/// Swaps two specified palette indices on a 1-, 4- or 8-bit palletized image.
+		/// </summary>
+		/// <param name="index_a">One of the two palette indices to be swapped.</param>
+		/// <param name="index_b">The other of the two palette indices to be swapped.</param>
+		/// <returns>The total number of pixels changed.</returns>
+		public uint SwapPaletteIndices(byte index_a, byte index_b)
+		{
+			ThrowOnDisposed();
+			return FreeImage.SwapPaletteIndices(dib, ref index_a, ref index_b);
+		}
+
+		/// <summary>
+		/// Creates a new ICC-Profile.
+		/// </summary>
+		/// <param name="data">The data of the new ICC-Profile.</param>
+		/// <returns>The new ICC-Profile of the bitmap.</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="data"/> is null.</exception>
+		public FIICCPROFILE CreateICCProfile(byte[] data)
+		{
+			if (data == null)
+			{
+				throw new ArgumentNullException("data");
+			}
+			return CreateICCProfile(data, data.Length);
+		}
+
+		/// <summary>
+		/// Creates a new ICC-Profile.
+		/// </summary>
+		/// <param name="data">The data of the new ICC-Profile.</param>
+		/// <param name="size">The number of bytes of 'data' to use.</param>
+		/// <returns>The new ICC-Profile of the bitmap.</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="data"/> is null.</exception>
+		public FIICCPROFILE CreateICCProfile(byte[] data, int size)
+		{
+			ThrowOnDisposed();
+			if (data == null)
+			{
+				throw new ArgumentNullException("data");
+			}
+			return FreeImage.CreateICCProfileEx(dib, data, size);
+		}
+
+		#endregion
+
+		#region Static functions
+
+		/// <summary>
+		/// Returns a value that indicates whether the pixel format for this image contains alpha information.
+		/// </summary>
+		/// <param name="pixfmt">The PixelFormat to test.</param>
+		/// <returns>true if pixfmt contains alpha information; otherwise, false.</returns>
+		public static bool IsAlphaPixelFormat(PixelFormat pixfmt)
+		{
+			return Bitmap.IsAlphaPixelFormat(pixfmt);
+		}
+
+		/// <summary>
+		/// Returns a value that indicates whether the pixel format is 32 bits per pixel.
+		/// </summary>
+		/// <param name="pixfmt">The PixelFormat to test.</param>
+		/// <returns>true if pixfmt is canonical; otherwise, false.</returns>
+		public static bool IsCanonicalPixelFormat(PixelFormat pixfmt)
+		{
+			return Bitmap.IsCanonicalPixelFormat(pixfmt);
+		}
+
+		/// <summary>
+		/// Returns a value that indicates whether the pixel format is 64 bits per pixel.
+		/// </summary>
+		/// <param name="pixfmt">The PixelFormat enumeration to test.</param>
+		/// <returns>true if pixfmt is extended; otherwise, false.</returns>
+		public static bool IsExtendedPixelFormat(PixelFormat pixfmt)
+		{
+			return Bitmap.IsExtendedPixelFormat(pixfmt);
+		}
+
+		/// <summary>
+		/// Creates a FreeImageBitmap from a Windows handle to an icon.
+		/// </summary>
+		/// <param name="hicon">A handle to an icon.</param>
+		/// <returns>The FreeImageBitmap that this method creates.</returns>
+		public static FreeImageBitmap FromHicon(IntPtr hicon)
+		{
+			using (Bitmap bitmap = Bitmap.FromHicon(hicon))
+			{
+				return new FreeImageBitmap(bitmap);
+			}
+		}
+
+		/// <summary>
+		/// Creates a FreeImageBitmap from the specified Windows resource.
+		/// </summary>
+		/// <param name="hinstance">A handle to an instance of the executable
+		/// file that contains the resource.</param>
+		/// <param name="bitmapName">A string containing the name of the resource bitmap.</param>
+		/// <returns>The FreeImageBitmap that this method creates.</returns>
+		public static FreeImageBitmap FromResource(IntPtr hinstance, string bitmapName)
+		{
+			using (Bitmap bitmap = Bitmap.FromResource(hinstance, bitmapName))
+			{
+				return new FreeImageBitmap(bitmap);
+			}
+		}
+
+		/// <summary>
+		/// Creates an FreeImageImage from the specified file.
+		/// </summary>
+		/// <param name="filename">A string that contains the name of the file
+		/// from which to create the FreeImageBitmap.</param>
+		/// <returns>The FreeImageImage this method creates.</returns>
+		public static FreeImageBitmap FromFile(string filename)
+		{
+			return new FreeImageBitmap(filename);
+		}
+
+		/// <summary>
+		/// Creates an Image from the specified file
+		/// using embedded color management information in that file.
+		/// </summary>
+		/// <param name="filename">A string that contains the
+		/// name of the file from which to create the FreeImageBitmap.</param>
+		/// <param name="useEmbeddedColorManagement">Ignored.</param>
+		/// <returns>The FreeImageBitmap this method creates.</returns>
+		public static FreeImageBitmap FromFile(string filename, bool useEmbeddedColorManagement)
+		{
+			return new FreeImageBitmap(filename);
+		}
+
+		/// <summary>
+		/// Creates a FreeImageBitmap from a handle to a GDI bitmap.
+		/// </summary>
+		/// <param name="hbitmap">The GDI bitmap handle from which to create the FreeImageBitmap.</param>
+		/// <returns>The FreeImageBitmap this method creates.</returns>
+		public static FreeImageBitmap FromHbitmap(IntPtr hbitmap)
+		{
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.CreateFromHbitmap(hbitmap, IntPtr.Zero);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Creates a FreeImageBitmap from a handle to a GDI bitmap and a handle to a GDI palette.
+		/// </summary>
+		/// <param name="hbitmap">The GDI bitmap handle from which to create the FreeImageBitmap.</param>
+		/// <param name="hpalette">Ignored.</param>
+		/// <returns>The FreeImageBitmap this method creates.</returns>
+		public static FreeImageBitmap FromHbitmap(IntPtr hbitmap, IntPtr hpalette)
+		{
+			return FromHbitmap(hbitmap);
+		}
+
+		/// <summary>
+		/// Frees a bitmap handle.
+		/// </summary>
+		/// <param name="hbitmap">Handle to a bitmap.</param>
+		/// <returns>True on success, false on failure.</returns>
+		public static bool FreeHbitmap(IntPtr hbitmap)
+		{
+			return FreeImage.FreeHbitmap(hbitmap);
+		}
+
+		/// <summary>
+		/// Creates a FreeImageBitmap from the specified data stream.
+		/// </summary>
+		/// <param name="stream">A Stream that contains the data for this FreeImageBitmap.</param>
+		/// <returns>The FreeImageBitmap this method creates.</returns>
+		public static FreeImageBitmap FromStream(Stream stream)
+		{
+			try
+			{
+				return new FreeImageBitmap(stream);
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Creates a FreeImageBitmap from the specified data stream.
+		/// </summary>
+		/// <param name="stream">A Stream that contains the data for this FreeImageBitmap.</param>
+		/// <param name="useEmbeddedColorManagement">Ignored.</param>
+		/// <returns>The FreeImageBitmap this method creates.</returns>
+		public static FreeImageBitmap FromStream(Stream stream, bool useEmbeddedColorManagement)
+		{
+			return new FreeImageBitmap(stream);
+		}
+
+		/// <summary>
+		/// Creates a FreeImageBitmap from the specified data stream.
+		/// </summary>
+		/// <param name="stream">A Stream that contains the data for this FreeImageBitmap.</param>
+		/// <param name="useEmbeddedColorManagement">Ignored.</param>
+		/// <param name="validateImageData">Ignored.</param>
+		/// <returns>The FreeImageBitmap this method creates.</returns>
+		public static FreeImageBitmap FromStream(Stream stream, bool useEmbeddedColorManagement, bool validateImageData)
+		{
+			return new FreeImageBitmap(stream);
+		}
+
+		/// <summary>
+		/// Returns the color depth, in number of bits per pixel,
+		/// of the specified pixel format.
+		/// </summary>
+		/// <param name="pixfmt">The PixelFormat member that specifies
+		/// the format for which to find the size.</param>
+		/// <returns>The color depth of the specified pixel format.</returns>
+		public static int GetPixelFormatSize(PixelFormat pixfmt)
+		{
+			return Bitmap.GetPixelFormatSize(pixfmt);
+		}
+
+		/// <summary>
+		/// Performs a lossless rotation or flipping on a JPEG file.
+		/// </summary>
+		/// <param name="source">Source file.</param>
+		/// <param name="destination">Destination file; can be the source file; will be overwritten.</param>
+		/// <param name="operation">The operation to apply.</param>
+		/// <param name="perfect">To avoid lossy transformation, you can set the perfect parameter to true.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public static bool JPEGTransform(string source, string destination, FREE_IMAGE_JPEG_OPERATION operation, bool perfect)
+		{
+			return FreeImage.JPEGTransform(source, destination, operation, perfect);
+		}
+
+		/// <summary>
+		/// Performs a lossless crop on a JPEG file.
+		/// </summary>
+		/// <param name="source">Source filename.</param>
+		/// <param name="destination">Destination filename.</param>
+		/// <param name="rect">Specifies the cropped rectangle.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="source"/> or <paramref name="destination"/> is null.
+		/// </exception>
+		/// <exception cref="FileNotFoundException">
+		/// <paramref name="source"/> does not exist.
+		/// </exception>
+		public static bool JPEGCrop(string source, string destination, Rectangle rect)
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException("source");
+			}
+			if (!File.Exists(source))
+			{
+				throw new FileNotFoundException("source");
+			}
+			if (destination == null)
+			{
+				throw new ArgumentNullException("destination");
+			}
+			return JPEGCrop(source, destination, rect.Left, rect.Top, rect.Right, rect.Bottom);
+		}
+
+		/// <summary>
+		/// Performs a lossless crop on a JPEG file.
+		/// </summary>
+		/// <param name="source">Source filename.</param>
+		/// <param name="destination">Destination filename.</param>
+		/// <param name="left">Specifies the left position of the cropped rectangle.</param>
+		/// <param name="top">Specifies the top position of the cropped rectangle.</param>
+		/// <param name="right">Specifies the right position of the cropped rectangle.</param>
+		/// <param name="bottom">Specifies the bottom position of the cropped rectangle.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="source"/> or <paramref name="destination"/> is null.
+		/// </exception>
+		/// <exception cref="FileNotFoundException">
+		/// <paramref name="source"/> does not exist.
+		/// </exception>
+		public static bool JPEGCrop(string source, string destination, int left, int top, int right, int bottom)
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException("source");
+			}
+			if (!File.Exists(source))
+			{
+				throw new FileNotFoundException("source");
+			}
+			if (destination == null)
+			{
+				throw new ArgumentNullException("destination");
+			}
+			return FreeImage.JPEGCrop(source, destination, left, top, right, bottom);
+		}
+
+		/// <summary>
+		/// Converts a X11 color name into a corresponding RGB value.
+		/// </summary>
+		/// <param name="color">Name of the color to convert.</param>
+		/// <param name="red">Red component.</param>
+		/// <param name="green">Green component.</param>
+		/// <param name="blue">Blue component.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="color"/> is null.</exception>
+		public static bool LookupX11Color(string color, out byte red, out byte green, out byte blue)
+		{
+			if (color == null)
+			{
+				throw new ArgumentNullException("color");
+			}
+			return FreeImage.LookupX11Color(color, out red, out green, out blue);
+		}
+
+		/// <summary>
+		/// Converts a SVG color name into a corresponding RGB value.
+		/// </summary>
+		/// <param name="color">Name of the color to convert.</param>
+		/// <param name="red">Red component.</param>
+		/// <param name="green">Green component.</param>
+		/// <param name="blue">Blue component.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="color"/> is null.</exception>
+		public static bool LookupSVGColor(string color, out byte red, out byte green, out byte blue)
+		{
+			if (color == null)
+			{
+				throw new ArgumentNullException("color");
+			}
+			return FreeImage.LookupSVGColor(color, out red, out green, out blue);
+		}
+
+		/// <summary>
+		/// Creates a lookup table to be used with AdjustCurve() which
+		/// may adjusts brightness and contrast, correct gamma and invert the image with a
+		/// single call to AdjustCurve().
+		/// </summary>
+		/// <param name="lookUpTable">Output lookup table to be used with AdjustCurve().
+		/// The size of 'LUT' is assumed to be 256.</param>
+		/// <param name="brightness">Percentage brightness value where -100 &lt;= brightness &lt;= 100.
+		/// <para>A value of 0 means no change, less than 0 will make the image darker and greater
+		/// than 0 will make the image brighter.</para></param>
+		/// <param name="contrast">Percentage contrast value where -100 &lt;= contrast &lt;= 100.
+		/// <para>A value of 0 means no change, less than 0 will decrease the contrast
+		/// and greater than 0 will increase the contrast of the image.</para></param>
+		/// <param name="gamma">Gamma value to be used for gamma correction.
+		/// <para>A value of 1.0 leaves the image alone, less than one darkens it,
+		/// and greater than one lightens it.</para></param>
+		/// <param name="invert">If set to true, the image will be inverted.</param>
+		/// <returns>The number of adjustments applied to the resulting lookup table
+		/// compared to a blind lookup table.</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="lookUpTable"/> is null.</exception>
+		/// <exception cref="ArgumentException"><paramref name="lookUpTable.Length"/> is not 256.</exception>
+		public static int GetAdjustColorsLookupTable(byte[] lookUpTable, double brightness, double contrast, double gamma, bool invert)
+		{
+			if (lookUpTable == null)
+			{
+				throw new ArgumentNullException("lookUpTable");
+			}
+			if (lookUpTable.Length != 256)
+			{
+				throw new ArgumentException("lookUpTable");
+			}
+			return FreeImage.GetAdjustColorsLookupTable(lookUpTable, brightness, contrast, gamma, invert);
+		}
+
+		/// <summary>
+		/// Adds a specified frame to the file specified using the specified parameters.
+		/// Use this method to save selected frames from a multiple-frame image to
+		/// another multiple-frame image.
+		/// </summary>
+		/// <param name="filename">File to add this frame to.</param>
+		/// <param name="bitmap">A FreeImageBitmap that contains the frame to add.</param>
+		/// <param name="format">Format of the image.</param>
+		/// <param name="loadFlags">Flags to enable or disable plugin-features.</param>
+		/// <param name="saveFlags">Flags to enable or disable plugin-features.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="filename"/> or <paramref name="bitmap"/> is null.
+		/// </exception>
+		/// <exception cref="FileNotFoundException"><paramref name="filename"/> does not exist.</exception>
+		/// <exception cref="Exception">Saving the image failed.</exception>
+		internal static void SaveAdd(
+			string filename,
+			FreeImageBitmap bitmap,
+			FREE_IMAGE_FORMAT format,
+			FREE_IMAGE_LOAD_FLAGS loadFlags,
+			FREE_IMAGE_SAVE_FLAGS saveFlags)
+		{
+			if (filename == null)
+			{
+				throw new ArgumentNullException("filename");
+			}
+			if (!File.Exists(filename))
+			{
+				throw new FileNotFoundException("filename");
+			}
+			if (bitmap == null)
+			{
+				throw new ArgumentNullException("bitmap");
+			}
+			bitmap.ThrowOnDisposed();
+			if (bitmap.dib.IsNull)
+			{
+				throw new Exception();
+			}
+
+			FIMULTIBITMAP mpBitmap =
+				FreeImage.OpenMultiBitmapEx(filename, ref format, loadFlags, false, false, true);
+
+			if (mpBitmap.IsNull)
+			{
+				throw new Exception();
+			}
+
+			FreeImage.AppendPage(mpBitmap, bitmap.dib);
+
+			if (!FreeImage.CloseMultiBitmap(mpBitmap, saveFlags))
+			{
+				throw new Exception();
+			}
+		}
+
+		/// <summary>
+		/// Returns a new instance of the 'PropertyItem' class which
+		/// has no public accessible constructor.
+		/// </summary>
+		/// <returns>A new instace of 'PropertyItem'.</returns>
+		public static PropertyItem CreateNewPropertyItem()
+		{
+			return FreeImage.CreatePropertyItem();
+		}
+
+		#endregion
+
+		#region Helper functions
+
+		/// <summary>
+		/// Throws an exception in case the instance has already been disposed.
+		/// </summary>
+		protected void ThrowOnDisposed()
+		{
+			lock (lockObject)
+			{
+				if (!this.disposed)
+				{
+					return;
+				}
+			}
+			throw new ObjectDisposedException(ToString());
+		}
+
+		/// <summary>
+		/// Tries to replace the wrapped FIBITMAP with a new one.
+		/// In case the new dib is null or the same as the already
+		/// wrapped one, nothing will be changed and the result will
+		/// be false.
+		/// Otherwise the wrapped FIBITMAP will be unloaded and replaced.
+		/// </summary>
+		/// <param name="newDib">The new dib.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		protected bool ReplaceDib(FIBITMAP newDib)
+		{
+			bool result = false;
+			if (dib != newDib && (!newDib.IsNull))
+			{
+				UnloadDib();
+				dib = newDib;
+				result = true;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Unloads currently wrapped FIBITMAP or unlocks the locked page
+		/// in case it came from a multipaged bitmap.
+		/// </summary>
+		protected void UnloadDib()
+		{
+			if (mdib.IsNull || FreeImage.GetLockedPageCount(mdib) == 0)
+			{
+				FreeImage.UnloadEx(ref dib);
+			}
+			else if (!dib.IsNull)
+			{
+				FreeImage.UnlockPage(mdib, dib, false);
+				dib = 0;
+			}
+		}
+
+		#endregion
+
+		#region Interfaces
+
+		/// <summary>
+		/// Helper class to store informations for 'SaveAdd'.
+		/// </summary>
+		private class SaveInformation : ICloneable
+		{
+			public string filename = null;
+			public FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+			public FREE_IMAGE_LOAD_FLAGS loadFlags = FREE_IMAGE_LOAD_FLAGS.DEFAULT;
+			public FREE_IMAGE_SAVE_FLAGS saveFlags = FREE_IMAGE_SAVE_FLAGS.DEFAULT;
+
+			public object Clone()
+			{
+				return base.MemberwiseClone();
+			}
+		}
+
+		/// <summary>
+		/// Creates a new object that is a copy of the current instance.
+		/// </summary>
+		/// <returns>A new object that is a copy of this instance.</returns>
+		public object Clone()
+		{
+			ThrowOnDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.Clone(dib);
+			if (!dib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+				result.saveInformation = saveInformation.Clone() as SaveInformation;
+				result.tag = tag;
+				result.originalFormat = originalFormat;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Performs application-defined tasks associated with freeing,
+		/// releasing, or resetting unmanaged resources.
+		/// </summary>
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		/// <summary>
+		/// Performs application-defined tasks associated with freeing,
+		/// releasing, or resetting unmanaged resources.
+		/// </summary>
+		/// <param name="disposing">If true managed ressources are released.</param>
+		protected virtual void Dispose(bool disposing)
+		{
+			// Only clean up once
+			lock (lockObject)
+			{
+				if (disposed)
+				{
+					return;
+				}
+				disposed = true;
+			}
+
+			// Clean up managed resources
+			if (disposing)
+			{
+				tag = null;
+			}
+
+			// Clean up unmanaged resources
+			UnloadDib();
+			FreeImage.CloseMultiBitmapEx(ref mdib);
+		}
+
+		/// <summary>
+		/// Returns an enumerator that iterates through a collection.
+		/// </summary>
+		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
+		/// <exception cref="ArgumentException">The bitmaps's type is not supported.</exception>
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetScanlines().GetEnumerator();
+		}
+
+		void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+		{
+			ThrowOnDisposed();
+			using (MemoryStream memory = new MemoryStream(DataSize))
+			{
+				if (!FreeImage.SaveToStream(FREE_IMAGE_FORMAT.FIF_TIFF, dib, memory, FREE_IMAGE_SAVE_FLAGS.TIFF_LZW, false))
+				{
+					throw new SerializationException();
+				}
+				memory.Capacity = (int)memory.Length;
+				info.AddValue("Bitmap Data", memory.GetBuffer());
+			}
+		}
+
+		#endregion
+	}
+
+	/// <summary>
+	/// Class handling non-bitmap related functions.
+	/// </summary>
+	public static class FreeImageEngine
+	{
+		/// <summary>
+		/// Gets a value indicating if the FreeImage DLL is available or not.
+		/// </summary>
+		public static bool IsAvailable
+		{
+			get
+			{
+				return FreeImage.IsAvailable();
+			}
+		}
+
+		/// <summary>
+		/// Internal errors in FreeImage generate a logstring that can be
+		/// captured by this event.
+		/// </summary>
+		public static event OutputMessageFunction Message
+		{
+			add
+			{
+				FreeImage.Message += value;
+			}
+			remove
+			{
+				FreeImage.Message -= value;
+			}
+		}
+
+		/// <summary>
+		/// Gets a string containing the current version of the library.
+		/// </summary>
+		public static string Version
+		{
+			get
+			{
+				return FreeImage.GetVersion();
+			}
+		}
+
+		/// <summary>
+		/// Gets a string containing a standard copyright message.
+		/// </summary>
+		public static string CopyrightMessage
+		{
+			get
+			{
+				return FreeImage.GetCopyrightMessage();
+			}
+		}
+
+		/// <summary>
+		/// Gets whether the platform is using Little Endian.
+		/// </summary>
+		public static bool IsLittleEndian
+		{
+			get
+			{
+				return FreeImage.IsLittleEndian();
+			}
+		}
+	}
+
 	// FreeImages itself is plugin based. Each supported format is integrated by a seperat plugin,
 	// that handles loading, saving, descriptions, identifing ect.
 	// And of course the user can create own plugins and use them in FreeImage.
@@ -9957,6 +13353,10 @@ namespace FreeImageAPI
 
 			// Register the plugin. The result will be saved and can be accessed later.
 			registered = FreeImage.RegisterLocalPlugin(initProc, null, null, null, null) != FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+			if (registered)
+			{
+				PluginRepository.RegisterLocalPlugin(this);
+			}
 		}
 
 		~LocalPlugin()
@@ -10235,7 +13635,9 @@ namespace FreeImageAPI
 		public StreamWrapper(Stream stream, bool blocking)
 		{
 			if (!stream.CanRead)
+			{
 				throw new ArgumentException("stream is not capable of reading.");
+			}
 			this.stream = stream;
 			this.blocking = blocking;
 		}
@@ -10278,7 +13680,9 @@ namespace FreeImageAPI
 			{
 				checkDisposed();
 				if (!eos)
+				{
 					Fill();
+				}
 				return memoryStream.Length;
 			}
 		}
@@ -10323,7 +13727,9 @@ namespace FreeImageAPI
 						break;
 					}
 					if (!blocking)
+					{
 						break;
+					}
 				} while ((memoryBytes + streamBytes) < count);
 				// copy the bytes from the original stream into the memory stream
 				// if 0 bytes were read we write 0 so the memory-stream is not changed
@@ -10349,7 +13755,9 @@ namespace FreeImageAPI
 				case SeekOrigin.End:
 					// to seek from the end have have to read to the end first
 					if (!eos)
+					{
 						Fill();
+					}
 					newPosition = memoryStream.Length + offset;
 					break;
 				default:
@@ -10394,17 +13802,18 @@ namespace FreeImageAPI
 		// Reads the wrapped stream until its end.
 		private void Fill()
 		{
-			if (eos)
-				return;
-			memoryStream.Position = memoryStream.Length;
-			int bytesRead = 0;
-			byte[] buffer = new byte[1024];
-			do
+			if (!eos)
 			{
-				bytesRead = stream.Read(buffer, 0, buffer.Length);
-				memoryStream.Write(buffer, 0, bytesRead);
-			} while (bytesRead != 0);
-			eos = true;
+				memoryStream.Position = memoryStream.Length;
+				int bytesRead = 0;
+				byte[] buffer = new byte[1024];
+				do
+				{
+					bytesRead = stream.Read(buffer, 0, buffer.Length);
+					memoryStream.Write(buffer, 0, bytesRead);
+				} while (bytesRead != 0);
+				eos = true;
+			}
 		}
 
 		public new void Dispose()
@@ -11450,14 +14859,6 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns the bitmap this instance is linked to.
-		/// </summary>
-		public FIBITMAP Dib
-		{
-			get { return dib; }
-		}
-
-		/// <summary>
 		/// Returns a String that represents the current Object.
 		/// </summary>
 		/// <returns>A String that represents the current Object.</returns>
@@ -11711,6 +15112,9 @@ namespace FreeImageAPI
 
 	#endregion
 
+	/// <summary>
+	/// Class handling metadata of a FreeImage bitmap.
+	/// </summary>
 	public class ImageMetadata : IEnumerable, IComparable, IComparable<ImageMetadata>
 	{
 		private readonly List<MetadataModel> data;
@@ -11865,17 +15269,6 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets the bitmap this instance represents.
-		/// </summary>
-		public FIBITMAP Dib
-		{
-			get
-			{
-				return dib;
-			}
-		}
-
-		/// <summary>
 		/// Gets or sets whether empty metadata models are hidden.
 		/// </summary>
 		public bool HideEmptyModels
@@ -11933,6 +15326,493 @@ namespace FreeImageAPI
 		{
 			return this.dib.CompareTo(other.dib);
 		}
+	}
+
+	/// <summary>
+	/// Class wrapping a FreeImage format.
+	/// </summary>
+	public sealed class FreeImagePlugin
+	{
+		private readonly FREE_IMAGE_FORMAT fif;
+
+		/// <summary>
+		/// Creates a new instance of this class.
+		/// </summary>
+		/// <param name="fif">The FreeImage format to wrap.</param>
+		internal FreeImagePlugin(FREE_IMAGE_FORMAT fif)
+		{
+			this.fif = fif;
+		}
+
+		/// <summary>
+		/// Gets the format of this instance.
+		/// </summary>
+		public FREE_IMAGE_FORMAT FIFormat
+		{
+			get
+			{
+				return fif;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets whether this plugin is enabled.
+		/// </summary>
+		public bool Enabled
+		{
+			get
+			{
+				return (FreeImage.IsPluginEnabled(fif) == 1);
+			}
+			set
+			{
+				FreeImage.SetPluginEnabled(fif, value);
+			}
+		}
+
+		/// <summary>
+		/// Gets a string describing the format.
+		/// </summary>
+		public string Format
+		{
+			get
+			{
+				return FreeImage.GetFormatFromFIF(fif);
+			}
+		}
+
+		/// <summary>
+		/// Gets a comma-delimited file extension list describing the bitmap formats
+		/// this plugin can read and/or write.
+		/// </summary>
+		public string ExtentsionList
+		{
+			get
+			{
+				return FreeImage.GetFIFExtensionList(fif);
+			}
+		}
+
+		/// <summary>
+		/// Gets a descriptive string that describes the bitmap formats
+		/// this plugin can read and/or write.
+		/// </summary>
+		public string Description
+		{
+			get
+			{
+				return FreeImage.GetFIFDescription(fif);
+			}
+		}
+
+		/// <summary>
+		/// Returns a regular expression string that can be used by
+		/// a regular expression engine to identify the bitmap.
+		/// FreeImageQt makes use of this function.
+		/// </summary>
+		public string RegExpr
+		{
+			get
+			{
+				return FreeImage.GetFIFRegExpr(fif);
+			}
+		}
+
+		/// <summary>
+		/// Gets whether this plugin can load bitmaps.
+		/// </summary>
+		public bool SupportsReading
+		{
+			get
+			{
+				return FreeImage.FIFSupportsReading(fif);
+			}
+		}
+
+		/// <summary>
+		/// Gets whether this plugin can save bitmaps.
+		/// </summary>
+		public bool SupportsWriting
+		{
+			get
+			{
+				return FreeImage.FIFSupportsWriting(fif);
+			}
+		}
+
+		/// <summary>
+		/// Checks whether this plugin can save a bitmap in the desired data type.
+		/// </summary>
+		/// <param name="type">The desired image type.</param>
+		/// <returns>True if this plugin can save bitmaps as the desired type, else false.</returns>
+		public bool SupportsExportType(FREE_IMAGE_TYPE type)
+		{
+			return FreeImage.FIFSupportsExportType(fif, type);
+		}
+
+		/// <summary>
+		/// Checks whether this plugin can save bitmaps in the desired bit depth.
+		/// </summary>
+		/// <param name="bpp">The desired bit depth.</param>
+		/// <returns>True if this plugin can save bitmaps in the desired bit depth, else false.</returns>
+		public bool SupportsExportBPP(int bpp)
+		{
+			return FreeImage.FIFSupportsExportBPP(fif, bpp);
+		}
+
+		/// <summary>
+		/// Gets whether this plugin can load or save an ICC profile.
+		/// </summary>
+		public bool SupportsICCProfiles
+		{
+			get
+			{
+				return FreeImage.FIFSupportsICCProfiles(fif);
+			}
+		}
+
+		/// <summary>
+		/// Checks whether an extension is valid for this format.
+		/// </summary>
+		/// <param name="extension">The desired extension.</param>
+		/// <returns>True if the extension is valid for this format, false otherwise.</returns>
+		public bool ValidExtension(string extension)
+		{
+			return FreeImage.IsExtensionValidForFIF(fif, extension);
+		}
+
+		/// <summary>
+		/// Checks whether an extension is valid for this format.
+		/// </summary>
+		/// <param name="extension">The desired extension.</param>
+		/// <param name="comparisonType">The string comparison type.</param>
+		/// <returns>True if the extension is valid for this format, false otherwise.</returns>
+		public bool ValidExtension(string extension, StringComparison comparisonType)
+		{
+			return FreeImage.IsExtensionValidForFIF(fif, extension, comparisonType);
+		}
+
+		/// <summary>
+		/// Checks whether a filename is valid for this format.
+		/// </summary>
+		/// <param name="filename">The desired filename.</param>
+		/// <returns>True if the filename is valid for this format, false otherwise.</returns>
+		public bool ValidFilename(string filename)
+		{
+			return FreeImage.IsFilenameValidForFIF(fif, filename);
+		}
+
+		/// <summary>
+		/// Checks whether a filename is valid for this format.
+		/// </summary>
+		/// <param name="filename">The desired filename.</param>
+		/// <param name="comparisonType">The string comparison type.</param>
+		/// <returns>True if the filename is valid for this format, false otherwise.</returns>
+		public bool ValidFilename(string filename, StringComparison comparisonType)
+		{
+			return FreeImage.IsFilenameValidForFIF(fif, filename, comparisonType);
+		}
+
+		/// <summary>
+		/// Returns a String that represents the current Object.
+		/// </summary>
+		/// <returns>A String that represents the current Object.</returns>
+		public override string ToString()
+		{
+			return Description;
+		}
+	}
+
+	/// <summary>
+	/// Class wrapping all registered plugins in FreeImage.
+	/// </summary>
+	public static class PluginRepository
+	{
+		private static readonly List<FreeImagePlugin> plugins = null;
+		private static readonly List<FreeImagePlugin> localPlugins = null;
+
+		static PluginRepository()
+		{
+			plugins = new List<FreeImagePlugin>(FreeImage.GetFIFCount());
+			localPlugins = new List<FreeImagePlugin>(0);
+			for (int i = 0; i < plugins.Capacity; i++)
+			{
+				plugins.Add(new FreeImagePlugin((FREE_IMAGE_FORMAT)i));
+			}
+		}
+
+		/// <summary>
+		/// Adds local plugin to this class.
+		/// </summary>
+		/// <param name="localPlugin">The registered plugin.</param>
+		internal static void RegisterLocalPlugin(LocalPlugin localPlugin)
+		{
+			FreeImagePlugin plugin = new FreeImagePlugin(localPlugin.Format);
+			plugins.Add(plugin);
+			localPlugins.Add(plugin);
+		}
+
+		/// <summary>
+		/// Returns an instance of 'Plugin', wrapping the given format.
+		/// </summary>
+		/// <param name="fif">The format to wrap.</param>
+		/// <returns>An instance of 'Plugin'.</returns>
+		public static FreeImagePlugin Plugin(FREE_IMAGE_FORMAT fif)
+		{
+			return Plugin((int)fif);
+		}
+
+		/// <summary>
+		/// Returns an instance of 'Plugin', wrapping the format at the given index.
+		/// </summary>
+		/// <param name="index">The index of the format to wrap.</param>
+		/// <returns>An instance of 'Plugin'.</returns>
+		public static FreeImagePlugin Plugin(int index)
+		{
+			return (index >= 0) ? plugins[index] : null;
+		}
+
+		/// <summary>
+		/// Returns an instance of 'Plugin'.
+		/// <typeparamref name="expression"/> is searched in:
+		/// <c>Format</c>, <c>RegExpr</c>,
+		/// <c>ValidExtension</c> and <c>ValidFilename</c>.
+		/// </summary>
+		/// <param name="expression">The expression to search for.</param>
+		/// <returns>An instance of 'Plugin'.</returns>
+		public static FreeImagePlugin Plugin(string expression)
+		{
+			FreeImagePlugin result = null;
+			expression = expression.ToLower();
+
+			foreach (FreeImagePlugin plugin in plugins)
+			{
+				if (plugin.Format.ToLower().Contains(expression) ||
+					plugin.RegExpr.ToLower().Contains(expression) ||
+					plugin.ValidExtension(expression, StringComparison.CurrentCultureIgnoreCase) ||
+					plugin.ValidFilename(expression, StringComparison.CurrentCultureIgnoreCase))
+				{
+					result = plugin;
+					break;
+				}
+			}
+
+			return result;
+		}
+
+		/// <summary>
+		/// Returns an instance of 'Plugin' for the given format.
+		/// </summary>
+		/// <param name="format">The format of the Plugin.</param>
+		/// <returns>An instance of 'Plugin'.</returns>
+		public static FreeImagePlugin PluginFromFormat(string format)
+		{
+			return Plugin(FreeImage.GetFIFFromFormat(format));
+		}
+
+		/// <summary>
+		/// Returns an instance of 'Plugin' for the given filename.
+		/// </summary>
+		/// <param name="filename">The valid filename for the plugin.</param>
+		/// <returns>An instance of 'Plugin'.</returns>
+		public static FreeImagePlugin PluginFromFilename(string filename)
+		{
+			return Plugin(FreeImage.GetFIFFromFilename(filename));
+		}
+
+		/// <summary>
+		/// Returns an instance of 'Plugin' for the given mime.
+		/// </summary>
+		/// <param name="mime">The valid mime for the plugin.</param>
+		/// <returns>An instance of 'Plugin'.</returns>
+		public static FreeImagePlugin PluginFromMime(string mime)
+		{
+			return Plugin(FreeImage.GetFIFFromMime(mime));
+		}
+
+		/// <summary>
+		/// Gets the number of registered plugins.
+		/// </summary>
+		public static int FIFCount
+		{
+			get
+			{
+				return FreeImage.GetFIFCount();
+			}
+		}
+
+		/// <summary>
+		/// Gets a readonly collection of all plugins.
+		/// </summary>
+		public static ReadOnlyCollection<FreeImagePlugin> PluginList
+		{
+			get
+			{
+				return plugins.AsReadOnly();
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of plugins that are only able to
+		/// read but not to write.
+		/// </summary>
+		public static List<FreeImagePlugin> ReadOnlyPlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (p.SupportsReading && !p.SupportsWriting) 
+					{
+						list.Add(p); 
+					}
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of plugins that are only able to
+		/// write but not to read.
+		/// </summary>
+		public static List<FreeImagePlugin> WriteOnlyPlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (!p.SupportsReading && p.SupportsWriting)
+					{
+						list.Add(p);
+					}
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of plugins that are not able to
+		/// read or write.
+		/// </summary>
+		public static List<FreeImagePlugin> StupidPlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (!p.SupportsReading && !p.SupportsWriting)
+					{
+						list.Add(p);
+					}
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of plugins that are able to read.
+		/// </summary>
+		public static List<FreeImagePlugin> ReadablePlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (p.SupportsReading)
+					{
+						list.Add(p);
+					}
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of plugins that are able to write.
+		/// </summary>
+		public static List<FreeImagePlugin> WriteablePlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (p.SupportsWriting)
+					{
+						list.Add(p);
+					}
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of local plugins.
+		/// </summary>
+		public static ReadOnlyCollection<FreeImagePlugin> LocalPlugins
+		{
+			get
+			{
+				return localPlugins.AsReadOnly();  
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of built-in plugins.
+		/// </summary>
+		public static List<FreeImagePlugin> BuiltInPlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (!localPlugins.Contains(p))
+					{
+						list.Add(p);
+					}
+				}
+				return list;
+			}
+		}
+
+		public static FreeImagePlugin BMP { get { return plugins[0]; } }
+		public static FreeImagePlugin ICO { get { return plugins[1]; } }
+		public static FreeImagePlugin JPEG { get { return plugins[2]; } }
+		public static FreeImagePlugin JNG { get { return plugins[3]; } }
+		public static FreeImagePlugin KOALA { get { return plugins[4]; } }
+		public static FreeImagePlugin LBM { get { return plugins[5]; } }
+		public static FreeImagePlugin IFF { get { return plugins[5]; } }
+		public static FreeImagePlugin MNG { get { return plugins[6]; } }
+		public static FreeImagePlugin PBM { get { return plugins[7]; } }
+		public static FreeImagePlugin PBMRAW { get { return plugins[8]; } }
+		public static FreeImagePlugin PCD { get { return plugins[9]; } }
+		public static FreeImagePlugin PCX { get { return plugins[10]; } }
+		public static FreeImagePlugin PGM { get { return plugins[11]; } }
+		public static FreeImagePlugin PGMRAW { get { return plugins[12]; } }
+		public static FreeImagePlugin PNG { get { return plugins[13]; } }
+		public static FreeImagePlugin PPM { get { return plugins[14]; } }
+		public static FreeImagePlugin PPMRAW { get { return plugins[15]; } }
+		public static FreeImagePlugin RAS { get { return plugins[16]; } }
+		public static FreeImagePlugin TARGA { get { return plugins[17]; } }
+		public static FreeImagePlugin TIFF { get { return plugins[18]; } }
+		public static FreeImagePlugin WBMP { get { return plugins[19]; } }
+		public static FreeImagePlugin PSD { get { return plugins[20]; } }
+		public static FreeImagePlugin CUT { get { return plugins[21]; } }
+		public static FreeImagePlugin XBM { get { return plugins[22]; } }
+		public static FreeImagePlugin XPM { get { return plugins[23]; } }
+		public static FreeImagePlugin DDS { get { return plugins[24]; } }
+		public static FreeImagePlugin GIF { get { return plugins[25]; } }
+		public static FreeImagePlugin HDR { get { return plugins[26]; } }
+		public static FreeImagePlugin FAXG3 { get { return plugins[27]; } }
+		public static FreeImagePlugin SGI { get { return plugins[28]; } }
+		public static FreeImagePlugin EXR { get { return plugins[29]; } }
+		public static FreeImagePlugin J2K { get { return plugins[30]; } }
+		public static FreeImagePlugin JP2 { get { return plugins[31]; } }
 	}
 
 	#endregion
@@ -12076,6 +15956,10 @@ namespace FreeImageAPI
 
 	#endregion
 
+	/// <summary>
+	/// Static class importing functions from the FreeImage library
+	/// and providing additional wrapper functions.
+	/// </summary>
 	public static partial class FreeImage
 	{
 		#region Constants
@@ -12092,6 +15976,10 @@ namespace FreeImageAPI
 		private static readonly ConstructorInfo PropertyItemConstructor =
 			typeof(PropertyItem).GetConstructor(
 			BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { }, null);
+
+		private const int DIB_RGB_COLORS = 0;
+		private const int DIB_PAL_COLORS = 1;
+		private const int CBM_INIT = 0x4;
 
 		#endregion
 
@@ -12180,7 +16068,7 @@ namespace FreeImageAPI
 		/// of reading and storing metadata in a .NET bitmap is found.</remarks>
 		public static Bitmap GetBitmap(FIBITMAP dib)
 		{
-			return GetBitmap(dib, false);
+			return GetBitmap(dib, true);
 		}
 
 		/// <summary>
@@ -12389,7 +16277,7 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="bitmap">The .NET bitmap to save.</param>
 		/// <param name="filename">Name of the file to save to.</param>
-		/// <param name="format">The format of image. If the format should be taken off the
+		/// <param name="format">Format of the image. If the format should be taken from the
 		/// filename use 'FIF_UNKNOWN'.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
@@ -12437,7 +16325,7 @@ namespace FreeImageAPI
 		/// The file will be loaded with default loading flags.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
-		/// <param name="format">The format of image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="format">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
 		/// In case a suitable format was found by LoadEx it will be returned in format.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
@@ -12455,7 +16343,7 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
-		/// <param name="format">The format of image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="format">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
 		/// In case a suitable format was found by LoadEx it will be returned in format.
 		/// </param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
@@ -12480,6 +16368,22 @@ namespace FreeImageAPI
 				dib = Load(format, filename, flags);
 			}
 			return dib;
+		}
+
+		/// <summary>
+		/// Loads a .NET Bitmap from a file.
+		/// </summary>
+		/// <param name="filename">Name of the file to be loaded.</param>
+		/// <param name="format">Format of the image. If the format should be taken from the
+		/// filename use 'FIF_UNKNOWN'.</param>
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public static Bitmap LoadBitmap(string filename, FREE_IMAGE_LOAD_FLAGS flags, ref FREE_IMAGE_FORMAT format)
+		{
+			FIBITMAP dib = FreeImage.LoadEx(filename, flags, ref format);
+			Bitmap result = GetBitmap(dib, true);
+			Unload(dib);
+			return result;
 		}
 
 		/// <summary>
@@ -12520,7 +16424,7 @@ namespace FreeImageAPI
 		/// <param name="filename">The complete name of the file to save to.
 		/// The extension will be corrected if it is no valid extension for the
 		/// selected format or if no extension was specified.</param>
-		/// <param name="format">The format of image. If the format should be taken off the
+		/// <param name="format">Format of the image. If the format should be taken from the
 		/// filename use 'FIF_UNKNOWN'.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		public static bool SaveEx(FIBITMAP dib, string filename, FREE_IMAGE_FORMAT format)
@@ -12594,7 +16498,7 @@ namespace FreeImageAPI
 		/// <param name="filename">The complete name of the file to save to.
 		/// The extension will be corrected if it is no valid extension for the
 		/// selected format or if no extension was specified.</param>
-		/// <param name="format">The format of image. If the format should be taken off the
+		/// <param name="format">Format of the image. If the format should be taken from the
 		/// filename use 'FIF_UNKNOWN'.</param>
 		/// <param name="unloadSource">When true the structure will be unloaded on success.
 		/// If the function failed and returned false, the bitmap was not unloaded.</param>
@@ -12615,7 +16519,7 @@ namespace FreeImageAPI
 		/// <param name="filename">The complete name of the file to save to.
 		/// The extension will be corrected if it is no valid extension for the
 		/// selected format or if no extension was specified.</param>
-		/// <param name="format">The format of image. If the format should be taken off the
+		/// <param name="format">Format of the image. If the format should be taken from the
 		/// filename use 'FIF_UNKNOWN'.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
@@ -12636,7 +16540,7 @@ namespace FreeImageAPI
 		/// <param name="filename">The complete name of the file to save to.
 		/// The extension will be corrected if it is no valid extension for the
 		/// selected format or if no extension was specified.</param>
-		/// <param name="format">The format of image. If the format should be taken off the
+		/// <param name="format">Format of the image. If the format should be taken from the
 		/// filename use 'FIF_UNKNOWN'.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <param name="colorDepth">The new color depth of the bitmap.
@@ -12784,7 +16688,7 @@ namespace FreeImageAPI
 		/// In case the loading format is 'FIF_UNKNOWN' the bitmaps real format is being analysed.
 		/// The stream must be set to the correct position before calling LoadFromStream.
 		/// </summary>
-		/// <param name="fif">The format of image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="fif">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
 		/// In case a suitable format was found by LoadFromStream it will be returned in format.</param>
 		/// <param name="stream">The stream to read from.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
@@ -12798,7 +16702,7 @@ namespace FreeImageAPI
 		/// In case the loading format is 'FIF_UNKNOWN' the bitmaps real format is being analysed.
 		/// The stream must be set to the correct position before calling LoadFromStream.
 		/// </summary>
-		/// <param name="fif">The format of image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="fif">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
 		/// In case a suitable format was found by LoadFromStream it will be returned in format.</param>
 		/// <param name="stream">The stream to read from.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
@@ -12842,7 +16746,7 @@ namespace FreeImageAPI
 		/// Saves a previously loaded FIBITMAP to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
-		/// <param name="fif">The format of image.</param>
+		/// <param name="fif">Format of the image.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="stream">The stream to write to.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
@@ -12857,7 +16761,7 @@ namespace FreeImageAPI
 		/// Saves a previously loaded FIBITMAP to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
-		/// <param name="fif">The format of image.</param>
+		/// <param name="fif">Format of the image.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="stream">The stream to write to.</param>
 		/// <param name="unloadSource">When true the structure will be unloaded on success.</param>
@@ -12873,7 +16777,7 @@ namespace FreeImageAPI
 		/// Saves a previously loaded FIBITMAP to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
-		/// <param name="fif">The format of image.</param>
+		/// <param name="fif">Format of the image.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="stream">The stream to write to.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
@@ -12893,7 +16797,7 @@ namespace FreeImageAPI
 		/// Saves a previously loaded FIBITMAP to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
-		/// <param name="fif">The format of image.</param>
+		/// <param name="fif">Format of the image.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="stream">The stream to write to.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
@@ -12906,7 +16810,7 @@ namespace FreeImageAPI
 			FIBITMAP dib,
 			Stream stream,
 			FREE_IMAGE_SAVE_FLAGS flags,
-		bool unloadSource)
+			bool unloadSource)
 		{
 			return SaveToStream(fif, dib, stream, FREE_IMAGE_COLOR_DEPTH.FICD_AUTO, flags, unloadSource);
 		}
@@ -12915,7 +16819,7 @@ namespace FreeImageAPI
 		/// Saves a previously loaded FIBITMAP to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
-		/// <param name="fif">The format of image.</param>
+		/// <param name="fif">Format of the image.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="stream">The stream to write to.</param>
 		/// <param name="colorDepth">The new color depth of the bitmap.
@@ -12940,7 +16844,7 @@ namespace FreeImageAPI
 		/// Saves a previously loaded FIBITMAP to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
-		/// <param name="fif">The format of image.</param>
+		/// <param name="fif">Format of the image.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="stream">The stream to write to.</param>
 		/// <param name="colorDepth">The new color depth of the bitmap.
@@ -12958,8 +16862,9 @@ namespace FreeImageAPI
 			Stream stream,
 			FREE_IMAGE_COLOR_DEPTH colorDepth,
 			FREE_IMAGE_SAVE_FLAGS flags,
-		bool unloadSource)
+			bool unloadSource)
 		{
+			FIBITMAP dibToSave = dib;
 			if (stream == null)
 			{
 				throw new ArgumentNullException("stream");
@@ -12973,7 +16878,7 @@ namespace FreeImageAPI
 				return false;
 			}
 
-			int bpp = (int)GetBPP(dib);
+			int bpp = (int)GetBPP(dibToSave);
 			int targetBpp = (int)(colorDepth & FREE_IMAGE_COLOR_DEPTH.FICD_COLOR_MASK);
 
 			if (colorDepth != FREE_IMAGE_COLOR_DEPTH.FICD_AUTO)
@@ -12981,7 +16886,7 @@ namespace FreeImageAPI
 				// A fix colordepth was chosen
 				if (FIFSupportsExportBPP(fif, targetBpp))
 				{
-					dib = ConvertColorDepth(dib, colorDepth, true);
+					dibToSave = ConvertColorDepth(dibToSave, colorDepth, unloadSource);
 				}
 				else
 				{
@@ -13004,13 +16909,13 @@ namespace FreeImageAPI
 						bppUpper = GetNextColorDepth(bppUpper);
 						if (FIFSupportsExportBPP(fif, bppUpper))
 						{
-							dib = ConvertColorDepth(dib, (FREE_IMAGE_COLOR_DEPTH)bppUpper, true);
+							dibToSave = ConvertColorDepth(dibToSave, (FREE_IMAGE_COLOR_DEPTH)bppUpper, unloadSource);
 							break;
 						}
 						bppLower = GetPrevousColorDepth(bppLower);
 						if (FIFSupportsExportBPP(fif, bppLower))
 						{
-							dib = ConvertColorDepth(dib, (FREE_IMAGE_COLOR_DEPTH)bppLower, true);
+							dibToSave = ConvertColorDepth(dibToSave, (FREE_IMAGE_COLOR_DEPTH)bppLower, unloadSource);
 							break;
 						}
 
@@ -13024,13 +16929,36 @@ namespace FreeImageAPI
 			bool result;
 			using (fi_handle handle = new fi_handle(stream))
 			{
-				result = SaveToHandle(fif, dib, ref io, handle, flags);
+				result = SaveToHandle(fif, dibToSave, ref io, handle, flags);
 			}
 
-			// Unload the source dib only if the operation succeeded
-			if (unloadSource && result)
+			// Check if the temporary bitmap is the same as the original
+			if (dibToSave == dib)
 			{
-				Unload(dib);
+				// Both handles are equal so only unloading the original
+				// in case saving succeeded
+				if (unloadSource && result)
+				{
+					UnloadEx(ref dib);
+				}
+			}
+			// The temporary bitmap was created
+			else
+			{
+				// The original was unloaded by 'ConvertColorDepth'
+				if (unloadSource)
+				{
+					// 'dib' was the original so the handle is dirty
+					dib = dibToSave;
+					if (result)
+					{
+						UnloadEx(ref dib);
+					}
+				}
+				else
+				{
+					UnloadEx(ref dibToSave);
+				}
 			}
 
 			return result;
@@ -13060,19 +16988,23 @@ namespace FreeImageAPI
 		/// <returns>True if the extension is valid for the given format, false otherwise.</returns>
 		public static bool IsExtensionValidForFIF(FREE_IMAGE_FORMAT fif, string extension, StringComparison comparisonType)
 		{
+			bool result = false;
 			// Split up the string and compare each with the given extension
 			string tempList = GetFIFExtensionList(fif);
-			if (tempList == null)
+			if (tempList != null)
 			{
-				return false;
+
+				string[] extensionList = tempList.Split(',');
+				foreach (string ext in extensionList)
+				{
+					if (extension.Equals(ext, comparisonType))
+					{
+						result = true;
+						break;
+					}
+				}
 			}
-			string[] extensionList = tempList.Split(',');
-			foreach (string ext in extensionList)
-			{
-				if (extension.Equals(ext, comparisonType))
-					return true;
-			}
-			return false;
+			return result;
 		}
 
 		/// <summary>
@@ -13095,13 +17027,14 @@ namespace FreeImageAPI
 		/// <returns>True if the filename is valid for the given format, false otherwise.</returns>
 		public static bool IsFilenameValidForFIF(FREE_IMAGE_FORMAT fif, string filename, StringComparison comparisonType)
 		{
+			bool result = false;
 			// Extract the filenames extension if it exists
 			int position = filename.LastIndexOf('.');
-			if (position < 0)
+			if (position >= 0)
 			{
-				return false;
+				result = IsExtensionValidForFIF(fif, filename.Substring(position + 1), comparisonType);
 			}
-			return IsExtensionValidForFIF(fif, filename.Substring(position + 1), comparisonType);
+			return result;
 		}
 
 		/// <summary>
@@ -13113,17 +17046,21 @@ namespace FreeImageAPI
 		/// <returns>The primary extension of the specified image format.</returns>
 		public static string GetPrimaryExtensionFromFIF(FREE_IMAGE_FORMAT fif)
 		{
+			string result = null;
 			string extensions = GetFIFExtensionList(fif);
-			if (extensions == null)
+			if (extensions != null)
 			{
-				return null;
+				int position = extensions.IndexOf(',');
+				if (position < 0)
+				{
+					result = extensions;
+				}
+				else
+				{
+					result = extensions.Substring(0, position);
+				}
 			}
-			int position = extensions.IndexOf(',');
-			if (position < 0)
-			{
-				return extensions;
-			}
-			return extensions.Substring(0, position);
+			return result;
 		}
 
 		#endregion
@@ -13194,7 +17131,7 @@ namespace FreeImageAPI
 		/// If no plugin can read the file, format remains 'FIF_UNKNOWN' and 0 is returned.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
-		/// <param name="format">The format of image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="format">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
 		/// In case a suitable format was found by LoadEx it will be returned in format.</param>
 		/// <param name="create_new">When true a new bitmap is created.</param>
 		/// <param name="read_only">When true the bitmap will be loaded read only.</param>
@@ -13215,7 +17152,7 @@ namespace FreeImageAPI
 		/// Load flags can be provided by the flags parameter.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
-		/// <param name="format">The format of image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="format">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
 		/// In case a suitable format was found by LoadEx it will be returned in format.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <param name="create_new">When true a new bitmap is created.</param>
@@ -13252,16 +17189,16 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public static bool CloseMultiBitmapEx(ref FIMULTIBITMAP dib)
 		{
-			if (dib.IsNull)
+			bool result = false;
+			if (!dib.IsNull)
 			{
-				return false;
+				if (CloseMultiBitmap(dib, FREE_IMAGE_SAVE_FLAGS.DEFAULT))
+				{
+					dib = 0;
+					result = true;
+				}
 			}
-			if (CloseMultiBitmap(dib, FREE_IMAGE_SAVE_FLAGS.DEFAULT))
-			{
-				dib = 0;
-				return true;
-			}
-			return false;
+			return result;
 		}
 
 		/// <summary>
@@ -13273,16 +17210,16 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public static bool CloseMultiBitmapEx(ref FIMULTIBITMAP dib, FREE_IMAGE_SAVE_FLAGS flags)
 		{
-			if (dib.IsNull)
+			bool result = false;
+			if (!dib.IsNull)
 			{
-				return false;
+				if (CloseMultiBitmap(dib, flags))
+				{
+					dib = 0;
+					result = true;
+				}
 			}
-			if (CloseMultiBitmap(dib, flags))
-			{
-				dib = 0;
-				return true;
-			}
-			return false;
+			return result;
 		}
 
 		/// <summary>
@@ -13308,25 +17245,43 @@ namespace FreeImageAPI
 			int count = 0;
 			int[] result = null;
 			// Get count
-			if (!GetLockedPageNumbers(dib, result, ref count))
+			if (GetLockedPageNumbers(dib, result, ref count))
 			{
-				return null;
-			}
-			result = new int[count];
-			// Fill array
-			if (!GetLockedPageNumbers(dib, result, ref count))
-			{
-				return null;
+				result = new int[count];
+				// Fill array
+				if (!GetLockedPageNumbers(dib, result, ref count))
+				{
+					result = null;
+				}
 			}
 			return result;
 		}
 
+		/// <summary>
+		/// Loads a FreeImage multi-paged bitmap from a stream and returns the
+		/// FreeImage memory stream used as temporary buffer.
+		/// The bitmap can not be modified by calling 'AppendPage', 'InsertPage',
+		/// 'MovePage' or 'DeletePage'.
+		/// </summary>
+		/// <param name="stream">The stream to read from.</param>
+		/// <param name="format">Format of the image.</param>
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <param name="memory">The temporary memory buffer used to load the bitmap.</param>
+		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		public static FIMULTIBITMAP LoadMultiBitmapFromStream(
 			Stream stream,
 			FREE_IMAGE_FORMAT format,
 			FREE_IMAGE_LOAD_FLAGS flags,
 			out FIMEMORY memory)
 		{
+			if (stream == null)
+			{
+				throw new ArgumentNullException("stream");
+			}
+			if (!stream.CanRead)
+			{
+				throw new ArgumentException("stream");
+			}
 			const int blockSize = 1024;
 			int bytesRead;
 			byte[] buffer = new byte[blockSize];
@@ -13343,21 +17298,6 @@ namespace FreeImageAPI
 
 			return FreeImage.LoadMultiBitmapFromMemory(format, memory, flags);
 		}
-
-		//public static FIMULTIBITMAP LoadMultiBitmapFromStream(
-		//    Stream stream,
-		//    FREE_IMAGE_FORMAT format,
-		//    FREE_IMAGE_LOAD_FLAGS flags,
-		//    out byte[] memory)
-		//{
-		//    memory = new byte[stream.Length];
-		//    if (memory.Length != stream.Read(memory, 0, memory.Length))
-		//        throw new Exception();
-
-		//    FIMEMORY mem = FreeImage.OpenMemoryEx(memory, (uint)memory.Length);
-
-		//    return FreeImage.LoadMultiBitmapFromMemory(format, mem, flags);
-		//}
 
 		#endregion
 
@@ -13398,11 +17338,11 @@ namespace FreeImageAPI
 		/// Retrieves an hBitmap for a FIBITMAP.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="reference">A provided reference.
+		/// <param name="hdc">A reference device context.
 		/// Use IntPtr.Zero if no reference is available.</param>
 		/// <param name="unload">When true dib will be unloaded if the function succeeded.</param>
 		/// <returns>The hBitmap for the FIBITMAP.</returns>
-		public static IntPtr GetHbitmap(FIBITMAP dib, IntPtr reference, bool unload)
+		public static IntPtr GetHbitmap(FIBITMAP dib, IntPtr hdc, bool unload)
 		{
 			IntPtr hBitmap = IntPtr.Zero;
 			if (!dib.IsNull)
@@ -13410,17 +17350,17 @@ namespace FreeImageAPI
 				bool release = false;
 				IntPtr ppvBits = IntPtr.Zero;
 				// Check if we have destination
-				if (release = (reference == IntPtr.Zero))
+				if (release = (hdc == IntPtr.Zero))
 				{
 					// We don't so request dc
-					reference = GetDC(IntPtr.Zero);
+					hdc = GetDC(IntPtr.Zero);
 				}
-				if (reference != IntPtr.Zero)
+				if (hdc != IntPtr.Zero)
 				{
 					// Get pointer to the infoheader of the bitmap
 					IntPtr info = GetInfo(dib);
 					// Create a bitmap in the dc
-					hBitmap = CreateDIBSection(reference, info, 0, out ppvBits, IntPtr.Zero, 0);
+					hBitmap = CreateDIBSection(hdc, info, DIB_RGB_COLORS, out ppvBits, IntPtr.Zero, 0);
 					if (hBitmap != IntPtr.Zero && ppvBits != IntPtr.Zero)
 					{
 						// Copy the data into the dc
@@ -13434,11 +17374,105 @@ namespace FreeImageAPI
 					// We have to release the dc
 					if (release)
 					{
-						ReleaseDC(IntPtr.Zero, reference);
+						ReleaseDC(IntPtr.Zero, hdc);
 					}
 				}
 			}
 			return hBitmap;
+		}
+
+		/// <summary>
+		/// Returns an HBITMAP created by the CreateDIBitmap() function which in turn
+		/// has always the same color depth as the reference DC, which may be provided
+		/// through the 'reference' parameter. The desktop DC will be used,
+		/// if 'IntPtr.Zero' DC is specified.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="hdc">Handle to a device context.</param>
+		/// <param name="unload">When true the structure will be unloaded on success.
+		/// If the function failed and returned false, the bitmap was not unloaded.</param>
+		/// <returns>If the function succeeds, the return value is a handle to the
+		/// compatible bitmap. If the function fails, the return value is NULL.</returns>
+		public static IntPtr GetBitmapForDevice(FIBITMAP dib, IntPtr hdc, bool unload)
+		{
+			IntPtr hbitmap = IntPtr.Zero;
+			if (!dib.IsNull)
+			{
+				bool release = false;
+				if (release = (hdc == IntPtr.Zero))
+				{
+					hdc = GetDC(IntPtr.Zero);
+				}
+				if (hdc != IntPtr.Zero)
+				{
+					hbitmap = CreateDIBitmap(hdc, GetInfoHeader(dib), CBM_INIT,
+						GetBits(dib), GetInfo(dib), DIB_RGB_COLORS);
+					if (unload)
+					{
+						Unload(dib);
+					}
+					if (release)
+					{
+						ReleaseDC(IntPtr.Zero, hdc);
+					}
+				}
+			}
+			return hbitmap;
+		}
+
+		/// <summary>
+		/// Creates a FreeImage DIB from a Device Context/Compatible Bitmap.
+		/// </summary>
+		/// <param name="hbitmap">Handle to the bitmap.</param>
+		/// <param name="hdc">Handle to a device context.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		public unsafe static FIBITMAP CreateFromHbitmap(IntPtr hbitmap, IntPtr hdc)
+		{
+			FIBITMAP dib = 0;
+			BITMAP bm;
+			uint colors;
+			bool release;
+
+			if (GetObject(hbitmap, sizeof(BITMAP), (IntPtr)(&bm)) != 0)
+			{
+				dib = Allocate(bm.bmWidth, bm.bmHeight, bm.bmBitsPixel, 0, 0, 0);
+				if (!dib.IsNull)
+				{
+					colors = GetColorsUsed(dib);
+					if (release = (hdc == IntPtr.Zero))
+					{
+						hdc = GetDC(IntPtr.Zero);
+					}
+					if (GetDIBits(hdc, hbitmap, 0, (uint)bm.bmHeight, GetBits(dib), GetInfo(dib), DIB_RGB_COLORS) != 0)
+					{
+						if (colors != 0)
+						{
+							BITMAPINFOHEADER* bmih = (BITMAPINFOHEADER*)GetInfo(dib);
+							bmih[0].biClrImportant = bmih[0].biClrUsed = colors;
+						}
+					}
+					else
+					{
+						UnloadEx(ref dib);
+					}
+					if (release)
+					{
+						ReleaseDC(IntPtr.Zero, hdc);
+					}
+				}
+			}
+
+			return dib;
+		}
+
+		/// <summary>
+		/// Frees a bitmap handle.
+		/// </summary>
+		/// <param name="hbitmap">Handle to a bitmap.</param>
+		/// <returns>True on success, false on failure.</returns>
+		public static bool FreeHbitmap(IntPtr hbitmap)
+		{
+			return DeleteObject(hbitmap);
 		}
 
 		#endregion
@@ -13493,28 +17527,32 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>True if the image is a greyscale image, else false.</returns>
-		public static bool IsGreyscaleImage(FIBITMAP dib)
+		public static unsafe bool IsGreyscaleImage(FIBITMAP dib)
 		{
+			bool result = true;
 			uint bpp = GetBPP(dib);
 			switch (bpp)
 			{
 				case 1:
 				case 4:
 				case 8:
-					RGBQUAD[] palette = GetPaletteEx(dib).Data;
-					for (int i = 0; i < palette.Length; i++)
+					RGBQUAD* palette = (RGBQUAD*)GetPalette(dib);
+					uint paletteLength = FreeImage.GetColorsUsed(dib);
+					for (int i = 0; i < paletteLength; i++)
 					{
 						if (palette[i].rgbRed != palette[i].rgbGreen ||
 							palette[i].rgbRed != palette[i].rgbBlue)
 						{
-							return false;
+							result = false;
+							break;
 						}
 					}
-					return true;
-
+					break;
 				default:
-					return false;
+					result = false;
+					break;
 			}
+			return result;
 		}
 
 		/// <summary>
@@ -13898,11 +17936,11 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns the bitmap�s transparency table.
+		/// Returns the bitmap's transparency table.
 		/// The array is empty in case the bitmap has no transparency table.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>The bitmap�s transparency table.</returns>
+		/// <returns>The bitmap's transparency table.</returns>
 		public static unsafe byte[] GetTransparencyTableEx(FIBITMAP dib)
 		{
 			uint count = GetTransparencyCount(dib);
@@ -13916,10 +17954,10 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Set the bitmap�s transparency table. Only affects palletised bitmaps.
+		/// Set the bitmap's transparency table. Only affects palletised bitmaps.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="table">The bitmap�s new transparency table.</param>
+		/// <param name="table">The bitmap's new transparency table.</param>
 		public static void SetTransparencyTable(FIBITMAP dib, byte[] table)
 		{
 			if (table == null)
@@ -13956,6 +17994,12 @@ namespace FreeImageAPI
 					case 1:
 
 						result = 1;
+						lut = CreateShrunkenPaletteLUT(dib, out uniquePalEnts);
+						if (uniquePalEnts == 1)
+						{
+							break;
+						}
+
 						if ((*(byte*)GetScanLine(dib, 0) & 0x80) == 0)
 						{
 							for (int y = 0; y < height; y++)
@@ -13992,8 +18036,13 @@ namespace FreeImageAPI
 
 					case 4:
 
-						bitArray = new BitArray(0x4);
+						bitArray = new BitArray(0x10);
 						lut = CreateShrunkenPaletteLUT(dib, out uniquePalEnts);
+						if (uniquePalEnts == 1)
+						{
+							result = 1;
+							break;
+						}
 
 						for (int y = 0; (y < height) && (result < uniquePalEnts); y++)
 						{
@@ -14023,6 +18072,11 @@ namespace FreeImageAPI
 
 						bitArray = new BitArray(0x100);
 						lut = CreateShrunkenPaletteLUT(dib, out uniquePalEnts);
+						if (uniquePalEnts == 1)
+						{
+							result = 1;
+							break;
+						}
 
 						for (int y = 0; (y < height) && (result < uniquePalEnts); y++)
 						{
@@ -14046,9 +18100,9 @@ namespace FreeImageAPI
 						for (int y = 0; y < height; y++)
 						{
 							short* scanline = (short*)GetScanLine(dib, y);
-							for (int x = 0; x < width; x++)
+							for (int x = 0; x < width; x++, scanline++)
 							{
-								hashcode = scanline[x];
+								hashcode = *scanline;
 								if (!bitArray[hashcode])
 								{
 									bitArray[hashcode] = true;
@@ -14065,9 +18119,9 @@ namespace FreeImageAPI
 						for (int y = 0; y < height; y++)
 						{
 							byte* scanline = (byte*)GetScanLine(dib, y);
-							for (int x = 0; x < width; x++)
+							for (int x = 0; x < width; x++, scanline += 3)
 							{
-								hashcode = *((int*)scanline[x * 3]) & 0x00FFFFFF;
+								hashcode = *((int*)scanline) & 0x00FFFFFF;
 								if (!bitArray[hashcode])
 								{
 									bitArray[hashcode] = true;
@@ -14084,9 +18138,9 @@ namespace FreeImageAPI
 						for (int y = 0; y < height; y++)
 						{
 							int* scanline = (int*)GetScanLine(dib, y);
-							for (int x = 0; x < width; x++)
+							for (int x = 0; x < width; x++, scanline++)
 							{
-								hashcode = scanline[x] >> 8;
+								hashcode = *scanline & 0x00FFFFFF;
 								if (!bitArray[hashcode])
 								{
 									bitArray[hashcode] = true;
@@ -14109,7 +18163,7 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="data">The data of the new ICC-Profile.</param>
-		/// <returns>The ICC-Profile new of the bitmap.</returns>
+		/// <returns>The new ICC-Profile of the bitmap.</returns>
 		public static FIICCPROFILE CreateICCProfileEx(FIBITMAP dib, byte[] data)
 		{
 			return new FIICCPROFILE(dib, data);
@@ -14121,7 +18175,7 @@ namespace FreeImageAPI
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="data">The data of the new ICC-Profile.</param>
 		/// <param name="size">The number of bytes of 'data' to use.</param>
-		/// <returns>The ICC-Profile new of the bitmap.</returns>
+		/// <returns>The new ICC-Profile of the bitmap.</returns>
 		public static FIICCPROFILE CreateICCProfileEx(FIBITMAP dib, byte[] data, int size)
 		{
 			return new FIICCPROFILE(dib, data, size);
@@ -14453,7 +18507,6 @@ namespace FreeImageAPI
 				{
 					return dib;
 				}
-
 				if (unloadSource)
 				{
 					Unload(dib);
@@ -14526,14 +18579,18 @@ namespace FreeImageAPI
 		/// <returns>Comment of the image, or null in case no comment exists.</returns>
 		public static string GetImageComment(FIBITMAP dib)
 		{
-			if (dib.IsNull) throw new ArgumentNullException("dib");
+			string result = null;
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException("dib");
+			}
 			FITAG tag;
 			if (GetMetadata(FREE_IMAGE_MDMODEL.FIMD_COMMENTS, dib, "Comment", out tag))
 			{
 				MetadataTag metadataTag = new MetadataTag(tag, FREE_IMAGE_MDMODEL.FIMD_COMMENTS);
-				return metadataTag.Value as string;
+				result = metadataTag.Value as string;
 			}
-			return null;
+			return result;
 		}
 
 		/// <summary>
@@ -14544,7 +18601,10 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public static bool SetImageComment(FIBITMAP dib, string comment)
 		{
-			if (dib.IsNull) throw new ArgumentNullException("dib");
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException("dib");
+			}
 			bool result;
 			if (comment != null)
 			{
@@ -14572,13 +18632,18 @@ namespace FreeImageAPI
 		public static bool GetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP dib, string key, out MetadataTag tag)
 		{
 			FITAG _tag;
+			bool result;
 			if (GetMetadata(model, dib, key, out _tag))
 			{
 				tag = new MetadataTag(_tag, model);
-				return true;
+				result = true;
 			}
-			tag = null;
-			return false;
+			else
+			{
+				tag = null;
+				result = false;
+			}
+			return result;
 		}
 
 		/// <summary>
@@ -14633,13 +18698,18 @@ namespace FreeImageAPI
 		public static bool FindNextMetadata(FIMETADATA mdhandle, out MetadataTag tag)
 		{
 			FITAG _tag;
+			bool result;
 			if (FindNextMetadata(mdhandle, out _tag))
 			{
 				tag = new MetadataTag(_tag, metaDataSearchHandler[mdhandle]);
-				return true;
+				result = true;
 			}
-			tag = null;
-			return false;
+			else
+			{
+				tag = null;
+				result = false;
+			}
+			return result;
 		}
 
 		/// <summary>
@@ -14663,6 +18733,109 @@ namespace FreeImageAPI
 
 		#endregion
 
+		#region Rotation and flipping
+
+		/// <summary>
+		/// This function rotates a 4-bit color image.
+		/// Allowed values for <paramref name="angle"/> are 90, 180 and 270.
+		/// In case <paramref name="angle"/> is 0 or 360 a clone is returned.
+		/// Null is returned for other values or in case the rotation fails.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="angle">The angle of rotation.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		/// <remarks>
+		/// This function is kind of temporary due to FreeImage's lack of
+		/// rotating 4-bit images. It's particularly used by FreeImageBitmap's
+		/// method RotateFlip. This function will be removed as soon as FreeImage
+		/// supports rotating 4-bit images.
+		/// </remarks>
+		public static unsafe FIBITMAP Rotate4bit(FIBITMAP dib, double angle)
+		{
+			FIBITMAP result = 0;
+			int ang = (int)angle;
+			if ((!dib.IsNull) &&
+				(GetImageType(dib) == FREE_IMAGE_TYPE.FIT_BITMAP) &&
+				(GetBPP(dib) == 4) &&
+				((ang % 90) == 0))
+			{
+				int width, height, xOrg, yOrg;
+				FI4BITARRAY[] src, dst;
+				width = (int)GetWidth(dib);
+				height = (int)GetHeight(dib);
+				byte index = 0;
+				switch (ang)
+				{
+					case 90:
+						result = Allocate(height, width, 4, 0, 0, 0);
+						if (result.IsNull)
+						{
+							break;
+						}
+						CopyPalette(dib, result);
+						src = Get04BitScanlines(dib);
+						dst = Get04BitScanlines(result);
+						for (int y = 0; y < width; y++)
+						{
+							yOrg = height - 1;
+							for (int x = 0; x < height; x++, yOrg--)
+							{
+								index = src[yOrg].GetIndexUnsafe(y);
+								dst[y].SetIndexUnsafe(x, index);
+							}
+						}
+						break;
+					case 180:
+						result = Allocate(width, height, 4, 0, 0, 0);
+						if (result.IsNull)
+						{
+							break;
+						}
+						CopyPalette(dib, result);
+						src = Get04BitScanlines(dib);
+						dst = Get04BitScanlines(result);
+
+						yOrg = height - 1;
+						for (int y = 0; y < height; y++, yOrg--)
+						{
+							xOrg = width - 1;
+							for (int x = 0; x < width; x++, xOrg--)
+							{
+								index = src[yOrg].GetIndexUnsafe(xOrg);
+								dst[y].SetIndexUnsafe(x, index);
+							}
+						}
+						break;
+					case 270:
+						result = Allocate(height, width, 4, 0, 0, 0);
+						if (result.IsNull)
+						{
+							break;
+						}
+						CopyPalette(dib, result);
+						src = Get04BitScanlines(dib);
+						dst = Get04BitScanlines(result);
+						xOrg = width - 1;
+						for (int y = 0; y < width; y++, xOrg--)
+						{
+							for (int x = 0; x < height; x++)
+							{
+								index = src[x].GetIndexUnsafe(xOrg);
+								dst[y].SetIndexUnsafe(x, index);
+							}
+						}
+						break;
+					case 0:
+					case 360:
+						result = Clone(dib);
+						break;
+				}
+			}
+			return result;
+		}
+
+		#endregion
+
 		#region Wrapper functions
 
 		/// <summary>
@@ -14672,15 +18845,26 @@ namespace FreeImageAPI
 		/// <returns>The next higher color depth or 0 if there is no valid color depth.</returns>
 		internal static int GetNextColorDepth(int bpp)
 		{
+			int result = 0;
 			switch (bpp)
 			{
-				case 1: return 4;
-				case 4: return 8;
-				case 8: return 16;
-				case 16: return 24;
-				case 24: return 32;
+				case 1:
+					result = 4;
+					break;
+				case 4:
+					result = 8;
+					break;
+				case 8:
+					result = 16;
+					break;
+				case 16:
+					result = 24;
+					break;
+				case 24:
+					result = 32;
+					break;
 			}
-			return 0;
+			return result;
 		}
 
 		/// <summary>
@@ -14690,15 +18874,26 @@ namespace FreeImageAPI
 		/// <returns>The next lower color depth or 0 if there is no valid color depth.</returns>
 		internal static int GetPrevousColorDepth(int bpp)
 		{
+			int result = 0;
 			switch (bpp)
 			{
-				case 32: return 24;
-				case 24: return 16;
-				case 16: return 8;
-				case 8: return 4;
-				case 4: return 1;
+				case 32:
+					result = 24;
+					break;
+				case 24:
+					result = 16;
+					break;
+				case 16:
+					result = 8;
+					break;
+				case 8:
+					result = 4;
+					break;
+				case 4:
+					result = 1;
+					break;
 			}
-			return 0;
+			return result;
 		}
 
 		/// <summary>
@@ -14706,21 +18901,20 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="ptr">Pointer to the first char of the string.</param>
 		/// <returns>The converted string.</returns>
-		internal static unsafe string PtrToStr(uint ptr)
+		internal static unsafe string PtrToStr(byte* ptr)
 		{
-			if (ptr == 0)
+			string result = null;
+			if (ptr != null)
 			{
-				return null;
-			}
+				System.Text.StringBuilder sb = new System.Text.StringBuilder();
 
-			byte* b = (byte*)ptr;
-			System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-			while (*b != 0)
-			{
-				sb.Append((char)*(b++));
+				while (*ptr != 0)
+				{
+					sb.Append((char)*(ptr++));
+				}
+				result = sb.ToString();
 			}
-			return sb.ToString();
+			return result;
 		}
 
 		internal static unsafe byte[] CreateShrunkenPaletteLUT(FIBITMAP dib, out int uniqueColors)
@@ -14740,6 +18934,8 @@ namespace FreeImageAPI
 				for (int i = 0; i < size; i++)
 				{
 					color = palette[i];
+					color.rgbReserved = 255; // ignore alpha
+
 					index = newPalette.IndexOf(color);
 					if (index < 0)
 					{
@@ -14759,7 +18955,38 @@ namespace FreeImageAPI
 
 		internal static PropertyItem CreatePropertyItem()
 		{
-			return (PropertyItem)PropertyItemConstructor.Invoke(null);
+			PropertyItem result = null;
+			try
+			{
+				result = (PropertyItem)PropertyItemConstructor.Invoke(null);
+			}
+			catch
+			{
+			}
+			return result;
+		}
+
+		private static unsafe void CopyPalette(FIBITMAP src, FIBITMAP dst)
+		{
+			RGBQUAD* orgPal = (RGBQUAD*)GetPalette(src);
+			RGBQUAD* newPal = (RGBQUAD*)GetPalette(dst);
+			int entries = (int)GetColorsUsed(src);
+			for (int i = 0; i < entries; i++)
+			{
+				newPal[i] = orgPal[i];
+			}
+		}
+
+		private static unsafe FI4BITARRAY[] Get04BitScanlines(FIBITMAP dib)
+		{
+			int height = (int)GetHeight(dib);
+			uint width = GetWidth(dib);
+			FI4BITARRAY[] array = new FI4BITARRAY[height];
+			for (int i = 0; i < height; i++)
+			{
+				array[i] = new FI4BITARRAY(GetScanLine(dib, i), width);
+			}
+			return array;
 		}
 
 		#endregion
@@ -14817,7 +19044,7 @@ namespace FreeImageAPI
 		/// <param name="hObject">Handle to a logical pen, brush, font, bitmap, region, or palette.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		[DllImport("gdi32.dll")]
-		public static extern bool DeleteObject(IntPtr hObject);
+		private static extern bool DeleteObject(IntPtr hObject);
 
 		/// <summary>
 		/// Moves a block of memory from one location to another.
@@ -14827,6 +19054,52 @@ namespace FreeImageAPI
 		/// <param name="size">Size of the block of memory to move, in bytes.</param>
 		[DllImport("Kernel32.dll", EntryPoint = "RtlMoveMemory", SetLastError = false)]
 		private static extern void MoveMemory(IntPtr dest, IntPtr src, int size);
+
+		/// <summary>
+		/// Creates a compatible bitmap (DDB) from a DIB and, optionally, sets the bitmap bits.
+		/// </summary>
+		/// <param name="hdc">Handle to a device context.</param>
+		/// <param name="lpbmih">Pointer to a bitmap information header structure.</param>
+		/// <param name="fdwInit">Specifies how the system initializes the bitmap bits - (use 4).</param>
+		/// <param name="lpbInit">Pointer to an array of bytes containing the initial bitmap data.</param>
+		/// <param name="lpbmi">Pointer to a BITMAPINFO structure that describes the dimensions
+		/// and color format of the array pointed to by the lpbInit parameter.</param>
+		/// <param name="fuUsage">Specifies whether the bmiColors member of the BITMAPINFO structure
+		/// was initialized - (use 0).</param>
+		/// <returns>Handle to a DIB or null on failure.</returns>
+		[DllImport("gdi32.dll")]
+		private static extern IntPtr CreateDIBitmap(IntPtr hdc, IntPtr lpbmih,
+			uint fdwInit, IntPtr lpbInit, IntPtr lpbmi, uint fuUsage);
+
+		/// <summary>
+		/// Retrieves information for the specified graphics object.
+		/// </summary>
+		/// <param name="hgdiobj">Handle to the graphics object of interest.</param>
+		/// <param name="cbBuffer">Specifies the number of bytes of information to
+		/// be written to the buffer.</param>
+		/// <param name="lpvObject">Pointer to a buffer that receives the information
+		/// about the specified graphics object.</param>
+		/// <returns>0 on failure.</returns>
+		[DllImport("gdi32.dll")]
+		private static extern int GetObject(IntPtr hgdiobj, int cbBuffer, IntPtr lpvObject);
+
+		/// <summary>
+		/// Retrieves the bits of the specified compatible bitmap and copies them into a buffer
+		/// as a DIB using the specified format.
+		/// </summary>
+		/// <param name="hdc">Handle to the device context.</param>
+		/// <param name="hbmp">Handle to the bitmap. This must be a compatible bitmap (DDB).</param>
+		/// <param name="uStartScan">Specifies the first scan line to retrieve.</param>
+		/// <param name="cScanLines">Specifies the number of scan lines to retrieve.</param>
+		/// <param name="lpvBits">Pointer to a buffer to receive the bitmap data.</param>
+		/// <param name="lpbmi">Pointer to a BITMAPINFO structure that specifies the desired
+		/// format for the DIB data.</param>
+		/// <param name="uUsage">Specifies the format of the bmiColors member of the
+		/// BITMAPINFO structure - (use 0).</param>
+		/// <returns>0 on failure.</returns>
+		[DllImport("gdi32.dll")]
+		private static extern unsafe int GetDIBits(IntPtr hdc, IntPtr hbmp, uint uStartScan,
+		   uint cScanLines, IntPtr lpvBits, IntPtr lpbmi, uint uUsage);
 
 		#endregion
 	}
