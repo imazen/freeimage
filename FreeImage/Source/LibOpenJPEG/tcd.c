@@ -1094,7 +1094,7 @@ bool tcd_rateallocate(opj_tcd_t *tcd, unsigned char *dest, int len, opj_codestre
 				
 				if (cp->fixed_quality) {	/* fixed_quality */
 					if(cp->cinema){
-						l = t2_encode_packets(t2,tcd->tcd_tileno, tcd_tile, layno + 1, dest, maxlen, cstr_info,tcd->cur_tp_num,tcd->tp_pos,tcd->cur_pino,THRESH_CALC);
+						l = t2_encode_packets(t2,tcd->tcd_tileno, tcd_tile, layno + 1, dest, maxlen, cstr_info,tcd->cur_tp_num,tcd->tp_pos,tcd->cur_pino,THRESH_CALC, tcd->cur_totnum_tp);
 						if (l == -999) {
 							lo = thresh;
 							continue;
@@ -1120,7 +1120,7 @@ bool tcd_rateallocate(opj_tcd_t *tcd, unsigned char *dest, int len, opj_codestre
 						lo = thresh;
 					}
 				} else {
-					l = t2_encode_packets(t2, tcd->tcd_tileno, tcd_tile, layno + 1, dest, maxlen, cstr_info,tcd->cur_tp_num,tcd->tp_pos,tcd->cur_pino,THRESH_CALC);
+					l = t2_encode_packets(t2, tcd->tcd_tileno, tcd_tile, layno + 1, dest, maxlen, cstr_info,tcd->cur_tp_num,tcd->tp_pos,tcd->cur_pino,THRESH_CALC, tcd->cur_totnum_tp);
 					/* TODO: what to do with l ??? seek / tell ??? */
 					/* opj_event_msg(tcd->cinfo, EVT_INFO, "rate alloc: len=%d, max=%d\n", l, maxlen); */
 					if (l == -999) {
@@ -1284,7 +1284,7 @@ int tcd_encode_tile(opj_tcd_t *tcd, int tileno, unsigned char *dest, int len, op
 	}
 
 	t2 = t2_create(tcd->cinfo, image, cp);
-	l = t2_encode_packets(t2,tileno, tile, tcd_tcp->numlayers, dest, len, cstr_info,tcd->tp_num,tcd->tp_pos,tcd->cur_pino,FINAL_PASS);
+	l = t2_encode_packets(t2,tileno, tile, tcd_tcp->numlayers, dest, len, cstr_info,tcd->tp_num,tcd->tp_pos,tcd->cur_pino,FINAL_PASS,tcd->cur_totnum_tp);
 	t2_destroy(t2);
 	
 	/*---------------CLEAN-------------------*/
@@ -1384,9 +1384,9 @@ bool tcd_decode_tile(opj_tcd_t *tcd, unsigned char *src, int len, int tileno, op
 		if (tcd->cp->reduce != 0) {
 			tcd->image->comps[compno].resno_decoded =
 				tile->comps[compno].numresolutions - tcd->cp->reduce - 1;
-			if (tcd->image->comps[compno].resno_decoded < 0) {
-				opj_event_msg(tcd->cinfo, EVT_ERROR, "Error decoding tile. The number of resolutions to remove is higher than the number "
-					"of resolutions in the original codestream\nModify the cp_reduce parameter.\n");
+			if (tcd->image->comps[compno].resno_decoded < 0) {				
+				opj_event_msg(tcd->cinfo, EVT_ERROR, "Error decoding tile. The number of resolutions to remove [%d+1] is higher than the number "
+					" of resolutions in the original codestream [%d]\nModify the cp_reduce parameter.\n", tcd->cp->reduce, tile->comps[compno].numresolutions);
 				return false;
 			}
 		}
@@ -1502,4 +1502,5 @@ void tcd_free_decode_tile(opj_tcd_t *tcd, int tileno) {
 	}
 	opj_free(tile->comps);
 }
+
 
