@@ -219,26 +219,31 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 		if(key == NULL) continue;
         
 		fip = TIFFFieldWithTag(tif, tag);
-        if(fip == NULL)
-			continue;
+        if(fip == NULL) continue;
 		
 		if(fip->field_passcount) {
-			if(TIFFGetField(tif, tag, &value_count, &raw_data) != 1)
-				continue;
+			if (fip->field_readcount != TIFF_VARIABLE2) {
+				// assume TIFF_VARIABLE
+				uint16 value_count16;
+				if(TIFFGetField(tif, tag, &value_count16, &raw_data) != 1) continue;
+				value_count = value_count16;
+			} else {
+				if(TIFFGetField(tif, tag, &value_count, &raw_data) != 1) continue;
+			}
 		} else {
-			if (fip->field_readcount == TIFF_VARIABLE || fip->field_readcount == TIFF_VARIABLE2)
+			if (fip->field_readcount == TIFF_VARIABLE || fip->field_readcount == TIFF_VARIABLE2) {
 				value_count = 1;
-			else if (fip->field_readcount == TIFF_SPP)
+			} else if (fip->field_readcount == TIFF_SPP) {
 				value_count = td->td_samplesperpixel;
-			else
+			} else {
 				value_count = fip->field_readcount;
+			}
 			if (fip->field_type == TIFF_ASCII 
 				|| fip->field_readcount == TIFF_VARIABLE
 				|| fip->field_readcount == TIFF_VARIABLE2
 				|| fip->field_readcount == TIFF_SPP
 				|| value_count > 1) {
-				if(TIFFGetField(tif, tag, &raw_data) != 1)
-					continue;
+				if(TIFFGetField(tif, tag, &raw_data) != 1) continue;
 			} else {
 				raw_data = _TIFFmalloc(_TIFFDataSize(fip->field_type) * value_count);
 				mem_alloc = 1;
