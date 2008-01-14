@@ -87,6 +87,10 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentNullException();
 			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
+			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
 				throw new ArgumentException("dib");
@@ -423,7 +427,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetRGBTRIPLE(index);
 					}
@@ -433,9 +437,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
