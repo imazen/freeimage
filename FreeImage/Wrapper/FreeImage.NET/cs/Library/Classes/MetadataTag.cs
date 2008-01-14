@@ -35,6 +35,8 @@
 
 using System;
 using System.Text;
+using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 namespace FreeImageAPI
 {
@@ -47,6 +49,8 @@ namespace FreeImageAPI
 		internal protected FREE_IMAGE_MDMODEL model;
 		protected bool disposed = false;
 		protected bool selfCreated;
+		protected static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
+		protected static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
 
 		protected MetadataTag()
 		{
@@ -99,6 +103,49 @@ namespace FreeImageAPI
 			selfCreated = false;
 		}
 
+		static MetadataTag()
+		{
+			idList = new Dictionary<FREE_IMAGE_MDTYPE, Type>();
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_BYTE, typeof(byte));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SHORT, typeof(ushort));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_LONG, typeof(uint));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_RATIONAL, typeof(FIURational));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SBYTE, typeof(sbyte));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_UNDEFINED, typeof(byte));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SSHORT, typeof(short));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SLONG, typeof(int));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SRATIONAL, typeof(FIRational));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_FLOAT, typeof(float));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_DOUBLE, typeof(double));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_IFD, typeof(uint));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_PALETTE, typeof(RGBQUAD));
+
+			typeList = new Dictionary<Type, FREE_IMAGE_MDTYPE>();
+			typeList.Add(typeof(ushort), FREE_IMAGE_MDTYPE.FIDT_SHORT);
+			typeList.Add(typeof(ushort[]), FREE_IMAGE_MDTYPE.FIDT_SHORT);
+			typeList.Add(typeof(string), FREE_IMAGE_MDTYPE.FIDT_ASCII);
+			typeList.Add(typeof(uint), FREE_IMAGE_MDTYPE.FIDT_LONG);
+			typeList.Add(typeof(uint[]), FREE_IMAGE_MDTYPE.FIDT_LONG);
+			typeList.Add(typeof(FIURational), FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
+			typeList.Add(typeof(FIURational[]), FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
+			typeList.Add(typeof(sbyte), FREE_IMAGE_MDTYPE.FIDT_SBYTE);
+			typeList.Add(typeof(sbyte[]), FREE_IMAGE_MDTYPE.FIDT_SBYTE);
+			typeList.Add(typeof(byte), FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
+			typeList.Add(typeof(byte[]), FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
+			typeList.Add(typeof(short), FREE_IMAGE_MDTYPE.FIDT_SSHORT);
+			typeList.Add(typeof(short[]), FREE_IMAGE_MDTYPE.FIDT_SSHORT);
+			typeList.Add(typeof(int), FREE_IMAGE_MDTYPE.FIDT_SLONG);
+			typeList.Add(typeof(int[]), FREE_IMAGE_MDTYPE.FIDT_SLONG);
+			typeList.Add(typeof(FIRational), FREE_IMAGE_MDTYPE.FIDT_SRATIONAL);
+			typeList.Add(typeof(FIRational[]), FREE_IMAGE_MDTYPE.FIDT_SRATIONAL);
+			typeList.Add(typeof(float), FREE_IMAGE_MDTYPE.FIDT_FLOAT);
+			typeList.Add(typeof(float[]), FREE_IMAGE_MDTYPE.FIDT_FLOAT);
+			typeList.Add(typeof(double), FREE_IMAGE_MDTYPE.FIDT_DOUBLE);
+			typeList.Add(typeof(double[]), FREE_IMAGE_MDTYPE.FIDT_DOUBLE);
+			typeList.Add(typeof(RGBQUAD), FREE_IMAGE_MDTYPE.FIDT_PALETTE);
+			typeList.Add(typeof(RGBQUAD[]), FREE_IMAGE_MDTYPE.FIDT_PALETTE);
+		}
+
 		~MetadataTag()
 		{
 			Dispose();
@@ -108,37 +155,32 @@ namespace FreeImageAPI
 		{
 			// Check whether both are null
 			if (Object.ReferenceEquals(value1, null) && Object.ReferenceEquals(value2, null))
+			{
 				return true;
+			}
 			// Check whether only one is null
 			if (Object.ReferenceEquals(value1, null) || Object.ReferenceEquals(value2, null))
+			{
 				return false;
+			}
 			// Check all properties
-			if (value1.Count != value2.Count) return false;
-			if (value1.Description != value2.Description) return false;
-			if (value1.ID != value2.ID) return false;
-			if (value1.Key != value2.Key) return false;
-			if (value1.Length != value2.Length) return false;
-			if (value1.Model != value2.Model) return false;
-			if (value1.Type != value2.Type) return false;
-			if (value1.Value.GetType() != value2.Value.GetType()) return false;
-			// Value is 'Object' so IComparable is used to compare either
-			// each value seperatly in case its an array or the single value
-			// in case its no array
-			if (value1.Value.GetType().IsArray)
+			if ((value1.Key != value2.Key) ||
+				(value1.ID != value2.ID) ||
+				(value1.Description != value2.Description) ||
+				(value1.Count != value2.Count) ||
+				(value1.Length != value2.Length) ||
+				(value1.Model != value2.Model) ||
+				(value1.Type != value2.Type))
 			{
-				Array array1 = (Array)value1.Value;
-				Array array2 = (Array)value2.Value;
-				if (array1.Length != array2.Length) return false;
-				for (int i = 0; i < array1.Length; i++)
-					if (((IComparable)array1.GetValue(i)).CompareTo(array2.GetValue(i)) != 0)
-						return false;
+				return false;
 			}
-			else
+			if (value1.Length == 0)
 			{
-				if (((IComparable)value1.Value).CompareTo(value2.Value) != 0) return false;
+				return true;
 			}
-			// No difference found
-			return true;
+			IntPtr ptr1 = FreeImage.GetTagValue(value1.tag);
+			IntPtr ptr2 = FreeImage.GetTagValue(value2.tag);
+			return FreeImage.CompareMemory(ptr1, ptr2, value1.Length);
 		}
 
 		public static bool operator !=(MetadataTag value1, MetadataTag value2)
@@ -166,13 +208,18 @@ namespace FreeImageAPI
 					do
 					{
 						if (value == tag)
+						{
 							return model;
+						}
 					}
 					while (FreeImage.FindNextMetadata(mData, out value));
 				}
 				finally
 				{
-					if (!mData.IsNull) FreeImage.FindCloseMetadata(mData);
+					if (!mData.IsNull)
+					{
+						FreeImage.FindCloseMetadata(mData);
+					}
 				}
 			}
 			throw new ArgumentException("'tag' is no metadata object of 'dib'");
@@ -246,118 +293,46 @@ namespace FreeImageAPI
 			byte[] value = new byte[length];
 			byte* ptr = (byte*)FreeImage.GetTagValue(tag);
 			for (int i = 0; i < length; i++)
+			{
 				value[i] = ptr[i];
+			}
 			return value;
 		}
 
 		/// <summary>
 		/// Gets or sets the value of the metadata.
-		/// <para> In case value is of byte or byte[] FREE_IMAGE_MDTYPE.FIDT_UNDEFINED is assumed.</para>
-		/// <para> In case value is of uint or uint[] FREE_IMAGE_MDTYPE.FIDT_LONG is assumed.</para>
+		/// <para> In case value is of byte or byte[], FREE_IMAGE_MDTYPE.FIDT_UNDEFINED is assumed.</para>
+		/// <para> In case value is of uint or uint[], FREE_IMAGE_MDTYPE.FIDT_LONG is assumed.</para>
 		/// </summary>
 		public unsafe object Value
 		{
 			get
 			{
 				CheckDisposed();
-				byte[] value;
+				int cnt = (int)Count;
 
 				if (Type == FREE_IMAGE_MDTYPE.FIDT_ASCII)
 				{
-					value = GetData();
-					StringBuilder sb = new StringBuilder(value.Length);
-					for (int i = 0; i < value.Length; i++)
-						sb.Append((char)value[i]);
+					byte* value = (byte*)FreeImage.GetTagValue(tag);
+					StringBuilder sb = new StringBuilder();
+					for (int i = 0; i < cnt; i++)
+					{
+						sb.Append(Convert.ToChar(value[i]));
+					}
 					return sb.ToString();
 				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_SRATIONAL)
-				{
-					FIRational[] rationResult = new FIRational[Count];
-					int* ptr = (int*)FreeImage.GetTagValue(tag);
-					for (int i = 0; i < rationResult.Length; i++)
-						rationResult[i] = new FIRational(ptr[i * 2], ptr[(i * 2) + 1]);
-					return rationResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_RATIONAL)
-				{
-					FIURational[] urationResult = new FIURational[Count];
-					uint* ptr = (uint*)FreeImage.GetTagValue(tag);
-					for (int i = 0; i < urationResult.Length; i++)
-						urationResult[i] = new FIURational(ptr[i * 2], ptr[(i * 2) + 1]);
-					return urationResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_DOUBLE)
-				{
-					value = GetData();
-					double[] doubleResult = new double[Count];
-					for (int i = 0; i < doubleResult.Length; i++)
-						doubleResult[i] = BitConverter.ToDouble(value, i * sizeof(double));
-					return doubleResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_UNDEFINED || Type == FREE_IMAGE_MDTYPE.FIDT_BYTE)
-				{
-					return GetData();
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_FLOAT)
-				{
-					value = GetData();
-					float[] floatResult = new float[Count];
-					for (int i = 0; i < floatResult.Length; i++)
-						floatResult[i] = BitConverter.ToSingle(value, i * sizeof(float));
-					return floatResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_IFD || Type == FREE_IMAGE_MDTYPE.FIDT_LONG)
-				{
-					value = GetData();
-					uint[] uintegerResult = new uint[Count];
-					for (int i = 0; i < uintegerResult.Length; i++)
-						uintegerResult[i] = BitConverter.ToUInt32(value, i * sizeof(uint));
-					return uintegerResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_SHORT)
-				{
-					value = GetData();
-					ushort[] ushortResult = new ushort[Count];
-					for (int i = 0; i < ushortResult.Length; i++)
-						ushortResult[i] = BitConverter.ToUInt16(value, i * sizeof(short));
-					return ushortResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_SLONG)
-				{
-					value = GetData();
-					int[] intResult = new int[Count];
-					for (int i = 0; i < intResult.Length; i++)
-						intResult[i] = BitConverter.ToInt32(value, i * sizeof(int));
-					return intResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_SSHORT)
-				{
-					value = GetData();
-					short[] shortResult = new short[Count];
-					for (int i = 0; i < shortResult.Length; i++)
-						shortResult[i] = BitConverter.ToInt16(value, i * sizeof(short));
-					return shortResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_SBYTE)
-				{
-					sbyte[] sbyteResult = new sbyte[Length];
-					sbyte* ptr = (sbyte*)FreeImage.GetTagValue(tag);
-					for (int i = 0; i < sbyteResult.Length; i++)
-						sbyteResult[i] = ptr[i];
-					return sbyteResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_PALETTE)
-				{
-					RGBQUAD[] rgbqResult = new RGBQUAD[Count];
-					RGBQUAD* ptr = (RGBQUAD*)FreeImage.GetTagValue(tag);
-					for (int i = 0; i < rgbqResult.Length; i++)
-						rgbqResult[i] = ptr[i];
-					return rgbqResult;
-				}
-				else
+				else if (Type == FREE_IMAGE_MDTYPE.FIDT_NOTYPE)
 				{
 					return null;
 				}
+
+				Array array = Array.CreateInstance(idList[Type], Count);
+				void* src = (void*)FreeImage.GetTagValue(tag);
+				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+				void* dst = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
+				FreeImage.MoveMemory(dst, src, Length);
+				handle.Free();
+				return array;
 			}
 			set
 			{
@@ -379,59 +354,11 @@ namespace FreeImageAPI
 		public bool SetValue(object value)
 		{
 			Type type = value.GetType();
-
-			if (type == typeof(string))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_ASCII);
-			}
-			else if (type == typeof(byte) || type == typeof(byte[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
-			}
-			else if (type == typeof(double) || type == typeof(double[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_DOUBLE);
-			}
-			else if (type == typeof(float) || type == typeof(float[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_FLOAT);
-			}
-			else if (type == typeof(uint) || type == typeof(uint[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_LONG);
-			}
-			else if (type == typeof(RGBQUAD) || type == typeof(RGBQUAD[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_PALETTE);
-			}
-			else if (type == typeof(FIURational) || type == typeof(FIURational[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
-			}
-			else if (type == typeof(sbyte) || type == typeof(sbyte[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_SBYTE);
-			}
-			else if (type == typeof(ushort) || type == typeof(ushort[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_SHORT);
-			}
-			else if (type == typeof(int) || type == typeof(int[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_SLONG);
-			}
-			else if (type == typeof(FIRational) || type == typeof(FIRational[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_SRATIONAL);
-			}
-			else if (type == typeof(short) || type == typeof(short[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_SSHORT);
-			}
-			else
+			if (!typeList.ContainsKey(type))
 			{
 				throw new NotSupportedException();
 			}
+			return SetValue(value, typeList[type]);
 		}
 
 		/// <summary>
@@ -460,207 +387,53 @@ namespace FreeImageAPI
 
 		protected unsafe bool SetArrayValue(object value, FREE_IMAGE_MDTYPE type)
 		{
-			if (value == null) throw new ArgumentNullException("value");
+			if (value == null)
+			{
+				throw new ArgumentNullException("value");
+			}
+
 			byte[] data = null;
 
 			if (type == FREE_IMAGE_MDTYPE.FIDT_ASCII)
 			{
 				string tempValue = value as string;
-				if (tempValue == null) throw new ArgumentException("value");
-
+				if (tempValue == null)
+				{
+					throw new ArgumentException("value");
+				}
 				Type = type;
 				Count = (uint)(tempValue.Length + 1);
 				Length = (uint)((tempValue.Length * sizeof(byte)) + 1);
 				data = new byte[Length + 1];
 
 				for (int i = 0; i < tempValue.Length; i++)
+				{
 					data[i] = (byte)tempValue[i];
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_SRATIONAL)
-			{
-				FIRational[] tempValue = value as FIRational[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				int size = sizeof(FIRational);
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * size);
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp1 = BitConverter.GetBytes(tempValue[i].Numerator);
-					byte[] temp2 = BitConverter.GetBytes(tempValue[i].Denominator);
-					temp1.CopyTo(data, i * size);
-					temp2.CopyTo(data, i * size + (size / 2));
 				}
+				data[data.Length - 1] = 0;
 			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_RATIONAL)
+			else if (type == FREE_IMAGE_MDTYPE.FIDT_NOTYPE)
 			{
-				FIURational[] tempValue = value as FIURational[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				int size = sizeof(FIURational);
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * size);
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp1 = BitConverter.GetBytes(tempValue[i].Numerator);
-					byte[] temp2 = BitConverter.GetBytes(tempValue[i].Denominator);
-					temp1.CopyTo(data, i * size);
-					temp2.CopyTo(data, i * size + (size / 2));
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_UNDEFINED || type == FREE_IMAGE_MDTYPE.FIDT_BYTE)
-			{
-				byte[] tempValue = value as byte[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(byte));
-				data = tempValue;
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_DOUBLE)
-			{
-				double[] tempValue = value as double[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(double));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(double)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_FLOAT)
-			{
-				float[] tempValue = value as float[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(float));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(float)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_IFD || type == FREE_IMAGE_MDTYPE.FIDT_LONG)
-			{
-				uint[] tempValue = value as uint[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(uint));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(uint)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_SBYTE)
-			{
-				sbyte[] tempValue = value as sbyte[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(sbyte));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-					data[i] = (byte)tempValue[i];
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_SHORT)
-			{
-				ushort[] tempValue = value as ushort[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(ushort));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(ushort)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_SLONG)
-			{
-				int[] tempValue = value as int[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(int));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(int)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_SSHORT)
-			{
-				short[] tempValue = value as short[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(short));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(short)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_PALETTE)
-			{
-				RGBQUAD[] tempValue = value as RGBQUAD[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				int size = sizeof(RGBQUAD);
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * size);
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					data[i * size + 0] = tempValue[i].rgbBlue;
-					data[i * size + 1] = tempValue[i].rgbGreen;
-					data[i * size + 2] = tempValue[i].rgbRed;
-					data[i * size + 3] = tempValue[i].rgbReserved;
-				}
+				throw new NotSupportedException();
 			}
 			else
 			{
-				throw new NotSupportedException();
+				Array array = value as Array;
+				if (array == null)
+				{
+					throw new ArgumentException("value");
+				}
+				Type = type;
+				Count = (uint)array.Length;
+				Length = (uint)(array.Length * Marshal.SizeOf(idList[type]));
+				data = new byte[Length];
+				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+				void* src = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
+				fixed (byte* dst = data)
+				{
+					FreeImage.MoveMemory(dst, src, Length);
+				}
+				handle.Free();
 			}
 
 			return FreeImage.SetTagValue(tag, data);
@@ -674,16 +447,27 @@ namespace FreeImageAPI
 		public bool AddToImage(FIBITMAP dib)
 		{
 			CheckDisposed();
-			if (dib.IsNull) throw new ArgumentNullException("dib");
-			if (Key == null) throw new ArgumentNullException("Key");
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException("dib");
+			}
+			if (Key == null)
+			{
+				throw new ArgumentNullException("Key");
+			}
 			if (!selfCreated)
 			{
 				tag = FreeImage.CloneTag(tag);
-				if (tag.IsNull) throw new Exception();
+				if (tag.IsNull)
+				{
+					throw new Exception();
+				}
 				selfCreated = true;
 			}
 			if (!FreeImage.SetMetadata(Model, dib, Key, tag))
+			{
 				return false;
+			}
 			FREE_IMAGE_MDMODEL _model = Model;
 			string _key = Key;
 			selfCreated = false;
@@ -704,7 +488,9 @@ namespace FreeImageAPI
 			byte[] data = new byte[item.Len];
 			byte* ptr = (byte*)FreeImage.GetTagValue(tag);
 			for (int i = 0; i < data.Length; i++)
+			{
 				data[i] = ptr[i];
+			}
 			item.Value = data;
 			return item;
 		}
@@ -750,7 +536,7 @@ namespace FreeImageAPI
 		public bool Equals(MetadataTag other)
 		{
 			CheckDisposed();
-			return this.tag == other.tag && this.model == other.model;
+			return (this.tag == other.tag) && (this.model == other.model);
 		}
 
 		/// <summary>
@@ -776,7 +562,7 @@ namespace FreeImageAPI
 		public int CompareTo(MetadataTag other)
 		{
 			CheckDisposed();
-			return this.tag.CompareTo(other.tag);
+			return tag.CompareTo(other.tag);
 		}
 
 		/// <summary>
@@ -804,7 +590,10 @@ namespace FreeImageAPI
 
 		protected void CheckDisposed()
 		{
-			if (disposed) throw new ObjectDisposedException("The object has already been disposed.");
+			if (disposed)
+			{
+				throw new ObjectDisposedException("The object has already been disposed.");
+			}
 		}
 	}
 }
