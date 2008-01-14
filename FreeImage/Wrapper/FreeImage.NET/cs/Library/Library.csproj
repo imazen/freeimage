@@ -112,6 +112,7 @@
     <Compile Include="Structs\FIURational.cs" />
     <Compile Include="Structs\fi_handle.cs" />
     <Compile Include="Structs\FreeImageIO.cs" />
+    <Compile Include="Structs\FICOMPLEXARRAY.cs" />
     <Compile Include="Structs\Plugin.cs" />
     <Compile Include="Structs\RGBQUAD.cs" />
     <Compile Include="Structs\RGBQUADARRAY.cs">

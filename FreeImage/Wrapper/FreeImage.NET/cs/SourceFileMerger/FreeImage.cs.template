@@ -211,6 +211,8 @@ namespace FreeImageAPI
 
 #include "Structs\FI1BITARRAY.cs"
 
+#include "Structs\FICOMPLEXARRAY.cs"
+
 #include "Structs\FIRational.cs"
 
 #include "Structs\FIURational.cs"
