@@ -475,8 +475,8 @@ namespace FreeImageNETUnitTest
 			Assert.AreEqual(0, FreeImage.GetTransparencyCount(dib));
 			Assert.AreNotEqual(IntPtr.Zero, FreeImage.GetTransparencyTable(dib));
 			FreeImage.SetTransparent(dib, false);
-			FreeImage.SetTransparencyTable(0, new byte[] { });
-			Assert.IsFalse(FreeImage.IsTransparent(dib));
+			FreeImage.SetTransparencyTable(dib, new byte[] { });
+			Assert.IsTrue(FreeImage.IsTransparent(dib));
 			Assert.IsFalse(FreeImage.HasBackgroundColor(dib));
 			RGBQUAD rgb = Color.Teal;
 			Assert.IsTrue(FreeImage.SetBackgroundColor(dib, ref rgb));
@@ -1869,6 +1869,11 @@ namespace FreeImageNETUnitTest
 			Assert.That(EqualColors(Color.DarkGoldenrod, color));
 		}
 
+		[Ignore]
+		public void FICOMPLEX()
+		{
+		}
+
 		[Test]
 		public void FIBITMAP()
 		{
@@ -3241,6 +3246,98 @@ namespace FreeImageNETUnitTest
 			Marshal.FreeHGlobal(buffer);
 		}
 
+		[Test]
+		public unsafe void FICOMPLEXARRAY()
+		{
+			int length = sizeof(double) * 2 * 100;
+			Random rand = new Random();
+			IntPtr buffer = Marshal.AllocHGlobal(length);
+			double[][] matrix = new double[100][];
+			long high, low, val;
+
+			for (int c = 0; c < matrix.Length; c++)
+			{
+				matrix[c] = new double[2];
+
+				high = rand.Next(0, int.MaxValue);
+				low = rand.Next(0, int.MaxValue);
+				high <<= 32;
+				val = low + high;
+				matrix[c][0] = (double)val;
+
+				high = rand.Next(0, int.MaxValue);
+				low = rand.Next(0, int.MaxValue);
+				high <<= 32;
+				val = low + high;
+				matrix[c][1] = (double)val;
+			}
+
+			double* ptr = (double*)buffer;
+
+			for (int c = 0; c < matrix.Length; c++)
+			{
+				*ptr++ = matrix[c][0];
+				*ptr++ = matrix[c][1];
+			}
+
+			ptr = (double*)buffer;
+			FICOMPLEXARRAY array = new FICOMPLEXARRAY(buffer, 100u);
+
+			for (int c = 0; c < matrix.Length; c++)
+			{
+				Assert.AreEqual(matrix[c][0], array.GetFICOMPLEX(c).r);
+				Assert.AreEqual(matrix[c][1], array.GetFICOMPLEX(c).i);
+			}
+
+			FICOMPLEX[] data = array.Data;
+
+			fixed (FICOMPLEX* fix = data)
+			{
+				Assert.IsTrue(FreeImage.CompareMemory((void*)buffer, fix, sizeof(FICOMPLEX) * 100));
+			}
+
+			data = new FICOMPLEX[data.Length];
+			for (int c = 0; c < data.Length; c++)
+			{
+				high = rand.Next(0, int.MaxValue);
+				low = rand.Next(0, int.MaxValue);
+				high <<= 32;
+				val = low + high;
+				data[c].r = (double)val;
+
+				high = rand.Next(0, int.MaxValue);
+				low = rand.Next(0, int.MaxValue);
+				high <<= 32;
+				val = low + high;
+				data[c].i = (double)val;
+			}
+
+			array.Data = data;
+			fixed (FICOMPLEX* fix = data)
+			{
+				Assert.IsTrue(FreeImage.CompareMemory((void*)buffer, fix, sizeof(FICOMPLEX) * 100));
+			}
+
+			FICOMPLEX* fix2 = (FICOMPLEX*)buffer;
+
+			for (int c = 0; c < 100; c++)
+			{
+				Assert.AreEqual(fix2[c].r, array[c].r);
+				Assert.AreEqual(fix2[c].i, array.GetFICOMPLEX(c).i);
+			}
+
+			for (int c = 0; c < 100; c++)
+			{
+				FICOMPLEX comp;
+				comp.r = matrix[c][0];
+				comp.i = matrix[c][1];
+				array.SetFICOMPLEX(c, comp);
+				Assert.AreEqual(comp, fix2[c]);
+			}
+
+			Marshal.FreeHGlobal(buffer);
+		}
+
 		[Ignore]
 		public void LocalPlugin()
 		{
@@ -4131,9 +4228,15 @@ namespace FreeImageNETUnitTest
 		[Test]
 		public void FreeImage_GetBitmap()
 		{
-			Bitmap bitmap;
+			Bitmap bitmap = null;
 
-			bitmap = FreeImage.GetBitmap(0);
+			try
+			{
+				bitmap = FreeImage.GetBitmap(0);
+			}
+			catch
+			{
+			}
 			Assert.IsNull(bitmap);
 
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
@@ -4163,8 +4266,14 @@ namespace FreeImageNETUnitTest
 			bitmap.Dispose();
 			FreeImage.UnloadEx(ref dib);
 
-			dib = FreeImage.CreateFromBitmap(null);
-			Assert.AreEqual(0, dib);
+			try
+			{
+				dib = FreeImage.CreateFromBitmap(null);
+				Assert.Fail();
+			}
+			catch
+			{
+			}
 		}
 
 		[Test]
@@ -4287,7 +4396,7 @@ namespace FreeImageNETUnitTest
 			Assert.IsNotNull(fStream);
 
 			format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
-			dib = FreeImage.LoadFromStream(ref format, fStream, FREE_IMAGE_LOAD_FLAGS.DEFAULT);
+			dib = FreeImage.LoadFromStream(fStream, FREE_IMAGE_LOAD_FLAGS.DEFAULT, ref format);
 			Assert.AreNotEqual(0, dib);
 			Assert.That(FreeImage.GetBPP(dib) == 24);
 			Assert.That(format == FREE_IMAGE_FORMAT.FIF_JPEG);
@@ -4296,7 +4405,7 @@ namespace FreeImageNETUnitTest
 
 			fStream = new FileStream(iManager.GetBitmapPath(ImageType.Even, ImageColorType.Type_32), FileMode.Open);
 			format = FREE_IMAGE_FORMAT.FIF_TIFF;
-			dib = FreeImage.LoadFromStream(ref format, fStream, FREE_IMAGE_LOAD_FLAGS.DEFAULT);
+			dib = FreeImage.LoadFromStream(fStream, FREE_IMAGE_LOAD_FLAGS.DEFAULT, ref format);
 			Assert.AreNotEqual(0, dib);
 			Assert.That(FreeImage.GetBPP(dib) == 32);
 			Assert.That(format == FREE_IMAGE_FORMAT.FIF_TIFF);
@@ -4309,7 +4418,7 @@ namespace FreeImageNETUnitTest
 
 			format = FREE_IMAGE_FORMAT.FIF_BMP;
 			fStream.Position = 0;
-			dib = FreeImage.LoadFromStream(ref format, fStream);
+			dib = FreeImage.LoadFromStream(fStream, ref format);
 			Assert.AreEqual(0, dib);
 			Assert.AreEqual(FREE_IMAGE_FORMAT.FIF_BMP, format);
 
@@ -4326,7 +4435,7 @@ namespace FreeImageNETUnitTest
 			Assert.IsNotNull(stream);
 
 			Assert.IsTrue(FreeImage.SaveEx(ref dib, @"out_file.bmp", FREE_IMAGE_FORMAT.FIF_BMP, false));
-			Assert.IsTrue(FreeImage.SaveToStream(FREE_IMAGE_FORMAT.FIF_BMP, dib, stream));
+			Assert.IsTrue(FreeImage.SaveToStream(dib, stream, FREE_IMAGE_FORMAT.FIF_BMP));
 			stream.Flush();
 			stream.Dispose();
 
@@ -4345,7 +4454,7 @@ namespace FreeImageNETUnitTest
 			Assert.IsFalse(File.Exists(@"out_file.bmp"));
 
 			stream = new MemoryStream();
-			Assert.IsFalse(FreeImage.SaveToStream(FREE_IMAGE_FORMAT.FIF_FAXG3, dib, stream));
+			Assert.IsFalse(FreeImage.SaveToStream(dib, stream, FREE_IMAGE_FORMAT.FIF_FAXG3));
 			stream.Dispose();
 			FreeImage.UnloadEx(ref dib);
 		}
@@ -4512,8 +4621,14 @@ namespace FreeImageNETUnitTest
 			FreeImage.FreeHbitmap(hBitmap);
 			FreeImage.UnloadEx(ref dib);
 
-			hBitmap = FreeImage.GetHbitmap(dib, IntPtr.Zero, false);
-			Assert.That(hBitmap == IntPtr.Zero);
+			try
+			{
+				hBitmap = FreeImage.GetHbitmap(dib, IntPtr.Zero, false);
+				Assert.Fail();
+			}
+			catch
+			{
+			}
 		}
 
 		[Test]
@@ -4754,32 +4869,27 @@ namespace FreeImageNETUnitTest
 		[Test]
 		public void FreeImage_GetFormatParameters()
 		{
-			FREE_IMAGE_TYPE type;
 			uint bpp, red, green, blue;
 
-			FreeImage.GetFormatParameters(PixelFormat.Format16bppRgb555, out type, out bpp, out red, out green, out blue);
-			Assert.AreEqual(FREE_IMAGE_TYPE.FIT_BITMAP, type);
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format16bppRgb555, out bpp, out red, out green, out blue));
 			Assert.AreEqual(16, bpp);
 			Assert.AreEqual(red, FreeImage.FI16_555_RED_MASK);
 			Assert.AreEqual(green, FreeImage.FI16_555_GREEN_MASK);
 			Assert.AreEqual(blue, FreeImage.FI16_555_BLUE_MASK);
 
-			FreeImage.GetFormatParameters(PixelFormat.Format32bppArgb, out type, out bpp, out red, out green, out blue);
-			Assert.AreEqual(FREE_IMAGE_TYPE.FIT_BITMAP, type);
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format32bppArgb, out bpp, out red, out green, out blue));
 			Assert.AreEqual(32, bpp);
 			Assert.AreEqual(red, FreeImage.FI_RGBA_RED_MASK);
 			Assert.AreEqual(green, FreeImage.FI_RGBA_GREEN_MASK);
 			Assert.AreEqual(blue, FreeImage.FI_RGBA_BLUE_MASK);
 
-			FreeImage.GetFormatParameters(PixelFormat.Format24bppRgb, out type, out bpp, out red, out green, out blue);
-			Assert.AreEqual(FREE_IMAGE_TYPE.FIT_BITMAP, type);
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format24bppRgb, out bpp, out red, out green, out blue));
 			Assert.AreEqual(24, bpp);
 			Assert.AreEqual(red, FreeImage.FI_RGBA_RED_MASK);
 			Assert.AreEqual(green, FreeImage.FI_RGBA_GREEN_MASK);
 			Assert.AreEqual(blue, FreeImage.FI_RGBA_BLUE_MASK);
 
-			FreeImage.GetFormatParameters(PixelFormat.Format4bppIndexed, out type, out bpp, out red, out green, out blue);
-			Assert.AreEqual(FREE_IMAGE_TYPE.FIT_BITMAP, type);
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format4bppIndexed, out bpp, out red, out green, out blue));
 			Assert.AreEqual(4, bpp);
 			Assert.AreEqual(red, 0);
 			Assert.AreEqual(green, 0);
@@ -6290,7 +6400,7 @@ namespace FreeImageNETUnitTest
 			fib2 = fib1.Clone() as FreeImageBitmap;
 			Assert.IsTrue(fib1 == fib2);
 			Assert.IsFalse(fib1 != fib2);
-			
+
 			fib1.Dispose();
 			fib2.Dispose();
 		}
