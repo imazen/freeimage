@@ -12,14 +12,15 @@ namespace FreeImageNET_SFM
 		static private FileStream fStream = null;
 		static private TextWriter textOut = null;
 		private const string baseFolder = @"..\..\..\Library\";
+		private const string templateName = @"FreeImage.cs.template";
 
 		static int Main(string[] args)
 		{
 			try
 			{
-				if (!File.Exists("FreeImage.cs.template"))
+				if (!File.Exists(templateName))
 				{
-					Console.WriteLine("FreeImage.txt not found."); return 1;
+					Console.WriteLine(templateName + " not found."); return 1;
 				}
 
 				try
@@ -33,7 +34,7 @@ namespace FreeImageNET_SFM
 
 				textOut = new StreamWriter(fStream);
 
-				string[] content = File.ReadAllLines("FreeImage.cs.template");
+				string[] content = File.ReadAllLines(templateName);
 
 				for (int lineNumber = 0; lineNumber < content.Length; lineNumber++)
 				{
@@ -43,7 +44,9 @@ namespace FreeImageNET_SFM
 					if (match.Success && match.Groups.Count == 2 && match.Groups[1].Value != null)
 					{
 						if (!File.Exists(baseFolder + match.Groups[1].Value))
+						{
 							throw new FileNotFoundException(baseFolder + match.Groups[1].Value + " does not exist.");
+						}
 
 						ParseFile(baseFolder + match.Groups[1].Value);
 					}
@@ -84,14 +87,18 @@ namespace FreeImageNET_SFM
 
             if (fileName.Contains("AssemblyInfo.cs"))
             {
-                while (content[lineNumber].Trim().StartsWith("using") && lineNumber < content.Length)
-                    lineNumber++;
+				while (content[lineNumber].Trim().StartsWith("using") && lineNumber < content.Length)
+				{
+					lineNumber++;
+				}
                 lineNumber++;
             }
             else
             {
-                while (!(content[lineNumber].Trim().StartsWith("namespace")) && lineNumber < content.Length)
-                    lineNumber++;
+				while (!(content[lineNumber].Trim().StartsWith("namespace")) && lineNumber < content.Length)
+				{
+					lineNumber++;
+				}
                 lineNumber += 2;
             }
 
@@ -103,7 +110,9 @@ namespace FreeImageNET_SFM
 				if (match.Success && match.Groups.Count == 2 && match.Groups[1].Value != null)
 				{
 					if (!File.Exists(baseFolder + match.Groups[1].Value))
+					{
 						throw new FileNotFoundException(baseFolder + match.Groups[1].Value + " does not exist.");
+					}
 
 					ParseFile(baseFolder + match.Groups[1].Value);
 				}
