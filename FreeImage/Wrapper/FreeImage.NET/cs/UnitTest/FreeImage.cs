@@ -1436,17 +1436,17 @@ namespace FreeImageAPI
 
 		public static bool operator ==(BITMAPINFOHEADER value1, BITMAPINFOHEADER value2)
 		{
-			return !((value1.biSize != value2.biSize) ||
-					(value1.biWidth != value2.biWidth) ||
-					(value1.biHeight != value2.biHeight) ||
-					(value1.biPlanes != value2.biPlanes) ||
-					(value1.biBitCount != value2.biBitCount) ||
-					(value1.biCompression != value2.biCompression) ||
-					(value1.biSizeImage != value2.biSizeImage) ||
-					(value1.biXPelsPerMeter != value2.biXPelsPerMeter) ||
-					(value1.biYPelsPerMeter != value2.biYPelsPerMeter) ||
-					(value1.biClrUsed != value2.biClrUsed) ||
-					(value1.biClrImportant != value2.biClrImportant));
+			return ((value1.biSize == value2.biSize) &&
+					(value1.biWidth == value2.biWidth) &&
+					(value1.biHeight == value2.biHeight) &&
+					(value1.biPlanes == value2.biPlanes) &&
+					(value1.biBitCount == value2.biBitCount) &&
+					(value1.biCompression == value2.biCompression) &&
+					(value1.biSizeImage == value2.biSizeImage) &&
+					(value1.biXPelsPerMeter == value2.biXPelsPerMeter) &&
+					(value1.biYPelsPerMeter == value2.biYPelsPerMeter) &&
+					(value1.biClrUsed == value2.biClrUsed) &&
+					(value1.biClrImportant == value2.biClrImportant));
 		}
 
 		public static bool operator !=(BITMAPINFOHEADER value1, BITMAPINFOHEADER value2)
@@ -1497,12 +1497,20 @@ namespace FreeImageAPI
 		public static bool operator ==(BITMAPINFO value1, BITMAPINFO value2)
 		{
 			if (value1.bmiHeader != value2.bmiHeader)
+			{
 				return false;
+			}
 			if (value1.bmiColors.Length != value2.bmiColors.Length)
+			{
 				return false;
+			}
 			for (int i = 0; i < value1.bmiColors.Length; i++)
+			{
 				if (value1.bmiColors[i] != value2.bmiColors[i])
+				{
 					return false;
+				}
+			}
 			return true;
 		}
 
@@ -4804,6 +4812,10 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentNullException();
 			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
+			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
 				throw new ArgumentException("dib");
@@ -5224,7 +5236,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetRGBQUAD(index);
 					}
@@ -5234,12 +5246,11 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
-				index = -1;
 				return false;
 			}
 
@@ -5315,6 +5326,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
@@ -5652,7 +5667,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetRGBTRIPLE(index);
 					}
@@ -5662,9 +5677,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
@@ -5741,6 +5756,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_RGBA16)
 			{
@@ -6070,7 +6089,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetFIRGBA16(index);
 					}
@@ -6080,9 +6099,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
@@ -6159,6 +6178,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_RGB16)
 			{
@@ -6456,7 +6479,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetFIRGB16(index);
 					}
@@ -6466,9 +6489,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
@@ -6545,6 +6568,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_RGBAF)
 			{
@@ -6874,7 +6901,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetFIRGBAF(index);
 					}
@@ -6884,9 +6911,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
@@ -6963,6 +6990,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_RGBF)
 			{
@@ -7260,7 +7291,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetFIRGBF(index);
 					}
@@ -7270,9 +7301,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
@@ -7499,6 +7530,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
@@ -7953,7 +7988,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetFI16RGB(index);
 					}
@@ -7963,9 +7998,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
@@ -8043,6 +8078,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
@@ -8208,7 +8247,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetIndex(index);
 					}
@@ -8218,9 +8257,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
@@ -8298,6 +8337,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
@@ -8518,7 +8561,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetIndex(index);
 					}
@@ -8528,9 +8571,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
@@ -8610,6 +8653,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
@@ -8849,7 +8896,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetIndex(index);
 					}
@@ -8859,9 +8906,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
@@ -8938,6 +8985,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_COMPLEX)
 			{
@@ -9107,7 +9158,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetFICOMPLEX(index);
 					}
@@ -9117,9 +9168,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
@@ -14914,6 +14965,8 @@ namespace FreeImageAPI
 		internal protected FREE_IMAGE_MDMODEL model;
 		protected bool disposed = false;
 		protected bool selfCreated;
+		protected static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
+		protected static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
 
 		protected MetadataTag()
 		{
@@ -14966,6 +15019,49 @@ namespace FreeImageAPI
 			selfCreated = false;
 		}
 
+		static MetadataTag()
+		{
+			idList = new Dictionary<FREE_IMAGE_MDTYPE, Type>();
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_BYTE, typeof(byte));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SHORT, typeof(ushort));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_LONG, typeof(uint));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_RATIONAL, typeof(FIURational));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SBYTE, typeof(sbyte));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_UNDEFINED, typeof(byte));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SSHORT, typeof(short));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SLONG, typeof(int));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SRATIONAL, typeof(FIRational));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_FLOAT, typeof(float));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_DOUBLE, typeof(double));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_IFD, typeof(uint));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_PALETTE, typeof(RGBQUAD));
+
+			typeList = new Dictionary<Type, FREE_IMAGE_MDTYPE>();
+			typeList.Add(typeof(ushort), FREE_IMAGE_MDTYPE.FIDT_SHORT);
+			typeList.Add(typeof(ushort[]), FREE_IMAGE_MDTYPE.FIDT_SHORT);
+			typeList.Add(typeof(string), FREE_IMAGE_MDTYPE.FIDT_ASCII);
+			typeList.Add(typeof(uint), FREE_IMAGE_MDTYPE.FIDT_LONG);
+			typeList.Add(typeof(uint[]), FREE_IMAGE_MDTYPE.FIDT_LONG);
+			typeList.Add(typeof(FIURational), FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
+			typeList.Add(typeof(FIURational[]), FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
+			typeList.Add(typeof(sbyte), FREE_IMAGE_MDTYPE.FIDT_SBYTE);
+			typeList.Add(typeof(sbyte[]), FREE_IMAGE_MDTYPE.FIDT_SBYTE);
+			typeList.Add(typeof(byte), FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
+			typeList.Add(typeof(byte[]), FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
+			typeList.Add(typeof(short), FREE_IMAGE_MDTYPE.FIDT_SSHORT);
+			typeList.Add(typeof(short[]), FREE_IMAGE_MDTYPE.FIDT_SSHORT);
+			typeList.Add(typeof(int), FREE_IMAGE_MDTYPE.FIDT_SLONG);
+			typeList.Add(typeof(int[]), FREE_IMAGE_MDTYPE.FIDT_SLONG);
+			typeList.Add(typeof(FIRational), FREE_IMAGE_MDTYPE.FIDT_SRATIONAL);
+			typeList.Add(typeof(FIRational[]), FREE_IMAGE_MDTYPE.FIDT_SRATIONAL);
+			typeList.Add(typeof(float), FREE_IMAGE_MDTYPE.FIDT_FLOAT);
+			typeList.Add(typeof(float[]), FREE_IMAGE_MDTYPE.FIDT_FLOAT);
+			typeList.Add(typeof(double), FREE_IMAGE_MDTYPE.FIDT_DOUBLE);
+			typeList.Add(typeof(double[]), FREE_IMAGE_MDTYPE.FIDT_DOUBLE);
+			typeList.Add(typeof(RGBQUAD), FREE_IMAGE_MDTYPE.FIDT_PALETTE);
+			typeList.Add(typeof(RGBQUAD[]), FREE_IMAGE_MDTYPE.FIDT_PALETTE);
+		}
+
 		~MetadataTag()
 		{
 			Dispose();
@@ -14975,37 +15071,32 @@ namespace FreeImageAPI
 		{
 			// Check whether both are null
 			if (Object.ReferenceEquals(value1, null) && Object.ReferenceEquals(value2, null))
+			{
 				return true;
+			}
 			// Check whether only one is null
 			if (Object.ReferenceEquals(value1, null) || Object.ReferenceEquals(value2, null))
+			{
 				return false;
+			}
 			// Check all properties
-			if (value1.Count != value2.Count) return false;
-			if (value1.Description != value2.Description) return false;
-			if (value1.ID != value2.ID) return false;
-			if (value1.Key != value2.Key) return false;
-			if (value1.Length != value2.Length) return false;
-			if (value1.Model != value2.Model) return false;
-			if (value1.Type != value2.Type) return false;
-			if (value1.Value.GetType() != value2.Value.GetType()) return false;
-			// Value is 'Object' so IComparable is used to compare either
-			// each value seperatly in case its an array or the single value
-			// in case its no array
-			if (value1.Value.GetType().IsArray)
+			if ((value1.Key != value2.Key) ||
+				(value1.ID != value2.ID) ||
+				(value1.Description != value2.Description) ||
+				(value1.Count != value2.Count) ||
+				(value1.Length != value2.Length) ||
+				(value1.Model != value2.Model) ||
+				(value1.Type != value2.Type))
 			{
-				Array array1 = (Array)value1.Value;
-				Array array2 = (Array)value2.Value;
-				if (array1.Length != array2.Length) return false;
-				for (int i = 0; i < array1.Length; i++)
-					if (((IComparable)array1.GetValue(i)).CompareTo(array2.GetValue(i)) != 0)
-						return false;
+				return false;
 			}
-			else
+			if (value1.Length == 0)
 			{
-				if (((IComparable)value1.Value).CompareTo(value2.Value) != 0) return false;
+				return true;
 			}
-			// No difference found
-			return true;
+			IntPtr ptr1 = FreeImage.GetTagValue(value1.tag);
+			IntPtr ptr2 = FreeImage.GetTagValue(value2.tag);
+			return FreeImage.CompareMemory(ptr1, ptr2, value1.Length);
 		}
 
 		public static bool operator !=(MetadataTag value1, MetadataTag value2)
@@ -15033,13 +15124,18 @@ namespace FreeImageAPI
 					do
 					{
 						if (value == tag)
+						{
 							return model;
+						}
 					}
 					while (FreeImage.FindNextMetadata(mData, out value));
 				}
 				finally
 				{
-					if (!mData.IsNull) FreeImage.FindCloseMetadata(mData);
+					if (!mData.IsNull)
+					{
+						FreeImage.FindCloseMetadata(mData);
+					}
 				}
 			}
 			throw new ArgumentException("'tag' is no metadata object of 'dib'");
@@ -15113,118 +15209,46 @@ namespace FreeImageAPI
 			byte[] value = new byte[length];
 			byte* ptr = (byte*)FreeImage.GetTagValue(tag);
 			for (int i = 0; i < length; i++)
+			{
 				value[i] = ptr[i];
+			}
 			return value;
 		}
 
 		/// <summary>
 		/// Gets or sets the value of the metadata.
-		/// <para> In case value is of byte or byte[] FREE_IMAGE_MDTYPE.FIDT_UNDEFINED is assumed.</para>
-		/// <para> In case value is of uint or uint[] FREE_IMAGE_MDTYPE.FIDT_LONG is assumed.</para>
+		/// <para> In case value is of byte or byte[], FREE_IMAGE_MDTYPE.FIDT_UNDEFINED is assumed.</para>
+		/// <para> In case value is of uint or uint[], FREE_IMAGE_MDTYPE.FIDT_LONG is assumed.</para>
 		/// </summary>
 		public unsafe object Value
 		{
 			get
 			{
 				CheckDisposed();
-				byte[] value;
+				int cnt = (int)Count;
 
 				if (Type == FREE_IMAGE_MDTYPE.FIDT_ASCII)
 				{
-					value = GetData();
-					StringBuilder sb = new StringBuilder(value.Length);
-					for (int i = 0; i < value.Length; i++)
-						sb.Append((char)value[i]);
+					byte* value = (byte*)FreeImage.GetTagValue(tag);
+					StringBuilder sb = new StringBuilder();
+					for (int i = 0; i < cnt; i++)
+					{
+						sb.Append(Convert.ToChar(value[i]));
+					}
 					return sb.ToString();
 				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_SRATIONAL)
-				{
-					FIRational[] rationResult = new FIRational[Count];
-					int* ptr = (int*)FreeImage.GetTagValue(tag);
-					for (int i = 0; i < rationResult.Length; i++)
-						rationResult[i] = new FIRational(ptr[i * 2], ptr[(i * 2) + 1]);
-					return rationResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_RATIONAL)
-				{
-					FIURational[] urationResult = new FIURational[Count];
-					uint* ptr = (uint*)FreeImage.GetTagValue(tag);
-					for (int i = 0; i < urationResult.Length; i++)
-						urationResult[i] = new FIURational(ptr[i * 2], ptr[(i * 2) + 1]);
-					return urationResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_DOUBLE)
-				{
-					value = GetData();
-					double[] doubleResult = new double[Count];
-					for (int i = 0; i < doubleResult.Length; i++)
-						doubleResult[i] = BitConverter.ToDouble(value, i * sizeof(double));
-					return doubleResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_UNDEFINED || Type == FREE_IMAGE_MDTYPE.FIDT_BYTE)
-				{
-					return GetData();
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_FLOAT)
-				{
-					value = GetData();
-					float[] floatResult = new float[Count];
-					for (int i = 0; i < floatResult.Length; i++)
-						floatResult[i] = BitConverter.ToSingle(value, i * sizeof(float));
-					return floatResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_IFD || Type == FREE_IMAGE_MDTYPE.FIDT_LONG)
-				{
-					value = GetData();
-					uint[] uintegerResult = new uint[Count];
-					for (int i = 0; i < uintegerResult.Length; i++)
-						uintegerResult[i] = BitConverter.ToUInt32(value, i * sizeof(uint));
-					return uintegerResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_SHORT)
-				{
-					value = GetData();
-					ushort[] ushortResult = new ushort[Count];
-					for (int i = 0; i < ushortResult.Length; i++)
-						ushortResult[i] = BitConverter.ToUInt16(value, i * sizeof(short));
-					return ushortResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_SLONG)
-				{
-					value = GetData();
-					int[] intResult = new int[Count];
-					for (int i = 0; i < intResult.Length; i++)
-						intResult[i] = BitConverter.ToInt32(value, i * sizeof(int));
-					return intResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_SSHORT)
-				{
-					value = GetData();
-					short[] shortResult = new short[Count];
-					for (int i = 0; i < shortResult.Length; i++)
-						shortResult[i] = BitConverter.ToInt16(value, i * sizeof(short));
-					return shortResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_SBYTE)
-				{
-					sbyte[] sbyteResult = new sbyte[Length];
-					sbyte* ptr = (sbyte*)FreeImage.GetTagValue(tag);
-					for (int i = 0; i < sbyteResult.Length; i++)
-						sbyteResult[i] = ptr[i];
-					return sbyteResult;
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_PALETTE)
-				{
-					RGBQUAD[] rgbqResult = new RGBQUAD[Count];
-					RGBQUAD* ptr = (RGBQUAD*)FreeImage.GetTagValue(tag);
-					for (int i = 0; i < rgbqResult.Length; i++)
-						rgbqResult[i] = ptr[i];
-					return rgbqResult;
-				}
-				else
+				else if (Type == FREE_IMAGE_MDTYPE.FIDT_NOTYPE)
 				{
 					return null;
 				}
+
+				Array array = Array.CreateInstance(idList[Type], Count);
+				void* src = (void*)FreeImage.GetTagValue(tag);
+				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+				void* dst = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
+				FreeImage.MoveMemory(dst, src, Length);
+				handle.Free();
+				return array;
 			}
 			set
 			{
@@ -15246,59 +15270,11 @@ namespace FreeImageAPI
 		public bool SetValue(object value)
 		{
 			Type type = value.GetType();
-
-			if (type == typeof(string))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_ASCII);
-			}
-			else if (type == typeof(byte) || type == typeof(byte[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
-			}
-			else if (type == typeof(double) || type == typeof(double[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_DOUBLE);
-			}
-			else if (type == typeof(float) || type == typeof(float[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_FLOAT);
-			}
-			else if (type == typeof(uint) || type == typeof(uint[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_LONG);
-			}
-			else if (type == typeof(RGBQUAD) || type == typeof(RGBQUAD[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_PALETTE);
-			}
-			else if (type == typeof(FIURational) || type == typeof(FIURational[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
-			}
-			else if (type == typeof(sbyte) || type == typeof(sbyte[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_SBYTE);
-			}
-			else if (type == typeof(ushort) || type == typeof(ushort[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_SHORT);
-			}
-			else if (type == typeof(int) || type == typeof(int[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_SLONG);
-			}
-			else if (type == typeof(FIRational) || type == typeof(FIRational[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_SRATIONAL);
-			}
-			else if (type == typeof(short) || type == typeof(short[]))
-			{
-				return SetValue(value, FREE_IMAGE_MDTYPE.FIDT_SSHORT);
-			}
-			else
+			if (!typeList.ContainsKey(type))
 			{
 				throw new NotSupportedException();
 			}
+			return SetValue(value, typeList[type]);
 		}
 
 		/// <summary>
@@ -15327,207 +15303,53 @@ namespace FreeImageAPI
 
 		protected unsafe bool SetArrayValue(object value, FREE_IMAGE_MDTYPE type)
 		{
-			if (value == null) throw new ArgumentNullException("value");
+			if (value == null)
+			{
+				throw new ArgumentNullException("value");
+			}
+
 			byte[] data = null;
 
 			if (type == FREE_IMAGE_MDTYPE.FIDT_ASCII)
 			{
 				string tempValue = value as string;
-				if (tempValue == null) throw new ArgumentException("value");
-
+				if (tempValue == null)
+				{
+					throw new ArgumentException("value");
+				}
 				Type = type;
 				Count = (uint)(tempValue.Length + 1);
 				Length = (uint)((tempValue.Length * sizeof(byte)) + 1);
 				data = new byte[Length + 1];
 
 				for (int i = 0; i < tempValue.Length; i++)
+				{
 					data[i] = (byte)tempValue[i];
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_SRATIONAL)
-			{
-				FIRational[] tempValue = value as FIRational[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				int size = sizeof(FIRational);
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * size);
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp1 = BitConverter.GetBytes(tempValue[i].Numerator);
-					byte[] temp2 = BitConverter.GetBytes(tempValue[i].Denominator);
-					temp1.CopyTo(data, i * size);
-					temp2.CopyTo(data, i * size + (size / 2));
 				}
+				data[data.Length - 1] = 0;
 			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_RATIONAL)
+			else if (type == FREE_IMAGE_MDTYPE.FIDT_NOTYPE)
 			{
-				FIURational[] tempValue = value as FIURational[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				int size = sizeof(FIURational);
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * size);
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp1 = BitConverter.GetBytes(tempValue[i].Numerator);
-					byte[] temp2 = BitConverter.GetBytes(tempValue[i].Denominator);
-					temp1.CopyTo(data, i * size);
-					temp2.CopyTo(data, i * size + (size / 2));
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_UNDEFINED || type == FREE_IMAGE_MDTYPE.FIDT_BYTE)
-			{
-				byte[] tempValue = value as byte[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(byte));
-				data = tempValue;
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_DOUBLE)
-			{
-				double[] tempValue = value as double[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(double));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(double)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_FLOAT)
-			{
-				float[] tempValue = value as float[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(float));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(float)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_IFD || type == FREE_IMAGE_MDTYPE.FIDT_LONG)
-			{
-				uint[] tempValue = value as uint[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(uint));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(uint)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_SBYTE)
-			{
-				sbyte[] tempValue = value as sbyte[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(sbyte));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-					data[i] = (byte)tempValue[i];
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_SHORT)
-			{
-				ushort[] tempValue = value as ushort[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(ushort));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(ushort)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_SLONG)
-			{
-				int[] tempValue = value as int[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(int));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(int)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_SSHORT)
-			{
-				short[] tempValue = value as short[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * sizeof(short));
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					byte[] temp = BitConverter.GetBytes(tempValue[i]);
-					for (int j = 0; j < temp.Length; j++)
-						data[(i * sizeof(short)) + j] = temp[j];
-				}
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_PALETTE)
-			{
-				RGBQUAD[] tempValue = value as RGBQUAD[];
-				if (tempValue == null) throw new ArgumentException("value");
-
-				int size = sizeof(RGBQUAD);
-				Type = type;
-				Count = (uint)(tempValue.Length);
-				Length = (uint)(tempValue.Length * size);
-				data = new byte[Length];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					data[i * size + 0] = tempValue[i].rgbBlue;
-					data[i * size + 1] = tempValue[i].rgbGreen;
-					data[i * size + 2] = tempValue[i].rgbRed;
-					data[i * size + 3] = tempValue[i].rgbReserved;
-				}
+				throw new NotSupportedException();
 			}
 			else
 			{
-				throw new NotSupportedException();
+				Array array = value as Array;
+				if (array == null)
+				{
+					throw new ArgumentException("value");
+				}
+				Type = type;
+				Count = (uint)array.Length;
+				Length = (uint)(array.Length * Marshal.SizeOf(idList[type]));
+				data = new byte[Length];
+				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+				void* src = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
+				fixed (byte* dst = data)
+				{
+					FreeImage.MoveMemory(dst, src, Length);
+				}
+				handle.Free();
 			}
 
 			return FreeImage.SetTagValue(tag, data);
@@ -15541,16 +15363,27 @@ namespace FreeImageAPI
 		public bool AddToImage(FIBITMAP dib)
 		{
 			CheckDisposed();
-			if (dib.IsNull) throw new ArgumentNullException("dib");
-			if (Key == null) throw new ArgumentNullException("Key");
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException("dib");
+			}
+			if (Key == null)
+			{
+				throw new ArgumentNullException("Key");
+			}
 			if (!selfCreated)
 			{
 				tag = FreeImage.CloneTag(tag);
-				if (tag.IsNull) throw new Exception();
+				if (tag.IsNull)
+				{
+					throw new Exception();
+				}
 				selfCreated = true;
 			}
 			if (!FreeImage.SetMetadata(Model, dib, Key, tag))
+			{
 				return false;
+			}
 			FREE_IMAGE_MDMODEL _model = Model;
 			string _key = Key;
 			selfCreated = false;
@@ -15571,7 +15404,9 @@ namespace FreeImageAPI
 			byte[] data = new byte[item.Len];
 			byte* ptr = (byte*)FreeImage.GetTagValue(tag);
 			for (int i = 0; i < data.Length; i++)
+			{
 				data[i] = ptr[i];
+			}
 			item.Value = data;
 			return item;
 		}
@@ -15617,7 +15452,7 @@ namespace FreeImageAPI
 		public bool Equals(MetadataTag other)
 		{
 			CheckDisposed();
-			return this.tag == other.tag && this.model == other.model;
+			return (this.tag == other.tag) && (this.model == other.model);
 		}
 
 		/// <summary>
@@ -15643,7 +15478,7 @@ namespace FreeImageAPI
 		public int CompareTo(MetadataTag other)
 		{
 			CheckDisposed();
-			return this.tag.CompareTo(other.tag);
+			return tag.CompareTo(other.tag);
 		}
 
 		/// <summary>
@@ -15671,7 +15506,10 @@ namespace FreeImageAPI
 
 		protected void CheckDisposed()
 		{
-			if (disposed) throw new ObjectDisposedException("The object has already been disposed.");
+			if (disposed)
+			{
+				throw new ObjectDisposedException("The object has already been disposed.");
+			}
 		}
 	}
 
@@ -19131,6 +18969,11 @@ namespace FreeImageAPI
 				return false;
 			}
 
+			byte* ptr1, ptr2;
+			int fullBytes;
+			int shift;
+			uint line = GetLine(dib1);
+
 			if (type == FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
 				switch (bpp)
@@ -19138,9 +18981,9 @@ namespace FreeImageAPI
 					case 32:
 						for (int i = 0; i < height; i++)
 						{
-							RGBQUADARRAY array1 = new RGBQUADARRAY(dib1, i);
-							RGBQUADARRAY array2 = new RGBQUADARRAY(dib2, i);
-							if (array1 != array2)
+							ptr1 = (byte*)GetScanLine(dib1, i);
+							ptr2 = (byte*)GetScanLine(dib2, i);
+							if (!CompareMemory(ptr1, ptr2, line))
 							{
 								return false;
 							}
@@ -19149,55 +18992,124 @@ namespace FreeImageAPI
 					case 24:
 						for (int i = 0; i < height; i++)
 						{
-							RGBTRIPLEARRAY array1 = new RGBTRIPLEARRAY(dib1, i);
-							RGBTRIPLEARRAY array2 = new RGBTRIPLEARRAY(dib2, i);
-							if (array1 != array2)
+							ptr1 = (byte*)GetScanLine(dib1, i);
+							ptr2 = (byte*)GetScanLine(dib2, i);
+							if (!CompareMemory(ptr1, ptr2, line))
 							{
 								return false;
 							}
 						}
 						break;
 					case 16:
-						for (int i = 0; i < height; i++)
+						if ((GetRedMask(dib1) == FI16_565_RED_MASK) &&
+							(GetGreenMask(dib1) == FI16_565_GREEN_MASK) &&
+							(GetBlueMask(dib1) == FI16_565_BLUE_MASK) &&
+							(GetRedMask(dib2) == FI16_565_RED_MASK) &&
+							(GetGreenMask(dib2) == FI16_565_GREEN_MASK) &&
+							(GetBlueMask(dib2) == FI16_565_BLUE_MASK))
 						{
-							FI16RGBARRAY array1 = new FI16RGBARRAY(dib1, i);
-							FI16RGBARRAY array2 = new FI16RGBARRAY(dib2, i);
-							if (array1 != array2)
+							for (int i = 0; i < height; i++)
 							{
-								return false;
+								ptr1 = (byte*)GetScanLine(dib1, i);
+								ptr2 = (byte*)GetScanLine(dib2, i);
+								if (!CompareMemory(ptr1, ptr2, line))
+								{
+									return false;
+								}
+							}
+						}
+						else if ((GetRedMask(dib1) == FI16_555_RED_MASK) &&
+							(GetGreenMask(dib1) == FI16_555_GREEN_MASK) &&
+							(GetBlueMask(dib1) == FI16_555_BLUE_MASK) &&
+							(GetRedMask(dib2) == FI16_555_RED_MASK) &&
+							(GetGreenMask(dib2) == FI16_555_GREEN_MASK) &&
+							(GetBlueMask(dib2) == FI16_555_BLUE_MASK))
+						{
+							short* sPtr1, sPtr2;
+							for (int i = 0; i < height; i++)
+							{
+								sPtr1 = (short*)GetScanLine(dib1, i);
+								sPtr2 = (short*)GetScanLine(dib2, i);
+								for (int x = 0; x < width; x++)
+								{
+									if ((sPtr1[x] << 1) != (sPtr2[x] << 1))
+									{
+										return false;
+									}
+								}
+							}
+						}
+						else
+						{
+							for (int i = 0; i < height; i++)
+							{
+								FI16RGBARRAY array1 = new FI16RGBARRAY(dib1, i);
+								FI16RGBARRAY array2 = new FI16RGBARRAY(dib2, i);
+								if (array1 != array2)
+								{
+									return false;
+								}
 							}
 						}
 						break;
 					case 8:
 						for (int i = 0; i < height; i++)
 						{
-							FI8BITARRAY array1 = new FI8BITARRAY(dib1, i);
-							FI8BITARRAY array2 = new FI8BITARRAY(dib2, i);
-							if (array1 != array2)
+							ptr1 = (byte*)GetScanLine(dib1, i);
+							ptr2 = (byte*)GetScanLine(dib2, i);
+							if (!CompareMemory(ptr1, ptr2, line))
 							{
 								return false;
 							}
 						}
 						break;
 					case 4:
+						fullBytes = (int)width / 2;
+						shift = (width % 2) == 0 ? 8 : 4;
 						for (int i = 0; i < height; i++)
 						{
-							FI4BITARRAY array1 = new FI4BITARRAY(dib1, i);
-							FI4BITARRAY array2 = new FI4BITARRAY(dib2, i);
-							if (array1 != array2)
+							ptr1 = (byte*)GetScanLine(dib1, i);
+							ptr2 = (byte*)GetScanLine(dib2, i);
+							if (fullBytes != 0)
 							{
-								return false;
+								if (!CompareMemory(ptr1, ptr2, fullBytes))
+								{
+									return false;
+								}
+								ptr1 += fullBytes;
+								ptr2 += fullBytes;
+							}
+							if (shift != 8)
+							{
+								if ((ptr1[0] >> shift) != (ptr2[0] >> shift))
+								{
+									return false;
+								}
 							}
 						}
 						break;
 					case 1:
+						fullBytes = (int)width / 8;
+						shift = 8 - ((int)width % 8);
 						for (int i = 0; i < height; i++)
 						{
-							FI1BITARRAY array1 = new FI1BITARRAY(dib1, i);
-							FI1BITARRAY array2 = new FI1BITARRAY(dib2, i);
-							if (array1 != array2)
+							ptr1 = (byte*)GetScanLine(dib1, i);
+							ptr2 = (byte*)GetScanLine(dib2, i);
+							if (fullBytes != 0)
 							{
-								return false;
+								if (!CompareMemory(ptr1, ptr2, fullBytes))
+								{
+									return false;
+								}
+								ptr1 += fullBytes;
+								ptr2 += fullBytes;
+							}
+							if (shift != 8)
+							{
+								if ((ptr1[0] >> shift) != (ptr2[0] >> shift))
+								{
+									return false;
+								}
 							}
 						}
 						break;
@@ -19207,13 +19119,11 @@ namespace FreeImageAPI
 			}
 			else
 			{
-				IntPtr ptr1, ptr2;
-				uint line = GetLine(dib1);
 				for (int i = 0; i < height; i++)
 				{
-					ptr1 = GetScanLine(dib1, i);
-					ptr2 = GetScanLine(dib2, i);
-					if (!CompareMemory((void*)ptr1, (void*)ptr2, line))
+					ptr1 = (byte*)GetScanLine(dib1, i);
+					ptr2 = (byte*)GetScanLine(dib2, i);
+					if (!CompareMemory(ptr1, ptr2, line))
 					{
 						return false;
 					}
@@ -20505,7 +20415,7 @@ namespace FreeImageAPI
 		/// <param name="buf2">Pointer to a block of memory to compare.</param>
 		/// <param name="length">Specifies the number of bytes to be compared.</param>
 		/// <returns>If all bytes compare as equal, true is returned.</returns>
-		public static unsafe bool CompareMemory(void* buf1, void* buf2, uint length)
+		internal static unsafe bool CompareMemory(void* buf1, void* buf2, uint length)
 		{
 			return (length == RtlCompareMemory(buf1, buf2, length));
 		}
@@ -20517,13 +20427,33 @@ namespace FreeImageAPI
 		/// <param name="buf2">Pointer to a block of memory to compare.</param>
 		/// <param name="length">Specifies the number of bytes to be compared.</param>
 		/// <returns>If all bytes compare as equal, true is returned.</returns>
-		public static unsafe bool CompareMemory(void* buf1, void* buf2, long length)
+		internal static unsafe bool CompareMemory(void* buf1, void* buf2, long length)
 		{
-			checked
+			return (length == RtlCompareMemory(buf1, buf2, checked((uint)length)));
+		}
+
+		/// <summary>
+		/// Compares blocks of memory.
+		/// </summary>
+		/// <param name="buf1">Pointer to a block of memory to compare.</param>
+		/// <param name="buf2">Pointer to a block of memory to compare.</param>
+		/// <param name="length">Specifies the number of bytes to be compared.</param>
+		/// <returns>If all bytes compare as equal, true is returned.</returns>
+		public static unsafe bool CompareMemory(IntPtr buf1, IntPtr buf2, uint length)
+		{
+			if (buf1 == IntPtr.Zero)
 			{
-				uint len = (uint)length;
-				return (len == RtlCompareMemory(buf1, buf2, len));
+				throw new ArgumentNullException("buf1");
 			}
+			if (buf2 == IntPtr.Zero)
+			{
+				throw new ArgumentNullException("buf2");
+			}
+			if (length == 0u)
+			{
+				throw new ArgumentOutOfRangeException("length");
+			}
+			return (length == RtlCompareMemory((void*)buf1, (void*)buf2, length));
 		}
 
 		/// <summary>
@@ -20532,12 +20462,56 @@ namespace FreeImageAPI
 		/// <param name="dst">Pointer to the starting address of the move destination.</param>
 		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
 		/// <param name="size">Size of the block of memory to move, in bytes.</param>
-		public static unsafe void MoveMemory(void* dst, void* src, long size)
+		internal static unsafe void MoveMemory(void* dst, void* src, long size)
 		{
-			checked
+			MoveMemory(dst, src, checked((uint)size));
+		}
+
+		/// <summary>
+		/// Moves a block of memory from one location to another.
+		/// </summary>
+		/// <param name="dst">Pointer to the starting address of the move destination.</param>
+		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
+		/// <param name="size">Size of the block of memory to move, in bytes.</param>
+		public static unsafe void MoveMemory(IntPtr dst, IntPtr src, uint size)
+		{
+			if (dst == IntPtr.Zero)
 			{
-				uint len = (uint)size;
-				MoveMemory(dst, src, len);
+				throw new ArgumentNullException("dst");
+			}
+			if (src == IntPtr.Zero)
+			{
+				throw new ArgumentNullException("src");
+			}
+			if (size == 0u)
+			{
+				throw new ArgumentOutOfRangeException("size");
+			}
+			MoveMemory((void*)dst, (void*)src, size);
+		}
+
+		internal static unsafe void CopyMemory(void* dst, void* src, uint size)
+		{
+			if ((dst != null) && (src != null) && (size != 0))
+			{
+				uint* uDst = (uint*)dst;
+				uint* uSrc = (uint*)src;
+				while (size >= 4)
+				{
+					uDst[0] = uSrc[0];
+					uDst++;
+					uSrc++;
+					size -= 4;
+				}
+				byte* bDst = (byte*)uDst;
+				byte* bSrc = (byte*)uSrc;
+				while (size > 0)
+				{
+					bDst[0] = bSrc[0];
+					bDst++;
+					bSrc++;
+					size--;
+				}
 			}
 		}
 
@@ -20667,7 +20641,7 @@ namespace FreeImageAPI
 		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
 		/// <param name="size">Size of the block of memory to move, in bytes.</param>
 		[DllImport("Kernel32.dll", EntryPoint = "RtlMoveMemory", SetLastError = false)]
-		public static unsafe extern void MoveMemory(void* dst, void* src, uint size);
+		internal static unsafe extern void MoveMemory(void* dst, void* src, uint size);
 
 		/// <summary>
 		/// The RtlCompareMemory routine compares blocks of memory
@@ -20679,7 +20653,7 @@ namespace FreeImageAPI
 		/// <returns>RtlCompareMemory returns the number of bytes that compare as equal.
 		/// If all bytes compare as equal, the input Length is returned.</returns>
 		[DllImport("ntdll.dll", EntryPoint = "RtlCompareMemory", SetLastError = false)]
-		private static unsafe extern uint RtlCompareMemory(void* buf1, void* buf2, uint count);
+		internal static unsafe extern uint RtlCompareMemory(void* buf1, void* buf2, uint count);
 
 		#endregion
 	}
