@@ -43,9 +43,62 @@ namespace FreeImageAPI
 	/// Each part is using 4 bytes of data.
 	/// </summary>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
-	public struct FICOMPLEX
+	public struct FICOMPLEX : IComparable, IComparable<FICOMPLEX>, IEquatable<FICOMPLEX>
 	{
 		public double r;
 		public double i;
+
+		public static bool operator ==(FICOMPLEX value1, FICOMPLEX value2)
+		{
+			return ((value1.r == value2.r) && (value1.i == value2.i));
+		}
+
+		public static bool operator !=(FICOMPLEX value1, FICOMPLEX value2)
+		{
+			return !(value1 == value2);
+		}
+
+		/// <summary>
+		/// Compares the current instance with another object of the same type.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		public int CompareTo(object obj)
+		{
+			if (obj is FICOMPLEX)
+			{
+				return CompareTo((FICOMPLEX)obj);
+			}
+			throw new ArgumentException();
+		}
+
+		/// <summary>
+		/// Compares the current instance with another object of the same type.
+		/// </summary>
+		/// <param name="other">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		public int CompareTo(FICOMPLEX other)
+		{
+			return (this.r * this.i).CompareTo(other.r * other.i);
+		}
+
+		/// <summary>
+		/// Indicates whether the current object is equal to another object of the same type.
+		/// </summary>
+		/// <param name="other">An object to compare with this object.</param>
+		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		public bool Equals(FICOMPLEX other)
+		{
+			return this == other;
+		}
+
+		/// <summary>
+		/// Serves as a hash function for a particular type.
+		/// </summary>
+		/// <returns>A hash code for the current object.</returns>
+		public override int GetHashCode()
+		{
+			return (r * i).GetHashCode();
+		}
 	}
 }
