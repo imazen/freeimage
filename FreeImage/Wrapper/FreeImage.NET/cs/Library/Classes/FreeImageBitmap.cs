@@ -72,6 +72,7 @@ namespace FreeImageAPI
 		/// Initializes a new instance of the FreeImageBitmap class.
 		/// For internal use only.
 		/// </summary>
+		/// <exception cref="Exception">The operation failed.</exception>
 		internal FreeImageBitmap(FIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -337,7 +338,7 @@ namespace FreeImageAPI
 			}
 			saveInformation.loadFlags = flags;
 
-			dib = FreeImage.LoadFromStream(ref format, stream, flags);
+			dib = FreeImage.LoadFromStream(stream, flags, ref format);
 
 			if (dib.IsNull)
 			{
@@ -518,12 +519,15 @@ namespace FreeImageAPI
 		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
 		/// <param name="format">The PixelFormat enumeration for the new FreeImageBitmap.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentException"><paramref name="format"/> is invalid.</exception>
 		public FreeImageBitmap(int width, int height, PixelFormat format)
 		{
-			FREE_IMAGE_TYPE type;
 			uint bpp, redMask, greenMask, blueMask;
-			FreeImage.GetFormatParameters(format, out type, out bpp, out redMask, out greenMask, out blueMask);
-			dib = FreeImage.AllocateT(type, width, height, (int)bpp, redMask, greenMask, blueMask);
+			if (!FreeImage.GetFormatParameters(format, out bpp, out redMask, out greenMask, out blueMask))
+			{
+				throw new ArgumentException("format is invalid.");
+			}
+			dib = FreeImage.Allocate(width, height, (int)bpp, redMask, greenMask, blueMask);
 			if (dib.IsNull)
 			{
 				throw new Exception();
@@ -544,14 +548,17 @@ namespace FreeImageAPI
 		/// <param name="format">The PixelFormat enumeration for the new FreeImageBitmap.</param>
 		/// <param name="scan0">Pointer to an array of bytes that contains the pixel data.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentException"><paramref name="format"/> is invalid.</exception>
 		public FreeImageBitmap(int width, int height, int stride, PixelFormat format, IntPtr scan0)
 		{
-			FREE_IMAGE_TYPE type;
 			uint bpp, redMask, greenMask, blueMask;
 			bool topDown = (stride > 0);
 			stride = (stride > 0) ? stride : (stride * -1);
 
-			FreeImage.GetFormatParameters(format, out type, out bpp, out redMask, out greenMask, out blueMask);
+			if (!FreeImage.GetFormatParameters(format, out bpp, out redMask, out greenMask, out blueMask))
+			{
+				throw new ArgumentException("format is invalid.");
+			}
 
 			dib = FreeImage.ConvertFromRawBits(
 				scan0, width, height, stride, bpp, redMask, greenMask, blueMask, topDown);
@@ -575,7 +582,7 @@ namespace FreeImageAPI
 				{
 					MemoryStream memory = new MemoryStream(data);
 					FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_TIFF;
-					dib = FreeImage.LoadFromStream(ref format, memory);
+					dib = FreeImage.LoadFromStream(memory, ref format);
 				}
 				if (dib.IsNull)
 				{
@@ -632,14 +639,22 @@ namespace FreeImageAPI
 
 		public static bool operator ==(FreeImageBitmap fib1, FreeImageBitmap fib2)
 		{
-			bool result;
+			bool result = false;
 			if (object.ReferenceEquals(fib1, fib2))
 			{
+				if (!object.ReferenceEquals(fib1, null))
+				{
+					fib1.ThrowOnDisposed();
+				}
 				result = true;
 			}
-			else if (object.ReferenceEquals(fib2, null) || object.ReferenceEquals(fib1, null))
+			else if (object.ReferenceEquals(fib1, null))
 			{
-				result = false;
+				fib2.ThrowOnDisposed();
+			}
+			else if (object.ReferenceEquals(fib2, null))
+			{
+				fib1.ThrowOnDisposed();
 			}
 			else
 			{
@@ -685,8 +700,8 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// The number of unique colors actually used by the bitmap. This might be different from
-		/// what ColorsUsed returns, which actually returns the
-		/// palette size for palletised images. Works for FIT_BITMAP type bitmaps only.
+		/// what ColorsUsed returns, which actually returns the palette size for palletised images.
+		/// Works for FIT_BITMAP type bitmaps only.
 		/// </summary>
 		public int UniqueColors
 		{
@@ -834,7 +849,7 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Investigates the color type of the bitmap
-		/// by reading the bitmap's pixel bits and analysing them.
+		/// by reading the bitmaps pixel bits and analysing them.
 		/// </summary>
 		public FREE_IMAGE_COLOR_TYPE ColorType
 		{
@@ -993,7 +1008,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Pointer to the scanline of bitmap's top most pixel row.
+		/// Pointer to the scanline of the bitmap's top most pixel row.
 		/// </summary>
 		public IntPtr Scan0
 		{
@@ -1027,7 +1042,6 @@ namespace FreeImageAPI
 				int result = 0;
 				byte alpha;
 				int cd = ColorDepth;
-
 
 				if ((cd == 32) || (FreeImage.GetTransparencyCount(dib) != 0))
 				{
@@ -1147,7 +1161,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Gets all the property items (pieces of metadata) stored in this bitmap.
 		/// </summary>
-		public System.Drawing.Imaging.PropertyItem[] PropertyItems
+		public PropertyItem[] PropertyItems
 		{
 			get
 			{
@@ -1372,7 +1386,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a thumbnail for this FreeImageBitmap.
+		/// Returns a thumbnail for this bitmap.
 		/// </summary>
 		/// <param name="thumbWidth">The width, in pixels, of the requested thumbnail image.</param>
 		/// <param name="thumbHeight">The height, in pixels, of the requested thumbnail image.</param>
@@ -1440,7 +1454,7 @@ namespace FreeImageAPI
 			{
 				case 1u: result = new FI1BITARRAY(dib, scanline); break;
 				case 4u: result = new FI4BITARRAY(dib, scanline); break;
-				case 8: result = new FI8BITARRAY(dib, scanline); break;
+				case 8u: result = new FI8BITARRAY(dib, scanline); break;
 				case 16u: result = new FI16RGBARRAY(dib, scanline); break;
 				case 24u: result = new RGBTRIPLEARRAY(dib, scanline); break;
 				case 32u: result = new RGBQUADARRAY(dib, scanline); break;
@@ -1481,7 +1495,7 @@ namespace FreeImageAPI
 		/// Instead of calling his method it is also possible to the
 		/// <c>foreach</c> clause to iterate over each scanline.
 		/// </remarks>
-		/// <exception cref="ArgumentException">
+		/// <exception cref="NotSupportedException">
 		/// The bitmap's type or color depth are not supported.
 		/// </exception>
 		public IList GetScanlines()
@@ -1549,7 +1563,7 @@ namespace FreeImageAPI
 
 				default:
 
-					throw new ArgumentException("Color depth or type is not supported.");
+					throw new NotSupportedException("Color depth or type is not supported.");
 			}
 
 			return list;
@@ -1717,7 +1731,7 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentNullException("stream");
 			}
-			if (!FreeImage.SaveToStream(format, dib, stream, flags))
+			if (!FreeImage.SaveToStream(dib, stream, format, flags))
 			{
 				throw new Exception();
 			}
@@ -3245,7 +3259,7 @@ namespace FreeImageAPI
 			ThrowOnDisposed();
 			using (MemoryStream memory = new MemoryStream(DataSize))
 			{
-				if (!FreeImage.SaveToStream(FREE_IMAGE_FORMAT.FIF_TIFF, dib, memory, FREE_IMAGE_SAVE_FLAGS.TIFF_LZW, false))
+				if (!FreeImage.SaveToStream(ref dib, memory, FREE_IMAGE_FORMAT.FIF_TIFF, FREE_IMAGE_SAVE_FLAGS.TIFF_LZW, false))
 				{
 					throw new SerializationException();
 				}
