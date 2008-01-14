@@ -56,12 +56,20 @@ namespace FreeImageAPI
 		public static bool operator ==(BITMAPINFO value1, BITMAPINFO value2)
 		{
 			if (value1.bmiHeader != value2.bmiHeader)
+			{
 				return false;
+			}
 			if (value1.bmiColors.Length != value2.bmiColors.Length)
+			{
 				return false;
+			}
 			for (int i = 0; i < value1.bmiColors.Length; i++)
+			{
 				if (value1.bmiColors[i] != value2.bmiColors[i])
+				{
 					return false;
+				}
+			}
 			return true;
 		}
 

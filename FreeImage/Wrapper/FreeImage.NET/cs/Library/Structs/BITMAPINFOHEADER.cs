@@ -96,17 +96,17 @@ namespace FreeImageAPI
 
 		public static bool operator ==(BITMAPINFOHEADER value1, BITMAPINFOHEADER value2)
 		{
-			return !((value1.biSize != value2.biSize) ||
-					(value1.biWidth != value2.biWidth) ||
-					(value1.biHeight != value2.biHeight) ||
-					(value1.biPlanes != value2.biPlanes) ||
-					(value1.biBitCount != value2.biBitCount) ||
-					(value1.biCompression != value2.biCompression) ||
-					(value1.biSizeImage != value2.biSizeImage) ||
-					(value1.biXPelsPerMeter != value2.biXPelsPerMeter) ||
-					(value1.biYPelsPerMeter != value2.biYPelsPerMeter) ||
-					(value1.biClrUsed != value2.biClrUsed) ||
-					(value1.biClrImportant != value2.biClrImportant));
+			return ((value1.biSize == value2.biSize) &&
+					(value1.biWidth == value2.biWidth) &&
+					(value1.biHeight == value2.biHeight) &&
+					(value1.biPlanes == value2.biPlanes) &&
+					(value1.biBitCount == value2.biBitCount) &&
+					(value1.biCompression == value2.biCompression) &&
+					(value1.biSizeImage == value2.biSizeImage) &&
+					(value1.biXPelsPerMeter == value2.biXPelsPerMeter) &&
+					(value1.biYPelsPerMeter == value2.biYPelsPerMeter) &&
+					(value1.biClrUsed == value2.biClrUsed) &&
+					(value1.biClrImportant == value2.biClrImportant));
 		}
 
 		public static bool operator !=(BITMAPINFOHEADER value1, BITMAPINFOHEADER value2)
