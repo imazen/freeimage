@@ -2159,6 +2159,11 @@ namespace FreeImageAPI
 				return false;
 			}
 
+			byte* ptr1, ptr2;
+			int fullBytes;
+			int shift;
+			uint line = GetLine(dib1);
+
 			if (type == FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
 				switch (bpp)
@@ -2166,9 +2171,9 @@ namespace FreeImageAPI
 					case 32:
 						for (int i = 0; i < height; i++)
 						{
-							RGBQUADARRAY array1 = new RGBQUADARRAY(dib1, i);
-							RGBQUADARRAY array2 = new RGBQUADARRAY(dib2, i);
-							if (array1 != array2)
+							ptr1 = (byte*)GetScanLine(dib1, i);
+							ptr2 = (byte*)GetScanLine(dib2, i);
+							if (!CompareMemory(ptr1, ptr2, line))
 							{
 								return false;
 							}
@@ -2177,55 +2182,124 @@ namespace FreeImageAPI
 					case 24:
 						for (int i = 0; i < height; i++)
 						{
-							RGBTRIPLEARRAY array1 = new RGBTRIPLEARRAY(dib1, i);
-							RGBTRIPLEARRAY array2 = new RGBTRIPLEARRAY(dib2, i);
-							if (array1 != array2)
+							ptr1 = (byte*)GetScanLine(dib1, i);
+							ptr2 = (byte*)GetScanLine(dib2, i);
+							if (!CompareMemory(ptr1, ptr2, line))
 							{
 								return false;
 							}
 						}
 						break;
 					case 16:
-						for (int i = 0; i < height; i++)
+						if ((GetRedMask(dib1) == FI16_565_RED_MASK) &&
+							(GetGreenMask(dib1) == FI16_565_GREEN_MASK) &&
+							(GetBlueMask(dib1) == FI16_565_BLUE_MASK) &&
+							(GetRedMask(dib2) == FI16_565_RED_MASK) &&
+							(GetGreenMask(dib2) == FI16_565_GREEN_MASK) &&
+							(GetBlueMask(dib2) == FI16_565_BLUE_MASK))
 						{
-							FI16RGBARRAY array1 = new FI16RGBARRAY(dib1, i);
-							FI16RGBARRAY array2 = new FI16RGBARRAY(dib2, i);
-							if (array1 != array2)
+							for (int i = 0; i < height; i++)
 							{
-								return false;
+								ptr1 = (byte*)GetScanLine(dib1, i);
+								ptr2 = (byte*)GetScanLine(dib2, i);
+								if (!CompareMemory(ptr1, ptr2, line))
+								{
+									return false;
+								}
+							}
+						}
+						else if ((GetRedMask(dib1) == FI16_555_RED_MASK) &&
+							(GetGreenMask(dib1) == FI16_555_GREEN_MASK) &&
+							(GetBlueMask(dib1) == FI16_555_BLUE_MASK) &&
+							(GetRedMask(dib2) == FI16_555_RED_MASK) &&
+							(GetGreenMask(dib2) == FI16_555_GREEN_MASK) &&
+							(GetBlueMask(dib2) == FI16_555_BLUE_MASK))
+						{
+							short* sPtr1, sPtr2;
+							for (int i = 0; i < height; i++)
+							{
+								sPtr1 = (short*)GetScanLine(dib1, i);
+								sPtr2 = (short*)GetScanLine(dib2, i);
+								for (int x = 0; x < width; x++)
+								{
+									if ((sPtr1[x] << 1) != (sPtr2[x] << 1))
+									{
+										return false;
+									}
+								}
+							}
+						}
+						else
+						{
+							for (int i = 0; i < height; i++)
+							{
+								FI16RGBARRAY array1 = new FI16RGBARRAY(dib1, i);
+								FI16RGBARRAY array2 = new FI16RGBARRAY(dib2, i);
+								if (array1 != array2)
+								{
+									return false;
+								}
 							}
 						}
 						break;
 					case 8:
 						for (int i = 0; i < height; i++)
 						{
-							FI8BITARRAY array1 = new FI8BITARRAY(dib1, i);
-							FI8BITARRAY array2 = new FI8BITARRAY(dib2, i);
-							if (array1 != array2)
+							ptr1 = (byte*)GetScanLine(dib1, i);
+							ptr2 = (byte*)GetScanLine(dib2, i);
+							if (!CompareMemory(ptr1, ptr2, line))
 							{
 								return false;
 							}
 						}
 						break;
 					case 4:
+						fullBytes = (int)width / 2;
+						shift = (width % 2) == 0 ? 8 : 4;
 						for (int i = 0; i < height; i++)
 						{
-							FI4BITARRAY array1 = new FI4BITARRAY(dib1, i);
-							FI4BITARRAY array2 = new FI4BITARRAY(dib2, i);
-							if (array1 != array2)
+							ptr1 = (byte*)GetScanLine(dib1, i);
+							ptr2 = (byte*)GetScanLine(dib2, i);
+							if (fullBytes != 0)
 							{
-								return false;
+								if (!CompareMemory(ptr1, ptr2, fullBytes))
+								{
+									return false;
+								}
+								ptr1 += fullBytes;
+								ptr2 += fullBytes;
+							}
+							if (shift != 8)
+							{
+								if ((ptr1[0] >> shift) != (ptr2[0] >> shift))
+								{
+									return false;
+								}
 							}
 						}
 						break;
 					case 1:
+						fullBytes = (int)width / 8;
+						shift = 8 - ((int)width % 8);
 						for (int i = 0; i < height; i++)
 						{
-							FI1BITARRAY array1 = new FI1BITARRAY(dib1, i);
-							FI1BITARRAY array2 = new FI1BITARRAY(dib2, i);
-							if (array1 != array2)
+							ptr1 = (byte*)GetScanLine(dib1, i);
+							ptr2 = (byte*)GetScanLine(dib2, i);
+							if (fullBytes != 0)
 							{
-								return false;
+								if (!CompareMemory(ptr1, ptr2, fullBytes))
+								{
+									return false;
+								}
+								ptr1 += fullBytes;
+								ptr2 += fullBytes;
+							}
+							if (shift != 8)
+							{
+								if ((ptr1[0] >> shift) != (ptr2[0] >> shift))
+								{
+									return false;
+								}
 							}
 						}
 						break;
@@ -2235,13 +2309,11 @@ namespace FreeImageAPI
 			}
 			else
 			{
-				IntPtr ptr1, ptr2;
-				uint line = GetLine(dib1);
 				for (int i = 0; i < height; i++)
 				{
-					ptr1 = GetScanLine(dib1, i);
-					ptr2 = GetScanLine(dib2, i);
-					if (!CompareMemory((void*)ptr1, (void*)ptr2, line))
+					ptr1 = (byte*)GetScanLine(dib1, i);
+					ptr2 = (byte*)GetScanLine(dib2, i);
+					if (!CompareMemory(ptr1, ptr2, line))
 					{
 						return false;
 					}
@@ -3533,7 +3605,7 @@ namespace FreeImageAPI
 		/// <param name="buf2">Pointer to a block of memory to compare.</param>
 		/// <param name="length">Specifies the number of bytes to be compared.</param>
 		/// <returns>If all bytes compare as equal, true is returned.</returns>
-		public static unsafe bool CompareMemory(void* buf1, void* buf2, uint length)
+		internal static unsafe bool CompareMemory(void* buf1, void* buf2, uint length)
 		{
 			return (length == RtlCompareMemory(buf1, buf2, length));
 		}
@@ -3545,13 +3617,33 @@ namespace FreeImageAPI
 		/// <param name="buf2">Pointer to a block of memory to compare.</param>
 		/// <param name="length">Specifies the number of bytes to be compared.</param>
 		/// <returns>If all bytes compare as equal, true is returned.</returns>
-		public static unsafe bool CompareMemory(void* buf1, void* buf2, long length)
+		internal static unsafe bool CompareMemory(void* buf1, void* buf2, long length)
 		{
-			checked
+			return (length == RtlCompareMemory(buf1, buf2, checked((uint)length)));
+		}
+
+		/// <summary>
+		/// Compares blocks of memory.
+		/// </summary>
+		/// <param name="buf1">Pointer to a block of memory to compare.</param>
+		/// <param name="buf2">Pointer to a block of memory to compare.</param>
+		/// <param name="length">Specifies the number of bytes to be compared.</param>
+		/// <returns>If all bytes compare as equal, true is returned.</returns>
+		public static unsafe bool CompareMemory(IntPtr buf1, IntPtr buf2, uint length)
+		{
+			if (buf1 == IntPtr.Zero)
 			{
-				uint len = (uint)length;
-				return (len == RtlCompareMemory(buf1, buf2, len));
+				throw new ArgumentNullException("buf1");
 			}
+			if (buf2 == IntPtr.Zero)
+			{
+				throw new ArgumentNullException("buf2");
+			}
+			if (length == 0u)
+			{
+				throw new ArgumentOutOfRangeException("length");
+			}
+			return (length == RtlCompareMemory((void*)buf1, (void*)buf2, length));
 		}
 
 		/// <summary>
@@ -3560,12 +3652,56 @@ namespace FreeImageAPI
 		/// <param name="dst">Pointer to the starting address of the move destination.</param>
 		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
 		/// <param name="size">Size of the block of memory to move, in bytes.</param>
-		public static unsafe void MoveMemory(void* dst, void* src, long size)
+		internal static unsafe void MoveMemory(void* dst, void* src, long size)
 		{
-			checked
+			MoveMemory(dst, src, checked((uint)size));
+		}
+
+		/// <summary>
+		/// Moves a block of memory from one location to another.
+		/// </summary>
+		/// <param name="dst">Pointer to the starting address of the move destination.</param>
+		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
+		/// <param name="size">Size of the block of memory to move, in bytes.</param>
+		public static unsafe void MoveMemory(IntPtr dst, IntPtr src, uint size)
+		{
+			if (dst == IntPtr.Zero)
 			{
-				uint len = (uint)size;
-				MoveMemory(dst, src, len);
+				throw new ArgumentNullException("dst");
+			}
+			if (src == IntPtr.Zero)
+			{
+				throw new ArgumentNullException("src");
+			}
+			if (size == 0u)
+			{
+				throw new ArgumentOutOfRangeException("size");
+			}
+			MoveMemory((void*)dst, (void*)src, size);
+		}
+
+		internal static unsafe void CopyMemory(void* dst, void* src, uint size)
+		{
+			if ((dst != null) && (src != null) && (size != 0))
+			{
+				uint* uDst = (uint*)dst;
+				uint* uSrc = (uint*)src;
+				while (size >= 4)
+				{
+					uDst[0] = uSrc[0];
+					uDst++;
+					uSrc++;
+					size -= 4;
+				}
+				byte* bDst = (byte*)uDst;
+				byte* bSrc = (byte*)uSrc;
+				while (size > 0)
+				{
+					bDst[0] = bSrc[0];
+					bDst++;
+					bSrc++;
+					size--;
+				}
 			}
 		}
 
@@ -3695,7 +3831,7 @@ namespace FreeImageAPI
 		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
 		/// <param name="size">Size of the block of memory to move, in bytes.</param>
 		[DllImport("Kernel32.dll", EntryPoint = "RtlMoveMemory", SetLastError = false)]
-		public static unsafe extern void MoveMemory(void* dst, void* src, uint size);
+		internal static unsafe extern void MoveMemory(void* dst, void* src, uint size);
 
 		/// <summary>
 		/// The RtlCompareMemory routine compares blocks of memory
@@ -3707,7 +3843,7 @@ namespace FreeImageAPI
 		/// <returns>RtlCompareMemory returns the number of bytes that compare as equal.
 		/// If all bytes compare as equal, the input Length is returned.</returns>
 		[DllImport("ntdll.dll", EntryPoint = "RtlCompareMemory", SetLastError = false)]
-		private static unsafe extern uint RtlCompareMemory(void* buf1, void* buf2, uint count);
+		internal static unsafe extern uint RtlCompareMemory(void* buf1, void* buf2, uint count);
 
 		#endregion
 	}
