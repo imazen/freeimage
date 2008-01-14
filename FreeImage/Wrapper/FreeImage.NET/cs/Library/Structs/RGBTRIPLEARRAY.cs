@@ -49,9 +49,9 @@ namespace FreeImageAPI
 	/// The equals(RGBTRIPLEARRAY other)-method can be used to check whether two
 	/// arrays map the same block of memory.</para>
 	/// </summary>
-	public struct RGBTRIPLEARRAY : IComparable, IComparable<RGBTRIPLEARRAY>, IEnumerable, IEquatable<RGBTRIPLEARRAY>
+	public unsafe struct RGBTRIPLEARRAY : IComparable, IComparable<RGBTRIPLEARRAY>, IEnumerable, IEquatable<RGBTRIPLEARRAY>
 	{
-		readonly uint baseAddress;
+		readonly RGBTRIPLE* baseAddress;
 		readonly uint length;
 
 		/// <summary>
@@ -59,10 +59,15 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
 		/// <param name="length">Length of the array.</param>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
 		public RGBTRIPLEARRAY(IntPtr baseAddress, uint length)
 		{
-			if (baseAddress == IntPtr.Zero) throw new ArgumentNullException();
-			this.baseAddress = (uint)baseAddress;
+			if (baseAddress == IntPtr.Zero)
+			{
+				throw new ArgumentNullException();
+			}
+			this.baseAddress = (RGBTRIPLE*)baseAddress;
 			this.length = length;
 		}
 
@@ -71,25 +76,43 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="scanline">Number of the scanline to wrap</param>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <exception cref="ArgumentException">
+		/// Thrown if the bitmaps type is not FIT_BITMAP
+		/// or color depth is not 24bpp.</exception>
 		public RGBTRIPLEARRAY(FIBITMAP dib, int scanline)
 		{
-			if (dib.IsNull) throw new ArgumentNullException();
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP) throw new ArgumentException("dib");
-			if (FreeImage.GetBPP(dib) != 24) throw new ArgumentException("dib");
-			baseAddress = (uint)FreeImage.GetScanLine(dib, scanline);
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException();
+			}
+			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
+			{
+				throw new ArgumentException("dib");
+			}
+			if (FreeImage.GetBPP(dib) != 24)
+			{
+				throw new ArgumentException("dib");
+			}
+			baseAddress = (RGBTRIPLE*)FreeImage.GetScanLine(dib, scanline);
 			length = FreeImage.GetWidth(dib);
 		}
 
 		public static bool operator ==(RGBTRIPLEARRAY value1, RGBTRIPLEARRAY value2)
 		{
-			RGBTRIPLE[] array1 = value1.Data;
-			RGBTRIPLE[] array2 = value2.Data;
-			if (array1.Length != array2.Length)
+			if (value1.length != value2.length)
+			{
 				return false;
-			for (int i = 0; i < array1.Length; i++)
-				if (array1[i] != array2[i])
-					return false;
-			return true;
+			}
+			if (value1.baseAddress == value2.baseAddress)
+			{
+				return true;
+			}
+			return FreeImage.CompareMemory(
+				value1.baseAddress,
+				value2.baseAddress,
+				sizeof(RGBTRIPLE) * value1.length);
 		}
 
 		public static bool operator !=(RGBTRIPLEARRAY value1, RGBTRIPLEARRAY value2)
@@ -111,18 +134,24 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>RGBTRIPLE structure of the index.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe RGBTRIPLE this[int index]
 		{
 			get
 			{
-				if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-				return ((RGBTRIPLE*)baseAddress)[index];
+				if (index >= length || index < 0)
+				{
+					throw new ArgumentOutOfRangeException();
+				}
+				return baseAddress[index];
 			}
 			set
 			{
-				if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-				((RGBTRIPLE*)baseAddress)[index] = value;
+				if (index >= length || index < 0)
+				{
+					throw new ArgumentOutOfRangeException();
+				}
+				baseAddress[index] = value;
 			}
 		}
 
@@ -132,11 +161,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>An UInt32 value representing the color.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe uint GetUIntColor(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			return ((uint*)((RGBTRIPLE*)baseAddress + index))[0] & 0x00FFFFFF;
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			return ((uint*)(baseAddress + index))[0] & 0x00FFFFFF;
 		}
 
 		/// <summary>
@@ -145,11 +177,14 @@ namespace FreeImageAPI
 		/// <param name="index">The index of the color to change.</param>
 		/// <param name="color">The new value of the color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe void SetUIntColor(int index, uint color)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			byte* ptrDestination = (byte*)((RGBTRIPLE*)baseAddress + index);
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			byte* ptrDestination = (byte*)(baseAddress + index);
 			byte* ptrSource = (byte*)&color;
 			*ptrDestination++ = *ptrSource++;
 			*ptrDestination++ = *ptrSource++;
@@ -162,11 +197,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>An RGBTRIPLE structure representing the color.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe RGBTRIPLE GetRGBTRIPLE(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			return ((RGBTRIPLE*)baseAddress)[index];
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			return baseAddress[index];
 		}
 
 		/// <summary>
@@ -175,11 +213,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="color">The new value of the color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe void SetRGBTRIPLE(int index, RGBTRIPLE color)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			((RGBTRIPLE*)baseAddress)[index] = color;
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			baseAddress[index] = color;
 		}
 
 		/// <summary>
@@ -188,11 +229,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>The value representing the red part of the color.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe byte GetRed(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			return ((byte*)((RGBTRIPLE*)baseAddress + index))[FreeImage.FI_RGBA_RED];
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			return baseAddress[index].rgbtRed;
 		}
 
 		/// <summary>
@@ -201,11 +245,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="red">The new red part of the color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe void SetRed(int index, byte red)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			((byte*)((RGBTRIPLE*)baseAddress + index))[FreeImage.FI_RGBA_RED] = red;
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			baseAddress[index].rgbtRed = red;
 		}
 
 		/// <summary>
@@ -214,11 +261,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>The value representing the green part of the color.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe byte GetGreen(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			return ((byte*)((RGBTRIPLE*)baseAddress + index))[FreeImage.FI_RGBA_GREEN];
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			return baseAddress[index].rgbtGreen;
 		}
 
 		/// <summary>
@@ -227,11 +277,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="green">The new green part of the color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe void SetGreen(int index, byte green)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			((byte*)((RGBTRIPLE*)baseAddress + index))[FreeImage.FI_RGBA_GREEN] = green;
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			baseAddress[index].rgbtGreen = green;
 		}
 
 		/// <summary>
@@ -240,11 +293,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>The value representing the blue part of the color.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe byte GetBlue(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			return ((byte*)((RGBTRIPLE*)baseAddress + index))[FreeImage.FI_RGBA_BLUE];
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			return baseAddress[index].rgbtBlue;
 		}
 
 		/// <summary>
@@ -253,11 +309,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="blue">The new blue part of the color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe void SetBlue(int index, byte blue)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			((byte*)((RGBTRIPLE*)baseAddress + index))[FreeImage.FI_RGBA_BLUE] = blue;
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			baseAddress[index].rgbtBlue = blue;
 		}
 
 		/// <summary>
@@ -266,10 +325,13 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>The color at the index.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public Color GetColor(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
 			return GetRGBTRIPLE(index).color;
 		}
 
@@ -279,10 +341,13 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="color">The new color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public void SetColor(int index, Color color)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
 			SetRGBTRIPLE(index, new RGBTRIPLE(color));
 		}
 
@@ -295,21 +360,28 @@ namespace FreeImageAPI
 		/// are being read or/and written.
 		/// </summary>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe RGBTRIPLE[] Data
 		{
 			get
 			{
 				RGBTRIPLE[] result = new RGBTRIPLE[length];
-				for (int i = 0; i < length; i++)
-					result[i] = ((RGBTRIPLE*)baseAddress)[i];
+				fixed (RGBTRIPLE* dst = result)
+				{
+					FreeImage.MoveMemory(dst, baseAddress, sizeof(RGBTRIPLE) * length);
+				}
 				return result;
 			}
 			set
 			{
-				if (value.Length != length) throw new ArgumentOutOfRangeException();
-				for (int i = 0; i < length; i++)
-					((RGBTRIPLE*)baseAddress)[i] = value[i];
+				if (value.Length != length)
+				{
+					throw new ArgumentOutOfRangeException();
+				}
+				fixed (RGBTRIPLE* src = value)
+				{
+					FreeImage.MoveMemory(baseAddress, src, sizeof(RGBTRIPLE) * length);
+				}
 			}
 		}
 
@@ -321,7 +393,9 @@ namespace FreeImageAPI
 		public int CompareTo(object obj)
 		{
 			if (!(obj is RGBTRIPLEARRAY))
+			{
 				throw new ArgumentException();
+			}
 			return CompareTo((RGBTRIPLEARRAY)obj);
 		}
 
@@ -332,7 +406,7 @@ namespace FreeImageAPI
 		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
 		public int CompareTo(RGBTRIPLEARRAY other)
 		{
-			return this.baseAddress.CompareTo(other.baseAddress);
+			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
 		}
 
 		private class Enumerator : IEnumerator
@@ -350,7 +424,9 @@ namespace FreeImageAPI
 				get
 				{
 					if (index >= 0 && index <= array.length)
+					{
 						return array.GetRGBTRIPLE(index);
+					}
 					throw new InvalidOperationException();
 				}
 			}
@@ -359,7 +435,9 @@ namespace FreeImageAPI
 			{
 				index++;
 				if (index < (int)array.length)
+				{
 					return true;
+				}
 				return false;
 			}
 

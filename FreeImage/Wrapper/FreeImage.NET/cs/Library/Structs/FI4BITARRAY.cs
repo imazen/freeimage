@@ -47,9 +47,9 @@ namespace FreeImageAPI
 	/// The equals(FI4BITARRAY other)-method can be used to check whether two
 	/// arrays map the same block of memory.</para>
 	/// </summary>
-	public struct FI4BITARRAY : IComparable, IComparable<FI4BITARRAY>, IEnumerable, IEquatable<FI4BITARRAY>
+	public unsafe struct FI4BITARRAY : IComparable, IComparable<FI4BITARRAY>, IEnumerable, IEquatable<FI4BITARRAY>
 	{
-		readonly uint baseAddress;
+		readonly byte* baseAddress;
 		readonly uint length;
 
 		/// <summary>
@@ -57,10 +57,15 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
 		/// <param name="length">Length of the array.</param>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
 		public FI4BITARRAY(IntPtr baseAddress, uint length)
 		{
-			if (baseAddress == IntPtr.Zero) throw new ArgumentNullException();
-			this.baseAddress = (uint)baseAddress;
+			if (baseAddress == IntPtr.Zero)
+			{
+				throw new ArgumentNullException();
+			}
+			this.baseAddress = (byte*)baseAddress;
 			this.length = length;
 		}
 
@@ -69,12 +74,26 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="scanline">Number of the scanline to wrap</param>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <exception cref="ArgumentException">
+		/// Thrown if the bitmaps type is not FIT_BITMAP
+		/// or color depth is not 4bpp.</exception>
 		public FI4BITARRAY(FIBITMAP dib, int scanline)
 		{
-			if (dib.IsNull) throw new ArgumentNullException();
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP) throw new ArgumentException("dib");
-			if (FreeImage.GetBPP(dib) != 4) throw new ArgumentException("dib");
-			baseAddress = (uint)FreeImage.GetScanLine(dib, scanline);
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException();
+			}
+			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
+			{
+				throw new ArgumentException("dib");
+			}
+			if (FreeImage.GetBPP(dib) != 4)
+			{
+				throw new ArgumentException("dib");
+			}
+			baseAddress = (byte*)FreeImage.GetScanLine(dib, scanline);
 			length = FreeImage.GetWidth(dib);
 		}
 
@@ -92,7 +111,7 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the data.</param>
 		/// <returns>Data of the index.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public byte this[int index]
 		{
 			get
@@ -111,14 +130,21 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the data.</param>
 		/// <returns>Data at the index.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe byte GetIndex(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
 			if ((index % 2) == 0)
-				return (byte)(((byte*)baseAddress)[index / 2] >> 4);
+			{
+				return (byte)(baseAddress[index / 2] >> 4);
+			}
 			else
-				return (byte)(((byte*)baseAddress)[index / 2] & 0x0F);
+			{
+				return (byte)(baseAddress[index / 2] & 0x0F);
+			}
 		}
 
 		/// <summary>
@@ -127,14 +153,21 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the data.</param>
 		/// <param name="value">The new data.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe void SetIndex(int index, byte value)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
 			if ((index % 2) == 0)
-				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0x0F) | (value << 4));
+			{
+				baseAddress[index / 2] = (byte)((baseAddress[index / 2] & 0x0F) | (value << 4));
+			}
 			else
-				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0xF0) | (value & 0x0F));
+			{
+				baseAddress[index / 2] = (byte)((baseAddress[index / 2] & 0xF0) | (value & 0x0F));
+			}
 		}
 
 		/// <summary>
@@ -143,13 +176,17 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the data.</param>
 		/// <returns>Data at the index.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		internal unsafe byte GetIndexUnsafe(int index)
 		{
 			if ((index % 2) == 0)
-				return (byte)(((byte*)baseAddress)[index / 2] >> 4);
+			{
+				return (byte)(baseAddress[index / 2] >> 4);
+			}
 			else
-				return (byte)(((byte*)baseAddress)[index / 2] & 0x0F);
+			{
+				return (byte)(baseAddress[index / 2] & 0x0F);
+			}
 		}
 
 		/// <summary>
@@ -158,13 +195,17 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the data.</param>
 		/// <param name="value">The new data.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		internal unsafe void SetIndexUnsafe(int index, byte value)
 		{
 			if ((index % 2) == 0)
-				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0x0F) | (value << 4));
+			{
+				baseAddress[index / 2] = (byte)((baseAddress[index / 2] & 0x0F) | (value << 4));
+			}
 			else
-				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0xF0) | (value & 0x0F));
+			{
+				baseAddress[index / 2] = (byte)((baseAddress[index / 2] & 0xF0) | (value & 0x0F));
+			}
 		}
 
 		/// <summary>
@@ -177,21 +218,28 @@ namespace FreeImageAPI
 		/// are being read or/and written.
 		/// </summary>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe byte[] Data
 		{
 			get
 			{
 				byte[] result = new byte[length];
 				for (int i = 0; i < length; i++)
+				{
 					result[i] = GetIndex(i);
+				}
 				return result;
 			}
 			set
 			{
-				if (value.Length != length) throw new ArgumentOutOfRangeException();
+				if (value.Length != length)
+				{
+					throw new ArgumentOutOfRangeException();
+				}
 				for (int i = 0; i < length; i++)
+				{
 					SetIndex(i, value[i]);
+				}
 			}
 		}
 
@@ -200,10 +248,16 @@ namespace FreeImageAPI
 			byte[] array1 = value1.Data;
 			byte[] array2 = value2.Data;
 			if (array1.Length != array2.Length)
+			{
 				return false;
+			}
 			for (int i = 0; i < array1.Length; i++)
+			{
 				if (array1[i] != array2[i])
+				{
 					return false;
+				}
+			}
 			return true;
 		}
 
@@ -233,7 +287,7 @@ namespace FreeImageAPI
 		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
 		public int CompareTo(FI4BITARRAY other)
 		{
-			return this.baseAddress.CompareTo(other.baseAddress);
+			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
 		}
 
 		private class Enumerator : IEnumerator
@@ -251,7 +305,9 @@ namespace FreeImageAPI
 				get
 				{
 					if (index >= 0 && index <= array.length)
+					{
 						return array.GetIndex(index);
+					}
 					throw new InvalidOperationException();
 				}
 			}
@@ -260,7 +316,9 @@ namespace FreeImageAPI
 			{
 				index++;
 				if (index < (int)array.length)
+				{
 					return true;
+				}
 				return false;
 			}
 

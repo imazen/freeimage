@@ -49,9 +49,9 @@ namespace FreeImageAPI
 	/// The equals(FI16RGBARRAY other)-method can be used to check whether two
 	/// arrays map the same block of memory.</para>
 	/// </summary>
-	public struct FI16RGBARRAY : IComparable, IComparable<FI16RGBARRAY>, IEnumerable, IEquatable<FI16RGBARRAY>
+	public unsafe struct FI16RGBARRAY : IComparable, IComparable<FI16RGBARRAY>, IEnumerable, IEquatable<FI16RGBARRAY>
 	{
-		readonly uint baseAddress;
+		readonly ushort* baseAddress;
 		readonly uint length;
 		readonly BitSettings bitSettings;
 
@@ -63,10 +63,20 @@ namespace FreeImageAPI
 		/// <param name="red_mask">Bitmask for the color red.</param>
 		/// <param name="green_mask">Bitmask for the color green.</param>
 		/// <param name="blue_mask">Bitmask for the color blue.</param>
-		public FI16RGBARRAY(IntPtr baseAddress, uint length, ushort red_mask, ushort green_mask, ushort blue_mask)
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
+		public FI16RGBARRAY(
+			IntPtr baseAddress,
+			uint length,
+			ushort red_mask,
+			ushort green_mask,
+			ushort blue_mask)
 		{
-			if (baseAddress == IntPtr.Zero) throw new ArgumentNullException();
-			this.baseAddress = (uint)baseAddress;
+			if (baseAddress == IntPtr.Zero)
+			{
+				throw new ArgumentNullException();
+			}
+			this.baseAddress = (ushort*)baseAddress;
 			this.length = length;
 			bitSettings = GetBitSettings(red_mask, green_mask, blue_mask);
 		}
@@ -76,14 +86,31 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="scanline">Number of the scanline to wrap</param>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <exception cref="ArgumentException">
+		/// Thrown if the bitmaps type is not FIT_BITMAP
+		/// or color depth is not 16bpp.</exception>
 		public FI16RGBARRAY(FIBITMAP dib, int scanline)
 		{
-			if (dib.IsNull) throw new ArgumentNullException();
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP) throw new ArgumentException("dib");
-			if (FreeImage.GetBPP(dib) != 16) throw new ArgumentException("dib");
-			baseAddress = (uint)FreeImage.GetScanLine(dib, scanline);
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException();
+			}
+			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
+			{
+				throw new ArgumentException("dib");
+			}
+			if (FreeImage.GetBPP(dib) != 16)
+			{
+				throw new ArgumentException("dib");
+			}
+			baseAddress = (ushort*)FreeImage.GetScanLine(dib, scanline);
 			length = FreeImage.GetWidth(dib);
-			bitSettings = GetBitSettings(FreeImage.GetRedMask(dib), FreeImage.GetGreenMask(dib), FreeImage.GetBlueMask(dib));
+			bitSettings = GetBitSettings(
+				FreeImage.GetRedMask(dib),
+				FreeImage.GetGreenMask(dib),
+				FreeImage.GetBlueMask(dib));
 		}
 
 		/// <summary>
@@ -141,10 +168,16 @@ namespace FreeImageAPI
 			FI16RGB[] array1 = value1.Data;
 			FI16RGB[] array2 = value2.Data;
 			if (array1.Length != array2.Length)
+			{
 				return false;
+			}
 			for (int i = 0; i < array1.Length; i++)
+			{
 				if (array1[i] != array2[i])
+				{
 					return false;
+				}
+			}
 			return true;
 		}
 
@@ -167,17 +200,23 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>Ushort value of the index.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public FI16RGB this[int index]
 		{
 			get
 			{
-				if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+				if (index >= length || index < 0)
+				{
+					throw new ArgumentOutOfRangeException();
+				}
 				return GetFI16RGB(index);
 			}
 			set
 			{
-				if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+				if (index >= length || index < 0)
+				{
+					throw new ArgumentOutOfRangeException();
+				}
 				SetFI16RGB(index, value);
 			}
 		}
@@ -188,7 +227,7 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>An FI16RGB structure representing the color.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public FI16RGB GetFI16RGB(int index)
 		{
 			return new FI16RGB(GetUShort(index), bitSettings);
@@ -200,7 +239,7 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="color">The new value of the color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public void SetFI16RGB(int index, FI16RGB color)
 		{
 			SetUShort(index, color.data);
@@ -212,11 +251,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>An ushort value representing the color.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe ushort GetUShort(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			return ((ushort*)baseAddress)[index];
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			return baseAddress[index];
 		}
 
 		/// <summary>
@@ -225,11 +267,14 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="color">The new value of the color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe void SetUShort(int index, ushort color)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			((ushort*)baseAddress)[index] = color;
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			baseAddress[index] = color;
 		}
 
 		/// <summary>
@@ -237,7 +282,7 @@ namespace FreeImageAPI
 		/// </summary>
 		private unsafe byte GetColorComponent(int index, ushort mask, ushort shift, ushort max)
 		{
-			ushort value = ((ushort*)baseAddress + index)[0];
+			ushort value = baseAddress[index];
 			value &= mask;
 			value >>= shift;
 			value = (byte)((value * 255) / max);
@@ -250,12 +295,12 @@ namespace FreeImageAPI
 		private unsafe void SetColorComponent(int index, byte value, ushort mask, ushort shift, ushort max)
 		{
 			ushort invertMask = (ushort)(~mask);
-			ushort orgValue = ((ushort*)baseAddress + index)[0];
+			ushort orgValue = baseAddress[index];
 			orgValue &= invertMask;
 			ushort newValue = (ushort)(((ushort)value * max) / 255);
 			newValue <<= shift;
 			newValue |= orgValue;
-			((ushort*)baseAddress + index)[0] = newValue;
+			baseAddress[index] = newValue;
 		}
 
 		/// <summary>
@@ -264,11 +309,18 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>The value representing the red part of the color.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public byte GetRed(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			return GetColorComponent(index, bitSettings.RED_MASK, bitSettings.RED_SHIFT, bitSettings.RED_MAX);
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			return GetColorComponent(
+				index,
+				bitSettings.RED_MASK,
+				bitSettings.RED_SHIFT,
+				bitSettings.RED_MAX);
 		}
 
 		/// <summary>
@@ -277,11 +329,19 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="red">The new red part of the color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public void SetRed(int index, byte red)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			SetColorComponent(index, red, bitSettings.RED_MASK, bitSettings.RED_SHIFT, bitSettings.RED_MAX);
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			SetColorComponent(
+				index,
+				red,
+				bitSettings.RED_MASK,
+				bitSettings.RED_SHIFT,
+				bitSettings.RED_MAX);
 		}
 
 		/// <summary>
@@ -290,11 +350,18 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>The value representing the green part of the color.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public byte GetGreen(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			return GetColorComponent(index, bitSettings.GREEN_MASK, bitSettings.GREEN_SHIFT, bitSettings.GREEN_MAX);
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			return GetColorComponent(
+				index,
+				bitSettings.GREEN_MASK,
+				bitSettings.GREEN_SHIFT,
+				bitSettings.GREEN_MAX);
 		}
 
 		/// <summary>
@@ -303,11 +370,19 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="green">The new green part of the color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public void SetGreen(int index, byte green)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			SetColorComponent(index, green, bitSettings.GREEN_MASK, bitSettings.GREEN_SHIFT, bitSettings.GREEN_MAX);
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			SetColorComponent(
+				index,
+				green,
+				bitSettings.GREEN_MASK,
+				bitSettings.GREEN_SHIFT,
+				bitSettings.GREEN_MAX);
 		}
 
 		/// <summary>
@@ -316,11 +391,18 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>The value representing the blue part of the color.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public byte GetBlue(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			return GetColorComponent(index, bitSettings.BLUE_MASK, bitSettings.BLUE_SHIFT, bitSettings.BLUE_MAX);
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			return GetColorComponent(
+				index,
+				bitSettings.BLUE_MASK,
+				bitSettings.BLUE_SHIFT,
+				bitSettings.BLUE_MAX);
 		}
 
 		/// <summary>
@@ -329,11 +411,19 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="blue">The new blue part of the color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public void SetBlue(int index, byte blue)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
-			SetColorComponent(index, blue, bitSettings.BLUE_MASK, bitSettings.BLUE_SHIFT, bitSettings.BLUE_MAX);
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
+			SetColorComponent(
+				index,
+				blue,
+				bitSettings.BLUE_MASK,
+				bitSettings.BLUE_SHIFT,
+				bitSettings.BLUE_MAX);
 		}
 
 		/// <summary>
@@ -342,14 +432,29 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <returns>The color at the index.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public Color GetColor(int index)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
 			int red, green, blue;
-			red = GetColorComponent(index, bitSettings.RED_MASK, bitSettings.RED_SHIFT, bitSettings.RED_MAX);
-			green = GetColorComponent(index, bitSettings.GREEN_MASK, bitSettings.GREEN_SHIFT, bitSettings.GREEN_MAX);
-			blue = GetColorComponent(index, bitSettings.BLUE_MASK, bitSettings.BLUE_SHIFT, bitSettings.BLUE_MAX);
+			red = GetColorComponent(
+				index,
+				bitSettings.RED_MASK,
+				bitSettings.RED_SHIFT,
+				bitSettings.RED_MAX);
+			green = GetColorComponent(
+				index,
+				bitSettings.GREEN_MASK,
+				bitSettings.GREEN_SHIFT, 
+				bitSettings.GREEN_MAX);
+			blue = GetColorComponent(
+				index,
+				bitSettings.BLUE_MASK,
+				bitSettings.BLUE_SHIFT,
+				bitSettings.BLUE_MAX);
 			return Color.FromArgb(red, green, blue);
 		}
 
@@ -359,10 +464,13 @@ namespace FreeImageAPI
 		/// <param name="index">Index of the color.</param>
 		/// <param name="color">The new color.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public void SetColor(int index, Color color)
 		{
-			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+			if (index >= length || index < 0)
+			{
+				throw new ArgumentOutOfRangeException();
+			}
 			uint value = 0;
 			value |= (((uint)(((float)color.R / 255f) * (float)bitSettings.RED_MAX)) << bitSettings.RED_SHIFT);
 			value |= (((uint)(((float)color.G / 255f) * (float)bitSettings.GREEN_MAX)) << bitSettings.GREEN_SHIFT);
@@ -379,21 +487,28 @@ namespace FreeImageAPI
 		/// are being read or/and written.
 		/// </summary>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if index is greater or same as Length</exception>
+		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
 		public unsafe FI16RGB[] Data
 		{
 			get
 			{
 				FI16RGB[] result = new FI16RGB[length];
 				for (int i = 0; i < length; i++)
+				{
 					result[i] = GetFI16RGB(i);
+				}
 				return result;
 			}
 			set
 			{
-				if (value.Length != length) throw new ArgumentOutOfRangeException();
+				if (value.Length != length)
+				{
+					throw new ArgumentOutOfRangeException();
+				}
 				for (int i = 0; i < length; i++)
+				{
 					SetFI16RGB(i, value[i]);
+				}
 			}
 		}
 
@@ -405,7 +520,9 @@ namespace FreeImageAPI
 		public int CompareTo(object obj)
 		{
 			if (!(obj is FI16RGBARRAY))
+			{
 				throw new ArgumentException();
+			}
 			return CompareTo((FI16RGBARRAY)obj);
 		}
 
@@ -416,7 +533,7 @@ namespace FreeImageAPI
 		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
 		public int CompareTo(FI16RGBARRAY other)
 		{
-			return this.baseAddress.CompareTo(other.baseAddress);
+			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
 		}
 
 		private class Enumerator : IEnumerator
@@ -434,7 +551,9 @@ namespace FreeImageAPI
 				get
 				{
 					if (index >= 0 && index <= array.length)
+					{
 						return array.GetFI16RGB(index);
+					}
 					throw new InvalidOperationException();
 				}
 			}
@@ -443,7 +562,9 @@ namespace FreeImageAPI
 			{
 				index++;
 				if (index < (int)array.length)
+				{
 					return true;
+				}
 				return false;
 			}
 
