@@ -88,10 +88,14 @@ namespace FreeImageAPI
 		/// Creates a new fi_handle structure wrapping a managed object.
 		/// </summary>
 		/// <param name="obj">The object to wrap.</param>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if <paramref name="obj"/> is null.</exception>
 		public fi_handle(object obj)
 		{
 			if (obj == null)
+			{
 				throw new ArgumentNullException("obj");
+			}
 			GCHandle gch = GCHandle.Alloc(obj, GCHandleType.Normal);
 			handle = GCHandle.ToIntPtr(gch);
 		}

@@ -101,7 +101,7 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="value">The value to convert into a fraction.</param>
 		/// <exception cref="OverflowException">
-		/// Throws if 'value' cannot be converted into a fraction
+		/// Thrown if <paramref name="value"/> cannot be converted into a fraction
 		/// represented by two integer values.</exception>
 		public FIRational(decimal value)
 		{
