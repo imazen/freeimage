@@ -61,16 +61,22 @@ namespace FreeImageAPI
 		public static bool operator ==(FI16RGB value1, FI16RGB value2)
 		{
 			if (value1.bitSettings.RED_MASK != value2.bitSettings.RED_MASK)
+			{
 				return false;
+			}
 			if (value1.bitSettings.GREEN_MASK != value2.bitSettings.GREEN_MASK)
+			{
 				return false;
+			}
 			if (value1.bitSettings.BLUE_MASK != value2.bitSettings.BLUE_MASK)
+			{
 				return false;
+			}
 			int MASK =
 				(value1.bitSettings.RED_MASK |
 				value1.bitSettings.GREEN_MASK |
 				value1.bitSettings.BLUE_MASK);
-			return (value1.data & MASK) == (value2.data & MASK);
+			return ((value1.data & MASK) == (value2.data & MASK));
 		}
 
 		public static bool operator !=(FI16RGB value1, FI16RGB value2)
