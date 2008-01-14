@@ -115,11 +115,11 @@ namespace Sample09
 					// Create a filestream to write to
 					fStream = new FileStream(sfd.FileName, FileMode.Create);
 					if (!FreeImage.SaveToStream(
-						FREE_IMAGE_FORMAT.FIF_TIFF,
-						dib,
+						ref dib,
 						fStream,
-						FREE_IMAGE_COLOR_DEPTH.FICD_AUTO,
+						FREE_IMAGE_FORMAT.FIF_TIFF,
 						FREE_IMAGE_SAVE_FLAGS.TIFF_LZW,
+						FREE_IMAGE_COLOR_DEPTH.FICD_AUTO,
 						false))
 					{
 						throw new Exception();
