@@ -10,6 +10,7 @@ Month day, 2007 - 3.10.1
 + [Floris van den Berg] added multipage support to the PSD plugin (read only)
 + [Yves Schmid] added 48-bit RGB to 32-bit conversion support in FreeImage_ConvertTo32Bits
 + [Aaron Shumate] added RGB16-to-BITMAP and All-to-RGBF conversion support in FreeImage_ConvertToType
++ [Benjamin English] added a new OpenGL sample to FreeImage/Examples
 * [Will Bryant] fixed makefile for MacOSX Tiger and Leopard
 * [Maria Gullickson] fixed a 'divide by 0' error in PNM plugin and FreeImage_Rescale function
 * [Yves Schmid] fixed a bug with Exif metadata reading in TIFF images
