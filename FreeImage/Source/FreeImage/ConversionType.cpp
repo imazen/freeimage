@@ -265,6 +265,14 @@ FreeImage_ConvertToStandardType(FIBITMAP *src, BOOL scale_linear) {
 			break;
 		case FIT_COMPLEX:	// array of FICOMPLEX: 2 x 64-bit
 			break;
+		case FIT_RGB16:	// 48-bit RGB image			: 3 x 16-bit
+			break;
+		case FIT_RGBA16:	// 64-bit RGBA image		: 4 x 16-bit
+			break;
+		case FIT_RGBF:	// 96-bit RGB float image	: 3 x 32-bit IEEE floating point
+			break;
+		case FIT_RGBAF:	// 128-bit RGBA float image	: 4 x 32-bit IEEE floating point
+			break;
 	}
 
 	if(NULL == dst) {
@@ -324,6 +332,15 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_COMPLEX:
 					dst = convertByteToComplex.convert(src);
 					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
+					break;
+				case FIT_RGBAF:
+					break;
 			}
 			break;
 		case FIT_UINT16:
@@ -346,12 +363,23 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_COMPLEX:
 					dst = convertUShortToComplex.convert(src);
 					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
+					break;
+				case FIT_RGBAF:
+					break;
 			}
 			break;
 		case FIT_INT16:
 			switch(dst_type) {
 				case FIT_BITMAP:
 					dst = FreeImage_ConvertToStandardType(src, scale_linear);
+					break;
+				case FIT_UINT16:
 					break;
 				case FIT_UINT32:
 					break;
@@ -365,6 +393,15 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 					break;
 				case FIT_COMPLEX:
 					dst = convertShortToComplex.convert(src);
+					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
+					break;
+				case FIT_RGBAF:
 					break;
 			}
 			break;
@@ -388,6 +425,15 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_COMPLEX:
 					dst = convertULongToComplex.convert(src);
 					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
+					break;
+				case FIT_RGBAF:
+					break;
 			}
 			break;
 		case FIT_INT32:
@@ -410,6 +456,15 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_COMPLEX:
 					dst = convertLongToComplex.convert(src);
 					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
+					break;
+				case FIT_RGBAF:
+					break;
 			}
 			break;
 		case FIT_FLOAT:
@@ -431,6 +486,15 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_COMPLEX:
 					dst = convertFloatToComplex.convert(src);
 					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
+					break;
+				case FIT_RGBAF:
+					break;
 			}
 			break;
 		case FIT_DOUBLE:
@@ -451,6 +515,15 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_COMPLEX:
 					dst = convertDoubleToComplex.convert(src);
 					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
+					break;
+				case FIT_RGBAF:
+					break;
 			}
 			break;
 		case FIT_COMPLEX:
@@ -468,6 +541,123 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_FLOAT:
 					break;
 				case FIT_DOUBLE:
+					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
+					break;
+				case FIT_RGBAF:
+					break;
+			}
+			break;
+		case FIT_RGB16:
+			switch(dst_type) {
+				case FIT_BITMAP:
+					dst = FreeImage_ConvertTo24Bits(src);
+					break;
+				case FIT_UINT16:
+					break;
+				case FIT_INT16:
+					break;
+				case FIT_UINT32:
+					break;
+				case FIT_INT32:
+					break;
+				case FIT_FLOAT:
+					break;
+				case FIT_DOUBLE:
+					break;
+				case FIT_COMPLEX:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
+					break;
+				case FIT_RGBAF:
+					break;
+			}
+			break;
+		case FIT_RGBA16:
+			switch(dst_type) {
+				case FIT_BITMAP:
+					break;
+				case FIT_UINT16:
+					break;
+				case FIT_INT16:
+					break;
+				case FIT_UINT32:
+					break;
+				case FIT_INT32:
+					break;
+				case FIT_FLOAT:
+					break;
+				case FIT_DOUBLE:
+					break;
+				case FIT_COMPLEX:
+					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
+					break;
+				case FIT_RGBAF:
+					break;
+			}
+			break;
+		case FIT_RGBF:
+			switch(dst_type) {
+				case FIT_BITMAP:
+					break;
+				case FIT_UINT16:
+					break;
+				case FIT_INT16:
+					break;
+				case FIT_UINT32:
+					break;
+				case FIT_INT32:
+					break;
+				case FIT_FLOAT:
+					break;
+				case FIT_DOUBLE:
+					break;
+				case FIT_COMPLEX:
+					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBAF:
+					break;
+			}
+			break;
+		case FIT_RGBAF:
+			switch(dst_type) {
+				case FIT_BITMAP:
+					break;
+				case FIT_UINT16:
+					break;
+				case FIT_INT16:
+					break;
+				case FIT_UINT32:
+					break;
+				case FIT_INT32:
+					break;
+				case FIT_FLOAT:
+					break;
+				case FIT_DOUBLE:
+					break;
+				case FIT_COMPLEX:
+					break;
+				case FIT_RGB16:
+					break;
+				case FIT_RGBA16:
+					break;
+				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
 					break;
 			}
 			break;
