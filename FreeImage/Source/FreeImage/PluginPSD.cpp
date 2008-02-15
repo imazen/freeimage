@@ -625,7 +625,7 @@ Close(FreeImageIO *io, fi_handle handle, void *data) {
 static int DLL_CALLCONV
 PageCount(FreeImageIO *io, fi_handle handle, void *data) {
 	PSDInfo *psd_info = (PSDInfo *)data;
-	return (psd_info) ? psd_info->layers.size() : 0;
+	return (psd_info) ? (int)psd_info->layers.size() : 0;
 }
 
 static FIBITMAP * DLL_CALLCONV

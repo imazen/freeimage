@@ -177,7 +177,7 @@ CalculateScanLine(unsigned char *bits, unsigned pitch, int scanline) {
 
 inline void
 ReplaceExtension(char *result, const char *filename, const char *extension) {
-	for (int i = strlen(filename) - 1; i > 0; --i) {
+	for (size_t i = strlen(filename) - 1; i > 0; --i) {
 		if (filename[i] == '.') {
 			memcpy(result, filename, i);
 			result[i] = '.';

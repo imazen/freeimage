@@ -27,12 +27,12 @@
 
 unsigned DLL_CALLCONV 
 _ReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle) {
-	return fread(buffer, size, count, (FILE *)handle);
+	return (unsigned)fread(buffer, size, count, (FILE *)handle);
 }
 
 unsigned DLL_CALLCONV 
 _WriteProc(void *buffer, unsigned size, unsigned count, fi_handle handle) {
-	return fwrite(buffer, size, count, (FILE *)handle);
+	return (unsigned)fwrite(buffer, size, count, (FILE *)handle);
 }
 
 int DLL_CALLCONV

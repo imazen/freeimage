@@ -58,7 +58,7 @@ static const TIFFFieldInfo xtiffFieldInfo[] = {
 
 static void 
 _XTIFFLocalDefaultDirectory(TIFF *tif) {
-	size_t tag_size = sizeof(xtiffFieldInfo) / sizeof(xtiffFieldInfo[0]);
+	int tag_size = sizeof(xtiffFieldInfo) / sizeof(xtiffFieldInfo[0]);
     // Install the extended Tag field info
     TIFFMergeFieldInfo(tif, xtiffFieldInfo, tag_size);
 }
@@ -128,7 +128,7 @@ tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 				FreeImage_SetTagID(tag, tag_id);
 				FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::GEOTIFF, tag_id, defaultKey));
 				FreeImage_SetTagDescription(tag, tag_lib.getTagDescription(TagLib::GEOTIFF, tag_id));
-				FreeImage_SetTagLength(tag, strlen(params) + 1);
+				FreeImage_SetTagLength(tag, (DWORD)strlen(params) + 1);
 				FreeImage_SetTagCount(tag, FreeImage_GetTagLength(tag));
 				FreeImage_SetTagValue(tag, params);
 				FreeImage_SetMetadata(FIMD_GEOTIFF, dib, FreeImage_GetTagKey(tag), tag);
@@ -374,10 +374,10 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 
 			default:
 			{
-				int length = strlen((char*)raw_data) + 1;
+				size_t length = strlen((char*)raw_data) + 1;
 				FreeImage_SetTagType(fitag, FIDT_ASCII);
-				FreeImage_SetTagLength(fitag, length);
-				FreeImage_SetTagCount(fitag, length);
+				FreeImage_SetTagLength(fitag, (DWORD)length);
+				FreeImage_SetTagCount(fitag, (DWORD)length);
 				FreeImage_SetTagValue(fitag, raw_data);
 			}
 			break;

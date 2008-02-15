@@ -343,7 +343,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		footer[] = "\"\n};\n",
 		buf[256]; //256 is more then enough to sprintf 4 ints into, or the base-92 chars and #rrggbb line
 
-		if( io->write_proc(header, strlen(header), 1, handle) != 1 )
+		if( io->write_proc(header, (unsigned int)strlen(header), 1, handle) != 1 )
 			return FALSE;
 
 		int width = FreeImage_GetWidth(dib), height = FreeImage_GetHeight(dib), bpp = FreeImage_GetBPP(dib);
@@ -391,22 +391,22 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		int cpp = (int)(log((double)num_colors)/log(92.0)) + 1;
 
 		sprintf(buf, "%d %d %d %d", FreeImage_GetWidth(dib), FreeImage_GetHeight(dib), num_colors, cpp );
-		if( io->write_proc(buf, strlen(buf), 1, handle) != 1 )
+		if( io->write_proc(buf, (unsigned int)strlen(buf), 1, handle) != 1 )
 			return FALSE;
 
-		if( io->write_proc(start_colors, strlen(start_colors), 1, handle) != 1 )
+		if( io->write_proc(start_colors, (unsigned int)strlen(start_colors), 1, handle) != 1 )
 			return FALSE;
 
 		//write colors, using map of chrs->rgb
 		for(x = 0; x < num_colors; x++ ) {
 			sprintf(buf, "%*s c #%02x%02x%02x", cpp, Base92(x), chrs2color[x].r, chrs2color[x].g, chrs2color[x].b );
-			if( io->write_proc(buf, strlen(buf), 1, handle) != 1 )
+			if( io->write_proc(buf, (unsigned int)strlen(buf), 1, handle) != 1 )
 				return FALSE;
 			if( x == num_colors - 1 ) {
-				if( io->write_proc(start_pixels, strlen(start_pixels), 1, handle) != 1 )
+				if( io->write_proc(start_pixels, (unsigned int)strlen(start_pixels), 1, handle) != 1 )
 					return FALSE;
 			} else {
-				if( io->write_proc(new_line, strlen(new_line), 1, handle) != 1 )
+				if( io->write_proc(new_line, (unsigned int)strlen(new_line), 1, handle) != 1 )
 					return FALSE;
 			}
 		}
@@ -432,10 +432,10 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					return FALSE;
 			}
 			if( y == height - 1 ) {
-				if( io->write_proc(footer, strlen(footer), 1, handle) != 1 )
+				if( io->write_proc(footer, (unsigned int)strlen(footer), 1, handle) != 1 )
 					return FALSE;
 			} else {
-				if( io->write_proc(new_line, strlen(new_line), 1, handle) != 1 )
+				if( io->write_proc(new_line, (unsigned int)strlen(new_line), 1, handle) != 1 )
 					return FALSE;
 			}
 		}

@@ -203,7 +203,7 @@ term_destination (j_compress_ptr cinfo) {
 	// write any data remaining in the buffer
 
 	if (datacount > 0) {
-		if (dest->m_io->write_proc(dest->buffer, 1, datacount, dest->outfile) != datacount)
+		if (dest->m_io->write_proc(dest->buffer, 1, (unsigned int)datacount, dest->outfile) != datacount)
 		  throw(cinfo, JERR_FILE_WRITE);
 	}
 }
@@ -398,7 +398,7 @@ jpeg_read_comment(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 	// create a tag
 	FITAG *tag = FreeImage_CreateTag();
 	if(tag) {
-		unsigned count = length + 1;	// includes the null value
+		unsigned int count = (unsigned int)length + 1;	// includes the null value
 
 		FreeImage_SetTagID(tag, JPEG_COM);
 		FreeImage_SetTagKey(tag, "Comment");
@@ -590,8 +590,8 @@ jpeg_read_xmp_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) 
 		if(tag) {
 			FreeImage_SetTagID(tag, JPEG_APP0+1);	// 0xFFE1
 			FreeImage_SetTagKey(tag, g_TagLib_XMPFieldName);
-			FreeImage_SetTagLength(tag, length);
-			FreeImage_SetTagCount(tag, length);
+			FreeImage_SetTagLength(tag, (DWORD)length);
+			FreeImage_SetTagCount(tag, (DWORD)length);
 			FreeImage_SetTagType(tag, FIDT_ASCII);
 			FreeImage_SetTagValue(tag, profile);
 			
@@ -773,7 +773,7 @@ jpeg_write_xmp_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 
 		if(NULL != tag_value) {
 			// XMP signature is 29 bytes long
-			unsigned xmp_header_size = strlen(xmp_signature) + 1;
+			unsigned int xmp_header_size = (unsigned int)strlen(xmp_signature) + 1;
 
 			DWORD tag_length = FreeImage_GetTagLength(tag_xmp);
 
@@ -827,13 +827,13 @@ store_size_info(FIBITMAP *dib, JDIMENSION width, JDIMENSION height) {
 	// create a tag
 	FITAG *tag = FreeImage_CreateTag();
 	if(tag) {
-		int length = 0;
+		size_t length = 0;
 		// set the original width
 		sprintf(buffer, "%d", (int)width);
 		length = strlen(buffer) + 1;	// include the NULL/0 value
 		FreeImage_SetTagKey(tag, "OriginalJPEGWidth");
-		FreeImage_SetTagLength(tag, length);
-		FreeImage_SetTagCount(tag, length);
+		FreeImage_SetTagLength(tag, (DWORD)length);
+		FreeImage_SetTagCount(tag, (DWORD)length);
 		FreeImage_SetTagType(tag, FIDT_ASCII);
 		FreeImage_SetTagValue(tag, buffer);
 		FreeImage_SetMetadata(FIMD_COMMENTS, dib, FreeImage_GetTagKey(tag), tag);
@@ -841,8 +841,8 @@ store_size_info(FIBITMAP *dib, JDIMENSION width, JDIMENSION height) {
 		sprintf(buffer, "%d", (int)height);
 		length = strlen(buffer) + 1;	// include the NULL/0 value
 		FreeImage_SetTagKey(tag, "OriginalJPEGHeight");
-		FreeImage_SetTagLength(tag, length);
-		FreeImage_SetTagCount(tag, length);
+		FreeImage_SetTagLength(tag, (DWORD)length);
+		FreeImage_SetTagCount(tag, (DWORD)length);
 		FreeImage_SetTagType(tag, FIDT_ASCII);
 		FreeImage_SetTagValue(tag, buffer);
 		FreeImage_SetMetadata(FIMD_COMMENTS, dib, FreeImage_GetTagKey(tag), tag);

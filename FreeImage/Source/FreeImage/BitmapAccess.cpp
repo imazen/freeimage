@@ -845,7 +845,7 @@ FreeImage_FindNextMetadata(FIMETADATA *mdhandle, FITAG **tag) {
 	TAGMAP *tagmap = mdh->tagmap;
 
 	int current_pos = mdh->pos;
-	int mapsize     = tagmap->size();
+	int mapsize     = (int)tagmap->size();
 
 	if(current_pos < mapsize) {
 		// get the tag element at position pos
@@ -1003,7 +1003,7 @@ FreeImage_GetMetadataCount(FREE_IMAGE_MDMODEL model, FIBITMAP *dib) {
 	}
 
 	// get the tag count
-	return tagmap->size();
+	return (unsigned)tagmap->size();
 }
 
 // ----------------------------------------------------------

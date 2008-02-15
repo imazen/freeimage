@@ -173,8 +173,8 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 		FreeImage_SetTagID(tag, TAG_KEYWORDS);
 		FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::IPTC, TAG_KEYWORDS, defaultKey));
 		FreeImage_SetTagDescription(tag, tag_lib.getTagDescription(TagLib::IPTC, TAG_KEYWORDS));
-		FreeImage_SetTagLength(tag, Keywords.length());
-		FreeImage_SetTagCount(tag, Keywords.length());
+		FreeImage_SetTagLength(tag, (DWORD)Keywords.length());
+		FreeImage_SetTagCount(tag, (DWORD)Keywords.length());
 		FreeImage_SetTagValue(tag, (char*)Keywords.c_str());
 		FreeImage_SetMetadata(FIMD_IPTC, dib, FreeImage_GetTagKey(tag), tag);
 	}
@@ -185,8 +185,8 @@ read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 		FreeImage_SetTagID(tag, TAG_SUPPLEMENTAL_CATEGORIES);
 		FreeImage_SetTagKey(tag, tag_lib.getTagFieldName(TagLib::IPTC, TAG_SUPPLEMENTAL_CATEGORIES, defaultKey));
 		FreeImage_SetTagDescription(tag, tag_lib.getTagDescription(TagLib::IPTC, TAG_SUPPLEMENTAL_CATEGORIES));
-		FreeImage_SetTagLength(tag, SupplementalCategory.length());
-		FreeImage_SetTagCount(tag, SupplementalCategory.length());
+		FreeImage_SetTagLength(tag, (DWORD)SupplementalCategory.length());
+		FreeImage_SetTagCount(tag, (DWORD)SupplementalCategory.length());
 		FreeImage_SetTagValue(tag, (char*)SupplementalCategory.c_str());
 		FreeImage_SetMetadata(FIMD_IPTC, dib, FreeImage_GetTagKey(tag), tag);
 	}
@@ -268,8 +268,8 @@ write_iptc_profile(FIBITMAP *dib, BYTE **profile, unsigned *profile_size) {
 						std::vector<std::string> output;
 						std::string delimiter = IPTC_DELIMITER;		
 						
-						unsigned int offset = 0;
-						unsigned int delimiterIndex = 0;
+						size_t offset = 0;
+						size_t delimiterIndex = 0;
 
 						delimiterIndex = value.find(delimiter, offset);
 						while (delimiterIndex != std::string::npos) {
@@ -282,7 +282,7 @@ write_iptc_profile(FIBITMAP *dib, BYTE **profile, unsigned *profile_size) {
 						// add as many tags as there are comma separated strings
 						for(int i = 0; i < (int)output.size(); i++) {
 							std::string& tag_value = output[i];
-							buffer = append_iptc_tag(buffer, &buffer_size, tag_id, tag_value.length(), tag_value.c_str());
+							buffer = append_iptc_tag(buffer, &buffer_size, tag_id, (DWORD)tag_value.length(), tag_value.c_str());
 						}
 
 					}

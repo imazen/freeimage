@@ -14,6 +14,7 @@ Month day, 2007 - 3.10.1
 * [Will Bryant] fixed makefile for MacOSX Tiger and Leopard
 * [Maria Gullickson] fixed a 'divide by 0' error in PNM plugin and FreeImage_Rescale function
 * [Yves Schmid] fixed a bug with Exif metadata reading in TIFF images
+* [Herve Drolon] fixed some possible 64-bit portability issues with pointer calculations
 
 November 19th, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-10-05)

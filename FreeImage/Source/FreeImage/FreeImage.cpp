@@ -132,7 +132,7 @@ FreeImage_OutputMessageProc(int fif, const char *fmt, ...) {
 
 		// check the length of the format string
 
-		int str_length = (strlen(fmt) > MSG_SIZE) ? MSG_SIZE : strlen(fmt);
+		int str_length = (int)( (strlen(fmt) > MSG_SIZE) ? MSG_SIZE : strlen(fmt) );
 
 		// parse the format string and put the result in 'message'
 
@@ -152,7 +152,7 @@ FreeImage_OutputMessageProc(int fif, const char *fmt, ...) {
 
 							strcat(message, tmp);
 
-							j += strlen(tmp);
+							j += (int)strlen(tmp);
 
 							++i;
 
@@ -168,7 +168,7 @@ FreeImage_OutputMessageProc(int fif, const char *fmt, ...) {
 
 							strcat(message, tmp);
 
-							j += strlen(tmp);
+							j += (int)strlen(tmp);
 
 							++i;
 
@@ -183,7 +183,7 @@ FreeImage_OutputMessageProc(int fif, const char *fmt, ...) {
 
 							strcat(message, tmp);
 
-							j += strlen(tmp);
+							j += (int)strlen(tmp);
 
 							++i;
 
@@ -196,7 +196,7 @@ FreeImage_OutputMessageProc(int fif, const char *fmt, ...) {
 
 							strcat(message, tmp);
 
-							j += strlen(tmp);
+							j += (int)strlen(tmp);
 
 							++i;
 

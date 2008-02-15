@@ -53,7 +53,7 @@ typedef struct {
 static void
 _ReadProc(png_structp png_ptr, unsigned char *data, png_size_t size) {
     pfi_ioStructure pfio = (pfi_ioStructure)png_get_io_ptr(png_ptr);
-	unsigned n = pfio->s_io->read_proc(data, size, 1, pfio->s_handle);
+	unsigned n = pfio->s_io->read_proc(data, (unsigned int)size, 1, pfio->s_handle);
 	if(size && (n == 0)) {
 		throw "Read error: invalid or corrupted PNG file";
 	}
@@ -62,7 +62,7 @@ _ReadProc(png_structp png_ptr, unsigned char *data, png_size_t size) {
 static void
 _WriteProc(png_structp png_ptr, unsigned char *data, png_size_t size) {
     pfi_ioStructure pfio = (pfi_ioStructure)png_get_io_ptr(png_ptr);
-    pfio->s_io->write_proc(data, size, 1, pfio->s_handle);
+    pfio->s_io->write_proc(data, (unsigned int)size, 1, pfio->s_handle);
 }
 
 static void
@@ -101,7 +101,7 @@ ReadMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 			tag = FreeImage_CreateTag();
 			if(!tag) return FALSE;
 
-			DWORD tag_length = MAX(text_ptr[i].text_length, text_ptr[i].itxt_length);
+			DWORD tag_length = (DWORD) MAX(text_ptr[i].text_length, text_ptr[i].itxt_length);
 
 			FreeImage_SetTagLength(tag, tag_length);
 			FreeImage_SetTagCount(tag, tag_length);

@@ -571,11 +571,11 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 	// Write the header info
 
 	sprintf(buffer, "P%d\n%d %d\n", magic, width, height);
-	io->write_proc(&buffer, strlen(buffer), 1, handle);
+	io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 
 	if (bpp != 1) {
 		sprintf(buffer, "%d\n", maxval);
-		io->write_proc(&buffer, strlen(buffer), 1, handle);
+		io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 	}
 
 	// Write the image data
@@ -608,14 +608,14 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						for (x = 0; x < width; x++) {
 							sprintf(buffer, "%3d %3d %3d ", bits[FI_RGBA_RED], bits[FI_RGBA_GREEN], bits[FI_RGBA_BLUE]);
 
-							io->write_proc(&buffer, strlen(buffer), 1, handle);
+							io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 
 							length += 12;
 
 							if(length > 58) {
 								// No line should be longer than 70 characters
 								sprintf(buffer, "\n");
-								io->write_proc(&buffer, strlen(buffer), 1, handle);
+								io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 								length = 0;
 							}
 
@@ -648,14 +648,14 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						for (x = 0; x < width; x++) {
 							sprintf(buffer, "%3d ", bits[x]);
 
-							io->write_proc(&buffer, strlen(buffer), 1, handle);
+							io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 
 							length += 4;
 
 							if (length > 66) {
 								// No line should be longer than 70 characters
 								sprintf(buffer, "\n");
-								io->write_proc(&buffer, strlen(buffer), 1, handle);
+								io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 								length = 0;
 							}
 						}
@@ -688,14 +688,14 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 							sprintf(buffer, "%c ", color ? '1':'0');
 
-							io->write_proc(&buffer, strlen(buffer), 1, handle);
+							io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 
 							length += 2;
 
 							if (length > 68) {
 								// No line should be longer than 70 characters
 								sprintf(buffer, "\n");
-								io->write_proc(&buffer, strlen(buffer), 1, handle);
+								io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 								length = 0;
 							}
 						}
@@ -727,14 +727,14 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				for (x = 0; x < width; x++) {
 					sprintf(buffer, "%5d ", bits[x]);
 
-					io->write_proc(&buffer, strlen(buffer), 1, handle);
+					io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 
 					length += 6;
 
 					if (length > 64) {
 						// No line should be longer than 70 characters
 						sprintf(buffer, "\n");
-						io->write_proc(&buffer, strlen(buffer), 1, handle);
+						io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 						length = 0;
 					}
 				}
@@ -764,14 +764,14 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				for (x = 0; x < width; x++) {
 					sprintf(buffer, "%5d %5d %5d ", bits[x].red, bits[x].green, bits[x].blue);
 
-					io->write_proc(&buffer, strlen(buffer), 1, handle);
+					io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 
 					length += 18;
 
 					if(length > 52) {
 						// No line should be longer than 70 characters
 						sprintf(buffer, "\n");
-						io->write_proc(&buffer, strlen(buffer), 1, handle);
+						io->write_proc(&buffer, (unsigned int)strlen(buffer), 1, handle);
 						length = 0;
 					}
 				}					

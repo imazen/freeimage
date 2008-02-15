@@ -92,7 +92,7 @@ PluginList::AddNode(FI_InitProc init_proc, void *instance, const char *format, c
 
 		// fill-in the plugin structure
 
-		init_proc(plugin, m_plugin_map.size());
+		init_proc(plugin, (int)m_plugin_map.size());
 
 		// get the format string (two possible ways)
 
@@ -107,7 +107,7 @@ PluginList::AddNode(FI_InitProc init_proc, void *instance, const char *format, c
 
 		if (the_format != NULL) {
 			if (FindNodeFromFormat(the_format) == NULL) {
-				node->m_id = m_plugin_map.size();
+				node->m_id = (int)m_plugin_map.size();
 				node->m_instance = instance;
 				node->m_plugin = plugin;
 				node->m_format = format;
@@ -117,7 +117,7 @@ PluginList::AddNode(FI_InitProc init_proc, void *instance, const char *format, c
 				node->m_next = NULL;
 				node->m_enabled = TRUE;
 
-				m_plugin_map[m_plugin_map.size()] = node;
+				m_plugin_map[(const int)m_plugin_map.size()] = node;
 
 				return (FREE_IMAGE_FORMAT)node->m_id;
 			}
@@ -176,7 +176,7 @@ PluginList::FindNodeFromFIF(int node_id) {
 
 int
 PluginList::Size() const {
-	return m_plugin_map.size();
+	return (int)m_plugin_map.size();
 }
 
 BOOL
@@ -286,7 +286,7 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 					strcpy(buffer, s_search_list[count]);
 					strcat(buffer, "*.fip");
 
-					if ((find_handle= _findfirst(buffer, &find_data)) != -1L) {
+					if ((find_handle = (long)_findfirst(buffer, &find_data)) != -1L) {
 						do {
 							strcpy(buffer, s_search_list[count]);
 							strncat(buffer, find_data.name, MAX_PATH + 200);
