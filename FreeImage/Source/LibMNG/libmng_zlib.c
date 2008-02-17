@@ -583,7 +583,7 @@ mng_retcode mngzlib_deflatefree (mng_datap pData)
   MNG_TRACE (pData, MNG_FN_ZLIB_DEFLATEFREE, MNG_LC_START);
 #endif
 
-  iZrslt = deflateEnd (&pData->sZlib); /* let zlib cleanup it's own stuff */
+  iZrslt = deflateEnd (&pData->sZlib); /* let zlib cleanup its own stuff */
 
   if (iZrslt != Z_OK)                  /* on error bail out */
     MNG_ERRORZ (pData, (mng_uint32)iZrslt);

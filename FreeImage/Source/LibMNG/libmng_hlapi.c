@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_hlapi.c            copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_hlapi.c            copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : high-level application API (implementation)                * */
 /* *                                                                        * */
@@ -33,7 +33,7 @@
 /* *             - added cleanup of saved-data (SAVE/SEEK processing)       * */
 /* *             0.5.1 - 05/16/2000 - G.Juyn                                * */
 /* *             - moved the actual write_graphic functionality from here   * */
-/* *               to it's appropriate function in the mng_write module     * */
+/* *               to its appropriate function in the mng_write module      * */
 /* *                                                                        * */
 /* *             0.5.2 - 05/19/2000 - G.Juyn                                * */
 /* *             - cleaned up some code regarding mixed support             * */
@@ -106,7 +106,7 @@
 /* *             0.9.3 - 10/18/2000 - G.Juyn                                * */
 /* *             - added closestream() processing for mng_cleanup()         * */
 /* *             0.9.3 - 10/27/2000 - G.Juyn                                * */
-/* *             - fixed seperate read() & display() processing             * */
+/* *             - fixed separate read() & display() processing             * */
 /* *                                                                        * */
 /* *             0.9.4 - 11/20/2000 - G.Juyn                                * */
 /* *             - fixed unwanted repetition in mng_readdisplay()           * */
@@ -188,6 +188,14 @@
 /* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
 /* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
 /* *                                                                        * */
+/* *             1.0.10 - 07/06/2005 - G.R-P                                * */
+/* *             - added more SKIPCHUNK conditionals                        * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
+/* *             1.0.10 - 04/12/2007 - G.Juyn                               * */
+/* *             - added support for ANG proposal                           * */
+/* *             1.0.10 - 07/06/2007 - G.R-P bugfix by Lucas Quintana       * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #include "libmng.h"
@@ -221,7 +229,7 @@
 
 #ifdef MNG_SUPPORT_DISPLAY
 MNG_LOCAL mng_retcode mng_drop_objects (mng_datap pData,
-                              mng_bool  bDropaniobj)
+                                        mng_bool  bDropaniobj)
 {
   mng_objectp       pObject;
   mng_objectp       pNext;
@@ -280,6 +288,24 @@ MNG_LOCAL mng_retcode mng_drop_objects (mng_datap pData,
     pData->pLastevent  = MNG_NULL;
 #endif
   }
+
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+  if (pData->pMPNG)                    /* drop MPNG data (if any) */
+  {
+    fCleanup = ((mng_object_headerp)pData->pMPNG)->fCleanup;
+    fCleanup (pData, pData->pMPNG);
+    pData->pMPNG = MNG_NULL;
+  }
+#endif
+
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+  if (pData->pANG)                     /* drop ANG data (if any) */
+  {
+    fCleanup = ((mng_object_headerp)pData->pANG)->fCleanup;
+    fCleanup (pData, pData->pANG);
+    pData->pANG = MNG_NULL;
+  }
+#endif
 
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (pData, MNG_FN_DROP_OBJECTS, MNG_LC_END);
@@ -447,7 +473,9 @@ MNG_LOCAL mng_retcode mng_reset_rundata (mng_datap pData)
   pData->iGlobalPrimarybluey   = 0;
 #endif
 
+#ifndef MNG_SKIPCHUNK_sRGB
   pData->iGlobalRendintent     = 0;    /* reset global sRGB data */
+#endif
 
 #ifndef MNG_SKIPCHUNK_iCCP
   if (pData->iGlobalProfilesize)       /* drop global profile (if any) */
@@ -499,7 +527,7 @@ MNG_LOCAL mng_retcode mng_reset_rundata (mng_datap pData)
 #endif
 
   pData->pLastseek             = MNG_NULL;
-  
+
   return MNG_NOERROR;
 }
 #endif /* MNG_SUPPORT_DISPLAY */
@@ -773,8 +801,14 @@ MNG_LOCAL mng_func_entry const func_table [] =
     {"mng_getchunk_dhdr",          1, 0, 0},
 #endif
     {"mng_getchunk_disc",          1, 0, 0},
+#ifndef MNG_NO_DELTA_PNG
     {"mng_getchunk_drop",          1, 0, 0},
+#endif
     {"mng_getchunk_endl",          1, 0, 0},
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {"mng_getchunk_mpng",          1, 0, 10},
+    {"mng_getchunk_mpng_frame",    1, 0, 10},
+#endif
 #ifndef MNG_SKIPCHUNK_evNT
     {"mng_getchunk_evnt",          1, 0, 5},
     {"mng_getchunk_evnt_entry",    1, 0, 5},
@@ -812,7 +846,9 @@ MNG_LOCAL mng_func_entry const func_table [] =
     {"mng_getchunk_jsep",          1, 0, 0},
 #endif
     {"mng_getchunk_loop",          1, 0, 0},
+#ifndef MNG_SKIPCHUNK_MAGN
     {"mng_getchunk_magn",          1, 0, 0},
+#endif
     {"mng_getchunk_mend",          1, 0, 0},
     {"mng_getchunk_mhdr",          1, 0, 0},
     {"mng_getchunk_move",          1, 0, 0},
@@ -855,7 +891,9 @@ MNG_LOCAL mng_func_entry const func_table [] =
 #ifndef MNG_SKIPCHUNK_sPLT
     {"mng_getchunk_splt",          1, 0, 0},
 #endif
+#ifndef MNG_SKIPCHUNK_sRGB
     {"mng_getchunk_srgb",          1, 0, 0},
+#endif
     {"mng_getchunk_term",          1, 0, 0},
 #ifndef MNG_SKIPCHUNK_tEXt
     {"mng_getchunk_text",          1, 0, 0},
@@ -875,7 +913,9 @@ MNG_LOCAL mng_func_entry const func_table [] =
     {"mng_initialize",             1, 0, 0},
     {"mng_iterate_chunks",         1, 0, 0},
     {"mng_putchunk_back",          1, 0, 0},
+#ifndef MNG_SKIPCHUNK_BASI
     {"mng_putchunk_basi",          1, 0, 0},
+#endif
 #ifndef MNG_SKIPCHUNK_bKGD
     {"mng_putchunk_bkgd",          1, 0, 0},
 #endif
@@ -894,8 +934,14 @@ MNG_LOCAL mng_func_entry const func_table [] =
     {"mng_putchunk_dhdr",          1, 0, 0},
 #endif
     {"mng_putchunk_disc",          1, 0, 0},
+#ifndef MNG_NO_DELTA_PNG
     {"mng_putchunk_drop",          1, 0, 0},
+#endif
     {"mng_putchunk_endl",          1, 0, 0},
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {"mng_putchunk_mpng",          1, 0, 10},
+    {"mng_putchunk_mpng_frame",    1, 0, 10},
+#endif
 #ifndef MNG_SKIPCHUNK_evNT
     {"mng_putchunk_evnt",          1, 0, 5},
     {"mng_putchunk_evnt_entry",    1, 0, 5},
@@ -906,7 +952,9 @@ MNG_LOCAL mng_func_entry const func_table [] =
 #ifndef MNG_SKIPCHUNK_fPRI
     {"mng_putchunk_fpri",          1, 0, 0},
 #endif
+#ifndef MNG_SKIPCHUNK_FRAM
     {"mng_putchunk_fram",          1, 0, 0},
+#endif
     {"mng_putchunk_gama",          1, 0, 0},
 #ifndef MNG_SKIPCHUNK_hIST
     {"mng_putchunk_hist",          1, 0, 0},
@@ -933,7 +981,9 @@ MNG_LOCAL mng_func_entry const func_table [] =
     {"mng_putchunk_jsep",          1, 0, 0},
 #endif
     {"mng_putchunk_loop",          1, 0, 0},
+#ifndef MNG_SKIPCHUNK_MAGN
     {"mng_putchunk_magn",          1, 0, 0},
+#endif
     {"mng_putchunk_mend",          1, 0, 0},
     {"mng_putchunk_mhdr",          1, 0, 0},
     {"mng_putchunk_move",          1, 0, 0},
@@ -976,7 +1026,9 @@ MNG_LOCAL mng_func_entry const func_table [] =
 #ifndef MNG_SKIPCHUNK_sPLT
     {"mng_putchunk_splt",          1, 0, 0},
 #endif
+#ifndef MNG_SKIPCHUNK_sRGB
     {"mng_putchunk_srgb",          1, 0, 0},
+#endif
     {"mng_putchunk_term",          1, 0, 0},
 #ifndef MNG_SKIPCHUNK_tEXt
     {"mng_putchunk_text",          1, 0, 0},
@@ -1329,7 +1381,7 @@ mng_handle MNG_DECL mng_initialize (mng_ptr       pUserdata,
   mng_reset ((mng_handle)pData);
 
 #ifdef MNG_SUPPORT_TRACE
-  if (mng_trace (pData, MNG_FN_INITIALIZE, MNG_LC_END);)
+  if (mng_trace (pData, MNG_FN_INITIALIZE, MNG_LC_END))
   {
     MNG_FREEX (pData, pData, sizeof (mng_data));
     return MNG_NULL;

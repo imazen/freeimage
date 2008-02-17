@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_read.c             copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_read.c             copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : Read logic (implementation)                                * */
 /* *                                                                        * */
@@ -104,6 +104,9 @@
 /* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
 /* *             1.0.9 - 12/31/2004 - G.R-P                                 * */
 /* *             - removed stray characters from #ifdef directive           * */
+/* *                                                                        * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -582,6 +585,9 @@ MNG_LOCAL mng_retcode process_raw_chunk (mng_datap  pData,
 #endif
 #ifndef MNG_SKIPCHUNK_iTXt
     {MNG_UINT_iTXt, mng_init_general, mng_free_itxt,    mng_read_itxt, mng_write_itxt, mng_assign_itxt,    0, 0, sizeof(mng_itxt)},
+#endif
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_UINT_mpNG, mng_init_general, mng_free_mpng,    mng_read_mpng, mng_write_mpng, mng_assign_mpng,    0, 0, sizeof(mng_mpng)},
 #endif
 #ifndef MNG_SKIPCHUNK_nEED
     {MNG_UINT_nEED, mng_init_general, mng_free_need,    mng_read_need, mng_write_need, mng_assign_need,    0, 0, sizeof(mng_need)},

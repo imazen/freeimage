@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_types.h            copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_types.h            copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : type specifications                                        * */
 /* *                                                                        * */
@@ -120,6 +120,11 @@
 /* *             - inclusion of zlib/lcms/ijgsrc6b with <> instead of ""    * */
 /* *             1.0.9 - 12/06/2004 - G.Juyn                                * */
 /* *             - added conditional MNG_OPTIMIZE_CHUNKREADER               * */
+/* *                                                                        * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
+/* *             1.0.10 - 04/12/2007 - G.Juyn                               * */
+/* *             - added support for ANG proposal                           * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -389,7 +394,14 @@ typedef LPGAMMATABLE        mng_gammatabp;
 /* ************************************************************************** */
 
                                        /* enumeration of known graphics types */
-enum mng_imgtypes {mng_it_unknown, mng_it_png, mng_it_mng, mng_it_jng};
+enum mng_imgtypes {mng_it_unknown, mng_it_png, mng_it_mng, mng_it_jng
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+     ,mng_it_mpng
+#endif     
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+     ,mng_it_ang
+#endif
+     };
 typedef enum mng_imgtypes mng_imgtype;
 
                                        /* enumeration of animation speed-types */

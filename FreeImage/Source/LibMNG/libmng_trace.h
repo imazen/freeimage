@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_trace.h            copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_trace.h            copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : Trace functions (definition)                               * */
 /* *                                                                        * */
@@ -150,6 +150,10 @@
 /* *             - added function to retrieve current FRAM delay            * */
 /* *             1.0.9 - 10/14/2004 - G.Juyn                                * */
 /* *             - added bgr565_a8 canvas-style (thanks to J. Elvander)     * */
+/* *                                                                        * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
+/* *             1.0.10 - 07/06/2007 - G.R-P bugfix by Lucas Quintana       * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -457,12 +461,14 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_GETCHUNK_MAGN          752
 #define MNG_FN_GETCHUNK_JDAA          753
 #define MNG_FN_GETCHUNK_EVNT          754
+#define MNG_FN_GETCHUNK_MPNG          755
 
 #define MNG_FN_GETCHUNK_PAST_SRC      781
 #define MNG_FN_GETCHUNK_SAVE_ENTRY    782
 #define MNG_FN_GETCHUNK_PPLT_ENTRY    783
 #define MNG_FN_GETCHUNK_ORDR_ENTRY    784
 #define MNG_FN_GETCHUNK_EVNT_ENTRY    785
+#define MNG_FN_GETCHUNK_MPNG_FRAME    786
 
 #define MNG_FN_PUTCHUNK_IHDR          801
 #define MNG_FN_PUTCHUNK_PLTE          802
@@ -518,12 +524,14 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_PUTCHUNK_MAGN          852
 #define MNG_FN_PUTCHUNK_JDAA          853
 #define MNG_FN_PUTCHUNK_EVNT          854
+#define MNG_FN_PUTCHUNK_MPNG          855
 
 #define MNG_FN_PUTCHUNK_PAST_SRC      881
 #define MNG_FN_PUTCHUNK_SAVE_ENTRY    882
 #define MNG_FN_PUTCHUNK_PPLT_ENTRY    883
 #define MNG_FN_PUTCHUNK_ORDR_ENTRY    884
 #define MNG_FN_PUTCHUNK_EVNT_ENTRY    885
+#define MNG_FN_PUTCHUNK_MPNG_FRAME    886
 
 /* ************************************************************************** */
 
@@ -609,6 +617,8 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_DISPLAY_ARGB8_PM      1132
 #define MNG_FN_DISPLAY_ABGR8_PM      1133
 #define MNG_FN_DISPLAY_BGR565_A8     1134
+#define MNG_FN_DISPLAY_RGB555        1135
+#define MNG_FN_DISPLAY_BGR555        1136
 
 /* ************************************************************************** */
 
@@ -931,6 +941,7 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_INIT_MAGN             2252
 #define MNG_FN_INIT_JDAA             2253
 #define MNG_FN_INIT_EVNT             2254
+#define MNG_FN_INIT_MPNG             2255
 
 /* ************************************************************************** */
 
@@ -988,6 +999,7 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_ASSIGN_MAGN           2352
 #define MNG_FN_ASSIGN_JDAA           2353
 #define MNG_FN_ASSIGN_EVNT           2354
+#define MNG_FN_ASSIGN_MPNG           2355
 
 /* ************************************************************************** */
 
@@ -1045,6 +1057,7 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_FREE_MAGN             2452
 #define MNG_FN_FREE_JDAA             2453
 #define MNG_FN_FREE_EVNT             2454
+#define MNG_FN_FREE_MPNG             2455
 
 /* ************************************************************************** */
 
@@ -1102,6 +1115,7 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_READ_MAGN             2652
 #define MNG_FN_READ_JDAA             2653
 #define MNG_FN_READ_EVNT             2654
+#define MNG_FN_READ_MPNG             2655
 
 /* ************************************************************************** */
 
@@ -1159,6 +1173,7 @@ mng_retcode mng_trace (mng_datap  pData,
 #define MNG_FN_WRITE_MAGN            2852
 #define MNG_FN_WRITE_JDAA            2853
 #define MNG_FN_WRITE_EVNT            2854
+#define MNG_FN_WRITE_MPNG            2855
 
 /* ************************************************************************** */
 

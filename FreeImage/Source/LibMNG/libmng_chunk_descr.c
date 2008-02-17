@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_chunk_descr.c      copyright (c) 2004 G.Juyn        * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_chunk_descr.c      copyright (c) 2005-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : Chunk descriptor functions (implementation)                * */
 /* *                                                                        * */
@@ -22,6 +22,13 @@
 /* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
 /* *             1.0.9 - 01/17/2005 - G.Juyn                                * */
 /* *             - fixed problem with global PLTE/tRNS                      * */
+/* *                                                                        * */
+/* *             1.0.10 - 01/17/2005 - G.R-P.                               * */
+/* *             - added typecast to appease the compiler                   * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
+/* *             1.0.10 - 04/12/2007 - G.Juyn                               * */
+/* *             - added support for ANG proposal                           * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -42,6 +49,11 @@
 #include "libmng_chunk_prc.h"
 #include "libmng_chunk_io.h"
 #include "libmng_display.h"
+
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+#include "libmng_pixels.h"
+#include "libmng_filter.h"
+#endif
 
 #if defined(__BORLANDC__) && defined(MNG_STRICT_ANSI)
 #pragma option -A                      /* force ANSI-C */
@@ -1063,6 +1075,82 @@ MNG_LOCAL mng_field_descriptor mng_fields_magn [] =
 
 /* ************************************************************************** */
 
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+MNG_LOCAL mng_field_descriptor mng_fields_mpng [] =
+  {
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     1, 0, 4, 4,
+     offsetof(mng_mpng, iFramewidth), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     1, 0, 4, 4,
+     offsetof(mng_mpng, iFrameheight), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     0, 0xFFFF, 2, 2,
+     offsetof(mng_mpng, iNumplays), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     1, 0xFFFF, 2, 2,
+     offsetof(mng_mpng, iTickspersec), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     0, 0, 1, 1,
+     offsetof(mng_mpng, iCompressionmethod), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_DEFLATED,
+     0, 0, 1, 0,
+     offsetof(mng_mpng, pFrames), MNG_NULL, offsetof(mng_mpng, iFramessize)}
+  };
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+MNG_LOCAL mng_field_descriptor mng_fields_ahdr [] =
+  {
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     1, 0, 4, 4,
+     offsetof(mng_ahdr, iNumframes), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     0, 0, 4, 4,
+     offsetof(mng_ahdr, iTickspersec), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     0, 0, 4, 4,
+     offsetof(mng_ahdr, iNumplays), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     1, 0, 4, 4,
+     offsetof(mng_ahdr, iTilewidth), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     1, 0, 4, 4,
+     offsetof(mng_ahdr, iTileheight), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     0, 1, 1, 1,
+     offsetof(mng_ahdr, iInterlace), MNG_NULL, MNG_NULL},
+    {MNG_NULL,
+     MNG_FIELD_INT,
+     0, 1, 1, 1,
+     offsetof(mng_ahdr, iStillused), MNG_NULL, MNG_NULL}
+  };
+
+MNG_LOCAL mng_field_descriptor mng_fields_adat [] =
+  {
+    {mng_adat_tiles,
+     MNG_NULL,
+     0, 0, 0, 0,
+     MNG_NULL, MNG_NULL, MNG_NULL}
+  };
+#endif
+
+/* ************************************************************************** */
+
 #ifndef MNG_SKIPCHUNK_evNT
 MNG_LOCAL mng_field_descriptor mng_fields_evnt [] =
   {
@@ -1613,6 +1701,34 @@ MNG_LOCAL mng_chunk_descriptor mng_chunk_descr_evnt =
      MNG_DESCR_NOSAVE};
 #endif
 
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+MNG_LOCAL mng_chunk_descriptor mng_chunk_descr_mpng =
+    {mng_it_mpng, mng_create_none, 0, 0,
+     MNG_NULL, MNG_NULL, mng_special_mpng,
+     mng_fields_mpng, (sizeof(mng_fields_mpng) / sizeof(mng_field_descriptor)),
+     MNG_NULL,
+     MNG_NULL,
+     MNG_DESCR_NOMHDR | MNG_DESCR_NOIDAT | MNG_DESCR_NOJDAT};
+#endif
+
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+MNG_LOCAL mng_chunk_descriptor mng_chunk_descr_ahdr =
+    {mng_it_ang, mng_create_none, 0, 0,
+     MNG_NULL, MNG_NULL, mng_special_ahdr,
+     mng_fields_ahdr, (sizeof(mng_fields_ahdr) / sizeof(mng_field_descriptor)),
+     MNG_NULL,
+     MNG_DESCR_IHDR,
+     MNG_DESCR_NOMHDR | MNG_DESCR_NOJHDR | MNG_DESCR_NOIDAT};
+
+MNG_LOCAL mng_chunk_descriptor mng_chunk_descr_adat =
+    {mng_it_ang, mng_create_none, 0, 0,
+     MNG_NULL, MNG_NULL, mng_special_adat,
+     mng_fields_adat, (sizeof(mng_fields_adat) / sizeof(mng_field_descriptor)),
+     MNG_NULL,
+     MNG_DESCR_IHDR,
+     MNG_DESCR_NOMHDR | MNG_DESCR_NOJHDR};
+#endif
+
 /* ************************************************************************** */
 /* ************************************************************************** */
 /* the good ol' unknown babe */
@@ -1721,7 +1837,7 @@ MNG_LOCAL mng_chunk_header mng_chunk_table [] =
 #ifndef MNG_NO_DELTA_PNG
     {MNG_UINT_PPLT, mng_init_general, mng_free_general, mng_read_general, mng_write_pplt, mng_assign_general, 0, 0, sizeof(mng_pplt), &mng_chunk_descr_pplt},
     {MNG_UINT_PROM, mng_init_general, mng_free_general, mng_read_general, mng_write_prom, mng_assign_general, 0, 0, sizeof(mng_prom), &mng_chunk_descr_prom},
-#endif                                     
+#endif
 #ifndef MNG_SKIPCHUNK_SAVE
     {MNG_UINT_SAVE, mng_init_general, mng_free_save,    mng_read_general, mng_write_save, mng_assign_save,    0, 0, sizeof(mng_save), &mng_chunk_descr_save},
 #endif
@@ -1733,6 +1849,10 @@ MNG_LOCAL mng_chunk_header mng_chunk_table [] =
 #endif
 #ifndef MNG_SKIPCHUNK_TERM
     {MNG_UINT_TERM, mng_init_general, mng_free_general, mng_read_general, mng_write_term, mng_assign_general, 0, 0, sizeof(mng_term), &mng_chunk_descr_term},
+#endif
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+    {MNG_UINT_adAT, mng_init_general, mng_free_adat,    mng_read_general, mng_write_adat, mng_assign_adat,    0, 0, sizeof(mng_adat), &mng_chunk_descr_adat},
+    {MNG_UINT_ahDR, mng_init_general, mng_free_general, mng_read_general, mng_write_ahdr, mng_assign_ahdr,    0, 0, sizeof(mng_ahdr), &mng_chunk_descr_ahdr},
 #endif
 #ifndef MNG_SKIPCHUNK_bKGD
     {MNG_UINT_bKGD, mng_init_general, mng_free_general, mng_read_general, mng_write_bkgd, mng_assign_general, 0, 0, sizeof(mng_bkgd), &mng_chunk_descr_bkgd},
@@ -1760,6 +1880,9 @@ MNG_LOCAL mng_chunk_header mng_chunk_table [] =
 #endif
 #ifndef MNG_SKIPCHUNK_iTXt
     {MNG_UINT_iTXt, mng_init_general, mng_free_itxt,    mng_read_general, mng_write_itxt, mng_assign_itxt,    0, 0, sizeof(mng_itxt), &mng_chunk_descr_itxt},
+#endif
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_UINT_mpNG, mng_init_general, mng_free_mpng,    mng_read_general, mng_write_mpng, mng_assign_mpng,    0, 0, sizeof(mng_mpng), &mng_chunk_descr_mpng},
 #endif
 #ifndef MNG_SKIPCHUNK_nEED
     {MNG_UINT_nEED, mng_init_general, mng_free_need,    mng_read_general, mng_write_need, mng_assign_need,    0, 0, sizeof(mng_need), &mng_chunk_descr_need},
@@ -1965,9 +2088,11 @@ MNG_C_SPECIALFUNC (mng_special_ihdr)
     if ((pData->iWidth > pData->iMaxwidth) || (pData->iHeight > pData->iMaxheight))
       MNG_WARNING (pData, MNG_IMAGETOOLARGE);
 
+#if !defined(MNG_INCLUDE_MPNG_PROPOSAL) || !defined(MNG_SUPPORT_DISPLAY)
     if (pData->fProcessheader)         /* inform the app ? */
       if (!pData->fProcessheader (((mng_handle)pData), pData->iWidth, pData->iHeight))
         MNG_ERROR (pData, MNG_APPMISCERROR);
+#endif
   }
 
   if (!pData->bHasDHDR)
@@ -2051,7 +2176,6 @@ MNG_C_SPECIALFUNC (mng_special_plte)
 #endif
     {                                  /* get the current object */
       pImage = (mng_imagep)pData->pCurrentobj;
-
       if (!pImage)                     /* no object then dump it in obj 0 */
         pImage = (mng_imagep)pData->pObjzero;
 
@@ -2128,8 +2252,7 @@ MNG_C_SPECIALFUNC (mng_special_idat)
 /* ************************************************************************** */
 
 MNG_C_SPECIALFUNC (mng_special_iend)
-{
-                                       /* IHDR-block requires IDAT */
+{                                      /* IHDR-block requires IDAT */
   if ((pData->bHasIHDR) && (!pData->bHasIDAT))
     MNG_ERROR (pData, MNG_IDATMISSING);
 
@@ -2665,7 +2788,7 @@ MNG_C_SPECIALFUNC (mng_special_iccp)
                                        /* allocate a buffer & copy it */
         MNG_ALLOC (pData, pImage->pImgbuf->pProfile, ((mng_iccpp)pChunk)->iProfilesize);
         MNG_COPY  (pImage->pImgbuf->pProfile, ((mng_iccpp)pChunk)->pProfile, ((mng_iccpp)pChunk)->iProfilesize);
-                                       /* store it's length as well */
+                                       /* store its length as well */
         pImage->pImgbuf->iProfilesize = ((mng_iccpp)pChunk)->iProfilesize;
         pImage->pImgbuf->bHasICCP     = MNG_TRUE;
       }
@@ -2682,7 +2805,7 @@ MNG_C_SPECIALFUNC (mng_special_iccp)
                                        /* allocate a buffer & copy it */
         MNG_ALLOC (pData, pImage->pImgbuf->pProfile, ((mng_iccpp)pChunk)->iProfilesize);
         MNG_COPY  (pImage->pImgbuf->pProfile, ((mng_iccpp)pChunk)->pProfile, ((mng_iccpp)pChunk)->iProfilesize);
-                                       /* store it's length as well */
+                                       /* store its length as well */
         pImage->pImgbuf->iProfilesize = ((mng_iccpp)pChunk)->iProfilesize;
         pImage->pImgbuf->bHasICCP     = MNG_TRUE;
       }
@@ -2701,7 +2824,7 @@ MNG_C_SPECIALFUNC (mng_special_iccp)
       {                                /* allocate a global buffer & copy it */
         MNG_ALLOC (pData, pData->pGlobalProfile, ((mng_iccpp)pChunk)->iProfilesize);
         MNG_COPY  (pData->pGlobalProfile, ((mng_iccpp)pChunk)->pProfile, ((mng_iccpp)pChunk)->iProfilesize);
-                                       /* store it's length as well */
+                                       /* store its length as well */
         pData->iGlobalProfilesize = ((mng_iccpp)pChunk)->iProfilesize;
       }
                                        /* create an animation object */
@@ -4540,7 +4663,7 @@ MNG_F_SPECIALFUNC (mng_pplt_entries)
     if (iM < iX)
       MNG_ERROR (pData, MNG_INVALIDINDEX);
 
-    if (iM >= (mng_int32)iMax)                    /* determine highest used index */
+    if (iM >= (mng_int32) iMax)       /* determine highest used index */
       iMax = iM + 1;
 
     pRawdata += 2;
@@ -5157,6 +5280,763 @@ MNG_F_SPECIALFUNC (mng_evnt_entries)
 
 #ifndef MNG_SKIPCHUNK_evNT
 MNG_C_SPECIALFUNC (mng_special_evnt)
+{
+  return MNG_NOERROR;
+}
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+MNG_C_SPECIALFUNC (mng_special_mpng)
+{
+  if ((pData->eImagetype != mng_it_png) && (pData->eImagetype != mng_it_jng))
+    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED);
+    
+#ifdef MNG_SUPPORT_DISPLAY
+  return mng_create_mpng_obj (pData, pChunk);
+#else
+  return MNG_NOERROR;
+#endif
+}
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+MNG_C_SPECIALFUNC (mng_special_ahdr)
+{
+#ifdef MNG_SUPPORT_DISPLAY
+  return mng_create_ang_obj (pData, pChunk);
+#else
+  return MNG_NOERROR;
+#endif
+}
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+MNG_F_SPECIALFUNC (mng_adat_tiles)
+{
+  if ((pData->eImagetype != mng_it_ang) || (!pData->pANG))
+    MNG_ERROR (pData, MNG_CHUNKNOTALLOWED);
+
+  {
+    mng_adatp      pADAT = (mng_adatp)pChunk;
+    mng_ang_objp   pANG  = (mng_ang_objp)pData->pANG;
+    mng_uint32     iRawlen  = *piRawlen;
+    mng_uint8p     pRawdata = *ppRawdata;
+    mng_retcode    iRetcode;
+    mng_uint8p     pBuf;
+    mng_uint32     iBufsize;
+    mng_uint32     iRealsize;
+    mng_uint8p     pTemp;
+    mng_uint8p     pTemp2;
+    mng_int32      iX;
+    mng_int32      iSize;
+
+#ifdef MNG_SUPPORT_DISPLAY
+    mng_imagep     pImage;
+    mng_int32      iTemplen;
+    mng_uint8p     pSwap;
+
+    mng_processobject pProcess;
+
+    mng_uint32     iSavedatawidth;
+    mng_uint32     iSavedataheight;
+
+    mng_fptr       fSaveinitrowproc;
+    mng_fptr       fSavestorerow;
+    mng_fptr       fSaveprocessrow;
+    mng_fptr       fSavedifferrow;
+    mng_imagep     fSavestoreobj;
+    mng_imagedatap fSavestorebuf;
+
+#ifdef MNG_OPTIMIZE_FOOTPRINT_INIT
+    png_imgtype    eSavepngimgtype;
+#endif
+
+    mng_uint8      iSaveinterlace;
+    mng_int8       iSavepass;
+    mng_int32      iSaverow;
+    mng_int32      iSaverowinc;
+    mng_int32      iSavecol;
+    mng_int32      iSavecolinc;
+    mng_int32      iSaverowsamples;
+    mng_int32      iSavesamplemul;
+    mng_int32      iSavesampleofs;
+    mng_int32      iSavesamplediv;
+    mng_int32      iSaverowsize;
+    mng_int32      iSaverowmax;
+    mng_int32      iSavefilterofs;
+    mng_int32      iSavepixelofs;
+    mng_uint32     iSavelevel0;
+    mng_uint32     iSavelevel1;
+    mng_uint32     iSavelevel2;
+    mng_uint32     iSavelevel3;
+    mng_uint8p     pSaveworkrow;
+    mng_uint8p     pSaveprevrow;
+    mng_uint8p     pSaverGBArow;
+    mng_bool       bSaveisRGBA16;
+    mng_bool       bSaveisOpaque;
+    mng_int32      iSavefilterbpp;
+
+    mng_int32      iSavedestl;
+    mng_int32      iSavedestt;
+    mng_int32      iSavedestr;
+    mng_int32      iSavedestb;
+    mng_int32      iSavesourcel;
+    mng_int32      iSavesourcet;
+    mng_int32      iSavesourcer;
+    mng_int32      iSavesourceb;
+#endif /* MNG_SUPPORT_DISPLAY */
+
+    iRetcode = mng_inflate_buffer (pData, pRawdata, iRawlen,
+                                   &pBuf, &iBufsize, &iRealsize);
+    if (iRetcode)                      /* on error bail out */
+    {                                  /* don't forget to drop the temp buffer */
+      MNG_FREEX (pData, pBuf, iBufsize);
+      return iRetcode;
+    }
+                                       /* get buffer for tile info in ADAT chunk */
+    pADAT->iTilessize = pANG->iNumframes * sizeof(mng_adat_tile);
+    MNG_ALLOCX (pData, pADAT->pTiles, pADAT->iTilessize);
+    if (!pADAT->pTiles)
+    {
+      pADAT->iTilessize = 0;
+      MNG_FREEX (pData, pBuf, iBufsize);
+      MNG_ERROR (pData, MNG_OUTOFMEMORY);
+    }
+
+    pTemp  = pBuf;
+    pTemp2 = (mng_uint8p)pADAT->pTiles;
+
+    if (!pANG->iStillused)
+      iSize = 12;
+    else
+      iSize = 13;
+
+    for (iX = 0; iX < pANG->iNumframes; iX++)
+    {
+      MNG_COPY (pTemp2, pTemp, iSize);
+      pTemp  += iSize;
+      pTemp2 += sizeof(mng_adat_tile);
+    }
+
+#ifdef MNG_SUPPORT_DISPLAY
+                                       /* get buffer for tile info in ANG object */
+    pANG->iTilessize = pADAT->iTilessize;
+    MNG_ALLOCX (pData, pANG->pTiles, pANG->iTilessize);
+    if (!pANG->pTiles)
+    {
+      pANG->iTilessize = 0;
+      MNG_FREEX (pData, pBuf, iBufsize);
+      MNG_ERROR (pData, MNG_OUTOFMEMORY);
+    }
+                                       /* copy it from the ADAT object */
+    MNG_COPY (pANG->pTiles, pADAT->pTiles, pANG->iTilessize);
+
+                                       /* save IDAT work-parms */
+    fSaveinitrowproc    = pData->fInitrowproc;
+    fSavestorerow       = pData->fDisplayrow;
+    fSaveprocessrow     = pData->fProcessrow;
+    fSavedifferrow      = pData->fDifferrow;
+    fSavestoreobj       = pData->pStoreobj;
+    fSavestorebuf       = pData->pStorebuf;
+
+#ifdef MNG_OPTIMIZE_FOOTPRINT_INIT
+    eSavepngimgtype     = pData->ePng_imgtype;
+#endif
+
+    iSavedatawidth      = pData->iDatawidth;
+    iSavedataheight     = pData->iDataheight;
+    iSaveinterlace      = pData->iInterlace;
+    iSavepass           = pData->iPass;
+    iSaverow            = pData->iRow;
+    iSaverowinc         = pData->iRowinc;
+    iSavecol            = pData->iCol;
+    iSavecolinc         = pData->iColinc;
+    iSaverowsamples     = pData->iRowsamples;
+    iSavesamplemul      = pData->iSamplemul;
+    iSavesampleofs      = pData->iSampleofs;
+    iSavesamplediv      = pData->iSamplediv;
+    iSaverowsize        = pData->iRowsize;
+    iSaverowmax         = pData->iRowmax;
+    iSavefilterofs      = pData->iFilterofs;
+    iSavepixelofs       = pData->iPixelofs;
+    iSavelevel0         = pData->iLevel0;
+    iSavelevel1         = pData->iLevel1;
+    iSavelevel2         = pData->iLevel2;
+    iSavelevel3         = pData->iLevel3;
+    pSaveworkrow        = pData->pWorkrow;
+    pSaveprevrow        = pData->pPrevrow;
+    pSaverGBArow        = pData->pRGBArow;
+    bSaveisRGBA16       = pData->bIsRGBA16;
+    bSaveisOpaque       = pData->bIsOpaque;
+    iSavefilterbpp      = pData->iFilterbpp;
+    iSavedestl          = pData->iDestl;
+    iSavedestt          = pData->iDestt;
+    iSavedestr          = pData->iDestr;
+    iSavedestb          = pData->iDestb;
+    iSavesourcel        = pData->iSourcel;
+    iSavesourcet        = pData->iSourcet;
+    iSavesourcer        = pData->iSourcer;
+    iSavesourceb        = pData->iSourceb;
+
+    pData->iDatawidth   = pANG->iTilewidth;
+    pData->iDataheight  = pANG->iTileheight;
+
+    pData->iDestl       = 0;
+    pData->iDestt       = 0;
+    pData->iDestr       = pANG->iTilewidth;
+    pData->iDestb       = pANG->iTileheight;
+    pData->iSourcel     = 0;
+    pData->iSourcet     = 0;
+    pData->iSourcer     = pANG->iTilewidth;
+    pData->iSourceb     = pANG->iTileheight;
+
+    pData->fInitrowproc = MNG_NULL;
+    pData->fStorerow    = MNG_NULL;
+    pData->fProcessrow  = MNG_NULL;
+    pData->fDifferrow   = MNG_NULL;
+
+    /* clone image object to store the pixel-data from object 0 */
+    iRetcode = mng_clone_imageobject (pData, 1, MNG_FALSE, MNG_FALSE, MNG_FALSE,
+                                      MNG_FALSE, 0, 0, 0, pData->pObjzero, &pImage);
+    if (iRetcode)                      /* on error, drop temp buffer and bail */
+    {
+      MNG_FREEX (pData, pBuf, iBufsize);
+      return iRetcode;
+    }
+
+    /* make sure we got the right dimensions and interlacing */
+    iRetcode = mng_reset_object_details (pData, pImage, pANG->iTilewidth, pANG->iTileheight,
+                                         pImage->pImgbuf->iBitdepth, pImage->pImgbuf->iColortype,
+                                         pImage->pImgbuf->iCompression, pImage->pImgbuf->iFilter,
+                                         pANG->iInterlace, MNG_FALSE);
+    if (iRetcode)                      /* on error, drop temp buffer and bail */
+    {
+      MNG_FREEX (pData, pBuf, iBufsize);
+      return iRetcode;
+    }
+
+    pData->pStoreobj    = pImage;
+
+#ifdef MNG_OPTIMIZE_FOOTPRINT_INIT
+    pData->fInitrowproc = (mng_fptr)mng_init_rowproc;
+    pData->ePng_imgtype = mng_png_imgtype(pData->iColortype,pData->iBitdepth);
+#else
+    switch (pData->iColortype)         /* determine row initialization routine */
+    {
+      case 0 : {                       /* gray */
+                 switch (pData->iBitdepth)
+                 {
+#ifndef MNG_NO_1_2_4BIT_SUPPORT
+                   case  1 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_g1_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_g1_i;
+
+                               break;
+                             }
+                   case  2 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_g2_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_g2_i;
+
+                               break;
+                             }
+                   case  4 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_g4_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_g4_i;
+                               break;
+                             }
+#endif /* MNG_NO_1_2_4BIT_SUPPORT */
+                   case  8 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_g8_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_g8_i;
+
+                               break;
+                             }
+#ifndef MNG_NO_16BIT_SUPPORT
+                   case 16 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_g16_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_g16_i;
+
+                               break;
+                             }
+#endif
+                 }
+
+                 break;
+               }
+      case 2 : {                       /* rgb */
+                 switch (pData->iBitdepth)
+                 {
+                   case  8 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_rgb8_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_rgb8_i;
+                               break;
+                             }
+#ifndef MNG_NO_16BIT_SUPPORT
+                   case 16 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_rgb16_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_rgb16_i;
+
+                               break;
+                             }
+#endif
+                 }
+
+                 break;
+               }
+      case 3 : {                       /* indexed */
+                 switch (pData->iBitdepth)
+                 {
+#ifndef MNG_NO_1_2_4BIT_SUPPORT
+                   case  1 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_idx1_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_idx1_i;
+
+                               break;
+                             }
+                   case  2 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_idx2_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_idx2_i;
+
+                               break;
+                             }
+                   case  4 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_idx4_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_idx4_i;
+
+                               break;
+                             }
+#endif /* MNG_NO_1_2_4BIT_SUPPORT */
+                   case  8 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_idx8_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_idx8_i;
+
+                               break;
+                             }
+                 }
+
+                 break;
+               }
+      case 4 : {                       /* gray+alpha */
+                 switch (pData->iBitdepth)
+                 {
+                   case  8 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_ga8_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_ga8_i;
+
+                               break;
+                             }
+#ifndef MNG_NO_16BIT_SUPPORT
+                   case 16 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_ga16_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_ga16_i;
+                               break;
+                             }
+#endif
+                 }
+
+                 break;
+               }
+      case 6 : {                       /* rgb+alpha */
+                 switch (pData->iBitdepth)
+                 {
+                   case  8 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_rgba8_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_rgba8_i;
+
+                               break;
+                             }
+#ifndef MNG_NO_16BIT_SUPPORT
+                   case 16 : {
+                               if (!pData->iInterlace)
+                                 pData->fInitrowproc = (mng_fptr)mng_init_rgba16_ni;
+                               else
+                                 pData->fInitrowproc = (mng_fptr)mng_init_rgba16_i;
+
+                               break;
+                             }
+#endif
+                 }
+
+                 break;
+               }
+    }
+#endif /* MNG_OPTIMIZE_FOOTPRINT_INIT */
+
+    pData->iFilterofs = 0;             /* determine filter characteristics */
+    pData->iLevel0    = 0;             /* default levels */
+    pData->iLevel1    = 0;    
+    pData->iLevel2    = 0;
+    pData->iLevel3    = 0;
+
+#ifdef FILTER192                       /* leveling & differing ? */
+    if (pData->iFilter == MNG_FILTER_DIFFERING)
+    {
+      switch (pData->iColortype)
+      {
+        case 0 : {
+                   if (pData->iBitdepth <= 8)
+                     pData->iFilterofs = 1;
+                   else
+                     pData->iFilterofs = 2;
+
+                   break;
+                 }
+        case 2 : {
+                   if (pData->iBitdepth <= 8)
+                     pData->iFilterofs = 3;
+                   else
+                     pData->iFilterofs = 6;
+
+                   break;
+                 }
+        case 3 : {
+                   pData->iFilterofs = 1;
+                   break;
+                 }
+        case 4 : {
+                   if (pData->iBitdepth <= 8)
+                     pData->iFilterofs = 2;
+                   else
+                     pData->iFilterofs = 4;
+
+                   break;
+                 }
+        case 6 : {
+                   if (pData->iBitdepth <= 8)
+                     pData->iFilterofs = 4;
+                   else
+                     pData->iFilterofs = 8;
+
+                   break;
+                 }
+      }
+    }
+#endif
+
+#ifdef FILTER193                       /* no adaptive filtering ? */
+    if (pData->iFilter == MNG_FILTER_NOFILTER)
+      pData->iPixelofs = pData->iFilterofs;
+    else
+#endif
+      pData->iPixelofs = pData->iFilterofs + 1;
+
+    if (pData->fInitrowproc)           /* need to initialize row processing? */
+    {
+      iRetcode = ((mng_initrowproc)pData->fInitrowproc) (pData);
+      if (iRetcode)
+      {
+         MNG_FREEX (pData, pBuf, iBufsize);
+         return iRetcode;
+      }
+    }
+                                       /* calculate remainder of buffer */
+    pTemp    = pBuf + (mng_int32)(pANG->iNumframes * iSize);
+    iTemplen = iRealsize - (mng_int32)(pANG->iNumframes * iSize);
+
+    do
+    {
+      if (iTemplen > pData->iRowmax)   /* get a pixel-row from the temp buffer */
+      {
+        MNG_COPY (pData->pWorkrow, pTemp, pData->iRowmax);
+      }
+      else
+      {
+        MNG_COPY (pData->pWorkrow, pTemp, iTemplen);
+      }
+
+      {                                /* image not completed yet ? */
+        if (pData->iRow < (mng_int32)pData->iDataheight)
+        {
+#ifdef MNG_NO_1_2_4BIT_SUPPORT
+          if (pData->iPNGdepth == 1)
+          {
+            /* Inflate Workrow to 8-bit */
+            mng_int32  iX;
+            mng_uint8p pSrc = pData->pWorkrow+1;
+            mng_uint8p pDest = pSrc + pData->iRowsize - (pData->iRowsize+7)/8;
+
+            for (iX = ((pData->iRowsize+7)/8) ; iX > 0 ; iX--)
+              *pDest++ = *pSrc++;
+
+            pDest = pData->pWorkrow+1;
+            pSrc = pDest + pData->iRowsize - (pData->iRowsize+7)/8;
+            for (iX = pData->iRowsize; ;)
+            {
+              *pDest++ = (((*pSrc)>>7)&1);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)>>6)&1);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)>>5)&1);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)>>4)&1);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)>>3)&1);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)>>2)&1);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)>>1)&1);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)   )&1);
+              if (iX-- <= 0)
+                break;
+              pSrc++;
+            }
+          }
+          else if (pData->iPNGdepth == 2)
+          {
+            /* Inflate Workrow to 8-bit */
+            mng_int32  iX;
+            mng_uint8p pSrc = pData->pWorkrow+1;
+            mng_uint8p pDest = pSrc + pData->iRowsize - (2*pData->iRowsize+7)/8;
+
+            for (iX = ((2*pData->iRowsize+7)/8) ; iX > 0 ; iX--)
+               *pDest++ = *pSrc++;
+
+            pDest = pData->pWorkrow+1;
+            pSrc = pDest + pData->iRowsize - (2*pData->iRowsize+7)/8;
+            for (iX = pData->iRowsize; ;)
+            {
+              *pDest++ = (((*pSrc)>>6)&3);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)>>4)&3);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)>>2)&3);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)   )&3);
+              if (iX-- <= 0)
+                break;
+              pSrc++;
+            }
+          }
+          else if (pData->iPNGdepth == 4)
+          {
+            /* Inflate Workrow to 8-bit */
+            mng_int32  iX;
+            mng_uint8p pSrc = pData->pWorkrow+1;
+            mng_uint8p pDest = pSrc + pData->iRowsize - (4*pData->iRowsize+7)/8;
+
+            for (iX = ((4*pData->iRowsize+7)/8) ; iX > 0 ; iX--)
+               *pDest++ = *pSrc++;
+
+            pDest = pData->pWorkrow+1;
+            pSrc = pDest + pData->iRowsize - (4*pData->iRowsize+7)/8;
+            for (iX = pData->iRowsize; ;)
+            {
+              *pDest++ = (((*pSrc)>>4)&0x0f);
+              if (iX-- <= 0)
+                break;
+              *pDest++ = (((*pSrc)   )&0x0f);
+              if (iX-- <= 0)
+                break;
+              pSrc++;
+            }
+          }
+          if (pData->iPNGdepth < 8 && pData->iColortype == 0)
+          {
+            /* Expand samples to 8-bit by LBR */
+            mng_int32  iX;
+            mng_uint8p pSrc = pData->pWorkrow+1;
+            mng_uint8 multiplier[]={0,255,85,0,17,0,0,0,1};
+
+            for (iX = pData->iRowsize; iX > 0; iX--)
+                *pSrc++ *= multiplier[pData->iPNGdepth];
+          }
+#endif
+#ifdef MNG_NO_16BIT_SUPPORT
+          if (pData->iPNGdepth > 8)
+          {
+            /* Reduce Workrow to 8-bit */
+            mng_int32  iX;
+            mng_uint8p pSrc = pData->pWorkrow+1;
+            mng_uint8p pDest = pSrc;
+
+            for (iX = pData->iRowsize; iX > 0; iX--)
+            {
+              *pDest = *pSrc;
+              pDest++;
+              pSrc+=2;
+            }
+          }
+#endif
+
+#ifdef FILTER192                       /* has leveling info ? */
+          if (pData->iFilterofs == MNG_FILTER_DIFFERING)
+            iRetcode = init_rowdiffering (pData);
+          else
+#endif
+            iRetcode = MNG_NOERROR;
+                                       /* filter the row if necessary */
+          if ((!iRetcode) && (pData->iFilterofs < pData->iPixelofs  ) &&
+                             (*(pData->pWorkrow + pData->iFilterofs))    )
+            iRetcode = mng_filter_a_row (pData);
+
+                                       /* additional leveling/differing ? */
+          if ((!iRetcode) && (pData->fDifferrow))
+          {
+            iRetcode = ((mng_differrow)pData->fDifferrow) (pData);
+
+            pSwap           = pData->pWorkrow;
+            pData->pWorkrow = pData->pPrevrow;
+            pData->pPrevrow = pSwap;   /* make sure we're processing the right data */
+          }
+
+          if (!iRetcode)
+          {
+            {                          /* process this row */
+              if ((!iRetcode) && (pData->fProcessrow))
+                iRetcode = ((mng_processrow)pData->fProcessrow) (pData);
+                                       /* store in object ? */
+              if ((!iRetcode) && (pData->fStorerow))
+                iRetcode = ((mng_storerow)pData->fStorerow)     (pData);
+            }
+          }
+
+          if (iRetcode)                   /* on error bail out */
+          {
+            MNG_FREEX (pData, pBuf, iBufsize);
+            MNG_ERROR (pData, iRetcode);
+          }
+
+          if (!pData->fDifferrow)      /* swap row-pointers */
+          {
+            pSwap           = pData->pWorkrow;
+            pData->pWorkrow = pData->pPrevrow;
+            pData->pPrevrow = pSwap;   /* so prev points to the processed row! */
+          }
+                                       /* adjust variables for next row */
+          iRetcode = mng_next_row (pData);
+
+          if (iRetcode)                   /* on error bail out */
+          {
+            MNG_FREEX (pData, pBuf, iBufsize);
+            MNG_ERROR (pData, iRetcode);
+          }
+        }
+      }
+
+      pTemp    += pData->iRowmax;
+      iTemplen -= pData->iRowmax;
+    }                                  /* until some error or EOI
+                                          or all pixels received */
+    while ( (iTemplen > 0)  &&
+            ( (pData->iRow < (mng_int32)pData->iDataheight) ||
+              ( (pData->iPass >= 0) && (pData->iPass < 7) )    )    );
+
+    mng_cleanup_rowproc (pData);       /* cleanup row processing buffers !! */
+
+                                       /* restore saved work-parms */
+    pData->iDatawidth   = iSavedatawidth;
+    pData->iDataheight  = iSavedataheight;
+
+    pData->fInitrowproc = fSaveinitrowproc;
+    pData->fDisplayrow  = fSavestorerow;
+    pData->fProcessrow  = fSaveprocessrow;
+    pData->fDifferrow   = fSavedifferrow;
+    pData->pStoreobj    = fSavestoreobj;
+    pData->pStorebuf    = fSavestorebuf;
+
+#ifdef MNG_OPTIMIZE_FOOTPRINT_INIT
+    pData->ePng_imgtype = eSavepngimgtype;
+#endif
+
+    pData->iInterlace   = iSaveinterlace;
+    pData->iPass        = iSavepass;
+    pData->iRow         = iSaverow;
+    pData->iRowinc      = iSaverowinc;
+    pData->iCol         = iSavecol;
+    pData->iColinc      = iSavecolinc;
+    pData->iRowsamples  = iSaverowsamples;
+    pData->iSamplemul   = iSavesamplemul;
+    pData->iSampleofs   = iSavesampleofs;
+    pData->iSamplediv   = iSavesamplediv;
+    pData->iRowsize     = iSaverowsize;
+    pData->iRowmax      = iSaverowmax;
+    pData->iFilterofs   = iSavefilterofs;
+    pData->iPixelofs    = iSavepixelofs;
+    pData->iLevel0      = iSavelevel0;
+    pData->iLevel1      = iSavelevel1;
+    pData->iLevel2      = iSavelevel2;
+    pData->iLevel3      = iSavelevel3;
+    pData->pWorkrow     = pSaveworkrow;
+    pData->pPrevrow     = pSaveprevrow;
+    pData->pRGBArow     = pSaverGBArow;
+    pData->bIsRGBA16    = bSaveisRGBA16;
+    pData->bIsOpaque    = bSaveisOpaque;
+    pData->iFilterbpp   = iSavefilterbpp;
+    pData->iDestl       = iSavedestl;
+    pData->iDestt       = iSavedestt;
+    pData->iDestr       = iSavedestr;
+    pData->iDestb       = iSavedestb;
+    pData->iSourcel     = iSavesourcel;
+    pData->iSourcet     = iSavesourcet;
+    pData->iSourcer     = iSavesourcer;
+    pData->iSourceb     = iSavesourceb;
+
+                                       /* create the animation directives ! */
+    pProcess = (mng_processobject)pANG->sHeader.fProcess;
+    iRetcode = pProcess (pData, (mng_objectp)pData->pANG);
+    if (iRetcode)
+      return iRetcode;
+
+#endif /* MNG_SUPPORT_DISPLAY */
+
+    MNG_FREE (pData, pBuf, iBufsize);  /* always free the temp buffer ! */
+  }
+
+  *piRawlen = 0;
+
+  return MNG_NOERROR;
+}
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+MNG_C_SPECIALFUNC (mng_special_adat)
 {
   return MNG_NOERROR;
 }

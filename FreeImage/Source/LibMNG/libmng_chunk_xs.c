@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_chunk_xs.c         copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_chunk_xs.c         copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : chunk access functions (implementation)                    * */
 /* *                                                                        * */
@@ -87,6 +87,9 @@
 /* *             - added conditional MNG_OPTIMIZE_CHUNKINITFREE             * */
 /* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
 /* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
+/* *                                                                        * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -2261,6 +2264,97 @@ mng_retcode MNG_DECL mng_getchunk_magn (mng_handle hHandle,
 
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (((mng_datap)hHandle), MNG_FN_GETCHUNK_MAGN, MNG_LC_END);
+#endif
+
+  return MNG_NOERROR;
+}
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+MNG_EXT mng_retcode MNG_DECL mng_getchunk_mpng (mng_handle hHandle,
+                                                mng_handle hChunk,
+                                                mng_uint32 *iFramewidth,
+                                                mng_uint32 *iFrameheight,
+                                                mng_uint16 *iNumplays,
+                                                mng_uint16 *iTickspersec,
+                                                mng_uint8  *iCompressionmethod,
+                                                mng_uint32 *iCount)
+{
+  mng_datap pData;
+  mng_mpngp pChunk;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_GETCHUNK_MPNG, MNG_LC_START);
+#endif
+
+  MNG_VALIDHANDLE (hHandle)            /* check validity handle */
+  pData  = (mng_datap)hHandle;         /* and make it addressable */
+  pChunk = (mng_mpngp)hChunk;          /* address the chunk */
+
+  if (pChunk->sHeader.iChunkname != MNG_UINT_mpNG)
+    MNG_ERROR (pData, MNG_WRONGCHUNK)  /* ouch */
+                                       /* fill the fields */
+  *iFramewidth        = pChunk->iFramewidth;
+  *iFrameheight       = pChunk->iFrameheight;
+  *iNumplays          = pChunk->iNumplays;
+  *iTickspersec       = pChunk->iTickspersec;
+  *iCompressionmethod = pChunk->iCompressionmethod;
+  *iCount             = pChunk->iFramessize / sizeof (mng_mpng_frame);
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_GETCHUNK_MPNG, MNG_LC_END);
+#endif
+
+  return MNG_NOERROR;
+}
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+MNG_EXT mng_retcode MNG_DECL mng_getchunk_mpng_frame (mng_handle hHandle,
+                                                      mng_handle hChunk,
+                                                      mng_uint32 iEntry,
+                                                      mng_uint32 *iX,
+                                                      mng_uint32 *iY,
+                                                      mng_uint32 *iWidth,
+                                                      mng_uint32 *iHeight,
+                                                      mng_int32  *iXoffset,
+                                                      mng_int32  *iYoffset,
+                                                      mng_uint16 *iTicks)
+{
+  mng_datap       pData;
+  mng_mpngp       pChunk;
+  mng_mpng_framep pFrame;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_GETCHUNK_MPNG_FRAME, MNG_LC_START);
+#endif
+
+  MNG_VALIDHANDLE (hHandle)            /* check validity handle */
+  pData  = (mng_datap)hHandle;         /* and make it addressable */
+  pChunk = (mng_mpngp)hChunk;          /* address the chunk */
+
+  if (pChunk->sHeader.iChunkname != MNG_UINT_mpNG)
+    MNG_ERROR (pData, MNG_WRONGCHUNK)  /* ouch */
+                                       /* valid index ? */
+  if (iEntry >= (pChunk->iFramessize / sizeof (mng_mpng_frame)))
+    MNG_ERROR (pData, MNG_INVALIDENTRYIX)
+
+  pFrame  = pChunk->pFrames + iEntry;  /* address the entry */
+                                       /* fill the fields */
+  *iX        = pFrame->iX;
+  *iY        = pFrame->iY;
+  *iWidth    = pFrame->iWidth;
+  *iHeight   = pFrame->iHeight;
+  *iXoffset  = pFrame->iXoffset;
+  *iYoffset  = pFrame->iYoffset;
+  *iTicks    = pFrame->iTicks;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_GETCHUNK_MPNG_FRAME, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;
@@ -6378,6 +6472,134 @@ mng_retcode MNG_DECL mng_putchunk_magn (mng_handle hHandle,
 
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (((mng_datap)hHandle), MNG_FN_PUTCHUNK_MAGN, MNG_LC_END);
+#endif
+
+  return MNG_NOERROR;
+}
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+MNG_EXT mng_retcode MNG_DECL mng_putchunk_mpng (mng_handle hHandle,
+                                                mng_uint32 iFramewidth,
+                                                mng_uint32 iFrameheight,
+                                                mng_uint16 iNumplays,
+                                                mng_uint16 iTickspersec,
+                                                mng_uint8  iCompressionmethod,
+                                                mng_uint32 iCount)
+{
+  mng_datap        pData;
+  mng_chunkp       pChunk;
+  mng_retcode      iRetcode;
+#ifndef MNG_OPTIMIZE_CHUNKREADER
+  mng_chunk_header sChunkheader =
+#ifdef MNG_OPTIMIZE_CHUNKINITFREE
+          {MNG_UINT_mpNG, mng_init_general, mng_free_mpng, mng_read_mpng, mng_write_mpng, mng_assign_mpng, 0, 0, sizeof(mng_mpng)};
+#else
+          {MNG_UINT_mpNG, mng_init_mpng, mng_free_mpng, mng_read_mpng, mng_write_mpng, mng_assign_mpng, 0, 0};
+#endif
+#else
+  mng_chunk_header sChunkheader;
+#endif
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_PUTCHUNK_MPNG, MNG_LC_START);
+#endif
+
+  MNG_VALIDHANDLE (hHandle)            /* check validity handle */
+  pData = (mng_datap)hHandle;          /* and make it addressable */
+
+  if (!pData->bCreating)               /* aren't we creating a new file ? */
+    MNG_ERROR (pData, MNG_FUNCTIONINVALID)
+                                       /* must have had a IHDR first! */
+  if (pData->iFirstchunkadded != MNG_UINT_IHDR)
+    MNG_ERROR (pData, MNG_NOHEADER)
+                                       /* create the chunk */
+#ifndef MNG_OPTIMIZE_CHUNKREADER
+#ifdef MNG_OPTIMIZE_CHUNKINITFREE
+  iRetcode = mng_init_general (pData, &sChunkheader, &pChunk);
+#else
+  iRetcode = mng_init_mpng (pData, &sChunkheader, &pChunk);
+#endif
+#else
+  mng_get_chunkheader(MNG_UINT_mpNG, &sChunkheader);
+  iRetcode = mng_init_general (pData, &sChunkheader, &pChunk);
+#endif
+
+  if (iRetcode)                        /* on error bail out */
+    return iRetcode;
+                                       /* fill the chunk */
+  ((mng_mpngp)pChunk)->iFramewidth        = iFramewidth;
+  ((mng_mpngp)pChunk)->iFrameheight       = iFrameheight;
+  ((mng_mpngp)pChunk)->iNumplays          = iNumplays;
+  ((mng_mpngp)pChunk)->iTickspersec       = iTickspersec;
+  ((mng_mpngp)pChunk)->iCompressionmethod = iCompressionmethod;
+  ((mng_mpngp)pChunk)->iFramessize        = iCount * sizeof (mng_mpng_frame);
+
+  if (iCount)
+    MNG_ALLOC (pData, ((mng_mpngp)pChunk)->pFrames, ((mng_mpngp)pChunk)->iFramessize);
+
+  mng_add_chunk (pData, pChunk);       /* add it to the list */
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_PUTCHUNK_MPNG, MNG_LC_END);
+#endif
+
+  return MNG_NOERROR;
+}
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+MNG_EXT mng_retcode MNG_DECL mng_putchunk_mpng_frame (mng_handle hHandle,
+                                                      mng_uint32 iEntry,
+                                                      mng_uint32 iX,
+                                                      mng_uint32 iY,
+                                                      mng_uint32 iWidth,
+                                                      mng_uint32 iHeight,
+                                                      mng_int32  iXoffset,
+                                                      mng_int32  iYoffset,
+                                                      mng_uint16 iTicks)
+{
+  mng_datap       pData;
+  mng_chunkp      pChunk;
+  mng_mpng_framep pFrame;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_PUTCHUNK_MPNG_FRAME, MNG_LC_START);
+#endif
+
+  MNG_VALIDHANDLE (hHandle)            /* check validity handle */
+  pData = (mng_datap)hHandle;          /* and make it addressable */
+
+  if (!pData->bCreating)               /* aren't we creating a new file ? */
+    MNG_ERROR (pData, MNG_FUNCTIONINVALID)
+                                       /* must have had a IHDR first! */
+  if (pData->iFirstchunkadded != MNG_UINT_IHDR)
+    MNG_ERROR (pData, MNG_NOHEADER)
+
+  pChunk = pData->pLastchunk;          /* last one must have been mpNG ! */
+
+  if (((mng_chunk_headerp)pChunk)->iChunkname != MNG_UINT_mpNG)
+    MNG_ERROR (pData, MNG_NOCORRCHUNK)
+                                       /* index out of bounds ? */
+  if (iEntry >= (((mng_mpngp)pChunk)->iFramessize / sizeof (mng_mpng_frame)))
+    MNG_ERROR (pData, MNG_INVALIDENTRYIX)
+                                       /* address proper entry */
+  pFrame = ((mng_mpngp)pChunk)->pFrames + iEntry;
+                                       /* fill entry */
+  pFrame->iX        = iX;
+  pFrame->iY        = iY;
+  pFrame->iWidth    = iWidth;
+  pFrame->iHeight   = iHeight;
+  pFrame->iXoffset  = iXoffset;
+  pFrame->iYoffset  = iYoffset;
+  pFrame->iTicks    = iTicks;
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (((mng_datap)hHandle), MNG_FN_PUTCHUNK_MPNG_FRAME, MNG_LC_END);
 #endif
 
   return MNG_NOERROR;

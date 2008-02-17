@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_display.c          copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_display.c          copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : Display management (implementation)                        * */
 /* *                                                                        * */
@@ -110,7 +110,7 @@
 /* *             0.9.3 - 10/19/2000 - G.Juyn                                * */
 /* *             - added storage for pixel-/alpha-sampledepth for delta's   * */
 /* *             0.9.3 - 10/27/2000 - G.Juyn                                * */
-/* *             - fixed seperate read() & display() processing             * */
+/* *             - fixed separate read() & display() processing             * */
 /* *                                                                        * */
 /* *             0.9.4 - 10/31/2000 - G.Juyn                                * */
 /* *             - fixed possible loop in display_resume() (Thanks Vova!)   * */
@@ -221,6 +221,19 @@
 /* *             - added conditional MNG_OPTIMIZE_DISPLAYCALLS              * */
 /* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
 /* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
+/* *                                                                        * */
+/* *             1.0.10 - 07/06/2005 - G.R-P.                               * */
+/* *             - added more SKIPCHUNK conditionals                        * */
+/* *             1.0.10 - 12/28/2005 - G.R-P.                               * */
+/* *             - added missing SKIPCHUNK_MAGN conditional                 * */
+/* *             1.0.10 - 03/07/2006 - (thanks to W. Manthey)               * */
+/* *             - added CANVAS_RGB555 and CANVAS_BGR555                    * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - fixed several compiler warnings                          * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
+/* *             1.0.10 - 04/12/2007 - G.Juyn                               * */
+/* *             - added support for ANG proposal                           * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -510,6 +523,12 @@ MNG_LOCAL void set_display_routine (mng_datap pData)
 #endif
 #ifndef MNG_SKIPCANVAS_BGR565_A8
       case MNG_CANVAS_BGR565_A8 : { pData->fDisplayrow = (mng_fptr)mng_display_bgr565_a8;  break; }
+#endif
+#ifndef MNG_SKIPCANVAS_RGB555
+      case MNG_CANVAS_RGB555  : { pData->fDisplayrow = (mng_fptr)mng_display_rgb555;  break; }
+#endif
+#ifndef MNG_SKIPCANVAS_BGR555
+      case MNG_CANVAS_BGR555  : { pData->fDisplayrow = (mng_fptr)mng_display_bgr555;  break; }
 #endif
 
 #ifndef MNG_NO_16BIT_SUPPORT
@@ -1670,11 +1689,13 @@ mng_retcode mng_execute_delta_image (mng_datap  pData,
     }
 #endif
 
+#ifndef MNG_SKIPCHUNK_sRGB
     if (pBufdelta->bHasSRGB)           /* sRGB in delta ? */
     {                                  /* drop it onto the target */
       pBuftarget->bHasSRGB         = MNG_TRUE;
       pBuftarget->iRenderingintent = pBufdelta->iRenderingintent;
     }
+#endif
 
 #ifndef MNG_SKIPCHUNK_iCCP
     if (pBufdelta->bHasICCP)           /* ICC profile in delta ? */
@@ -1686,7 +1707,7 @@ mng_retcode mng_execute_delta_image (mng_datap  pData,
                                        /* allocate a buffer & copy it */
       MNG_ALLOC (pData, pBuftarget->pProfile, pBufdelta->iProfilesize);
       MNG_COPY  (pBuftarget->pProfile, pBufdelta->pProfile, pBufdelta->iProfilesize);
-                                       /* store it's length as well */
+                                       /* store its length as well */
       pBuftarget->iProfilesize = pBufdelta->iProfilesize;
     }
 #endif
@@ -2096,13 +2117,16 @@ MNG_LOCAL mng_retcode save_state (mng_datap pData)
   pSave->bHasglobalBKGD       = pData->bHasglobalBKGD;
 #endif /* MNG_SUPPORT_READ || MNG_SUPPORT_WRITE */
 
+#ifndef MNG_SKIPCHUNK_BACK
   pSave->iBACKred             = pData->iBACKred;
   pSave->iBACKgreen           = pData->iBACKgreen;
   pSave->iBACKblue            = pData->iBACKblue;
   pSave->iBACKmandatory       = pData->iBACKmandatory;
   pSave->iBACKimageid         = pData->iBACKimageid;
   pSave->iBACKtile            = pData->iBACKtile;
+#endif
 
+#ifndef MNG_SKIPCHUNK_FRAM
   pSave->iFRAMmode            = pData->iFRAMmode;
   pSave->iFRAMdelay           = pData->iFRAMdelay;
   pSave->iFRAMtimeout         = pData->iFRAMtimeout;
@@ -2111,6 +2135,7 @@ MNG_LOCAL mng_retcode save_state (mng_datap pData)
   pSave->iFRAMclipr           = pData->iFRAMclipr;
   pSave->iFRAMclipt           = pData->iFRAMclipt;
   pSave->iFRAMclipb           = pData->iFRAMclipb;
+#endif
 
   pSave->iGlobalPLTEcount     = pData->iGlobalPLTEcount;
 
@@ -2132,7 +2157,9 @@ MNG_LOCAL mng_retcode save_state (mng_datap pData)
   pSave->iGlobalPrimarybluey  = pData->iGlobalPrimarybluey;
 #endif
 
+#ifndef MNG_SKIPCHUNK_sRGB
   pSave->iGlobalRendintent    = pData->iGlobalRendintent;
+#endif
 
 #ifndef MNG_SKIPCHUNK_iCCP
   pSave->iGlobalProfilesize   = pData->iGlobalProfilesize;
@@ -2154,7 +2181,7 @@ MNG_LOCAL mng_retcode save_state (mng_datap pData)
   pImage = (mng_imagep)pData->pFirstimgobj;
 
   while (pImage)
-  {                                    /* freeze the object AND it's buffer */
+  {                                    /* freeze the object AND its buffer */
     pImage->bFrozen          = MNG_TRUE;
     pImage->pImgbuf->bFrozen = MNG_TRUE;
                                        /* neeeext */
@@ -2239,13 +2266,16 @@ MNG_LOCAL mng_retcode restore_state (mng_datap pData)
     pData->bHasglobalBKGD       = pSave->bHasglobalBKGD;
 #endif /* MNG_SUPPORT_READ || MNG_SUPPORT_WRITE */
 
+#ifndef MNG_SKIPCHUNK_BACK
     pData->iBACKred             = pSave->iBACKred;
     pData->iBACKgreen           = pSave->iBACKgreen;
     pData->iBACKblue            = pSave->iBACKblue;
     pData->iBACKmandatory       = pSave->iBACKmandatory;
     pData->iBACKimageid         = pSave->iBACKimageid;
     pData->iBACKtile            = pSave->iBACKtile;
+#endif
 
+#ifndef MNG_SKIPCHUNK_FRAM
     pData->iFRAMmode            = pSave->iFRAMmode;
 /*    pData->iFRAMdelay           = pSave->iFRAMdelay; */
     pData->iFRAMtimeout         = pSave->iFRAMtimeout;
@@ -2266,6 +2296,7 @@ MNG_LOCAL mng_retcode restore_state (mng_datap pData)
 
 /*    pData->iNextdelay           = pSave->iFRAMdelay; */
     pData->iNextdelay           = pData->iFramedelay;
+#endif
 
     pData->iGlobalPLTEcount     = pSave->iGlobalPLTEcount;
     MNG_COPY (pData->aGlobalPLTEentries, pSave->aGlobalPLTEentries, sizeof (mng_rgbpaltab));
@@ -2583,6 +2614,7 @@ png_imgtype mng_png_imgtype(mng_uint8 colortype, mng_uint8 bitdepth)
   png_imgtype ret;
   switch (bitdepth)
   {
+#ifndef MNG_NO_1_2_4BIT_SUPPORT
     case 1:
     {
       png_imgtype imgtype[]={png_g1,png_none,png_none,png_idx1};
@@ -2601,6 +2633,7 @@ png_imgtype mng_png_imgtype(mng_uint8 colortype, mng_uint8 bitdepth)
       ret=imgtype[colortype];
       break;
     }
+#endif
     case 8:
     {
       png_imgtype imgtype[]={png_g8,png_none,png_rgb8,png_idx8,png_ga8,
@@ -2624,6 +2657,8 @@ png_imgtype mng_png_imgtype(mng_uint8 colortype, mng_uint8 bitdepth)
   return (ret);
 }
 #endif /* MNG_OPTIMIZE_FOOTPRINT_INIT */
+
+/* ************************************************************************** */
 
 mng_retcode mng_process_display_ihdr (mng_datap pData)
 {                                      /* address the current "object" if any */
@@ -2715,8 +2750,9 @@ mng_retcode mng_process_display_ihdr (mng_datap pData)
       pData->pStoreobj = pImage;       /* tell the row routines */
     else                               /* otherwise use object 0 */
       pData->pStoreobj = pData->pObjzero;
-                                       /* display "on-the-fly" ? */
-    if (
+
+#if !defined(MNG_INCLUDE_MPNG_PROPOSAL) && !defined(MNG_INCLUDE_ANG_PROPOSAL)
+    if (                               /* display "on-the-fly" ? */
 #ifndef MNG_SKIPCHUNK_MAGN
          (((mng_imagep)pData->pStoreobj)->iMAGN_MethodX == 0) &&
          (((mng_imagep)pData->pStoreobj)->iMAGN_MethodY == 0) &&
@@ -2736,6 +2772,7 @@ mng_retcode mng_process_display_ihdr (mng_datap pData)
           set_display_routine (pData); /* then determine display routine */
       }
     }
+#endif
   }
 
   if (!pData->bTimerset)               /* no timer break ? */
@@ -2982,6 +3019,71 @@ mng_retcode mng_process_display_ihdr (mng_datap pData)
 
 /* ************************************************************************** */
 
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+mng_retcode mng_process_display_mpng (mng_datap pData)
+{
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (pData, MNG_FN_PROCESS_DISPLAY_MPNG, MNG_LC_START);
+#endif
+
+  pData->iAlphadepth = 8;              /* assume transparency !! */
+
+  if (pData->fProcessheader)           /* inform the app (creating the output canvas) ? */
+  {
+    pData->iWidth  = ((mng_mpng_objp)pData->pMPNG)->iFramewidth;
+    pData->iHeight = ((mng_mpng_objp)pData->pMPNG)->iFrameheight;
+
+    if (!pData->fProcessheader (((mng_handle)pData), pData->iWidth, pData->iHeight))
+      MNG_ERROR (pData, MNG_APPMISCERROR);
+  }
+
+  next_layer (pData);                  /* first mPNG layer then ! */
+  pData->bTimerset   = MNG_FALSE;
+  pData->iBreakpoint = 0;
+
+  if ((pData->iDestr > pData->iDestl) && (pData->iDestb > pData->iDestt))
+    set_display_routine (pData);       /* then determine display routine */
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (pData, MNG_FN_PROCESS_DISPLAY_MPNG, MNG_LC_END);
+#endif
+
+  return MNG_NOERROR;
+}
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+mng_retcode mng_process_display_ang (mng_datap pData)
+{
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (pData, MNG_FN_PROCESS_DISPLAY_ANG, MNG_LC_START);
+#endif
+
+  if (pData->fProcessheader)           /* inform the app (creating the output canvas) ? */
+  {
+    if (!pData->fProcessheader (((mng_handle)pData), pData->iWidth, pData->iHeight))
+      MNG_ERROR (pData, MNG_APPMISCERROR);
+  }
+
+  next_layer (pData);                  /* first mPNG layer then ! */
+  pData->bTimerset   = MNG_FALSE;
+  pData->iBreakpoint = 0;
+
+  if ((pData->iDestr > pData->iDestl) && (pData->iDestb > pData->iDestt))
+    set_display_routine (pData);       /* then determine display routine */
+
+#ifdef MNG_SUPPORT_TRACE
+  MNG_TRACE (pData, MNG_FN_PROCESS_DISPLAY_ANG, MNG_LC_END);
+#endif
+
+  return MNG_NOERROR;
+}
+#endif
+
+/* ************************************************************************** */
+
 #ifndef MNG_OPTIMIZE_DISPLAYCALLS
 mng_retcode mng_process_display_idat (mng_datap  pData,
                                       mng_uint32 iRawlen,
@@ -2994,6 +3096,22 @@ mng_retcode mng_process_display_idat (mng_datap  pData)
 
 #ifdef MNG_SUPPORT_TRACE
   MNG_TRACE (pData, MNG_FN_PROCESS_DISPLAY_IDAT, MNG_LC_START);
+#endif
+
+#if defined(MNG_INCLUDE_MPNG_PROPOSAL) || defined(MNG_INCLUDE_ANG_PROPOSAL) 
+  if ((pData->eImagetype == mng_it_png) && (pData->iLayerseq <= 0))
+  {
+    if (pData->fProcessheader)         /* inform the app (creating the output canvas) ? */
+      if (!pData->fProcessheader (((mng_handle)pData), pData->iWidth, pData->iHeight))
+        MNG_ERROR (pData, MNG_APPMISCERROR);
+
+    next_layer (pData);                /* first regular PNG layer then ! */
+    pData->bTimerset   = MNG_FALSE;
+    pData->iBreakpoint = 0;
+
+    if ((pData->iDestr > pData->iDestl) && (pData->iDestb > pData->iDestt))
+      set_display_routine (pData);     /* then determine display routine */
+  }
 #endif
 
   if (pData->bRestorebkgd)             /* need to restore the background ? */
@@ -3066,7 +3184,9 @@ mng_retcode mng_process_display_iend (mng_datap pData)
 
   if ((pData->bHasBASI) ||             /* was it a BASI stream */
       (bDodisplay)      ||             /* or should we display the JNG */
+#ifndef MNG_SKIPCHUNK_MAGN
       (bMagnify)        ||             /* or should we magnify it */
+#endif
                                        /* or did we get broken here last time ? */
       ((pData->iBreakpoint) && (pData->iBreakpoint != 8)))
   {
@@ -3117,9 +3237,24 @@ mng_retcode mng_process_display_iend (mng_datap pData)
   if (!pData->bTimerset)               /* can we continue ? */
   {
     pData->iBreakpoint = 0;            /* clear this flag now ! */
-                                       /* cleanup object 0 */
-    mng_reset_object_details (pData, (mng_imagep)pData->pObjzero,
-                              0, 0, 0, 0, 0, 0, 0, MNG_TRUE);
+
+
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    if (pData->eImagetype == mng_it_mpng)
+    {
+      pData->pCurraniobj = pData->pFirstaniobj;
+    } else
+#endif
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+    if (pData->eImagetype == mng_it_ang)
+    {
+      pData->pCurraniobj = pData->pFirstaniobj;
+    } else
+#endif
+    {                                  /* cleanup object 0 */
+      mng_reset_object_details (pData, (mng_imagep)pData->pObjzero,
+                                0, 0, 0, 0, 0, 0, 0, MNG_TRUE);
+    }
 
     if (pData->bInflating)             /* if we've been inflating */
     {                                  /* cleanup row-processing, */
@@ -4931,8 +5066,11 @@ mng_retcode mng_process_display_jhdr (mng_datap pData)
     else                               /* otherwise use object 0 */
       pData->pStoreobj = pData->pObjzero;
                                        /* display "on-the-fly" ? */
-    if ( (((mng_imagep)pData->pStoreobj)->iMAGN_MethodX == 0) &&
-         (((mng_imagep)pData->pStoreobj)->iMAGN_MethodY == 0) &&
+    if (
+#ifndef MNG_SKIPCHUNK_MAGN
+         ( ((mng_imagep)pData->pStoreobj)->iMAGN_MethodX == 0) &&
+         ( ((mng_imagep)pData->pStoreobj)->iMAGN_MethodY == 0) &&
+#endif
          ( (pData->eImagetype == mng_it_jng         ) ||
            (((mng_imagep)pData->pStoreobj)->bVisible)    )       )
     {
@@ -5283,6 +5421,7 @@ mng_retcode mng_process_display_dhdr (mng_datap  pData)
   {
     if (pImage->pImgbuf->bConcrete)    /* is it concrete ? */
     {                                  /* previous magnification to be done ? */
+#ifndef MNG_SKIPCHUNK_MAGN
       if ((pImage->iMAGN_MethodX) || (pImage->iMAGN_MethodY))
       {
         iRetcode = mng_magnify_imageobject (pData, pImage);
@@ -5290,6 +5429,7 @@ mng_retcode mng_process_display_dhdr (mng_datap  pData)
         if (iRetcode)                  /* on error bail out */
           return iRetcode;
       }
+#endif
                                        /* save delta fields */
       pData->pDeltaImage           = (mng_ptr)pImage;
 #ifndef MNG_OPTIMIZE_DISPLAYCALLS
@@ -5524,7 +5664,7 @@ mng_retcode mng_process_display_dhdr (mng_datap  pData)
  
 #ifdef MNG_OPTIMIZE_FOOTPRINT_INIT
   pData->fInitrowproc = (mng_fptr)mng_init_rowproc;
-  pData->ePng_imgtype=mng_png_imgtype(pData->iColortype,pData->iBitdepth);
+  pData->ePng_imgtype = mng_png_imgtype (pData->iColortype, pData->iBitdepth);
 #else
       switch (pData->iColortype)       /* determine row initialization routine */
       {
@@ -6473,9 +6613,11 @@ mng_retcode mng_process_display_past (mng_datap  pData)
     mng_bool       bTargetRGBA16 = MNG_FALSE;
     mng_int32      iTemprowsize;
     mng_imagedatap pBuf;
+#ifndef MNG_SKIPCHUNK_MAGN
                                        /* needs magnification ? */
     if ((pTargetimg->iMAGN_MethodX) || (pTargetimg->iMAGN_MethodY))
       iRetcode = mng_magnify_imageobject (pData, pTargetimg);
+#endif
 
     if (!iRetcode)                     /* still ok ? */
     {
@@ -6538,8 +6680,10 @@ mng_retcode mng_process_display_past (mng_datap  pData)
                                        /* exists and viewable? */
       if ((pSourceimg) && (pSourceimg->bViewable))
       {                                /* needs magnification ? */
+#ifndef MNG_SKIPCHUNK_MAGN
         if ((pSourceimg->iMAGN_MethodX) || (pSourceimg->iMAGN_MethodY))
           iRetcode = mng_magnify_imageobject (pData, pSourceimg);
+#endif
 
         if (!iRetcode)                 /* still ok ? */
         {

@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_data.h             copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_data.h             copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : main data structure definition                             * */
 /* *                                                                        * */
@@ -147,6 +147,11 @@
 /* *                                                                        * */
 /* *             1.0.9 - 12/11/2004 - G.Juyn                                * */
 /* *             - added conditional MNG_OPTIMIZE_DISPLAYCALLS              * */
+/* *                                                                        * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
+/* *             1.0.10 - 04/12/2007 - G.Juyn                               * */
+/* *             - added support for ANG proposal                           * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -733,7 +738,15 @@ typedef struct mng_data_struct {
            mng_int32         iPasty;
 #endif
 
-           mng_objectp       pLastseek;          /* last processed ani_seek object */  
+           mng_objectp       pLastseek;          /* last processed ani_seek object */
+
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+           mng_objectp       pMPNG;              /* mpNG object if available */
+#endif
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+           mng_objectp       pANG;               /* ANG object if available */
+#endif
+
 #endif /* MNG_SUPPORT_DISPLAY */
 
 #ifdef MNG_INCLUDE_ZLIB

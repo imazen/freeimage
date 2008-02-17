@@ -19,7 +19,7 @@
 /* *             - changed trace to macro for callback error-reporting      * */
 /* *             0.5.1 - 05/16/2000 - G.Juyn                                * */
 /* *             - moved the actual write_graphic functionality from        * */
-/* *               mng_hlapi to it's appropriate function here              * */
+/* *               mng_hlapi to its appropriate function here               * */
 /* *                                                                        * */
 /* *             0.9.1 - 07/19/2000 - G.Juyn                                * */
 /* *             - fixed writing of signature                               * */
@@ -153,7 +153,7 @@ mng_retcode mng_write_graphic (mng_datap pData)
     }
 
     while (pChunk)                     /* so long as there's something to write */
-    {                                  /* let's call it's output routine */
+    {                                  /* let's call its output routine */
       iRetcode = ((mng_chunk_headerp)pChunk)->fWrite (pData, pChunk);
       if (iRetcode)                    /* on error bail out */
         return iRetcode;

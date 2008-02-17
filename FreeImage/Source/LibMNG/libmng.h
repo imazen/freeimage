@@ -2,7 +2,7 @@
 /* *                                                                        * */
 /* * COPYRIGHT NOTICE:                                                      * */
 /* *                                                                        * */
-/* * Copyright (c) 2000-2005 Gerard Juyn                                    * */
+/* * Copyright (c) 2000-2007 Gerard Juyn                                    * */
 /* * [You may insert additional notices after this sentence if you modify   * */
 /* *  this source]                                                          * */
 /* *                                                                        * */
@@ -102,8 +102,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng.h                  copyright (c) 2000-2005 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng.h                  copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : main application interface                                 * */
 /* *                                                                        * */
@@ -287,6 +287,13 @@
 /* *             1.0.9 - 10/17/2004 - G.Juyn                                * */
 /* *             - fixed PPLT getchunk/putchunk routines                    * */
 /* *                                                                        * */
+/* *             1.0.10 - 03/07/2006 - (thanks to W. Manthey)               * */
+/* *             - added CANVAS_RGB555 and CANVAS_BGR555                    * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
+/* *             1.0.10 - 04/12/2007 - G.Juyn                               * */
+/* *             - added support for ANG proposal                           * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #if defined(__BORLANDC__) && defined(MNG_STRICT_ANSI)
@@ -439,12 +446,12 @@ extern "C" {
 /* *                                                                        * */
 /* ************************************************************************** */
 
-#define MNG_VERSION_TEXT    "1.0.9"
+#define MNG_VERSION_TEXT    "1.0.10"
 #define MNG_VERSION_SO      1          /* eg. libmng.so.1  */
 #define MNG_VERSION_DLL     1          /* but: libmng.dll (!) */
 #define MNG_VERSION_MAJOR   1
 #define MNG_VERSION_MINOR   0
-#define MNG_VERSION_RELEASE 9
+#define MNG_VERSION_RELEASE 10
 #define MNG_VERSION_BETA    MNG_FALSE
 
 MNG_EXT mng_pchar MNG_DECL mng_version_text      (void);
@@ -511,10 +518,10 @@ MNG_EXT mng_retcode MNG_DECL mng_cleanup         (mng_handle*   hHandle);
 /* high-level read functions */
 /* use mng_read if you simply want to read a Network Graphic */
 /* mng_read_resume is used in I/O-read-suspension scenarios, where the
-   "readdata" callback may return FALSE & length=0 indicating it's buffer is
+   "readdata" callback may return FALSE & length=0 indicating its buffer is
    depleted or too short to supply the required bytes, and the buffer needs
    to be refilled; libmng will return the errorcode MNG_NEEDMOREDATA telling
-   the app to refill it's read-buffer after which it must call mng_read_resume
+   the app to refill its read-buffer after which it must call mng_read_resume
    (or mng_display_resume if it also displaying the image simultaneously) */
 #ifdef MNG_SUPPORT_READ
 MNG_EXT mng_retcode MNG_DECL mng_read            (mng_handle    hHandle);
@@ -726,7 +733,7 @@ MNG_EXT mng_retcode MNG_DECL mng_setcb_processunknown(mng_handle        hHandle,
 /* getbkgdline is called to get an access-pointer to a line from the
    background-canvas */
 /* refresh is called to inform the GUI to redraw the current canvas onto
-   it's output device (eg. in Win32 this would mean sending an
+   its output device (eg. in Win32 this would mean sending an
    invalidate message for the specified region */
 /* NOTE that the update-region is specified as x,y,width,height; eg. the
    invalidate message for Windows requires left,top,right,bottom parameters
@@ -1274,7 +1281,7 @@ MNG_EXT mng_retcode MNG_DECL mng_get_lastbackchunk   (mng_handle        hHandle,
 
 /* SEEK info */
 /* can be used to retrieve the segmentname of the last processed SEEK chunk;
-   if no SEEK chunk was processed or it's segmentname was empty, the function
+   if no SEEK chunk was processed or its segmentname was empty, the function
    will return an empty string; the provided buffer must be at least 80 bytes!! */
 #ifdef MNG_SUPPORT_DISPLAY
 MNG_EXT mng_retcode MNG_DECL mng_get_lastseekname    (mng_handle        hHandle,
@@ -1802,6 +1809,27 @@ MNG_EXT mng_retcode MNG_DECL mng_getchunk_magn       (mng_handle       hHandle,
                                                       mng_uint16       *iMB,
                                                       mng_uint16       *iMethodY);
 
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+MNG_EXT mng_retcode MNG_DECL mng_getchunk_mpng       (mng_handle       hHandle,
+                                                      mng_handle       hChunk,
+                                                      mng_uint32       *iFramewidth,
+                                                      mng_uint32       *iFrameheight,
+                                                      mng_uint16       *iNumplays,
+                                                      mng_uint16       *iTickspersec,
+                                                      mng_uint8        *iCompressionmethod,
+                                                      mng_uint32       *iCount);
+MNG_EXT mng_retcode MNG_DECL mng_getchunk_mpng_frame (mng_handle       hHandle,
+                                                      mng_handle       hChunk,
+                                                      mng_uint32       iEntry,
+                                                      mng_uint32       *iX,
+                                                      mng_uint32       *iY,
+                                                      mng_uint32       *iWidth,
+                                                      mng_uint32       *iHeight,
+                                                      mng_int32        *iXoffset,
+                                                      mng_int32        *iYoffset,
+                                                      mng_uint16       *iTicks);
+#endif
+
 MNG_EXT mng_retcode MNG_DECL mng_getchunk_evnt       (mng_handle       hHandle,
                                                       mng_handle       hChunk,
                                                       mng_uint32       *iCount);
@@ -2218,6 +2246,25 @@ MNG_EXT mng_retcode MNG_DECL mng_putchunk_magn       (mng_handle       hHandle,
                                                       mng_uint16       iMB,
                                                       mng_uint16       iMethodY);
 
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+MNG_EXT mng_retcode MNG_DECL mng_putchunk_mpng       (mng_handle       hHandle,
+                                                      mng_uint32       iFramewidth,
+                                                      mng_uint32       iFrameheight,
+                                                      mng_uint16       iNumplays,
+                                                      mng_uint16       iTickspersec,
+                                                      mng_uint8        iCompressionmethod,
+                                                      mng_uint32       iCount);
+MNG_EXT mng_retcode MNG_DECL mng_putchunk_mpng_frame (mng_handle       hHandle,
+                                                      mng_uint32       iEntry,
+                                                      mng_uint32       iX,
+                                                      mng_uint32       iY,
+                                                      mng_uint32       iWidth,
+                                                      mng_uint32       iHeight,
+                                                      mng_int32        iXoffset,
+                                                      mng_int32        iYoffset,
+                                                      mng_uint16       iTicks);
+#endif
+
 MNG_EXT mng_retcode MNG_DECL mng_putchunk_evnt       (mng_handle       hHandle,
                                                       mng_uint32       iCount);
 
@@ -2433,6 +2480,8 @@ MNG_EXT mng_retcode MNG_DECL mng_updatemngsimplicity (mng_handle        hHandle,
 #define MNG_OBJNOTABSTRACT   (mng_retcode)1071 /* object must be abstract     */
 #define MNG_TERMSEQERROR     (mng_retcode)1072 /* TERM in wrong place         */
 #define MNG_INVALIDFIELDVAL  (mng_retcode)1073 /* invalid fieldvalue (generic)*/
+#define MNG_INVALIDWIDTH     (mng_retcode)1074 /* invalid frame/image width   */
+#define MNG_INVALIDHEIGHT    (mng_retcode)1075 /* invalid frame/image height  */
 
 #define MNG_INVALIDCNVSTYLE  (mng_retcode)2049 /* can't make anything of this */
 #define MNG_WRONGCHUNK       (mng_retcode)2050 /* accessing the wrong chunk   */
@@ -2501,6 +2550,9 @@ MNG_EXT mng_retcode MNG_DECL mng_updatemngsimplicity (mng_handle        hHandle,
 #define MNG_CANVAS_BGRA565   0x00001006L
 #define MNG_CANVAS_BGR565_A8 0x00004006L
 
+#define MNG_CANVAS_RGB555    0x00000007L
+#define MNG_CANVAS_BGR555    0x00000008L
+
 #define MNG_CANVAS_PIXELTYPE(C)  (C & 0x000000FFL)
 #define MNG_CANVAS_BITDEPTH(C)   (C & 0x00000100L)
 #define MNG_CANVAS_HASALPHA(C)   (C & 0x00001000L)
@@ -2563,14 +2615,18 @@ MNG_EXT mng_retcode MNG_DECL mng_updatemngsimplicity (mng_handle        hHandle,
 #define MNG_UINT_SEEK 0x5345454bL
 #define MNG_UINT_SHOW 0x53484f57L
 #define MNG_UINT_TERM 0x5445524dL
+#define MNG_UINT_adAT 0x61644154L
+#define MNG_UINT_ahDR 0x61684452L
 #define MNG_UINT_bKGD 0x624b4744L
 #define MNG_UINT_cHRM 0x6348524dL
 #define MNG_UINT_eXPI 0x65585049L
+#define MNG_UINT_evNT 0x65764e54L
 #define MNG_UINT_fPRI 0x66505249L
 #define MNG_UINT_gAMA 0x67414d41L
 #define MNG_UINT_hIST 0x68495354L
 #define MNG_UINT_iCCP 0x69434350L
 #define MNG_UINT_iTXt 0x69545874L
+#define MNG_UINT_mpNG 0x6d704e47L
 #define MNG_UINT_nEED 0x6e454544L
 #define MNG_UINT_oFFs 0x6f464673L
 #define MNG_UINT_pCAL 0x7043414cL
@@ -2584,8 +2640,6 @@ MNG_EXT mng_retcode MNG_DECL mng_updatemngsimplicity (mng_handle        hHandle,
 #define MNG_UINT_tIME 0x74494d45L
 #define MNG_UINT_tRNS 0x74524e53L
 #define MNG_UINT_zTXt 0x7a545874L
-
-#define MNG_UINT_evNT 0x65764e54L
 
 /* ************************************************************************** */
 /* *                                                                        * */

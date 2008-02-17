@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_error.c            copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_error.c            copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : Error routines (implementation)                            * */
 /* *                                                                        * */
@@ -79,6 +79,9 @@
 /* *                                                                        * */
 /* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
 /* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
+/* *                                                                        * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -187,6 +190,9 @@ MNG_LOCAL mng_error_entry const error_table [] =
     {MNG_OBJNOTABSTRACT,   "Destination object for PAST must be abstract"},
 #endif
     {MNG_TERMSEQERROR,     "TERM misplaced during creation of MNG stream"},
+    {MNG_INVALIDFIELDVAL,  "invalid fieldvalue (generic)"},
+    {MNG_INVALIDWIDTH,     "invalid frame/image width"},
+    {MNG_INVALIDHEIGHT,    "invalid frame/image height"},
 
     {MNG_INVALIDCNVSTYLE,  "Canvas_style is invalid"},
     {MNG_WRONGCHUNK,       "Attempt to access the wrong chunk"},

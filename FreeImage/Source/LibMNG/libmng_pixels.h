@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_pixels.h           copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_pixels.h           copyright (c) 2000-2006 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : Pixel-row management routines (definition)                 * */
 /* *                                                                        * */
@@ -83,6 +83,9 @@
 /* *             - added MNG_NO_1_2_4BIT_SUPPORT                            * */
 /* *             1.0.9 - 10/14/2004 - G.Juyn                                * */
 /* *             - added bgr565_a8 canvas-style (thanks to J. Elvander)     * */
+/* *                                                                        * */
+/* *             1.0.10 - 03/07/2006 - (thanks to W. Manthey)               * */
+/* *             - added CANVAS_RGB555 and CANVAS_BGR555                    * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -166,6 +169,12 @@ mng_retcode mng_display_bgra565        (mng_datap  pData);
 #endif
 #ifndef MNG_SKIPCANVAS_BGR565_A8
 mng_retcode mng_display_bgr565_a8      (mng_datap  pData);
+#endif
+#ifndef MNG_SKIPCANVAS_RGB555
+mng_retcode mng_display_rgb555         (mng_datap  pData);
+#endif
+#ifndef MNG_SKIPCANVAS_BGR555
+mng_retcode mng_display_bgr555         (mng_datap  pData);
 #endif
 
 /* ************************************************************************** */

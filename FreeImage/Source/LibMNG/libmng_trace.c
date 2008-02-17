@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_trace.c            copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_trace.c            copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : Trace functions (implementation)                           * */
 /* *                                                                        * */
@@ -147,6 +147,10 @@
 /* *             - added function to retrieve current FRAM delay            * */
 /* *             1.0.9 - 10/14/2004 - G.Juyn                                * */
 /* *             - added bgr565_a8 canvas-style (thanks to J. Elvander)     * */
+/* *                                                                        * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
+/* *             1.0.10 - 07/06/2007 - G.R-P bugfix by Lucas Quintana       * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -509,6 +513,9 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
 #ifndef MNG_SKIPCHUNK_evNT
     {MNG_FN_GETCHUNK_EVNT,             "getchunk_evnt"},
 #endif
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_FN_GETCHUNK_MPNG,             "getchunk_mpng"},
+#endif
 
 #ifndef MNG_SKIPCHUNK_PAST
     {MNG_FN_GETCHUNK_PAST_SRC,         "getchunk_past_src"},
@@ -522,6 +529,9 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
 #endif
 #ifndef MNG_SKIPCHUNK_evNT
     {MNG_FN_GETCHUNK_EVNT_ENTRY,       "getchunk_evnt_entry"},
+#endif
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_FN_GETCHUNK_MPNG_FRAME,       "getchunk_mpng_frame"},
 #endif
 
     {MNG_FN_PUTCHUNK_IHDR,             "putchunk_ihdr"},
@@ -632,6 +642,9 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
 #ifndef MNG_SKIPCHUNK_evNT
     {MNG_FN_PUTCHUNK_EVNT,             "putchunk_evnt"},
 #endif
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_FN_PUTCHUNK_MPNG,             "putchunk_mpng"},
+#endif
 
 #ifndef MNG_SKIPCHUNK_PAST
     {MNG_FN_PUTCHUNK_PAST_SRC,         "putchunk_past_src"},
@@ -647,6 +660,9 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
 #endif
 #ifndef MNG_SKIPCHUNK_evNT
     {MNG_FN_PUTCHUNK_EVNT_ENTRY,       "putchunk_evnt_entry"},
+#endif
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_FN_PUTCHUNK_MPNG_FRAME,       "putchunk_mpng_frame"},
 #endif
 
     {MNG_FN_GETIMGDATA_SEQ,            "getimgdata_seq"},
@@ -730,7 +746,7 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_DISPLAY_RGBA8_PM,          "display_rgba8_pm"},
     {MNG_FN_DISPLAY_ARGB8_PM,          "display_argb8_pm"},
     {MNG_FN_DISPLAY_ABGR8_PM,          "display_abgr8_pm"},
-    (MNG_FN_DISPLAY_BGR565_A8,         "display_bgr565_a8"},
+    {MNG_FN_DISPLAY_BGR565_A8,         "display_bgr565_a8"},
 
     {MNG_FN_INIT_FULL_CMS,             "init_full_cms"},
     {MNG_FN_CORRECT_FULL_CMS,          "correct_full_cms"},
@@ -1060,6 +1076,9 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_INIT_MAGN,                 "init_magn"},
     {MNG_FN_INIT_JDAA,                 "init_jdaa"},
     {MNG_FN_INIT_EVNT,                 "init_evnt"},
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_FN_INIT_MPNG,                 "init_mpng"},
+#endif
 
     {MNG_FN_ASSIGN_IHDR,               "assign_ihdr"},
     {MNG_FN_ASSIGN_PLTE,               "assign_plte"},
@@ -1123,6 +1142,9 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_ASSIGN_MAGN,               "assign_magn"},
     {MNG_FN_ASSIGN_JDAA,               "assign_jdaa"},
     {MNG_FN_ASSIGN_EVNT,               "assign_evnt"},
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_FN_ASSIGN_MPNG,               "assign_mpng"},
+#endif
 
     {MNG_FN_FREE_IHDR,                 "free_ihdr"},
     {MNG_FN_FREE_PLTE,                 "free_plte"},
@@ -1186,6 +1208,9 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_FREE_MAGN,                 "free_magn"},
     {MNG_FN_FREE_JDAA,                 "free_jdaa"},
     {MNG_FN_FREE_EVNT,                 "free_evnt"},
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_FN_FREE_MPNG,                 "free_mpng"},
+#endif
 
     {MNG_FN_READ_IHDR,                 "read_ihdr"},
     {MNG_FN_READ_PLTE,                 "read_plte"},
@@ -1249,6 +1274,9 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_READ_MAGN,                 "read_magn"},
     {MNG_FN_READ_JDAA,                 "read_jdaa"},
     {MNG_FN_READ_EVNT,                 "read_evnt"},
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_FN_READ_MPNG,                 "read_mpng"},
+#endif
 
     {MNG_FN_WRITE_IHDR,                "write_ihdr"},
     {MNG_FN_WRITE_PLTE,                "write_plte"},
@@ -1312,6 +1340,9 @@ MNG_LOCAL mng_trace_entry const trace_table [] =
     {MNG_FN_WRITE_MAGN,                "write_magn"},
     {MNG_FN_WRITE_JDAA,                "write_jdaa"},
     {MNG_FN_WRITE_EVNT,                "write_evnt"},
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+    {MNG_FN_WRITE_MPNG,                "write_mpng"},
+#endif
 
     {MNG_FN_ZLIB_INITIALIZE,           "zlib_initialize"},
     {MNG_FN_ZLIB_CLEANUP,              "zlib_cleanup"},

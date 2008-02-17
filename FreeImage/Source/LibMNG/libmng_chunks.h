@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_chunks.h           copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.7                                                      * */
+/* * file      : libmng_chunks.h           copyright (c) 2000-2007 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : Chunk structures (definition)                              * */
 /* *                                                                        * */
@@ -57,6 +57,11 @@
 /* *             - added conditional MNG_OPTIMIZE_CHUNKINITFREE             * */
 /* *             1.0.9 - 12/06/2004 - G.Juyn                                * */
 /* *             - added conditional MNG_OPTIMIZE_CHUNKREADER               * */
+/* *                                                                        * */
+/* *             1.0.10 - 04/08/2007 - G.Juyn                               * */
+/* *             - added support for mPNG proposal                          * */
+/* *             1.0.10 - 04/12/2007 - G.Juyn                               * */
+/* *             - added support for ANG proposal                           * */
 /* *                                                                        * */
 /* ************************************************************************** */
 
@@ -924,7 +929,7 @@ typedef mng_magn * mng_magnp;
 
 /* ************************************************************************** */
 
-typedef struct {                       /* EvNT entry */
+typedef struct {                       /* evNT entry */
            mng_uint8         iEventtype;
            mng_uint8         iMasktype;
            mng_int32         iLeft;
@@ -938,12 +943,70 @@ typedef struct {                       /* EvNT entry */
         } mng_evnt_entry;
 typedef mng_evnt_entry * mng_evnt_entryp;
 
-typedef struct {                       /* EvNT */
+typedef struct {                       /* evNT */
            mng_chunk_header  sHeader;
            mng_uint32        iCount;
            mng_evnt_entryp   pEntries;
         } mng_evnt;
 typedef mng_evnt * mng_evntp;
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_MPNG_PROPOSAL
+typedef struct {                       /* mpNG frame */
+           mng_uint32        iX;
+           mng_uint32        iY;
+           mng_uint32        iWidth;
+           mng_uint32        iHeight;
+           mng_int32         iXoffset;
+           mng_int32         iYoffset;
+           mng_uint16        iTicks;
+        } mng_mpng_frame;
+typedef mng_mpng_frame * mng_mpng_framep;
+
+typedef struct {                       /* mpNG */
+           mng_chunk_header  sHeader;
+           mng_uint32        iFramewidth;
+           mng_uint32        iFrameheight;
+           mng_uint16        iNumplays;
+           mng_uint16        iTickspersec;
+           mng_uint8         iCompressionmethod;
+           mng_uint32        iFramessize;
+           mng_mpng_framep   pFrames;
+        } mng_mpng;
+typedef mng_mpng * mng_mpngp;
+#endif
+
+/* ************************************************************************** */
+
+#ifdef MNG_INCLUDE_ANG_PROPOSAL
+typedef struct {                       /* ahDR */
+           mng_chunk_header  sHeader;
+           mng_uint32        iNumframes;
+           mng_uint32        iTickspersec;
+           mng_uint32        iNumplays;
+           mng_uint32        iTilewidth;
+           mng_uint32        iTileheight;
+           mng_uint8         iInterlace;
+           mng_uint8         iStillused;
+        } mng_ahdr;
+typedef mng_ahdr * mng_ahdrp;
+
+typedef struct {                       /* adAT tile */
+           mng_uint32        iTicks;
+           mng_int32         iXoffset;
+           mng_int32         iYoffset;
+           mng_uint8         iTilesource;
+        } mng_adat_tile;
+typedef mng_adat_tile * mng_adat_tilep;
+
+typedef struct {                       /* adAT */
+           mng_chunk_header  sHeader;
+           mng_uint32        iTilessize;
+           mng_adat_tilep    pTiles;
+        } mng_adat;
+typedef mng_adat * mng_adatp;
+#endif
 
 /* ************************************************************************** */
 

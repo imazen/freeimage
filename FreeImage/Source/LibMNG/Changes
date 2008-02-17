@@ -1,5 +1,40 @@
 -----------------------------------------------------------
 
+1.0.10 (Jul 13th 2007)
+----------------------
+
+in short:
+
+intermediate CVS
+
+-------------------
+
+bugfixes:
+
+core:
+- fixed some compiler-warnings
+- fixed display routines called twice for FULL_MNG support in mozlibmngconf.h
+- standard windows dll upgraded to zlib 1.2.3
+- fixed problem with CLON object during readdisplay() (thanks Winfried!)
+- added typecast to appease the compiler (G R-P)
+- added more SKIPCHUNK conditionals (G R-P)
+- added MORE MNG_NO_1_2_4BIT_SUPPORT (G R-P)
+- added provisional support for anIM(mpNG) proposal
+- added provisional support for ANG proposal
+
+samples:
+- xmngview upgraded to 0.6 (thanks Winfried!)
+
+contrib:
+
+doc:
+
+makefiles:
+
+autoconf:
+
+-----------------------------------------------------------
+
 1.0.9 (jan 30th 2005)
 ---------------------
 

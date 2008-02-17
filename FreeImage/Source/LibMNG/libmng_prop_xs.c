@@ -4,8 +4,8 @@
 /* ************************************************************************** */
 /* *                                                                        * */
 /* * project   : libmng                                                     * */
-/* * file      : libmng_prop_xs.c          copyright (c) 2000-2004 G.Juyn   * */
-/* * version   : 1.0.9                                                      * */
+/* * file      : libmng_prop_xs.c          copyright (c) 2000-2006 G.Juyn   * */
+/* * version   : 1.0.10                                                     * */
 /* *                                                                        * */
 /* * purpose   : property get/set interface (implementation)                * */
 /* *                                                                        * */
@@ -111,6 +111,9 @@
 /* *             1.0.9 - 12/20/2004 - G.Juyn                                * */
 /* *             - cleaned up macro-invocations (thanks to D. Airlie)       * */
 /* *                                                                        * */
+/* *             1.0.10 - 03/07/2006 - (thanks to W. Manthey)               * */
+/* *             - added CANVAS_RGB555 and CANVAS_BGR555                    * */
+/* *                                                                        * */
 /* ************************************************************************** */
 
 #include "libmng.h"
@@ -214,6 +217,12 @@ mng_retcode MNG_DECL mng_set_canvasstyle (mng_handle hHandle,
 #endif
 #ifndef MNG_SKIPCANVAS_BGR565_A8
     case MNG_CANVAS_BGR565_A8 : break;
+#endif
+#ifndef MNG_SKIPCANVAS_RGB555
+    case MNG_CANVAS_RGB555  : break;
+#endif
+#ifndef MNG_SKIPCANVAS_BGR555
+    case MNG_CANVAS_BGR555  : break;
 #endif
 /*    case MNG_CANVAS_RGB16   : break; */
 /*    case MNG_CANVAS_RGBA16  : break; */
