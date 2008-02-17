@@ -279,7 +279,7 @@ LoadPixelDataRLE4(FreeImageIO *io, fi_handle handle, int width, int height, FIBI
 					default:
 					{
 						// Absolute mode
-						status_byte = (int)MIN(status_byte, (int)(end - q));
+						status_byte = (int)MIN((size_t)status_byte, (size_t)(end - q));
 						for (int i = 0; i < status_byte; i++) {
 							if ((i & 0x01) == 0) {
 								if(io->read_proc(&second_byte, sizeof(BYTE), 1, handle) != 1) {
