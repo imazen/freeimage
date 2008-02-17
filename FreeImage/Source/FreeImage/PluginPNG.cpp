@@ -260,8 +260,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	png_structp png_ptr = NULL;
 	png_infop info_ptr;
 	png_uint_32 width, height;
-	png_colorp png_palette;
-	int color_type, palette_entries;
+	png_colorp png_palette = NULL;
+	int color_type, palette_entries = 0;
 	int bit_depth, pixel_depth;		// pixel_depth = bit_depth * channels
 
 	FIBITMAP *dib = NULL;
@@ -409,13 +409,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				rgbBkColor.rgbReserved = 0;
 			}
 
-			// if this image has transparency, store the trns values
-
-			png_bytep trans               = NULL;
-			int num_trans                 = 0;
-			//png_color_16p trans_values    = NULL;
-			//png_uint_32 transparent_value = png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, &trans_values);
-
 			// unlike the example in the libpng documentation, we have *no* idea where
 			// this file may have come from--so if it doesn't have a file gamma, don't
 			// do any correction ("do no harm")
@@ -473,8 +466,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					// store the transparency table
 
-					if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
-						FreeImage_SetTransparencyTable(dib, (BYTE *)trans, num_trans);					
+					if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+						int num_trans = 0; 
+						png_bytep trans = NULL; 
+						png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, NULL); 
+						FreeImage_SetTransparencyTable(dib, (BYTE *)trans, num_trans);
+					}
 
 					break;
 
@@ -491,10 +488,21 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							palette[i].rgbBlue  = (BYTE)((i * 255) / (palette_entries - 1));
 						}
 					}
+
 					// store the transparency table
 
-					if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
-						FreeImage_SetTransparencyTable(dib, (BYTE *)trans, num_trans);					
+					if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+						png_color_16p trans_values = NULL; 
+						png_get_tRNS(png_ptr, info_ptr, NULL, NULL, &trans_values); 
+						if(trans_values) {
+							if (trans_values->gray < palette_entries) { 
+								BYTE table[256]; 
+								memset(table, 0xFF, palette_entries); 
+								table[trans_values->gray] = 0; 
+								FreeImage_SetTransparencyTable(dib, table, palette_entries); 
+							}
+						}
+					}
 
 					break;
 
