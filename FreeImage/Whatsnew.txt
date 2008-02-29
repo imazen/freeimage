@@ -18,6 +18,7 @@ Month day, 2007 - 3.10.1
 * [Yves Schmid] fixed a bug with Exif metadata reading in TIFF images
 * [Herve Drolon] fixed some possible 64-bit portability issues with pointer calculations
 * [wangyn] fixed a bug with transparency handling of indexed images in PNG plugin
+* [Martin Dyring-Andersen] fixed a bug with GIFinfo structure initialization in GIF plugin
 
 November 19th, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-10-05)

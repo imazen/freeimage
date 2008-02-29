@@ -52,6 +52,10 @@ struct GIFinfo {
 	std::vector<size_t> comment_extension_offsets;
 	std::vector<size_t> graphic_control_extension_offsets;
 	std::vector<size_t> image_descriptor_offsets;
+
+	GIFinfo() : read(0), global_color_table_offset(0), global_color_table_size(0), background_color(0)
+	{
+	}
 };
 
 struct PageInfo {
@@ -524,7 +528,10 @@ Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 	if( info == NULL ) {
 		return NULL;
 	}
-	memset(info, 0, sizeof(GIFinfo));
+
+	// 25/02/2008 MDA:	Not safe to memset GIFinfo structure with VS 2008 (safe iterators),
+	//					perform initialization in constructor instead.
+	// memset(info, 0, sizeof(GIFinfo));
 
 	info->read = read;
 	if( read ) {
