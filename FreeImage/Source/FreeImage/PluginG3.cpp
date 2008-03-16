@@ -115,13 +115,13 @@ copyFaxFile(FreeImageIO *io, fi_handle handle, TIFF* tifin, uint32 xsize, int st
 		rowbuf = (BYTE*) _TIFFmalloc(linesize);
 		refbuf = (BYTE*) _TIFFmalloc(linesize);
 		if (rowbuf == NULL || refbuf == NULL) {
-			throw "Not enough memory";
+			throw FI_MSG_ERROR_MEMORY;
 		}
 
 		tifin->tif_rawdatasize = G3GetFileSize(io, handle);
 		tifin->tif_rawdata = (tidata_t) _TIFFmalloc(tifin->tif_rawdatasize);
 		if (tifin->tif_rawdata == NULL) {
-			throw "Not enough memory";
+			throw FI_MSG_ERROR_MEMORY;
 		}
 			
 		if(!G3ReadFile(io, handle, tifin->tif_rawdata, tifin->tif_rawdatasize)) {

@@ -279,7 +279,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// allocate a new dib
 			dib = FreeImage_AllocateT(image_type, width, height);
-			if(!dib) THROW (Iex::NullExc, "Not enough memory");
+			if(!dib) THROW (Iex::NullExc, FI_MSG_ERROR_MEMORY);
 
 			BYTE *bits = FreeImage_GetBits(dib);			// pointer to our pixel buffer
 			size_t bytespp = sizeof(float) * components;	// size of our pixel in bytes
@@ -564,7 +564,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		if(pixelType == Imf::HALF) {
 			// convert from float to half
 			halfData = new half[width * height * components];
-			if(!halfData) THROW (Iex::NullExc, "Not enough memory");
+			if(!halfData) THROW (Iex::NullExc, FI_MSG_ERROR_MEMORY);
 			for(int y = 0; y < height; y++) {
 				float *src_bits = (float*)FreeImage_GetScanLine(dib, height - 1 - y);
 				half *dst_bits = halfData + y * width * components;

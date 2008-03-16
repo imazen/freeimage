@@ -265,4 +265,11 @@ MAXMIN(const T* L, long n, T& max, T& min) {
 	}
 }
 
+// ==========================================================
+//   Generic error messages
+// ==========================================================
+
+static const char *FI_MSG_ERROR_MEMORY = "Not enough memory";
+
+
 #endif // UTILITIES_H

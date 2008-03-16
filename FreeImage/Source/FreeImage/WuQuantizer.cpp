@@ -71,7 +71,7 @@ WuQuantizer::WuQuantizer(FIBITMAP *dib) {
 		if(mg)	free(mg);
 		if(mb)	free(mb);
 		if(Qadd)  free(Qadd);
-		throw "Not enough memory";
+		throw FI_MSG_ERROR_MEMORY;
 	}
 	memset(gm2, 0, 35937 * sizeof(float));
 	memset(wt, 0, 35937 * sizeof(LONG));
@@ -484,7 +484,7 @@ WuQuantizer::Quantize(int PaletteSize, int ReserveSize, RGBQUAD *ReservePalette)
 		FIBITMAP *new_dib = FreeImage_Allocate(width, height, 8);
 
 		if (new_dib == NULL) {
-			throw "Not enough memory";
+			throw FI_MSG_ERROR_MEMORY;
 		}
 
 		// create an optimized palette
@@ -495,7 +495,7 @@ WuQuantizer::Quantize(int PaletteSize, int ReserveSize, RGBQUAD *ReservePalette)
 		memset(tag, 0, 33 * 33 * 33 * sizeof(BYTE));
 
 		if (tag == NULL) {
-			throw "Not enough memory";
+			throw FI_MSG_ERROR_MEMORY;
 		}
 
 		for (k = 0; k < PaletteSize ; k++) {
