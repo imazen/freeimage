@@ -19,6 +19,7 @@ Month day, 2007 - 3.10.1
 * [Herve Drolon] fixed some possible 64-bit portability issues with pointer calculations
 * [wangyn] fixed a bug with transparency handling of indexed images in PNG plugin
 * [Martin Dyring-Andersen] fixed a bug with GIFinfo structure initialization in GIF plugin
+* [Noam Gat] fixed a bug in SGI plugin: when the file reports as two-dimensional, the height factor does not get loaded
 
 November 19th, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-10-05)

@@ -254,11 +254,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			zsize = 1;
 		} else {
 			zsize = sgiHeader.zsize;
-			if (dim < 2) {
-				height = 1;
-			} else {
-				height = sgiHeader.ysize;
-			}
+		}
+
+		if (dim < 2) {
+			height = 1;
+		} else {
+			height = sgiHeader.ysize;
 		}
 		
 		if(bIsRLE) {
