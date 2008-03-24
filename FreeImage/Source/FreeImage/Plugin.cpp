@@ -388,6 +388,8 @@ FreeImage_Load(FREE_IMAGE_FORMAT fif, const char *filename, int flags) {
 		fclose(handle);
 
 		return bitmap;
+	} else {
+		FreeImage_OutputMessageProc((int)fif, "FreeImage_Load: failed to open file %s", filename);
 	}
 
 	return NULL;
@@ -406,6 +408,8 @@ FreeImage_LoadU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, int flags) {
 		fclose(handle);
 
 		return bitmap;
+	} else {
+		FreeImage_OutputMessageProc((int)fif, "FreeImage_LoadU: failed to open input file");
 	}
 #endif
 	return NULL;
@@ -450,6 +454,8 @@ FreeImage_Save(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const char *filename, int f
 		fclose(handle);
 
 		return success;
+	} else {
+		FreeImage_OutputMessageProc((int)fif, "FreeImage_Save: failed to open file %s", filename);
 	}
 
 	return FALSE;
@@ -468,6 +474,8 @@ FreeImage_SaveU(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const wchar_t *filename, i
 		fclose(handle);
 
 		return success;
+	} else {
+		FreeImage_OutputMessageProc((int)fif, "FreeImage_SaveU: failed to open output file");
 	}
 #endif
 	return FALSE;
