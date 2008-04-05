@@ -776,7 +776,7 @@ static	int32 find1span(unsigned char*, int32, int32);
  * table.  The ``base'' of the bit string is supplied
  * along with the start+end bit indices.
  */
-static inline int32
+static int32
 find0span(unsigned char* bp, int32 bs, int32 be)
 {
 	int32 bits = be - bs;
@@ -835,7 +835,7 @@ find0span(unsigned char* bp, int32 bs, int32 be)
 	return (span);
 }
 
-static inline int32
+static int32
 find1span(unsigned char* bp, int32 bs, int32 be)
 {
 	int32 bits = be - bs;
@@ -1086,6 +1086,9 @@ Fax3Cleanup(TIFF* tif)
 
 	if (Fax3State(tif)->subaddress)
 		_TIFFfree(Fax3State(tif)->subaddress);
+	if (Fax3State(tif)->faxdcs)
+		_TIFFfree(Fax3State(tif)->faxdcs);
+
 	_TIFFfree(tif->tif_data);
 	tif->tif_data = NULL;
 
