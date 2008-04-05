@@ -5,6 +5,51 @@ What's New for OpenJPEG
 ! : changed
 + : added
 
+March 12, 2008
++ [GB] help line for the -F option in j2k_to_image
+
+March 4, 2008
+! [FOD] Changed Java files copyright in JavaOpenJPEG module
+
+February 28, 2008
+* [FOD] Fixed openjpeg.c for proper initialization of codec context structures (dinfo in opj_create_compress() 
+		and opj_create_decompress(). Bug fix suggested by Andrey V. Kiselev
+* [FOD] Clean up of opj_aligned_malloc(), to just forgo the use of posix_memalign(), 
+		as apparently memalign() is what is working better for everyone. Patch by Callum.
+
+February 28, 2008
+- [FOD] Removed the J2KViewer module, which has been replaced by OPJViewer
+* [FOD] Fixed the error handling of j2k_decode in jp2.c, thanks to Robin Cornelius
+
+February 11, 2008
+* [GB] Minor style modifications to comply with c99 compiler flag; removed Microsoft-specific "union-in-struct" syntax; Re-enabled cstr_info struct creation when -W switch is specified
+! [GB] Changed a number of things in opjviewer (e.g., decoding thread does not execute GUI calls anymore), to have it running under linux --> it is better than before, but still crashes
+
+February 5, 2008
+! [Parvatha] In convert.c, corrected imagetobmp() conversion for grayscale. In tcd.c, corrected Rate modification in
+  tcd_init_encode(). Thanks to Jeremy Furtek and Jérôme Fimes.
+
+January 31, 2008
+! [GB] In opjviewer, unification of JPEG 2000 family handlers (*.jp2, *.mj2, *.j2k) in a single file
+
+January 22, 2008
+! [FOD] In image.c, changed the opj_image_create0() memory allocation from malloc() to calloc() in order
+		to avoid segfaults when freeing the memory allocated for the coding of bad images.
+		Thanks to Christopher Layne for this improvement. 
+
+January 17, 2008
++ [antonin] Initial commit of Xcode project directory (XCode 2.5 for macosx)
+			available targets : libopenjpeg (stat and dyn), image_to_j2k, j2k_to_image
+
+January 16, 2008
+* [antonin] fixed opj_malloc.h for macosx (bugfix provided by janpeder, thanks)
+
+January 11, 2008
++ [FOD] Added missing files to JavaOpenJPEG project (files from Patrick Piscaglia)
+
+January 4, 2008
+* [Parvatha] Patch by Callum Lerwick. Fixed bug during encoding using tile option in tcd.c
+
 ----------------------
 December 21, 2007
 VERSION 1.3.0 RELEASED
