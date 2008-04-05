@@ -916,9 +916,11 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 				case FIMD_IPTC:
 				{
 					int id = tag_lib.getTagID(TagLib::IPTC, key);
+					/*
 					if(id == -1) {
 						FreeImage_OutputMessageProc(FIF_UNKNOWN, "IPTC: Invalid key '%s'", key);
 					}
+					*/
 					FreeImage_SetTagID(tag, (WORD)id);
 				}
 				break;
