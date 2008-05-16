@@ -23,6 +23,7 @@ Month day, 2007 - 3.10.1
 * [Noam Gat] fixed a bug in SGI plugin: when the file reports as two-dimensional, the height factor does not get loaded
 * [Herve Drolon] added error messages in FreeImage_Load(U) / FreeImage_Save(U) in case of bad filenames
 * [Scott Smith/Herve Drolon] added missing IPTC tags and renamed some tag names to be compatible with ExifTool naming convention
+* [Martin Dyring-Andersen] fixed a crash problem with images containing exif data emitted by Picassa
 
 November 19th, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-10-05)

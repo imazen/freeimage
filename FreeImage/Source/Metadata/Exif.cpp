@@ -541,7 +541,7 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned long offset, unsig
 
 				// if its bigger than 4 bytes, the directory entry contains an offset
 				offset_value = ReadUint32(msb_order, pde + 8);
-				if((size_t) (offset_value + FreeImage_GetTagLength(tag)) > length) {
+				if(offset_value > length - FreeImage_GetTagLength(tag)) {
 					// a problem occured : delete the tag (not free'd after)
 					FreeImage_DeleteTag(tag);
 					// jump to next entry
