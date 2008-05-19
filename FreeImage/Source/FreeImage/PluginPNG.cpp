@@ -686,10 +686,33 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			// PNG_INTERLACE_ADAM7, and the compression_type and filter_type MUST
 			// currently be PNG_COMPRESSION_TYPE_BASE and PNG_FILTER_TYPE_BASE. REQUIRED
 
-			interlace_type = PNG_INTERLACE_NONE;	// Default value
 			width = FreeImage_GetWidth(dib);
 			height = FreeImage_GetHeight(dib);
-			pixel_depth = FreeImage_GetBPP(dib);	
+			pixel_depth = FreeImage_GetBPP(dib);
+
+			BOOL bInterlaced = FALSE;
+			if( (flags & PNG_INTERLACED) == PNG_INTERLACED) {
+				interlace_type = PNG_INTERLACE_ADAM7;
+				bInterlaced = TRUE;
+			} else {
+				interlace_type = PNG_INTERLACE_NONE;
+			}
+
+			// set the ZLIB compression level or default to PNG default compression level (ZLIB level = 6)
+			int zlib_level = flags & 0x0F;
+			if((zlib_level >= 1) && (zlib_level <= 9)) {
+				png_set_compression_level(png_ptr, zlib_level);
+			} else if((flags & PNG_Z_NO_COMPRESSION) == PNG_Z_NO_COMPRESSION) {
+				png_set_compression_level(png_ptr, Z_NO_COMPRESSION);
+			}
+
+			// filtered strategy works better for high color images
+			if(pixel_depth >= 16){
+				png_set_compression_strategy(png_ptr, Z_FILTERED);
+				png_set_filter(png_ptr, 0, PNG_FILTER_NONE|PNG_FILTER_SUB|PNG_FILTER_PAETH);
+			} else {
+				png_set_compression_strategy(png_ptr, Z_DEFAULT_STRATEGY);
+			}
 
 			FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 			if(image_type == FIT_BITMAP) {
@@ -699,7 +722,6 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				// 16-bit greyscale or 16-bit RGB(A)
 				bit_depth = 16;
 			}
-
 
 			switch (FreeImage_GetColorType(dib)) {
 				case FIC_MINISWHITE:
@@ -787,8 +809,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			// set the transparency table
 
-			if ((pixel_depth == 8) && (FreeImage_IsTransparent(dib)) && (FreeImage_GetTransparencyCount(dib) > 0))
+			if ((pixel_depth == 8) && (FreeImage_IsTransparent(dib)) && (FreeImage_GetTransparencyCount(dib) > 0)) {
 				png_set_tRNS(png_ptr, info_ptr, FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), NULL);
+			}
 
 			// set the background color
 
@@ -819,21 +842,29 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			}
 #endif
 
+			int number_passes = 1;
+			if (bInterlaced) {
+				number_passes = png_set_interlace_handling(png_ptr);
+			}
 
 			if ((pixel_depth == 32) && (!has_alpha_channel)) {
 				BYTE *buffer = (BYTE *)malloc(width * 3);
 
 				// transparent conversion to 24-bit
-				for (png_uint_32 k = 0; k < height; k++) {
-					FreeImage_ConvertLine32To24(buffer, FreeImage_GetScanLine(dib, height - k - 1), width);
-
-					png_write_row(png_ptr, buffer);
+				// the number of passes is either 1 for non-interlaced images, or 7 for interlaced images
+				for (int pass = 0; pass < number_passes; pass++) {
+					for (png_uint_32 k = 0; k < height; k++) {
+						FreeImage_ConvertLine32To24(buffer, FreeImage_GetScanLine(dib, height - k - 1), width);			
+						png_write_row(png_ptr, buffer);
+					}
 				}
-
 				free(buffer);
 			} else {
-				for (png_uint_32 k = 0; k < height; k++) {
-					png_write_row(png_ptr, FreeImage_GetScanLine(dib, height - k - 1));
+				// the number of passes is either 1 for non-interlaced images, or 7 for interlaced images
+				for (int pass = 0; pass < number_passes; pass++) {
+					for (png_uint_32 k = 0; k < height; k++) {			
+						png_write_row(png_ptr, FreeImage_GetScanLine(dib, height - k - 1));					
+					}
 				}
 			}
 
@@ -843,8 +874,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			png_write_end(png_ptr, info_ptr);
 
 			// clean up after the write, and free any memory allocated
-			if (palette)
+			if (palette) {
 				png_free(png_ptr, palette);
+			}
 
 			png_destroy_write_struct(&png_ptr, &info_ptr);
 
