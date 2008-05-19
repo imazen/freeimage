@@ -1168,10 +1168,54 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			// Set JFIF density parameters from the DIB data
 
-			BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-			cinfo.X_density = (UINT16) (0.5 + 0.0254 * pInfoHeader->biXPelsPerMeter);
-			cinfo.Y_density = (UINT16) (0.5 + 0.0254 * pInfoHeader->biYPelsPerMeter);
+			cinfo.X_density = (UINT16) (0.5 + 0.0254 * FreeImage_GetDotsPerMeterX(dib));
+			cinfo.Y_density = (UINT16) (0.5 + 0.0254 * FreeImage_GetDotsPerMeterY(dib));
 			cinfo.density_unit = 1;	// dots / inch
+
+			// set subsampling options if required
+
+			if(cinfo.in_color_space == JCS_RGB) {
+				if((flags & JPEG_SUBSAMPLING_411) == JPEG_SUBSAMPLING_411) { 
+					// 4:1:1 (4x1 1x1 1x1) - CrH 25% - CbH 25% - CrV 100% - CbV 100%
+					// the horizontal color resolution is quartered
+					cinfo.comp_info[0].h_samp_factor = 4;	// Y 
+					cinfo.comp_info[0].v_samp_factor = 1; 
+					cinfo.comp_info[1].h_samp_factor = 1;	// Cb 
+					cinfo.comp_info[1].v_samp_factor = 1; 
+					cinfo.comp_info[2].h_samp_factor = 1;	// Cr 
+					cinfo.comp_info[2].v_samp_factor = 1; 
+				} else if((flags & JPEG_SUBSAMPLING_420) == JPEG_SUBSAMPLING_420) {
+					// 4:2:0 (2x2 1x1 1x1) - CrH 50% - CbH 50% - CrV 50% - CbV 50%
+					// the chrominance resolution in both the horizontal and vertical directions is cut in half
+					cinfo.comp_info[0].h_samp_factor = 2;	// Y
+					cinfo.comp_info[0].v_samp_factor = 2; 
+					cinfo.comp_info[1].h_samp_factor = 1;	// Cb
+					cinfo.comp_info[1].v_samp_factor = 1; 
+					cinfo.comp_info[2].h_samp_factor = 1;	// Cr
+					cinfo.comp_info[2].v_samp_factor = 1; 
+				} else if((flags & JPEG_SUBSAMPLING_422) == JPEG_SUBSAMPLING_422){ //2x1 (low) 
+					// 4:2:2 (2x1 1x1 1x1) - CrH 50% - CbH 50% - CrV 100% - CbV 100%
+					// half of the horizontal resolution in the chrominance is dropped (Cb & Cr), 
+					// while the full resolution is retained in the vertical direction, with respect to the luminance
+					cinfo.comp_info[0].h_samp_factor = 2;	// Y 
+					cinfo.comp_info[0].v_samp_factor = 1; 
+					cinfo.comp_info[1].h_samp_factor = 1;	// Cb 
+					cinfo.comp_info[1].v_samp_factor = 1; 
+					cinfo.comp_info[2].h_samp_factor = 1;	// Cr 
+					cinfo.comp_info[2].v_samp_factor = 1; 
+				} 
+				else if((flags & JPEG_SUBSAMPLING_444) == JPEG_SUBSAMPLING_444){ //1x1 (no subsampling) 
+					// 4:4:4 (1x1 1x1 1x1) - CrH 100% - CbH 100% - CrV 100% - CbV 100%
+					// the resolution of chrominance information (Cb & Cr) is preserved 
+					// at the same rate as the luminance (Y) information
+					cinfo.comp_info[0].h_samp_factor = 1;	// Y 
+					cinfo.comp_info[0].v_samp_factor = 1; 
+					cinfo.comp_info[1].h_samp_factor = 1;	// Cb 
+					cinfo.comp_info[1].v_samp_factor = 1; 
+					cinfo.comp_info[2].h_samp_factor = 1;	// Cr 
+					cinfo.comp_info[2].v_samp_factor = 1;  
+				} 
+			}
 
 			// Step 4: set quality
 			// the first 7 bits are reserved for low level quality settings
