@@ -357,26 +357,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				file.readPixels(dataWindow.min.y, dataWindow.max.y);
 			}
 
-			// check for unused alpha channels
-			if(components == 4) {
-				BOOL bIsAlpha = FALSE;
-				for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
-					FIRGBAF *pixel = (FIRGBAF*)FreeImage_GetScanLine(dib, y);
-					for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
-						if((pixel->alpha != 1) && (pixel->alpha != 0)) {
-							bIsAlpha = TRUE;
-							break;
-						}
-					}
-					if(bIsAlpha) break;
-				}
-				if(!bIsAlpha) {
-					FIBITMAP *rgbf = FreeImage_ConvertToRGBF(dib);
-					FreeImage_Unload(dib);
-					dib = rgbf;
-				}
-			}
-
 			// lastly, flip dib lines
 			FreeImage_FlipVertical(dib);
 
