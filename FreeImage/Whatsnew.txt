@@ -5,7 +5,7 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month day, 2007 - 3.10.1
+Month day, 2007 - 3.11.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2008-01-30)
 ! FreeImage now uses OpenJPEG 1.3.0 (SVN patch 2008-03-12)
 ! FreeImage now uses libMNG 1.0.10
@@ -17,6 +17,7 @@ Month day, 2007 - 3.10.1
 + [Lucian Sabo] added new compression flags to the PNG plugin
 + [Lucian Sabo] added new compression flags to the JPEG plugin (chroma subsampling options)
 + [Noam Gat] added support for SGI grayscale + alpha pics to SGI plugin
++ [Herve Drolon] added FreeImage_CloneMetadata
 * [Will Bryant] fixed makefile for MacOSX Tiger and Leopard
 * [Maria Gullickson] fixed a 'divide by 0' error in PNM plugin and FreeImage_Rescale function
 * [Yves Schmid] fixed a bug with Exif metadata reading in TIFF images
@@ -28,6 +29,7 @@ Month day, 2007 - 3.10.1
 * [Scott Smith/Herve Drolon] added missing IPTC tags and renamed some tag names to be compatible with ExifTool naming convention
 * [Martin Dyring-Andersen] fixed a crash problem with images containing exif data emitted by Picassa
 * [Herve Drolon] removed RGBA to RGB transparent conversion in EXR plugin
+* [Glenn Pierce] improved the speed of FreeImage_FlipHorizontal
 
 November 19th, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-10-05)
