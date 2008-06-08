@@ -34,7 +34,10 @@ FreeImage_FlipHorizontal(FIBITMAP *src) {
 	if (!src) return FALSE;
 
 	unsigned line   = FreeImage_GetLine(src);
-	unsigned height	= FreeImage_GetHeight(src);
+	unsigned width	= FreeImage_GetWidth(src);
+	unsigned height = FreeImage_GetHeight(src);
+
+	unsigned bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
 
 	// copy between aligned memories
 	BYTE *new_bits = (BYTE*)FreeImage_Aligned_Malloc(line * sizeof(BYTE), FIBITMAP_ALIGNMENT);
@@ -48,8 +51,7 @@ FreeImage_FlipHorizontal(FIBITMAP *src) {
 
 		switch (FreeImage_GetBPP(src)) {
 			case 1 :
-			{
-				unsigned width	= FreeImage_GetWidth(src);
+			{				
 				for(unsigned x = 0; x < width; x++) {
 					// get pixel at (x, y)
 					BOOL value = (new_bits[x >> 3] & (0x80 >> (x & 0x07))) != 0;
@@ -57,9 +59,8 @@ FreeImage_FlipHorizontal(FIBITMAP *src) {
 					unsigned new_x = width - 1 - x;
 					value ? bits[new_x >> 3] |= (0x80 >> (new_x & 0x7)) : bits[new_x >> 3] &= (0xff7f >> (new_x & 0x7));
 				}
-
-				break;
 			}
+			break;
 
 			case 4 :
 			{
@@ -71,27 +72,46 @@ FreeImage_FlipHorizontal(FIBITMAP *src) {
 					bits[c] = bits[c] << 4;
 					bits[c] |= nibble;
 				}
-
-				break;
 			}
+			break;
 
 			case 8:
+			{				
+				BYTE *dst_data = (BYTE*) bits; 				
+				BYTE *src_data = (BYTE*) (new_bits + line - bytespp); 				
+				for(unsigned c = 0; c < width; c++) { 			
+					*dst_data++ = *src_data--;  
+				} 
+			}
+			break;
+
 			case 16:
+			{				
+				WORD *dst_data = (WORD*) bits; 				
+				WORD *src_data = (WORD*) (new_bits + line - bytespp); 				
+				for(unsigned c = 0; c < width; c++) { 			
+					*dst_data++ = *src_data--;  
+				} 
+			}
+			break;
+
 			case 24 :
 			case 32 :
 			case 48:
 			case 64:
 			case 96:
 			case 128:
-			{
-				int bytespp = FreeImage_GetLine(src) / FreeImage_GetWidth(src);
-
-				for(unsigned c = 0; c < line; c += bytespp) {
-					memcpy(bits + c, new_bits + line - c - bytespp, bytespp);						
-				}
-
-				break;
+			{				
+				BYTE *dst_data = (BYTE*) bits; 				
+				BYTE *src_data = (BYTE*) (new_bits + line - bytespp); 				
+				for(unsigned c = 0; c < width; c++) { 		
+					for(unsigned k = 0; k < bytespp; k++) {
+						*dst_data++ = src_data[k];  
+					}
+					src_data -= bytespp;
+				} 
 			}
+			break;
 
 		}
 	}
@@ -100,6 +120,7 @@ FreeImage_FlipHorizontal(FIBITMAP *src) {
 
 	return TRUE;
 }
+
 
 /**
 Flip the image vertically along the horizontal axis.
