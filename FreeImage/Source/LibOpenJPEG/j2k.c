@@ -467,6 +467,13 @@ static void j2k_read_siz(opj_j2k_t *j2k) {
 	cp->tx0 = cio_read(cio, 4);		/* XT0siz */
 	cp->ty0 = cio_read(cio, 4);		/* YT0siz */
 	
+	if ((image->x0<0)||(image->x1<0)||(image->y0<0)||(image->y1<0)) {
+		opj_event_msg(j2k->cinfo, EVT_ERROR,
+									"%s: invalid image size (x0:%d, x1:%d, y0:%d, y1:%d)\n",
+									image->x0,image->x1,image->y0,image->y1);
+		return;
+	}
+	
 	image->numcomps = cio_read(cio, 2);	/* Csiz */
 
 #ifdef USE_JPWL
@@ -1431,7 +1438,11 @@ static void j2k_write_sod(opj_j2k_t *j2k, void *tile_coder) {
 	
 	tcp = &cp->tcps[j2k->curtileno];
 	for (layno = 0; layno < tcp->numlayers; layno++) {
-		tcp->rates[layno] -= tcp->rates[layno] ? (j2k->sod_start / (cp->th * cp->tw)) : 0;
+		if (tcp->rates[layno]>(j2k->sod_start / (cp->th * cp->tw))) {
+			tcp->rates[layno]-=(j2k->sod_start / (cp->th * cp->tw));
+		} else if (tcp->rates[layno]) {
+			tcp->rates[layno]=1;
+		}
 	}
 	if(j2k->cur_tp_num == 0){
 		tcd->tcd_image->tiles->packno = 0;

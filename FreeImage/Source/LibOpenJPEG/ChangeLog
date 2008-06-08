@@ -5,6 +5,15 @@ What's New for OpenJPEG
 ! : changed
 + : added
 
+May 22, 2008
+* [antonin] fixed a bug in j2k.c (j2k_write_sod) that allowed to get negative rates, thanks zhong1985624 for pointing this.
+
+May 22, 2008
+* [antonin] additional test to avoid crash due to invalid image size, patch by Christopher Layne
+
+May 20, 2008
+* [antonin] memory leak fixed in openjpeg.c (opj_destroy_cstr_info()), patch by Carsten Juttner
+
 March 12, 2008
 + [GB] help line for the -F option in j2k_to_image
 
