@@ -142,16 +142,19 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_ConvertTo4Bits(FIBITMAP *dib) {
 	if(!dib) return NULL;
 
-	int bpp = FreeImage_GetBPP(dib);
+	const int bpp = FreeImage_GetBPP(dib);
 
 	if(bpp != 4) {
-		int width  = FreeImage_GetWidth(dib);
-		int height = FreeImage_GetHeight(dib);
+		const int width  = FreeImage_GetWidth(dib);
+		const int height = FreeImage_GetHeight(dib);
 		FIBITMAP *new_dib = FreeImage_Allocate(width, height, 4);
 
 		if(new_dib == NULL) {
 			return NULL;
 		}
+
+		// copy metadata from src to dst
+		FreeImage_CloneMetadata(new_dib, dib);
 
 		// Build a greyscale palette (*always* needed for image processing)
 
@@ -186,9 +189,9 @@ FreeImage_ConvertTo4Bits(FIBITMAP *dib) {
 
 				// Expand and copy the bitmap data
 
-				for (int rows = 0; rows < height; rows++)
+				for (int rows = 0; rows < height; rows++) {
 					FreeImage_ConvertLine1To4(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-					
+				}
 				return new_dib;
 			}
 
@@ -196,9 +199,9 @@ FreeImage_ConvertTo4Bits(FIBITMAP *dib) {
 			{
 				// Expand and copy the bitmap data
 
-				for (int rows = 0; rows < height; rows++)
+				for (int rows = 0; rows < height; rows++) {
 					FreeImage_ConvertLine8To4(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
-
+				}
 				return new_dib;
 			}
 
@@ -221,9 +224,9 @@ FreeImage_ConvertTo4Bits(FIBITMAP *dib) {
 			{
 				// Expand and copy the bitmap data
 
-				for (int rows = 0; rows < height; rows++)
+				for (int rows = 0; rows < height; rows++) {
 					FreeImage_ConvertLine24To4(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);					
-
+				}
 				return new_dib;
 			}
 
@@ -231,9 +234,9 @@ FreeImage_ConvertTo4Bits(FIBITMAP *dib) {
 			{
 				// Expand and copy the bitmap data
 
-				for (int rows = 0; rows < height; rows++)
+				for (int rows = 0; rows < height; rows++) {
 					FreeImage_ConvertLine32To4(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-				
+				}
 				return new_dib;
 			}
 		}

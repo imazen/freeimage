@@ -688,6 +688,9 @@ FreeImage_RotateClassic(FIBITMAP *dib, double angle) {
 				dst_pal[1].rgbRed = dst_pal[1].rgbGreen = dst_pal[1].rgbBlue = 0;			
 			}
 
+			// copy metadata from src to dst
+			FreeImage_CloneMetadata(dst, dib);
+
 			return dst;
 		}
 
@@ -701,6 +704,9 @@ FreeImage_RotateClassic(FIBITMAP *dib, double angle) {
 				RGBQUAD *dst_pal = FreeImage_GetPalette(dst);
 				memcpy(&dst_pal[0], &src_pal[0], 256 * sizeof(RGBQUAD));
 			}
+
+			// copy metadata from src to dst
+			FreeImage_CloneMetadata(dst, dib);
 
 			return dst;
 		}

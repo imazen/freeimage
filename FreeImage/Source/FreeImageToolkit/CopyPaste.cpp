@@ -607,6 +607,9 @@ FreeImage_Copy(FIBITMAP *src, int left, int top, int right, int bottom) {
 		}
 	}
 
+	// copy metadata from src to dst
+	FreeImage_CloneMetadata(dst, src);
+	
 	return dst;
 }
 
@@ -633,7 +636,7 @@ FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha) {
 	}
 
 	// check data type
-	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dst);
+	const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dst);
 	if(image_type != FreeImage_GetImageType(src)) {
 		// no conversion between data type is done
 		return FALSE;

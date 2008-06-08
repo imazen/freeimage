@@ -68,7 +68,12 @@ FreeImage_ColorQuantizeEx(FIBITMAP *dib, FREE_IMAGE_QUANTIZE quantize, int Palet
 				{
 					try {
 						WuQuantizer Q (dib);
-						return Q.Quantize(PaletteSize, ReserveSize, ReservePalette);
+						FIBITMAP *dst = Q.Quantize(PaletteSize, ReserveSize, ReservePalette);
+						if(dst) {
+							// copy metadata from src to dst
+							FreeImage_CloneMetadata(dst, dib);
+						}
+						return dst;
 					} catch (char *) {
 						return NULL;
 					}
@@ -80,7 +85,12 @@ FreeImage_ColorQuantizeEx(FIBITMAP *dib, FREE_IMAGE_QUANTIZE quantize, int Palet
 					const int sampling = 1;
 
 					NNQuantizer Q(PaletteSize);
-					return Q.Quantize(dib, ReserveSize, ReservePalette, sampling);
+					FIBITMAP *dst = Q.Quantize(dib, ReserveSize, ReservePalette, sampling);
+					if(dst) {
+						// copy metadata from src to dst
+						FreeImage_CloneMetadata(dst, dib);
+					}
+					return dst;
 				}
 			}
 		}

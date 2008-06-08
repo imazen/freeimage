@@ -122,6 +122,9 @@ FreeImage_Rescale(FIBITMAP *src, int dst_width, int dst_height, FREE_IMAGE_FILTE
 
 	delete pFilter;
 
+	// copy metadata from src to dst
+	FreeImage_CloneMetadata(dst, src);
+	
 	return dst;
 }
 
@@ -156,7 +159,7 @@ FreeImage_MakeThumbnail(FIBITMAP *dib, int max_pixel_size, BOOL convert) {
 		if(new_width == 0) new_width = 1;
 	}
 
-	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+	const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 
 	// perform downsampling using a bilinear interpolation
 
@@ -217,5 +220,8 @@ FreeImage_MakeThumbnail(FIBITMAP *dib, int max_pixel_size, BOOL convert) {
 		}
 	}
 
+	// copy metadata from src to dst
+	FreeImage_CloneMetadata(thumbnail, dib);
+	
 	return thumbnail;
 }

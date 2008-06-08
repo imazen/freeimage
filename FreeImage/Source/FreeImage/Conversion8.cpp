@@ -103,21 +103,24 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 	if(!dib) return NULL;
 
-	int bpp = FreeImage_GetBPP(dib);
+	const int bpp = FreeImage_GetBPP(dib);
 
-	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+	const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 	if((image_type != FIT_BITMAP) && (image_type != FIT_UINT16)) {
 		return NULL;
 	}
 
 	if(bpp != 8) {
-		int width  = FreeImage_GetWidth(dib);
-		int height = FreeImage_GetHeight(dib);
+		const int width  = FreeImage_GetWidth(dib);
+		const int height = FreeImage_GetHeight(dib);
 		FIBITMAP *new_dib = FreeImage_Allocate(width, height, 8);
 
 		if(new_dib == NULL) {
 			return NULL;
 		}
+
+		// copy metadata from src to dst
+		FreeImage_CloneMetadata(new_dib, dib);
 
 		// Build a greyscale palette (*always* needed for image processing)
 
@@ -155,9 +158,9 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 
 					// Expand and copy the bitmap data
 
-					for (int rows = 0; rows < height; rows++)
+					for (int rows = 0; rows < height; rows++) {
 						FreeImage_ConvertLine1To8(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-						
+					}
 					return new_dib;
 				}
 
@@ -178,9 +181,9 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 
 					// Expand and copy the bitmap data
 
-					for (int rows = 0; rows < height; rows++)
+					for (int rows = 0; rows < height; rows++) {
 						FreeImage_ConvertLine4To8(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);					
-
+					}
 					return new_dib;
 				}
 
@@ -203,9 +206,9 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 				{
 					// Expand and copy the bitmap data
 
-					for (int rows = 0; rows < height; rows++)
+					for (int rows = 0; rows < height; rows++) {
 						FreeImage_ConvertLine24To8(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);					
-
+					}
 					return new_dib;
 				}
 
@@ -213,21 +216,21 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 				{
 					// Expand and copy the bitmap data
 
-					for (int rows = 0; rows < height; rows++)
+					for (int rows = 0; rows < height; rows++) {
 						FreeImage_ConvertLine32To8(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-					
+					}
 					return new_dib;
 				}
 			}
 
 		} else if(image_type == FIT_UINT16) {
 
-			unsigned src_pitch = FreeImage_GetPitch(dib);
-			unsigned dst_pitch = FreeImage_GetPitch(new_dib);
-			BYTE *src_bits = FreeImage_GetBits(dib);
+			const unsigned src_pitch = FreeImage_GetPitch(dib);
+			const unsigned dst_pitch = FreeImage_GetPitch(new_dib);
+			const BYTE *src_bits = FreeImage_GetBits(dib);
 			BYTE *dst_bits = FreeImage_GetBits(new_dib);
 			for (int rows = 0; rows < height; rows++) {
-				WORD *src_pixel = (WORD*)src_bits;
+				const WORD *src_pixel = (WORD*)src_bits;
 				BYTE *dst_pixel = (BYTE*)dst_bits;
 				for(int cols = 0; cols < width; cols++) {
 					dst_pixel[cols] = (BYTE)(src_pixel[cols] >> 8);
@@ -249,17 +252,20 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_ConvertToGreyscale(FIBITMAP *dib) {
 	if(!dib) return NULL;
 
-	FREE_IMAGE_COLOR_TYPE color_type = FreeImage_GetColorType(dib);
-	int bpp = FreeImage_GetBPP(dib);
+	const FREE_IMAGE_COLOR_TYPE color_type = FreeImage_GetColorType(dib);
+	const int bpp = FreeImage_GetBPP(dib);
 
 	if((color_type == FIC_PALETTE) || (color_type == FIC_MINISWHITE)) {
-		int width  = FreeImage_GetWidth(dib);
-		int height = FreeImage_GetHeight(dib);
+		const int width  = FreeImage_GetWidth(dib);
+		const int height = FreeImage_GetHeight(dib);
 		FIBITMAP *new_dib = FreeImage_Allocate(width, height, 8);
 
 		if(new_dib == NULL) {
 			return NULL;
 		}
+
+		// copy metadata from src to dst
+		FreeImage_CloneMetadata(new_dib, dib);
 
 		// Build a greyscale palette
 

@@ -387,7 +387,7 @@ FREE_IMAGE_COLOR_TYPE DLL_CALLCONV
 FreeImage_GetColorType(FIBITMAP *dib) {
 	RGBQUAD *rgb;
 
-	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+	const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 
 	// special bitmap type
 	if(image_type != FIT_BITMAP) {
@@ -803,7 +803,10 @@ FreeImage_FindFirstMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, FITAG **tag
 
 	// get the metadata model
 	METADATAMAP *metadata = ((FREEIMAGEHEADER *)dib->data)->metadata;
-	TAGMAP *tagmap = (*metadata)[model];
+	TAGMAP *tagmap = NULL;
+	if( (*metadata).find(model) != (*metadata).end() ) {
+		tagmap = (*metadata)[model];
+	}
 	if(tagmap) {
 		// allocate a handle
 		FIMETADATA 	*handle = (FIMETADATA *)malloc(sizeof(FIMETADATA));
@@ -874,6 +877,48 @@ FreeImage_FindCloseMetadata(FIMETADATA *mdhandle) {
 		}
 		free(mdhandle);		// ... and the wrapper
 	}
+}
+
+
+// ----------------------------------------------------------
+
+BOOL DLL_CALLCONV
+FreeImage_CloneMetadata(FIBITMAP *dst, FIBITMAP *src) {
+	if(!src || !dst) return FALSE;
+
+	// get metadata links
+	METADATAMAP *src_metadata = ((FREEIMAGEHEADER *)src->data)->metadata;
+	METADATAMAP *dst_metadata = ((FREEIMAGEHEADER *)dst->data)->metadata;
+
+	// copy metadata models
+	for(METADATAMAP::iterator i = (*src_metadata).begin(); i != (*src_metadata).end(); i++) {
+		int model = (*i).first;
+		TAGMAP *src_tagmap = (*i).second;
+
+		if(src_tagmap) {
+			if( dst_metadata->find(model) != dst_metadata->end() ) {
+				// destroy dst model
+				FreeImage_SetMetadata((FREE_IMAGE_MDMODEL)model, dst, NULL, NULL);
+			}
+
+			// create a metadata model
+			TAGMAP *dst_tagmap = new TAGMAP();
+
+			// fill the model
+			for(TAGMAP::iterator j = src_tagmap->begin(); j != src_tagmap->end(); j++) {
+				std::string dst_key = (*j).first;
+				FITAG *dst_tag = FreeImage_CloneTag( (*j).second );
+
+				// assign key and tag value
+				(*dst_tagmap)[dst_key] = dst_tag;
+			}
+
+			// assign model and tagmap
+			(*dst_metadata)[model] = dst_tagmap;
+		}
+	}
+
+	return TRUE;
 }
 
 // ----------------------------------------------------------
@@ -998,7 +1043,9 @@ FreeImage_GetMetadataCount(FREE_IMAGE_MDMODEL model, FIBITMAP *dib) {
 
 	// get the metadata model
 	METADATAMAP *metadata = ((FREEIMAGEHEADER *)dib->data)->metadata;
-	tagmap = (*metadata)[model];
+	if( (*metadata).find(model) != (*metadata).end() ) {
+		tagmap = (*metadata)[model];
+	}
 	if(!tagmap) {
 		// this model, doesn't exist: return
 		return 0;

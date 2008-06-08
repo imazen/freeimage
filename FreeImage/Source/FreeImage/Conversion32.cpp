@@ -170,8 +170,8 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 	if(!dib) return NULL;
 
-	int bpp = FreeImage_GetBPP(dib);
-	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+	const int bpp = FreeImage_GetBPP(dib);
+	const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 	
 	if((image_type != FIT_BITMAP) && (image_type != FIT_RGB16) && (image_type != FIT_RGBA16)) {
 		return NULL;
@@ -182,69 +182,66 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 
 	if(image_type == FIT_BITMAP) {
 
+		if(bpp == 32) {
+			return FreeImage_Clone(dib);
+		}
+
+		FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+		if(new_dib == NULL) {
+			return NULL;
+		}
+
+		// copy metadata from src to dst
+		FreeImage_CloneMetadata(new_dib, dib);
+
 		switch(bpp) {
 			case 1:
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
-
-				if (new_dib != NULL) {
-					for (int rows = 0; rows < height; rows++) {
-						FreeImage_ConvertLine1To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
-						
-						if (FreeImage_IsTransparent(dib)) {
-							MapTransparentTableToAlpha1((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
-						}
+				for (int rows = 0; rows < height; rows++) {
+					FreeImage_ConvertLine1To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
+					
+					if (FreeImage_IsTransparent(dib)) {
+						MapTransparentTableToAlpha1((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
 					}
 				}
+
 				return new_dib;
 			}
 
 			case 4:
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
-
-				if (new_dib != NULL) {
-					for (int rows = 0; rows < height; rows++) {
-						FreeImage_ConvertLine4To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
-				
-						if (FreeImage_IsTransparent(dib)) {
-							MapTransparentTableToAlpha4((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
-						}
+				for (int rows = 0; rows < height; rows++) {
+					FreeImage_ConvertLine4To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
+			
+					if (FreeImage_IsTransparent(dib)) {
+						MapTransparentTableToAlpha4((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
 					}
-
-					return new_dib;
 				}
+
+				return new_dib;
 			}
 				
 			case 8:
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+				for (int rows = 0; rows < height; rows++) {
+					FreeImage_ConvertLine8To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
 
-				if (new_dib != NULL) {
-					for (int rows = 0; rows < height; rows++) {
-						FreeImage_ConvertLine8To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
-
-						if (FreeImage_IsTransparent(dib)) {
-							MapTransparentTableToAlpha8((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
-						}
+					if (FreeImage_IsTransparent(dib)) {
+						MapTransparentTableToAlpha8((RGBQUAD *)FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib), width);
 					}
-
-					return new_dib;
 				}
+
+				return new_dib;
 			}
 
 			case 16:
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
-
-				if (new_dib != NULL) {
-					for (int rows = 0; rows < height; rows++) {
-						if ((FreeImage_GetRedMask(dib) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dib) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dib) == FI16_565_BLUE_MASK)) {
-							FreeImage_ConvertLine16To32_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-						} else {
-							// includes case where all the masks are 0
-							FreeImage_ConvertLine16To32_555(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-						}
+				for (int rows = 0; rows < height; rows++) {
+					if ((FreeImage_GetRedMask(dib) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dib) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dib) == FI16_565_BLUE_MASK)) {
+						FreeImage_ConvertLine16To32_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
+					} else {
+						// includes case where all the masks are 0
+						FreeImage_ConvertLine16To32_555(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
 					}
 				}
 
@@ -253,64 +250,68 @@ FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
 
 			case 24:
 			{
-				FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
-
-				if (new_dib != NULL) {
-					for (int rows = 0; rows < height; rows++) {
-						FreeImage_ConvertLine24To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-					}
+				for (int rows = 0; rows < height; rows++) {
+					FreeImage_ConvertLine24To32(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
 				}
+
 				return new_dib;
 			}
-
-			case 32:
-				return FreeImage_Clone(dib);
 		}
 
 	} else if(image_type == FIT_RGB16) {
 		FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+		if(new_dib == NULL) {
+			return NULL;
+		}
 
-		if (new_dib != NULL) {
-			unsigned src_pitch = FreeImage_GetPitch(dib);
-			unsigned dst_pitch = FreeImage_GetPitch(new_dib);
-			BYTE *src_bits = FreeImage_GetBits(dib);
-			BYTE *dst_bits = FreeImage_GetBits(new_dib);
-			for (int rows = 0; rows < height; rows++) {
-				FIRGB16 *src_pixel = (FIRGB16*)src_bits;
-				RGBQUAD *dst_pixel = (RGBQUAD*)dst_bits;
-				for(int cols = 0; cols < width; cols++) {
-					dst_pixel[cols].rgbRed		= (BYTE)(src_pixel[cols].red   >> 8);
-					dst_pixel[cols].rgbGreen	= (BYTE)(src_pixel[cols].green >> 8);
-					dst_pixel[cols].rgbBlue		= (BYTE)(src_pixel[cols].blue  >> 8);
-					dst_pixel[cols].rgbReserved = (BYTE)0xFF;
-				}
-				src_bits += src_pitch;
-				dst_bits += dst_pitch;
+		// copy metadata from src to dst
+		FreeImage_CloneMetadata(new_dib, dib);
+
+		const unsigned src_pitch = FreeImage_GetPitch(dib);
+		const unsigned dst_pitch = FreeImage_GetPitch(new_dib);
+		const BYTE *src_bits = FreeImage_GetBits(dib);
+		BYTE *dst_bits = FreeImage_GetBits(new_dib);
+		for (int rows = 0; rows < height; rows++) {
+			const FIRGB16 *src_pixel = (FIRGB16*)src_bits;
+			RGBQUAD *dst_pixel = (RGBQUAD*)dst_bits;
+			for(int cols = 0; cols < width; cols++) {
+				dst_pixel[cols].rgbRed		= (BYTE)(src_pixel[cols].red   >> 8);
+				dst_pixel[cols].rgbGreen	= (BYTE)(src_pixel[cols].green >> 8);
+				dst_pixel[cols].rgbBlue		= (BYTE)(src_pixel[cols].blue  >> 8);
+				dst_pixel[cols].rgbReserved = (BYTE)0xFF;
 			}
-		}				
+			src_bits += src_pitch;
+			dst_bits += dst_pitch;
+		}
+
 		return new_dib;
 
 	} else if(image_type == FIT_RGBA16) {
 		FIBITMAP *new_dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+		if(new_dib == NULL) {
+			return NULL;
+		}
 
-		if (new_dib != NULL) {
-			unsigned src_pitch = FreeImage_GetPitch(dib);
-			unsigned dst_pitch = FreeImage_GetPitch(new_dib);
-			BYTE *src_bits = FreeImage_GetBits(dib);
-			BYTE *dst_bits = FreeImage_GetBits(new_dib);
-			for (int rows = 0; rows < height; rows++) {
-				FIRGBA16 *src_pixel = (FIRGBA16*)src_bits;
-				RGBQUAD *dst_pixel = (RGBQUAD*)dst_bits;
-				for(int cols = 0; cols < width; cols++) {
-					dst_pixel[cols].rgbRed		= (BYTE)(src_pixel[cols].red   >> 8);
-					dst_pixel[cols].rgbGreen	= (BYTE)(src_pixel[cols].green >> 8);
-					dst_pixel[cols].rgbBlue		= (BYTE)(src_pixel[cols].blue  >> 8);
-					dst_pixel[cols].rgbReserved = (BYTE)(src_pixel[cols].alpha >> 8);
-				}
-				src_bits += src_pitch;
-				dst_bits += dst_pitch;
+		// copy metadata from src to dst
+		FreeImage_CloneMetadata(new_dib, dib);
+
+		const unsigned src_pitch = FreeImage_GetPitch(dib);
+		const unsigned dst_pitch = FreeImage_GetPitch(new_dib);
+		const BYTE *src_bits = FreeImage_GetBits(dib);
+		BYTE *dst_bits = FreeImage_GetBits(new_dib);
+		for (int rows = 0; rows < height; rows++) {
+			const FIRGBA16 *src_pixel = (FIRGBA16*)src_bits;
+			RGBQUAD *dst_pixel = (RGBQUAD*)dst_bits;
+			for(int cols = 0; cols < width; cols++) {
+				dst_pixel[cols].rgbRed		= (BYTE)(src_pixel[cols].red   >> 8);
+				dst_pixel[cols].rgbGreen	= (BYTE)(src_pixel[cols].green >> 8);
+				dst_pixel[cols].rgbBlue		= (BYTE)(src_pixel[cols].blue  >> 8);
+				dst_pixel[cols].rgbReserved = (BYTE)(src_pixel[cols].alpha >> 8);
 			}
-		}				
+			src_bits += src_pitch;
+			dst_bits += dst_pitch;
+		}		
+
 		return new_dib;
 	}
 	

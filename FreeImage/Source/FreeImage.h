@@ -47,7 +47,7 @@
 // Version information ------------------------------------------------------
 
 #define FREEIMAGE_MAJOR_VERSION   3
-#define FREEIMAGE_MINOR_VERSION   10
+#define FREEIMAGE_MINOR_VERSION   11
 #define FREEIMAGE_RELEASE_SERIAL  0
 
 // Compiler options ---------------------------------------------------------
@@ -994,6 +994,7 @@ DLL_API BOOL DLL_CALLCONV FreeImage_GetMetadata(FREE_IMAGE_MDMODEL model, FIBITM
 
 // helpers
 DLL_API unsigned DLL_CALLCONV FreeImage_GetMetadataCount(FREE_IMAGE_MDMODEL model, FIBITMAP *dib);
+DLL_API BOOL DLL_CALLCONV FreeImage_CloneMetadata(FIBITMAP *dst, FIBITMAP *src);
 
 // tag to C string conversion
 DLL_API const char* DLL_CALLCONV FreeImage_TagToString(FREE_IMAGE_MDMODEL model, FITAG *tag, char *Make FI_DEFAULT(NULL));

@@ -47,7 +47,7 @@ static FIBITMAP* GaussianLevel5x5(FIBITMAP *dib) {
 	float *src_pixel, *dst_pixel;
 
 	try {
-		FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+		const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 		if(image_type != FIT_FLOAT) throw(1);
 
 		width = FreeImage_GetWidth(dib);
@@ -156,7 +156,7 @@ static FIBITMAP* GradientLevel(FIBITMAP *H, float *avgGrad, int k) {
 	FIBITMAP *G = NULL;
 
 	try {
-		FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(H);
+		const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(H);
 		if(image_type != FIT_FLOAT) throw(1);
 
 		width = FreeImage_GetWidth(H);
@@ -335,7 +335,7 @@ static FIBITMAP* Divergence(FIBITMAP *H, FIBITMAP *PHI) {
 	float *phi, *h, *gx, *gy, *divg;
 
 	try {
-		FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(H);
+		const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(H);
 		if(image_type != FIT_FLOAT) throw(1);
 
 		width = FreeImage_GetWidth(H);
@@ -672,6 +672,9 @@ FreeImage_TmoFattal02(FIBITMAP *dib, double color_saturation, double attenuation
 		// clean-up and return
 		FreeImage_Unload(src); src = NULL;
 
+		// copy metadata from src to dst
+		FreeImage_CloneMetadata(dst, dib);
+		
 		return dst;
 
 	} catch(int) {

@@ -65,11 +65,11 @@ ToneMappingReinhard05(FIBITMAP *dib, FIBITMAP *Y, float f, float m, float a, flo
     if(a < 0)  a = 0;  if(a > 1) a = 1;
     if(c < 0)  c = 0;  if(c > 1) c = 1;
 
-	unsigned width  = FreeImage_GetWidth(dib);
-	unsigned height = FreeImage_GetHeight(dib);
+	const unsigned width  = FreeImage_GetWidth(dib);
+	const unsigned height = FreeImage_GetHeight(dib);
 
-	unsigned dib_pitch  = FreeImage_GetPitch(dib);
-	unsigned y_pitch    = FreeImage_GetPitch(Y);
+	const unsigned dib_pitch  = FreeImage_GetPitch(dib);
+	const unsigned y_pitch    = FreeImage_GetPitch(Y);
 
 	int i;
 	unsigned x, y;
@@ -134,7 +134,7 @@ ToneMappingReinhard05(FIBITMAP *dib, FIBITMAP *Y, float f, float m, float a, flo
 			// next line
 			bits += dib_pitch;
 		}
-		float image_size = (float)width * height;
+		const float image_size = (float)width * height;
 		for(i = 0; i < 3; i++) {
 			Cav[i] /= image_size;
 		}
@@ -142,7 +142,7 @@ ToneMappingReinhard05(FIBITMAP *dib, FIBITMAP *Y, float f, float m, float a, flo
 		// perform tone mapping
 
 		for(y = 0; y < height; y++) {
-			float *Y     = (float*)Ybits;
+			const float *Y     = (float*)Ybits;
 			float *color = (float*)bits;
 
 			for(x = 0; x < width; x++) {
@@ -231,6 +231,9 @@ FreeImage_TmoReinhard05(FIBITMAP *src, double intensity, double contrast) {
 
 	// clean-up and return
 	FreeImage_Unload(dib);
+
+	// copy metadata from src to dst
+	FreeImage_CloneMetadata(dst, src);
 
 	return dst;
 }

@@ -79,6 +79,9 @@ FreeImage_GetChannel(FIBITMAP *src, FREE_IMAGE_COLOR_CHANNEL channel) {
 			}
 		}
 
+		// copy metadata from src to dst
+		FreeImage_CloneMetadata(dst, src);
+		
 		return dst;
 	}
 
@@ -220,6 +223,9 @@ FreeImage_GetComplexChannel(FIBITMAP *src, FREE_IMAGE_COLOR_CHANNEL channel) {
 		}
 	}
 
+	// copy metadata from src to dst
+	FreeImage_CloneMetadata(dst, src);
+	
 	return dst;
 }
 
@@ -239,8 +245,8 @@ FreeImage_SetComplexChannel(FIBITMAP *dst, FIBITMAP *src, FREE_IMAGE_COLOR_CHANN
 	if(!src || !dst) return FALSE;
 
 	// src image should be of type FIT_DOUBLE, dst image should be of type FIT_COMPLEX
-	FREE_IMAGE_TYPE src_type = FreeImage_GetImageType(src);
-	FREE_IMAGE_TYPE dst_type = FreeImage_GetImageType(dst);
+	const FREE_IMAGE_TYPE src_type = FreeImage_GetImageType(src);
+	const FREE_IMAGE_TYPE dst_type = FreeImage_GetImageType(dst);
 	if((src_type != FIT_DOUBLE) || (dst_type != FIT_COMPLEX))
 		return FALSE;
 

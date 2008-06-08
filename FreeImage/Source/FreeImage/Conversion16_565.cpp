@@ -115,100 +115,94 @@ FreeImage_ConvertLine32To16_565(BYTE *target, BYTE *source, int width_in_pixels)
 
 FIBITMAP * DLL_CALLCONV
 FreeImage_ConvertTo16Bits565(FIBITMAP *dib) {
-	if(!dib) return NULL;
+	if(!dib || (FreeImage_GetImageType(dib) != FIT_BITMAP)) return NULL;
 
-	int width = FreeImage_GetWidth(dib);
-	int height = FreeImage_GetHeight(dib);
+	const int width = FreeImage_GetWidth(dib);
+	const int height = FreeImage_GetHeight(dib);
+	const int bpp = FreeImage_GetBPP(dib);
 
-	switch (FreeImage_GetBPP(dib)) {
-		case 1 :
-		{
+	if(bpp == 16) {
+		if ((FreeImage_GetRedMask(dib) == FI16_555_RED_MASK) && (FreeImage_GetGreenMask(dib) == FI16_555_GREEN_MASK) && (FreeImage_GetBlueMask(dib) == FI16_555_BLUE_MASK)) {
+			// RGB 555
 			FIBITMAP *new_dib = FreeImage_Allocate(width, height, 16, FI16_565_RED_MASK, FI16_565_GREEN_MASK, FI16_565_BLUE_MASK);
+			if(new_dib == NULL) {
+				return NULL;
+			}
+			for (int rows = 0; rows < height; rows++) {
+				FreeImage_ConvertLine16_555_To16_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
+			}
 
-			if (new_dib) {
-				for (int rows = 0; rows < height; rows++)
+			// copy metadata from src to dst
+			FreeImage_CloneMetadata(new_dib, dib);
+
+			return new_dib;
+		} else {
+			// RGB 565
+			return FreeImage_Clone(dib);
+		}
+	}
+	else {
+		// other bpp cases => convert to RGB 565
+		FIBITMAP *new_dib = FreeImage_Allocate(width, height, 16, FI16_565_RED_MASK, FI16_565_GREEN_MASK, FI16_565_BLUE_MASK);
+		if(new_dib == NULL) {
+			return NULL;
+		}
+
+		// copy metadata from src to dst
+		FreeImage_CloneMetadata(new_dib, dib);
+
+		switch (bpp) {
+			case 1 :
+			{
+				for (int rows = 0; rows < height; rows++) {
 					FreeImage_ConvertLine1To16_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
-									
+				}
+
 				return new_dib;
 			}
 
-			break;
-		}
-
-		case 4 :
-		{
-			FIBITMAP *new_dib = FreeImage_Allocate(width, height, 16, FI16_565_RED_MASK, FI16_565_GREEN_MASK, FI16_565_BLUE_MASK);
-
-			if (new_dib) {
-				for (int rows = 0; rows < height; rows++)
+			case 4 :
+			{
+				for (int rows = 0; rows < height; rows++) {
 					FreeImage_ConvertLine4To16_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
-				
+				}
+
 				return new_dib;
 			}
 
-			break;
-		}
-
-		case 8 :
-		{
-			FIBITMAP *new_dib = FreeImage_Allocate(width, height, 16, FI16_565_RED_MASK, FI16_565_GREEN_MASK, FI16_565_BLUE_MASK);
-
-			if (new_dib) {
-				for (int rows = 0; rows < height; rows++)
+			case 8 :
+			{
+				for (int rows = 0; rows < height; rows++) {
 					FreeImage_ConvertLine8To16_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width, FreeImage_GetPalette(dib));
-				
+				}
+
 				return new_dib;
 			}
 
-			break;
-		}
-
-		case 16 :
-		{
-			if ((FreeImage_GetRedMask(dib) == FI16_565_RED_MASK) && (FreeImage_GetGreenMask(dib) == FI16_565_GREEN_MASK) && (FreeImage_GetBlueMask(dib) == FI16_565_BLUE_MASK)) {
-				break; //jump down to the clone line
-			}
-
-			FIBITMAP *new_dib = FreeImage_Allocate(width, height, 16, FI16_565_RED_MASK, FI16_565_GREEN_MASK, FI16_565_BLUE_MASK);
-
-			if (new_dib) {
-				for (int rows = 0; rows < height; rows++)
-					FreeImage_ConvertLine16_555_To16_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-				
-				return new_dib;
-			}
-
-			break;
-		}
-
-		case 24 :
-		{
-			FIBITMAP *new_dib = FreeImage_Allocate(width, height, 16, FI16_565_RED_MASK, FI16_565_GREEN_MASK, FI16_565_BLUE_MASK);
-
-			if (new_dib) {
-				for (int rows = 0; rows < height; rows++)
+			case 24 :
+			{
+				for (int rows = 0; rows < height; rows++) {
 					FreeImage_ConvertLine24To16_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-				
+				}
+
 				return new_dib;
 			}
 
-			break;
-		}
-
-		case 32 :
-		{
-			FIBITMAP *new_dib = FreeImage_Allocate(width, height, 16, FI16_565_RED_MASK, FI16_565_GREEN_MASK, FI16_565_BLUE_MASK);
-
-			if (new_dib) {
-				for (int rows = 0; rows < height; rows++)
+			case 32 :
+			{
+				for (int rows = 0; rows < height; rows++) {
 					FreeImage_ConvertLine32To16_565(FreeImage_GetScanLine(new_dib, rows), FreeImage_GetScanLine(dib, rows), width);
-				
+				}
+
 				return new_dib;
 			}
 
-			break;
+			default :
+				// unreachable code ...
+				FreeImage_Unload(new_dib);
+				break;
 		}
 	}
 
-	return FreeImage_Clone(dib);
+	return NULL;
 }

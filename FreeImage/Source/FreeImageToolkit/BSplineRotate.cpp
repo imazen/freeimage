@@ -657,7 +657,12 @@ FreeImage_RotateEx(FIBITMAP *dib, double angle, double x_shift, double y_shift, 
 		bpp = FreeImage_GetBPP(dib);
 
 		if(bpp == 8) {
-			return Rotate8Bit(dib, angle, x_shift, y_shift, x_origin, y_origin, ROTATE_CUBIC, use_mask);
+			FIBITMAP *dst_8 = Rotate8Bit(dib, angle, x_shift, y_shift, x_origin, y_origin, ROTATE_CUBIC, use_mask);
+			if(dst_8) {
+				// copy metadata from src to dst
+				FreeImage_CloneMetadata(dst_8, dib);
+			}
+			return dst_8;
 		}
 		if((bpp == 24) || (bpp == 32)) {
 			// allocate dst image
@@ -708,6 +713,9 @@ FreeImage_RotateEx(FIBITMAP *dib, double angle, double x_shift, double y_shift, 
 
 			FreeImage_Unload(src8);
 
+			// copy metadata from src to dst
+			FreeImage_CloneMetadata(dst, dib);
+			
 			return dst;
 		}
 	} catch(int) {
