@@ -356,7 +356,7 @@ const
   FAXG3_DEFAULT       = 0;
   GIF_DEFAULT         = 0;
   ICO_DEFAULT         = 0;
-  ICO_MAKEALPHA       = 0;     // convert to 32bpp and create an alpha channel from the AND-mask when loading
+  ICO_MAKEALPHA       = 1;     // convert to 32bpp and create an alpha channel from the AND-mask when loading
   IFF_DEFAULT         = 0;
   JPEG_DEFAULT        = 0;
   JPEG_FAST           = 1;
