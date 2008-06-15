@@ -77,11 +77,10 @@ static DWORD
 CalculateImageSize(FIBITMAP* icon_dib) {
 	DWORD dwNumBytes = 0;
 
-	BITMAPINFOHEADER *bmih = FreeImage_GetInfoHeader(icon_dib);
-	int colors		= FreeImage_GetColorsUsed(icon_dib);
-	int width		= bmih->biWidth;
-	int height		= bmih->biHeight;
-	int pitch		= FreeImage_GetPitch(icon_dib);
+	unsigned colors		= FreeImage_GetColorsUsed(icon_dib);
+	unsigned width		= FreeImage_GetWidth(icon_dib);
+	unsigned height		= FreeImage_GetHeight(icon_dib);
+	unsigned pitch		= FreeImage_GetPitch(icon_dib);
 
 	dwNumBytes = sizeof( BITMAPINFOHEADER );	// header
 	dwNumBytes += colors * sizeof(RGBQUAD);		// palette
@@ -270,7 +269,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		page = 0;
 
 	if (handle != NULL) {
-		FIBITMAP *dib;
+		FIBITMAP *dib = NULL;
 
 		// get the icon header
 		ICONHEADER *icon_header = (ICONHEADER*)data;
@@ -289,6 +288,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// seek to the start of the bitmap data for the icon
 				io->seek_proc(handle, 0, SEEK_SET);
 				io->seek_proc(handle, icon_list[page].dwImageOffset, SEEK_CUR);
+
+				// Vista icon support
+				if((icon_list[page].bWidth == 0) && (icon_list[page].bHeight == 0)) {
+					dib = FreeImage_LoadFromHandle(FIF_PNG, io, handle, 0);
+					free(icon_list);
+					return dib;
+				}
+
 				free(icon_list);
 
 				// load the BITMAPINFOHEADER
@@ -388,6 +395,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 
 				return (FIBITMAP *)dib;
+
 			} else {
 				free(icon_list);
 				FreeImage_OutputMessageProc(s_format_id, "Page doesn't exist");
