@@ -1009,18 +1009,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// step 5c: handle metrices
 
-			BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-
 			if (cinfo.density_unit == 1) {
 				// dots/inch
-
-				pInfoHeader->biXPelsPerMeter = (int) (((float)cinfo.X_density) / 0.0254000 + 0.5);
-				pInfoHeader->biYPelsPerMeter = (int) (((float)cinfo.Y_density) / 0.0254000 + 0.5);
+				FreeImage_SetDotsPerMeterX(dib, (unsigned) (((float)cinfo.X_density) / 0.0254000 + 0.5));
+				FreeImage_SetDotsPerMeterY(dib, (unsigned) (((float)cinfo.Y_density) / 0.0254000 + 0.5));
 			} else if (cinfo.density_unit == 2) {
 				// dots/cm
-
-				pInfoHeader->biXPelsPerMeter = cinfo.X_density * 100;
-				pInfoHeader->biYPelsPerMeter = cinfo.Y_density * 100;
+				FreeImage_SetDotsPerMeterX(dib, (unsigned) (cinfo.X_density * 100));
+				FreeImage_SetDotsPerMeterY(dib, (unsigned) (cinfo.Y_density * 100));
 			}
 
 			// step 6a: while (scan lines remain to be read) jpeg_read_scanlines(...);

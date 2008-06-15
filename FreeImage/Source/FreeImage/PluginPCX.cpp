@@ -351,9 +351,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// metrics handling code
 
-			BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-			pInfoHeader->biXPelsPerMeter = (int) (((float)header.hdpi) / 0.0254000 + 0.5);
-			pInfoHeader->biYPelsPerMeter = (int) (((float)header.vdpi) / 0.0254000 + 0.5);
+			FreeImage_SetDotsPerMeterX(dib, (unsigned) (((float)header.hdpi) / 0.0254000 + 0.5));
+			FreeImage_SetDotsPerMeterY(dib, (unsigned) (((float)header.vdpi) / 0.0254000 + 0.5));
 
 			// Set up the palette if needed
 			// ----------------------------
