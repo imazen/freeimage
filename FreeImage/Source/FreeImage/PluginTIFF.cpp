@@ -323,15 +323,12 @@ ReadResolution(TIFF *tiff, FIBITMAP *dib) {
 	if (resUnit == RESUNIT_NONE && fResX > 0.0 && fResY > 0.0) {
 		resUnit = RESUNIT_INCH;
 	}
-
-	BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-
 	if (resUnit == RESUNIT_INCH) {
-		pInfoHeader->biXPelsPerMeter = (int) (fResX/0.0254000 + 0.5);
-		pInfoHeader->biYPelsPerMeter = (int) (fResY/0.0254000 + 0.5);
+		FreeImage_SetDotsPerMeterX(dib, (unsigned) (fResX/0.0254000 + 0.5));
+		FreeImage_SetDotsPerMeterY(dib, (unsigned) (fResY/0.0254000 + 0.5));
 	} else if(resUnit == RESUNIT_CENTIMETER) {
-		pInfoHeader->biXPelsPerMeter = (int) (fResX*100.0 + 0.5);
-		pInfoHeader->biYPelsPerMeter = (int) (fResY*100.0 + 0.5);
+		FreeImage_SetDotsPerMeterX(dib, (unsigned) (fResX*100.0 + 0.5));
+		FreeImage_SetDotsPerMeterY(dib, (unsigned) (fResY*100.0 + 0.5));
 	}
 }
 
@@ -342,14 +339,12 @@ static void
 WriteResolution(TIFF *tiff, FIBITMAP *dib) {
 	double res;
 
-	BITMAPINFOHEADER *pInfoHeader = FreeImage_GetInfoHeader(dib);
-
 	TIFFSetField(tiff, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
 
-	res = (unsigned long) (0.5 + 0.0254 * pInfoHeader->biXPelsPerMeter); // rounded ! (99,9998 -> 100)
+	res = (unsigned long) (0.5 + 0.0254 * FreeImage_GetDotsPerMeterX(dib));
 	TIFFSetField(tiff, TIFFTAG_XRESOLUTION, res);
 
-	res = (unsigned long) (0.5 + 0.0254 * pInfoHeader->biYPelsPerMeter);
+	res = (unsigned long) (0.5 + 0.0254 * FreeImage_GetDotsPerMeterY(dib));
 	TIFFSetField(tiff, TIFFTAG_YRESOLUTION, res);
 }
 
@@ -1172,6 +1167,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if (!tif || !TIFFSetDirectory(tif, (tdir_t)page))
 					throw "Error encountered while opening TIFF file";			
 
+			// first, get the photometric, the compression and basic metadata
+			// ---------------------------------------------------------------------------------
+
 			TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
 			TIFFGetField(tif, TIFFTAG_COMPRESSION, &compression);
 			TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
@@ -1211,6 +1209,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// ---------------------------------------------------------------------------------
 
 			if(loadMethod == LoadAsRBGA) {
+				// ---------------------------------------------------------------------------------
+				// RGB[A] loading using the TIFFReadRGBAImage() API
+				// ---------------------------------------------------------------------------------
+
 				BOOL has_alpha = FALSE;   
 
 				// Read the whole image into one big RGBA buffer and then 
@@ -1303,10 +1305,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				FreeImage_SetTransparent(dib, has_alpha);
 
 			} else if(loadMethod == LoadAs8BitTrns) {
+				// ---------------------------------------------------------------------------------
+				// 8-bit + 8-bit alpha layer loading
+				// ---------------------------------------------------------------------------------
+
 				// create a new 8-bit DIB
 				dib = CreateImageType(image_type, width, height, bitspersample, samplesperpixel);
 				if (dib == NULL) {
-					throw "No space for DIB image";
+					throw FI_MSG_ERROR_MEMORY;
 				}
 
 				// fill in the resolution (english or universal)
@@ -1340,6 +1346,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if(planar_config == PLANARCONFIG_CONTIG) {
 
 					BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
+					if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
+
 
 					for (uint32 y = 0; y < height; y += rowsperstrip) {
 						int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
@@ -1415,6 +1423,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				FreeImage_SetTransparent(dib, TRUE);
 
 			} else if(loadMethod == LoadAsCMYK) {
+				// ---------------------------------------------------------------------------------
+				// CMYK loading
+				// ---------------------------------------------------------------------------------
+
 				BOOL has_alpha = FALSE;    
 
 				// At this place, samplesperpixel could be > 4, esp. when a CMYK(A) format
@@ -1431,7 +1443,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// create a new DIB
 				dib = CreateImageType(image_type, width, height, bitspersample, spp);
 				if (dib == NULL) {
-					throw "No space for DIB image";
+					throw FI_MSG_ERROR_MEMORY;
 				}
 
 				// fill in the resolution (english or universal)
@@ -1452,6 +1464,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				if(planar_config == PLANARCONFIG_CONTIG) {
 					BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
+					if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
 
 					for (uint32 y = 0; y < height; y += rowsperstrip) {
 						int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
@@ -1505,6 +1518,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					BYTE *channel;
 					tsize_t stripsize = TIFFStripSize(tif) * sizeof(BYTE);
 					BYTE *buf = (BYTE*)malloc(samplesperpixel * stripsize);
+					if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
 
 					for (uint32 y = 0; y < height; y += rowsperstrip) {
 						int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
@@ -1581,10 +1595,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				FreeImage_SetTransparent(dib, has_alpha);
 
 			} else if(loadMethod == LoadAsGenericStrip) {
+				// ---------------------------------------------------------------------------------
+				// Generic loading
+				// ---------------------------------------------------------------------------------
+
 				// create a new DIB
 				dib = CreateImageType(image_type, width, height, bitspersample, samplesperpixel);
 				if (dib == NULL) {
-					throw "No space for DIB image";
+					throw FI_MSG_ERROR_MEMORY;
 				}
 
 				// fill in the resolution (english or universal)
@@ -1610,6 +1628,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if(planar_config == PLANARCONFIG_CONTIG) {
 					BOOL bThrowMessage = FALSE;
 					BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
+					if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
 
 					for (uint32 y = 0; y < height; y += rowsperstrip) {
 						int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
@@ -1642,6 +1661,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					BYTE *channel;
 					tsize_t stripsize = TIFFStripSize(tif) * sizeof(BYTE);
 					BYTE *buf = (BYTE*)malloc(samplesperpixel * stripsize);
+					if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
 					
 					int bytespersample = bitspersample / 8;
 					int bytesperpixel = bytespersample * samplesperpixel;
@@ -1688,13 +1708,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 
 			} else if(loadMethod == LoadAsTiled) {
+				// ---------------------------------------------------------------------------------
+				// Tiled image loading
+				// ---------------------------------------------------------------------------------
+
 				uint32 tileWidth, tileHeight;
 				uint32 src_line = 0;
 
 				// create a new DIB
 				dib = CreateImageType(image_type, width, height, bitspersample, samplesperpixel);
 				if (dib == NULL) {
-					throw "No space for DIB image";
+					throw FI_MSG_ERROR_MEMORY;
 				}
 
 				// fill in the resolution (english or universal)
@@ -1770,6 +1794,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				free(tileBuffer);
 
 			} else {
+				// ---------------------------------------------------------------------------------
+				// Unknown or unsupported format
+				// ---------------------------------------------------------------------------------
+
 				throw "Unknown format";
 			}
 
@@ -1920,6 +1948,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			RGBQUAD *pal = FreeImage_GetPalette(dib);
 
 			r = (uint16 *) _TIFFmalloc(sizeof(uint16) * 3 * nColors);
+			if(r == NULL) throw FI_MSG_ERROR_MEMORY;
 			g = r + nColors;
 			b = g + nColors;
 
@@ -1964,6 +1993,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 						BYTE *trns = FreeImage_GetTransparencyTable(dib);
 
 						BYTE *buffer = (BYTE *)malloc(2 * width * sizeof(BYTE));
+						if(buffer == NULL) throw FI_MSG_ERROR_MEMORY;
 
 						for (y = height - 1; y >= 0; y--) {
 							BYTE *bits = FreeImage_GetScanLine(dib, y);
@@ -1990,6 +2020,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 					else {
 						// other cases
 						BYTE *buffer = (BYTE *)malloc(pitch * sizeof(BYTE));
+						if(buffer == NULL) throw FI_MSG_ERROR_MEMORY;
 						for (y = 0; y < height; y++) {
 							// get a copy of the scanline
 							memcpy(buffer, FreeImage_GetScanLine(dib, height - y - 1), pitch);
@@ -2006,6 +2037,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				case 32:
 				{
 					BYTE *buffer = (BYTE *)malloc(pitch * sizeof(BYTE));
+					if(buffer == NULL) throw FI_MSG_ERROR_MEMORY;
 
 					for (y = 0; y < height; y++) {
 						// get a copy of the scanline
@@ -2046,6 +2078,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				case 128:
 				{
 					BYTE *buffer = (BYTE *)malloc(pitch * sizeof(BYTE));
+					if(buffer == NULL) throw FI_MSG_ERROR_MEMORY;
+
 					for (y = 0; y < height; y++) {
 						// get a copy of the scanline
 						memcpy(buffer, FreeImage_GetScanLine(dib, height - y - 1), pitch);
