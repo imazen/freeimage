@@ -38,15 +38,20 @@ using System.IO;
 
 namespace FreeImageAPI
 {
-	// As mentioned above FreeImage can load bitmaps from arbitrary sources.
-	// .NET works with different streams like File- or NetConnection-strams.
-	// NetConnection streams, which are used to load files from web servers,
-	// for example cannot seek.
-	// But FreeImage frequently uses the seek operation when loading bitmaps.
-	// StreamWrapper wrapps a stream and makes it seekable by caching all read
-	// data into an internal MemoryStream to jump back- and forward.
-	// StreamWapper is for internal use and only for loading from streams.
-
+	/// <summary>
+	/// Class wrapping streams, implementing a buffer for read data,
+	/// so that seek operations can be made.
+	/// </summary>
+	/// <remarks>
+	/// FreeImage can load bitmaps from arbitrary sources.
+	/// .NET works with different streams like File- or NetConnection-strams.
+	/// NetConnection streams, which are used to load files from web servers,
+	/// for example cannot seek.
+	/// But FreeImage frequently uses the seek operation when loading bitmaps.
+	/// <b>StreamWrapper</b> wrapps a stream and makes it seekable by caching all read
+	/// data into an internal MemoryStream to jump back- and forward.
+	/// StreamWapper is for internal use and only for loading from streams.
+	/// </remarks>
 	internal class StreamWrapper : Stream
 	{
 		/// <summary>
@@ -71,7 +76,7 @@ namespace FreeImageAPI
 		private bool disposed = false;
 
 		/// <summary>
-		/// Creates a new StreamWrapper
+		/// Initializes a new instance based on the specified <see cref="Stream"/>.
 		/// </summary>
 		/// <param name="stream">The stream to wrap.</param>
 		/// <param name="blocking">When true the wrapper always tries to read the requested
@@ -86,6 +91,9 @@ namespace FreeImageAPI
 			this.blocking = blocking;
 		}
 
+		/// <summary>
+		/// Releases all resources used by the instance.
+		/// </summary>
 		~StreamWrapper()
 		{
 			Dispose(false);
@@ -273,7 +281,10 @@ namespace FreeImageAPI
 				disposed = true;
 				if (disposing)
 				{
-					if (memoryStream != null) memoryStream.Dispose();
+					if (memoryStream != null)
+					{
+						memoryStream.Dispose();
+					}
 				}
 			}
 		}

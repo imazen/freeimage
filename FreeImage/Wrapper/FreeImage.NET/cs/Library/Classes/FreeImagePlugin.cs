@@ -3,14 +3,14 @@ using System;
 namespace FreeImageAPI
 {
 	/// <summary>
-	/// Class wrapping a FreeImage format.
+	/// Class representing a FreeImage format.
 	/// </summary>
 	public sealed class FreeImagePlugin
 	{
 		private readonly FREE_IMAGE_FORMAT fif;
 
 		/// <summary>
-		/// Creates a new instance of this class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="fif">The FreeImage format to wrap.</param>
 		internal FreeImagePlugin(FREE_IMAGE_FORMAT fif)
@@ -188,9 +188,10 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Gets a descriptive string that describes the bitmap formats
+		/// this plugin can read and/or write.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>A descriptive string that describes the bitmap formats.</returns>
 		public override string ToString()
 		{
 			return Description;

@@ -36,12 +36,12 @@
 namespace FreeImageAPI
 {
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_ANIMATION.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_ANIMATION"/>.
 	/// </summary>
 	public class MDM_ANIMATION : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_ANIMATION(FIBITMAP dib) : base(dib) { }
@@ -56,12 +56,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_COMMENTS.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_COMMENTS"/>.
 	/// </summary>
 	public class MDM_COMMENTS : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_COMMENTS(FIBITMAP dib) : base(dib) { }
@@ -76,12 +76,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_CUSTOM.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_CUSTOM"/>.
 	/// </summary>
 	public class MDM_CUSTOM : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_CUSTOM(FIBITMAP dib) : base(dib) { }
@@ -96,12 +96,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_EXIF_EXIF.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF"/>.
 	/// </summary>
 	public class MDM_EXIF_EXIF : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_EXIF_EXIF(FIBITMAP dib) : base(dib) { }
@@ -116,12 +116,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_EXIF_GPS.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_GPS"/>.
 	/// </summary>
 	public class MDM_EXIF_GPS : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_EXIF_GPS(FIBITMAP dib) : base(dib) { }
@@ -136,12 +136,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_EXIF_INTEROP.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_INTEROP"/>.
 	/// </summary>
 	public class MDM_INTEROP : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_INTEROP(FIBITMAP dib) : base(dib) { }
@@ -156,12 +156,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_EXIF_MAIN.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_MAIN"/>.
 	/// </summary>
 	public class MDM_MAIN : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_MAIN(FIBITMAP dib) : base(dib) { }
@@ -176,12 +176,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_EXIF_MAKERNOTE.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_MAKERNOTE"/>.
 	/// </summary>
 	public class MDM_MAKERNOTE : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_MAKERNOTE(FIBITMAP dib) : base(dib) { }
@@ -196,12 +196,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_GEOTIFF.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_GEOTIFF"/>.
 	/// </summary>
 	public class MDM_GEOTIFF : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_GEOTIFF(FIBITMAP dib) : base(dib) { }
@@ -216,12 +216,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_IPTC.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_IPTC"/>.
 	/// </summary>
 	public class MDM_IPTC : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_IPTC(FIBITMAP dib) : base(dib) { }
@@ -236,12 +236,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_NODATA.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_NODATA"/>.
 	/// </summary>
 	public class MDM_NODATA : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_NODATA(FIBITMAP dib) : base(dib) { }
@@ -256,12 +256,12 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// Class that manages the metadata model type FIMD_XMP.
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_XMP"/>.
 	/// </summary>
 	public class MDM_XMP : MetadataModel
 	{
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public MDM_XMP(FIBITMAP dib) : base(dib) { }

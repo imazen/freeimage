@@ -39,10 +39,10 @@ using System.Runtime.InteropServices;
 
 namespace FreeImageAPI
 {
-	// Delegates used by the 'FreeImageIO' structure
+	// Delegates used by the FreeImageIO structure
 
 	/// <summary>
-	/// Delegate for capturing error messages.
+	/// Delegate for capturing FreeImage error messages.
 	/// </summary>
 	/// <param name="fif">The format of the image.</param>
 	/// <param name="message">The errormessage.</param>
@@ -51,19 +51,19 @@ namespace FreeImageAPI
 	public delegate void OutputMessageFunction(FREE_IMAGE_FORMAT fif, string message);
 
 	/// <summary>
-	/// Delegate wrapping the C++ function 'fread'.
+	/// Delegate to the C++ function <b>fread</b>.
 	/// </summary>
 	/// <param name="buffer">Pointer to read from.</param>
 	/// <param name="size">Item size in bytes.</param>
 	/// <param name="count">Maximum number of items to be read.</param>
 	/// <param name="handle">Handle/stream to read from.</param>
-	/// <returns>number of full items actually read,
+	/// <returns>Number of full items actually read,
 	/// which may be less than count if an error occurs or
 	/// if the end of the file is encountered before reaching count.</returns>
 	public delegate uint ReadProc(IntPtr buffer, uint size, uint count, fi_handle handle);
 
 	/// <summary>
-	/// Delegate wrapping the C++ function 'fwrite'.
+	/// Delegate to the C++ function <b>fwrite</b>.
 	/// </summary>
 	/// <param name="buffer">Pointer to data to be written.</param>
 	/// <param name="size">Item size in bytes.</param>
@@ -75,7 +75,7 @@ namespace FreeImageAPI
 	public delegate uint WriteProc(IntPtr buffer, uint size, uint count, fi_handle handle);
 
 	/// <summary>
-	/// Delegate wrapping the C++ function 'fseek'.
+	/// Delegate to the C++ function <b>fseek</b>.
 	/// </summary>
 	/// <param name="handle">Handle/stream to seek in.</param>
 	/// <param name="offset">Number of bytes from origin.</param>
@@ -84,7 +84,7 @@ namespace FreeImageAPI
 	public delegate int SeekProc(fi_handle handle, int offset, SeekOrigin origin);
 
 	/// <summary>
-	/// Delegate wrapping the C++ function 'ftell'.
+	/// Delegate to the C++ function <b>ftell</b>.
 	/// </summary>
 	/// <param name="handle">Handle/stream to retrieve its currents position from.</param>
 	/// <returns>The current position.</returns>
@@ -93,25 +93,25 @@ namespace FreeImageAPI
 	// Delegates used by 'Plugin' structure
 
 	/// <summary>
-	/// Delegate to a function returning a string which describes
+	/// Delegate to a function that returns a string which describes
 	/// the plugins format.
 	/// </summary>
 	public delegate string FormatProc();
 
 	/// <summary>
-	/// Delegate to a function returning a string which contains
+	/// Delegate to a function that returns a string which contains
 	/// a more detailed description.
 	/// </summary>
 	public delegate string DescriptionProc();
 
 	/// <summary>
-	/// Delegate to a function returning a comma seperated list
-	/// of file-extensions the plugin can read or write.
+	/// Delegate to a function that returns a comma seperated list
+	/// of file extensions the plugin can read or write.
 	/// </summary>
 	public delegate string ExtensionListProc();
 
 	/// <summary>
-	/// Delegate to a function returning a regular expression that
+	/// Delegate to a function that returns a regular expression that
 	/// can be used to idientify whether a file can be handled by the plugin.
 	/// </summary>
 	public delegate string RegExprProc();
@@ -127,8 +127,8 @@ namespace FreeImageAPI
 	public delegate void CloseProc(ref FreeImageIO io, fi_handle handle, IntPtr data);
 
 	/// <summary>
-	/// Delegate to a function that returns the number of pages of a multi-paged
-	/// bitmap if the plugin is capable of handling multi-paged bitmaps
+	/// Delegate to a function that returns the number of pages of a multipage
+	/// bitmap if the plugin is capable of handling multipage bitmaps.
 	/// </summary>
 	public delegate int PageCountProc(ref FreeImageIO io, fi_handle handle, IntPtr data);
 
@@ -138,7 +138,7 @@ namespace FreeImageAPI
 	public delegate int PageCapabilityProc(ref FreeImageIO io, fi_handle handle, IntPtr data);
 
 	/// <summary>
-	/// Delegate to a function that loads a bitmap into memory.
+	/// Delegate to a function that loads and decodes a bitmap into memory.
 	/// </summary>
 	public delegate FIBITMAP LoadProc(ref FreeImageIO io, fi_handle handle, int page, int flags, IntPtr data);
 
@@ -148,25 +148,26 @@ namespace FreeImageAPI
 	public delegate bool SaveProc(ref FreeImageIO io, FIBITMAP dib, fi_handle handle, int page, int flags, IntPtr data);
 
 	/// <summary>
-	/// Delegate to a function that validates a bitmap.
+	/// Delegate to a function that determines whether the source defined
+	/// by <param name="io"/> and <param name="handle"/> is a valid image.
 	/// </summary>
 	public delegate bool ValidateProc(ref FreeImageIO io, fi_handle handle);
 
 	/// <summary>
-	/// Delegate to a function returning a string which contains
-	/// a Mime.
+	/// Delegate to a function that returns a string which contains
+	/// the plugin's mime type.
 	/// </summary>
 	public delegate string MimeProc();
 
 	/// <summary>
-	/// Delegate to a function that returns whether the plugin can handle a
-	/// given color depth.
+	/// Delegate to a function that returns whether the plugin can handle the
+	/// specified color depth.
 	/// </summary>
 	public delegate bool SupportsExportBPPProc(int bpp);
 
 	/// <summary>
-	/// Delegate to a function that returns whether the plugin can handle a
-	/// given image type.
+	/// Delegate to a function that returns whether the plugin can handle the
+	/// specified image type.
 	/// </summary>
 	public delegate bool SupportsExportTypeProc(FREE_IMAGE_TYPE type);
 
@@ -174,11 +175,10 @@ namespace FreeImageAPI
 	/// Delegate to a function that returns whether the plugin can handle
 	/// ICC-Profiles.
 	/// </summary>
-	/// <returns></returns>
 	public delegate bool SupportsICCProfilesProc();
 
 	/// <summary>
-	/// Callback used by FreeImage to register plugins.
+	/// Callback function used by FreeImage to register plugins.
 	/// </summary>
 	public delegate void InitProc(ref Plugin plugin, int format_id);
 }

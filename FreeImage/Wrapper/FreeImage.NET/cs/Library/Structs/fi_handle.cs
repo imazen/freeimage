@@ -39,43 +39,46 @@ using System.Runtime.InteropServices;
 
 namespace FreeImageAPI
 {
-	// The 'fi_handle' of FreeImage in C++ is a simple pointer, but in .NET
-	// it's not that simple. This wrapper uses fi_handle in two different ways.
-	//
-	// We implement a new plugin and FreeImage gives us a handle (pointer) that
-	// we can simply pass through to the given functions in a 'FreeImageIO'
-	// structure.
-	// But when we want to use LoadFromhandle or SaveToHandle we need
-	// a fi_handle (that we recieve again in our own functions).
-	// This handle is for example a stream (see LoadFromStream / SaveToStream)
-	// that we want to work with. To know which stream a read/write is meant for
-	// we could use a hash value that the wrapper itself handles or we can
-	// go the unmanaged way of using a handle.
-	// Therefor we use a 'GCHandle' to recieve a unique pointer that we can
-	// convert back into a .NET object.
-	// When the fi_handle instance is no longer needed the instance must be disposed
-	// by the creater manually! It is recommended to use the "using" statement to
-	// be sure the instance is always disposed:
-	//
-	// using (fi_handle handle = new fi_handle(object))
-	// {
-	//     callSomeFunctions(handle);
-	// }
-	//
-	// What does that mean?
-	// If we get a fi_handle from unmanaged code we get a pointer to unmanaged
-	// memory that we do not have to care about, and just pass ist back to FreeImage.
-	// If we have to create a handle our own we use the standard constructur
-	// that fills the IntPtr with an pointer that represents the given object.
-	// With calling 'GetObject' the IntPtr is used to retrieve the original
-	// object we passed through the constructor.
-	//
-	// This way we can implement a fi_handle that works with managed an unmanaged
-	// code.
-
 	/// <summary>
 	/// Wrapper for a custom handle.
 	/// </summary>
+	/// <remarks>
+	/// The <b>fi_handle</b> of FreeImage in C++ is a simple pointer, but in .NET
+	/// it's not that simple. This wrapper uses fi_handle in two different ways.
+	///
+	/// We implement a new plugin and FreeImage gives us a handle (pointer) that
+	/// we can simply pass through to the given functions in a 'FreeImageIO'
+	/// structure.
+	/// But when we want to use LoadFromhandle or SaveToHandle we need
+	/// a fi_handle (that we recieve again in our own functions).
+	/// This handle is for example a stream (see LoadFromStream / SaveToStream)
+	/// that we want to work with. To know which stream a read/write is meant for
+	/// we could use a hash value that the wrapper itself handles or we can
+	/// go the unmanaged way of using a handle.
+	/// Therefor we use a <see cref="GCHandle"/> to recieve a unique pointer that we can
+	/// convert back into a .NET object.
+	/// When the <b>fi_handle</b> instance is no longer needed the instance must be disposed
+	/// by the creater manually! It is recommended to use the <c>using</c> statement to
+	/// be sure the instance is always disposed:
+	/// 
+	/// <code>
+	/// using (fi_handle handle = new fi_handle(object))
+	/// {
+	///     callSomeFunctions(handle);
+	/// }
+	/// </code>
+	/// 
+	/// What does that mean?
+	/// If we get a <b>fi_handle</b> from unmanaged code we get a pointer to unmanaged
+	/// memory that we do not have to care about, and just pass ist back to FreeImage.
+	/// If we have to create a handle our own we use the standard constructur
+	/// that fills the <see cref="IntPtr"/> with an pointer that represents the given object.
+	/// With calling <see cref="GetObject"/> the <see cref="IntPtr"/> is used to retrieve the original
+	/// object we passed through the constructor.
+	///
+	/// This way we can implement a <b>fi_handle</b> that works with managed an unmanaged
+	/// code.
+	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct fi_handle : IComparable, IComparable<fi_handle>, IEquatable<fi_handle>, IDisposable
 	{
@@ -85,11 +88,11 @@ namespace FreeImageAPI
 		public IntPtr handle;
 
 		/// <summary>
-		/// Creates a new fi_handle structure wrapping a managed object.
+		/// Initializes a new instance wrapping a managed object.
 		/// </summary>
 		/// <param name="obj">The object to wrap.</param>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="obj"/> is null.</exception>
+		/// <paramref name="obj"/> is null.</exception>
 		public fi_handle(object obj)
 		{
 			if (obj == null)
@@ -100,110 +103,137 @@ namespace FreeImageAPI
 			handle = GCHandle.ToIntPtr(gch);
 		}
 
-		public static bool operator !=(fi_handle value1, fi_handle value2)
+		/// <summary>
+		/// Tests whether two specified <see cref="fi_handle"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="fi_handle"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(fi_handle left, fi_handle right)
 		{
-			return value1.handle != value2.handle;
+			return (left.handle == right.handle);
 		}
 
-		public static bool operator ==(fi_handle value1, fi_handle value2)
+		/// <summary>
+		/// Tests whether two specified <see cref="fi_handle"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="fi_handle"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(fi_handle left, fi_handle right)
 		{
-			return value1.handle == value2.handle;
+			return (left.handle != right.handle);
 		}
 
 		/// <summary>
 		/// Gets whether the pointer is a null pointer.
 		/// </summary>
-		public bool IsNull { get { return handle == IntPtr.Zero; } }
+		public bool IsNull
+		{
+			get
+			{
+				return (handle == IntPtr.Zero);
+			}
+		}
 
 		/// <summary>
 		/// Returns the object assigned to the handle in case this instance
 		/// was created by managed code.
 		/// </summary>
-		/// <returns>Object assigned to this handle or null on failure.</returns>
+		/// <returns><see cref="Object"/> assigned to this handle or null on failure.</returns>
 		internal object GetObject()
 		{
-			if (handle == IntPtr.Zero)
+			object result = null;
+			if (handle != IntPtr.Zero)
 			{
-				return null;
+				try
+				{
+					result = GCHandle.FromIntPtr(handle).Target;
+				}
+				catch
+				{
+				}
 			}
-			try
-			{
-				return GCHandle.FromIntPtr(handle).Target;
-			}
-			catch
-			{
-				return null;
-			}
+			return result;
 		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="fi_handle"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
-			return String.Format("0x{0:X}", (uint)handle);
+			return handle.ToString();
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="fi_handle"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="fi_handle"/>.</returns>
 		public override int GetHashCode()
 		{
 			return handle.GetHashCode();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Tests whether the specified object is a <see cref="fi_handle"/> structure
+		/// and is equivalent to this <see cref="fi_handle"/> structure.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="fi_handle"/> structure
+		/// equivalent to this <see cref="fi_handle"/> structure; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is fi_handle)
-			{
-				return (((fi_handle)obj).handle == handle);
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is fi_handle)
-			{
-				return CompareTo((fi_handle)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(fi_handle other)
-		{
-			return handle.ToInt64().CompareTo(other.handle.ToInt64());
+			return ((obj is fi_handle) && (this == ((fi_handle)obj)));
 		}
 
 		/// <summary>
 		/// Indicates whether the current object is equal to another object of the same type.
 		/// </summary>
 		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <returns>True if the current object is equal to the other parameter; otherwise, <b>false</b>.</returns>
 		public bool Equals(fi_handle other)
 		{
-			return this == other;
+			return (this == other);
 		}
 
 		/// <summary>
-		/// Frees the GCHandle.
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="fi_handle"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is fi_handle))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((fi_handle)obj);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="fi_handle"/> object.
+		/// </summary>
+		/// <param name="other">A <see cref="fi_handle"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(fi_handle other)
+		{
+			return handle.ToInt64().CompareTo(other.handle.ToInt64());
+		}
+
+		/// <summary>
+		/// Releases all resources used by the instance.
 		/// </summary>
 		public void Dispose()
 		{
