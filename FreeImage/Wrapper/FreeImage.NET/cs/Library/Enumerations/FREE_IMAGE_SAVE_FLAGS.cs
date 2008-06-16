@@ -102,6 +102,44 @@ namespace FreeImageAPI
 		/// </summary>
 		JPEG_PROGRESSIVE = 0x2000,
 		/// <summary>
+		/// Save with high 4x1 chroma subsampling (4:1:1).
+		/// </summary>
+		JPEG_SUBSAMPLING_411 = 0x1000,
+		/// <summary>
+		/// Save with medium 2x2 medium chroma (4:2:0).
+		/// </summary>
+		JPEG_SUBSAMPLING_420 = 0x4000,
+		/// <summary>
+		/// Save with low 2x1 chroma subsampling (4:2:2).
+		/// </summary>
+		JPEG_SUBSAMPLING_422 = 0x8000,
+		/// <summary>
+		/// Save with no chroma subsampling (4:4:4).
+		/// </summary>
+		JPEG_SUBSAMPLING_444 = 0x10000,
+		/// <summary>
+		/// Save using ZLib level 1 compression flag
+		/// (default value is <see cref="PNG_Z_DEFAULT_COMPRESSION"/>).
+		/// </summary>
+		PNG_Z_BEST_SPEED = 0x0001,
+		/// <summary>
+		/// Save using ZLib level 6 compression flag (default recommended value).
+		/// </summary>
+		PNG_Z_DEFAULT_COMPRESSION = 0x0006,
+		/// <summary>
+		/// save using ZLib level 9 compression flag
+		/// (default value is <see cref="PNG_Z_DEFAULT_COMPRESSION"/>).
+		/// </summary>
+		PNG_Z_BEST_COMPRESSION = 0x0009,
+		/// <summary>
+		/// Save without ZLib compression.
+		/// </summary>
+		PNG_Z_NO_COMPRESSION = 0x0100,
+		/// <summary>
+		/// Save using Adam7 interlacing (use | to combine with other save flags).
+		/// </summary>
+		PNG_INTERLACED = 0x0200,
+		/// <summary>
 		/// If set the writer saves in ASCII format (i.e. P1, P2 or P3).
 		/// </summary>
 		PNM_SAVE_ASCII = 1,
