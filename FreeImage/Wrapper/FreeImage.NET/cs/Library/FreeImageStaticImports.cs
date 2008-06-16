@@ -45,18 +45,18 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Filename of the FreeImage library.
 		/// </summary>
-		private const string FreeImageLibrary = "FreeImage.dll";
+		private const string FreeImageLibrary = "FreeImage";
 
 		/// <summary>
-		/// Major version of the wrapper.
+		/// Major version of the library.
 		/// </summary>
 		public const int FREEIMAGE_MAJOR_VERSION = 3;
 		/// <summary>
-		/// Minor version of the wrapper.
+		/// Minor version of the library.
 		/// </summary>
-		public const int FREEIMAGE_MINOR_VERSION = 10;
+		public const int FREEIMAGE_MINOR_VERSION = 11;
 		/// <summary>
-		/// Release version of the wrapper.
+		/// Release version of the library.
 		/// </summary>
 		public const int FREEIMAGE_RELEASE_SERIAL = 0;
 
@@ -170,7 +170,7 @@ namespace FreeImageAPI
 		/// Initialises the library.
 		/// </summary>
 		/// <param name="load_local_plugins_only">
-		/// When the load_local_plugins_only parameter is true, FreeImage won't make use of external plugins.
+		/// When the <paramref name="load_local_plugins_only"/> is true, FreeImage won't make use of external plugins.
 		/// </param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_Initialise")]
 		private static extern void Initialise(bool load_local_plugins_only);
@@ -208,10 +208,10 @@ namespace FreeImageAPI
 		/// <summary>
 		/// You use the function FreeImage_SetOutputMessage to capture the log string
 		/// so that you can show it to the user of the program.
-		/// The callback is implemented in the 'Message' event of this class.
+		/// The callback is implemented in the <see cref="Message"/> event of this class.
 		/// </summary>
 		/// <remarks>The function is private because FreeImage can only have a single
-		/// callback function. To use the callback use the 'Message' event of this class.</remarks>
+		/// callback function. To use the callback use the <see cref="Message"/> event of this class.</remarks>
 		/// <param name="omf">Handler to the callback function.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetOutputMessage")]
 		internal static extern void SetOutputMessage(OutputMessageFunction omf);
@@ -505,26 +505,26 @@ namespace FreeImageAPI
 		public static extern int IsPluginEnabled(FREE_IMAGE_FORMAT fif);
 
 		/// <summary>
-		/// Returns a FREE_IMAGE_FORMAT identifier from the format string that was used to register the FIF.
+		/// Returns a <see cref="FREE_IMAGE_FORMAT"/> identifier from the format string that was used to register the FIF.
 		/// </summary>
 		/// <param name="format">The string that was used to register the plugin.</param>
-		/// <returns>A FREE_IMAGE_FORMAT identifier from the format.</returns>
+		/// <returns>A <see cref="FREE_IMAGE_FORMAT"/> identifier from the format.</returns>
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_GetFIFFromFormat")]
 		public static extern FREE_IMAGE_FORMAT GetFIFFromFormat(string format);
 
 		/// <summary>
-		/// Returns a FREE_IMAGE_FORMAT identifier from a MIME content type string
+		/// Returns a <see cref="FREE_IMAGE_FORMAT"/> identifier from a MIME content type string
 		/// (MIME stands for Multipurpose Internet Mail Extension).
 		/// </summary>
 		/// <param name="mime">A MIME content type.</param>
-		/// <returns>A FREE_IMAGE_FORMAT identifier from the MIME.</returns>
+		/// <returns>A <see cref="FREE_IMAGE_FORMAT"/> identifier from the MIME.</returns>
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_GetFIFFromMime")]
 		public static extern FREE_IMAGE_FORMAT GetFIFFromMime(string mime);
 
 		/// <summary>
-		/// Returns the string that was used to register a plugin from the system assigned FREE_IMAGE_FORMAT.
+		/// Returns the string that was used to register a plugin from the system assigned <see cref="FREE_IMAGE_FORMAT"/>.
 		/// </summary>
-		/// <param name="fif">The assigned FREE_IMAGE_FORMAT.</param>
+		/// <param name="fif">The assigned <see cref="FREE_IMAGE_FORMAT"/>.</param>
 		/// <returns>The string that was used to register the plugin.</returns>
 		public static unsafe string GetFormatFromFIF(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFormatFromFIF_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFormatFromFIF")]
@@ -533,7 +533,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Returns a comma-delimited file extension list describing the bitmap formats the given plugin can read and/or write.
 		/// </summary>
-		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
+		/// <param name="fif">The desired <see cref="FREE_IMAGE_FORMAT"/>.</param>
 		/// <returns>A comma-delimited file extension list.</returns>
 		public static unsafe string GetFIFExtensionList(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFExtensionList_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFExtensionList")]
@@ -542,7 +542,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Returns a descriptive string that describes the bitmap formats the given plugin can read and/or write.
 		/// </summary>
-		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
+		/// <param name="fif">The desired <see cref="FREE_IMAGE_FORMAT"/>.</param>
 		/// <returns>A descriptive string that describes the bitmap formats.</returns>
 		public static unsafe string GetFIFDescription(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFDescription_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFDescription")]
@@ -552,16 +552,16 @@ namespace FreeImageAPI
 		/// Returns a regular expression string that can be used by a regular expression engine to identify the bitmap.
 		/// FreeImageQt makes use of this function.
 		/// </summary>
-		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
+		/// <param name="fif">The desired <see cref="FREE_IMAGE_FORMAT"/>.</param>
 		/// <returns>A regular expression string.</returns>
 		public static unsafe string GetFIFRegExpr(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFRegExpr_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFRegExpr")]
 		private static unsafe extern byte* GetFIFRegExpr_(FREE_IMAGE_FORMAT fif);
 
 		/// <summary>
-		/// Given a FREE_IMAGE_FORMAT identifier, returns a MIME content type string (MIME stands for Multipurpose Internet Mail Extension).
+		/// Given a <see cref="FREE_IMAGE_FORMAT"/> identifier, returns a MIME content type string (MIME stands for Multipurpose Internet Mail Extension).
 		/// </summary>
-		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
+		/// <param name="fif">The desired <see cref="FREE_IMAGE_FORMAT"/>.</param>
 		/// <returns>A MIME content type string.</returns>
 		public static unsafe string GetFIFMimeType(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFMimeType_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFMimeType")]
@@ -569,27 +569,27 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// This function takes a filename or a file-extension and returns the plugin that can
-		/// read/write files with that extension in the form of a FREE_IMAGE_FORMAT identifier.
+		/// read/write files with that extension in the form of a <see cref="FREE_IMAGE_FORMAT"/> identifier.
 		/// </summary>
 		/// <param name="filename">The filename or -extension.</param>
-		/// <returns>The FREE_IMAGE_FORMAT of the plugin.</returns>
+		/// <returns>The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</returns>
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Unicode, EntryPoint = "FreeImage_GetFIFFromFilenameU")]
 		public static extern FREE_IMAGE_FORMAT GetFIFFromFilename(string filename);
 
 		/// <summary>
 		/// This function takes a filename or a file-extension and returns the plugin that can
-		/// read/write files with that extension in the form of a FREE_IMAGE_FORMAT identifier.
+		/// read/write files with that extension in the form of a <see cref="FREE_IMAGE_FORMAT"/> identifier.
 		/// Supports UNICODE filenames.
 		/// </summary>
 		/// <param name="filename">The filename or -extension.</param>
-		/// <returns>The FREE_IMAGE_FORMAT of the plugin.</returns>
+		/// <returns>The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</returns>
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Unicode, EntryPoint = "FreeImage_GetFIFFromFilenameU")]
 		private static extern FREE_IMAGE_FORMAT GetFIFFromFilenameU(string filename);
 
 		/// <summary>
 		/// Checks if a plugin can load bitmaps.
 		/// </summary>
-		/// <param name="fif">The FREE_IMAGE_FORMAT of the plugin.</param>
+		/// <param name="fif">The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</param>
 		/// <returns>True if the plugin can load bitmaps, else false.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FIFSupportsReading")]
 		public static extern bool FIFSupportsReading(FREE_IMAGE_FORMAT fif);
@@ -597,7 +597,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Checks if a plugin can save bitmaps.
 		/// </summary>
-		/// <param name="fif">The FREE_IMAGE_FORMAT of the plugin.</param>
+		/// <param name="fif">The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</param>
 		/// <returns>True if the plugin can save bitmaps, else false.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FIFSupportsWriting")]
 		public static extern bool FIFSupportsWriting(FREE_IMAGE_FORMAT fif);
@@ -605,7 +605,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Checks if a plugin can save bitmaps in the desired bit depth.
 		/// </summary>
-		/// <param name="fif">The FREE_IMAGE_FORMAT of the plugin.</param>
+		/// <param name="fif">The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</param>
 		/// <param name="bpp">The desired bit depth.</param>
 		/// <returns>True if the plugin can save bitmaps in the desired bit depth, else false.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FIFSupportsExportBPP")]
@@ -614,7 +614,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Checks if a plugin can save a bitmap in the desired data type.
 		/// </summary>
-		/// <param name="fif">The FREE_IMAGE_FORMAT of the plugin.</param>
+		/// <param name="fif">The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</param>
 		/// <param name="type">The desired image type.</param>
 		/// <returns>True if the plugin can save bitmaps as the desired type, else false.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FIFSupportsExportType")]
@@ -623,7 +623,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Checks if a plugin can load or save an ICC profile.
 		/// </summary>
-		/// <param name="fif">The FREE_IMAGE_FORMAT of the plugin.</param>
+		/// <param name="fif">The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</param>
 		/// <returns>True if the plugin can load or save an ICC profile, else false.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FIFSupportsICCProfiles")]
 		public static extern bool FIFSupportsICCProfiles(FREE_IMAGE_FORMAT fif);
@@ -732,8 +732,8 @@ namespace FreeImageAPI
 		/// </example>
 		/// <param name="bitmap">Handle to a FreeImage multi-paged bitmap.</param>
 		/// <param name="pages">The list of locked pages in the multi-pages bitmap.
-		/// If set to 'null', count will contain the number of pages.</param>
-		/// <param name="count">If 'pages' is set to 'null' count will contain the number of locked pages.</param>
+		/// If set to null, count will contain the number of pages.</param>
+		/// <param name="count">If <paramref name="pages"/> is set to null count will contain the number of locked pages.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetLockedPageNumbers")]
 		public static extern bool GetLockedPageNumbers(FIMULTIBITMAP bitmap, int[] pages, ref int count);
@@ -763,10 +763,10 @@ namespace FreeImageAPI
 		private static extern FREE_IMAGE_FORMAT GetFileTypeU(string filename, int size);
 
 		/// <summary>
-		/// Uses the FreeImageIO structure as described in the topic Bitmap management functions
+		/// Uses the <see cref="FreeImageIO"/> structure as described in the topic bitmap management functions
 		/// to identify a bitmap type.
 		/// </summary>
-		/// <param name="io">A FreeImageIO structure with functionpointers to handle the source.</param>
+		/// <param name="io">A <see cref="FreeImageIO"/> structure with functionpointers to handle the source.</param>
 		/// <param name="handle">A handle to the source.</param>
 		/// <param name="size">Size in bytes of the source.</param>
 		/// <returns>Type of the bitmap.</returns>
@@ -990,7 +990,7 @@ namespace FreeImageAPI
 		public static extern void SetDotsPerMeterY(FIBITMAP dib, uint res);
 
 		/// <summary>
-		/// Returns a pointer to the BITMAPINFOHEADER of the DIB-element in a FIBITMAP.
+		/// Returns a pointer to the <see cref="BITMAPINFOHEADER"/> of the DIB-element in a FIBITMAP.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>Poiter to the header of the bitmap.</returns>
@@ -998,11 +998,11 @@ namespace FreeImageAPI
 		public static extern IntPtr GetInfoHeader(FIBITMAP dib);
 
 		/// <summary>
-		/// Alias for FreeImage_GetInfoHeader that returns a pointer to a BITMAPINFO
-		/// rather than to a BITMAPINFOHEADER.
+		/// Alias for FreeImage_GetInfoHeader that returns a pointer to a <see cref="BITMAPINFO"/>
+		/// rather than to a <see cref="BITMAPINFOHEADER"/>.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>Pointer to the BITMAPINFO structure for the bitmap.</returns>
+		/// <returns>Pointer to the <see cref="BITMAPINFO"/> structure for the bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetInfo")]
 		public static extern IntPtr GetInfo(FIBITMAP dib);
 
@@ -1015,7 +1015,7 @@ namespace FreeImageAPI
 		public static extern FREE_IMAGE_COLOR_TYPE GetColorType(FIBITMAP dib);
 
 		/// <summary>
-		/// Returns a bit pattern describing the red color component of a pixel in a FIBITMAP.
+		/// Returns a bit pattern describing the red color component of a pixel in a FreeImage bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>The bit pattern for RED.</returns>
@@ -1023,7 +1023,7 @@ namespace FreeImageAPI
 		public static extern uint GetRedMask(FIBITMAP dib);
 
 		/// <summary>
-		/// Returns a bit pattern describing the green color component of a pixel in a FIBITMAP.
+		/// Returns a bit pattern describing the green color component of a pixel in a FreeImage bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>The bit pattern for green.</returns>
@@ -1031,7 +1031,7 @@ namespace FreeImageAPI
 		public static extern uint GetGreenMask(FIBITMAP dib);
 
 		/// <summary>
-		/// Returns a bit pattern describing the blue color component of a pixel in a FIBITMAP.
+		/// Returns a bit pattern describing the blue color component of a pixel in a FreeImage bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>The bit pattern for blue.</returns>
@@ -1116,8 +1116,8 @@ namespace FreeImageAPI
 		/// When the bkcolor parameter is null, the background color is removed from the image.
 		/// <para>
 		/// This overloaded version of the function with an array parameter is provided to allow
-		/// passing <c>null</c> in the <c>bkcolor</c> parameter. This is similar to the
-		/// original C/C++ function. Passing <c>null</c> as <c>bkcolor</c> parameter will
+		/// passing <c>null</c> in the <paramref name="bkcolor"/> parameter. This is similar to the
+		/// original C/C++ function. Passing <c>null</c> as <paramref name="bkcolor"/> parameter will
 		/// unset the dib's previously set background color.
 		/// </para> 
 		/// </summary>
@@ -1166,35 +1166,35 @@ namespace FreeImageAPI
 		#region ICC profile functions
 
 		/// <summary>
-		/// Retrieves the FIICCPROFILE data of the bitmap.
+		/// Retrieves the <see cref="FIICCPROFILE"/> data of the bitmap.
 		/// This function can also be called safely, when the original format does not support profiles.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>The FIICCPROFILE data of the bitmap.</returns>
+		/// <returns>The <see cref="FIICCPROFILE"/> data of the bitmap.</returns>
 		public static FIICCPROFILE GetICCProfileEx(FIBITMAP dib) { unsafe { return *(FIICCPROFILE*)FreeImage.GetICCProfile(dib); } }
 
 		/// <summary>
-		/// Retrieves a pointer to the FIICCPROFILE data of the bitmap.
+		/// Retrieves a pointer to the <see cref="FIICCPROFILE"/> data of the bitmap.
 		/// This function can also be called safely, when the original format does not support profiles.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>Pointer to the FIICCPROFILE data of the bitmap.</returns>
+		/// <returns>Pointer to the <see cref="FIICCPROFILE"/> data of the bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetICCProfile")]
 		public static extern IntPtr GetICCProfile(FIBITMAP dib);
 
 		/// <summary>
-		/// Creates a new FIICCPROFILE block from ICC profile data previously read from a file
+		/// Creates a new <see cref="FIICCPROFILE"/> block from ICC profile data previously read from a file
 		/// or built by a color management system. The profile data is attached to the bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="data">Pointer to the new FIICCPROFILE data.</param>
-		/// <param name="size">Size of the FIICCPROFILE data.</param>
-		/// <returns>Pointer to the created FIICCPROFILE structure.</returns>
+		/// <param name="data">Pointer to the new <see cref="FIICCPROFILE"/> data.</param>
+		/// <param name="size">Size of the <see cref="FIICCPROFILE"/> data.</param>
+		/// <returns>Pointer to the created <see cref="FIICCPROFILE"/> structure.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_CreateICCProfile")]
 		public static extern IntPtr CreateICCProfile(FIBITMAP dib, byte[] data, int size);
 
 		/// <summary>
-		/// This function destroys an FIICCPROFILE previously created by FreeImage_CreateICCProfile.
+		/// This function destroys an <see cref="FIICCPROFILE"/> previously created by <see cref="CreateICCProfile(FIBITMAP,byte[],int)"/>.
 		/// After this call the bitmap will contain no profile information.
 		/// This function should be called to ensure that a stored bitmap will not contain any profile information.
 		/// </summary>
@@ -1394,7 +1394,7 @@ namespace FreeImageAPI
 		public static extern FIBITMAP ColorQuantize(FIBITMAP dib, FREE_IMAGE_QUANTIZE quantize);
 
 		/// <summary>
-		/// ColorQuantizeEx is an extension to the FreeImage_ColorQuantize function that
+		/// ColorQuantizeEx is an extension to the <see cref="ColorQuantize(FIBITMAP, FREE_IMAGE_QUANTIZE)"/> method that
 		/// provides additional options used to quantize a 24-bit image to any
 		/// number of colors (up to 256), as well as quantize a 24-bit image using a
 		/// partial or full provided palette.
@@ -1407,7 +1407,6 @@ namespace FreeImageAPI
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ColorQuantizeEx")]
 		public static extern FIBITMAP ColorQuantizeEx(FIBITMAP dib, FREE_IMAGE_QUANTIZE quantize, int PaletteSize, int ReserveSize, RGBQUAD[] ReservePalette);
-		//public static extern FIBITMAP ColorQuantizeEx(FIBITMAP dib, FREE_IMAGE_QUANTIZE quantize, int PaletteSize, int ReserveSize, IntPtr ReservePalette);
 
 		/// <summary>
 		/// Converts a bitmap to 1-bit monochrome bitmap using a threshold T between [0..255].
@@ -1432,7 +1431,7 @@ namespace FreeImageAPI
 		public static extern FIBITMAP Dither(FIBITMAP dib, FREE_IMAGE_DITHER algorithm);
 
 		/// <summary>
-		/// Converts a raw bitmap somewhere in memory to a FIBITMAP.
+		/// Converts a raw bitmap somewhere in memory to a FreeImage bitmap.
 		/// The parameters in this function are used to describe the raw bitmap.
 		/// </summary>
 		/// <param name="bits">Pointer to start of the raw bits.</param>
@@ -1452,7 +1451,7 @@ namespace FreeImageAPI
 				uint bpp, uint red_mask, uint green_mask, uint blue_mask, bool topdown);
 
 		/// <summary>
-		/// Converts a FIBITMAP to a raw piece of memory.
+		/// Converts a FreeImage bitmap to a raw piece of memory.
 		/// </summary>
 		/// <param name="bits">Pointer to the start of the raw bits.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
@@ -1619,25 +1618,26 @@ namespace FreeImageAPI
 		#region Tag creation and destruction
 
 		/// <summary>
-		/// Allocates a new FITAG object.
-		/// This object must be destroyed with a call to FreeImage_DeleteTag when no longer in use.
+		/// Allocates a new <see cref="FITAG"/> object.
+		/// This object must be destroyed with a call to
+		/// <see cref="FreeImageAPI.FreeImage.DeleteTag(FITAG)"/> when no longer in use.
 		/// </summary>
-		/// <returns>The new FITAG.</returns>
+		/// <returns>The new <see cref="FITAG"/>.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_CreateTag")]
 		public static extern FITAG CreateTag();
 
 		/// <summary>
-		/// Delete a previously allocated FITAG object.
+		/// Delete a previously allocated <see cref="FITAG"/> object.
 		/// </summary>
-		/// <param name="tag">The FITAG to destroy.</param>
+		/// <param name="tag">The <see cref="FITAG"/> to destroy.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_DeleteTag")]
 		public static extern void DeleteTag(FITAG tag);
 
 		/// <summary>
-		/// Creates and returns a copy of a FITAG object.
+		/// Creates and returns a copy of a <see cref="FITAG"/> object.
 		/// </summary>
-		/// <param name="tag">The FITAG to clone.</param>
-		/// <returns>The new FITAG.</returns>
+		/// <param name="tag">The <see cref="FITAG"/> to clone.</param>
+		/// <returns>The new <see cref="FITAG"/>.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_CloneTag")]
 		public static extern FITAG CloneTag(FITAG tag);
 
@@ -1839,6 +1839,15 @@ namespace FreeImageAPI
 		/// <returns>Number of tags contained in the metadata model.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetMetadataCount")]
 		public static extern uint GetMetadataCount(FREE_IMAGE_MDMODEL model, FIBITMAP dib);
+
+		/// <summary>
+		/// Copies the metadata of FreeImage bitmap to another.
+		/// </summary>
+		/// <param name="dst">The FreeImage bitmap to copy the metadata to.</param>
+		/// <param name="src">The FreeImage bitmap to copy the metadata from.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_CloneMetadata")]
+		public static extern bool CloneMetadata(FIBITMAP dst, FIBITMAP src);
 
 		/// <summary>
 		/// Converts a FreeImage tag structure to a string that represents the interpreted tag value.
