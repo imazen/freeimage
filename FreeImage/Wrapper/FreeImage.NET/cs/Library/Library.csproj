@@ -24,9 +24,11 @@
     <BaseAddress>4194304</BaseAddress>
     <FileAlignment>512</FileAlignment>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <NoWarn>659,660,661,1591</NoWarn>
+    <NoWarn>
+    </NoWarn>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <DocumentationFile>bin\Debug\FreeImageNET.XML</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -40,7 +42,8 @@
     <BaseAddress>4194304</BaseAddress>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <NoWarn>659,660,661,1591</NoWarn>
+    <NoWarn>
+    </NoWarn>
     <DocumentationFile>bin\Release\FreeImageNET.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
@@ -56,10 +59,19 @@
     <Compile Include="Classes\FreeImageStreamIO.cs" />
     <Compile Include="Classes\ImageMetadata.cs" />
     <Compile Include="Classes\LocalPlugin.cs" />
+    <Compile Include="Classes\MemoryArray.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Classes\MetadataModel.cs" />
     <Compile Include="Classes\MetadataModels.cs" />
     <Compile Include="Classes\MetadataTag.cs" />
+    <Compile Include="Classes\Palette.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Classes\PluginRepository.cs" />
+    <Compile Include="Classes\Scanline.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Classes\StreamWrapper.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="Enumerations\FREE_IMAGE_DITHER.cs" />
@@ -83,12 +95,9 @@
     <Compile Include="Structs\BITMAP.cs" />
     <Compile Include="Structs\BITMAPINFO.cs" />
     <Compile Include="Structs\BITMAPINFOHEADER.cs" />
-    <Compile Include="Structs\FI16RGBARRAY.cs" />
-    <Compile Include="Structs\FI1BITARRAY.cs" />
-    <Compile Include="Structs\FI4BITARRAY.cs" />
-    <Compile Include="Structs\FI8BITARRAY.cs" />
-    <Compile Include="Structs\BitSettings.cs" />
-    <Compile Include="Structs\FI16RGB.cs" />
+    <Compile Include="Structs\FI16RGB555.cs" />
+    <Compile Include="Structs\FI16RGB565.cs" />
+    <Compile Include="Structs\FI1BIT.cs" />
     <Compile Include="Structs\FIBITMAP.cs" />
     <Compile Include="Structs\FICOMPLEX.cs" />
     <Compile Include="Structs\FIICCPROFILE.cs" />
@@ -100,10 +109,6 @@
     <Compile Include="Structs\FIRGBA16.cs" />
     <Compile Include="Structs\FIRGBAF.cs" />
     <Compile Include="Structs\FIRGBF.cs" />
-    <Compile Include="Structs\FIRGBFARRAY.cs" />
-    <Compile Include="Structs\FIRGBAFARRAY.cs" />
-    <Compile Include="Structs\FIRGB16ARRAY.cs" />
-    <Compile Include="Structs\FIRGBA16ARRAY.cs" />
     <Compile Include="FreeImageStaticImports.cs" />
     <Compile Include="FreeImageWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -114,14 +119,10 @@
     <Compile Include="Structs\FIURational.cs" />
     <Compile Include="Structs\fi_handle.cs" />
     <Compile Include="Structs\FreeImageIO.cs" />
-    <Compile Include="Structs\FICOMPLEXARRAY.cs" />
+    <Compile Include="Structs\FI4BIT.cs" />
     <Compile Include="Structs\Plugin.cs" />
     <Compile Include="Structs\RGBQUAD.cs" />
-    <Compile Include="Structs\RGBQUADARRAY.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Structs\RGBTRIPLE.cs" />
-    <Compile Include="Structs\RGBTRIPLEARRAY.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
