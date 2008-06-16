@@ -28,13 +28,14 @@
 
 // ==========================================================
 // To build the project without VS use the following commandline:
-// "csc.exe /out:FreeImageNET.dll /target:library /doc:FreeImageNET.XML /debug- /o /nowarn:659,660,661,1591 /unsafe+ /filealign:512 FreeImage.cs"
+// "csc.exe /out:FreeImageNET.dll /target:library /doc:FreeImageNET.XML /debug- /o /unsafe+ /filealign:512 FreeImage.cs"
 // ==========================================================
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -56,569 +57,1440 @@ namespace FreeImageAPI
 {
 	#region Structs
 
-	// FIBITMAP, FIMULTIBITMAP, FIMEMORY, FIMETADATA and FITAG are wrapped pointers.
-	// The strcutures contain a single IntPtr wrapping the unmanaged memory address.
-	// The structures implement conversions between Int and IntPtr and the 'Equals'
-	// method.
-	// The 'IsNull' property allows a null-pointer check.
+	/// <summary>
+	/// The <b>BITMAP</b> structure defines the type, width, height, color format, and bit values of a bitmap.
+	/// </summary>
+	/// <remarks>
+	/// The bitmap formats currently used are monochrome and color. The monochrome bitmap uses a one-bit,
+	/// one-plane format. Each scan is a multiple of 32 bits.
+	/// <para/>
+	/// Scans are organized as follows for a monochrome bitmap of height n:
+	/// <para/>
+	/// <code>
+	/// Scan 0
+	/// Scan 1
+	/// .
+	/// .
+	/// .
+	/// Scan n-2
+	/// Scan n-1
+	/// </code>
+	/// <para/>
+	/// The pixels on a monochrome device are either black or white. If the corresponding bit in the
+	/// bitmap is 1, the pixel is set to the foreground color; if the corresponding bit in the bitmap
+	/// is zero, the pixel is set to the background color.
+	/// <para/>
+	/// All devices that have the RC_BITBLT device capability support bitmaps. For more information,
+	/// see <b>GetDeviceCaps</b>.
+	/// <para/>
+	/// Each device has a unique color format. To transfer a bitmap from one device to another,
+	/// use the <b>GetDIBits</b> and <b>SetDIBits</b> functions.
+	/// </remarks>
+	[Serializable, StructLayout(LayoutKind.Sequential)]
+	public struct BITMAP
+	{
+		/// <summary>
+		/// Specifies the bitmap type. This member must be zero.
+		/// </summary>
+		public int bmType;
+		/// <summary>
+		/// Specifies the width, in pixels, of the bitmap. The width must be greater than zero.
+		/// </summary>
+		public int bmWidth;
+		/// <summary>
+		/// Specifies the height, in pixels, of the bitmap. The height must be greater than zero.
+		/// </summary>
+		public int bmHeight;
+		/// <summary>
+		/// Specifies the number of bytes in each scan line. This value must be divisible by 2,
+		/// because the system assumes that the bit values of a bitmap form an array that is word aligned.
+		/// </summary>
+		public int bmWidthBytes;
+		/// <summary>
+		/// Specifies the count of color planes.
+		/// </summary>
+		public ushort bmPlanes;
+		/// <summary>
+		/// Specifies the number of bits required to indicate the color of a pixel.
+		/// </summary>
+		public ushort bmBitsPixel;
+		/// <summary>
+		/// Pointer to the location of the bit values for the bitmap.
+		/// The <b>bmBits</b> member must be a long pointer to an array of character (1-byte) values.
+		/// </summary>
+		public IntPtr bmBits;
+	}
 
 	/// <summary>
-	/// Handle to FIBITMAP structure
+	/// This structure contains information about the dimensions and color format
+	/// of a device-independent bitmap (DIB).
 	/// </summary>
+	/// <remarks>
+	/// The <see cref="FreeImageAPI.BITMAPINFO"/> structure combines the
+	/// <b>BITMAPINFOHEADER</b> structure and a color table to provide a complete
+	/// definition of the dimensions and colors of a DIB.
+	/// </remarks>
+	[Serializable, StructLayout(LayoutKind.Sequential)]
+	public struct BITMAPINFOHEADER : IEquatable<BITMAPINFOHEADER>
+	{
+		/// <summary>
+		/// Specifies the size of the structure, in bytes.
+		/// </summary>
+		public uint biSize;
+		/// <summary>
+		/// Specifies the width of the bitmap, in pixels.
+		/// <para/>
+		/// <b>Windows 98/Me, Windows 2000/XP:</b> If <b>biCompression</b> is BI_JPEG or BI_PNG,
+		/// the <b>biWidth</b> member specifies the width of the decompressed JPEG or PNG image file,
+		/// respectively.
+		/// </summary>
+		public int biWidth;
+		/// <summary>
+		/// Specifies the height of the bitmap, in pixels. If <b>biHeight</b> is positive, the bitmap
+		/// is a bottom-up DIB and its origin is the lower-left corner. If <b>biHeight</b> is negative,
+		/// the bitmap is a top-down DIB and its origin is the upper-left corner. 
+		/// <para/>
+		/// If <b>biHeight</b> is negative, indicating a top-down DIB, <b>biCompression</b> must be
+		/// either BI_RGB or BI_BITFIELDS. Top-down DIBs cannot be compressed.
+		/// <para/>
+		/// <b>Windows 98/Me, Windows 2000/XP:</b> If <b>biCompression</b> is BI_JPEG or BI_PNG,
+		/// the <b>biHeight</b> member specifies the height of the decompressed JPEG or PNG image file,
+		/// respectively.
+		/// </summary>
+		public int biHeight;
+		/// <summary>
+		/// Specifies the number of planes for the target device. This value must be set to 1.
+		/// </summary>
+		public ushort biPlanes;
+		/// <summary>
+		/// Specifies the number of bits per pixel.The biBitCount member of the <b>BITMAPINFOHEADER</b>
+		/// structure determines the number of bits that define each pixel and the maximum number of
+		/// colors in the bitmap. This member must be one of the following values.
+		/// <para/>
+		/// 
+		/// <list type="table">
+		/// <listheader>
+		/// <term>Value</term>
+		/// <description>Meaning</description>
+		/// </listheader>
+		/// 
+		/// <item>
+		/// <term>0</term>
+		/// <description>
+		/// <b>Windows 98/Me, Windows 2000/XP:</b> The number of bits-per-pixel is specified
+		/// or is implied by the JPEG or PNG format.
+		/// </description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>1</term>
+		/// <description>
+		/// The bitmap is monochrome, and the bmiColors member of <see cref="FreeImageAPI.BITMAPINFO"/>
+		/// contains two entries. Each bit in the bitmap array represents a pixel. If the bit is clear,
+		/// the pixel is displayed with the color of the first entry in the bmiColors table; if the bit
+		/// is set, the pixel has the color of the second entry in the table.
+		/// </description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>4</term>
+		/// <description>
+		/// The bitmap has a maximum of 16 colors, and the <b>bmiColors</b> member of <b>BITMAPINFO</b>
+		/// contains up to 16 entries. Each pixel in the bitmap is represented by a 4-bit index into the
+		/// color table. For example, if the first byte in the bitmap is 0x1F, the byte represents two
+		/// pixels. The first pixel contains the color in the second table entry, and the second pixel
+		/// contains the color in the sixteenth table entry.</description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>8</term>
+		/// <description>
+		/// The bitmap has a maximum of 256 colors, and the <b>bmiColors</b> member of <b>BITMAPINFO</b>
+		/// contains up to 256 entries. In this case, each byte in the array represents a single pixel.
+		/// </description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>16</term>
+		/// <description>
+		/// The bitmap has a maximum of 2^16 colors. If the <b>biCompression</b> member of the
+		/// <b>BITMAPINFOHEADER</b> is BI_RGB, the <b>bmiColors</b> member of <b>BITMAPINFO</b> is NULL.
+		/// Each <b>WORD</b> in the bitmap array represents a single pixel. The relative intensities
+		/// of red, green, and blue are represented with five bits for each color component.
+		/// The value for blue is in the least significant five bits, followed by five bits each for
+		/// green and red. The most significant bit is not used. The <b>bmiColors</b> color table is used
+		/// for optimizing colors used on palette-based devices, and must contain the number of entries
+		/// specified by the <b>biClrUsed</b> member of the <b>BITMAPINFOHEADER</b>.
+		/// <para/>
+		/// If the <b>biCompression</b> member of the <b>BITMAPINFOHEADER</b> is BI_BITFIELDS, the
+		/// <b>bmiColors</b> member contains three <b>DWORD</b> color masks that specify the red, green,
+		/// and blue components, respectively, of each pixel. Each <b>WORD</b> in the bitmap array represents
+		/// a single pixel.
+		/// <para/>
+		/// <b>Windows NT/Windows 2000/XP:</b> When the <b>biCompression</b> member is BI_BITFIELDS,
+		/// bits set in each <b>DWORD</b> mask must be contiguous and should not overlap the bits
+		/// of another mask. All the bits in the pixel do not have to be used.
+		/// <para/>
+		/// <b>Windows 95/98/Me:</b> When the <b>biCompression</b> member is BI_BITFIELDS, the system
+		/// supports only the following 16bpp color masks: A 5-5-5 16-bit image, where the blue mask is
+		/// 0x001F, the green mask is 0x03E0, and the red mask is 0x7C00; and a 5-6-5 16-bit image,
+		/// where the blue mask is 0x001F, the green mask is 0x07E0, and the red mask is 0xF800.
+		/// </description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>24</term>
+		/// <description>
+		/// The bitmap has a maximum of 2^24 colors, and the <b>bmiColors</b> member of <b>BITMAPINFO</b>
+		/// is NULL. Each 3-byte triplet in the bitmap array represents the relative intensities of blue,
+		/// green, and red, respectively, for a pixel. The <b>bmiColors</b> color table is used for
+		/// optimizing colors used on palette-based devices, and must contain the number of entries
+		/// specified by the <b>biClrUsed</b> member of the <b>BITMAPINFOHEADER</b>.
+		/// </description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>32</term>
+		/// <description>
+		/// The bitmap has a maximum of 2^32 colors. If the <b>biCompression</b> member of the
+		/// <b>BITMAPINFOHEADER</b> is BI_RGB, the <b>bmiColors</b> member of <b>BITMAPINFO</b> is NULL.
+		/// Each <b>DWORD</b> in the bitmap array represents the relative intensities of blue, green, and red,
+		/// respectively, for a pixel. The high byte in each <b>DWORD</b> is not used. The <b>bmiColors</b>
+		/// color table is used for optimizing colors used on palette-based devices, and must contain the 
+		/// number of entries specified by the <b>biClrUsed</b> member of the <b>BITMAPINFOHEADER</b>.
+		/// <para/>
+		/// If the <b>biCompression</b> member of the <b>BITMAPINFOHEADER</b> is BI_BITFIELDS,
+		/// the <b>bmiColors</b> member contains three <b>DWORD</b> color masks that specify the red, green,
+		/// and blue components, respectively, of each pixel. Each <b>DWORD</b> in the bitmap array represents
+		/// a single pixel.
+		/// <para/>
+		/// <b>Windows NT/ 2000:</b> When the <b>biCompression</b> member is BI_BITFIELDS, bits set in each
+		/// <b>DWORD</b> mask must be contiguous and should not overlap the bits of another mask. All the
+		/// bits in the pixel do not need to be used.
+		/// <para/>
+		/// <b>Windows 95/98/Me:</b> When the <b>biCompression</b> member is BI_BITFIELDS, the system
+		/// supports only the following 32-bpp color mask: The blue mask is 0x000000FF, the green mask is
+		/// 0x0000FF00, and the red mask is 0x00FF0000.
+		/// </description>
+		/// </item>
+		/// </list>
+		/// </summary>
+		public ushort biBitCount;
+		/// <summary>
+		/// Specifies the type of compression for a compressed bottom-up bitmap (top-down DIBs cannot be
+		/// compressed).
+		/// <list type="table">
+		/// <listheader>
+		/// <term>Value</term>
+		/// <description>Meaning</description>
+		/// </listheader>
+		/// 
+		/// <item>
+		/// <term>BI_RGB</term>
+		/// <description>An uncompressed format.</description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>BI_RLE8</term>
+		/// <description>A run-length encoded (RLE) format for bitmaps with 8 bpp. The compression format
+		/// is a 2-byte format consisting of a count byte followed by a byte containing a color index.
+		/// </description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>BI_RLE4</term>
+		/// <description>An RLE format for bitmaps with 4 bpp. The compression format is a 2-byte format
+		/// consisting of a count byte followed by two word-length color indexes.</description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>BI_BITFIELDS</term>
+		/// <description>Specifies that the bitmap is not compressed and that the color table consists
+		/// of three <b>DWORD</b> color masks that specify the red, green, and blue components, respectively,
+		/// of each pixel. This is valid when used with 16- and 32-bpp bitmaps.</description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>BI_JPEG</term>
+		/// <description><b>Windows 98/Me, Windows 2000/XP:</b> Indicates that the image is a JPEG image.
+		/// </description>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>BI_PNG</term>
+		/// <description><b>Windows 98/Me, Windows 2000/XP:</b> Indicates that the image is a PNG image.
+		/// </description>
+		/// </item>
+		/// 
+		/// </list>
+		/// </summary>
+		public uint biCompression;
+		/// <summary>
+		/// Specifies the size, in bytes, of the image. This may be set to zero for BI_RGB bitmaps.
+		/// <para/>
+		/// <b>Windows 98/Me, Windows 2000/XP:</b> If <b>biCompression</b> is BI_JPEG or BI_PNG,
+		/// <b>biSizeImage</b> indicates the size of the JPEG or PNG image buffer, respectively.
+		/// </summary>
+		public uint biSizeImage;
+		/// <summary>
+		/// Specifies the horizontal resolution, in pixels-per-meter, of the target device for the bitmap.
+		/// An application can use this value to select a bitmap from a resource group that best matches
+		/// the characteristics of the current device.
+		/// </summary>
+		public int biXPelsPerMeter;
+		/// <summary>
+		/// Specifies the vertical resolution, in pixels-per-meter, of the target device for the bitmap.
+		/// </summary>
+		public int biYPelsPerMeter;
+		/// <summary>
+		/// Specifies the number of color indexes in the color table that are actually used by the bitmap.
+		/// If this value is zero, the bitmap uses the maximum number of colors corresponding to the value
+		/// of the biBitCount member for the compression mode specified by <b>biCompression</b>.
+		/// <para/>
+		/// If <b>iClrUsed</b> is nonzero and the <b>biBitCount</b> member is less than 16, the <b>biClrUsed</b>
+		/// member specifies the actual number of colors the graphics engine or device driver accesses.
+		/// If <b>biBitCount</b> is 16 or greater, the <b>biClrUsed</b> member specifies the size of the color
+		/// table used to optimize performance of the system color palettes. If <b>biBitCount</b> equals 16 or 32,
+		/// the optimal color palette starts immediately following the three <b>DWORD</b> masks.
+		/// <para/>
+		/// When the bitmap array immediately follows the <see cref="BITMAPINFO"/> structure, it is a packed bitmap.
+		/// Packed bitmaps are referenced by a single pointer. Packed bitmaps require that the
+		/// <b>biClrUsed</b> member must be either zero or the actual size of the color table.
+		/// </summary>
+		public uint biClrUsed;
+		/// <summary>
+		/// Specifies the number of color indexes that are required for displaying the bitmap. If this value
+		/// is zero, all colors are required.
+		/// </summary>
+		public uint biClrImportant;
+
+		/// <summary>
+		/// Tests whether two specified <see cref="BITMAPINFOHEADER"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="BITMAPINFOHEADER"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="BITMAPINFOHEADER"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="BITMAPINFOHEADER"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(BITMAPINFOHEADER left, BITMAPINFOHEADER right)
+		{
+			return ((left.biSize == right.biSize) &&
+					(left.biWidth == right.biWidth) &&
+					(left.biHeight == right.biHeight) &&
+					(left.biPlanes == right.biPlanes) &&
+					(left.biBitCount == right.biBitCount) &&
+					(left.biCompression == right.biCompression) &&
+					(left.biSizeImage == right.biSizeImage) &&
+					(left.biXPelsPerMeter == right.biXPelsPerMeter) &&
+					(left.biYPelsPerMeter == right.biYPelsPerMeter) &&
+					(left.biClrUsed == right.biClrUsed) &&
+					(left.biClrImportant == right.biClrImportant));
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="BITMAPINFOHEADER"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="BITMAPINFOHEADER"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="BITMAPINFOHEADER"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="BITMAPINFOHEADER"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(BITMAPINFOHEADER left, BITMAPINFOHEADER right)
+		{
+			return !(left == right);
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="BITMAPINFOHEADER"/> structure is equivalent to this <see cref="BITMAPINFOHEADER"/> structure.
+		/// </summary>
+		/// <param name="other">A <see cref="BITMAPINFOHEADER"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="BITMAPINFOHEADER"/> structure
+		/// equivalent to this <see cref="BITMAPINFOHEADER"/> structure; otherwise, <b>false</b>.</returns>
+		public bool Equals(BITMAPINFOHEADER other)
+		{
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Tests whether the specified object is a <see cref="BITMAPINFOHEADER"/> structure
+		/// and is equivalent to this <see cref="BITMAPINFOHEADER"/> structure.
+		/// </summary>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="BITMAPINFOHEADER"/> structure
+		/// equivalent to this <see cref="BITMAPINFOHEADER"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return ((obj is BITMAPINFOHEADER) && (this == (BITMAPINFOHEADER)obj));
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="BITMAPINFOHEADER"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="BITMAPINFOHEADER"/>.</returns>
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+	}
+
+	/// <summary>
+	/// The <b>BITMAPINFO</b> structure defines the dimensions and color information for a DIB.
+	/// </summary>
+	/// <remarks>
+	/// A DIB consists of two distinct parts: a <b>BITMAPINFO</b> structure describing the dimensions
+	/// and colors of the bitmap, and an array of bytes defining the pixels of the bitmap. The bits in
+	/// the array are packed together, but each scan line must be padded with zeroes to end on a
+	/// <b>LONG</b> data-type boundary. If the height of the bitmap is positive, the bitmap is a
+	/// bottom-up DIB and its origin is the lower-left corner. If the height is negative, the bitmap is
+	/// a top-down DIB and its origin is the upper left corner.
+	/// <para/>
+	/// A bitmap is packed when the bitmap array immediately follows the <b>BITMAPINFO</b> header.
+	/// Packed bitmaps are referenced by a single pointer. For packed bitmaps, the <b>biClrUsed</b>
+	/// member must be set to an even number when using the DIB_PAL_COLORS mode so that the DIB bitmap
+	/// array starts on a <b>DWORD</b> boundary.
+	/// <para/>
+	/// <b>Note</b>  The <b>bmiColors</b> member should not contain palette indexes if the bitmap is to
+	/// be stored in a file or transferred to another application.
+	/// <para/>
+	/// Unless the application has exclusive use and control of the bitmap, the bitmap color table
+	/// should contain explicit RGB values.
+	/// </remarks>
+	[Serializable, StructLayout(LayoutKind.Sequential)]
+	public struct BITMAPINFO : IEquatable<BITMAPINFO>
+	{
+		/// <summary>
+		/// Specifies a <see cref="FreeImageAPI.BITMAPINFOHEADER"/> structure that contains information
+		/// about the dimensions of color format.
+		/// </summary>
+		public BITMAPINFOHEADER bmiHeader;
+		/// <summary>
+		/// The <b>bmiColors</b> member contains one of the following:
+		/// <list type="bullets">
+		/// 
+		/// <item>
+		/// <term>
+		/// An array of <see cref="FreeImageAPI.RGBQUAD"/>. The elements of the array that make up the
+		/// color table.
+		/// </term>
+		/// </item>
+		/// 
+		/// <item>
+		/// <term>
+		/// An array of 16-bit unsigned integers that specifies indexes into the currently realized
+		/// logical palette. This use of <b>bmiColors</b> is allowed for functions that use DIBs.
+		/// When <b>bmiColors</b> elements contain indexes to a realized logical palette, they must
+		/// also call the following bitmap functions:
+		/// </term>
+		/// </item>
+		/// 
+		/// </list>
+		/// <b>CreateDIBitmap</b>
+		/// <para/>
+		/// <b>CreateDIBPatternBrush</b>
+		/// <para/>
+		/// <b>CreateDIBSection</b>
+		/// <para/>
+		/// The <i>iUsage</i> parameter of CreateDIBSection must be set to DIB_PAL_COLORS.
+		/// <para/>
+		/// The number of entries in the array depends on the values of the <b>biBitCount</b> and
+		/// <b>biClrUsed</b> members of the <see cref="FreeImageAPI.BITMAPINFOHEADER"/> structure.
+		/// <para/>
+		/// The colors in the <b>bmiColors</b> table appear in order of importance. For more information,
+		/// see the Remarks section.
+		/// </summary>
+		public RGBQUAD[] bmiColors;
+
+		/// <summary>
+		/// Tests whether two specified <see cref="BITMAPINFO"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="BITMAPINFO"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="BITMAPINFO"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="BITMAPINFO"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(BITMAPINFO left, BITMAPINFO right)
+		{
+			if (left.bmiHeader != right.bmiHeader)
+			{
+				return false;
+			}
+			if ((left.bmiColors == null) && (right.bmiColors == null))
+			{
+				return true;
+			}
+			if ((left.bmiColors == null) || (right.bmiColors == null))
+			{
+				return false;
+			}
+			if (left.bmiColors.Length != right.bmiColors.Length)
+			{
+				return false;
+			}
+			for (int i = 0; i < left.bmiColors.Length; i++)
+			{
+				if (left.bmiColors[i] != right.bmiColors[i])
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="BITMAPINFO"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="BITMAPINFO"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="BITMAPINFO"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="BITMAPINFO"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(BITMAPINFO left, BITMAPINFO right)
+		{
+			return !(left == right);
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="BITMAPINFO"/> structure is equivalent to this <see cref="BITMAPINFO"/> structure.
+		/// </summary>
+		/// <param name="other">A <see cref="BITMAPINFO"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="BITMAPINFO"/> structure
+		/// equivalent to this <see cref="BITMAPINFO"/> structure; otherwise, <b>false</b>.</returns>
+		public bool Equals(BITMAPINFO other)
+		{
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Tests whether the specified object is a <see cref="BITMAPINFO"/> structure
+		/// and is equivalent to this <see cref="BITMAPINFO"/> structure.
+		/// </summary>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="BITMAPINFO"/> structure
+		/// equivalent to this <see cref="BITMAPINFO"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return ((obj is BITMAPINFO) && (this == ((BITMAPINFO)obj)));
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="BITMAPINFO"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="BITMAPINFO"/>.</returns>
+		public override int GetHashCode()
+		{
+			int hash = bmiHeader.GetHashCode();
+			if (bmiColors != null)
+			{
+				for (int c = 0; c < bmiColors.Length; c++)
+				{
+					hash ^= bmiColors[c].GetHashCode();
+					hash <<= 1;
+				}
+				hash <<= 1;
+			}
+			else
+			{
+				hash >>= 1;
+			}
+			return hash;
+		}
+	}
+
+	/// <summary>
+	/// The <b>FIBITMAP</b> structure is a handle to a FreeImage bimtap.
+	/// </summary>
+	/// <remarks>
+	/// The handle represented by a <b>FIBITBAP</b> structure provides
+	/// access to either a singlepage bitmap or exactly one page of
+	/// a multipage bitmap.
+	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FIBITMAP : IComparable, IComparable<FIBITMAP>, IEquatable<FIBITMAP>
 	{
 		private IntPtr data;
-		public FIBITMAP(int ptr) { data = new IntPtr(ptr); }
-		public FIBITMAP(IntPtr ptr) { data = ptr; }
 
-		public static bool operator !=(FIBITMAP value1, FIBITMAP value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIBITMAP"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIBITMAP"/> structure.</param>
+		public FIBITMAP(int ptr)
 		{
-			return value1.data != value2.data;
+			data = new IntPtr(ptr);
 		}
 
-		public static bool operator ==(FIBITMAP value1, FIBITMAP value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIBITMAP"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIBITMAP"/> structure.</param>
+		public FIBITMAP(IntPtr ptr)
 		{
-			return value1.data == value2.data;
+			data = ptr;
 		}
 
+		/// <summary>
+		/// Tests whether two specified <see cref="FIBITMAP"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FIBITMAP"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FIBITMAP"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIBITMAP"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FIBITMAP left, FIBITMAP right)
+		{
+			return (left.data == right.data);
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FIBITMAP"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FIBITMAP"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FIBITMAP"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIBITMAP"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FIBITMAP left, FIBITMAP right)
+		{
+			return (left.data != right.data);
+		}
+
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIBITMAP"/> structure.</param>
+		/// <returns>A <see cref="FIBITMAP"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIBITMAP(int ptr)
 		{
 			return new FIBITMAP(ptr);
 		}
 
-		public static implicit operator int(FIBITMAP fi)
+		/// <summary>
+		/// Converts the <see cref="FIBITMAP"/> structure specified in <paramref name="handle"/> to a 32-bit value.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIBITMAP"/> structure to be converted into a 32-bit value.</param>
+		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIBITMAP"/> structure.</returns>
+		public static implicit operator int(FIBITMAP handle)
 		{
-			return fi.data.ToInt32();
+			return handle.data.ToInt32();
 		}
 
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIBITMAP"/> structure.</param>
+		/// <returns>A <see cref="FIBITMAP"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIBITMAP(IntPtr ptr)
 		{
 			return new FIBITMAP(ptr);
 		}
 
-		public static implicit operator IntPtr(FIBITMAP fi)
+		/// <summary>
+		/// Converts the <see cref="FIBITMAP"/> structure specified in <paramref name="handle"/> to an IntPtr.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIBITMAP"/> structure to be converted into an IntPtr.</param>
+		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIBITMAP"/> structure.</returns>
+		public static implicit operator IntPtr(FIBITMAP handle)
 		{
-			return fi.data;
+			return handle.data;
 		}
 
 		/// <summary>
-		/// Gets whether the pointer is a null pointer.
+		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
-		public bool IsNull { get { return data == IntPtr.Zero; } }
+		/// <value><b>true</b> if this <see cref="FIBITMAP"/> is a null pointer;
+		/// otherwise, <b>false</b>.</value>		
+		public bool IsNull
+		{
+			get
+			{
+				return (data == IntPtr.Zero);
+			}
+		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FIBITMAP"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
-			return String.Format("0x{0:X}", (uint)data);
+			return data.ToString();
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FIBITMAP"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIBITMAP"/>.</returns>
 		public override int GetHashCode()
 		{
 			return data.GetHashCode();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="Object"/>.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The <see cref="Object"/> to compare with the current <see cref="Object"/>.</param>
+		/// <returns><b>true</b> if the specified <see cref="Object"/> is equal to the current <see cref="Object"/>; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FIBITMAP)
-			{
-				return Equals((FIBITMAP)obj);
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is FIBITMAP)
-			{
-				return CompareTo((FIBITMAP)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FIBITMAP other)
-		{
-			return this.data.ToInt64().CompareTo(other.data.ToInt64());
+			return ((obj is FIBITMAP) && (this == ((FIBITMAP)obj)));
 		}
 
 		/// <summary>
 		/// Indicates whether the current object is equal to another object of the same type.
 		/// </summary>
 		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <returns><b>true</b> if the current object is equal to the other parameter; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIBITMAP other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIBITMAP"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FIBITMAP))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIBITMAP)obj);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="FIBITMAP"/> object.
+		/// </summary>
+		/// <param name="other">A <see cref="FIBITMAP"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(FIBITMAP other)
+		{
+			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
 
 	/// <summary>
-	/// Handle to a multi-paged bitmap
+	/// The <b>FIMULTIBITMAP</b> structure is a handle to a FreeImage multipaged bimtap.
 	/// </summary>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FIMULTIBITMAP : IComparable, IComparable<FIMULTIBITMAP>, IEquatable<FIMULTIBITMAP>
 	{
 		private IntPtr data;
-		public FIMULTIBITMAP(int ptr) { data = new IntPtr(ptr); }
-		public FIMULTIBITMAP(IntPtr ptr) { data = ptr; }
 
-		public static bool operator !=(FIMULTIBITMAP value1, FIMULTIBITMAP value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIMULTIBITMAP"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIMULTIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIMULTIBITMAP"/> structure.</param>
+		public FIMULTIBITMAP(int ptr)
 		{
-			return value1.data != value2.data;
+			data = new IntPtr(ptr);
 		}
 
-		public static bool operator ==(FIMULTIBITMAP value1, FIMULTIBITMAP value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIMULTIBITMAP"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIMULTIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIMULTIBITMAP"/> structure.</param>
+		public FIMULTIBITMAP(IntPtr ptr)
 		{
-			return value1.data == value2.data;
+			data = ptr;
 		}
 
+		/// <summary>
+		/// Tests whether two specified <see cref="FIMULTIBITMAP"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FIMULTIBITMAP"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FIMULTIBITMAP"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIMULTIBITMAP"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FIMULTIBITMAP left, FIMULTIBITMAP right)
+		{
+			return (left.data == right.data);
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FIMULTIBITMAP"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FIMULTIBITMAP"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FIMULTIBITMAP"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIMULTIBITMAP"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FIMULTIBITMAP left, FIMULTIBITMAP right)
+		{
+			return (left.data != right.data);
+		}
+
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMULTIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMULTIBITMAP"/> structure.</param>
+		/// <returns>A <see cref="FIMULTIBITMAP"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIMULTIBITMAP(int ptr)
 		{
 			return new FIMULTIBITMAP(ptr);
 		}
 
-		public static implicit operator int(FIMULTIBITMAP fi)
+		/// <summary>
+		/// Converts the <see cref="FIMULTIBITMAP"/> structure specified in <paramref name="handle"/> to a 32-bit value.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIMULTIBITMAP"/> structure to be converted into a 32-bit value.</param>
+		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIMULTIBITMAP"/> structure.</returns>
+		public static implicit operator int(FIMULTIBITMAP handle)
 		{
-			return fi.data.ToInt32();
+			return handle.data.ToInt32();
 		}
 
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMULTIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMULTIBITMAP"/> structure.</param>
+		/// <returns>A <see cref="FIMULTIBITMAP"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIMULTIBITMAP(IntPtr ptr)
 		{
 			return new FIMULTIBITMAP(ptr);
 		}
 
-		public static implicit operator IntPtr(FIMULTIBITMAP fi)
+		/// <summary>
+		/// Converts the <see cref="FIMULTIBITMAP"/> structure specified in <paramref name="handle"/> to an IntPtr.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIMULTIBITMAP"/> structure to be converted into an IntPtr.</param>
+		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIMULTIBITMAP"/> structure.</returns>
+		public static implicit operator IntPtr(FIMULTIBITMAP handle)
 		{
-			return fi.data;
+			return handle.data;
 		}
 
 		/// <summary>
-		/// Gets whether the pointer is a null pointer.
+		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
-		public bool IsNull { get { return data == IntPtr.Zero; } }
+		/// <value><b>true</b> if this <see cref="FIMULTIBITMAP"/> is a null pointer;
+		/// otherwise, <b>false</b>.</value>		
+		public bool IsNull
+		{
+			get
+			{
+				return (data == IntPtr.Zero);
+			}
+		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FIMULTIBITMAP"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
-			return String.Format("0x{0:X}", (uint)data);
+			return data.ToString();
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FIMULTIBITMAP"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIMULTIBITMAP"/>.</returns>
 		public override int GetHashCode()
 		{
 			return data.GetHashCode();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="Object"/>.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The <see cref="Object"/> to compare with the current <see cref="Object"/>.</param>
+		/// <returns><b>true</b> if the specified <see cref="Object"/> is equal to the current <see cref="Object"/>; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FIMULTIBITMAP)
-			{
-				return Equals((FIMULTIBITMAP)obj);
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is FIMULTIBITMAP)
-			{
-				return CompareTo((FIMULTIBITMAP)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FIMULTIBITMAP other)
-		{
-			return this.data.ToInt64().CompareTo(other.data.ToInt64());
+			return ((obj is FIMULTIBITMAP) && (this == ((FIMULTIBITMAP)obj)));
 		}
 
 		/// <summary>
 		/// Indicates whether the current object is equal to another object of the same type.
 		/// </summary>
 		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <returns><b>true</b> if the current object is equal to the other parameter; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIMULTIBITMAP other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIMULTIBITMAP"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FIMULTIBITMAP))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIMULTIBITMAP)obj);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="FIMULTIBITMAP"/> object.
+		/// </summary>
+		/// <param name="other">A <see cref="FIMULTIBITMAP"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(FIMULTIBITMAP other)
+		{
+			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
 
 	/// <summary>
-	/// Handle to an opened memory stream
+	/// The <b>FIMEMORY</b> structure is a handle to an opened memory stream.
 	/// </summary>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FIMEMORY : IComparable, IComparable<FIMEMORY>, IEquatable<FIMEMORY>
 	{
 		private IntPtr data;
-		public FIMEMORY(int ptr) { data = new IntPtr(ptr); }
-		public FIMEMORY(IntPtr ptr) { data = ptr; }
 
-		public static bool operator !=(FIMEMORY value1, FIMEMORY value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIMEMORY"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIMEMORY"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIMEMORY"/> structure.</param>
+		public FIMEMORY(int ptr)
 		{
-			return value1.data != value2.data;
+			data = new IntPtr(ptr);
 		}
 
-		public static bool operator ==(FIMEMORY value1, FIMEMORY value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIMEMORY"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIMEMORY"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIMEMORY"/> structure.</param>
+		public FIMEMORY(IntPtr ptr)
 		{
-			return value1.data == value2.data;
+			data = ptr;
 		}
 
+		/// <summary>
+		/// Tests whether two specified <see cref="FIMEMORY"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FIMEMORY"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FIMEMORY"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIMEMORY"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FIMEMORY left, FIMEMORY right)
+		{
+			return (left.data == right.data);
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FIMEMORY"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FIMEMORY"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FIMEMORY"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIMEMORY"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FIMEMORY left, FIMEMORY right)
+		{
+			return (left.data != right.data);
+		}
+
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMEMORY"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMEMORY"/> structure.</param>
+		/// <returns>A <see cref="FIMEMORY"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIMEMORY(int ptr)
 		{
 			return new FIMEMORY(ptr);
 		}
 
-		public static implicit operator int(FIMEMORY fi)
+		/// <summary>
+		/// Converts the <see cref="FIMEMORY"/> structure specified in <paramref name="handle"/> to a 32-bit value.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIMEMORY"/> structure to be converted into a 32-bit value.</param>
+		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIMEMORY"/> structure.</returns>
+		public static implicit operator int(FIMEMORY handle)
 		{
-			return fi.data.ToInt32();
+			return handle.data.ToInt32();
 		}
 
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMEMORY"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMEMORY"/> structure.</param>
+		/// <returns>A <see cref="FIMEMORY"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIMEMORY(IntPtr ptr)
 		{
 			return new FIMEMORY(ptr);
 		}
 
-		public static implicit operator IntPtr(FIMEMORY fi)
+		/// <summary>
+		/// Converts the <see cref="FIMEMORY"/> structure specified in <paramref name="handle"/> to an IntPtr.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIMEMORY"/> structure to be converted into an IntPtr.</param>
+		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIMEMORY"/> structure.</returns>
+		public static implicit operator IntPtr(FIMEMORY handle)
 		{
-			return fi.data;
+			return handle.data;
 		}
 
 		/// <summary>
-		/// Gets whether the pointer is a null pointer.
+		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
-		public bool IsNull { get { return data == IntPtr.Zero; } }
+		/// <value><b>true</b> if this <see cref="FIMEMORY"/> is a null pointer;
+		/// otherwise, <b>false</b>.</value>		
+		public bool IsNull
+		{
+			get
+			{
+				return (data == IntPtr.Zero);
+			}
+		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FIMEMORY"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
-			return String.Format("0x{0:X}", (uint)data);
+			return data.ToString();
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FIMEMORY"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIMEMORY"/>.</returns>
 		public override int GetHashCode()
 		{
 			return data.GetHashCode();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="Object"/>.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The <see cref="Object"/> to compare with the current <see cref="Object"/>.</param>
+		/// <returns><b>true</b> if the specified <see cref="Object"/> is equal to the current <see cref="Object"/>; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FIMEMORY)
-			{
-				return Equals((FIMEMORY)obj);
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is FIMEMORY)
-			{
-				return CompareTo((FIMEMORY)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FIMEMORY other)
-		{
-			return this.data.ToInt64().CompareTo(other.data.ToInt64());
+			return ((obj is FIMEMORY) && (this == ((FIMEMORY)obj)));
 		}
 
 		/// <summary>
 		/// Indicates whether the current object is equal to another object of the same type.
 		/// </summary>
 		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <returns><b>true</b> if the current object is equal to the other parameter; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIMEMORY other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIMEMORY"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FIMEMORY))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIMEMORY)obj);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="FIMEMORY"/> object.
+		/// </summary>
+		/// <param name="other">A <see cref="FIMEMORY"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(FIMEMORY other)
+		{
+			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
 
 	/// <summary>
-	/// Handle to a metadata model
+	/// The <b>FIMETADATA</b> structure is an unique search handle for metadata search operations.
 	/// </summary>
+	/// <remarks>
+	/// The <b>FIMETADATA</b> structure is usually returned by the
+	/// <see cref="FreeImageAPI.FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL, FIBITMAP, out FITAG)"/>
+	/// function and then used on subsequent calls to
+	/// <see cref="FreeImageAPI.FreeImage.FindNextMetadata(FIMETADATA, out FITAG)"/>.
+	/// When the <b>FIMETADATA</b> handle is no longer used, it needs to be freed by the
+	/// <see cref="FreeImageAPI.FreeImage.FindCloseMetadata(FIMETADATA)"/> function.
+	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FIMETADATA : IComparable, IComparable<FIMETADATA>, IEquatable<FIMETADATA>
 	{
 		private IntPtr data;
-		public FIMETADATA(int ptr) { data = new IntPtr(ptr); }
-		public FIMETADATA(IntPtr ptr) { data = ptr; }
 
-		public static bool operator !=(FIMETADATA value1, FIMETADATA value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIMETADATA"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIMETADATA"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIMETADATA"/> structure.</param>
+		public FIMETADATA(int ptr)
 		{
-			return value1.data != value2.data;
+			data = new IntPtr(ptr);
 		}
 
-		public static bool operator ==(FIMETADATA value1, FIMETADATA value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIMETADATA"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIMETADATA"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIMETADATA"/> structure.</param>
+		public FIMETADATA(IntPtr ptr)
 		{
-			return value1.data == value2.data;
+			data = ptr;
 		}
 
+		/// <summary>
+		/// Tests whether two specified <see cref="FIMETADATA"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FIMETADATA"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FIMETADATA"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIMETADATA"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FIMETADATA left, FIMETADATA right)
+		{
+			return (left.data == right.data);
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FIMETADATA"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FIMETADATA"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FIMETADATA"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIMETADATA"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FIMETADATA left, FIMETADATA right)
+		{
+			return (left.data != right.data);
+		}
+
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMETADATA"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMETADATA"/> structure.</param>
+		/// <returns>A <see cref="FIMETADATA"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIMETADATA(int ptr)
 		{
 			return new FIMETADATA(ptr);
 		}
 
-		public static implicit operator int(FIMETADATA fi)
+		/// <summary>
+		/// Converts the <see cref="FIMETADATA"/> structure specified in <paramref name="handle"/> to a 32-bit value.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIMETADATA"/> structure to be converted into a 32-bit value.</param>
+		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIMETADATA"/> structure.</returns>
+		public static implicit operator int(FIMETADATA handle)
 		{
-			return fi.data.ToInt32();
+			return handle.data.ToInt32();
 		}
 
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMETADATA"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMETADATA"/> structure.</param>
+		/// <returns>A <see cref="FIMETADATA"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIMETADATA(IntPtr ptr)
 		{
 			return new FIMETADATA(ptr);
 		}
 
-		public static implicit operator IntPtr(FIMETADATA fi)
+		/// <summary>
+		/// Converts the <see cref="FIMETADATA"/> structure specified in <paramref name="handle"/> to an IntPtr.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIMETADATA"/> structure to be converted into an IntPtr.</param>
+		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIMETADATA"/> structure.</returns>
+		public static implicit operator IntPtr(FIMETADATA handle)
 		{
-			return fi.data;
+			return handle.data;
 		}
 
 		/// <summary>
-		/// Gets whether the pointer is a null pointer.
+		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
-		public bool IsNull { get { return data == IntPtr.Zero; } }
+		/// <value><b>true</b> if this <see cref="FIMETADATA"/> is a null pointer;
+		/// otherwise, <b>false</b>.</value>		
+		public bool IsNull
+		{
+			get
+			{
+				return (data == IntPtr.Zero);
+			}
+		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FIMETADATA"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
-			return String.Format("0x{0:X}", (uint)data);
+			return data.ToString();
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FIMETADATA"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIMETADATA"/>.</returns>
 		public override int GetHashCode()
 		{
 			return data.GetHashCode();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="Object"/>.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The <see cref="Object"/> to compare with the current <see cref="Object"/>.</param>
+		/// <returns><b>true</b> if the specified <see cref="Object"/> is equal to the current <see cref="Object"/>; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FIMETADATA)
-			{
-				return Equals((FIMETADATA)obj);
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is FIMETADATA)
-			{
-				return CompareTo((FIMETADATA)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FIMETADATA other)
-		{
-			return this.data.ToInt64().CompareTo(other.data.ToInt64());
+			return ((obj is FIMETADATA) && (this == ((FIMETADATA)obj)));
 		}
 
 		/// <summary>
 		/// Indicates whether the current object is equal to another object of the same type.
 		/// </summary>
 		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <returns><b>true</b> if the current object is equal to the other parameter; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIMETADATA other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIMETADATA"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FIMETADATA))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIMETADATA)obj);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="FIMETADATA"/> object.
+		/// </summary>
+		/// <param name="other">A <see cref="FIMETADATA"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(FIMETADATA other)
+		{
+			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
 
 	/// <summary>
-	/// Handle to a FreeImage tag
+	/// The <b>FITAG</b> structure is a handle to a FreeImage metadata tag.
 	/// </summary>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FITAG : IComparable, IComparable<FITAG>, IEquatable<FITAG>
 	{
 		private IntPtr data;
-		public FITAG(int ptr) { data = new IntPtr(ptr); }
-		public FITAG(IntPtr ptr) { data = ptr; }
 
-		public static bool operator !=(FITAG value1, FITAG value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FITAG"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FITAG"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FITAG"/> structure.</param>
+		public FITAG(int ptr)
 		{
-			return value1.data != value2.data;
+			data = new IntPtr(ptr);
 		}
 
-		public static bool operator ==(FITAG value1, FITAG value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FITAG"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FITAG"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FITAG"/> structure.</param>
+		public FITAG(IntPtr ptr)
 		{
-			return value1.data == value2.data;
+			data = ptr;
 		}
 
+		/// <summary>
+		/// Tests whether two specified <see cref="FITAG"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FITAG"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FITAG"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FITAG"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FITAG left, FITAG right)
+		{
+			return (left.data == right.data);
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FITAG"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FITAG"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FITAG"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FITAG"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FITAG left, FITAG right)
+		{
+			return (left.data != right.data);
+		}
+
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FITAG"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FITAG"/> structure.</param>
+		/// <returns>A <see cref="FITAG"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FITAG(int ptr)
 		{
 			return new FITAG(ptr);
 		}
 
-		public static implicit operator int(FITAG fi)
+		/// <summary>
+		/// Converts the <see cref="FITAG"/> structure specified in <paramref name="handle"/> to a 32-bit value.
+		/// </summary>
+		/// <param name="handle">A <see cref="FITAG"/> structure to be converted into a 32-bit value.</param>
+		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FITAG"/> structure.</returns>
+		public static implicit operator int(FITAG handle)
 		{
-			return fi.data.ToInt32();
+			return handle.data.ToInt32();
 		}
 
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FITAG"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FITAG"/> structure.</param>
+		/// <returns>A <see cref="FITAG"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FITAG(IntPtr ptr)
 		{
 			return new FITAG(ptr);
 		}
 
-		public static implicit operator IntPtr(FITAG fi)
+		/// <summary>
+		/// Converts the <see cref="FITAG"/> structure specified in <paramref name="handle"/> to an IntPtr.
+		/// </summary>
+		/// <param name="handle">A <see cref="FITAG"/> structure to be converted into an IntPtr.</param>
+		/// <returns>An IntPtr initialized with the pointer of the <see cref="FITAG"/> structure.</returns>
+		public static implicit operator IntPtr(FITAG handle)
 		{
-			return fi.data;
+			return handle.data;
 		}
 
 		/// <summary>
-		/// Gets whether the pointer is a null pointer.
+		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
-		public bool IsNull { get { return data == IntPtr.Zero; } }
+		/// <value><b>true</b> if this <see cref="FITAG"/> is a null pointer;
+		/// otherwise, <b>false</b>.</value>		
+		public bool IsNull
+		{
+			get
+			{
+				return (data == IntPtr.Zero);
+			}
+		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FITAG"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
-			return String.Format("0x{0:X}", (uint)data);
+			return data.ToString();
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FITAG"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FITAG"/>.</returns>
 		public override int GetHashCode()
 		{
 			return data.GetHashCode();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="Object"/>.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The <see cref="Object"/> to compare with the current <see cref="Object"/>.</param>
+		/// <returns><b>true</b> if the specified <see cref="Object"/> is equal to the current <see cref="Object"/>; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FITAG)
-			{
-				return Equals((FITAG)obj);
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is FITAG)
-			{
-				return CompareTo((FITAG)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FITAG other)
-		{
-			return this.data.ToInt64().CompareTo(other.data.ToInt64());
+			return ((obj is FITAG) && (this == ((FITAG)obj)));
 		}
 
 		/// <summary>
 		/// Indicates whether the current object is equal to another object of the same type.
 		/// </summary>
 		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <returns><b>true</b> if the current object is equal to the other parameter; otherwise, <b>false</b>.</returns>
 		public bool Equals(FITAG other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FITAG"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FITAG))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FITAG)obj);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="FITAG"/> object.
+		/// </summary>
+		/// <param name="other">A <see cref="FITAG"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(FITAG other)
+		{
+			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
 
@@ -628,96 +1500,202 @@ namespace FreeImageAPI
 	[StructLayout(LayoutKind.Sequential)]
 	public struct FreeImageIO
 	{
+		/// <summary>
+		/// Delegate to the C++ function <b>fread</b>.
+		/// </summary>
 		public ReadProc readProc;
+
+		/// <summary>
+		/// Delegate to the C++ function <b>fwrite</b>.
+		/// </summary>
 		public WriteProc writeProc;
+
+		/// <summary>
+		/// Delegate to the C++ function <b>fseek</b>.
+		/// </summary>
 		public SeekProc seekProc;
+
+		/// <summary>
+		/// Delegate to the C++ function <b>ftell</b>.
+		/// </summary>
 		public TellProc tellProc;
 	}
 
-	// Bitmaps are made up of different structures.
-	// Some bitmaps have palettes that define the used colors and the bitmaps real
-	// data links to the palette index.
-	// Others don't have a palette and each pixel is stored directly.
-	//
-	// No matter which type of bitmap is accessed FreeImage provides pointers to
-	// beginning of a structure and its length.
-	// In unmanaged code pointers would be used to access the data. In .NET
-	// unsafe code is needed to that.
-	//
-	// RGBQUAD, RGBTRIPLE, FIRGB16, FIRGBA16, FIRGBF and FIRGBAF represent
-	// the structures that bitmaps use to store their data.
-	// Its up to the coder to choose the right one.
-	//
-	// Each structure can be converted from and to the .NETs structure 'Color'.
-
-	// Bitmaps are made up of different structures.
-	// Some bitmaps have palettes that define the used colors and the bitmaps real
-	// data links to the palette index.
-	// Others don't have a palette and each pixel is stored directly.
-	//
-	// No matter which type of bitmap is accessed FreeImage provides pointers to
-	// beginning of a structure and its length.
-	// In unmanaged code pointers would be used to access the data. In .NET
-	// unsafe code is needed to that.
-	//
-	// RGBQUAD, RGBTRIPLE, FIRGB16, FIRGBA16, FIRGBF and FIRGBAF represent
-	// the structures that bitmaps use to store their data.
-	// Its up to the coder to choose the right one.
-	//
-	// Each structure can be converted from and to the .NETs structure 'Color'.
-
 	/// <summary>
-	/// The RGBQUAD structure describes a color consisting of relative intensities of red, green, and blue
-	/// combined with an alpha factor. Each color is using 1 byte of data.
+	/// The <b>RGBQUAD</b> structure describes a color consisting of relative
+	/// intensities of red, green, blue and alpha value. Each single color
+	/// component consumes 8 bits and so, takes values in the range from 0 to 255.
 	/// </summary>
-	[Serializable, StructLayout(LayoutKind.Sequential)]
+	/// <remarks>
+	/// <para>
+	/// The <b>RGBQUAD</b> structure provides access to an underlying Win32 <b>RGBQUAD</b>
+	/// structure. To determine the alpha, red, green or blue component of a color,
+	/// use the rgbReserved, rgbRed, rgbGreen or rgbBlue fields, respectively.
+	/// </para>
+	/// <para>For easy integration of the underlying structure into the .NET framework,
+	/// the <b>RGBQUAD</b> structure implements implicit conversion operators to 
+	/// convert the represented color to and from the <see cref="System.Drawing.Color"/>
+	/// type. This makes the <see cref="System.Drawing.Color"/> type a real replacement
+	/// for the <b>RGBQUAD</b> structure and my be used in all situations which require
+	/// an <b>RGBQUAD</b> type.
+	/// </para>
+	/// <para>
+	/// Each color component rgbReserved, rgbRed, rgbGreen or rgbBlue of <b>RGBQUAD</b>
+	/// is translated into it's corresponding color component A, R, G or B of
+	/// <see cref="System.Drawing.Color"/> by an one-to-one manner and vice versa.
+	/// </para>
+	/// <para>
+	/// <b>Conversion from System.Drawing.Color to RGBQUAD</b>
+	/// </para>
+	/// <c>RGBQUAD.component = Color.component</c>
+	/// <para>
+	/// <b>Conversion from RGBQUAD to System.Drawing.Color</b>
+	/// </para>
+	/// <c>Color.component = RGBQUAD.component</c>
+	/// <para>
+	/// The same conversion is also applied when the <see cref="FreeImageAPI.RGBQUAD.Color"/>
+	/// property or the <see cref="FreeImageAPI.RGBQUAD(System.Drawing.Color)"/> constructor
+	/// is invoked.
+	/// </para>
+	/// </remarks>
+	/// <example>
+	/// The following code example demonstrates the various conversions between the
+	/// <b>RGBQUAD</b> structure and the <see cref="System.Drawing.Color"/> structure.
+	/// <code>
+	/// RGBQUAD rgbq;
+	/// // Initialize the structure using a native .NET Color structure.
+	///	rgbq = new RGBQUAD(Color.Indigo);
+	/// // Initialize the structure using the implicit operator.
+	///	rgbq = Color.DarkSeaGreen;
+	/// // Convert the RGBQUAD instance into a native .NET Color
+	/// // using its implicit operator.
+	///	Color color = rgbq;
+	/// // Using the structure's Color property for converting it
+	/// // into a native .NET Color.
+	///	Color another = rgbq.Color;
+	/// </code>
+	/// </example>
+	[Serializable, StructLayout(LayoutKind.Explicit)]
 	public struct RGBQUAD : IComparable, IComparable<RGBQUAD>, IEquatable<RGBQUAD>
 	{
+		/// <summary>
+		/// The blue color component.
+		/// </summary>
+		[FieldOffset(0)]
 		public byte rgbBlue;
+
+		/// <summary>
+		/// The green color component.
+		/// </summary>
+		[FieldOffset(1)]
 		public byte rgbGreen;
+
+		/// <summary>
+		/// The red color component.
+		/// </summary>
+		[FieldOffset(2)]
 		public byte rgbRed;
+
+		/// <summary>
+		/// The alpha color component.
+		/// </summary>
+		[FieldOffset(3)]
 		public byte rgbReserved;
 
 		/// <summary>
-		/// Create a new instance.
+		/// The color's value.
 		/// </summary>
-		/// <param name="color">Color to initialize with.</param>
+		[FieldOffset(0)]
+		public uint uintValue;
+
+		/// <summary>
+		/// Initializes a new instance based on the specified <see cref="System.Drawing.Color"/>.
+		/// </summary>
+		/// <param name="color"><see cref="System.Drawing.Color"/> to initialize with.</param>
 		public RGBQUAD(Color color)
 		{
+			uintValue = 0u;
 			rgbBlue = color.B;
 			rgbGreen = color.G;
 			rgbRed = color.R;
 			rgbReserved = color.A;
 		}
 
-		public static bool operator ==(RGBQUAD value1, RGBQUAD value2)
+		/// <summary>
+		/// Tests whether two specified <see cref="RGBQUAD"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="RGBQUAD"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="RGBQUAD"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="RGBQUAD"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(RGBQUAD left, RGBQUAD right)
 		{
-			return
-				value1.rgbBlue == value2.rgbBlue &&
-				value1.rgbGreen == value2.rgbGreen &&
-				value1.rgbRed == value2.rgbRed &&
-				value1.rgbReserved == value2.rgbReserved;
-		}
-
-		public static bool operator !=(RGBQUAD value1, RGBQUAD value2)
-		{
-			return !(value1 == value2);
-		}
-
-		public static implicit operator RGBQUAD(Color color)
-		{
-			return new RGBQUAD(color);
-		}
-
-		public static implicit operator Color(RGBQUAD rgbquad)
-		{
-			return rgbquad.color;
+			return ((left.rgbBlue == right.rgbBlue) &&
+					(left.rgbGreen == right.rgbGreen) &&
+					(left.rgbRed == right.rgbRed) &&
+					(left.rgbReserved == right.rgbReserved));
 		}
 
 		/// <summary>
-		/// Gets or sets the color of the structure.
+		/// Tests whether two specified <see cref="RGBQUAD"/> structures are different.
 		/// </summary>
-		public Color color
+		/// <param name="left">The <see cref="RGBQUAD"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="RGBQUAD"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="RGBQUAD"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(RGBQUAD left, RGBQUAD right)
+		{
+			return !(left == right);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="System.Drawing.Color"/> structure to a <see cref="RGBQUAD"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="System.Drawing.Color"/> structure.</param>
+		/// <returns>A new instance of <see cref="RGBQUAD"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator RGBQUAD(Color value)
+		{
+			return new RGBQUAD(value);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="RGBQUAD"/> structure to a Color structure.
+		/// </summary>
+		/// <param name="value">A <see cref="RGBQUAD"/> structure.</param>
+		/// <returns>A new instance of <see cref="System.Drawing.Color"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator Color(RGBQUAD value)
+		{
+			return value.Color;
+		}
+
+		/// <summary>
+		/// Converts the value of an <see cref="UInt32"/> structure to a <see cref="RGBQUAD"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt32"/> structure.</param>
+		/// <returns>A new instance of <see cref="RGBQUAD"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator RGBQUAD(uint value)
+		{
+			RGBQUAD result = new RGBQUAD();
+			result.uintValue = value;
+			return result;
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="RGBQUAD"/> structure to an <see cref="UInt32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="RGBQUAD"/> structure.</param>
+		/// <returns>A new instance of <see cref="RGBQUAD"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator uint(RGBQUAD value)
+		{
+			return value.uintValue;
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="System.Drawing.Color"/> of the structure.
+		/// </summary>
+		public Color Color
 		{
 			get
 			{
@@ -737,64 +1715,158 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="RGBQUAD"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is RGBQUAD)
+			if (obj == null)
 			{
-				return CompareTo((RGBQUAD)obj);
+				return 1;
 			}
-			throw new ArgumentException();
+			if (!(obj is RGBQUAD))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((RGBQUAD)obj);
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="RGBQUAD"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="RGBQUAD"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(RGBQUAD other)
 		{
-			return this.color.ToArgb().CompareTo(other.color.ToArgb());
+			return this.Color.ToArgb().CompareTo(other.Color.ToArgb());
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified object is a <see cref="RGBQUAD"/> structure
+		/// and is equivalent to this <see cref="RGBQUAD"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="RGBQUAD"/> structure
+		/// equivalent to this <see cref="RGBQUAD"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return ((obj is RGBQUAD) && (this == ((RGBQUAD)obj)));
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="RGBQUAD"/> structure is equivalent to this <see cref="RGBQUAD"/> structure.
+		/// </summary>
+		/// <param name="other">A <see cref="RGBQUAD"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="RGBQUAD"/> structure
+		/// equivalent to this <see cref="RGBQUAD"/> structure; otherwise, <b>false</b>.</returns>
 		public bool Equals(RGBQUAD other)
 		{
-			return this == other;
+			return (this == other);
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="RGBQUAD"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="RGBQUAD"/>.</returns>
 		public override int GetHashCode()
 		{
-			return ((rgbBlue << 16) | (rgbGreen << 8) | (rgbRed));
+			return base.GetHashCode();
+		}
+
+		/// <summary>
+		/// Converts the numeric value of the <see cref="RGBQUAD"/> object
+		/// to its equivalent string representation.
+		/// </summary>
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
+		{
+			return FreeImage.ColorToString(Color);
 		}
 	}
 
 	/// <summary>
-	/// The RGBTRIPLE structure describes a color consisting of relative intensities of red, green, and blue.
-	/// Each color is using 1 byte of data.
+	/// The <b>RGBTRIPLE</b> structure describes a color consisting of relative
+	/// intensities of red, green and blue value. Each single color component
+	/// consumes 8 bits and so, takes values in the range from 0 to 255.
 	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The <b>RGBTRIPLE</b> structure provides access to an underlying Win32 <b>RGBTRIPLE</b>
+	/// structure. To determine the red, green or blue component of a color, use the
+	/// rgbtRed, rgbtGreen or rgbtBlue fields, respectively.
+	/// </para>
+	/// <para>For easy integration of the underlying structure into the .NET framework,
+	/// the <b>RGBTRIPLE</b> structure implements implicit conversion operators to 
+	/// convert the represented color to and from the <see cref="System.Drawing.Color"/>
+	/// type. This makes the <see cref="System.Drawing.Color"/> type a real replacement
+	/// for the <b>RGBTRIPLE</b> structure and my be used in all situations which require
+	/// an <b>RGBTRIPLE</b> type.
+	/// </para>
+	/// <para>
+	/// Each of the color components rgbtRed, rgbtGreen or rgbtBlue of <b>RGBTRIPLE</b> is
+	/// translated into it's corresponding color component R, G or B of
+	/// <see cref="System.Drawing.Color"/> by an one-to-one manner and vice versa.
+	/// When converting from <see cref="System.Drawing.Color"/> into <b>RGBTRIPLE</b>, the
+	/// color's alpha value is ignored and assumed to be 255 when converting from
+	/// <b>RGBTRIPLE</b> into <see cref="System.Drawing.Color"/>, creating a fully
+	/// opaque color.
+	/// </para>
+	/// <para>
+	/// <b>Conversion from System.Drawing.Color to RGBTRIPLE</b>
+	/// </para>
+	/// <c>RGBTRIPLE.component = Color.component</c>
+	/// <para>
+	/// <b>Conversion from RGBTRIPLE to System.Drawing.Color</b>
+	/// </para>
+	/// <c>Color.component = RGBTRIPLE.component</c>
+	/// <para>
+	/// The same conversion is also applied when the <see cref="FreeImageAPI.RGBTRIPLE.Color"/>
+	/// property or the <see cref="FreeImageAPI.RGBTRIPLE(System.Drawing.Color)"/> constructor
+	/// is invoked.
+	/// </para>
+	/// </remarks>
+	/// <example>
+	/// The following code example demonstrates the various conversions between the
+	/// <b>RGBTRIPLE</b> structure and the <see cref="System.Drawing.Color"/> structure.
+	/// <code>
+	/// RGBTRIPLE rgbt;
+	/// // Initialize the structure using a native .NET Color structure.
+	///	rgbt = new RGBTRIPLE(Color.Indigo);
+	/// // Initialize the structure using the implicit operator.
+	///	rgbt = Color.DarkSeaGreen;
+	/// // Convert the RGBTRIPLE instance into a native .NET Color
+	/// // using its implicit operator.
+	///	Color color = rgbt;
+	/// // Using the structure's Color property for converting it
+	/// // into a native .NET Color.
+	///	Color another = rgbt.Color;
+	/// </code>
+	/// </example>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct RGBTRIPLE : IComparable, IComparable<RGBTRIPLE>, IEquatable<RGBTRIPLE>
 	{
+		/// <summary>
+		/// The blue color component.
+		/// </summary>
 		public byte rgbtBlue;
+
+		/// <summary>
+		/// The green color component.
+		/// </summary>
 		public byte rgbtGreen;
+
+		/// <summary>
+		/// The red color component.
+		/// </summary>
 		public byte rgbtRed;
 
 		/// <summary>
-		/// Create a new instance.
+		/// Initializes a new instance based on the specified <see cref="System.Drawing.Color"/>.
 		/// </summary>
-		/// <param name="color">Color to initialize with.</param>
+		/// <param name="color"><see cref="System.Drawing.Color"/> to initialize with.</param>
 		public RGBTRIPLE(Color color)
 		{
 			rgbtBlue = color.B;
@@ -802,33 +1874,83 @@ namespace FreeImageAPI
 			rgbtRed = color.R;
 		}
 
-		public static bool operator ==(RGBTRIPLE value1, RGBTRIPLE value2)
+		/// <summary>
+		/// Tests whether two specified <see cref="RGBTRIPLE"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="RGBTRIPLE"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="RGBTRIPLE"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="RGBTRIPLE"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(RGBTRIPLE left, RGBTRIPLE right)
 		{
 			return
-				value1.rgbtBlue == value2.rgbtBlue &&
-				value1.rgbtGreen == value2.rgbtGreen &&
-				value1.rgbtRed == value2.rgbtRed;
-		}
-
-		public static bool operator !=(RGBTRIPLE value1, RGBTRIPLE value2)
-		{
-			return !(value1 == value2);
-		}
-
-		public static implicit operator RGBTRIPLE(Color color)
-		{
-			return new RGBTRIPLE(color);
-		}
-
-		public static implicit operator Color(RGBTRIPLE rgbtripple)
-		{
-			return rgbtripple.color;
+				left.rgbtBlue == right.rgbtBlue &&
+				left.rgbtGreen == right.rgbtGreen &&
+				left.rgbtRed == right.rgbtRed;
 		}
 
 		/// <summary>
-		/// Gets or sets the color of the structure.
+		/// Tests whether two specified <see cref="RGBTRIPLE"/> structures are different.
 		/// </summary>
-		public Color color
+		/// <param name="left">The <see cref="RGBTRIPLE"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="RGBTRIPLE"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="RGBTRIPLE"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(RGBTRIPLE left, RGBTRIPLE right)
+		{
+			return !(left == right);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="System.Drawing.Color"/> structure to a <see cref="RGBTRIPLE"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="System.Drawing.Color"/> structure.</param>
+		/// <returns>A new instance of <see cref="RGBTRIPLE"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator RGBTRIPLE(Color value)
+		{
+			return new RGBTRIPLE(value);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="RGBTRIPLE"/> structure to a <see cref="System.Drawing.Color"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="RGBTRIPLE"/> structure.</param>
+		/// <returns>A new instance of <see cref="System.Drawing.Color"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator Color(RGBTRIPLE value)
+		{
+			return value.Color;
+		}
+
+		/// <summary>
+		/// Converts the value of an <see cref="UInt32"/> structure to a <see cref="RGBTRIPLE"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt32"/> structure.</param>
+		/// <returns>A new instance of <see cref="RGBTRIPLE"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator RGBTRIPLE(uint value)
+		{
+			RGBTRIPLE result = new RGBTRIPLE();
+			result.rgbtBlue = (byte)(value & 0xFF);
+			result.rgbtGreen = (byte)((value >> 8) & 0xFF);
+			result.rgbtRed = (byte)((value >> 16) & 0xFF);
+			return result;
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="RGBTRIPLE"/> structure to an <see cref="UInt32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="RGBTRIPLE"/> structure.</param>
+		/// <returns>A new instance of <see cref="RGBTRIPLE"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator uint(RGBTRIPLE value)
+		{
+			return (uint)((value.rgbtRed << 16) | (value.rgbtGreen << 8) | (value.rgbtBlue));
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="System.Drawing.Color"/> of the structure.
+		/// </summary>
+		public Color Color
 		{
 			get
 			{
@@ -846,270 +1968,617 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="RGBTRIPLE"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is RGBTRIPLE)
+			if (obj == null)
 			{
-				return CompareTo((RGBTRIPLE)obj);
+				return 1;
 			}
-			throw new ArgumentException();
+			if (!(obj is RGBTRIPLE))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((RGBTRIPLE)obj);
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="RGBTRIPLE"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="RGBTRIPLE"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(RGBTRIPLE other)
 		{
-			return this.color.ToArgb().CompareTo(other.color.ToArgb());
+			return this.Color.ToArgb().CompareTo(other.Color.ToArgb());
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified object is a <see cref="RGBTRIPLE"/> structure
+		/// and is equivalent to this <see cref="RGBTRIPLE"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="RGBTRIPLE"/> structure
+		/// equivalent to this <see cref="RGBTRIPLE"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return ((obj is RGBTRIPLE) && (this == ((RGBTRIPLE)obj)));
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="RGBTRIPLE"/> structure is equivalent to this
+		/// <see cref="RGBTRIPLE"/> structure.
+		/// </summary>
+		/// <param name="other">A <see cref="RGBTRIPLE"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="RGBTRIPLE"/> structure
+		/// equivalent to this <see cref="RGBTRIPLE"/> structure; otherwise, <b>false</b>.</returns>
 		public bool Equals(RGBTRIPLE other)
 		{
-			return this == other;
+			return (this == other);
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="RGBTRIPLE"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="RGBTRIPLE"/>.</returns>
 		public override int GetHashCode()
 		{
-			return ((rgbtBlue << 16) | (rgbtGreen << 8) | (rgbtRed));
+			return base.GetHashCode();
+		}
+
+		/// <summary>
+		/// Converts the numeric value of the <see cref="RGBTRIPLE"/> object
+		/// to its equivalent string representation.
+		/// </summary>
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
+		{
+			return FreeImage.ColorToString(Color);
 		}
 	}
 
 	/// <summary>
-	/// The FIRGBA16 structure describes a color consisting of relative intensities of red, green, and blue
-	/// combined with an alpha factor. Each color is using 2 bytes of data.
+	/// The <b>FIRGBA16</b> structure describes a color consisting of relative
+	/// intensities of red, green, blue and alpha value. Each single color
+	/// component consumes 16 bits and so, takes values in the range from 0 to 65535.
 	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The <b>FIRGBA16</b> structure provides access to an underlying FreeImage <b>FIRGBA16</b>
+	/// structure. To determine the alpha, red, green or blue component of a color,
+	/// use the alpha, red, green or blue fields, respectively.
+	/// </para>
+	/// <para>For easy integration of the underlying structure into the .NET framework,
+	/// the <b>FIRGBA16</b> structure implements implicit conversion operators to 
+	/// convert the represented color to and from the <see cref="System.Drawing.Color"/>
+	/// type. This makes the <see cref="System.Drawing.Color"/> type a real replacement
+	/// for the <b>FIRGBA16</b> structure and my be used in all situations which require
+	/// an <b>FIRGBA16</b> type.
+	/// </para>
+	/// <para>
+	/// Each color component alpha, red, green or blue of <b>FIRGBA16</b>
+	/// is translated into it's corresponding color component A, R, G or B of
+	/// <see cref="System.Drawing.Color"/> by an 8 bit right shift and vice versa.
+	/// </para>
+	/// <para>
+	/// <b>Conversion from System.Drawing.Color to FIRGBA16</b>
+	/// </para>
+	/// <c>FIRGBA16.component = Color.component &lt;&lt; 8</c>
+	/// <para>
+	/// <b>Conversion from FIRGBA16 to System.Drawing.Color</b>
+	/// </para>
+	/// <c>Color.component = FIRGBA16.component &gt;&gt; 8</c>
+	/// <para>
+	/// The same conversion is also applied when the <see cref="FreeImageAPI.FIRGBA16.Color"/>
+	/// property or the <see cref="FreeImageAPI.FIRGBA16(System.Drawing.Color)"/> constructor
+	/// is invoked.
+	/// </para>
+	/// </remarks>
+	/// <example>
+	/// The following code example demonstrates the various conversions between the
+	/// <b>FIRGBA16</b> structure and the <see cref="System.Drawing.Color"/> structure.
+	/// <code>
+	/// FIRGBA16 firgba16;
+	/// // Initialize the structure using a native .NET Color structure.
+	///	firgba16 = new FIRGBA16(Color.Indigo);
+	/// // Initialize the structure using the implicit operator.
+	///	firgba16 = Color.DarkSeaGreen;
+	/// // Convert the FIRGBA16 instance into a native .NET Color
+	/// // using its implicit operator.
+	///	Color color = firgba16;
+	/// // Using the structure's Color property for converting it
+	/// // into a native .NET Color.
+	///	Color another = firgba16.Color;
+	/// </code>
+	/// </example>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FIRGBA16 : IComparable, IComparable<FIRGBA16>, IEquatable<FIRGBA16>
 	{
+		/// <summary>
+		/// The red color component.
+		/// </summary>
 		public ushort red;
+
+		/// <summary>
+		/// The green color component.
+		/// </summary>
 		public ushort green;
+
+		/// <summary>
+		/// The blue color component.
+		/// </summary>
 		public ushort blue;
+
+		/// <summary>
+		/// The alpha color component.
+		/// </summary>
 		public ushort alpha;
 
 		/// <summary>
-		/// Create a new instance.
+		/// Initializes a new instance based on the specified <see cref="System.Drawing.Color"/>.
 		/// </summary>
-		/// <param name="color">Color to initialize with.</param>
+		/// <param name="color"><see cref="System.Drawing.Color"/> to initialize with.</param>
 		public FIRGBA16(Color color)
 		{
-			red = (ushort)(color.R * 256);
-			green = (ushort)(color.G * 256);
-			blue = (ushort)(color.B * 256);
-			alpha = (ushort)(color.A * 256);
-		}
-
-		public static bool operator ==(FIRGBA16 value1, FIRGBA16 value2)
-		{
-			return
-				value1.alpha == value2.alpha &&
-				value1.blue == value2.blue &&
-				value1.green == value2.green &&
-				value1.red == value2.red;
-		}
-
-		public static bool operator !=(FIRGBA16 value1, FIRGBA16 value2)
-		{
-			return !(value1 == value2);
-		}
-
-		public static implicit operator FIRGBA16(Color color)
-		{
-			return new FIRGBA16(color);
-		}
-
-		public static implicit operator Color(FIRGBA16 firgba16)
-		{
-			return firgba16.color;
+			red = (ushort)(color.R << 8);
+			green = (ushort)(color.G << 8);
+			blue = (ushort)(color.B << 8);
+			alpha = (ushort)(color.A << 8);
 		}
 
 		/// <summary>
-		/// Gets or sets the color of the structure.
+		/// Tests whether two specified <see cref="FIRGBA16"/> structures are equivalent.
 		/// </summary>
-		public Color color
+		/// <param name="left">The <see cref="FIRGBA16"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FIRGBA16"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIRGBA16"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FIRGBA16 left, FIRGBA16 right)
+		{
+			return
+				((left.alpha == right.alpha) &&
+				(left.blue == right.blue) &&
+				(left.green == right.green) &&
+				(left.red == right.red));
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FIRGBA16"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FIRGBA16"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FIRGBA16"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIRGBA16"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FIRGBA16 left, FIRGBA16 right)
+		{
+			return !(left == right);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="System.Drawing.Color"/> structure to a <see cref="FIRGBA16"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="System.Drawing.Color"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRGBA16"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator FIRGBA16(Color value)
+		{
+			return new FIRGBA16(value);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="FIRGBA16"/> structure to a <see cref="System.Drawing.Color"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRGBA16"/> structure.</param>
+		/// <returns>A new instance of <see cref="System.Drawing.Color"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator Color(FIRGBA16 value)
+		{
+			return value.Color;
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="System.Drawing.Color"/> of the structure.
+		/// </summary>
+		public Color Color
 		{
 			get
 			{
-				return Color.FromArgb(
-					alpha / 256,
-					red / 256,
-					green / 256,
-					blue / 256);
+				return Color.FromArgb((alpha >> 8), (red >> 8), (green >> 8), (blue >> 8));
 			}
 			set
 			{
-				red = (ushort)(value.R * 256);
-				green = (ushort)(value.G * 256);
-				blue = (ushort)(value.B * 256);
-				alpha = (ushort)(value.A * 256);
+				red = (ushort)(value.R << 8);
+				green = (ushort)(value.G << 8);
+				blue = (ushort)(value.B << 8);
+				alpha = (ushort)(value.A << 8);
 			}
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIRGBA16"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is FIRGBA16)
+			if (obj == null)
 			{
-				return CompareTo((FIRGBA16)obj);
+				return 1;
 			}
-			throw new ArgumentException();
+			if (!(obj is FIRGBA16))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIRGBA16)obj);
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="FIRGBA16"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="FIRGBA16"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(FIRGBA16 other)
 		{
-			return this.color.ToArgb().CompareTo(other.color.ToArgb());
+			return this.Color.ToArgb().CompareTo(other.Color.ToArgb());
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified object is a <see cref="FIRGBA16"/> structure
+		/// and is equivalent to this <see cref="FIRGBA16"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRGBA16"/> structure
+		/// equivalent to this <see cref="FIRGBA16"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return ((obj is FIRGBA16) && (this == ((FIRGBA16)obj)));
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="FIRGBA16"/> structure is equivalent to this <see cref="FIRGBA16"/> structure.
+		/// </summary>
+		/// <param name="other">A <see cref="FIRGBA16"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRGBA16"/> structure
+		/// equivalent to this <see cref="FIRGBA16"/> structure; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIRGBA16 other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="FIRGBA16"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIRGBA16"/>.</returns>
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		/// <summary>
+		/// Converts the numeric value of the <see cref="FIRGBA16"/> object
+		/// to its equivalent string representation.
+		/// </summary>
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
+		{
+			return FreeImage.ColorToString(Color);
 		}
 	}
 
 	/// <summary>
-	/// The FIRGB16 structure describes a color consisting of relative intensities of red, green, and blue.
-	/// Each color is using 2 bytes of data.
+	/// The <b>FIRGB16</b> structure describes a color consisting of relative
+	/// intensities of red, green, blue and alpha value. Each single color
+	/// component consumes 16 bits and so, takes values in the range from 0 to 65535.
 	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The <b>FIRGB16</b> structure provides access to an underlying FreeImage <b>FIRGB16</b>
+	/// structure. To determine the red, green or blue component of a color,
+	/// use the red, green or blue fields, respectively.
+	/// </para>
+	/// <para>For easy integration of the underlying structure into the .NET framework,
+	/// the <b>FIRGB16</b> structure implements implicit conversion operators to 
+	/// convert the represented color to and from the <see cref="System.Drawing.Color"/>
+	/// type. This makes the <see cref="System.Drawing.Color"/> type a real replacement
+	/// for the <b>FIRGB16</b> structure and my be used in all situations which require
+	/// an <b>FIRGB16</b> type.
+	/// </para>
+	/// <para>
+	/// Each color component red, green or blue of <b>FIRGB16</b> is translated into
+	/// it's corresponding color component R, G or B of
+	/// <see cref="System.Drawing.Color"/> by right shifting 8 bits and shifting left 8 bits for the reverse conversion.
+	/// When converting from <see cref="System.Drawing.Color"/> into <b>FIRGB16</b>, the
+	/// color's alpha value is ignored and assumed to be 255 when converting from
+	/// <b>FIRGB16</b> into <see cref="System.Drawing.Color"/>, creating a fully
+	/// opaque color.
+	/// </para>
+	/// <para>
+	/// <b>Conversion from System.Drawing.Color to FIRGB16</b>
+	/// </para>
+	/// <c>FIRGB16.component = Color.component &lt;&lt; 8</c>
+	/// <para>
+	/// <b>Conversion from FIRGB16 to System.Drawing.Color</b>
+	/// </para>
+	/// <c>Color.component = FIRGB16.component &gt;&gt; 8</c>
+	/// <para>
+	/// The same conversion is also applied when the <see cref="FreeImageAPI.FIRGB16.Color"/>
+	/// property or the <see cref="FreeImageAPI.FIRGB16(System.Drawing.Color)"/> constructor
+	/// is invoked.
+	/// </para>
+	/// </remarks>
+	/// <example>
+	/// The following code example demonstrates the various conversions between the
+	/// <b>FIRGB16</b> structure and the <see cref="System.Drawing.Color"/> structure.
+	/// <code>
+	/// FIRGB16 firgb16;
+	/// // Initialize the structure using a native .NET Color structure.
+	///	firgb16 = new FIRGBA16(Color.Indigo);
+	/// // Initialize the structure using the implicit operator.
+	///	firgb16 = Color.DarkSeaGreen;
+	/// // Convert the FIRGB16 instance into a native .NET Color
+	/// // using its implicit operator.
+	///	Color color = firgb16;
+	/// // Using the structure's Color property for converting it
+	/// // into a native .NET Color.
+	///	Color another = firgb16.Color;
+	/// </code>
+	/// </example>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FIRGB16 : IComparable, IComparable<FIRGB16>, IEquatable<FIRGB16>
 	{
+		/// <summary>
+		/// The red color component.
+		/// </summary>
 		public ushort red;
+
+		/// <summary>
+		/// The green color component.
+		/// </summary>
 		public ushort green;
+
+		/// <summary>
+		/// The blue color component.
+		/// </summary>
 		public ushort blue;
 
 		/// <summary>
-		/// Create a new instance.
+		/// Initializes a new instance based on the specified <see cref="System.Drawing.Color"/>.
 		/// </summary>
-		/// <param name="color">Color to initialize with.</param>
+		/// <param name="color"><see cref="System.Drawing.Color"/> to initialize with.</param>
 		public FIRGB16(Color color)
 		{
-			red = (ushort)(color.R * 256);
-			green = (ushort)(color.G * 256);
-			blue = (ushort)(color.B * 256);
-		}
-
-		public static bool operator ==(FIRGB16 value1, FIRGB16 value2)
-		{
-			return
-				value1.blue == value2.blue &&
-				value1.green == value2.green &&
-				value1.red == value2.red;
-		}
-
-		public static bool operator !=(FIRGB16 value1, FIRGB16 value2)
-		{
-			return !(value1 == value2);
-		}
-
-		public static implicit operator FIRGB16(Color color)
-		{
-			return new FIRGB16(color);
-		}
-
-		public static implicit operator Color(FIRGB16 firgb16)
-		{
-			return firgb16.color;
+			red = (ushort)(color.R << 8);
+			green = (ushort)(color.G << 8);
+			blue = (ushort)(color.B << 8);
 		}
 
 		/// <summary>
-		/// Gets or sets the color of the structure.
+		/// Tests whether two specified <see cref="FIRGB16"/> structures are equivalent.
 		/// </summary>
-		public Color color
+		/// <param name="left">The <see cref="FIRGB16"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FIRGB16"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIRGB16"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FIRGB16 left, FIRGB16 right)
+		{
+			return
+				((left.blue == right.blue) &&
+				(left.green == right.green) &&
+				(left.red == right.red));
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FIRGB16"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FIRGB16"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FIRGB16"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIRGB16"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FIRGB16 left, FIRGB16 right)
+		{
+			return !(left == right);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="System.Drawing.Color"/> structure to a <see cref="FIRGB16"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="System.Drawing.Color"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRGB16"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator FIRGB16(Color value)
+		{
+			return new FIRGB16(value);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="FIRGB16"/> structure to a <see cref="System.Drawing.Color"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRGB16"/> structure.</param>
+		/// <returns>A new instance of <see cref="System.Drawing.Color"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator Color(FIRGB16 value)
+		{
+			return value.Color;
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="System.Drawing.Color"/> of the structure.
+		/// </summary>
+		public Color Color
 		{
 			get
 			{
-				return Color.FromArgb(
-					red / 256,
-					green / 256,
-					blue / 256);
+				return Color.FromArgb((red >> 8), (green >> 8), (blue >> 8));
 			}
 			set
 			{
-				red = (ushort)(value.R * 256);
-				green = (ushort)(value.G * 256);
-				blue = (ushort)(value.B * 256);
+				red = (ushort)(value.R << 8);
+				green = (ushort)(value.G << 8);
+				blue = (ushort)(value.B << 8);
 			}
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIRGB16"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is FIRGB16)
+			if (obj == null)
 			{
-				return CompareTo((FIRGB16)obj);
+				return 1;
 			}
-			throw new ArgumentException();
+			if (!(obj is FIRGB16))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIRGB16)obj);
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="FIRGB16"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="FIRGB16"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(FIRGB16 other)
 		{
-			return this.color.ToArgb().CompareTo(other.color.ToArgb());
+			return this.Color.ToArgb().CompareTo(other.Color.ToArgb());
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified object is a <see cref="FIRGB16"/> structure
+		/// and is equivalent to this <see cref="FIRGB16"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRGB16"/> structure
+		/// equivalent to this <see cref="FIRGB16"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return ((obj is FIRGB16) && (this == ((FIRGB16)obj)));
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="FIRGB16"/> structure is equivalent to this <see cref="FIRGB16"/> structure.
+		/// </summary>
+		/// <param name="other">A <see cref="FIRGB16"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRGB16"/> structure
+		/// equivalent to this <see cref="FIRGB16"/> structure; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIRGB16 other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="FIRGB16"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIRGB16"/>.</returns>
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		/// <summary>
+		/// Converts the numeric value of the <see cref="FIRGB16"/> object
+		/// to its equivalent string representation.
+		/// </summary>
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
+		{
+			return FreeImage.ColorToString(Color);
 		}
 	}
 
 	/// <summary>
-	/// The FIRGBAF structure describes a color consisting of relative intensities of red, green, and blue
-	/// combined with an alpha factor. Each color is using 4 bytes of data.
+	/// The <b>FIRGBAF</b> structure describes a color consisting of relative
+	/// intensities of red, green, blue and alpha value. Each single color
+	/// component consumes 32 bits and takes values in the range from 0 to 1.
 	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The <b>FIRGBAF</b> structure provides access to an underlying FreeImage <b>FIRGBAF</b>
+	/// structure. To determine the alpha, red, green or blue component of a color,
+	/// use the alpha, red, green or blue fields, respectively.
+	/// </para>
+	/// <para>For easy integration of the underlying structure into the .NET framework,
+	/// the <b>FIRGBAF</b> structure implements implicit conversion operators to 
+	/// convert the represented color to and from the <see cref="System.Drawing.Color"/>
+	/// type. This makes the <see cref="System.Drawing.Color"/> type a real replacement
+	/// for the <b>FIRGBAF</b> structure and my be used in all situations which require
+	/// an <b>FIRGBAF</b> type.
+	/// </para>
+	/// <para>
+	/// Each color component alpha, red, green or blue of <b>FIRGBAF</b> is translated
+	/// into it's corresponding color component A, R, G or B of
+	/// <see cref="System.Drawing.Color"/> by linearly mapping the values of one range
+	/// into the other range and vice versa.
+	/// </para>
+	/// <para>
+	/// <b>Conversion from System.Drawing.Color to FIRGBAF</b>
+	/// </para>
+	/// <c>FIRGBAF.component = (float)Color.component / 255f</c>
+	/// <para>
+	/// <b>Conversion from FIRGBAF to System.Drawing.Color</b>
+	/// </para>
+	/// <c>Color.component = (int)(FIRGBAF.component * 255f)</c>
+	/// <para>
+	/// The same conversion is also applied when the <see cref="FreeImageAPI.FIRGBAF.Color"/>
+	/// property or the <see cref="FreeImageAPI.FIRGBAF(System.Drawing.Color)"/> constructor
+	/// is invoked.
+	/// </para>
+	/// </remarks>
+	/// <example>
+	/// The following code example demonstrates the various conversions between the
+	/// <b>FIRGBAF</b> structure and the <see cref="System.Drawing.Color"/> structure.
+	/// <code>
+	/// FIRGBAF firgbaf;
+	/// // Initialize the structure using a native .NET Color structure.
+	///	firgbaf = new FIRGBAF(Color.Indigo);
+	/// // Initialize the structure using the implicit operator.
+	///	firgbaf = Color.DarkSeaGreen;
+	/// // Convert the FIRGBAF instance into a native .NET Color
+	/// // using its implicit operator.
+	///	Color color = firgbaf;
+	/// // Using the structure's Color property for converting it
+	/// // into a native .NET Color.
+	///	Color another = firgbaf.Color;
+	/// </code>
+	/// </example>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FIRGBAF : IComparable, IComparable<FIRGBAF>, IEquatable<FIRGBAF>
 	{
+		/// <summary>
+		/// The red color component.
+		/// </summary>
 		public float red;
+
+		/// <summary>
+		/// The green color component.
+		/// </summary>
 		public float green;
+
+		/// <summary>
+		/// The blue color component.
+		/// </summary>
 		public float blue;
+
+		/// <summary>
+		/// The alpha color component.
+		/// </summary>
 		public float alpha;
 
 		/// <summary>
-		/// Create a new instance.
+		/// Initializes a new instance based on the specified <see cref="System.Drawing.Color"/>.
 		/// </summary>
-		/// <param name="color">Color to initialize with.</param>
+		/// <param name="color"><see cref="System.Drawing.Color"/> to initialize with.</param>
 		public FIRGBAF(Color color)
 		{
 			red = (float)color.R / 255f;
@@ -1118,34 +2587,60 @@ namespace FreeImageAPI
 			alpha = (float)color.A / 255f;
 		}
 
-		public static bool operator ==(FIRGBAF value1, FIRGBAF value2)
+		/// <summary>
+		/// Tests whether two specified <see cref="FIRGBAF"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FIRGBAF"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FIRGBAF"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIRGBAF"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FIRGBAF left, FIRGBAF right)
 		{
 			return
-				value1.alpha == value2.alpha &&
-				value1.blue == value2.blue &&
-				value1.green == value2.green &&
-				value1.red == value2.red;
-		}
-
-		public static bool operator !=(FIRGBAF value1, FIRGBAF value2)
-		{
-			return !(value1 == value2);
-		}
-
-		public static implicit operator FIRGBAF(Color color)
-		{
-			return new FIRGBAF(color);
-		}
-
-		public static implicit operator Color(FIRGBAF firgbaf)
-		{
-			return firgbaf.color;
+				((left.alpha == right.alpha) &&
+				(left.blue == right.blue) &&
+				(left.green == right.green) &&
+				(left.red == right.red));
 		}
 
 		/// <summary>
-		/// Gets or sets the color of the structure.
+		/// Tests whether two specified <see cref="FIRGBAF"/> structures are different.
 		/// </summary>
-		public Color color
+		/// <param name="left">The <see cref="FIRGBAF"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FIRGBAF"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIRGBAF"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FIRGBAF left, FIRGBAF right)
+		{
+			return !(left == right);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="System.Drawing.Color"/> structure to a <see cref="FIRGBAF"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="System.Drawing.Color"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRGBAF"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator FIRGBAF(Color value)
+		{
+			return new FIRGBAF(value);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="FIRGBAF"/> structure to a <see cref="System.Drawing.Color"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRGBAF"/> structure.</param>
+		/// <returns>A new instance of <see cref="System.Drawing.Color"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator Color(FIRGBAF value)
+		{
+			return value.Color;
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="System.Drawing.Color"/> of the structure.
+		/// </summary>
+		public Color Color
 		{
 			get
 			{
@@ -1165,55 +2660,159 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIRGBAF"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is FIRGBAF)
+			if (obj == null)
 			{
-				return CompareTo((FIRGBAF)obj);
+				return 1;
 			}
-			throw new ArgumentException();
+			if (!(obj is FIRGBAF))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIRGBAF)obj);
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="FIRGBAF"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="FIRGBAF"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(FIRGBAF other)
 		{
-			return this.color.ToArgb().CompareTo(other.color.ToArgb());
+			return this.Color.ToArgb().CompareTo(other.Color.ToArgb());
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified object is a <see cref="FIRGBAF"/> structure
+		/// and is equivalent to this <see cref="FIRGBAF"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRGBAF"/> structure
+		/// equivalent to this <see cref="FIRGBAF"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return ((obj is FIRGBAF) && (this == ((FIRGBAF)obj)));
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="FIRGBAF"/> structure is equivalent to this <see cref="FIRGBAF"/> structure.
+		/// </summary>
+		/// <param name="other">A <see cref="FIRGBAF"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRGBAF"/> structure
+		/// equivalent to this <see cref="FIRGBAF"/> structure; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIRGBAF other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="FIRGBAF"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIRGBAF"/>.</returns>
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		/// <summary>
+		/// Converts the numeric value of the <see cref="FIRGBAF"/> object
+		/// to its equivalent string representation.
+		/// </summary>
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
+		{
+			return FreeImage.ColorToString(Color);
 		}
 	}
 
 	/// <summary>
-	/// The FIRGBF structure describes a color consisting of relative intensities of red, green, and blue.
-	/// Each color is using 4 bytes of data.
+	/// The <b>FIRGBF</b> structure describes a color consisting of relative
+	/// intensities of red, green, blue and alpha value. Each single color
+	/// component consumes 32 bits and takes values in the range from 0 to 1.
 	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The <b>FIRGBF</b> structure provides access to an underlying FreeImage <b>FIRGBF</b>
+	/// structure. To determine the red, green or blue component of a color, use the
+	/// red, green or blue fields, respectively.
+	/// </para>
+	/// <para>For easy integration of the underlying structure into the .NET framework,
+	/// the <b>FIRGBF</b> structure implements implicit conversion operators to 
+	/// convert the represented color to and from the <see cref="System.Drawing.Color"/>
+	/// type. This makes the <see cref="System.Drawing.Color"/> type a real replacement
+	/// for the <b>FIRGBF</b> structure and my be used in all situations which require
+	/// an <b>FIRGBF</b> type.
+	/// </para>
+	/// <para>
+	/// Each color component alpha, red, green or blue of <b>FIRGBF</b> is translated
+	/// into it's corresponding color component A, R, G or B of
+	/// <see cref="System.Drawing.Color"/> by linearly mapping the values of one range
+	/// into the other range and vice versa.
+	/// When converting from <see cref="System.Drawing.Color"/> into <b>FIRGBF</b>, the
+	/// color's alpha value is ignored and assumed to be 255 when converting from
+	/// <b>FIRGBF</b> into <see cref="System.Drawing.Color"/>, creating a fully
+	/// opaque color.
+	/// </para>
+	/// <para>
+	/// <b>Conversion from System.Drawing.Color to FIRGBF</b>
+	/// </para>
+	/// <c>FIRGBF.component = (float)Color.component / 255f</c>
+	/// <para>
+	/// <b>Conversion from FIRGBF to System.Drawing.Color</b>
+	/// </para>
+	/// <c>Color.component = (int)(FIRGBF.component * 255f)</c>
+	/// <para>
+	/// The same conversion is also applied when the <see cref="FreeImageAPI.FIRGBF.Color"/>
+	/// property or the <see cref="FreeImageAPI.FIRGBF(System.Drawing.Color)"/> constructor
+	/// is invoked.
+	/// </para>
+	/// </remarks>
+	/// <example>
+	/// The following code example demonstrates the various conversions between the
+	/// <b>FIRGBF</b> structure and the <see cref="System.Drawing.Color"/> structure.
+	/// <code>
+	/// FIRGBF firgbf;
+	/// // Initialize the structure using a native .NET Color structure.
+	///	firgbf = new FIRGBF(Color.Indigo);
+	/// // Initialize the structure using the implicit operator.
+	///	firgbf = Color.DarkSeaGreen;
+	/// // Convert the FIRGBF instance into a native .NET Color
+	/// // using its implicit operator.
+	///	Color color = firgbf;
+	/// // Using the structure's Color property for converting it
+	/// // into a native .NET Color.
+	///	Color another = firgbf.Color;
+	/// </code>
+	/// </example>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FIRGBF : IComparable, IComparable<FIRGBF>, IEquatable<FIRGBF>
 	{
+		/// <summary>
+		/// The red color component.
+		/// </summary>
 		public float red;
+
+		/// <summary>
+		/// The green color component.
+		/// </summary>
 		public float green;
+
+		/// <summary>
+		/// The blue color component.
+		/// </summary>
 		public float blue;
 
 		/// <summary>
-		/// Create a new instance.
+		/// Initializes a new instance based on the specified <see cref="System.Drawing.Color"/>.
 		/// </summary>
-		/// <param name="color">Color to initialize with.</param>
+		/// <param name="color"><see cref="System.Drawing.Color"/> to initialize with.</param>
 		public FIRGBF(Color color)
 		{
 			red = (float)color.R / 255f;
@@ -1221,33 +2820,59 @@ namespace FreeImageAPI
 			blue = (float)color.B / 255f;
 		}
 
-		public static bool operator ==(FIRGBF value1, FIRGBF value2)
+		/// <summary>
+		/// Tests whether two specified <see cref="FIRGBF"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FIRGBF"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FIRGBF"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIRGBF"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FIRGBF left, FIRGBF right)
 		{
 			return
-				value1.blue == value2.blue &&
-				value1.green == value2.green &&
-				value1.red == value2.red;
-		}
-
-		public static bool operator !=(FIRGBF value1, FIRGBF value2)
-		{
-			return !(value1 == value2);
-		}
-
-		public static implicit operator FIRGBF(Color color)
-		{
-			return new FIRGBF(color);
-		}
-
-		public static implicit operator Color(FIRGBF firgbf)
-		{
-			return firgbf.color;
+				((left.blue == right.blue) &&
+				(left.green == right.green) &&
+				(left.red == right.red));
 		}
 
 		/// <summary>
-		/// Gets or sets the color of the structure.
+		/// Tests whether two specified <see cref="FIRGBF"/> structures are different.
 		/// </summary>
-		public Color color
+		/// <param name="left">The <see cref="FIRGBF"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FIRGBF"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIRGBF"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FIRGBF left, FIRGBF right)
+		{
+			return !(left == right);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="System.Drawing.Color"/> structure to a <see cref="FIRGBF"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="System.Drawing.Color"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRGBF"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator FIRGBF(Color value)
+		{
+			return new FIRGBF(value);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="FIRGBF"/> structure to a <see cref="System.Drawing.Color"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRGBF"/> structure.</param>
+		/// <returns>A new instance of <see cref="System.Drawing.Color"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator Color(FIRGBF value)
+		{
+			return value.Color;
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="System.Drawing.Color"/> of the structure.
+		/// </summary>
+		public Color Color
 		{
 			get
 			{
@@ -1265,268 +2890,182 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIRGBF"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is FIRGBF)
+			if (obj == null)
 			{
-				return CompareTo((FIRGBF)obj);
+				return 1;
 			}
-			throw new ArgumentException();
+			if (!(obj is FIRGBF))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIRGBF)obj);
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="FIRGBF"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="FIRGBF"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(FIRGBF other)
 		{
-			return this.color.ToArgb().CompareTo(other.color.ToArgb());
+			return this.Color.ToArgb().CompareTo(other.Color.ToArgb());
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified object is a <see cref="FIRGBF"/> structure
+		/// and is equivalent to this <see cref="FIRGBF"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRGBF"/> structure
+		/// equivalent to this <see cref="FIRGBF"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return ((obj is FIRGBF) && (this == ((FIRGBF)obj)));
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="FIRGBF"/> structure is equivalent to this <see cref="FIRGBF"/> structure.
+		/// </summary>
+		/// <param name="other">A <see cref="FIRGBF"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRGBF"/> structure
+		/// equivalent to this <see cref="FIRGBF"/> structure; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIRGBF other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="FIRGBF"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIRGBF"/>.</returns>
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+
+		/// <summary>
+		/// Converts the numeric value of the <see cref="FIRGBF"/> object
+		/// to its equivalent string representation.
+		/// </summary>
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
+		{
+			return FreeImage.ColorToString(Color);
 		}
 	}
 
 	/// <summary>
-	/// The FICOMPLEX structure describes a color consisting of a real and an imaginary part.
+	/// The <b>FICOMPLEX</b> structure describes a color consisting of a real and an imaginary part.
 	/// Each part is using 4 bytes of data.
 	/// </summary>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FICOMPLEX : IComparable, IComparable<FICOMPLEX>, IEquatable<FICOMPLEX>
 	{
-		public double r;
-		public double i;
+		/// <summary>
+		/// Real part of the color.
+		/// </summary>
+		public double real;
 
-		public static bool operator ==(FICOMPLEX value1, FICOMPLEX value2)
-		{
-			return ((value1.r == value2.r) && (value1.i == value2.i));
-		}
+		/// <summary>
+		/// Imaginary part of the color.
+		/// </summary>
+		public double imag;
 
-		public static bool operator !=(FICOMPLEX value1, FICOMPLEX value2)
+		/// <summary>
+		/// Tests whether two specified <see cref="FICOMPLEX"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FICOMPLEX"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FICOMPLEX"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FICOMPLEX"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FICOMPLEX left, FICOMPLEX right)
 		{
-			return !(value1 == value2);
+			return ((left.real == right.real) && (left.imag == right.imag));
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Tests whether two specified <see cref="FICOMPLEX"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FICOMPLEX"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FICOMPLEX"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FICOMPLEX"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FICOMPLEX left, FICOMPLEX right)
+		{
+			return ((left.real != right.real) || (left.imag == right.imag));
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FICOMPLEX"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is FICOMPLEX)
+			if (obj == null)
 			{
-				return CompareTo((FICOMPLEX)obj);
+				return 1;
 			}
-			throw new ArgumentException();
+			if (!(obj is FICOMPLEX))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FICOMPLEX)obj);
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="FICOMPLEX"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="FICOMPLEX"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(FICOMPLEX other)
 		{
-			return (this.r * this.i).CompareTo(other.r * other.i);
+			return base.GetHashCode();
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified object is a <see cref="FICOMPLEX"/> structure
+		/// and is equivalent to this <see cref="FICOMPLEX"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FICOMPLEX other)
-		{
-			return this == other;
-		}
-
-		/// <summary>
-		/// Serves as a hash function for a particular type.
-		/// </summary>
-		/// <returns>A hash code for the current object.</returns>
-		public override int GetHashCode()
-		{
-			return (r * i).GetHashCode();
-		}
-	}
-
-	/// <summary>
-	/// The BITMAP structure defines the type, width, height, color format, and bit values of a bitmap.
-	/// </summary>
-	[Serializable, StructLayout(LayoutKind.Sequential)]
-	public struct BITMAP
-	{
-		public int bmType;
-		public int bmWidth;
-		public int bmHeight;
-		public int bmWidthBytes;
-		public ushort bmPlanes;
-		public ushort bmBitsPixel;
-		public IntPtr bmBits;
-	}
-
-	/// <summary>
-	/// This structure contains information about the dimensions and color format of a device-independent bitmap (DIB).
-	/// </summary>
-	[Serializable, StructLayout(LayoutKind.Sequential)]
-	public struct BITMAPINFOHEADER : IEquatable<BITMAPINFOHEADER>
-	{
-		/// <summary>
-		/// Specifies the size of the structure, in bytes.
-		/// </summary>
-		public uint biSize;
-		/// <summary>
-		/// Specifies the width of the bitmap, in pixels.
-		/// </summary>
-		public int biWidth;
-		/// <summary>
-		/// Specifies the height of the bitmap, in pixels.
-		/// If biHeight is positive, the bitmap is a bottom-up DIB and its origin is the lower left corner.
-		/// If biHeight is negative, the bitmap is a top-down DIB and its origin is the upper left corner.
-		/// If biHeight is negative, indicating a top-down DIB, biCompression must be either BI_RGB or BI_BITFIELDS.
-		/// Top-down DIBs cannot be compressed.
-		/// </summary>
-		public int biHeight;
-		/// <summary>
-		/// Specifies the number of planes for the target device. This value must be set to 1.
-		/// </summary>
-		public ushort biPlanes;
-		/// <summary>
-		/// Specifies the number of bits per pixel.
-		/// </summary>
-		public ushort biBitCount;
-		/// <summary>
-		/// Specifies the type of compression for a compressed bottom-up bitmap (top-down DIBs cannot be compressed).
-		/// </summary>
-		public uint biCompression;
-		/// <summary>
-		/// Specifies the size, in bytes, of the image.
-		/// </summary>
-		public uint biSizeImage;
-		/// <summary>
-		/// Specifies the horizontal resolution, in pixels per meter, of the target device for the bitmap.
-		/// </summary>
-		public int biXPelsPerMeter;
-		/// <summary>
-		/// Specifies the vertical resolution, in pixels per meter, of the target device for the bitmap
-		/// </summary>
-		public int biYPelsPerMeter;
-		/// <summary>
-		/// Specifies the number of color indexes in the color table that are actually used by the bitmap.
-		/// </summary>
-		public uint biClrUsed;
-		/// <summary>
-		/// Specifies the number of color indexes required for displaying the bitmap.
-		/// If this value is zero, all colors are required.
-		/// </summary>
-		public uint biClrImportant;
-
-		public static bool operator ==(BITMAPINFOHEADER value1, BITMAPINFOHEADER value2)
-		{
-			return ((value1.biSize == value2.biSize) &&
-					(value1.biWidth == value2.biWidth) &&
-					(value1.biHeight == value2.biHeight) &&
-					(value1.biPlanes == value2.biPlanes) &&
-					(value1.biBitCount == value2.biBitCount) &&
-					(value1.biCompression == value2.biCompression) &&
-					(value1.biSizeImage == value2.biSizeImage) &&
-					(value1.biXPelsPerMeter == value2.biXPelsPerMeter) &&
-					(value1.biYPelsPerMeter == value2.biYPelsPerMeter) &&
-					(value1.biClrUsed == value2.biClrUsed) &&
-					(value1.biClrImportant == value2.biClrImportant));
-		}
-
-		public static bool operator !=(BITMAPINFOHEADER value1, BITMAPINFOHEADER value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
-		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FICOMPLEX"/> structure
+		/// equivalent to this <see cref="FICOMPLEX"/> structure; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is BITMAPINFOHEADER)
-			{
-				return Equals((BITMAPINFOHEADER)obj);
-			}
-			return base.Equals(obj);
+			return ((obj is FICOMPLEX) && (this == ((FICOMPLEX)obj)));
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified <see cref="FICOMPLEX"/> structure is equivalent to this <see cref="FICOMPLEX"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(BITMAPINFOHEADER other)
+		/// <param name="other">A <see cref="FICOMPLEX"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FICOMPLEX"/> structure
+		/// equivalent to this <see cref="FICOMPLEX"/> structure; otherwise, <b>false</b>.</returns>
+		public bool Equals(FICOMPLEX other)
 		{
-			return this == other;
-		}
-	}
-
-	/// <summary>
-	/// This structure defines the dimensions and color information of a Windows-based device-independent bitmap (DIB).
-	/// </summary>
-	[Serializable, StructLayout(LayoutKind.Sequential)]
-	public struct BITMAPINFO : IEquatable<BITMAPINFO>
-	{
-		/// <summary>
-		/// Specifies a BITMAPINFOHEADER structure that contains information about the dimensions of color format.
-		/// </summary>
-		public BITMAPINFOHEADER bmiHeader;
-		/// <summary>
-		/// An array of RGBQUAD. The elements of the array that make up the color table.
-		/// </summary>
-		public RGBQUAD[] bmiColors;
-
-		public static bool operator ==(BITMAPINFO value1, BITMAPINFO value2)
-		{
-			if (value1.bmiHeader != value2.bmiHeader)
-			{
-				return false;
-			}
-			if (value1.bmiColors.Length != value2.bmiColors.Length)
-			{
-				return false;
-			}
-			for (int i = 0; i < value1.bmiColors.Length; i++)
-			{
-				if (value1.bmiColors[i] != value2.bmiColors[i])
-				{
-					return false;
-				}
-			}
-			return true;
-		}
-
-		public static bool operator !=(BITMAPINFO value1, BITMAPINFO value2)
-		{
-			return !(value1 == value2);
+			return (this == other);
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Returns a hash code for this <see cref="FICOMPLEX"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(BITMAPINFO other)
+		/// <returns>An integer value that specifies the hash code for this <see cref="FICOMPLEX"/>.</returns>
+		public override int GetHashCode()
 		{
-			return this == other;
+			return base.GetHashCode();
 		}
 	}
 
@@ -1541,25 +3080,25 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
-		/// Creates a new ICC-Profile for dib.
+		/// Creates a new ICC-Profile for <paramref name="dib"/>.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="data">The ICC-Profile data.</param>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public FIICCPROFILE(FIBITMAP dib, byte[] data)
 			: this(dib, data, (int)data.Length)
 		{
 		}
 
 		/// <summary>
-		/// Creates a new ICC-Profile for dib.
+		/// Creates a new ICC-Profile for <paramref name="dib"/>.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="data">The ICC-Profile data.</param>
 		/// <param name="size">Number of bytes to use from data.</param>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public unsafe FIICCPROFILE(FIBITMAP dib, byte[] data, int size)
 		{
 			if (dib.IsNull)
@@ -1580,7 +3119,6 @@ namespace FreeImageAPI
 		public ICC_FLAGS Flags
 		{
 			get { return flags; }
-			set { flags = value; }
 		}
 
 		/// <summary>
@@ -1607,9 +3145,10 @@ namespace FreeImageAPI
 			get
 			{
 				byte[] result = new byte[size];
-				byte* ptr = (byte*)data;
-				for (int i = 0; i < size; i++)
-					result[i] = ptr[i];
+				fixed (byte* dst = result)
+				{
+					FreeImage.CopyMemory(dst, data.ToPointer(), size);
+				}
 				return result;
 			}
 		}
@@ -1621,7 +3160,7 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				return ((flags & ICC_FLAGS.FIICC_COLOR_IS_CMYK) > 0);
+				return ((flags & ICC_FLAGS.FIICC_COLOR_IS_CMYK) != 0);
 			}
 		}
 	}
@@ -1632,20 +3171,88 @@ namespace FreeImageAPI
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct Plugin
 	{
+		/// <summary>
+		/// Delegate to a function that returns a string which describes
+		/// the plugins format.
+		/// </summary>
 		public FormatProc formatProc;
+
+		/// <summary>
+		/// Delegate to a function that returns a string which contains
+		/// a more detailed description.
+		/// </summary>
 		public DescriptionProc descriptionProc;
+
+		/// <summary>
+		/// Delegate to a function that returns a comma seperated list
+		/// of file extensions the plugin can read or write.
+		/// </summary>
 		public ExtensionListProc extensionListProc;
+
+		/// <summary>
+		/// Delegate to a function that returns a regular expression that
+		/// can be used to idientify whether a file can be handled by the plugin.
+		/// </summary>
 		public RegExprProc regExprProc;
+
+		/// <summary>
+		/// Delegate to a function that opens a file.
+		/// </summary>
 		public OpenProc openProc;
+
+		/// <summary>
+		/// Delegate to a function that closes a previosly opened file.
+		/// </summary>
 		public CloseProc closeProc;
+
+		/// <summary>
+		/// Delegate to a function that returns the number of pages of a multipage
+		/// bitmap if the plugin is capable of handling multipage bitmaps.
+		/// </summary>
 		public PageCountProc pageCountProc;
+
+		/// <summary>
+		/// UNKNOWN
+		/// </summary>
 		public PageCapabilityProc pageCapabilityProc;
+
+		/// <summary>
+		/// Delegate to a function that loads and decodes a bitmap into memory.
+		/// </summary>
 		public LoadProc loadProc;
+
+		/// <summary>
+		///  Delegate to a function that saves a bitmap.
+		/// </summary>
 		public SaveProc saveProc;
+
+		/// <summary>
+		/// Delegate to a function that determines whether the source is a valid image.
+		/// </summary>
 		public ValidateProc validateProc;
+
+		/// <summary>
+		/// Delegate to a function that returns a string which contains
+		/// the plugin's mime type.
+		/// </summary>
 		public MimeProc mimeProc;
+
+		/// <summary>
+		/// Delegate to a function that returns whether the plugin can handle the
+		/// specified color depth.
+		/// </summary>
 		public SupportsExportBPPProc supportsExportBPPProc;
+
+		/// <summary>
+		/// Delegate to a function that returns whether the plugin can handle the
+		/// specified image type.
+		/// </summary>
 		public SupportsExportTypeProc supportsExportTypeProc;
+
+		/// <summary>
+		/// Delegate to a function that returns whether the plugin can handle
+		/// ICC-Profiles.
+		/// </summary>
 		public SupportsICCProfilesProc supportsICCProfilesProc;
 	}
 
@@ -2324,6 +3931,44 @@ namespace FreeImageAPI
 		/// </summary>
 		JPEG_PROGRESSIVE = 0x2000,
 		/// <summary>
+		/// Save with high 4x1 chroma subsampling (4:1:1).
+		/// </summary>
+		JPEG_SUBSAMPLING_411 = 0x1000,
+		/// <summary>
+		/// Save with medium 2x2 medium chroma (4:2:0).
+		/// </summary>
+		JPEG_SUBSAMPLING_420 = 0x4000,
+		/// <summary>
+		/// Save with low 2x1 chroma subsampling (4:2:2).
+		/// </summary>
+		JPEG_SUBSAMPLING_422 = 0x8000,
+		/// <summary>
+		/// Save with no chroma subsampling (4:4:4).
+		/// </summary>
+		JPEG_SUBSAMPLING_444 = 0x10000,
+		/// <summary>
+		/// Save using ZLib level 1 compression flag
+		/// (default value is <see cref="PNG_Z_DEFAULT_COMPRESSION"/>).
+		/// </summary>
+		PNG_Z_BEST_SPEED = 0x0001,
+		/// <summary>
+		/// Save using ZLib level 6 compression flag (default recommended value).
+		/// </summary>
+		PNG_Z_DEFAULT_COMPRESSION = 0x0006,
+		/// <summary>
+		/// save using ZLib level 9 compression flag
+		/// (default value is <see cref="PNG_Z_DEFAULT_COMPRESSION"/>).
+		/// </summary>
+		PNG_Z_BEST_COMPRESSION = 0x0009,
+		/// <summary>
+		/// Save without ZLib compression.
+		/// </summary>
+		PNG_Z_NO_COMPRESSION = 0x0100,
+		/// <summary>
+		/// Save using Adam7 interlacing (use | to combine with other save flags).
+		/// </summary>
+		PNG_INTERLACED = 0x0200,
+		/// <summary>
 		/// If set the writer saves in ASCII format (i.e. P1, P2 or P3).
 		/// </summary>
 		PNM_SAVE_ASCII = 1,
@@ -2385,10 +4030,10 @@ namespace FreeImageAPI
 
 	#region Delegates
 
-	// Delegates used by the 'FreeImageIO' structure
+	// Delegates used by the FreeImageIO structure
 
 	/// <summary>
-	/// Delegate for capturing error messages.
+	/// Delegate for capturing FreeImage error messages.
 	/// </summary>
 	/// <param name="fif">The format of the image.</param>
 	/// <param name="message">The errormessage.</param>
@@ -2397,19 +4042,19 @@ namespace FreeImageAPI
 	public delegate void OutputMessageFunction(FREE_IMAGE_FORMAT fif, string message);
 
 	/// <summary>
-	/// Delegate wrapping the C++ function 'fread'.
+	/// Delegate to the C++ function <b>fread</b>.
 	/// </summary>
 	/// <param name="buffer">Pointer to read from.</param>
 	/// <param name="size">Item size in bytes.</param>
 	/// <param name="count">Maximum number of items to be read.</param>
 	/// <param name="handle">Handle/stream to read from.</param>
-	/// <returns>number of full items actually read,
+	/// <returns>Number of full items actually read,
 	/// which may be less than count if an error occurs or
 	/// if the end of the file is encountered before reaching count.</returns>
 	public delegate uint ReadProc(IntPtr buffer, uint size, uint count, fi_handle handle);
 
 	/// <summary>
-	/// Delegate wrapping the C++ function 'fwrite'.
+	/// Delegate to the C++ function <b>fwrite</b>.
 	/// </summary>
 	/// <param name="buffer">Pointer to data to be written.</param>
 	/// <param name="size">Item size in bytes.</param>
@@ -2421,7 +4066,7 @@ namespace FreeImageAPI
 	public delegate uint WriteProc(IntPtr buffer, uint size, uint count, fi_handle handle);
 
 	/// <summary>
-	/// Delegate wrapping the C++ function 'fseek'.
+	/// Delegate to the C++ function <b>fseek</b>.
 	/// </summary>
 	/// <param name="handle">Handle/stream to seek in.</param>
 	/// <param name="offset">Number of bytes from origin.</param>
@@ -2430,7 +4075,7 @@ namespace FreeImageAPI
 	public delegate int SeekProc(fi_handle handle, int offset, SeekOrigin origin);
 
 	/// <summary>
-	/// Delegate wrapping the C++ function 'ftell'.
+	/// Delegate to the C++ function <b>ftell</b>.
 	/// </summary>
 	/// <param name="handle">Handle/stream to retrieve its currents position from.</param>
 	/// <returns>The current position.</returns>
@@ -2439,25 +4084,25 @@ namespace FreeImageAPI
 	// Delegates used by 'Plugin' structure
 
 	/// <summary>
-	/// Delegate to a function returning a string which describes
+	/// Delegate to a function that returns a string which describes
 	/// the plugins format.
 	/// </summary>
 	public delegate string FormatProc();
 
 	/// <summary>
-	/// Delegate to a function returning a string which contains
+	/// Delegate to a function that returns a string which contains
 	/// a more detailed description.
 	/// </summary>
 	public delegate string DescriptionProc();
 
 	/// <summary>
-	/// Delegate to a function returning a comma seperated list
-	/// of file-extensions the plugin can read or write.
+	/// Delegate to a function that returns a comma seperated list
+	/// of file extensions the plugin can read or write.
 	/// </summary>
 	public delegate string ExtensionListProc();
 
 	/// <summary>
-	/// Delegate to a function returning a regular expression that
+	/// Delegate to a function that returns a regular expression that
 	/// can be used to idientify whether a file can be handled by the plugin.
 	/// </summary>
 	public delegate string RegExprProc();
@@ -2473,8 +4118,8 @@ namespace FreeImageAPI
 	public delegate void CloseProc(ref FreeImageIO io, fi_handle handle, IntPtr data);
 
 	/// <summary>
-	/// Delegate to a function that returns the number of pages of a multi-paged
-	/// bitmap if the plugin is capable of handling multi-paged bitmaps
+	/// Delegate to a function that returns the number of pages of a multipage
+	/// bitmap if the plugin is capable of handling multipage bitmaps.
 	/// </summary>
 	public delegate int PageCountProc(ref FreeImageIO io, fi_handle handle, IntPtr data);
 
@@ -2484,7 +4129,7 @@ namespace FreeImageAPI
 	public delegate int PageCapabilityProc(ref FreeImageIO io, fi_handle handle, IntPtr data);
 
 	/// <summary>
-	/// Delegate to a function that loads a bitmap into memory.
+	/// Delegate to a function that loads and decodes a bitmap into memory.
 	/// </summary>
 	public delegate FIBITMAP LoadProc(ref FreeImageIO io, fi_handle handle, int page, int flags, IntPtr data);
 
@@ -2494,25 +4139,26 @@ namespace FreeImageAPI
 	public delegate bool SaveProc(ref FreeImageIO io, FIBITMAP dib, fi_handle handle, int page, int flags, IntPtr data);
 
 	/// <summary>
-	/// Delegate to a function that validates a bitmap.
+	/// Delegate to a function that determines whether the source defined
+	/// by <param name="io"/> and <param name="handle"/> is a valid image.
 	/// </summary>
 	public delegate bool ValidateProc(ref FreeImageIO io, fi_handle handle);
 
 	/// <summary>
-	/// Delegate to a function returning a string which contains
-	/// a Mime.
+	/// Delegate to a function that returns a string which contains
+	/// the plugin's mime type.
 	/// </summary>
 	public delegate string MimeProc();
 
 	/// <summary>
-	/// Delegate to a function that returns whether the plugin can handle a
-	/// given color depth.
+	/// Delegate to a function that returns whether the plugin can handle the
+	/// specified color depth.
 	/// </summary>
 	public delegate bool SupportsExportBPPProc(int bpp);
 
 	/// <summary>
-	/// Delegate to a function that returns whether the plugin can handle a
-	/// given image type.
+	/// Delegate to a function that returns whether the plugin can handle the
+	/// specified image type.
 	/// </summary>
 	public delegate bool SupportsExportTypeProc(FREE_IMAGE_TYPE type);
 
@@ -2520,11 +4166,10 @@ namespace FreeImageAPI
 	/// Delegate to a function that returns whether the plugin can handle
 	/// ICC-Profiles.
 	/// </summary>
-	/// <returns></returns>
 	public delegate bool SupportsICCProfilesProc();
 
 	/// <summary>
-	/// Callback used by FreeImage to register plugins.
+	/// Callback function used by FreeImage to register plugins.
 	/// </summary>
 	public delegate void InitProc(ref Plugin plugin, int format_id);
 
@@ -2537,18 +4182,18 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Filename of the FreeImage library.
 		/// </summary>
-		private const string FreeImageLibrary = "FreeImage.dll";
+		private const string FreeImageLibrary = "FreeImage";
 
 		/// <summary>
-		/// Major version of the wrapper.
+		/// Major version of the library.
 		/// </summary>
 		public const int FREEIMAGE_MAJOR_VERSION = 3;
 		/// <summary>
-		/// Minor version of the wrapper.
+		/// Minor version of the library.
 		/// </summary>
-		public const int FREEIMAGE_MINOR_VERSION = 10;
+		public const int FREEIMAGE_MINOR_VERSION = 11;
 		/// <summary>
-		/// Release version of the wrapper.
+		/// Release version of the library.
 		/// </summary>
 		public const int FREEIMAGE_RELEASE_SERIAL = 0;
 
@@ -2662,7 +4307,7 @@ namespace FreeImageAPI
 		/// Initialises the library.
 		/// </summary>
 		/// <param name="load_local_plugins_only">
-		/// When the load_local_plugins_only parameter is true, FreeImage won't make use of external plugins.
+		/// When the <paramref name="load_local_plugins_only"/> is true, FreeImage won't make use of external plugins.
 		/// </param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_Initialise")]
 		private static extern void Initialise(bool load_local_plugins_only);
@@ -2700,10 +4345,10 @@ namespace FreeImageAPI
 		/// <summary>
 		/// You use the function FreeImage_SetOutputMessage to capture the log string
 		/// so that you can show it to the user of the program.
-		/// The callback is implemented in the 'Message' event of this class.
+		/// The callback is implemented in the <see cref="Message"/> event of this class.
 		/// </summary>
 		/// <remarks>The function is private because FreeImage can only have a single
-		/// callback function. To use the callback use the 'Message' event of this class.</remarks>
+		/// callback function. To use the callback use the <see cref="Message"/> event of this class.</remarks>
 		/// <param name="omf">Handler to the callback function.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetOutputMessage")]
 		internal static extern void SetOutputMessage(OutputMessageFunction omf);
@@ -2997,26 +4642,26 @@ namespace FreeImageAPI
 		public static extern int IsPluginEnabled(FREE_IMAGE_FORMAT fif);
 
 		/// <summary>
-		/// Returns a FREE_IMAGE_FORMAT identifier from the format string that was used to register the FIF.
+		/// Returns a <see cref="FREE_IMAGE_FORMAT"/> identifier from the format string that was used to register the FIF.
 		/// </summary>
 		/// <param name="format">The string that was used to register the plugin.</param>
-		/// <returns>A FREE_IMAGE_FORMAT identifier from the format.</returns>
+		/// <returns>A <see cref="FREE_IMAGE_FORMAT"/> identifier from the format.</returns>
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_GetFIFFromFormat")]
 		public static extern FREE_IMAGE_FORMAT GetFIFFromFormat(string format);
 
 		/// <summary>
-		/// Returns a FREE_IMAGE_FORMAT identifier from a MIME content type string
+		/// Returns a <see cref="FREE_IMAGE_FORMAT"/> identifier from a MIME content type string
 		/// (MIME stands for Multipurpose Internet Mail Extension).
 		/// </summary>
 		/// <param name="mime">A MIME content type.</param>
-		/// <returns>A FREE_IMAGE_FORMAT identifier from the MIME.</returns>
+		/// <returns>A <see cref="FREE_IMAGE_FORMAT"/> identifier from the MIME.</returns>
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_GetFIFFromMime")]
 		public static extern FREE_IMAGE_FORMAT GetFIFFromMime(string mime);
 
 		/// <summary>
-		/// Returns the string that was used to register a plugin from the system assigned FREE_IMAGE_FORMAT.
+		/// Returns the string that was used to register a plugin from the system assigned <see cref="FREE_IMAGE_FORMAT"/>.
 		/// </summary>
-		/// <param name="fif">The assigned FREE_IMAGE_FORMAT.</param>
+		/// <param name="fif">The assigned <see cref="FREE_IMAGE_FORMAT"/>.</param>
 		/// <returns>The string that was used to register the plugin.</returns>
 		public static unsafe string GetFormatFromFIF(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFormatFromFIF_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFormatFromFIF")]
@@ -3025,7 +4670,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Returns a comma-delimited file extension list describing the bitmap formats the given plugin can read and/or write.
 		/// </summary>
-		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
+		/// <param name="fif">The desired <see cref="FREE_IMAGE_FORMAT"/>.</param>
 		/// <returns>A comma-delimited file extension list.</returns>
 		public static unsafe string GetFIFExtensionList(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFExtensionList_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFExtensionList")]
@@ -3034,7 +4679,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Returns a descriptive string that describes the bitmap formats the given plugin can read and/or write.
 		/// </summary>
-		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
+		/// <param name="fif">The desired <see cref="FREE_IMAGE_FORMAT"/>.</param>
 		/// <returns>A descriptive string that describes the bitmap formats.</returns>
 		public static unsafe string GetFIFDescription(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFDescription_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFDescription")]
@@ -3044,16 +4689,16 @@ namespace FreeImageAPI
 		/// Returns a regular expression string that can be used by a regular expression engine to identify the bitmap.
 		/// FreeImageQt makes use of this function.
 		/// </summary>
-		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
+		/// <param name="fif">The desired <see cref="FREE_IMAGE_FORMAT"/>.</param>
 		/// <returns>A regular expression string.</returns>
 		public static unsafe string GetFIFRegExpr(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFRegExpr_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFRegExpr")]
 		private static unsafe extern byte* GetFIFRegExpr_(FREE_IMAGE_FORMAT fif);
 
 		/// <summary>
-		/// Given a FREE_IMAGE_FORMAT identifier, returns a MIME content type string (MIME stands for Multipurpose Internet Mail Extension).
+		/// Given a <see cref="FREE_IMAGE_FORMAT"/> identifier, returns a MIME content type string (MIME stands for Multipurpose Internet Mail Extension).
 		/// </summary>
-		/// <param name="fif">The desired FREE_IMAGE_FORMAT.</param>
+		/// <param name="fif">The desired <see cref="FREE_IMAGE_FORMAT"/>.</param>
 		/// <returns>A MIME content type string.</returns>
 		public static unsafe string GetFIFMimeType(FREE_IMAGE_FORMAT fif) { return PtrToStr(GetFIFMimeType_(fif)); }
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetFIFMimeType")]
@@ -3061,27 +4706,27 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// This function takes a filename or a file-extension and returns the plugin that can
-		/// read/write files with that extension in the form of a FREE_IMAGE_FORMAT identifier.
+		/// read/write files with that extension in the form of a <see cref="FREE_IMAGE_FORMAT"/> identifier.
 		/// </summary>
 		/// <param name="filename">The filename or -extension.</param>
-		/// <returns>The FREE_IMAGE_FORMAT of the plugin.</returns>
+		/// <returns>The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</returns>
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Unicode, EntryPoint = "FreeImage_GetFIFFromFilenameU")]
 		public static extern FREE_IMAGE_FORMAT GetFIFFromFilename(string filename);
 
 		/// <summary>
 		/// This function takes a filename or a file-extension and returns the plugin that can
-		/// read/write files with that extension in the form of a FREE_IMAGE_FORMAT identifier.
+		/// read/write files with that extension in the form of a <see cref="FREE_IMAGE_FORMAT"/> identifier.
 		/// Supports UNICODE filenames.
 		/// </summary>
 		/// <param name="filename">The filename or -extension.</param>
-		/// <returns>The FREE_IMAGE_FORMAT of the plugin.</returns>
+		/// <returns>The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</returns>
 		[DllImport(FreeImageLibrary, CharSet = CharSet.Unicode, EntryPoint = "FreeImage_GetFIFFromFilenameU")]
 		private static extern FREE_IMAGE_FORMAT GetFIFFromFilenameU(string filename);
 
 		/// <summary>
 		/// Checks if a plugin can load bitmaps.
 		/// </summary>
-		/// <param name="fif">The FREE_IMAGE_FORMAT of the plugin.</param>
+		/// <param name="fif">The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</param>
 		/// <returns>True if the plugin can load bitmaps, else false.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FIFSupportsReading")]
 		public static extern bool FIFSupportsReading(FREE_IMAGE_FORMAT fif);
@@ -3089,7 +4734,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Checks if a plugin can save bitmaps.
 		/// </summary>
-		/// <param name="fif">The FREE_IMAGE_FORMAT of the plugin.</param>
+		/// <param name="fif">The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</param>
 		/// <returns>True if the plugin can save bitmaps, else false.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FIFSupportsWriting")]
 		public static extern bool FIFSupportsWriting(FREE_IMAGE_FORMAT fif);
@@ -3097,7 +4742,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Checks if a plugin can save bitmaps in the desired bit depth.
 		/// </summary>
-		/// <param name="fif">The FREE_IMAGE_FORMAT of the plugin.</param>
+		/// <param name="fif">The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</param>
 		/// <param name="bpp">The desired bit depth.</param>
 		/// <returns>True if the plugin can save bitmaps in the desired bit depth, else false.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FIFSupportsExportBPP")]
@@ -3106,7 +4751,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Checks if a plugin can save a bitmap in the desired data type.
 		/// </summary>
-		/// <param name="fif">The FREE_IMAGE_FORMAT of the plugin.</param>
+		/// <param name="fif">The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</param>
 		/// <param name="type">The desired image type.</param>
 		/// <returns>True if the plugin can save bitmaps as the desired type, else false.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FIFSupportsExportType")]
@@ -3115,7 +4760,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Checks if a plugin can load or save an ICC profile.
 		/// </summary>
-		/// <param name="fif">The FREE_IMAGE_FORMAT of the plugin.</param>
+		/// <param name="fif">The <see cref="FREE_IMAGE_FORMAT"/> of the plugin.</param>
 		/// <returns>True if the plugin can load or save an ICC profile, else false.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FIFSupportsICCProfiles")]
 		public static extern bool FIFSupportsICCProfiles(FREE_IMAGE_FORMAT fif);
@@ -3224,8 +4869,8 @@ namespace FreeImageAPI
 		/// </example>
 		/// <param name="bitmap">Handle to a FreeImage multi-paged bitmap.</param>
 		/// <param name="pages">The list of locked pages in the multi-pages bitmap.
-		/// If set to 'null', count will contain the number of pages.</param>
-		/// <param name="count">If 'pages' is set to 'null' count will contain the number of locked pages.</param>
+		/// If set to null, count will contain the number of pages.</param>
+		/// <param name="count">If <paramref name="pages"/> is set to null count will contain the number of locked pages.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetLockedPageNumbers")]
 		public static extern bool GetLockedPageNumbers(FIMULTIBITMAP bitmap, int[] pages, ref int count);
@@ -3255,10 +4900,10 @@ namespace FreeImageAPI
 		private static extern FREE_IMAGE_FORMAT GetFileTypeU(string filename, int size);
 
 		/// <summary>
-		/// Uses the FreeImageIO structure as described in the topic Bitmap management functions
+		/// Uses the <see cref="FreeImageIO"/> structure as described in the topic bitmap management functions
 		/// to identify a bitmap type.
 		/// </summary>
-		/// <param name="io">A FreeImageIO structure with functionpointers to handle the source.</param>
+		/// <param name="io">A <see cref="FreeImageIO"/> structure with functionpointers to handle the source.</param>
 		/// <param name="handle">A handle to the source.</param>
 		/// <param name="size">Size in bytes of the source.</param>
 		/// <returns>Type of the bitmap.</returns>
@@ -3482,7 +5127,7 @@ namespace FreeImageAPI
 		public static extern void SetDotsPerMeterY(FIBITMAP dib, uint res);
 
 		/// <summary>
-		/// Returns a pointer to the BITMAPINFOHEADER of the DIB-element in a FIBITMAP.
+		/// Returns a pointer to the <see cref="BITMAPINFOHEADER"/> of the DIB-element in a FIBITMAP.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>Poiter to the header of the bitmap.</returns>
@@ -3490,11 +5135,11 @@ namespace FreeImageAPI
 		public static extern IntPtr GetInfoHeader(FIBITMAP dib);
 
 		/// <summary>
-		/// Alias for FreeImage_GetInfoHeader that returns a pointer to a BITMAPINFO
-		/// rather than to a BITMAPINFOHEADER.
+		/// Alias for FreeImage_GetInfoHeader that returns a pointer to a <see cref="BITMAPINFO"/>
+		/// rather than to a <see cref="BITMAPINFOHEADER"/>.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>Pointer to the BITMAPINFO structure for the bitmap.</returns>
+		/// <returns>Pointer to the <see cref="BITMAPINFO"/> structure for the bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetInfo")]
 		public static extern IntPtr GetInfo(FIBITMAP dib);
 
@@ -3507,7 +5152,7 @@ namespace FreeImageAPI
 		public static extern FREE_IMAGE_COLOR_TYPE GetColorType(FIBITMAP dib);
 
 		/// <summary>
-		/// Returns a bit pattern describing the red color component of a pixel in a FIBITMAP.
+		/// Returns a bit pattern describing the red color component of a pixel in a FreeImage bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>The bit pattern for RED.</returns>
@@ -3515,7 +5160,7 @@ namespace FreeImageAPI
 		public static extern uint GetRedMask(FIBITMAP dib);
 
 		/// <summary>
-		/// Returns a bit pattern describing the green color component of a pixel in a FIBITMAP.
+		/// Returns a bit pattern describing the green color component of a pixel in a FreeImage bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>The bit pattern for green.</returns>
@@ -3523,7 +5168,7 @@ namespace FreeImageAPI
 		public static extern uint GetGreenMask(FIBITMAP dib);
 
 		/// <summary>
-		/// Returns a bit pattern describing the blue color component of a pixel in a FIBITMAP.
+		/// Returns a bit pattern describing the blue color component of a pixel in a FreeImage bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>The bit pattern for blue.</returns>
@@ -3608,8 +5253,8 @@ namespace FreeImageAPI
 		/// When the bkcolor parameter is null, the background color is removed from the image.
 		/// <para>
 		/// This overloaded version of the function with an array parameter is provided to allow
-		/// passing <c>null</c> in the <c>bkcolor</c> parameter. This is similar to the
-		/// original C/C++ function. Passing <c>null</c> as <c>bkcolor</c> parameter will
+		/// passing <c>null</c> in the <paramref name="bkcolor"/> parameter. This is similar to the
+		/// original C/C++ function. Passing <c>null</c> as <paramref name="bkcolor"/> parameter will
 		/// unset the dib's previously set background color.
 		/// </para> 
 		/// </summary>
@@ -3658,35 +5303,35 @@ namespace FreeImageAPI
 		#region ICC profile functions
 
 		/// <summary>
-		/// Retrieves the FIICCPROFILE data of the bitmap.
+		/// Retrieves the <see cref="FIICCPROFILE"/> data of the bitmap.
 		/// This function can also be called safely, when the original format does not support profiles.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>The FIICCPROFILE data of the bitmap.</returns>
+		/// <returns>The <see cref="FIICCPROFILE"/> data of the bitmap.</returns>
 		public static FIICCPROFILE GetICCProfileEx(FIBITMAP dib) { unsafe { return *(FIICCPROFILE*)FreeImage.GetICCProfile(dib); } }
 
 		/// <summary>
-		/// Retrieves a pointer to the FIICCPROFILE data of the bitmap.
+		/// Retrieves a pointer to the <see cref="FIICCPROFILE"/> data of the bitmap.
 		/// This function can also be called safely, when the original format does not support profiles.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>Pointer to the FIICCPROFILE data of the bitmap.</returns>
+		/// <returns>Pointer to the <see cref="FIICCPROFILE"/> data of the bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetICCProfile")]
 		public static extern IntPtr GetICCProfile(FIBITMAP dib);
 
 		/// <summary>
-		/// Creates a new FIICCPROFILE block from ICC profile data previously read from a file
+		/// Creates a new <see cref="FIICCPROFILE"/> block from ICC profile data previously read from a file
 		/// or built by a color management system. The profile data is attached to the bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="data">Pointer to the new FIICCPROFILE data.</param>
-		/// <param name="size">Size of the FIICCPROFILE data.</param>
-		/// <returns>Pointer to the created FIICCPROFILE structure.</returns>
+		/// <param name="data">Pointer to the new <see cref="FIICCPROFILE"/> data.</param>
+		/// <param name="size">Size of the <see cref="FIICCPROFILE"/> data.</param>
+		/// <returns>Pointer to the created <see cref="FIICCPROFILE"/> structure.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_CreateICCProfile")]
 		public static extern IntPtr CreateICCProfile(FIBITMAP dib, byte[] data, int size);
 
 		/// <summary>
-		/// This function destroys an FIICCPROFILE previously created by FreeImage_CreateICCProfile.
+		/// This function destroys an <see cref="FIICCPROFILE"/> previously created by <see cref="CreateICCProfile(FIBITMAP,byte[],int)"/>.
 		/// After this call the bitmap will contain no profile information.
 		/// This function should be called to ensure that a stored bitmap will not contain any profile information.
 		/// </summary>
@@ -3886,7 +5531,7 @@ namespace FreeImageAPI
 		public static extern FIBITMAP ColorQuantize(FIBITMAP dib, FREE_IMAGE_QUANTIZE quantize);
 
 		/// <summary>
-		/// ColorQuantizeEx is an extension to the FreeImage_ColorQuantize function that
+		/// ColorQuantizeEx is an extension to the <see cref="ColorQuantize(FIBITMAP, FREE_IMAGE_QUANTIZE)"/> method that
 		/// provides additional options used to quantize a 24-bit image to any
 		/// number of colors (up to 256), as well as quantize a 24-bit image using a
 		/// partial or full provided palette.
@@ -3899,7 +5544,6 @@ namespace FreeImageAPI
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ColorQuantizeEx")]
 		public static extern FIBITMAP ColorQuantizeEx(FIBITMAP dib, FREE_IMAGE_QUANTIZE quantize, int PaletteSize, int ReserveSize, RGBQUAD[] ReservePalette);
-		//public static extern FIBITMAP ColorQuantizeEx(FIBITMAP dib, FREE_IMAGE_QUANTIZE quantize, int PaletteSize, int ReserveSize, IntPtr ReservePalette);
 
 		/// <summary>
 		/// Converts a bitmap to 1-bit monochrome bitmap using a threshold T between [0..255].
@@ -3924,7 +5568,7 @@ namespace FreeImageAPI
 		public static extern FIBITMAP Dither(FIBITMAP dib, FREE_IMAGE_DITHER algorithm);
 
 		/// <summary>
-		/// Converts a raw bitmap somewhere in memory to a FIBITMAP.
+		/// Converts a raw bitmap somewhere in memory to a FreeImage bitmap.
 		/// The parameters in this function are used to describe the raw bitmap.
 		/// </summary>
 		/// <param name="bits">Pointer to start of the raw bits.</param>
@@ -3944,7 +5588,7 @@ namespace FreeImageAPI
 				uint bpp, uint red_mask, uint green_mask, uint blue_mask, bool topdown);
 
 		/// <summary>
-		/// Converts a FIBITMAP to a raw piece of memory.
+		/// Converts a FreeImage bitmap to a raw piece of memory.
 		/// </summary>
 		/// <param name="bits">Pointer to the start of the raw bits.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
@@ -4111,25 +5755,26 @@ namespace FreeImageAPI
 		#region Tag creation and destruction
 
 		/// <summary>
-		/// Allocates a new FITAG object.
-		/// This object must be destroyed with a call to FreeImage_DeleteTag when no longer in use.
+		/// Allocates a new <see cref="FITAG"/> object.
+		/// This object must be destroyed with a call to
+		/// <see cref="FreeImageAPI.FreeImage.DeleteTag(FITAG)"/> when no longer in use.
 		/// </summary>
-		/// <returns>The new FITAG.</returns>
+		/// <returns>The new <see cref="FITAG"/>.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_CreateTag")]
 		public static extern FITAG CreateTag();
 
 		/// <summary>
-		/// Delete a previously allocated FITAG object.
+		/// Delete a previously allocated <see cref="FITAG"/> object.
 		/// </summary>
-		/// <param name="tag">The FITAG to destroy.</param>
+		/// <param name="tag">The <see cref="FITAG"/> to destroy.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_DeleteTag")]
 		public static extern void DeleteTag(FITAG tag);
 
 		/// <summary>
-		/// Creates and returns a copy of a FITAG object.
+		/// Creates and returns a copy of a <see cref="FITAG"/> object.
 		/// </summary>
-		/// <param name="tag">The FITAG to clone.</param>
-		/// <returns>The new FITAG.</returns>
+		/// <param name="tag">The <see cref="FITAG"/> to clone.</param>
+		/// <returns>The new <see cref="FITAG"/>.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_CloneTag")]
 		public static extern FITAG CloneTag(FITAG tag);
 
@@ -4331,6 +5976,15 @@ namespace FreeImageAPI
 		/// <returns>Number of tags contained in the metadata model.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetMetadataCount")]
 		public static extern uint GetMetadataCount(FREE_IMAGE_MDMODEL model, FIBITMAP dib);
+
+		/// <summary>
+		/// Copies the metadata of FreeImage bitmap to another.
+		/// </summary>
+		/// <param name="dst">The FreeImage bitmap to copy the metadata to.</param>
+		/// <param name="src">The FreeImage bitmap to copy the metadata from.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_CloneMetadata")]
+		public static extern bool CloneMetadata(FIBITMAP dst, FIBITMAP src);
 
 		/// <summary>
 		/// Converts a FreeImage tag structure to a string that represents the interpreted tag value.
@@ -4745,4483 +6399,836 @@ namespace FreeImageAPI
 {
 	#region Structs
 
-	// RGBQUADARRAY, RGBTRIPLEARRAY, FIRGB16ARRAY, FIRGBFARRAY and FIRGBAFARRAY
-	// are structures that wrap a block of memory. Each structure has its own
-	// definitions (size, color position ect).
-	//
-	// In unmanaged code pointers would be used to access a bitmaps data.
-	// In .NET unsafe code is needed to perform the same operations.
-	// All mentioned structures have the same core methods and properties.
-	// They return Colors or the original structure (RGBQUADARRAY returns
-	// RGBQUADs ect) that can be altered and then saved back to the bitmap
-	// (always keep in mind, that the structure returns a copy of the block
-	// of memory; any change made to it must be saved back or will be lost).
-	//
-	// These structures provide a comfortable way of accessing a bitmaps data.
-	// The structure is defined by the base address of the memory-block to wrap
-	// and the !number of elements! the block contains, not the size of the block
-	// in bytes.
-	// Keep in mind that the structure accepts any length and can be used to
-	// write in memory that does not belong to the bitmap, which will lead to
-	// data loss.
-
 	/// <summary>
-	/// The structure wraps all operations needed to work with an array of RGBQUADs.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(RGBQUADARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
+	/// Wrapper for a custom handle.
 	/// </summary>
-	public unsafe struct RGBQUADARRAY : IComparable, IComparable<RGBQUADARRAY>, IEnumerable, IEquatable<RGBQUADARRAY>
-	{
-		readonly RGBQUAD* baseAddress;
-		readonly uint length;
-
-		/// <summary>
-		/// Creates an RGBQUADARRAY structure.
-		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public RGBQUADARRAY(IntPtr baseAddress, uint length)
-		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (RGBQUAD*)baseAddress;
-			this.length = length;
-		}
-
-		/// <summary>
-		/// Creates an RGBQUADARRAY structure.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_BITMAP
-		/// or color depth is not 32bpp.</exception>
-		public RGBQUADARRAY(FIBITMAP dib, int scanline)
-		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
-			{
-				throw new ArgumentException("dib");
-			}
-			if (FreeImage.GetBPP(dib) != 32)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (RGBQUAD*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
-		}
-
-		/// <summary>
-		/// Creates an RGBQUADARRAY structure.
-		/// In case the bitmap has a palette this will be wrapped.
-		/// Otherwise the bitmap must be a 32-bit color bitmap and its first
-		/// scanline will be wrapped.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_BITMAP
-		/// or color depth is not 32bpp and has no palette.</exception>
-		public RGBQUADARRAY(FIBITMAP dib)
-		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
-			{
-				throw new ArgumentException("dib");
-			}
-			uint colorsUsed = FreeImage.GetColorsUsed(dib);
-			if (colorsUsed != 0)
-			{
-				baseAddress = (RGBQUAD*)FreeImage.GetPalette(dib);
-				length = colorsUsed;
-			}
-			else
-			{
-				if (FreeImage.GetBPP(dib) != 32)
-				{
-					throw new ArgumentException("dib");
-				}
-				baseAddress = (RGBQUAD*)FreeImage.GetScanLine(dib, 0);
-				length = FreeImage.GetWidth(dib);
-			}
-		}
-
-		public static bool operator ==(RGBQUADARRAY value1, RGBQUADARRAY value2)
-		{
-			if (value1.length != value2.length)
-			{
-				return false;
-			}
-			if (value1.baseAddress == value2.baseAddress)
-			{
-				return true;
-			}
-			return FreeImage.CompareMemory(
-				value1.baseAddress,
-				value2.baseAddress,
-				sizeof(RGBQUAD) * value1.length);
-		}
-
-		public static bool operator !=(RGBQUADARRAY value1, RGBQUADARRAY value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Gets the number of elements being wrapped.
-		/// </summary>
-		public uint Length
-		{
-			get { return length; }
-		}
-
-		/// <summary>
-		/// Gets or sets the RGBQUAD structure representing the color at the given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>RGBQUAD structure of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe RGBQUAD this[int index]
-		{
-			get
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				return baseAddress[index];
-			}
-			set
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				baseAddress[index] = value;
-			}
-		}
-
-		/// <summary>
-		/// Returns the color as an UInt32 value.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An UInt32 value representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe uint GetUIntColor(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((uint*)baseAddress)[index];
-		}
-
-		/// <summary>
-		/// Sets the color at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">The index of the color to change.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetUIntColor(int index, uint color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((uint*)baseAddress)[index] = color;
-		}
-
-		/// <summary>
-		/// Returns the color as an RGBQUAD structure.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An RGBQUAD structure representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe RGBQUAD GetRGBQUAD(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index];
-		}
-
-		/// <summary>
-		/// Sets the color at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetRGBQUAD(int index, RGBQUAD color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index] = color;
-		}
-
-		/// <summary>
-		/// Returns the data representing the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the red part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte GetRed(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index].rgbRed;
-		}
-
-		/// <summary>
-		/// Sets the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="red">The new red part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetRed(int index, byte red)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index].rgbRed = red;
-		}
-
-		/// <summary>
-		/// Returns the data representing the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the green part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte GetGreen(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index].rgbGreen;
-		}
-
-		/// <summary>
-		/// Sets the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="green">The new green part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetGreen(int index, byte green)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index].rgbGreen = green;
-		}
-
-		/// <summary>
-		/// Returns the data representing the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the blue part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte GetBlue(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index].rgbBlue;
-		}
-
-		/// <summary>
-		/// Sets the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="blue">The new blue part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetBlue(int index, byte blue)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index].rgbBlue = blue;
-		}
-
-		/// <summary>
-		/// Returns the data representing the alpha part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the alpha part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte GetAlpha(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index].rgbReserved;
-		}
-
-		/// <summary>
-		/// Sets the alpha part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="alpha">The new alpha part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetAlpha(int index, byte alpha)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index].rgbReserved = alpha;
-		}
-
-		/// <summary>
-		/// Returns the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The color at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public Color GetColor(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return GetRGBQUAD(index).color;
-		}
-
-		/// <summary>
-		/// Sets the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetColor(int index, Color color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			SetRGBQUAD(index, new RGBQUAD(color));
-		}
-
-		/// <summary>
-		/// Returns an array of RGBQUAD.
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe RGBQUAD[] Data
-		{
-			get
-			{
-				RGBQUAD[] result = new RGBQUAD[length];
-				fixed (RGBQUAD* dst = result)
-				{
-					FreeImage.MoveMemory(dst, baseAddress, sizeof(RGBQUAD) * length);
-				}
-				return result;
-			}
-			set
-			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				fixed (RGBQUAD* src = value)
-				{
-					FreeImage.MoveMemory(baseAddress, src, sizeof(RGBQUAD) * length);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Get an array of Color that the block of memory represents.
-		/// This property is used for internal palette operations.
-		/// </summary>
-		internal unsafe Color[] ColorData
-		{
-			get
-			{
-				Color[] data = new Color[length];
-				for (int i = 0; i < length; i++)
-				{
-					data[i] = Color.FromArgb((int)(((uint*)baseAddress)[i] | 0xFF000000));
-				}
-				return data;
-			}
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (!(obj is RGBQUADARRAY))
-			{
-				throw new ArgumentException();
-			}
-			return CompareTo((RGBQUADARRAY)obj);
-		}
-
-		/// <summary>
-		/// Compares the current object with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(RGBQUADARRAY other)
-		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
-		}
-
-		private class Enumerator : IEnumerator
-		{
-			private readonly RGBQUADARRAY array;
-			private int index = -1;
-
-			public Enumerator(RGBQUADARRAY array)
-			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
-				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetRGBQUAD(index);
-					}
-					throw new InvalidOperationException();
-				}
-			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return new Enumerator(this);
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(RGBQUADARRAY other)
-		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
-		}
-	}
-
-	/// <summary>
-	/// The structure wraps all operations needed to work with an array of RGBTRIPLEs.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(RGBTRIPLEARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
-	/// </summary>
-	public unsafe struct RGBTRIPLEARRAY : IComparable, IComparable<RGBTRIPLEARRAY>, IEnumerable, IEquatable<RGBTRIPLEARRAY>
-	{
-		readonly RGBTRIPLE* baseAddress;
-		readonly uint length;
-
-		/// <summary>
-		/// Creates an RGBTRIPLEARRAY structure.
-		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public RGBTRIPLEARRAY(IntPtr baseAddress, uint length)
-		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (RGBTRIPLE*)baseAddress;
-			this.length = length;
-		}
-
-		/// <summary>
-		/// Creates an RGBTRIPLEARRAY structure.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_BITMAP
-		/// or color depth is not 24bpp.</exception>
-		public RGBTRIPLEARRAY(FIBITMAP dib, int scanline)
-		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
-			{
-				throw new ArgumentException("dib");
-			}
-			if (FreeImage.GetBPP(dib) != 24)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (RGBTRIPLE*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
-		}
-
-		public static bool operator ==(RGBTRIPLEARRAY value1, RGBTRIPLEARRAY value2)
-		{
-			if (value1.length != value2.length)
-			{
-				return false;
-			}
-			if (value1.baseAddress == value2.baseAddress)
-			{
-				return true;
-			}
-			return FreeImage.CompareMemory(
-				value1.baseAddress,
-				value2.baseAddress,
-				sizeof(RGBTRIPLE) * value1.length);
-		}
-
-		public static bool operator !=(RGBTRIPLEARRAY value1, RGBTRIPLEARRAY value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Gets the number of elements being wrapped.
-		/// </summary>
-		public uint Length
-		{
-			get { return length; }
-		}
-
-		/// <summary>
-		/// Gets or sets the RGBTRIPLE structure representing the color at the given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>RGBTRIPLE structure of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe RGBTRIPLE this[int index]
-		{
-			get
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				return baseAddress[index];
-			}
-			set
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				baseAddress[index] = value;
-			}
-		}
-
-		/// <summary>
-		/// Returns the color as an UInt32 value.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An UInt32 value representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe uint GetUIntColor(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((uint*)(baseAddress + index))[0] & 0x00FFFFFF;
-		}
-
-		/// <summary>
-		/// Sets the color at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">The index of the color to change.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetUIntColor(int index, uint color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			byte* ptrDestination = (byte*)(baseAddress + index);
-			byte* ptrSource = (byte*)&color;
-			*ptrDestination++ = *ptrSource++;
-			*ptrDestination++ = *ptrSource++;
-			*ptrDestination++ = *ptrSource++;
-		}
-
-		/// <summary>
-		/// Returns the color as an RGBTRIPLE structure.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An RGBTRIPLE structure representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe RGBTRIPLE GetRGBTRIPLE(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index];
-		}
-
-		/// <summary>
-		/// Sets the color at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetRGBTRIPLE(int index, RGBTRIPLE color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index] = color;
-		}
-
-		/// <summary>
-		/// Returns the data representing the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the red part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte GetRed(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index].rgbtRed;
-		}
-
-		/// <summary>
-		/// Sets the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="red">The new red part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetRed(int index, byte red)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index].rgbtRed = red;
-		}
-
-		/// <summary>
-		/// Returns the data representing the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the green part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte GetGreen(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index].rgbtGreen;
-		}
-
-		/// <summary>
-		/// Sets the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="green">The new green part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetGreen(int index, byte green)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index].rgbtGreen = green;
-		}
-
-		/// <summary>
-		/// Returns the data representing the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the blue part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte GetBlue(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index].rgbtBlue;
-		}
-
-		/// <summary>
-		/// Sets the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="blue">The new blue part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetBlue(int index, byte blue)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index].rgbtBlue = blue;
-		}
-
-		/// <summary>
-		/// Returns the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The color at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public Color GetColor(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return GetRGBTRIPLE(index).color;
-		}
-
-		/// <summary>
-		/// Sets the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetColor(int index, Color color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			SetRGBTRIPLE(index, new RGBTRIPLE(color));
-		}
-
-		/// <summary>
-		/// Returns an array of RGBTRIPLE.
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe RGBTRIPLE[] Data
-		{
-			get
-			{
-				RGBTRIPLE[] result = new RGBTRIPLE[length];
-				fixed (RGBTRIPLE* dst = result)
-				{
-					FreeImage.MoveMemory(dst, baseAddress, sizeof(RGBTRIPLE) * length);
-				}
-				return result;
-			}
-			set
-			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				fixed (RGBTRIPLE* src = value)
-				{
-					FreeImage.MoveMemory(baseAddress, src, sizeof(RGBTRIPLE) * length);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (!(obj is RGBTRIPLEARRAY))
-			{
-				throw new ArgumentException();
-			}
-			return CompareTo((RGBTRIPLEARRAY)obj);
-		}
-
-		/// <summary>
-		/// Compares the current object with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(RGBTRIPLEARRAY other)
-		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
-		}
-
-		private class Enumerator : IEnumerator
-		{
-			private readonly RGBTRIPLEARRAY array;
-			private int index = -1;
-
-			public Enumerator(RGBTRIPLEARRAY array)
-			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
-				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetRGBTRIPLE(index);
-					}
-					throw new InvalidOperationException();
-				}
-			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return new Enumerator(this);
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(RGBTRIPLEARRAY other)
-		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
-		}
-	}
-
-	/// <summary>
-	/// The structure wraps all operations needed to work with an array of FIRGBA16s.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(FIRGBA16ARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
-	/// </summary>
-	public unsafe struct FIRGBA16ARRAY : IComparable, IComparable<FIRGBA16ARRAY>, IEnumerable, IEquatable<FIRGBA16ARRAY>
-	{
-		readonly FIRGBA16* baseAddress;
-		readonly uint length;
-
-		/// <summary>
-		/// Creates an FIRGBA16ARRAY structure.
-		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public FIRGBA16ARRAY(IntPtr baseAddress, uint length)
-		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (FIRGBA16*)baseAddress;
-			this.length = length;
-		}
-
-		/// <summary>
-		/// Creates an FIRGBA16ARRAY structure.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_RGBA16.</exception>
-		public FIRGBA16ARRAY(FIBITMAP dib, int scanline)
-		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_RGBA16)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (FIRGBA16*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
-		}
-
-		public static bool operator ==(FIRGBA16ARRAY value1, FIRGBA16ARRAY value2)
-		{
-			if (value1.length != value2.length)
-			{
-				return false;
-			}
-			if (value1.baseAddress == value2.baseAddress)
-			{
-				return true;
-			}
-			return FreeImage.CompareMemory(
-				value1.baseAddress,
-				value2.baseAddress,
-				sizeof(FIRGBA16) * value1.length);
-		}
-
-		public static bool operator !=(FIRGBA16ARRAY value1, FIRGBA16ARRAY value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Gets the number of elements being wrapped.
-		/// </summary>
-		public uint Length
-		{
-			get { return length; }
-		}
-
-		/// <summary>
-		/// Gets or sets the FIRGBA16 structure representing the color at the given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>FIRGBA16 structure of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGBA16 this[int index]
-		{
-			get
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				return baseAddress[index];
-			}
-			set
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				baseAddress[index] = value;
-			}
-		}
-
-		/// <summary>
-		/// Returns the color as an FIRGBA16 structure.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An FIRGBA16 structure representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGBA16 GetFIRGBA16(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index];
-		}
-
-		/// <summary>
-		/// Sets the color at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetFIRGBA16(int index, FIRGBA16 color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index] = color;
-		}
-
-		/// <summary>
-		/// Returns the data representing the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the red part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe ushort GetRed(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((ushort*)(baseAddress + index))[0];
-		}
-
-		/// <summary>
-		/// Sets the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="red">The new red part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetRed(int index, ushort red)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((ushort*)(baseAddress + index))[0] = red;
-		}
-
-		/// <summary>
-		/// Returns the data representing the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the green part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe ushort GetGreen(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((ushort*)(baseAddress + index))[1];
-		}
-
-		/// <summary>
-		/// Sets the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="green">The new green part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetGreen(int index, ushort green)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((ushort*)(baseAddress + index))[1] = green;
-		}
-
-		/// <summary>
-		/// Returns the data representing the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the blue part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe ushort GetBlue(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((ushort*)(baseAddress + index))[2];
-		}
-
-		/// <summary>
-		/// Sets the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="blue">The new blue part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetBlue(int index, ushort blue)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((ushort*)(baseAddress + index))[2] = blue;
-		}
-
-		/// <summary>
-		/// Returns the data representing the alpha part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the alpha part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe ushort GetAlpha(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((ushort*)(baseAddress + index))[3];
-		}
-
-		/// <summary>
-		/// Sets the alpha part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="alpha">The new alpha part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetAlpha(int index, ushort alpha)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((ushort*)(baseAddress + index))[3] = alpha;
-		}
-
-		/// <summary>
-		/// Returns the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The color at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public Color GetColor(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return GetFIRGBA16(index).color;
-		}
-
-		/// <summary>
-		/// Sets the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetColor(int index, Color color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			SetFIRGBA16(index, new FIRGBA16(color));
-		}
-
-		/// <summary>
-		/// Returns an array of FIRGBA16.
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGBA16[] Data
-		{
-			get
-			{
-				FIRGBA16[] result = new FIRGBA16[length];
-				fixed (FIRGBA16* dst = result)
-				{
-					FreeImage.MoveMemory(dst, baseAddress, sizeof(FIRGBA16) * length);
-				}
-				return result;
-			}
-			set
-			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				fixed (FIRGBA16* src = value)
-				{
-					FreeImage.MoveMemory(baseAddress, src, sizeof(FIRGBA16) * length);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (!(obj is FIRGBA16ARRAY))
-			{
-				throw new ArgumentException();
-			}
-			return CompareTo((FIRGBA16ARRAY)obj);
-		}
-
-		/// <summary>
-		/// Compares the current object with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FIRGBA16ARRAY other)
-		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
-		}
-
-		private class Enumerator : IEnumerator
-		{
-			private readonly FIRGBA16ARRAY array;
-			private int index = -1;
-
-			public Enumerator(FIRGBA16ARRAY array)
-			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
-				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetFIRGBA16(index);
-					}
-					throw new InvalidOperationException();
-				}
-			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return new Enumerator(this);
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FIRGBA16ARRAY other)
-		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
-		}
-	}
-
-	/// <summary>
-	/// The structure wraps all operations needed to work with an array of FIRGB16s.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(FIRGB16ARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
-	/// </summary>
-	public unsafe struct FIRGB16ARRAY : IComparable, IComparable<FIRGB16ARRAY>, IEnumerable, IEquatable<FIRGB16ARRAY>
-	{
-		readonly FIRGB16* baseAddress;
-		readonly uint length;
-
-		/// <summary>
-		/// Creates an FIRGB16ARRAY structure.
-		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public FIRGB16ARRAY(IntPtr baseAddress, uint length)
-		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (FIRGB16*)baseAddress;
-			this.length = length;
-		}
-
-		/// <summary>
-		/// Creates an FIRGB16ARRAY structure.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_RGB16.</exception>
-		public FIRGB16ARRAY(FIBITMAP dib, int scanline)
-		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_RGB16)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (FIRGB16*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
-		}
-
-		public static bool operator ==(FIRGB16ARRAY value1, FIRGB16ARRAY value2)
-		{
-			if (value1.length != value2.length)
-			{
-				return false;
-			}
-			if (value1.baseAddress == value2.baseAddress)
-			{
-				return true;
-			}
-			return FreeImage.CompareMemory(
-				value1.baseAddress,
-				value2.baseAddress,
-				sizeof(FIRGB16) * value1.length);
-		}
-
-		public static bool operator !=(FIRGB16ARRAY value1, FIRGB16ARRAY value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Gets the number of elements being wrapped.
-		/// </summary>
-		public uint Length
-		{
-			get { return length; }
-		}
-
-		/// <summary>
-		/// Gets or sets the FIRGB16 structure representing the color at the given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>FIRGB16 structure of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGB16 this[int index]
-		{
-			get
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				return baseAddress[index];
-			}
-			set
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				baseAddress[index] = value;
-			}
-		}
-
-		/// <summary>
-		/// Returns the color as an FIRGB16 structure.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An FIRGB16 structure representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGB16 GetFIRGB16(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index];
-		}
-
-		/// <summary>
-		/// Sets the color at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetFIRGB16(int index, FIRGB16 color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index] = color;
-		}
-
-		/// <summary>
-		/// Returns the data representing the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the red part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe ushort GetRed(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((ushort*)(baseAddress + index))[0];
-		}
-
-		/// <summary>
-		/// Sets the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="red">The new red part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetRed(int index, ushort red)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((ushort*)(baseAddress + index))[0] = red;
-		}
-
-		/// <summary>
-		/// Returns the data representing the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the green part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe ushort GetGreen(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((ushort*)(baseAddress + index))[1];
-		}
-
-		/// <summary>
-		/// Sets the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="green">The new green part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetGreen(int index, ushort green)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((ushort*)(baseAddress + index))[1] = green;
-		}
-
-		/// <summary>
-		/// Returns the data representing the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the blue part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe ushort GetBlue(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((ushort*)(baseAddress + index))[2];
-		}
-
-		/// <summary>
-		/// Sets the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="blue">The new blue part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetBlue(int index, ushort blue)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((ushort*)(baseAddress + index))[2] = blue;
-		}
-
-		/// <summary>
-		/// Returns the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The color at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public Color GetColor(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return GetFIRGB16(index).color;
-		}
-
-		/// <summary>
-		/// Sets the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetColor(int index, Color color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			SetFIRGB16(index, new FIRGB16(color));
-		}
-
-		/// <summary>
-		/// Returns an array of FIRGB16.
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGB16[] Data
-		{
-			get
-			{
-				FIRGB16[] result = new FIRGB16[length];
-				fixed (FIRGB16* dst = result)
-				{
-					FreeImage.MoveMemory(dst, baseAddress, sizeof(FIRGB16) * length);
-				}
-				return result;
-			}
-			set
-			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				fixed (FIRGB16* src = value)
-				{
-					FreeImage.MoveMemory(baseAddress, src, sizeof(FIRGB16) * length);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (!(obj is FIRGB16ARRAY))
-			{
-				throw new ArgumentException();
-			}
-			return CompareTo((FIRGB16ARRAY)obj);
-		}
-
-		/// <summary>
-		/// Compares the current object with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FIRGB16ARRAY other)
-		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
-		}
-
-		private class Enumerator : IEnumerator
-		{
-			private readonly FIRGB16ARRAY array;
-			private int index = -1;
-
-			public Enumerator(FIRGB16ARRAY array)
-			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
-				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetFIRGB16(index);
-					}
-					throw new InvalidOperationException();
-				}
-			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return new Enumerator(this);
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FIRGB16ARRAY other)
-		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
-		}
-	}
-
-	/// <summary>
-	/// The structure wraps all operations needed to work with an array of FIRGBAFs.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(FIRGBAFARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
-	/// </summary>
-	public unsafe struct FIRGBAFARRAY : IComparable, IComparable<FIRGBAFARRAY>, IEnumerable, IEquatable<FIRGBAFARRAY>
-	{
-		readonly FIRGBAF* baseAddress;
-		readonly uint length;
-
-		/// <summary>
-		/// Creates an FIRGBAFARRAY structure.
-		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public FIRGBAFARRAY(IntPtr baseAddress, uint length)
-		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (FIRGBAF*)baseAddress;
-			this.length = length;
-		}
-
-		/// <summary>
-		/// Creates an FIRGBAFARRAY structure.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_RGBAF.</exception>
-		public FIRGBAFARRAY(FIBITMAP dib, int scanline)
-		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_RGBAF)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (FIRGBAF*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
-		}
-
-		public static bool operator ==(FIRGBAFARRAY value1, FIRGBAFARRAY value2)
-		{
-			if (value1.length != value2.length)
-			{
-				return false;
-			}
-			if (value1.baseAddress == value2.baseAddress)
-			{
-				return true;
-			}
-			return FreeImage.CompareMemory(
-				value1.baseAddress,
-				value2.baseAddress,
-				sizeof(FIRGBAF) * value1.length);
-		}
-
-		public static bool operator !=(FIRGBAFARRAY value1, FIRGBAFARRAY value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Gets the number of elements being wrapped.
-		/// </summary>
-		public uint Length
-		{
-			get { return length; }
-		}
-
-		/// <summary>
-		/// Gets or sets the FIRGBAF structure representing the color at the given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>FIRGBAF structure of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGBAF this[int index]
-		{
-			get
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				return baseAddress[index];
-			}
-			set
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				baseAddress[index] = value;
-			}
-		}
-
-		/// <summary>
-		/// Returns the color as an FIRGBAF structure.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An FIRGBAF structure representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGBAF GetFIRGBAF(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index];
-		}
-
-		/// <summary>
-		/// Sets the color at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetFIRGBAF(int index, FIRGBAF color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index] = color;
-		}
-
-		/// <summary>
-		/// Returns the data representing the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the red part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe float GetRed(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((float*)(baseAddress + index))[0];
-		}
-
-		/// <summary>
-		/// Sets the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="red">The new red part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetRed(int index, float red)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((float*)(baseAddress + index))[0] = red;
-		}
-
-		/// <summary>
-		/// Returns the data representing the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the green part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe float GetGreen(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((float*)(baseAddress + index))[1];
-		}
-
-		/// <summary>
-		/// Sets the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="green">The new green part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetGreen(int index, float green)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((float*)(baseAddress + index))[1] = green;
-		}
-
-		/// <summary>
-		/// Returns the data representing the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the blue part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe float GetBlue(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((float*)(baseAddress + index))[2];
-		}
-
-		/// <summary>
-		/// Sets the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="blue">The new blue part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetBlue(int index, float blue)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((float*)(baseAddress + index))[2] = blue;
-		}
-
-		/// <summary>
-		/// Returns the data representing the alpha part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the alpha part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe float GetAlpha(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((float*)(baseAddress + index))[3];
-		}
-
-		/// <summary>
-		/// Sets the alpha part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="alpha">The new alpha part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetAlpha(int index, float alpha)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((float*)(baseAddress + index))[3] = alpha;
-		}
-
-		/// <summary>
-		/// Returns the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The color at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public Color GetColor(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return GetFIRGBAF(index).color;
-		}
-
-		/// <summary>
-		/// Sets the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetColor(int index, Color color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			SetFIRGBAF(index, new FIRGBAF(color));
-		}
-
-		/// <summary>
-		/// Returns an array of FIRGBAF.
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGBAF[] Data
-		{
-			get
-			{
-				FIRGBAF[] result = new FIRGBAF[length];
-				fixed (FIRGBAF* dst = result)
-				{
-					FreeImage.MoveMemory(dst, baseAddress, sizeof(FIRGBAF) * length);
-				}
-				return result;
-			}
-			set
-			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				fixed (FIRGBAF* src = value)
-				{
-					FreeImage.MoveMemory(baseAddress, src, sizeof(FIRGBAF) * length);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (!(obj is FIRGBAFARRAY))
-			{
-				throw new ArgumentException();
-			}
-			return CompareTo((FIRGBAFARRAY)obj);
-		}
-
-		/// <summary>
-		/// Compares the current object with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FIRGBAFARRAY other)
-		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
-		}
-
-		private class Enumerator : IEnumerator
-		{
-			private readonly FIRGBAFARRAY array;
-			private int index = -1;
-
-			public Enumerator(FIRGBAFARRAY array)
-			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
-				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetFIRGBAF(index);
-					}
-					throw new InvalidOperationException();
-				}
-			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return new Enumerator(this);
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FIRGBAFARRAY other)
-		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
-		}
-	}
-
-	/// <summary>
-	/// The structure wraps all operations needed to work with an array of FIRGBFs.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(FIRGBFARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
-	/// </summary>
-	public unsafe struct FIRGBFARRAY : IComparable, IComparable<FIRGBFARRAY>, IEnumerable, IEquatable<FIRGBFARRAY>
-	{
-		readonly FIRGBF* baseAddress;
-		readonly uint length;
-
-		/// <summary>
-		/// Creates an FIRGBFARRAY structure.
-		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public FIRGBFARRAY(IntPtr baseAddress, uint length)
-		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (FIRGBF*)baseAddress;
-			this.length = length;
-		}
-
-		/// <summary>
-		/// Creates an FIRGBFARRAY structure.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_RGBF.</exception>
-		public FIRGBFARRAY(FIBITMAP dib, int scanline)
-		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_RGBF)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (FIRGBF*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
-		}
-
-		public static bool operator ==(FIRGBFARRAY value1, FIRGBFARRAY value2)
-		{
-			if (value1.length != value2.length)
-			{
-				return false;
-			}
-			if (value1.baseAddress == value2.baseAddress)
-			{
-				return true;
-			}
-			return FreeImage.CompareMemory(
-				value1.baseAddress,
-				value2.baseAddress,
-				sizeof(FIRGBF) * value1.length);
-		}
-
-		public static bool operator !=(FIRGBFARRAY value1, FIRGBFARRAY value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Gets the number of elements being wrapped.
-		/// </summary>
-		public uint Length
-		{
-			get { return length; }
-		}
-
-		/// <summary>
-		/// Gets or sets the FIRGBF structure representing the color at the given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>FIRGBF structure of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGBF this[int index]
-		{
-			get
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				return baseAddress[index];
-			}
-			set
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				baseAddress[index] = value;
-			}
-		}
-
-		/// <summary>
-		/// Returns the color as an FIRGBF structure.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An FIRGBF structure representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGBF GetFIRGBF(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index];
-		}
-
-		/// <summary>
-		/// Sets the color at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetFIRGBF(int index, FIRGBF color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index] = color;
-		}
-
-		/// <summary>
-		/// Returns the data representing the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the red part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe float GetRed(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((float*)(baseAddress + index))[0];
-		}
-
-		/// <summary>
-		/// Sets the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="red">The new red part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetRed(int index, float red)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((float*)(baseAddress + index))[0] = red;
-		}
-
-		/// <summary>
-		/// Returns the data representing the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the green part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe float GetGreen(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((float*)(baseAddress + index))[1];
-		}
-
-		/// <summary>
-		/// Sets the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="green">The new green part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetGreen(int index, float green)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((float*)(baseAddress + index))[1] = green;
-		}
-
-		/// <summary>
-		/// Returns the data representing the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the blue part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe float GetBlue(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return ((float*)(baseAddress + index))[2];
-		}
-
-		/// <summary>
-		/// Sets the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="blue">The new blue part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetBlue(int index, float blue)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			((float*)(baseAddress + index))[2] = blue;
-		}
-
-		/// <summary>
-		/// Returns the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The color at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public Color GetColor(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return GetFIRGBF(index).color;
-		}
-
-		/// <summary>
-		/// Sets the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetColor(int index, Color color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			SetFIRGBF(index, new FIRGBF(color));
-		}
-
-		/// <summary>
-		/// Returns an array of FIRGBF.
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FIRGBF[] Data
-		{
-			get
-			{
-				FIRGBF[] result = new FIRGBF[length];
-				fixed (FIRGBF* dst = result)
-				{
-					FreeImage.MoveMemory(dst, baseAddress, sizeof(FIRGBF) * length);
-				}
-				return result;
-			}
-			set
-			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				fixed (FIRGBF* src = value)
-				{
-					FreeImage.MoveMemory(baseAddress, src, sizeof(FIRGBF) * length);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (!(obj is FIRGBFARRAY))
-			{
-				throw new ArgumentException();
-			}
-			return CompareTo((FIRGBFARRAY)obj);
-		}
-
-		/// <summary>
-		/// Compares the current object with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FIRGBFARRAY other)
-		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
-		}
-
-		private class Enumerator : IEnumerator
-		{
-			private readonly FIRGBFARRAY array;
-			private int index = -1;
-
-			public Enumerator(FIRGBFARRAY array)
-			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
-				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetFIRGBF(index);
-					}
-					throw new InvalidOperationException();
-				}
-			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return new Enumerator(this);
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FIRGBFARRAY other)
-		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
-		}
-	}
-
-	/// <summary>
-	/// Storage of bitmasks and -shifts.
-	/// </summary>
-	internal struct BitSettings
-	{
-		public ushort RED_MASK;
-		public ushort GREEN_MASK;
-		public ushort BLUE_MASK;
-		public ushort RED_SHIFT;
-		public ushort GREEN_SHIFT;
-		public ushort BLUE_SHIFT;
-		public ushort RED_MAX;
-		public ushort GREEN_MAX;
-		public ushort BLUE_MAX;
-	}
-
-	/// <summary>
-	/// The FI16RGB structure describes a color consisting of relative intensities of red, green, and blue.
-	/// The structure provides 16 bit which can be dynamically spread across the three colors.
-	/// </summary>
+	/// <remarks>
+	/// The <b>fi_handle</b> of FreeImage in C++ is a simple pointer, but in .NET
+	/// it's not that simple. This wrapper uses fi_handle in two different ways.
+	///
+	/// We implement a new plugin and FreeImage gives us a handle (pointer) that
+	/// we can simply pass through to the given functions in a 'FreeImageIO'
+	/// structure.
+	/// But when we want to use LoadFromhandle or SaveToHandle we need
+	/// a fi_handle (that we recieve again in our own functions).
+	/// This handle is for example a stream (see LoadFromStream / SaveToStream)
+	/// that we want to work with. To know which stream a read/write is meant for
+	/// we could use a hash value that the wrapper itself handles or we can
+	/// go the unmanaged way of using a handle.
+	/// Therefor we use a <see cref="GCHandle"/> to recieve a unique pointer that we can
+	/// convert back into a .NET object.
+	/// When the <b>fi_handle</b> instance is no longer needed the instance must be disposed
+	/// by the creater manually! It is recommended to use the <c>using</c> statement to
+	/// be sure the instance is always disposed:
+	/// 
+	/// <code>
+	/// using (fi_handle handle = new fi_handle(object))
+	/// {
+	///     callSomeFunctions(handle);
+	/// }
+	/// </code>
+	/// 
+	/// What does that mean?
+	/// If we get a <b>fi_handle</b> from unmanaged code we get a pointer to unmanaged
+	/// memory that we do not have to care about, and just pass ist back to FreeImage.
+	/// If we have to create a handle our own we use the standard constructur
+	/// that fills the <see cref="IntPtr"/> with an pointer that represents the given object.
+	/// With calling <see cref="GetObject"/> the <see cref="IntPtr"/> is used to retrieve the original
+	/// object we passed through the constructor.
+	///
+	/// This way we can implement a <b>fi_handle</b> that works with managed an unmanaged
+	/// code.
+	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
-	public sealed class FI16RGB : IComparable, IComparable<FI16RGB>, IEquatable<FI16RGB>
+	public struct fi_handle : IComparable, IComparable<fi_handle>, IEquatable<fi_handle>, IDisposable
 	{
-		public ushort data;
-		private readonly BitSettings bitSettings;
+		/// <summary>
+		/// The handle to wrap.
+		/// </summary>
+		public IntPtr handle;
 
 		/// <summary>
-		/// For internal use only.
+		/// Initializes a new instance wrapping a managed object.
 		/// </summary>
-		internal FI16RGB(ushort color, BitSettings bitSettings)
+		/// <param name="obj">The object to wrap.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="obj"/> is null.</exception>
+		public fi_handle(object obj)
 		{
-			this.data = color;
-			this.bitSettings = bitSettings;
-		}
-
-		public static bool operator ==(FI16RGB value1, FI16RGB value2)
-		{
-			if (value1.bitSettings.RED_MASK != value2.bitSettings.RED_MASK)
+			if (obj == null)
 			{
-				return false;
+				throw new ArgumentNullException("obj");
 			}
-			if (value1.bitSettings.GREEN_MASK != value2.bitSettings.GREEN_MASK)
-			{
-				return false;
-			}
-			if (value1.bitSettings.BLUE_MASK != value2.bitSettings.BLUE_MASK)
-			{
-				return false;
-			}
-			int MASK =
-				(value1.bitSettings.RED_MASK |
-				value1.bitSettings.GREEN_MASK |
-				value1.bitSettings.BLUE_MASK);
-			return ((value1.data & MASK) == (value2.data & MASK));
-		}
-
-		public static bool operator !=(FI16RGB value1, FI16RGB value2)
-		{
-			return !(value1 == value2);
+			GCHandle gch = GCHandle.Alloc(obj, GCHandleType.Normal);
+			handle = GCHandle.ToIntPtr(gch);
 		}
 
 		/// <summary>
-		/// Gets or sets the color of the structure.
+		/// Tests whether two specified <see cref="fi_handle"/> structures are different.
 		/// </summary>
-		public Color color
+		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="fi_handle"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(fi_handle left, fi_handle right)
+		{
+			return (left.handle == right.handle);
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="fi_handle"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="fi_handle"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(fi_handle left, fi_handle right)
+		{
+			return (left.handle != right.handle);
+		}
+
+		/// <summary>
+		/// Gets whether the pointer is a null pointer.
+		/// </summary>
+		public bool IsNull
 		{
 			get
 			{
-				int red, green, blue;
-				red = (255 * GetColorComponent(bitSettings.RED_MASK, bitSettings.RED_SHIFT)) / bitSettings.RED_MAX;
-				green = (255 * GetColorComponent(bitSettings.GREEN_MASK, bitSettings.GREEN_SHIFT)) / bitSettings.GREEN_MAX;
-				blue = (255 * GetColorComponent(bitSettings.BLUE_MASK, bitSettings.BLUE_SHIFT)) / bitSettings.BLUE_MAX;
-				return Color.FromArgb(red, green, blue);
+				return (handle == IntPtr.Zero);
 			}
-			set
+		}
+
+		/// <summary>
+		/// Returns the object assigned to the handle in case this instance
+		/// was created by managed code.
+		/// </summary>
+		/// <returns><see cref="Object"/> assigned to this handle or null on failure.</returns>
+		internal object GetObject()
+		{
+			object result = null;
+			if (handle != IntPtr.Zero)
 			{
-				uint val = 0;
-				val |= (((uint)(((float)value.R / 255f) * (float)bitSettings.RED_MAX)) << bitSettings.RED_SHIFT);
-				val |= (((uint)(((float)value.G / 255f) * (float)bitSettings.GREEN_MAX)) << bitSettings.GREEN_SHIFT);
-				val |= (((uint)(((float)value.B / 255f) * (float)bitSettings.BLUE_MAX)) << bitSettings.BLUE_SHIFT);
-				data = (ushort)val;
+				try
+				{
+					result = GCHandle.FromIntPtr(handle).Target;
+				}
+				catch
+				{
+				}
 			}
+			return result;
 		}
 
 		/// <summary>
-		/// Extract bits from a value.
+		/// Converts the numeric value of the <see cref="fi_handle"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		private byte GetColorComponent(ushort mask, ushort shift)
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
 		{
-			ushort value = data;
-			value &= mask;
-			value >>= shift;
-			return (byte)value;
+			return handle.ToString();
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Returns a hash code for this <see cref="fi_handle"/> structure.
 		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is FI16RGB)
-			{
-				return CompareTo((FI16RGB)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FI16RGB other)
-		{
-			return this.color.ToArgb().CompareTo(other.color.ToArgb());
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FI16RGB other)
-		{
-			return this == other;
-		}
-
-		/// <summary>
-		/// Serves as a hash function for a particular type.
-		/// </summary>
-		/// <returns>A hash code for the current object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="fi_handle"/>.</returns>
 		public override int GetHashCode()
 		{
-			return data;
+			return handle.GetHashCode();
 		}
-	}
-
-	/// <summary>
-	/// The structure wraps all operations needed to work with an array of FI16RGBs.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(FI16RGBARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
-	/// </summary>
-	public unsafe struct FI16RGBARRAY : IComparable, IComparable<FI16RGBARRAY>, IEnumerable, IEquatable<FI16RGBARRAY>
-	{
-		readonly ushort* baseAddress;
-		readonly uint length;
-		readonly BitSettings bitSettings;
 
 		/// <summary>
-		/// Creates an FIRGBFARRAY structure.
+		/// Tests whether the specified object is a <see cref="fi_handle"/> structure
+		/// and is equivalent to this <see cref="fi_handle"/> structure.
 		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <param name="red_mask">Bitmask for the color red.</param>
-		/// <param name="green_mask">Bitmask for the color green.</param>
-		/// <param name="blue_mask">Bitmask for the color blue.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public FI16RGBARRAY(
-			IntPtr baseAddress,
-			uint length,
-			ushort red_mask,
-			ushort green_mask,
-			ushort blue_mask)
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="fi_handle"/> structure
+		/// equivalent to this <see cref="fi_handle"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
 		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (ushort*)baseAddress;
-			this.length = length;
-			bitSettings = GetBitSettings(red_mask, green_mask, blue_mask);
+			return ((obj is fi_handle) && (this == ((fi_handle)obj)));
 		}
 
 		/// <summary>
-		/// Creates an FIRGBFARRAY structure.
+		/// Indicates whether the current object is equal to another object of the same type.
 		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_BITMAP
-		/// or color depth is not 16bpp.</exception>
-		public FI16RGBARRAY(FIBITMAP dib, int scanline)
+		/// <param name="other">An object to compare with this object.</param>
+		/// <returns>True if the current object is equal to the other parameter; otherwise, <b>false</b>.</returns>
+		public bool Equals(fi_handle other)
 		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
-			{
-				throw new ArgumentException("dib");
-			}
-			if (FreeImage.GetBPP(dib) != 16)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (ushort*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
-			bitSettings = GetBitSettings(
-				FreeImage.GetRedMask(dib),
-				FreeImage.GetGreenMask(dib),
-				FreeImage.GetBlueMask(dib));
+			return (this == other);
 		}
 
 		/// <summary>
-		/// Create a BitSettings structure from color masks
-		/// </summary>
-		private static BitSettings GetBitSettings(uint red_mask, uint green_mask, uint blue_mask)
-		{
-			return GetBitSettings((ushort)red_mask, (ushort)green_mask, (ushort)blue_mask);
-		}
-
-		/// <summary>
-		/// Create a BitSettings structure from color masks
-		/// </summary>
-		private static BitSettings GetBitSettings(ushort red_mask, ushort green_mask, ushort blue_mask)
-		{
-			BitSettings bitSettings = new BitSettings();
-
-			ushort temp;
-			bitSettings.RED_MASK = red_mask;
-			bitSettings.GREEN_MASK = green_mask;
-			bitSettings.BLUE_MASK = blue_mask;
-
-			bitSettings.RED_SHIFT = 0;
-			temp = bitSettings.RED_MASK;
-			while ((temp & 0x1) != 1)
-			{
-				temp >>= 1;
-				bitSettings.RED_SHIFT++;
-			}
-			bitSettings.RED_MAX = temp;
-
-			bitSettings.GREEN_SHIFT = 0;
-			temp = bitSettings.GREEN_MASK;
-			while ((temp & 0x1) != 1)
-			{
-				temp >>= 1;
-				bitSettings.GREEN_SHIFT++;
-			}
-			bitSettings.GREEN_MAX = temp;
-
-			bitSettings.BLUE_SHIFT = 0;
-			temp = bitSettings.BLUE_MASK;
-			while ((temp & 0x1) != 1)
-			{
-				temp >>= 1;
-				bitSettings.BLUE_SHIFT++;
-			}
-			bitSettings.BLUE_MAX = temp;
-
-			return bitSettings;
-		}
-
-		public static bool operator ==(FI16RGBARRAY value1, FI16RGBARRAY value2)
-		{
-			FI16RGB[] array1 = value1.Data;
-			FI16RGB[] array2 = value2.Data;
-			if (array1.Length != array2.Length)
-			{
-				return false;
-			}
-			for (int i = 0; i < array1.Length; i++)
-			{
-				if (array1[i] != array2[i])
-				{
-					return false;
-				}
-			}
-			return true;
-		}
-
-		public static bool operator !=(FI16RGBARRAY value1, FI16RGBARRAY value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Gets the number of elements being wrapped.
-		/// </summary>
-		public uint Length
-		{
-			get { return length; }
-		}
-
-		/// <summary>
-		/// Gets or sets the ushort value representing the color at the given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>Ushort value of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public FI16RGB this[int index]
-		{
-			get
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				return GetFI16RGB(index);
-			}
-			set
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				SetFI16RGB(index, value);
-			}
-		}
-
-		/// <summary>
-		/// Returns the color as an FI16RGB structure.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An FI16RGB structure representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public FI16RGB GetFI16RGB(int index)
-		{
-			return new FI16RGB(GetUShort(index), bitSettings);
-		}
-
-		/// <summary>
-		/// Sets the color at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetFI16RGB(int index, FI16RGB color)
-		{
-			SetUShort(index, color.data);
-		}
-
-		/// <summary>
-		/// Returns the ushort value of the index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An ushort value representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe ushort GetUShort(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index];
-		}
-
-		/// <summary>
-		/// Sets the ushort value at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetUShort(int index, ushort color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index] = color;
-		}
-
-		/// <summary>
-		/// Extract bits from a value
-		/// </summary>
-		private unsafe byte GetColorComponent(int index, ushort mask, ushort shift, ushort max)
-		{
-			ushort value = baseAddress[index];
-			value &= mask;
-			value >>= shift;
-			value = (byte)((value * 255) / max);
-			return (byte)value;
-		}
-
-		/// <summary>
-		/// Insert bits into a value
-		/// </summary>
-		private unsafe void SetColorComponent(int index, byte value, ushort mask, ushort shift, ushort max)
-		{
-			ushort invertMask = (ushort)(~mask);
-			ushort orgValue = baseAddress[index];
-			orgValue &= invertMask;
-			ushort newValue = (ushort)(((ushort)value * max) / 255);
-			newValue <<= shift;
-			newValue |= orgValue;
-			baseAddress[index] = newValue;
-		}
-
-		/// <summary>
-		/// Returns the data representing the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the red part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public byte GetRed(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return GetColorComponent(
-				index,
-				bitSettings.RED_MASK,
-				bitSettings.RED_SHIFT,
-				bitSettings.RED_MAX);
-		}
-
-		/// <summary>
-		/// Sets the red part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="red">The new red part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetRed(int index, byte red)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			SetColorComponent(
-				index,
-				red,
-				bitSettings.RED_MASK,
-				bitSettings.RED_SHIFT,
-				bitSettings.RED_MAX);
-		}
-
-		/// <summary>
-		/// Returns the data representing the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the green part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public byte GetGreen(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return GetColorComponent(
-				index,
-				bitSettings.GREEN_MASK,
-				bitSettings.GREEN_SHIFT,
-				bitSettings.GREEN_MAX);
-		}
-
-		/// <summary>
-		/// Sets the green part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="green">The new green part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetGreen(int index, byte green)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			SetColorComponent(
-				index,
-				green,
-				bitSettings.GREEN_MASK,
-				bitSettings.GREEN_SHIFT,
-				bitSettings.GREEN_MAX);
-		}
-
-		/// <summary>
-		/// Returns the data representing the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The value representing the blue part of the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public byte GetBlue(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return GetColorComponent(
-				index,
-				bitSettings.BLUE_MASK,
-				bitSettings.BLUE_SHIFT,
-				bitSettings.BLUE_MAX);
-		}
-
-		/// <summary>
-		/// Sets the blue part of the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="blue">The new blue part of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetBlue(int index, byte blue)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			SetColorComponent(
-				index,
-				blue,
-				bitSettings.BLUE_MASK,
-				bitSettings.BLUE_SHIFT,
-				bitSettings.BLUE_MAX);
-		}
-
-		/// <summary>
-		/// Returns the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>The color at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public Color GetColor(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			int red, green, blue;
-			red = GetColorComponent(
-				index,
-				bitSettings.RED_MASK,
-				bitSettings.RED_SHIFT,
-				bitSettings.RED_MAX);
-			green = GetColorComponent(
-				index,
-				bitSettings.GREEN_MASK,
-				bitSettings.GREEN_SHIFT, 
-				bitSettings.GREEN_MAX);
-			blue = GetColorComponent(
-				index,
-				bitSettings.BLUE_MASK,
-				bitSettings.BLUE_SHIFT,
-				bitSettings.BLUE_MAX);
-			return Color.FromArgb(red, green, blue);
-		}
-
-		/// <summary>
-		/// Sets the color at a given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public void SetColor(int index, Color color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			uint value = 0;
-			value |= (((uint)(((float)color.R / 255f) * (float)bitSettings.RED_MAX)) << bitSettings.RED_SHIFT);
-			value |= (((uint)(((float)color.G / 255f) * (float)bitSettings.GREEN_MAX)) << bitSettings.GREEN_SHIFT);
-			value |= (((uint)(((float)color.B / 255f) * (float)bitSettings.BLUE_MAX)) << bitSettings.BLUE_SHIFT);
-			SetUShort(index, (ushort)value);
-		}
-
-		/// <summary>
-		/// Returns an array of FI16RGB.
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FI16RGB[] Data
-		{
-			get
-			{
-				FI16RGB[] result = new FI16RGB[length];
-				for (int i = 0; i < length; i++)
-				{
-					result[i] = GetFI16RGB(i);
-				}
-				return result;
-			}
-			set
-			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				for (int i = 0; i < length; i++)
-				{
-					SetFI16RGB(i, value[i]);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="fi_handle"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (!(obj is FI16RGBARRAY))
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is fi_handle))
 			{
 				throw new ArgumentException();
 			}
-			return CompareTo((FI16RGBARRAY)obj);
+			return CompareTo((fi_handle)obj);
 		}
 
 		/// <summary>
-		/// Compares the current object with another object of the same type.
+		/// Compares this instance with a specified <see cref="fi_handle"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FI16RGBARRAY other)
+		/// <param name="other">A <see cref="fi_handle"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(fi_handle other)
 		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
+			return handle.ToInt64().CompareTo(other.handle.ToInt64());
 		}
 
-		private class Enumerator : IEnumerator
+		/// <summary>
+		/// Releases all resources used by the instance.
+		/// </summary>
+		public void Dispose()
 		{
-			private readonly FI16RGBARRAY array;
-			private int index = -1;
-
-			public Enumerator(FI16RGBARRAY array)
+			if (this.handle != IntPtr.Zero)
 			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
+				try
 				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetFI16RGB(index);
-					}
-					throw new InvalidOperationException();
+					GCHandle.FromIntPtr(handle).Free();
+				}
+				catch
+				{
+				}
+				finally
+				{
+					this.handle = IntPtr.Zero;
 				}
 			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return new Enumerator(this);
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FI16RGBARRAY other)
-		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
 		}
 	}
 
 	/// <summary>
-	/// The structure wraps all operations needed to work with an array of FI8BITs.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(FI8BITARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
+	/// The <b>FI1BIT</b> structure represents a single bit.
+	/// It's value can be <i>0</i> or <i>1</i>.
 	/// </summary>
-	public unsafe struct FI8BITARRAY : IComparable, IComparable<FI8BITARRAY>, IEnumerable, IEquatable<FI8BITARRAY>
+	[DebuggerDisplay("{value}"),
+	Serializable]
+	public struct FI1BIT
 	{
-		readonly byte* baseAddress;
-		readonly uint length;
+		/// <summary>
+		/// The value of the structure.
+		/// </summary>
+		private byte value;
 
 		/// <summary>
-		/// Creates an FI8BITARRAY structure.
+		/// Initializes a new instance based on the specified value.
 		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public FI8BITARRAY(IntPtr baseAddress, uint length)
+		/// <param name="value">The value to initialize with.</param>
+		private FI1BIT(byte value)
 		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (byte*)baseAddress;
-			this.length = length;
+			this.value = (byte)(value & 0x01);
 		}
 
 		/// <summary>
-		/// Creates an FI8BITARRAY structure.
+		/// Converts the value of a <see cref="FI1BIT"/> structure to a <see cref="Byte"/> structure.
 		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_BITMAP
-		/// or color depth is not 8bpp.</exception>
-		public FI8BITARRAY(FIBITMAP dib, int scanline)
+		/// <param name="value">A <see cref="FI1BIT"/> structure.</param>
+		/// <returns>A new instance of <see cref="FI1BIT"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator byte(FI1BIT value)
 		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
-			{
-				throw new ArgumentException("dib");
-			}
-			if (FreeImage.GetBPP(dib) != 8)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (byte*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
+			return value.value;
 		}
 
 		/// <summary>
-		/// Gets the number of elements being wrapped.
+		/// Converts the value of a <see cref="Byte"/> structure to a <see cref="FI1BIT"/> structure.
 		/// </summary>
-		public uint Length
+		/// <param name="value">A <see cref="Byte"/> structure.</param>
+		/// <returns>A new instance of <see cref="FI1BIT"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator FI1BIT(byte value)
 		{
-			get { return length; }
+			return new FI1BIT(value);
 		}
 
 		/// <summary>
-		/// Gets or sets the palette-index representing at the given index.
+		/// Converts the numeric value of the <see cref="FI1BIT"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <returns>Data of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public byte this[int index]
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
 		{
-			get
-			{
-				return GetIndex(index);
-			}
-			set
-			{
-				SetIndex(index, value);
-			}
-		}
-
-		/// <summary>
-		/// Returns the palette-index at a given index.
-		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <returns>Data at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte GetIndex(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index];
-		}
-
-		/// <summary>
-		/// Sets the palette-index at a given index.
-		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <param name="value">The new data.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetIndex(int index, byte value)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index] = value;
-		}
-
-		/// <summary>
-		/// Returns an array of byte.
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte[] Data
-		{
-			get
-			{
-				byte[] result = new byte[length];
-				fixed (byte* dst = result)
-				{
-					FreeImage.MoveMemory(dst, baseAddress, sizeof(byte) * length);
-				}
-				return result;
-			}
-			set
-			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				fixed (byte* src = value)
-				{
-					FreeImage.MoveMemory(baseAddress, src, sizeof(byte) * length);
-				}
-			}
-		}
-
-		public static bool operator ==(FI8BITARRAY value1, FI8BITARRAY value2)
-		{
-			if (value1.length != value2.length)
-			{
-				return false;
-			}
-			if (value1.baseAddress == value2.baseAddress)
-			{
-				return true;
-			}
-			return FreeImage.CompareMemory(
-				value1.baseAddress,
-				value2.baseAddress,
-				sizeof(byte) * value1.length);
-		}
-
-		public static bool operator !=(FI8BITARRAY value1, FI8BITARRAY value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is FI8BITARRAY)
-			{
-				return CompareTo((FI8BITARRAY)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current object with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FI8BITARRAY other)
-		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
-		}
-
-		private class Enumerator : IEnumerator
-		{
-			private readonly FI8BITARRAY array;
-			private int index = -1;
-
-			public Enumerator(FI8BITARRAY array)
-			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
-				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetIndex(index);
-					}
-					throw new InvalidOperationException();
-				}
-			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return new Enumerator(this);
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FI8BITARRAY other)
-		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
+			return value.ToString();
 		}
 	}
 
 	/// <summary>
-	/// The structure wraps all operations needed to work with an array of FI4BITs.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(FI4BITARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
+	/// The <b>FI4BIT</b> structure represents the half of a <see cref="Byte"/>.
+	/// It's valuerange is between <i>0</i> and <i>15</i>.
 	/// </summary>
-	public unsafe struct FI4BITARRAY : IComparable, IComparable<FI4BITARRAY>, IEnumerable, IEquatable<FI4BITARRAY>
+	[DebuggerDisplay("{value}"),
+	Serializable]
+	public struct FI4BIT
 	{
-		readonly byte* baseAddress;
-		readonly uint length;
+		/// <summary>
+		/// The value of the structure.
+		/// </summary>
+		private byte value;
 
 		/// <summary>
-		/// Creates an FI4BITARRAY structure.
+		/// Initializes a new instance based on the specified value.
 		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public FI4BITARRAY(IntPtr baseAddress, uint length)
+		/// <param name="value">The value to initialize with.</param>
+		private FI4BIT(byte value)
 		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (byte*)baseAddress;
-			this.length = length;
+			this.value = (byte)(value & 0x0F);
 		}
 
 		/// <summary>
-		/// Creates an FI4BITARRAY structure.
+		/// Converts the value of a <see cref="FI4BIT"/> structure to a <see cref="Byte"/> structure.
 		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_BITMAP
-		/// or color depth is not 4bpp.</exception>
-		public FI4BITARRAY(FIBITMAP dib, int scanline)
+		/// <param name="value">A <see cref="FI4BIT"/> structure.</param>
+		/// <returns>A new instance of <see cref="FI4BIT"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator byte(FI4BIT value)
 		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
-			{
-				throw new ArgumentException("dib");
-			}
-			if (FreeImage.GetBPP(dib) != 4)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (byte*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
+			return value.value;
 		}
 
 		/// <summary>
-		/// Gets the number of elements being wrapped.
+		/// Converts the value of a <see cref="Byte"/> structure to a <see cref="FI4BIT"/> structure.
 		/// </summary>
-		public uint Length
+		/// <param name="value">A <see cref="Byte"/> structure.</param>
+		/// <returns>A new instance of <see cref="FI4BIT"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator FI4BIT(byte value)
 		{
-			get { return length; }
+			return new FI4BIT(value);
 		}
 
 		/// <summary>
-		/// Gets or sets the palette-index at the given index.
+		/// Converts the numeric value of the <see cref="FI4BIT"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <returns>Data of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public byte this[int index]
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
 		{
-			get
-			{
-				return GetIndex(index);
-			}
-			set
-			{
-				SetIndex(index, value);
-			}
-		}
-
-		/// <summary>
-		/// Returns the palette-index at a given index.
-		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <returns>Data at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte GetIndex(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			if ((index % 2) == 0)
-			{
-				return (byte)(baseAddress[index / 2] >> 4);
-			}
-			else
-			{
-				return (byte)(baseAddress[index / 2] & 0x0F);
-			}
-		}
-
-		/// <summary>
-		/// Sets the palette-index at a given index.
-		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <param name="value">The new data.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetIndex(int index, byte value)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			if ((index % 2) == 0)
-			{
-				baseAddress[index / 2] = (byte)((baseAddress[index / 2] & 0x0F) | (value << 4));
-			}
-			else
-			{
-				baseAddress[index / 2] = (byte)((baseAddress[index / 2] & 0xF0) | (value & 0x0F));
-			}
-		}
-
-		/// <summary>
-		/// Returns the palette-index at a given index.
-		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <returns>Data at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		internal unsafe byte GetIndexUnsafe(int index)
-		{
-			if ((index % 2) == 0)
-			{
-				return (byte)(baseAddress[index / 2] >> 4);
-			}
-			else
-			{
-				return (byte)(baseAddress[index / 2] & 0x0F);
-			}
-		}
-
-		/// <summary>
-		/// Sets the palette-index at a given index.
-		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <param name="value">The new data.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		internal unsafe void SetIndexUnsafe(int index, byte value)
-		{
-			if ((index % 2) == 0)
-			{
-				baseAddress[index / 2] = (byte)((baseAddress[index / 2] & 0x0F) | (value << 4));
-			}
-			else
-			{
-				baseAddress[index / 2] = (byte)((baseAddress[index / 2] & 0xF0) | (value & 0x0F));
-			}
-		}
-
-		/// <summary>
-		/// Returns an array of byte.
-		/// In each byte the lower 4 bits are representing the value (0x0F).
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte[] Data
-		{
-			get
-			{
-				byte[] result = new byte[length];
-				for (int i = 0; i < length; i++)
-				{
-					result[i] = GetIndex(i);
-				}
-				return result;
-			}
-			set
-			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				for (int i = 0; i < length; i++)
-				{
-					SetIndex(i, value[i]);
-				}
-			}
-		}
-
-		public static bool operator ==(FI4BITARRAY value1, FI4BITARRAY value2)
-		{
-			byte[] array1 = value1.Data;
-			byte[] array2 = value2.Data;
-			if (array1.Length != array2.Length)
-			{
-				return false;
-			}
-			for (int i = 0; i < array1.Length; i++)
-			{
-				if (array1[i] != array2[i])
-				{
-					return false;
-				}
-			}
-			return true;
-		}
-
-		public static bool operator !=(FI4BITARRAY value1, FI4BITARRAY value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is FI4BITARRAY)
-			{
-				return CompareTo((FI4BITARRAY)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current object with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FI4BITARRAY other)
-		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
-		}
-
-		private class Enumerator : IEnumerator
-		{
-			private readonly FI4BITARRAY array;
-			private int index = -1;
-
-			public Enumerator(FI4BITARRAY array)
-			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
-				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetIndex(index);
-					}
-					throw new InvalidOperationException();
-				}
-			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return new Enumerator(this);
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FI4BITARRAY other)
-		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
+			return value.ToString();
 		}
 	}
 
 	/// <summary>
-	/// The structure wraps all operations needed to work with an array of FI1BITs.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(FI1BITARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
+	/// The <b>FI16RGB555</b> structure describes a color consisting of relative
+	/// intensities of red, green, blue and alpha value. Each single color
+	/// component consumes 5 bits and so, takes values in the range from 0 to 31.
 	/// </summary>
-	public unsafe struct FI1BITARRAY : IComparable, IComparable<FI1BITARRAY>, IEnumerable, IEquatable<FI1BITARRAY>
+	/// <remarks>
+	/// <para>For easy integration of the underlying structure into the .NET framework,
+	/// the <b>FI16RGB555</b> structure implements implicit conversion operators to 
+	/// convert the represented color to and from the <see cref="System.Drawing.Color"/>
+	/// type. This makes the <see cref="System.Drawing.Color"/> type a real replacement
+	/// for the <b>FI16RGB555</b> structure and my be used in all situations which require
+	/// an <b>FI16RGB555</b> type.
+	/// </para>
+	/// <example>
+	/// The following code example demonstrates the various conversions between the
+	/// <b>FI16RGB555</b> structure and the <see cref="System.Drawing.Color"/> structure.
+	/// <code>
+	/// FI16RGB555 fi16rgb;
+	/// // Initialize the structure using a native .NET Color structure.
+	///	fi16rgb = new FI16RGB555(Color.Indigo);
+	/// // Initialize the structure using the implicit operator.
+	///	fi16rgb = Color.DarkSeaGreen;
+	/// // Convert the FI16RGB555 instance into a native .NET Color
+	/// // using its implicit operator.
+	///	Color color = fi16rgb;
+	/// // Using the structure's Color property for converting it
+	/// // into a native .NET Color.
+	///	Color another = fi16rgb.Color;
+	/// </code>
+	/// </example>
+	/// </remarks>
+	[Serializable, StructLayout(LayoutKind.Sequential)]
+	public struct FI16RGB555 : IComparable, IComparable<FI16RGB555>, IEquatable<FI16RGB555>
 	{
-		readonly byte* baseAddress;
-		readonly uint length;
-		private const byte Zero = 0;
-		private const byte One = 1;
+		/// <summary>
+		/// The value of the color.
+		/// </summary>
+		private ushort value;
 
 		/// <summary>
-		/// Creates an FI1BITARRAY structure.
+		/// Initializes a new instance based on the specified <see cref="System.Drawing.Color"/>.
 		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public FI1BITARRAY(IntPtr baseAddress, uint length)
+		/// <param name="color"><see cref="System.Drawing.Color"/> to initialize with.</param>
+		public FI16RGB555(Color color)
 		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (byte*)baseAddress;
-			this.length = length;
+			value = (ushort)(
+				(((color.R * 31) / 255) << FreeImage.FI16_555_RED_SHIFT) +
+				(((color.G * 31) / 255) << FreeImage.FI16_555_GREEN_SHIFT) +
+				(((color.B * 31) / 255) << FreeImage.FI16_555_BLUE_SHIFT));
 		}
 
 		/// <summary>
-		/// Creates an FI1BITARRAY structure.
+		/// Tests whether two specified <see cref="FI16RGB555"/> structures are equivalent.
 		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_BITMAP
-		/// or color depth is not 1bpp.</exception>
-		public FI1BITARRAY(FIBITMAP dib, int scanline)
+		/// <param name="left">The <see cref="FI16RGB555"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FI16RGB555"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FI16RGB555"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FI16RGB555 left, FI16RGB555 right)
 		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
-			{
-				throw new ArgumentException("dib");
-			}
-			if (FreeImage.GetBPP(dib) != 1)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (byte*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
+			return (left.value == right.value);
 		}
 
 		/// <summary>
-		/// Gets the number of elements being wrapped.
+		/// Tests whether two specified <see cref="FI16RGB555"/> structures are different.
 		/// </summary>
-		public uint Length
+		/// <param name="left">The <see cref="FI16RGB555"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FI16RGB555"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FI16RGB555"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FI16RGB555 left, FI16RGB555 right)
 		{
-			get { return length; }
+			return (!(left == right));
 		}
 
 		/// <summary>
-		/// Gets or sets the bit representing the index of the bitmaps palette at the given index.
+		/// Converts the value of a <see cref="System.Drawing.Color"/> structure to a <see cref="FI16RGB555"/> structure.
 		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <returns>Data of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public byte this[int index]
+		/// <param name="value">A <see cref="System.Drawing.Color"/> structure.</param>
+		/// <returns>A new instance of <see cref="FI16RGB555"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator FI16RGB555(Color value)
+		{
+			return new FI16RGB555(value);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="FI16RGB555"/> structure to a <see cref="System.Drawing.Color"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FI16RGB555"/> structure.</param>
+		/// <returns>A new instance of <see cref="System.Drawing.Color"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator Color(FI16RGB555 value)
+		{
+			return value.Color;
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="System.Drawing.Color"/> of the structure.
+		/// </summary>
+		public Color Color
 		{
 			get
 			{
-				return GetIndex(index);
+				return Color.FromArgb(
+					((value & FreeImage.FI16_555_RED_MASK) >> FreeImage.FI16_555_RED_SHIFT) * 255 / 31,
+					((value & FreeImage.FI16_555_GREEN_MASK) >> FreeImage.FI16_555_GREEN_SHIFT) * 255 / 31,
+					((value & FreeImage.FI16_555_BLUE_MASK) >> FreeImage.FI16_555_BLUE_SHIFT) * 255 / 31);
 			}
 			set
 			{
-				SetIndex(index, value);
+				this.value = (ushort)(
+					(((value.R * 31) / 255) << FreeImage.FI16_555_RED_SHIFT) +
+					(((value.G * 31) / 255) << FreeImage.FI16_555_GREEN_SHIFT) +
+					(((value.B * 31) / 255) << FreeImage.FI16_555_BLUE_SHIFT));
 			}
 		}
 
 		/// <summary>
-		/// Returns the bit at a given index.
+		/// Gets or sets the red color component.
 		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <returns>Data at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte GetIndex(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			byte mask = (byte)(1 << (7 - (index % 8)));
-			return ((baseAddress[index / 8] & mask) > 0) ? FI1BITARRAY.One : FI1BITARRAY.Zero;
-		}
-
-		/// <summary>
-		/// Sets the bit at a given index.
-		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <param name="value">The new data.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetIndex(int index, byte value)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			int mask = 1 << (7 - (index % 8));
-			if ((value & 0x01) > 0)
-			{
-				baseAddress[index / 8] |= (byte)mask;
-			}
-			else
-			{
-				baseAddress[index / 8] &= (byte)(~mask);
-			}
-		}
-
-		/// <summary>
-		/// Returns the bit at a given index.
-		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <returns>Data at the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		internal unsafe byte GetIndexUnsafe(int index)
-		{
-			byte mask = (byte)(1 << (7 - (index % 8)));
-			return ((baseAddress[index / 8] & mask) > 0) ? FI1BITARRAY.One : FI1BITARRAY.Zero;
-		}
-
-		/// <summary>
-		/// Sets the bit at a given index.
-		/// </summary>
-		/// <param name="index">Index of the data.</param>
-		/// <param name="value">The new data.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		internal unsafe void SetIndexUnsafe(int index, byte value)
-		{
-			int mask = 1 << (7 - (index % 8));
-			if ((value & 0x01) > 0)
-			{
-				baseAddress[index / 8] |= (byte)mask;
-			}
-			else
-			{
-				baseAddress[index / 8] &= (byte)(~mask);
-			}
-		}
-
-		/// <summary>
-		/// Returns an array of byte.
-		/// In each byte the lowest bit is representing the value (0x01).
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe byte[] Data
+		public byte Red
 		{
 			get
 			{
-				byte[] result = new byte[length];
-				int mask = 0x80;
-				int j = 0;
-
-				for (int i = 0; i < length; i++)
-				{
-					result[i] = (byte)((baseAddress[j] & mask) > 0 ? 1 : 0);
-					mask >>= 1;
-					if (mask == 0)
-					{
-						mask = 0x80;
-						j++;
-					}
-				}
-
-				return result;
+				return (byte)(((value & FreeImage.FI16_555_RED_MASK) >> FreeImage.FI16_555_RED_SHIFT) * 255 / 31);
 			}
 			set
 			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				int buffer = 0;
-				int mask = 0x80;
-				int j = 0;
-
-				for (int i = 0; i < length; i++)
-				{
-					if ((value[i] & 0x01) > 0)
-					{
-						buffer |= mask;
-					}
-					mask >>= 1;
-					if (mask == 0)
-					{
-						baseAddress[j] = (byte)buffer;
-						buffer = 0;
-						mask = 0x80;
-						j++;
-					}
-				}
-				if ((length % 8) != 0)
-				{
-					baseAddress[j] = (byte)buffer;
-				}
+				this.value = (ushort)((this.value & (~FreeImage.FI16_555_RED_MASK)) | (((value * 31) / 255) << FreeImage.FI16_555_RED_SHIFT));
 			}
-		}
-
-		public static bool operator ==(FI1BITARRAY value1, FI1BITARRAY value2)
-		{
-			byte[] array1 = value1.Data;
-			byte[] array2 = value2.Data;
-			if (array1.Length != array2.Length)
-			{
-				return false;
-			}
-			for (int i = 0; i < array1.Length; i++)
-			{
-				if (array1[i] != array2[i])
-				{
-					return false;
-				}
-			}
-			return true;
-		}
-
-		public static bool operator !=(FI1BITARRAY value1, FI1BITARRAY value2)
-		{
-			return !(value1 == value2);
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Gets or sets the green color component.
+		/// </summary>
+		public byte Green
+		{
+			get
+			{
+				return (byte)(((value & FreeImage.FI16_555_GREEN_MASK) >> FreeImage.FI16_555_GREEN_SHIFT) * 255 / 31);
+			}
+			set
+			{
+				this.value = (ushort)((this.value & (~FreeImage.FI16_555_GREEN_MASK)) | (((value * 31) / 255) << FreeImage.FI16_555_GREEN_SHIFT));
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the blue color component.
+		/// </summary>
+		public byte Blue
+		{
+			get
+			{
+				return (byte)(((value & FreeImage.FI16_555_BLUE_MASK) >> FreeImage.FI16_555_BLUE_SHIFT) * 255 / 31);
+			}
+			set
+			{
+				this.value = (ushort)((this.value & (~FreeImage.FI16_555_BLUE_MASK)) | (((value * 31) / 255) << FreeImage.FI16_555_BLUE_SHIFT));
+			}
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FI16RGB555"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is FI1BITARRAY)
+			if (obj == null)
 			{
-				return CompareTo((FI1BITARRAY)obj);
+				return 1;
 			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current object with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FI1BITARRAY other)
-		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
-		}
-
-		private class Enumerator : IEnumerator
-		{
-			private readonly FI1BITARRAY array;
-			private int index = -1;
-
-			public Enumerator(FI1BITARRAY array)
-			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
-				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetIndex(index);
-					}
-					throw new InvalidOperationException();
-				}
-			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return new Enumerator(this);
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FI1BITARRAY other)
-		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
-		}
-	}
-
-	/// <summary>
-	/// The structure wraps all operations needed to work with an array of FICOMPLEXs.
-	/// Be aware that the data recieved from the structure are copies, and changes
-	/// made to them have to be applied by calling a setter function of the structure.
-	/// <para>Two arrays can be compared by their data using the equality or inequality
-	/// operators.
-	/// The equals(FICOMPLEXARRAY other)-method can be used to check whether two
-	/// arrays map the same block of memory.</para>
-	/// </summary>
-	public unsafe struct FICOMPLEXARRAY : IComparable, IComparable<FICOMPLEXARRAY>, IEnumerable, IEquatable<FICOMPLEXARRAY>
-	{
-		readonly FICOMPLEX* baseAddress;
-		readonly uint length;
-
-		/// <summary>
-		/// Creates an FICOMPLEXARRAY structure.
-		/// </summary>
-		/// <param name="baseAddress">Startaddress of the memory to wrap.</param>
-		/// <param name="length">Length of the array.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="baseAddress"/> is null.</exception>
-		public FICOMPLEXARRAY(IntPtr baseAddress, uint length)
-		{
-			if (baseAddress == IntPtr.Zero)
-			{
-				throw new ArgumentNullException();
-			}
-			this.baseAddress = (FICOMPLEX*)baseAddress;
-			this.length = length;
-		}
-
-		/// <summary>
-		/// Creates an FICOMPLEXARRAY structure.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="scanline">Number of the scanline to wrap</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps type is not FIT_RGBAF.</exception>
-		public FICOMPLEXARRAY(FIBITMAP dib, int scanline)
-		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException();
-			}
-			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
-			{
-				throw new ArgumentOutOfRangeException("scanline");
-			}
-			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_COMPLEX)
-			{
-				throw new ArgumentException("dib");
-			}
-			baseAddress = (FICOMPLEX*)FreeImage.GetScanLine(dib, scanline);
-			length = FreeImage.GetWidth(dib);
-		}
-
-		public static bool operator ==(FICOMPLEXARRAY value1, FICOMPLEXARRAY value2)
-		{
-			if (value1.length != value2.length)
-			{
-				return false;
-			}
-			if (value1.baseAddress == value2.baseAddress)
-			{
-				return true;
-			}
-			return FreeImage.CompareMemory(
-				value1.baseAddress,
-				value2.baseAddress,
-				sizeof(FICOMPLEX) * value1.length);
-		}
-
-		public static bool operator !=(FICOMPLEXARRAY value1, FICOMPLEXARRAY value2)
-		{
-			return !(value1 == value2);
-		}
-
-		/// <summary>
-		/// Gets the number of elements being wrapped.
-		/// </summary>
-		public uint Length
-		{
-			get { return length; }
-		}
-
-		/// <summary>
-		/// Gets or sets the FICOMPLEX structure representing the color at the given index.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>FICOMPLEX structure of the index.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FICOMPLEX this[int index]
-		{
-			get
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				return baseAddress[index];
-			}
-			set
-			{
-				if (index >= length || index < 0)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				baseAddress[index] = value;
-			}
-		}
-
-		/// <summary>
-		/// Returns the color as an FICOMPLEX structure.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <returns>An FICOMPLEX structure representing the color.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FICOMPLEX GetFICOMPLEX(int index)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			return baseAddress[index];
-		}
-
-		/// <summary>
-		/// Sets the color at position 'index' to the value of 'color'.
-		/// </summary>
-		/// <param name="index">Index of the color.</param>
-		/// <param name="color">The new value of the color.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe void SetFICOMPLEX(int index, FICOMPLEX color)
-		{
-			if (index >= length || index < 0)
-			{
-				throw new ArgumentOutOfRangeException();
-			}
-			baseAddress[index] = color;
-		}
-
-		/// <summary>
-		/// Returns an array of FICOMPLEX.
-		/// Changes to the array will NOT be applied to the bitmap directly.
-		/// After all changes have been done, the changes will be applied by
-		/// calling the setter of 'Data' with the array.
-		/// Keep in mind that using 'Data' is only useful if all values
-		/// are being read or/and written.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown if <paramref name="index"/> is greater or same as Length.</exception>
-		public unsafe FICOMPLEX[] Data
-		{
-			get
-			{
-				FICOMPLEX[] result = new FICOMPLEX[length];
-				fixed (FICOMPLEX* dst = result)
-				{
-					FreeImage.MoveMemory(dst, baseAddress, sizeof(FICOMPLEX) * length);
-				}
-				return result;
-			}
-			set
-			{
-				if (value.Length != length)
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				fixed (FICOMPLEX* src = value)
-				{
-					FreeImage.MoveMemory(baseAddress, src, sizeof(FICOMPLEX) * length);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (!(obj is FICOMPLEXARRAY))
+			if (!(obj is FI16RGB555))
 			{
 				throw new ArgumentException();
 			}
-			return CompareTo((FICOMPLEXARRAY)obj);
+			return CompareTo((FI16RGB555)obj);
 		}
 
 		/// <summary>
-		/// Compares the current object with another object of the same type.
+		/// Compares this instance with a specified <see cref="FI16RGB555"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FICOMPLEXARRAY other)
+		/// <param name="other">A <see cref="FI16RGB555"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(FI16RGB555 other)
 		{
-			return ((uint)baseAddress).CompareTo((uint)other.baseAddress);
-		}
-
-		private class Enumerator : IEnumerator
-		{
-			private readonly FICOMPLEXARRAY array;
-			private int index = -1;
-
-			public Enumerator(FICOMPLEXARRAY array)
-			{
-				this.array = array;
-			}
-
-			public object Current
-			{
-				get
-				{
-					if ((index >= 0) && (index < array.length))
-					{
-						return array.GetFICOMPLEX(index);
-					}
-					throw new InvalidOperationException();
-				}
-			}
-
-			public bool MoveNext()
-			{
-				if ((index + 1) < (int)array.length)
-				{
-					index++;
-					return true;
-				}
-				return false;
-			}
-
-			public void Reset()
-			{
-				index = -1;
-			}
+			return this.Color.ToArgb().CompareTo(other.Color.ToArgb());
 		}
 
 		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
+		/// Tests whether the specified object is a <see cref="FI16RGB555"/> structure
+		/// and is equivalent to this <see cref="FI16RGB555"/> structure.
 		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FI16RGB555"/> structure
+		/// equivalent to this <see cref="FI16RGB555"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
 		{
-			return new Enumerator(this);
+			return base.Equals(obj);
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified <see cref="FI16RGB555"/> structure is equivalent to this <see cref="FI16RGB555"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(FICOMPLEXARRAY other)
+		/// <param name="other">A <see cref="FI16RGB555"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FI16RGB555"/> structure
+		/// equivalent to this <see cref="FI16RGB555"/> structure; otherwise, <b>false</b>.</returns>
+		public bool Equals(FI16RGB555 other)
 		{
-			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="FI16RGB555"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FI16RGB555"/>.</returns>
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		/// <summary>
+		/// Converts the numeric value of the <see cref="FI16RGB555"/> object
+		/// to its equivalent string representation.
+		/// </summary>
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
+		{
+			return FreeImage.ColorToString(Color);
 		}
 	}
 
 	/// <summary>
-	/// The structure represents a fraction by saving two integeres which are interpreted
-	/// as numerator and denominator. The structure implements all common operations
-	/// like +, -, ++, --, ==, != , >, >==, &lt;, &lt;== and ~ (which switches nominator and
-	/// denomiator). No other bit-operations are implemented.
+	/// The <b>FI16RGB565</b> structure describes a color consisting of relative
+	/// intensities of red, green, blue and alpha value. Each single color
+	/// component consumes 5 bits and so, takes values in the range from 0 to 31.
+	/// </summary>
+	/// <remarks>
+	/// <para>For easy integration of the underlying structure into the .NET framework,
+	/// the <b>FI16RGB565</b> structure implements implicit conversion operators to 
+	/// convert the represented color to and from the <see cref="System.Drawing.Color"/>
+	/// type. This makes the <see cref="System.Drawing.Color"/> type a real replacement
+	/// for the <b>FI16RGB565</b> structure and my be used in all situations which require
+	/// an <b>FI16RGB565</b> type.
+	/// </para>
+	/// <example>
+	/// The following code example demonstrates the various conversions between the
+	/// <b>FI16RGB565</b> structure and the <see cref="System.Drawing.Color"/> structure.
+	/// <code>
+	/// FI16RGB565 fi16rgb;
+	/// // Initialize the structure using a native .NET Color structure.
+	///	fi16rgb = new FI16RGB565(Color.Indigo);
+	/// // Initialize the structure using the implicit operator.
+	///	fi16rgb = Color.DarkSeaGreen;
+	/// // Convert the FI16RGB565 instance into a native .NET Color
+	/// // using its implicit operator.
+	///	Color color = fi16rgb;
+	/// // Using the structure's Color property for converting it
+	/// // into a native .NET Color.
+	///	Color another = fi16rgb.Color;
+	/// </code>
+	/// </example>
+	/// </remarks>
+	[Serializable, StructLayout(LayoutKind.Sequential)]
+	public struct FI16RGB565 : IComparable, IComparable<FI16RGB565>, IEquatable<FI16RGB565>
+	{
+		/// <summary>
+		/// The value of the color.
+		/// </summary>
+		private ushort value;
+
+		/// <summary>
+		/// Initializes a new instance based on the specified <see cref="System.Drawing.Color"/>.
+		/// </summary>
+		/// <param name="color"><see cref="System.Drawing.Color"/> to initialize with.</param>
+		public FI16RGB565(Color color)
+		{
+			value = (ushort)(
+				(((color.R * 31) / 255) << FreeImage.FI16_565_RED_SHIFT) +
+				(((color.G * 63) / 255) << FreeImage.FI16_565_GREEN_SHIFT) +
+				(((color.B * 31) / 255) << FreeImage.FI16_565_BLUE_SHIFT));
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FI16RGB565"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FI16RGB565"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FI16RGB565"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FI16RGB565"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FI16RGB565 left, FI16RGB565 right)
+		{
+			return (left.value == right.value);
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FI16RGB565"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FI16RGB565"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FI16RGB565"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FI16RGB565"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FI16RGB565 left, FI16RGB565 right)
+		{
+			return (!(left == right));
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="System.Drawing.Color"/> structure to a <see cref="FI16RGB565"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="System.Drawing.Color"/> structure.</param>
+		/// <returns>A new instance of <see cref="FI16RGB565"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator FI16RGB565(Color value)
+		{
+			return new FI16RGB565(value);
+		}
+
+		/// <summary>
+		/// Converts the value of a <see cref="FI16RGB565"/> structure to a <see cref="System.Drawing.Color"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FI16RGB565"/> structure.</param>
+		/// <returns>A new instance of <see cref="System.Drawing.Color"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator Color(FI16RGB565 value)
+		{
+			return value.Color;
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="System.Drawing.Color"/> of the structure.
+		/// </summary>
+		public Color Color
+		{
+			get
+			{
+				return Color.FromArgb(
+					((value & FreeImage.FI16_565_RED_MASK) >> FreeImage.FI16_565_RED_SHIFT) * 255 / 31,
+					((value & FreeImage.FI16_565_GREEN_MASK) >> FreeImage.FI16_565_GREEN_SHIFT) * 255 / 63,
+					((value & FreeImage.FI16_565_BLUE_MASK) >> FreeImage.FI16_565_BLUE_SHIFT) * 255 / 31);
+			}
+			set
+			{
+				this.value = (ushort)(
+					(((value.R * 31) / 255) << FreeImage.FI16_565_RED_SHIFT) +
+					(((value.G * 63) / 255) << FreeImage.FI16_565_GREEN_SHIFT) +
+					(((value.B * 31) / 255) << FreeImage.FI16_565_BLUE_SHIFT));
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the red color component.
+		/// </summary>
+		public byte Red
+		{
+			get
+			{
+				return (byte)(((value & FreeImage.FI16_565_RED_MASK) >> FreeImage.FI16_565_RED_SHIFT) * 255 / 31);
+			}
+			set
+			{
+				this.value = (ushort)((this.value & (~FreeImage.FI16_565_RED_MASK)) | (((value * 31) / 255) << FreeImage.FI16_565_RED_SHIFT));
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the green color component.
+		/// </summary>
+		public byte Green
+		{
+			get
+			{
+				return (byte)(((value & FreeImage.FI16_565_GREEN_MASK) >> FreeImage.FI16_565_GREEN_SHIFT) * 255 / 63);
+			}
+			set
+			{
+				this.value = (ushort)((this.value & (~FreeImage.FI16_565_GREEN_MASK)) | (((value * 63) / 255) << FreeImage.FI16_565_GREEN_SHIFT));
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the blue color component.
+		/// </summary>
+		public byte Blue
+		{
+			get
+			{
+				return (byte)(((value & FreeImage.FI16_565_BLUE_MASK) >> FreeImage.FI16_565_BLUE_SHIFT) * 255 / 31);
+			}
+			set
+			{
+				this.value = (ushort)((this.value & (~FreeImage.FI16_565_BLUE_MASK)) | (((value * 31) / 255) << FreeImage.FI16_565_BLUE_SHIFT));
+			}
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FI16RGB565"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FI16RGB565))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FI16RGB565)obj);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="FI16RGB565"/> object.
+		/// </summary>
+		/// <param name="other">A <see cref="FI16RGB565"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(FI16RGB565 other)
+		{
+			return this.Color.ToArgb().CompareTo(other.Color.ToArgb());
+		}
+
+		/// <summary>
+		/// Tests whether the specified object is a <see cref="FI16RGB565"/> structure
+		/// and is equivalent to this <see cref="FI16RGB565"/> structure.
+		/// </summary>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FI16RGB565"/> structure
+		/// equivalent to this <see cref="FI16RGB565"/> structure; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return base.Equals(obj);
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="FI16RGB565"/> structure is equivalent to this <see cref="FI16RGB565"/> structure.
+		/// </summary>
+		/// <param name="other">A <see cref="FI16RGB565"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FI16RGB565"/> structure
+		/// equivalent to this <see cref="FI16RGB565"/> structure; otherwise, <b>false</b>.</returns>
+		public bool Equals(FI16RGB565 other)
+		{
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="FI16RGB565"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FI16RGB565"/>.</returns>
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+
+		/// <summary>
+		/// Converts the numeric value of the <see cref="FI16RGB565"/> object
+		/// to its equivalent string representation.
+		/// </summary>
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
+		{
+			return FreeImage.ColorToString(Color);
+		}
+	}
+
+	/// <summary>
+	/// The <b>FIRational</b> structure represents a fraction via two <see cref="Int32"/>
+	/// instances which are interpreted as numerator and denominator.
+	/// </summary>
+	/// <remarks>
+	/// The structure tries to approximate the value of <see cref="FreeImageAPI.FIRational(decimal)"/>
+	/// when creating a new instance by using a better algorithm than FreeImage does.
+	/// <para/>
+	/// The structure implements the following operators:
+	/// +, -, ++, --, ==, != , >, >==, &lt;, &lt;== and ~ (which switches nominator and denomiator).
+	/// <para/>
 	/// The structure can be converted into all .NET standard types either implicit or
 	/// explicit.
-	/// </summary>
+	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential), ComVisible(true)]
 	public struct FIRational : IConvertible, IComparable, IFormattable, IComparable<FIRational>, IEquatable<FIRational>
 	{
 		private int numerator;
 		private int denominator;
 
-		public const int MaxValue = Int32.MaxValue;
-		public const int MinValue = Int32.MinValue;
-		public const double Epsilon = 1d / (double)Int32.MaxValue;
+		/// <summary>
+		/// Represents the largest possible value of <see cref="FIRational"/>. This field is constant.
+		/// </summary>
+		public static readonly FIRational MaxValue = new FIRational(Int32.MaxValue, 1);
 
 		/// <summary>
-		/// Creates a new FIRational structure.
+		/// Represents the smallest possible value of <see cref="FIRational"/>. This field is constant.
+		/// </summary>
+		public static readonly FIRational MinValue = new FIRational(Int32.MinValue, 1);
+
+		/// <summary>
+		/// Represents the smallest positive <see cref="FIRational"/> value greater than zero. This field is constant.
+		/// </summary>
+		public static readonly FIRational Epsilon = new FIRational(1, Int32.MaxValue);
+
+		/// <summary>
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="n">The numerator.</param>
 		/// <param name="d">The denominator.</param>
@@ -9233,38 +7240,30 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure.
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="tag">The tag to read the data from.</param>
 		public unsafe FIRational(FITAG tag)
 		{
 			switch (FreeImage.GetTagType(tag))
 			{
-				case FREE_IMAGE_MDTYPE.FIDT_RATIONAL:
-					uint* pvalue = (uint*)FreeImage.GetTagValue(tag);
-					numerator = (int)pvalue[0];
-					denominator = (int)pvalue[1];
-					Normalize();
-					return;
 				case FREE_IMAGE_MDTYPE.FIDT_SRATIONAL:
 					int* value = (int*)FreeImage.GetTagValue(tag);
 					numerator = (int)value[0];
 					denominator = (int)value[1];
 					Normalize();
 					return;
+				default:
+					throw new ArgumentException("tag");
 			}
-			numerator = 0;
-			denominator = 0;
-			Normalize();
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure by converting the value into
-		/// a fraction. The fraction might slightly differ from value.
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="value">The value to convert into a fraction.</param>
 		/// <exception cref="OverflowException">
-		/// Thrown if <paramref name="value"/> cannot be converted into a fraction
+		/// <paramref name="value"/> cannot be converted into a fraction
 		/// represented by two integer values.</exception>
 		public FIRational(decimal value)
 		{
@@ -9290,7 +7289,9 @@ namespace FreeImageAPI
 					ApproximateFraction(value, maxDen, out numerator, out denominator);
 					Normalize();
 					if (Math.Abs(((decimal)numerator / (decimal)denominator) - value) > 0.0001m)
+					{
 						throw new OverflowException();
+					}
 				}
 				numerator *= sign;
 				Normalize();
@@ -9302,7 +7303,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure by cloning.
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="r">The structure to clone from.</param>
 		public FIRational(FIRational r)
@@ -9463,10 +7464,15 @@ namespace FreeImageAPI
 
 			while (value != 0m)
 			{
-				if (++b == byte.MaxValue || value < epsilon) break;
+				if (++b == byte.MaxValue || value < epsilon)
+				{
+					break;
+				}
 				value = 1m / value;
 				if (Math.Abs((Math.Round(value, precision - 1) - value)) < epsilon)
+				{
 					value = Math.Round(value, precision - 1);
+				}
 				list.Add((int)value);
 				value -= ((int)value);
 			}
@@ -9491,7 +7497,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Tries 'brute force' to approximate 'value' with a fraction.
+		/// Tries 'brute force' to approximate <paramref name="value"/> with a fraction.
 		/// </summary>
 		private static void ApproximateFraction(decimal value, int maxDen, out int num, out int den)
 		{
@@ -9505,7 +7511,9 @@ namespace FreeImageAPI
 			{
 				int mul = 1;
 				for (int i = 1; i <= digits; i++)
+				{
 					mul *= 10;
+				}
 				if (mul <= maxDen)
 				{
 					num = (int)(value * mul);
@@ -9528,48 +7536,58 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FIRational"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
 			return ((IConvertible)this).ToDouble(null).ToString();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Tests whether the specified object is a <see cref="FIRational"/> structure
+		/// and is equivalent to this <see cref="FIRational"/> structure.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRational"/> structure
+		/// equivalent to this <see cref="FIRational"/> structure; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FIRational)
-				return Equals((FIRational)obj);
-			throw new ArgumentException("obj is no FIRational");
+			return ((obj is FIRational) && (this == ((FIRational)obj)));
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FIRational"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIRational"/>.</returns>
 		public override int GetHashCode()
 		{
-			return ToString().GetHashCode();
+			return base.GetHashCode();
 		}
 
 		#region Operators
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator +(FIRational r1)
 		{
 			return r1;
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator -(FIRational r1)
 		{
 			r1.numerator *= -1;
 			return r1;
 		}
 
+		/// <summary>
+		/// Returns the reciprocal value of this instance.
+		/// </summary>
 		public static FIRational operator ~(FIRational r1)
 		{
 			int temp = r1.denominator;
@@ -9579,6 +7597,9 @@ namespace FreeImageAPI
 			return r1;
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator ++(FIRational r1)
 		{
 			checked
@@ -9588,6 +7609,9 @@ namespace FreeImageAPI
 			return r1;
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator --(FIRational r1)
 		{
 			checked
@@ -9597,6 +7621,9 @@ namespace FreeImageAPI
 			return r1;
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator +(FIRational r1, FIRational r2)
 		{
 			long numerator = 0;
@@ -9609,11 +7636,17 @@ namespace FreeImageAPI
 			}
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator -(FIRational r1, FIRational r2)
 		{
 			return r1 + (-r2);
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator *(FIRational r1, FIRational r2)
 		{
 			long numerator = r1.numerator * r2.numerator;
@@ -9625,6 +7658,9 @@ namespace FreeImageAPI
 			}
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator /(FIRational r1, FIRational r2)
 		{
 			int temp = r2.denominator;
@@ -9633,6 +7669,9 @@ namespace FreeImageAPI
 			return r1 * r2;
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator %(FIRational r1, FIRational r2)
 		{
 			r2.Normalize();
@@ -9642,6 +7681,9 @@ namespace FreeImageAPI
 			return r1 - (r2 * div);
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator ==(FIRational r1, FIRational r2)
 		{
 			r1.Normalize();
@@ -9649,29 +7691,44 @@ namespace FreeImageAPI
 			return (r1.numerator == r2.numerator) && (r1.denominator == r2.denominator);
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator !=(FIRational r1, FIRational r2)
 		{
 			return !(r1 == r2);
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator >(FIRational r1, FIRational r2)
 		{
 			long denominator = Scm(r1.denominator, r2.denominator);
 			return (r1.numerator * (denominator / r1.denominator)) > (r2.numerator * (denominator / r2.denominator));
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator <(FIRational r1, FIRational r2)
 		{
 			long denominator = Scm(r1.denominator, r2.denominator);
 			return (r1.numerator * (denominator / r1.denominator)) < (r2.numerator * (denominator / r2.denominator));
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator >=(FIRational r1, FIRational r2)
 		{
 			long denominator = Scm(r1.denominator, r2.denominator);
 			return (r1.numerator * (denominator / r1.denominator)) >= (r2.numerator * (denominator / r2.denominator));
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator <=(FIRational r1, FIRational r2)
 		{
 			long denominator = Scm(r1.denominator, r2.denominator);
@@ -9682,133 +7739,263 @@ namespace FreeImageAPI
 
 		#region Conversions
 
-		public static explicit operator bool(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Boolean"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Boolean"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator bool(FIRational value)
 		{
-			return (r.numerator > 0);
+			return (value.numerator != 0);
 		}
 
-		public static explicit operator byte(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Byte"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Byte"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator byte(FIRational value)
 		{
-			return (byte)(double)r;
+			return (byte)(double)value;
 		}
 
-		public static explicit operator char(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Char"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Char"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator char(FIRational value)
 		{
-			return (char)(double)r;
+			return (char)(double)value;
 		}
 
-		public static implicit operator decimal(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Decimal"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Decimal"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator decimal(FIRational value)
 		{
-			return r.denominator == 0 ? 0m : (decimal)r.numerator / (decimal)r.denominator;
+			return value.denominator == 0 ? 0m : (decimal)value.numerator / (decimal)value.denominator;
 		}
 
-		public static implicit operator double(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Double"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Double"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator double(FIRational value)
 		{
-			return r.denominator == 0 ? 0d : (double)r.numerator / (double)r.denominator;
+			return value.denominator == 0 ? 0d : (double)value.numerator / (double)value.denominator;
 		}
 
-		public static explicit operator short(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="Int16"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int16"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator short(FIRational value)
 		{
-			return (short)(double)r;
+			return (short)(double)value;
 		}
 
-		public static explicit operator int(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="Int32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int32"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator int(FIRational value)
 		{
-			return (int)(double)r;
+			return (int)(double)value;
 		}
 
-		public static explicit operator long(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="Int64"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int64"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator long(FIRational value)
 		{
-			return (byte)(double)r;
+			return (byte)(double)value;
 		}
 
-		public static implicit operator float(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Single"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Single"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator float(FIRational value)
 		{
-			return r.denominator == 0 ? 0f : (float)r.numerator / (float)r.denominator;
+			return value.denominator == 0 ? 0f : (float)value.numerator / (float)value.denominator;
 		}
 
-		public static explicit operator sbyte(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="SByte"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="SByte"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator sbyte(FIRational value)
 		{
-			return (sbyte)(double)r;
+			return (sbyte)(double)value;
 		}
 
-		public static explicit operator ushort(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="UInt16"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt16"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator ushort(FIRational value)
 		{
-			return (ushort)(double)r;
+			return (ushort)(double)value;
 		}
 
-		public static explicit operator uint(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="UInt32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt32"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator uint(FIRational value)
 		{
-			return (uint)(double)r;
+			return (uint)(double)value;
 		}
 
-		public static explicit operator ulong(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="UInt64"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt64"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator ulong(FIRational value)
 		{
-			return (ulong)(double)r;
+			return (ulong)(double)value;
 		}
 
 		//
 
+		/// <summary>
+		/// Converts the value of a <see cref="Boolean"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Boolean"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(bool value)
 		{
 			return new FIRational(value ? 1 : 0, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Byte"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Byte"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(byte value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Char"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Char"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(char value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Decimal"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Decimal"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(decimal value)
 		{
 			return new FIRational(value);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Double"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Double"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(double value)
 		{
 			return new FIRational((decimal)value);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int16"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int16"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(short value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int32"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int32"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(int value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int64"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int64"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(long value)
 		{
 			return new FIRational((int)value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="SByte"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="SByte"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(sbyte value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Single"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Single"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(float value)
 		{
 			return new FIRational((decimal)value);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt16"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt16"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(ushort value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt32"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt32"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(uint value)
 		{
 			return new FIRational((int)value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt64"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt64"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(ulong value)
 		{
 			return new FIRational((int)value, 1);
@@ -9908,17 +8095,22 @@ namespace FreeImageAPI
 		#region IComparable Member
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIRational"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is FIRational)
-				return CompareTo((FIRational)obj);
-			else if (obj is IConvertible)
-				return CompareTo(new FIRational(((IConvertible)obj).ToDecimal(null)));
-			throw new ArgumentException("obj is not convertable to double");
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FIRational))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIRational)obj);
 		}
 
 		#endregion
@@ -9933,7 +8125,10 @@ namespace FreeImageAPI
 		/// <returns>A String containing the value of the current instance in the specified format.</returns>
 		public string ToString(string format, IFormatProvider formatProvider)
 		{
-			if (format == null) format = "";
+			if (format == null)
+			{
+				format = "";
+			}
 			return String.Format(formatProvider, format, ((IConvertible)this).ToDouble(formatProvider));
 		}
 
@@ -9942,13 +8137,14 @@ namespace FreeImageAPI
 		#region IEquatable<FIRational> Member
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified <see cref="FIRational"/> structure is equivalent to this <see cref="FIRational"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <param name="other">A <see cref="FIRational"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRational"/> structure
+		/// equivalent to this <see cref="FIRational"/> structure; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIRational other)
 		{
-			return ((FIRational)other).numerator == numerator && ((FIRational)other).denominator == denominator;
+			return (this == other);
 		}
 
 		#endregion
@@ -9956,10 +8152,11 @@ namespace FreeImageAPI
 		#region IComparable<FIRational> Member
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="FIRational"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="FIRational"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(FIRational other)
 		{
 			FIRational difference = this - other;
@@ -9973,25 +8170,42 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
-	/// The structure represents a fraction by saving two unsigned integeres which are interpreted
-	/// as numerator and denominator. The structure implements all common operations
-	/// like +, -, ++, --, ==, != , >, >==, &lt;, &lt;== and ~ (which switches nominator and
-	/// denomiator). No other bit-operations are implemented.
+	/// The <b>FIURational</b> structure represents a fraction via two <see cref="UInt32"/>
+	/// instances which are interpreted as numerator and denominator.
+	/// </summary>
+	/// <remarks>
+	/// The structure tries to approximate the value of <see cref="FreeImageAPI.FIURational(decimal)"/>
+	/// when creating a new instance by using a better algorithm than FreeImage does.
+	/// <para/>
+	/// The structure implements the following operators:
+	/// +, ++, --, ==, != , >, >==, &lt;, &lt;== and ~ (which switches nominator and denomiator).
+	/// <para/>
 	/// The structure can be converted into all .NET standard types either implicit or
 	/// explicit.
-	/// </summary>
+	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential), ComVisible(true)]
 	public struct FIURational : IConvertible, IComparable, IFormattable, IComparable<FIURational>, IEquatable<FIURational>
 	{
 		private uint numerator;
 		private uint denominator;
 
-		public const uint MaxValue = UInt32.MaxValue;
-		public const uint MinValue = UInt32.MinValue;
-		public const double Epsilon = 1d / (double)UInt32.MaxValue;
+		/// <summary>
+		/// Represents the largest possible value of <see cref="FIURational"/>. This field is constant.
+		/// </summary>
+		public static readonly FIURational MaxValue = new FIURational(UInt32.MaxValue, 1u);
 
 		/// <summary>
-		/// Creates a new FIRational structure.
+		/// Represents the smallest possible value of <see cref="FIURational"/>. This field is constant.
+		/// </summary>
+		public static readonly FIURational MinValue = new FIURational(0u, 1u);
+
+		/// <summary>
+		/// Represents the smallest positive <see cref="FIURational"/> value greater than zero. This field is constant.
+		/// </summary>
+		public static readonly FIURational Epsilon = new FIURational(1, Int32.MaxValue);
+
+		/// <summary>
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="n">The numerator.</param>
 		/// <param name="d">The denominator.</param>
@@ -10003,7 +8217,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure.
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="tag">The tag to read the data from.</param>
 		public unsafe FIURational(FITAG tag)
@@ -10016,21 +8230,17 @@ namespace FreeImageAPI
 					denominator = pvalue[1];
 					Normalize();
 					return;
-				case FREE_IMAGE_MDTYPE.FIDT_SRATIONAL:
+				default:
 					throw new ArgumentException("tag");
 			}
-			numerator = 0;
-			denominator = 0;
-			Normalize();
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure by converting the value into
-		/// a fraction. The fraction might slightly differ from value.
+		///Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="value">The value to convert into a fraction.</param>
 		/// <exception cref="OverflowException">
-		/// Thrown if <paramref name="value"/> cannot be converted into a fraction
+		/// <paramref name="value"/> cannot be converted into a fraction
 		/// represented by two integer values.</exception>
 		public FIURational(decimal value)
 		{
@@ -10055,7 +8265,9 @@ namespace FreeImageAPI
 					ApproximateFraction(value, maxDen, out numerator, out denominator);
 					Normalize();
 					if (Math.Abs(((decimal)numerator / (decimal)denominator) - value) > 0.0001m)
+					{
 						throw new OverflowException();
+					}
 				}
 				Normalize();
 			}
@@ -10066,7 +8278,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure by cloning.
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="r">The structure to clone from.</param>
 		public FIURational(FIURational r)
@@ -10214,10 +8426,15 @@ namespace FreeImageAPI
 
 			while (value != 0m)
 			{
-				if (++b == byte.MaxValue || value < epsilon) break;
+				if (++b == byte.MaxValue || value < epsilon)
+				{
+					break;
+				}
 				value = 1m / value;
 				if (Math.Abs((Math.Round(value, precision - 1) - value)) < epsilon)
+				{
 					value = Math.Round(value, precision - 1);
+				}
 				list.Add((int)value);
 				value -= ((int)value);
 			}
@@ -10242,7 +8459,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Tries 'brute force' to approximate 'value' with a fraction.
+		/// Tries 'brute force' to approximate <paramref name="value"/> with a fraction.
 		/// </summary>
 		private static void ApproximateFraction(decimal value, int maxDen, out uint num, out uint den)
 		{
@@ -10256,7 +8473,9 @@ namespace FreeImageAPI
 			{
 				uint mul = 1;
 				for (int i = 1; i <= digits; i++)
+				{
 					mul *= 10;
+				}
 				if (mul <= maxDen)
 				{
 					num = (uint)(value * mul);
@@ -10279,74 +8498,91 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FIURational"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
 			return ((IConvertible)this).ToDouble(null).ToString();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Tests whether the specified object is a <see cref="FIURational"/> structure
+		/// and is equivalent to this <see cref="FIURational"/> structure.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIURational"/> structure
+		/// equivalent to this <see cref="FIURational"/> structure; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FIURational)
-				return Equals((FIURational)obj);
-			throw new ArgumentException("obj is no FIRational");
+			return ((obj is FIURational) && (this == ((FIURational)obj)));
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FIURational"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIURational"/>.</returns>
 		public override int GetHashCode()
 		{
-			return ToString().GetHashCode();
+			return base.GetHashCode();
 		}
 
 		#region Operators
 
-		public static FIURational operator +(FIURational r1)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator +(FIURational value)
 		{
-			return r1;
+			return value;
 		}
 
-		public static FIURational operator ~(FIURational r1)
+		/// <summary>
+		/// Returns the reciprocal value of this instance.
+		/// </summary>
+		public static FIURational operator ~(FIURational value)
 		{
-			uint temp = r1.denominator;
-			r1.denominator = r1.numerator;
-			r1.numerator = temp;
-			r1.Normalize();
-			return r1;
+			uint temp = value.denominator;
+			value.denominator = value.numerator;
+			value.numerator = temp;
+			value.Normalize();
+			return value;
 		}
 
-		public static FIURational operator ++(FIURational r1)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator ++(FIURational value)
 		{
 			checked
 			{
-				r1.numerator += r1.denominator;
+				value.numerator += value.denominator;
 			}
-			return r1;
+			return value;
 		}
 
-		public static FIURational operator --(FIURational r1)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator --(FIURational value)
 		{
 			checked
 			{
-				r1.numerator -= r1.denominator;
+				value.numerator -= value.denominator;
 			}
-			return r1;
+			return value;
 		}
 
-		public static FIURational operator +(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator +(FIURational left, FIURational right)
 		{
 			ulong numerator = 0;
-			ulong denominator = Scm(r1.denominator, r2.denominator);
-			numerator = (r1.numerator * (denominator / r1.denominator)) + (r2.numerator * (denominator / r2.denominator));
+			ulong denominator = Scm(left.denominator, right.denominator);
+			numerator = (left.numerator * (denominator / left.denominator)) +
+						(right.numerator * (denominator / right.denominator));
 			Normalize(ref numerator, ref denominator);
 			checked
 			{
@@ -10354,28 +8590,34 @@ namespace FreeImageAPI
 			}
 		}
 
-		public static FIURational operator -(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator -(FIURational left, FIURational right)
 		{
 			checked
 			{
-				if (r1.denominator != r2.denominator)
+				if (left.denominator != right.denominator)
 				{
-					uint denom = r1.denominator;
-					r1.numerator *= r2.denominator;
-					r1.denominator *= r2.denominator;
-					r2.numerator *= denom;
-					r2.denominator *= denom;
+					uint denom = left.denominator;
+					left.numerator *= right.denominator;
+					left.denominator *= right.denominator;
+					right.numerator *= denom;
+					right.denominator *= denom;
 				}
-				r1.numerator -= r2.numerator;
-				r1.Normalize();
-				return r1;
+				left.numerator -= right.numerator;
+				left.Normalize();
+				return left;
 			}
 		}
 
-		public static FIURational operator *(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator *(FIURational left, FIURational r2)
 		{
-			ulong numerator = r1.numerator * r2.numerator;
-			ulong denominator = r1.denominator * r2.denominator;
+			ulong numerator = left.numerator * r2.numerator;
+			ulong denominator = left.denominator * r2.denominator;
 			Normalize(ref numerator, ref denominator);
 			checked
 			{
@@ -10383,190 +8625,350 @@ namespace FreeImageAPI
 			}
 		}
 
-		public static FIURational operator /(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator /(FIURational left, FIURational right)
 		{
-			uint temp = r2.denominator;
-			r2.denominator = r2.numerator;
-			r2.numerator = temp;
-			return r1 * r2;
+			uint temp = right.denominator;
+			right.denominator = right.numerator;
+			right.numerator = temp;
+			return left * right;
 		}
 
-		public static FIURational operator %(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator %(FIURational left, FIURational right)
 		{
-			r2.Normalize();
-			if (Math.Abs(r2.numerator) < r2.denominator)
+			right.Normalize();
+			if (Math.Abs(right.numerator) < right.denominator)
 				return new FIURational(0, 0);
-			int div = (int)(r1 / r2);
-			return r1 - (r2 * div);
+			int div = (int)(left / right);
+			return left - (right * div);
 		}
 
-		public static bool operator ==(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator ==(FIURational left, FIURational right)
 		{
-			r1.Normalize();
-			r2.Normalize();
-			return (r1.numerator == r2.numerator) && (r1.denominator == r2.denominator);
+			left.Normalize();
+			right.Normalize();
+			return (left.numerator == right.numerator) && (left.denominator == right.denominator);
 		}
 
-		public static bool operator !=(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator !=(FIURational left, FIURational right)
 		{
-			return !(r1 == r2);
+			left.Normalize();
+			right.Normalize();
+			return (left.numerator != right.numerator) || (left.denominator != right.denominator);
 		}
 
-		public static bool operator >(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator >(FIURational left, FIURational right)
 		{
-			ulong denominator = Scm(r1.denominator, r2.denominator);
-			return (r1.numerator * (denominator / r1.denominator)) > (r2.numerator * (denominator / r2.denominator));
+			ulong denominator = Scm(left.denominator, right.denominator);
+			return (left.numerator * (denominator / left.denominator)) >
+				(right.numerator * (denominator / right.denominator));
 		}
 
-		public static bool operator <(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator <(FIURational left, FIURational right)
 		{
-			ulong denominator = Scm(r1.denominator, r2.denominator);
-			return (r1.numerator * (denominator / r1.denominator)) < (r2.numerator * (denominator / r2.denominator));
+			ulong denominator = Scm(left.denominator, right.denominator);
+			return (left.numerator * (denominator / left.denominator)) <
+				(right.numerator * (denominator / right.denominator));
 		}
 
-		public static bool operator >=(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator >=(FIURational left, FIURational right)
 		{
-			ulong denominator = Scm(r1.denominator, r2.denominator);
-			return (r1.numerator * (denominator / r1.denominator)) >= (r2.numerator * (denominator / r2.denominator));
+			ulong denominator = Scm(left.denominator, right.denominator);
+			return (left.numerator * (denominator / left.denominator)) >=
+				(right.numerator * (denominator / right.denominator));
 		}
 
-		public static bool operator <=(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator <=(FIURational left, FIURational right)
 		{
-			ulong denominator = Scm(r1.denominator, r2.denominator);
-			return (r1.numerator * (denominator / r1.denominator)) <= (r2.numerator * (denominator / r2.denominator));
+			ulong denominator = Scm(left.denominator, right.denominator);
+			return (left.numerator * (denominator / left.denominator)) <=
+				(right.numerator * (denominator / right.denominator));
 		}
 
 		#endregion
 
 		#region Conversions
 
-		public static explicit operator bool(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Boolean"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Boolean"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator bool(FIURational value)
 		{
-			return (r.numerator > 0);
+			return (value.numerator != 0);
 		}
 
-		public static explicit operator byte(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Byte"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Byte"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator byte(FIURational value)
 		{
-			return (byte)(double)r;
+			return (byte)(double)value;
 		}
 
-		public static explicit operator char(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Char"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Char"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator char(FIURational value)
 		{
-			return (char)(double)r;
+			return (char)(double)value;
 		}
 
-		public static implicit operator decimal(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Decimal"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Decimal"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator decimal(FIURational value)
 		{
-			return r.denominator == 0 ? 0m : (decimal)r.numerator / (decimal)r.denominator;
+			return value.denominator == 0 ? 0m : (decimal)value.numerator / (decimal)value.denominator;
 		}
 
-		public static implicit operator double(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Double"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Double"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator double(FIURational value)
 		{
-			return r.denominator == 0 ? 0d : (double)r.numerator / (double)r.denominator;
+			return value.denominator == 0 ? 0d : (double)value.numerator / (double)value.denominator;
 		}
 
-		public static explicit operator short(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="Int16"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int16"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator short(FIURational value)
 		{
-			return (short)(double)r;
+			return (short)(double)value;
 		}
 
-		public static explicit operator int(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="Int32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int32"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator int(FIURational value)
 		{
-			return (int)(double)r;
+			return (int)(double)value;
 		}
 
-		public static explicit operator long(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="Int64"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int64"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator long(FIURational value)
 		{
-			return (byte)(double)r;
+			return (byte)(double)value;
 		}
 
-		public static implicit operator float(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Single"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Single"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator float(FIURational value)
 		{
-			return r.denominator == 0 ? 0f : (float)r.numerator / (float)r.denominator;
+			return value.denominator == 0 ? 0f : (float)value.numerator / (float)value.denominator;
 		}
 
-		public static explicit operator sbyte(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="SByte"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="SByte"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator sbyte(FIURational value)
 		{
-			return (sbyte)(double)r;
+			return (sbyte)(double)value;
 		}
 
-		public static explicit operator ushort(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="UInt16"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt16"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator ushort(FIURational value)
 		{
-			return (ushort)(double)r;
+			return (ushort)(double)value;
 		}
 
-		public static explicit operator uint(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="UInt32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt32"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator uint(FIURational value)
 		{
-			return (uint)(double)r;
+			return (uint)(double)value;
 		}
 
-		public static explicit operator ulong(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="UInt32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt32"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator ulong(FIURational value)
 		{
-			return (ulong)(double)r;
+			return (ulong)(double)value;
 		}
 
 		//
 
+		/// <summary>
+		/// Converts the value of a <see cref="Boolean"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Boolean"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(bool value)
 		{
 			return new FIURational(value ? 1u : 0u, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Byte"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Byte"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(byte value)
 		{
 			return new FIURational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Char"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Char"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(char value)
 		{
 			return new FIURational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Decimal"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Decimal"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(decimal value)
 		{
 			return new FIURational(value);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Double"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Double"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(double value)
 		{
 			return new FIURational((decimal)value);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int16"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int16"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(short value)
 		{
 			return new FIURational((uint)value, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int32"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int32"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(int value)
 		{
 			return new FIURational((uint)value, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int64"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int64"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(long value)
 		{
 			return new FIURational((uint)value, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="SByte"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="SByte"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(sbyte value)
 		{
 			return new FIURational((uint)value, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Single"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Single"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(float value)
 		{
 			return new FIURational((decimal)value);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt16"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt16"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(ushort value)
 		{
 			return new FIURational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt32"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt32"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(uint value)
 		{
 			return new FIURational(value, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt64"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt64"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(ulong value)
 		{
 			return new FIURational((uint)value, 1u);
@@ -10666,17 +9068,22 @@ namespace FreeImageAPI
 		#region IComparable Member
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIURational"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is FIURational)
-				return CompareTo((FIURational)obj);
-			else if (obj is IConvertible)
-				return CompareTo(new FIURational(((IConvertible)obj).ToDecimal(null)));
-			throw new ArgumentException("obj is not convertable to double");
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FIURational))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIURational)obj);
 		}
 
 		#endregion
@@ -10691,33 +9098,38 @@ namespace FreeImageAPI
 		/// <returns>A String containing the value of the current instance in the specified format.</returns>
 		public string ToString(string format, IFormatProvider formatProvider)
 		{
-			if (format == null) format = "";
+			if (format == null)
+			{
+				format = "";
+			}
 			return String.Format(formatProvider, format, ((IConvertible)this).ToDouble(formatProvider));
 		}
 
 		#endregion
 
-		#region IEquatable<FIRational> Member
+		#region IEquatable<FIURational> Member
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified <see cref="FIURational"/> structure is equivalent to this <see cref="FIURational"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <param name="other">A <see cref="FIURational"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIURational"/> structure
+		/// equivalent to this <see cref="FIURational"/> structure; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIURational other)
 		{
-			return ((FIURational)other).numerator == numerator && ((FIURational)other).denominator == denominator;
+			return (this == other);
 		}
 
 		#endregion
 
-		#region IComparable<FIRational> Member
+		#region IComparable<FIURational> Member
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="FIURational"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="FIURational"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(FIURational other)
 		{
 			FIURational difference = this - other;
@@ -10730,191 +9142,6 @@ namespace FreeImageAPI
 		#endregion
 	}
 
-	// The 'fi_handle' of FreeImage in C++ is a simple pointer, but in .NET
-	// it's not that simple. This wrapper uses fi_handle in two different ways.
-	//
-	// We implement a new plugin and FreeImage gives us a handle (pointer) that
-	// we can simply pass through to the given functions in a 'FreeImageIO'
-	// structure.
-	// But when we want to use LoadFromhandle or SaveToHandle we need
-	// a fi_handle (that we recieve again in our own functions).
-	// This handle is for example a stream (see LoadFromStream / SaveToStream)
-	// that we want to work with. To know which stream a read/write is meant for
-	// we could use a hash value that the wrapper itself handles or we can
-	// go the unmanaged way of using a handle.
-	// Therefor we use a 'GCHandle' to recieve a unique pointer that we can
-	// convert back into a .NET object.
-	// When the fi_handle instance is no longer needed the instance must be disposed
-	// by the creater manually! It is recommended to use the "using" statement to
-	// be sure the instance is always disposed:
-	//
-	// using (fi_handle handle = new fi_handle(object))
-	// {
-	//     callSomeFunctions(handle);
-	// }
-	//
-	// What does that mean?
-	// If we get a fi_handle from unmanaged code we get a pointer to unmanaged
-	// memory that we do not have to care about, and just pass ist back to FreeImage.
-	// If we have to create a handle our own we use the standard constructur
-	// that fills the IntPtr with an pointer that represents the given object.
-	// With calling 'GetObject' the IntPtr is used to retrieve the original
-	// object we passed through the constructor.
-	//
-	// This way we can implement a fi_handle that works with managed an unmanaged
-	// code.
-
-	/// <summary>
-	/// Wrapper for a custom handle.
-	/// </summary>
-	[Serializable, StructLayout(LayoutKind.Sequential)]
-	public struct fi_handle : IComparable, IComparable<fi_handle>, IEquatable<fi_handle>, IDisposable
-	{
-		/// <summary>
-		/// The handle to wrap.
-		/// </summary>
-		public IntPtr handle;
-
-		/// <summary>
-		/// Creates a new fi_handle structure wrapping a managed object.
-		/// </summary>
-		/// <param name="obj">The object to wrap.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="obj"/> is null.</exception>
-		public fi_handle(object obj)
-		{
-			if (obj == null)
-			{
-				throw new ArgumentNullException("obj");
-			}
-			GCHandle gch = GCHandle.Alloc(obj, GCHandleType.Normal);
-			handle = GCHandle.ToIntPtr(gch);
-		}
-
-		public static bool operator !=(fi_handle value1, fi_handle value2)
-		{
-			return value1.handle != value2.handle;
-		}
-
-		public static bool operator ==(fi_handle value1, fi_handle value2)
-		{
-			return value1.handle == value2.handle;
-		}
-
-		/// <summary>
-		/// Gets whether the pointer is a null pointer.
-		/// </summary>
-		public bool IsNull { get { return handle == IntPtr.Zero; } }
-
-		/// <summary>
-		/// Returns the object assigned to the handle in case this instance
-		/// was created by managed code.
-		/// </summary>
-		/// <returns>Object assigned to this handle or null on failure.</returns>
-		internal object GetObject()
-		{
-			if (handle == IntPtr.Zero)
-			{
-				return null;
-			}
-			try
-			{
-				return GCHandle.FromIntPtr(handle).Target;
-			}
-			catch
-			{
-				return null;
-			}
-		}
-
-		/// <summary>
-		/// Returns a String that represents the current Object.
-		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
-		public override string ToString()
-		{
-			return String.Format("0x{0:X}", (uint)handle);
-		}
-
-		/// <summary>
-		/// Serves as a hash function for a particular type.
-		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
-		public override int GetHashCode()
-		{
-			return handle.GetHashCode();
-		}
-
-		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
-		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
-		public override bool Equals(object obj)
-		{
-			if (obj is fi_handle)
-			{
-				return (((fi_handle)obj).handle == handle);
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is fi_handle)
-			{
-				return CompareTo((fi_handle)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(fi_handle other)
-		{
-			return handle.ToInt64().CompareTo(other.handle.ToInt64());
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(fi_handle other)
-		{
-			return this == other;
-		}
-
-		/// <summary>
-		/// Frees the GCHandle.
-		/// </summary>
-		public void Dispose()
-		{
-			if (this.handle != IntPtr.Zero)
-			{
-				try
-				{
-					GCHandle.FromIntPtr(handle).Free();
-				}
-				catch
-				{
-				}
-				finally
-				{
-					this.handle = IntPtr.Zero;
-				}
-			}
-		}
-	}
-
 	#endregion
 
 	#region Classes
@@ -10925,25 +9152,41 @@ namespace FreeImageAPI
 	[Serializable, Guid("64a4c935-b757-499c-ab8c-6110316a9e51")]
 	public class FreeImageBitmap : ICloneable, IDisposable, IEnumerable, ISerializable
 	{
+		#region Fields
+
 		private bool disposed = false;
 		private object tag = null;
 		private object lockObject = new object();
 		private SaveInformation saveInformation = new SaveInformation();
+
+		/// <summary>
+		/// Format of the sourceimage.
+		/// </summary>
 		protected FREE_IMAGE_FORMAT originalFormat = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+
+		/// <summary>
+		/// Handle to the encapsulated FreeImage-bitmap.
+		/// </summary>
 		protected FIBITMAP dib = 0;
+
+		/// <summary>
+		/// Handle to the encapsulated FreeImage-multipagebitmap.
+		/// </summary>
 		protected FIMULTIBITMAP mdib = 0;
+
+		#endregion
 
 		#region Constructors and Destructor
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class.
 		/// </summary>
 		protected FreeImageBitmap()
 		{
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class.
 		/// For internal use only.
 		/// </summary>
 		/// <exception cref="Exception">The operation failed.</exception>
@@ -10957,14 +9200,14 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from a specified existing image.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified image.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		public FreeImageBitmap(FreeImageBitmap original)
 		{
-			original.ThrowOnDisposed();
+			original.EnsureNotDisposed();
 			dib = FreeImage.Clone(original.dib);
 			if (dib.IsNull)
 			{
@@ -10973,16 +9216,16 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from a specified existing image with the specified size.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified image with the specified size.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
 		/// <param name="newSize">The Size structure that represent the
-		/// size of the new FreeImageBitmap.</param>
+		/// size of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="newSize.Width"/> or <paramref name="newSize.Height"/> are less than or zero.
+		/// <paramref name="newSize.Width"/> or <paramref name="newSize.Height"/> are less or equal zero.
 		/// </exception>
 		public FreeImageBitmap(FreeImageBitmap original, Size newSize)
 			: this(original, newSize.Width, newSize.Height)
@@ -10990,16 +9233,16 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from a specified existing image with the specified size.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified image with the specified size.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
-		/// <param name="width">Width of the new FreeImageBitmap.</param>
-		/// <param name="height">Height of the new FreeImageBitmap.</param>
+		/// <param name="width">Width of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">Height of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="width"/> or <paramref name="height"/> are less than or zero.</exception>
+		/// <paramref name="width"/> or <paramref name="height"/> are less or equal zero.</exception>
 		public FreeImageBitmap(FreeImageBitmap original, int width, int height)
 		{
 			if (original == null)
@@ -11014,7 +9257,7 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentOutOfRangeException("height");
 			}
-			original.ThrowOnDisposed();
+			original.EnsureNotDisposed();
 			dib = FreeImage.Rescale(original.dib, width, height, FREE_IMAGE_FILTER.FILTER_BICUBIC);
 			if (dib.IsNull)
 			{
@@ -11023,8 +9266,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from a specified existing image.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified image.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
@@ -11034,16 +9277,16 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from a specified existing image with the specified size.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified image with the specified size.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
 		/// <param name="newSize">The Size structure that represent the
-		/// size of the new FreeImageBitmap.</param>
+		/// size of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="newSize.Width"/> or <paramref name="newSize.Height"/> are less than or zero.
+		/// <paramref name="newSize.Width"/> or <paramref name="newSize.Height"/> are less or equal zero.
 		/// </exception>
 		public FreeImageBitmap(Image original, Size newSize)
 			: this(original as Bitmap, newSize.Width, newSize.Height)
@@ -11051,24 +9294,24 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from a specified existing image with the specified size.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified image with the specified size.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
-		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
-		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="width"/> or <paramref name="height"/> are less than or zero.</exception>
+		/// <paramref name="width"/> or <paramref name="height"/> are less or equal zero.</exception>
 		public FreeImageBitmap(Image original, int width, int height)
 			: this(original as Bitmap, width, height)
 		{
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from a specified existing image.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified image.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
@@ -11086,16 +9329,16 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from a specified existing image with the specified size.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified image with the specified size.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
 		/// <param name="newSize">The Size structure that represent the
-		/// size of the new FreeImageBitmap.</param>
+		/// size of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="newSize.Width"/> or <paramref name="newSize.Height"/> are less than or zero.
+		/// <paramref name="newSize.Width"/> or <paramref name="newSize.Height"/> are less or equal zero.
 		/// </exception>
 		public FreeImageBitmap(Bitmap original, Size newSize)
 			: this(original, newSize.Width, newSize.Height)
@@ -11103,16 +9346,16 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from a specified existing image with the specified size.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified image with the specified size.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
-		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
-		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="width"/> or <paramref name="height"/> are less than or zero.</exception>
+		/// <paramref name="width"/> or <paramref name="height"/> are less or equal zero.</exception>
 		public FreeImageBitmap(Bitmap original, int width, int height)
 		{
 			if (original == null)
@@ -11144,8 +9387,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from the specified data stream.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified stream.
 		/// </summary>
 		/// <param name="stream">Stream to read from.</param>
 		/// <param name="useIcm">Ignored.</param>
@@ -11157,8 +9400,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from the specified data stream.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified stream.
 		/// </summary>
 		/// <param name="stream">Stream to read from.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
@@ -11169,8 +9412,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from the specified data stream in the specified format.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified stream in the specified format.
 		/// </summary>
 		/// <param name="stream">Stream to read from.</param>
 		/// <param name="format">Format of the image.</param>
@@ -11182,8 +9425,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from the specified data stream with the specified loading flags.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified stream with the specified loading flags.
 		/// </summary>
 		/// <param name="stream">Stream to read from.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
@@ -11195,8 +9438,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// from the specified data stream in the specified format
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified stream in the specified format
 		/// with the specified loading flags.
 		/// </summary>
 		/// <param name="stream">Stream to read from.</param>
@@ -11223,7 +9466,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class from the specified file.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified file.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
@@ -11235,7 +9478,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class from the specified file.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified file.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
 		/// <param name="useIcm">Ignored.</param>
@@ -11248,7 +9491,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class from the specified file
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified file
 		/// with the specified loading flags.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
@@ -11262,7 +9505,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class from the specified file
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified file
 		/// in the specified format.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
@@ -11276,7 +9519,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class from the specified file
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified file
 		/// in the specified format with the specified loading flags.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
@@ -11338,11 +9581,11 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class
-		/// with the specified size.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class
+		/// bases on the specified size.
 		/// </summary>
-		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
-		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		public FreeImageBitmap(int width, int height)
 		{
@@ -11360,7 +9603,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class from a specified resource.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified resource.
 		/// </summary>
 		/// <param name="type">The class used to extract the resource.</param>
 		/// <param name="resource">The name of the resource.</param>
@@ -11371,12 +9614,12 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class with the specified size
-		/// and with the resolution of the specified Graphics object.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified size
+		/// and with the resolution of the specified <see cref="System.Drawing.Graphics"/> object.
 		/// </summary>
-		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
-		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
-		/// <param name="g">The Graphics object that specifies the resolution for the new FreeImageBitmap.</param>
+		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="g">The Graphics object that specifies the resolution for the new <see cref="FreeImageBitmap"/>.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="g"/> is null.</exception>
 		public FreeImageBitmap(int width, int height, Graphics g)
@@ -11387,15 +9630,25 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class with the specified size and format.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified size and format.
 		/// </summary>
-		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
-		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
-		/// <param name="format">The PixelFormat enumeration for the new FreeImageBitmap.</param>
+		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="format">The PixelFormat enumeration for the new <see cref="FreeImageBitmap"/>.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentException"><paramref name="format"/> is invalid.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="width"/> or <paramref name="height"/> are less or equal zero.</exception>
 		public FreeImageBitmap(int width, int height, PixelFormat format)
 		{
+			if (width <= 0)
+			{
+				throw new ArgumentOutOfRangeException("width");
+			}
+			if (height <= 0)
+			{
+				throw new ArgumentOutOfRangeException("height");
+			}
 			uint bpp, redMask, greenMask, blueMask;
 			if (!FreeImage.GetFormatParameters(format, out bpp, out redMask, out greenMask, out blueMask))
 			{
@@ -11409,22 +9662,66 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class with the specified size,
-		/// pixel format, and pixel data.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified size and type.
+		/// Only non standard bitmaps are supported.
 		/// </summary>
-		/// <param name="width">The width, in pixels, of the new FreeImageBitmap.</param>
-		/// <param name="height">The height, in pixels, of the new FreeImageBitmap.</param>
+		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="type">The type of the bitmap.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="type"/> is FIT_BITMAP or FIT_UNKNOWN.</exception>
+		/// <exception cref="ArgumentException"><paramref name="type"/> is invalid.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="width"/> or <paramref name="height"/> are less or equal zero.</exception>
+		public FreeImageBitmap(int width, int height, FREE_IMAGE_TYPE type)
+		{
+			if (width <= 0)
+			{
+				throw new ArgumentOutOfRangeException("width");
+			}
+			if (height <= 0)
+			{
+				throw new ArgumentOutOfRangeException("height");
+			}
+			if ((type == FREE_IMAGE_TYPE.FIT_BITMAP) || (type == FREE_IMAGE_TYPE.FIT_UNKNOWN))
+			{
+				throw new ArgumentException("type is invalid.");
+			}
+			dib = FreeImage.AllocateT(type, width, height, 0, 0u, 0u, 0u);
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified size,
+		/// pixel format and pixel data.
+		/// </summary>
+		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="stride">nteger that specifies the byte offset between the beginning
 		/// of one scan line and the next. This is usually (but not necessarily)
 		/// the number of bytes in the pixel format (for example, 2 for 16 bits per pixel)
 		/// multiplied by the width of the bitmap. The value passed to this parameter must
 		/// be a multiple of four..</param>
-		/// <param name="format">The PixelFormat enumeration for the new FreeImageBitmap.</param>
+		/// <param name="format">The PixelFormat enumeration for the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="scan0">Pointer to an array of bytes that contains the pixel data.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentException"><paramref name="format"/> is invalid.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="width"/> or <paramref name="height"/> are less or equal zero.</exception>
 		public FreeImageBitmap(int width, int height, int stride, PixelFormat format, IntPtr scan0)
 		{
+			if (width <= 0)
+			{
+				throw new ArgumentOutOfRangeException("width");
+			}
+			if (height <= 0)
+			{
+				throw new ArgumentOutOfRangeException("height");
+			}
 			uint bpp, redMask, greenMask, blueMask;
 			bool topDown = (stride > 0);
 			stride = (stride > 0) ? stride : (stride * -1);
@@ -11443,7 +9740,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the FreeImageBitmap class.
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class.
 		/// </summary>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="SerializationException">The operation failed.</exception>
@@ -11470,7 +9767,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Destructor
+		/// Frees all managed and unmanaged ressources.
 		/// </summary>
 		~FreeImageBitmap()
 		{
@@ -11482,23 +9779,33 @@ namespace FreeImageAPI
 		#region Operators
 
 		/// <summary>
-		/// The implicit conversion from FreeImageBitmap into Bitmap
+		/// Converts a <see cref="FreeImageBitmap"/> instance to a <see cref="Bitmap"/> instance.
+		/// </summary>
+		/// <param name="value">A <see cref="FreeImageBitmap"/> instance.</param>
+		/// <returns>A new instance of <see cref="Bitmap"/> initialized to <paramref name="value"/>.</returns>
+		/// <remarks>
+		/// The implicit conversion from <see cref="FreeImageBitmap"/> into Bitmap
 		/// allows to create an instance on the fly and use it as if
 		/// was a Bitmap. This way it can be directly used with a
 		/// PixtureBox for example without having to call any
 		/// conversion operations.
-		/// </summary>
+		/// </remarks>
 		public static implicit operator Bitmap(FreeImageBitmap value)
 		{
-			value.ThrowOnDisposed();
+			value.EnsureNotDisposed();
 			return FreeImage.GetBitmap(value.dib, true);
 		}
 
 		/// <summary>
-		/// The implicit conversion from Bitmap into FreeImageBitmap
+		/// Converts a <see cref="Bitmap"/> instance to a <see cref="FreeImageBitmap"/> instance.
+		/// </summary>
+		/// <param name="value">A <see cref="Bitmap"/> instance.</param>
+		/// <returns>A new instance of <see cref="FreeImageBitmap"/> initialized to <paramref name="value"/>.</returns>
+		/// <remarks>
+		/// The implicit conversion from <see cref="Bitmap"/> into <see cref="FreeImageBitmap"/>
 		/// allows to create an instance on the fly to perform
 		/// image processing operations and converting it back.
-		/// </summary>
+		/// </remarks>
 		public static implicit operator FreeImageBitmap(Bitmap value)
 		{
 			FreeImageBitmap result = null;
@@ -11511,37 +9818,43 @@ namespace FreeImageAPI
 			return result;
 		}
 
-		public static bool operator ==(FreeImageBitmap fib1, FreeImageBitmap fib2)
+		/// <summary>
+		/// Determines whether two specified <see cref="FreeImageBitmap"/> objects have the same value.
+		/// </summary>
+		/// <param name="left">A <see cref="FreeImageBitmap"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <param name="right">A <see cref="FreeImageBitmap"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <returns>
+		/// <b>true</b> if the value of left is the same as the value of right; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FreeImageBitmap left, FreeImageBitmap right)
 		{
-			bool result = false;
-			if (object.ReferenceEquals(fib1, fib2))
+			if (object.ReferenceEquals(left, right))
 			{
-				if (!object.ReferenceEquals(fib1, null))
-				{
-					fib1.ThrowOnDisposed();
-				}
-				result = true;
+				return true;
 			}
-			else if (object.ReferenceEquals(fib1, null))
+			else if (object.ReferenceEquals(left, null) || object.ReferenceEquals(right, null))
 			{
-				fib2.ThrowOnDisposed();
-			}
-			else if (object.ReferenceEquals(fib2, null))
-			{
-				fib1.ThrowOnDisposed();
+				return false;
 			}
 			else
 			{
-				fib1.ThrowOnDisposed();
-				fib2.ThrowOnDisposed();
-				result = FreeImage.Compare(fib1.dib, fib2.dib, FREE_IMAGE_COMPARE_FLAGS.COMPLETE);
+				left.EnsureNotDisposed();
+				right.EnsureNotDisposed();
+				return FreeImage.Compare(left.dib, right.dib, FREE_IMAGE_COMPARE_FLAGS.COMPLETE);
 			}
-			return result;
 		}
 
-		public static bool operator !=(FreeImageBitmap fib1, FreeImageBitmap fib2)
+		/// <summary>
+		/// Determines whether two specified <see cref="FreeImageBitmap"/> objects have different values.
+		/// </summary>
+		/// <param name="left">A <see cref="FreeImageBitmap"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <param name="right">A <see cref="FreeImageBitmap"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <returns>
+		/// true if the value of left is different from the value of right; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FreeImageBitmap left, FreeImageBitmap right)
 		{
-			return !(fib1 == fib2);
+			return !(left == right);
 		}
 
 		#endregion
@@ -11555,7 +9868,7 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetImageType(dib);
 			}
 		}
@@ -11567,7 +9880,7 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (int)FreeImage.GetColorsUsed(dib);
 			}
 		}
@@ -11581,7 +9894,7 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetUniqueColors(dib);
 			}
 		}
@@ -11593,7 +9906,7 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (int)FreeImage.GetBPP(dib);
 			}
 		}
@@ -11605,7 +9918,7 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (int)FreeImage.GetWidth(dib);
 			}
 		}
@@ -11617,7 +9930,7 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (int)FreeImage.GetHeight(dib);
 			}
 		}
@@ -11629,7 +9942,7 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (int)FreeImage.GetPitch(dib);
 			}
 		}
@@ -11641,195 +9954,217 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (int)FreeImage.GetDIBSize(dib);
 			}
 		}
 
 		/// <summary>
-		/// Returns a structure that wraps the palette of a FreeImage bitmap.
+		/// Returns a structure that represents the palette of a FreeImage bitmap.
 		/// </summary>
-		/// <exception cref="Exception">'HasPalette' is false.</exception>
-		public RGBQUADARRAY Palette
+		/// <exception cref="Exception"><see cref="HasPalette"/> is false.</exception>
+		public Palette Palette
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				if (HasPalette)
 				{
-					return FreeImage.GetPaletteEx(dib);
+					return new Palette(dib);
 				}
 				throw new Exception();
 			}
 		}
 
 		/// <summary>
-		/// Gets the horizontal resolution, in pixels per inch, of this bitmap.
+		/// Gets whether the bitmap is RGB 555.
+		/// </summary>
+		public bool IsRGB555
+		{
+			get
+			{
+				return FreeImage.IsRGB555(dib);
+			}
+		}
+
+		/// <summary>
+		/// Gets whether the bitmap is RGB 565.
+		/// </summary>
+		public bool IsRGB565
+		{
+			get
+			{
+				return FreeImage.IsRGB565(dib);
+			}
+		}
+
+		/// <summary>
+		/// Gets the horizontal resolution, in pixels per inch, of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public float HorizontalResolution
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (float)FreeImage.GetResolutionX(dib);
 			}
 			private set
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				FreeImage.SetResolutionX(dib, (uint)value);
 			}
 		}
 
 		/// <summary>
-		/// Gets the vertical resolution, in pixels per inch, of this bitmap.
+		/// Gets the vertical resolution, in pixels per inch, of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public float VerticalResolution
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (float)FreeImage.GetResolutionY(dib);
 			}
 			private set
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				FreeImage.SetResolutionY(dib, (uint)value);
 			}
 		}
 
 		/// <summary>
-		/// Returns the BITMAPINFOHEADER structure of this bitmap.
+		/// Returns the <see cref="BITMAPINFOHEADER"/> structure of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public BITMAPINFOHEADER InfoHeader
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetInfoHeaderEx(dib);
 			}
 		}
 
 		/// <summary>
-		/// Returns the BITMAPINFO structure of a this bitmap.
+		/// Returns the <see cref="BITMAPINFO"/> structure of a this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public BITMAPINFO Info
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetInfoEx(dib);
 			}
 		}
 
 		/// <summary>
-		/// Investigates the color type of the bitmap
+		/// Investigates the color type of this <see cref="FreeImageBitmap"/>
 		/// by reading the bitmaps pixel bits and analysing them.
 		/// </summary>
 		public FREE_IMAGE_COLOR_TYPE ColorType
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetColorType(dib);
 			}
 		}
 
 		/// <summary>
-		/// Bit pattern describing the red color component of a pixel in this bitmap.
+		/// Bit pattern describing the red color component of a pixel in this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public uint RedMask
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetRedMask(dib);
 			}
 		}
 
 		/// <summary>
-		/// Bit pattern describing the green color component of a pixel in this bitmap.
+		/// Bit pattern describing the green color component of a pixel in this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public uint GreenMask
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetGreenMask(dib);
 			}
 		}
 
 		/// <summary>
-		/// Bit pattern describing the blue color component of a pixel in this bitmap.
+		/// Bit pattern describing the blue color component of a pixel in this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public uint BlueMask
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetBlueMask(dib);
 			}
 		}
 
 		/// <summary>
-		/// Number of transparent colors in a palletised bitmap.
+		/// Number of transparent colors in a palletised <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public int TransparencyCount
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (int)FreeImage.GetTransparencyCount(dib);
 			}
 		}
 
 		/// <summary>
-		/// Get or sets the bitmap's transparency table.
+		/// Get or sets transparency table of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public byte[] TransparencyTable
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetTransparencyTableEx(dib);
 			}
 			set
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				FreeImage.SetTransparencyTable(dib, value);
 			}
 		}
 
 		/// <summary>
-		/// Gets or sets whether this bitmap is transparent.
+		/// Gets or sets whether this <see cref="FreeImageBitmap"/> is transparent.
 		/// </summary>
 		public bool IsTransparent
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.IsTransparent(dib);
 			}
 			set
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				FreeImage.SetTransparent(dib, value);
 			}
 		}
 
 		/// <summary>
-		/// Gets whether this bitmap has a file background color.
+		/// Gets whether this <see cref="FreeImageBitmap"/> has a file background color.
 		/// </summary>
 		public bool HasBackgroundColor
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.HasBackgroundColor(dib);
 			}
 		}
 
 		/// <summary>
-		/// Gets or sets the bitmap's background color.
+		/// Gets or sets the background color of this <see cref="FreeImageBitmap"/>.
 		/// In case the value is null, the background color is removed.
 		/// </summary>
 		/// <exception cref="InvalidOperationException">Get: There is no background color available.</exception>
@@ -11838,18 +10173,18 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				if (!FreeImage.HasBackgroundColor(dib))
 				{
 					throw new InvalidOperationException("No background color available.");
 				}
 				RGBQUAD rgbq;
 				FreeImage.GetBackgroundColor(dib, out rgbq);
-				return rgbq.color;
+				return rgbq.Color;
 			}
 			set
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				if (!FreeImage.SetBackgroundColor(dib, (value.HasValue ? new RGBQUAD[] { value.Value } : null)))
 				{
 					throw new Exception("Setting background color failed.");
@@ -11858,44 +10193,44 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Pointer to the data-bits of the bitmap.
+		/// Pointer to the data-bits of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public IntPtr Bits
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetBits(dib);
 			}
 		}
 
 		/// <summary>
-		/// Width of the bitmap in bytes.
+		/// Width, in bytes, of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public int Line
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (int)FreeImage.GetLine(dib);
 			}
 		}
 
 		/// <summary>
-		/// Pointer to the scanline of the bitmap's top most pixel row.
+		/// Pointer to the scanline of the top most pixel row of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public IntPtr Scan0
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetScanLine(dib, (int)(FreeImage.GetHeight(dib) - 1));
 			}
 		}
 
 		/// <summary>
-		/// Width of the bitmap in bytes.
-		/// In case the bitmap is top down 'Stride' will be positive, else negative.
+		/// Width, in bytes, of this <see cref="FreeImageBitmap"/>.
+		/// In case this <see cref="FreeImageBitmap"/> is top down <b>Stride</b> will be positive, else negative.
 		/// </summary>
 		public int Stride
 		{
@@ -11906,13 +10241,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets attribute flags for the pixel data of this bitmap.
+		/// Gets attribute flags for the pixel data of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public unsafe int Flags
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				int result = 0;
 				byte alpha;
 				int cd = ColorDepth;
@@ -11931,7 +10266,7 @@ namespace FreeImageAPI
 						RGBQUAD* scanline = (RGBQUAD*)FreeImage.GetScanLine(dib, y);
 						for (int x = 0; x < width; x++)
 						{
-							alpha = scanline[x].color.A;
+							alpha = scanline[x].Color.A;
 							if (alpha != byte.MinValue && alpha != byte.MaxValue)
 							{
 								result += (int)ImageFlags.HasTranslucent;
@@ -11986,37 +10321,37 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets the width and height of this bitmap.
+		/// Gets the width and height of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public SizeF PhysicalDimension
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return new SizeF((float)FreeImage.GetWidth(dib), (float)FreeImage.GetHeight(dib));
 			}
 		}
 
 		/// <summary>
-		/// Gets the pixel format for this bitmap.
+		/// Gets the pixel format for this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public PixelFormat PixelFormat
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetPixelFormat(dib);
 			}
 		}
 
 		/// <summary>
-		/// Gets IDs of the property items stored in this bitmap.
+		/// Gets IDs of the property items stored in this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public int[] PropertyIdList
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				List<int> list = new List<int>();
 				ImageMetadata metaData = new ImageMetadata(dib, true);
 
@@ -12033,13 +10368,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets all the property items (pieces of metadata) stored in this bitmap.
+		/// Gets all the property items (pieces of metadata) stored in this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public PropertyItem[] PropertyItems
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				List<PropertyItem> list = new List<PropertyItem>();
 				ImageMetadata metaData = new ImageMetadata(dib, true);
 
@@ -12056,13 +10391,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets the format of this bitmap.
+		/// Gets the format of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public ImageFormat RawFormat
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				Attribute guidAttribute =
 					Attribute.GetCustomAttribute(
 						typeof(FreeImageBitmap), typeof(System.Runtime.InteropServices.GuidAttribute)
@@ -12074,36 +10409,36 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets the width and height, in pixels, of this bitmap.
+		/// Gets the width and height, in pixels, of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public Size Size
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return new Size(Width, Height);
 			}
 		}
 
 		/// <summary>
-		/// Gets or sets an object that provides additional data about the bitmap.
+		/// Gets or sets an object that provides additional data about the <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public Object Tag
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return tag;
 			}
 			set
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				tag = value;
 			}
 		}
 
 		/// <summary>
-		/// Gets whether the object has been disposed.
+		/// Gets whether this <see cref="FreeImageBitmap"/> has been disposed.
 		/// </summary>
 		public bool IsDisposed
 		{
@@ -12114,73 +10449,73 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets a new instance of a metadata wrapping class.
+		/// Gets a new instance of a metadata representing class.
 		/// </summary>
 		public ImageMetadata Metadata
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return new ImageMetadata(dib, true);
 			}
 		}
 
 		/// <summary>
-		/// Gets or sets the comment of the bitmap.
+		/// Gets or sets the comment of this <see cref="FreeImageBitmap"/>.
 		/// Supported formats are JPEG, PNG and GIF.
 		/// </summary>
 		public string Comment
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetImageComment(dib);
 			}
 			set
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				FreeImage.SetImageComment(dib, value);
 			}
 		}
 
 		/// <summary>
-		/// Returns whether the bitmap has a palette.
+		/// Returns whether this <see cref="FreeImageBitmap"/> has a palette.
 		/// </summary>
 		public bool HasPalette
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return (FreeImage.GetPalette(dib) != IntPtr.Zero);
 			}
 		}
 
 		/// <summary>
-		/// Gets or sets the bitmap's palette entry used as transparent color.
+		/// Gets or sets the entry used as transparent color in this <see cref="FreeImageBitmap"/>.
 		/// Only works for 1-, 4- and 8-bpp.
 		/// </summary>
 		public int TransparentIndex
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetTransparentIndex(dib);
 			}
 			set
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				FreeImage.SetTransparentIndex(dib, value);
 			}
 		}
 
 		/// <summary>
-		/// Gets the number of frames in the bitmap.
+		/// Gets the number of frames in this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public int FrameCount
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				int result = 1;
 				if (!mdib.IsNull)
 				{
@@ -12191,26 +10526,26 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets the ICCProfile structure of the bitmap.
+		/// Gets the ICCProfile structure of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public FIICCPROFILE ICCProfile
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return FreeImage.GetICCProfileEx(dib);
 			}
 		}
 
 		/// <summary>
 		/// Gets the format of the original image in case
-		/// the bitmap was loaded from a file or stream.
+		/// this <see cref="FreeImageBitmap"/> was loaded from a file or stream.
 		/// </summary>
 		public FREE_IMAGE_FORMAT ImageFormat
 		{
 			get
 			{
-				ThrowOnDisposed();
+				EnsureNotDisposed();
 				return originalFormat;
 			}
 		}
@@ -12220,15 +10555,15 @@ namespace FreeImageAPI
 		#region Methods
 
 		/// <summary>
-		/// Gets the bounds of the image in the specified unit.
+		/// Gets the bounds of this <see cref="FreeImageBitmap"/> in the specified unit.
 		/// </summary>
-		/// <param name="pageUnit">One of the GraphicsUnit values indicating
+		/// <param name="pageUnit">One of the <see cref="System.Drawing.GraphicsUnit"/> values indicating
 		/// the unit of measure for the bounding rectangle.</param>
-		/// <returns>The RectangleF that represents the bounds of the image,
-		/// in the specified unit.</returns>
+		/// <returns>The <see cref="System.Drawing.RectangleF"/> that represents the bounds of this
+		/// <see cref="FreeImageBitmap"/>, in the specified unit.</returns>
 		public RectangleF GetBounds(ref GraphicsUnit pageUnit)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			pageUnit = GraphicsUnit.Pixel;
 			return new RectangleF(
 					0f,
@@ -12238,13 +10573,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets the specified property item from this bitmap.
+		/// Gets the specified property item from this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		/// <param name="propid">The ID of the property item to get.</param>
-		/// <returns>The PropertyItem this method gets.</returns>
+		/// <returns>The <see cref="PropertyItem"/> this method gets.</returns>
 		public PropertyItem GetPropertyItem(int propid)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			ImageMetadata metadata = new ImageMetadata(dib, true);
 			foreach (MetadataModel metadataModel in metadata)
 			{
@@ -12260,17 +10595,17 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a thumbnail for this bitmap.
+		/// Returns a thumbnail for this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		/// <param name="thumbWidth">The width, in pixels, of the requested thumbnail image.</param>
 		/// <param name="thumbHeight">The height, in pixels, of the requested thumbnail image.</param>
 		/// <param name="callback">Ignored.</param>
 		/// <param name="callBackData">Ignored.</param>
-		/// <returns>A bitmap that represents the thumbnail.</returns>
+		/// <returns>A <see cref="FreeImageBitmap"/> that represents the thumbnail.</returns>
 		public FreeImageBitmap GetThumbnailImage(int thumbWidth, int thumbHeight,
 			Image.GetThumbnailImageAbort callback, IntPtr callBackData)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib = FreeImage.Rescale(
 				dib, thumbWidth, thumbHeight, FREE_IMAGE_FILTER.FILTER_BICUBIC);
@@ -12283,7 +10618,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a thumbnail for this FreeImageBitmap, keeping aspect ratio.
+		/// Returns a thumbnail for this <see cref="FreeImageBitmap"/>, keeping aspect ratio.
 		/// <paramref name="maxPixelSize"/> defines the maximum width or height
 		/// of the thumbnail.
 		/// </summary>
@@ -12293,7 +10628,7 @@ namespace FreeImageAPI
 		/// <returns>The thumbnail in a new instance.</returns>
 		public FreeImageBitmap GetThumbnailImage(int maxPixelSize, bool convert)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib = FreeImage.MakeThumbnail(dib, maxPixelSize, convert);
 			if (!newDib.IsNull)
@@ -12305,34 +10640,169 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a structure, wrapping the bitmap's scanline.
-		/// Due to FreeImage bitmaps are bottum up, scanline 0 is the
+		/// Returns an instance of <see cref="Scanline&lt;T&gt;"/>, representing the scanline
+		/// specified by <paramref name="scanline"/> of this <see cref="FreeImageBitmap"/>.
+		/// Since FreeImage bitmaps are always bottum up aligned, keep in mind that scanline 0 is the
 		/// bottom-most line of the image.
-		/// <para>
-		/// The structures are FI1BITARRAY (1bpp), FI4BITARRAY (4bpp),
-		/// FI8BITARRAY (8bpp), FI16RGBARRAY (16bpp), RGBTRIPLEARRAY (24bpp)
-		/// or RGBQUADARRAY (32bpp).
-		/// </para>
 		/// </summary>
-		/// <param name="scanline">Number of the scanline.</param>
-		/// <returns>Structure wrapping the scanline.</returns>
+		/// <param name="scanline">Number of the scanline to retrieve.</param>
+		/// <returns>An instance of <see cref="Scanline&lt;T&gt;"/> representing the
+		/// <paramref name="scanline"/>th scanline.</returns>
+		/// <remarks>
+		/// List of return-types of <b>T</b>:<para/>
+		/// <list type="table">
+		/// <listheader><term>Color Depth / Type</term><description><see cref="Type">Result Type</see></description></listheader>
+		/// <item><term>1 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI1BIT"/></description></item>
+		/// <item><term>4 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI4BIT"/></description></item>
+		/// <item><term>8 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="Byte"/></description></item>
+		/// <item><term>16 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="UInt16"/></description></item>
+		/// <item><term>16 - 555 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI16RGB555"/></description></item>
+		/// <item><term>16 - 565 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI16RGB565"/></description></item>
+		/// <item><term>24 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="RGBTRIPLE"/></description></item>
+		/// <item><term>32 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="RGBQUAD"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_COMPLEX"/></term><description><see cref="FICOMPLEX"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_DOUBLE"/></term><description><see cref="Double"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_FLOAT"/></term><description><see cref="Single"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_INT16"/></term><description><see cref="Int16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_INT32"/></term><description><see cref="Int32"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGB16"/></term><description><see cref="FIRGB16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGBA16"/></term><description><see cref="FIRGBA16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGBAF"/></term><description><see cref="FIRGBAF"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGBF"/></term><description><see cref="FIRGBF"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_UINT16"/></term><description><see cref="UInt16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_UINT32"/></term><description><see cref="UInt32"/></description></item>
+		/// </list>
+		/// </remarks>
+		/// <example>
+		/// <code>
+		/// FreeImageBitmap bitmap = new FreeImageBitmap(@"C:\Pictures\picture.bmp");
+		/// if (bitmap.ColorDepth == 32)
+		/// {
+		/// 	Scanline&lt;RGBQUAD&gt; scanline = (Scanline&lt;RGBQUAD&gt;)bitmap.GetScanline(0);
+		/// 	foreach (RGBQUAD pixel in scanline)
+		/// 	{
+		///			Console.WriteLine(pixel);
+		/// 	}
+		///	}
+		/// </code>
+		/// </example>
 		/// <exception cref="ArgumentException">
 		/// The bitmap's type or color depth are not supported.
 		/// </exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="scanline"/> is no valid value.
+		/// </exception>
+		public Scanline<T> GetScanline<T>(int scanline) where T : struct
+		{
+			EnsureNotDisposed();
+			return new Scanline<T>(dib, scanline);
+		}
+
+		/// <summary>
+		/// Returns an instance of <see cref="Scanline&lt;T&gt;"/>, representing the scanline
+		/// specified by <paramref name="scanline"/> of this <see cref="FreeImageBitmap"/>.
+		/// Since FreeImage bitmaps are always bottum up aligned, keep in mind that scanline 0 is the
+		/// bottom-most line of the image.
+		/// </summary>
+		/// <param name="scanline">Number of the scanline to retrieve.</param>
+		/// <returns>An instance of <see cref="Scanline&lt;T&gt;"/> representing the
+		/// <paramref name="scanline"/>th scanline.</returns>
+		/// <remarks>
+		/// List of return-types of <b>T</b>:<para/>
+		/// <list type="table">
+		/// <listheader><term>Color Depth / Type</term><description><see cref="Type">Result Type</see></description></listheader>
+		/// <item><term>1 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI1BIT"/></description></item>
+		/// <item><term>4 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI4BIT"/></description></item>
+		/// <item><term>8 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="Byte"/></description></item>
+		/// <item><term>16 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="UInt16"/></description></item>
+		/// <item><term>16 - 555 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI16RGB555"/></description></item>
+		/// <item><term>16 - 565 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI16RGB565"/></description></item>
+		/// <item><term>24 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="RGBTRIPLE"/></description></item>
+		/// <item><term>32 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="RGBQUAD"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_COMPLEX"/></term><description><see cref="FICOMPLEX"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_DOUBLE"/></term><description><see cref="Double"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_FLOAT"/></term><description><see cref="Single"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_INT16"/></term><description><see cref="Int16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_INT32"/></term><description><see cref="Int32"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGB16"/></term><description><see cref="FIRGB16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGBA16"/></term><description><see cref="FIRGBA16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGBAF"/></term><description><see cref="FIRGBAF"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGBF"/></term><description><see cref="FIRGBF"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_UINT16"/></term><description><see cref="UInt16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_UINT32"/></term><description><see cref="UInt32"/></description></item>
+		/// </list>
+		/// </remarks>
+		/// <example>
+		/// <code>
+		/// FreeImageBitmap bitmap = new FreeImageBitmap(@"C:\Pictures\picture.bmp");
+		/// if (bitmap.ColorDepth == 32)
+		/// {
+		/// 	Scanline&lt;RGBQUAD&gt; scanline = (Scanline&lt;RGBQUAD&gt;)bitmap.GetScanline(0);
+		/// 	foreach (RGBQUAD pixel in scanline)
+		/// 	{
+		///			Console.WriteLine(pixel);
+		/// 	}
+		///	}
+		/// </code>
+		/// </example>
+		/// <exception cref="ArgumentException">
+		/// The type of the bitmap or color depth are not supported.
+		/// </exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="scanline"/> is no valid value.
+		/// </exception>
 		public object GetScanline(int scanline)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			object result = null;
+			int width = (int)FreeImage.GetWidth(dib);
 
-			switch (FreeImage.GetBPP(dib))
+			switch (FreeImage.GetImageType(dib))
 			{
-				case 1u: result = new FI1BITARRAY(dib, scanline); break;
-				case 4u: result = new FI4BITARRAY(dib, scanline); break;
-				case 8u: result = new FI8BITARRAY(dib, scanline); break;
-				case 16u: result = new FI16RGBARRAY(dib, scanline); break;
-				case 24u: result = new RGBTRIPLEARRAY(dib, scanline); break;
-				case 32u: result = new RGBQUADARRAY(dib, scanline); break;
-				default: throw new ArgumentException("Color depth or type is not supported.");
+				case FREE_IMAGE_TYPE.FIT_BITMAP:
+
+					switch (FreeImage.GetBPP(dib))
+					{
+						case 1u: result = new Scanline<FI1BIT>(dib, scanline, width); break;
+						case 4u: result = new Scanline<FI4BIT>(dib, scanline, width); break;
+						case 8u: result = new Scanline<Byte>(dib, scanline, width); break;
+						case 16u:
+							if ((RedMask == FreeImage.FI16_555_RED_MASK) &&
+								(GreenMask == FreeImage.FI16_555_GREEN_MASK) &&
+								(BlueMask == FreeImage.FI16_555_BLUE_MASK))
+							{
+								result = new Scanline<FI16RGB555>(dib, scanline, width);
+							}
+							else if ((RedMask == FreeImage.FI16_565_RED_MASK) &&
+								(GreenMask == FreeImage.FI16_565_GREEN_MASK) &&
+								(BlueMask == FreeImage.FI16_565_BLUE_MASK))
+							{
+								result = new Scanline<FI16RGB565>(dib, scanline, width);
+							}
+							else
+							{
+								result = new Scanline<UInt16>(dib, scanline, width);
+							}
+							break;
+						case 24u: result = new Scanline<RGBTRIPLE>(dib, scanline, width); break;
+						case 32u: result = new Scanline<RGBQUAD>(dib, scanline, width); break;
+						default: throw new ArgumentException("Color depth is not supported.");
+					}
+					break;
+
+				case FREE_IMAGE_TYPE.FIT_COMPLEX: result = new Scanline<FICOMPLEX>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_DOUBLE: result = new Scanline<Double>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_FLOAT: result = new Scanline<Single>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_INT16: result = new Scanline<Int16>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_INT32: result = new Scanline<Int32>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_RGB16: result = new Scanline<FIRGB16>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_RGBA16: result = new Scanline<FIRGBA16>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_RGBAF: result = new Scanline<FIRGBAF>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_RGBF: result = new Scanline<FIRGBF>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_UINT16: result = new Scanline<UInt16>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_UINT32: result = new Scanline<UInt32>(dib, scanline, width); break;
+				case FREE_IMAGE_TYPE.FIT_UNKNOWN:
+				default: throw new ArgumentException("Type is not supported.");
 			}
 
 			return result;
@@ -12347,109 +10817,107 @@ namespace FreeImageAPI
 		/// <returns>Pointer to the scanline.</returns>
 		public IntPtr GetScanlinePointer(int scanline)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.GetScanLine(dib, scanline);
 		}
 
 		/// <summary>
-		/// Returns a list of structures, wrapping the bitmap's scanlines.
+		/// Returns a list of structures, representing the scanlines of this <see cref="FreeImageBitmap"/>.
 		/// Due to FreeImage bitmaps are bottum up, scanline 0 is the
 		/// bottom-most line of the image.
-		/// Each color depth has a different wrapping structure
-		/// due to different memory layouts.
-		/// <para>
-		/// The structures are FI1BITARRAY (1bpp), FI4BITARRAY (4bpp),
-		/// FI8BITARRAY (8bpp), FI16RGBARRAY (16bpp), RGBTRIPLEARRAY (24bpp)
-		/// or RGBQUADARRAY (32bpp).
-		/// </para>
+		/// Each color depth has a different representing structure due to different memory layouts.
 		/// </summary>
-		/// <returns>A list containing structures wrapping the bitmap's
-		/// scanlines.</returns>
 		/// <remarks>
-		/// Instead of calling his method it is also possible to the
-		/// <c>foreach</c> clause to iterate over each scanline.
+		/// List of return-types of <b>T</b>:<para/>
+		/// <list type="table">
+		/// <listheader><term>Color Depth / Type</term><description><see cref="Type">Result Type of IEnmuerable&lt;Scanline&lt;T&gt;&gt;</see></description></listheader>
+		/// <item><term>1 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI1BIT"/></description></item>
+		/// <item><term>4 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI4BIT"/></description></item>
+		/// <item><term>8 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="Byte"/></description></item>
+		/// <item><term>16 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="UInt16"/></description></item>
+		/// <item><term>16 - 555 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI16RGB555"/></description></item>
+		/// <item><term>16 - 565 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="FI16RGB565"/></description></item>
+		/// <item><term>24 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="RGBTRIPLE"/></description></item>
+		/// <item><term>32 (<see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>)</term><description><see cref="RGBQUAD"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_COMPLEX"/></term><description><see cref="FICOMPLEX"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_DOUBLE"/></term><description><see cref="Double"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_FLOAT"/></term><description><see cref="Single"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_INT16"/></term><description><see cref="Int16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_INT32"/></term><description><see cref="Int32"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGB16"/></term><description><see cref="FIRGB16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGBA16"/></term><description><see cref="FIRGBA16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGBAF"/></term><description><see cref="FIRGBAF"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_RGBF"/></term><description><see cref="FIRGBF"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_UINT16"/></term><description><see cref="UInt16"/></description></item>
+		/// <item><term><see cref="FREE_IMAGE_TYPE.FIT_UINT32"/></term><description><see cref="UInt32"/></description></item>
+		/// </list>
 		/// </remarks>
-		/// <exception cref="NotSupportedException">
-		/// The bitmap's type or color depth are not supported.
-		/// </exception>
 		public IList GetScanlines()
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 
-			IList list = null;
 			int height = (int)FreeImage.GetHeight(dib);
+			IList list;
 
-			switch (FreeImage.GetBPP(dib))
+			switch (FreeImage.GetImageType(dib))
 			{
-				case 1u:
+				case FREE_IMAGE_TYPE.FIT_BITMAP:
 
-					list = new List<FI1BITARRAY>(height);
-					for (int i = 0; i < height; i++)
+					switch (FreeImage.GetBPP(dib))
 					{
-						list.Add(new FI1BITARRAY(dib, i));
+						case 1u: list = new List<Scanline<FI1BIT>>(height); break;
+						case 4u: list = new List<Scanline<FI4BIT>>(height); break;
+						case 8u: list = new List<Scanline<Byte>>(height); break;
+						case 16u:
+							if (FreeImage.IsRGB555(dib))
+							{
+								list = new List<Scanline<FI16RGB555>>(height);
+							}
+							else if (FreeImage.IsRGB565(dib))
+							{
+								list = new List<Scanline<FI16RGB565>>(height);
+							}
+							else
+							{
+								list = new List<Scanline<UInt16>>(height);
+							}
+							break;
+						case 24u: list = new List<Scanline<RGBTRIPLE>>(height); break;
+						case 32u: list = new List<Scanline<RGBQUAD>>(height); break;
+						default: throw new ArgumentException("Color depth is not supported.");
 					}
 					break;
 
-				case 4u:
+				case FREE_IMAGE_TYPE.FIT_COMPLEX: list = new List<Scanline<FICOMPLEX>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_DOUBLE: list = new List<Scanline<Double>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_FLOAT: list = new List<Scanline<Single>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_INT16: list = new List<Scanline<Int16>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_INT32: list = new List<Scanline<Int32>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_RGB16: list = new List<Scanline<FIRGB16>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_RGBA16: list = new List<Scanline<FIRGBA16>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_RGBAF: list = new List<Scanline<FIRGBAF>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_RGBF: list = new List<Scanline<FIRGBF>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_UINT16: list = new List<Scanline<UInt16>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_UINT32: list = new List<Scanline<UInt32>>(height); break;
+				case FREE_IMAGE_TYPE.FIT_UNKNOWN:
+				default: throw new ArgumentException("Type is not supported.");
+			}
 
-					list = new List<FI4BITARRAY>(height);
-					for (int i = 0; i < height; i++)
-					{
-						list.Add(new FI4BITARRAY(dib, i));
-					}
-					break;
-
-				case 8u:
-
-					list = new List<FI8BITARRAY>(height);
-					for (int i = 0; i < height; i++)
-					{
-						list.Add(new FI8BITARRAY(dib, i));
-					}
-					break;
-
-				case 16u:
-
-					list = new List<FI16RGBARRAY>(height);
-					for (int i = 0; i < height; i++)
-					{
-						list.Add(new FI16RGBARRAY(dib, i));
-					}
-					break;
-
-				case 24u:
-
-					list = new List<RGBTRIPLEARRAY>(height);
-					for (int i = 0; i < height; i++)
-					{
-						list.Add(new RGBTRIPLEARRAY(dib, i));
-					}
-					break;
-
-				case 32u:
-
-					list = new List<RGBQUADARRAY>(height);
-					for (int i = 0; i < height; i++)
-					{
-						list.Add(new RGBQUADARRAY(dib, i));
-					}
-					break;
-
-				default:
-
-					throw new NotSupportedException("Color depth or type is not supported.");
+			for (int i = 0; i < height; i++)
+			{
+				list.Add(GetScanline(i));
 			}
 
 			return list;
 		}
 
 		/// <summary>
-		/// Removes the specified property item from this bitmap.
+		/// Removes the specified property item from this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		/// <param name="propid">The ID of the property item to remove.</param>
 		public void RemovePropertyItem(int propid)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			ImageMetadata mdata = new ImageMetadata(dib, true);
 			foreach (MetadataModel model in mdata)
 			{
@@ -12465,13 +10933,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// This method rotates, flips, or rotates and flips the bitmap.
+		/// This method rotates, flips, or rotates and flips this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		/// <param name="rotateFlipType">A RotateFlipType member
-		/// that specifies the type of rotation and flip to apply to the bitmap.</param>
+		/// that specifies the type of rotation and flip to apply to this <see cref="FreeImageBitmap"/>.</param>
 		public void RotateFlip(RotateFlipType rotateFlipType)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 
 			FIBITMAP newDib = 0;
 			uint bpp = FreeImage.GetBPP(dib);
@@ -12526,10 +10994,48 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves this bitmap to the specified file.
+		/// Copies the metadata from another <see cref="FreeImageBitmap"/>.
+		/// </summary>
+		/// <param name="bitmap">The bitmap to read the metadata from.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="bitmap"/> is null.
+		/// </exception>
+		public void CloneMetadataFrom(FreeImageBitmap bitmap)
+		{
+			if (bitmap == null)
+			{
+				throw new ArgumentNullException("bitmap");
+			}
+			EnsureNotDisposed();
+			bitmap.EnsureNotDisposed();
+			FreeImage.CloneMetadata(dib, bitmap.dib);
+		}
+
+		/// <summary>
+		/// Copies the metadata from another <see cref="FreeImageBitmap"/> using
+		/// the provided options.
+		/// </summary>
+		/// <param name="bitmap">The bitmap to read the metadata from.</param>
+		/// <param name="flags">Specifies the way the metadata is copied.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="bitmap"/> is null.
+		/// </exception>
+		public void CloneMetadataFrom(FreeImageBitmap bitmap, FREE_IMAGE_METADATA_COPY flags)
+		{
+			if (bitmap == null)
+			{
+				throw new ArgumentNullException("bitmap");
+			}
+			EnsureNotDisposed();
+			bitmap.EnsureNotDisposed();
+			FreeImage.CloneMetadataEx(bitmap.dib, dib, flags);
+		}
+
+		/// <summary>
+		/// Saves this <see cref="FreeImageBitmap"/> to the specified file.
 		/// </summary>
 		/// <param name="filename">A string that contains the name of the file to which
-		/// to save this bitmap.</param>
+		/// to save this <see cref="FreeImageBitmap"/>.</param>
 		/// <exception cref="ArgumentException"><paramref name="filename"/> is null or empty.</exception>
 		/// <exception cref="Exception">Saving the image failed.</exception>
 		public void Save(string filename)
@@ -12538,11 +11044,11 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves this bitmap to the specified file in the specified format.
+		/// Saves this <see cref="FreeImageBitmap"/> to the specified file in the specified format.
 		/// </summary>
 		/// <param name="filename">A string that contains the name of the file to which
-		/// to save this bitmap.</param>
-		/// <param name="format">An FREE_IMAGE_FORMAT that specifies the format of the saved image.</param>
+		/// to save this <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="format">An <see cref="FREE_IMAGE_FORMAT"/> that specifies the format of the saved image.</param>
 		/// <exception cref="ArgumentException"><paramref name="filename"/> is null or empty.</exception>
 		/// <exception cref="Exception">Saving the image failed.</exception>
 		public void Save(string filename, FREE_IMAGE_FORMAT format)
@@ -12551,18 +11057,18 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves this bitmap to the specified file in the specified format
+		/// Saves this <see cref="FreeImageBitmap"/> to the specified file in the specified format
 		/// using the specified saving flags.
 		/// </summary>
 		/// <param name="filename">A string that contains the name of the file to which
-		/// to save this bitmap.</param>
-		/// <param name="format">An FREE_IMAGE_FORMAT that specifies the format of the saved image.</param>
+		/// to save this <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="format">An <see cref="FREE_IMAGE_FORMAT"/> that specifies the format of the saved image.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <exception cref="ArgumentException"><paramref name="filename"/> is null or empty.</exception>
 		/// <exception cref="Exception">Saving the image failed.</exception>
 		public void Save(string filename, FREE_IMAGE_FORMAT format, FREE_IMAGE_SAVE_FLAGS flags)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			if (string.IsNullOrEmpty(filename))
 			{
 				throw new ArgumentException("filename");
@@ -12578,10 +11084,10 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves this image to the specified stream in the specified format.
+		/// Saves this <see cref="FreeImageBitmap"/> to the specified stream in the specified format.
 		/// </summary>
-		/// <param name="stream">The stream where the image will be saved.</param>
-		/// <param name="format">An FREE_IMAGE_FORMAT that specifies the format of the saved image.</param>
+		/// <param name="stream">The stream where this <see cref="FreeImageBitmap"/> will be saved.</param>
+		/// <param name="format">An <see cref="FREE_IMAGE_FORMAT"/> that specifies the format of the saved image.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
 		/// <exception cref="Exception">Saving the image failed.</exception>
 		public void Save(Stream stream, FREE_IMAGE_FORMAT format)
@@ -12590,17 +11096,17 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves this image to the specified stream in the specified format
+		/// Saves this <see cref="FreeImageBitmap"/> to the specified stream in the specified format
 		/// using the specified saving flags.
 		/// </summary>
-		/// <param name="stream">The stream where the image will be saved.</param>
-		/// <param name="format">An FREE_IMAGE_FORMAT that specifies the format of the saved image.</param>
+		/// <param name="stream">The stream where this <see cref="FreeImageBitmap"/> will be saved.</param>
+		/// <param name="format">An <see cref="FREE_IMAGE_FORMAT"/> that specifies the format of the saved image.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is null.</exception>
 		/// <exception cref="Exception">Saving the image failed.</exception>
 		public void Save(Stream stream, FREE_IMAGE_FORMAT format, FREE_IMAGE_SAVE_FLAGS flags)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			if (stream == null)
 			{
 				throw new ArgumentNullException("stream");
@@ -12614,7 +11120,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Adds a frame to the file specified in a previous call to the Save method.
+		/// Adds a frame to the file specified in a previous call to the <see cref="Save(String)"/> method.
 		/// Use this method to save selected frames from a multiple-frame image to
 		/// another multiple-frame image.
 		/// </summary>
@@ -12626,11 +11132,11 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Adds a frame to the file specified in a previous call to the Save method.
+		/// Adds a frame to the file specified in a previous call to the <see cref="Save(String)"/> method.
 		/// Use this method to save selected frames from a multiple-frame image to
 		/// another multiple-frame image.
 		/// </summary>
-		/// <param name="bitmap">A FreeImageBitmap that contains the frame to add.</param>
+		/// <param name="bitmap">A <see cref="FreeImageBitmap"/> that contains the frame to add.</param>
 		/// <exception cref="InvalidOperationException">
 		/// This instance has not been saved to a file using Save(...) before.</exception>
 		public void SaveAdd(FreeImageBitmap bitmap)
@@ -12703,7 +11209,7 @@ namespace FreeImageAPI
 		/// <exception cref="Exception">The operation failed.</exception>
 		public void SelectActiveFrame(int frameIndex)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			if (frameIndex < 0)
 			{
 				throw new ArgumentOutOfRangeException("frameIndex");
@@ -12723,24 +11229,24 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a GDI bitmap object from this FreeImageBitmap.
+		/// Creates a GDI bitmap object from this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		/// <returns>A handle to the GDI bitmap object that this method creates.</returns>
 		public IntPtr GetHbitmap()
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.GetHbitmap(dib, IntPtr.Zero, false);
 		}
 
 		/// <summary>
-		/// Creates a GDI bitmap object from this FreeImageBitmap.
+		/// Creates a GDI bitmap object from this <see cref="FreeImageBitmap"/>.
 		/// </summary>
-		/// <param name="background">A Color structure that specifies the background color.
+		/// <param name="background">A <see cref="System.Drawing.Color"/> structure that specifies the background color.
 		/// This parameter is ignored if the bitmap is totally opaque.</param>
 		/// <returns>A handle to the GDI bitmap object that this method creates.</returns>
 		public IntPtr GetHbitmap(Color background)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			using (FreeImageBitmap temp = new FreeImageBitmap(this))
 			{
 				temp.BackgroundColor = background;
@@ -12751,10 +11257,10 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Returns the handle to an icon.
 		/// </summary>
-		/// <returns>A Windows handle to an icon with the same image as the FreeImageBitmap.</returns>
+		/// <returns>A Windows handle to an icon with the same image as this <see cref="FreeImageBitmap"/>.</returns>
 		public IntPtr GetHicon()
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			using (Bitmap bitmap = FreeImage.GetBitmap(dib, true))
 			{
 				return bitmap.GetHicon();
@@ -12762,27 +11268,27 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a GDI bitmap object from this FreeImageBitmap with the same
+		/// Creates a GDI bitmap object from this <see cref="FreeImageBitmap"/> with the same
 		/// color depth as the primary device.
 		/// </summary>
 		/// <returns>A handle to the GDI bitmap object that this method creates.</returns>
 		public IntPtr GetHbitmapForDevice()
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.GetBitmapForDevice(dib, IntPtr.Zero, false);
 		}
 
 		/// <summary>
-		/// Gets the color of the specified pixel in this FreeImageBitmap.
+		/// Gets the <see cref="Color"/> of the specified pixel in this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		/// <param name="x">The x-coordinate of the pixel to retrieve.</param>
 		/// <param name="y">The y-coordinate of the pixel to retrieve.</param>
-		/// <returns>A Color structure that represents the color of the specified pixel.</returns>
+		/// <returns>A <see cref="System.Drawing.Color"/> structure that represents the color of the specified pixel.</returns>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="NotSupportedException">The type of this bitmap is not supported.</exception>
 		public unsafe Color GetPixel(int x, int y)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			if (FreeImage.GetImageType(dib) == FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
 				if (ColorDepth == 16 || ColorDepth == 24 || ColorDepth == 32)
@@ -12792,7 +11298,7 @@ namespace FreeImageAPI
 					{
 						throw new Exception();
 					}
-					return rgbq.color;
+					return rgbq.Color;
 				}
 				else if (ColorDepth == 1 || ColorDepth == 4 || ColorDepth == 8)
 				{
@@ -12802,44 +11308,46 @@ namespace FreeImageAPI
 						throw new Exception();
 					}
 					RGBQUAD* palette = (RGBQUAD*)FreeImage.GetPalette(dib);
-					return palette[index].color;
+					return palette[index].Color;
 				}
 			}
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		/// Makes the default transparent color transparent for this FreeImageBitmap.
+		/// Makes the default transparent color transparent for this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		public void MakeTransparent()
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			MakeTransparent(Color.Transparent);
 		}
 
 		/// <summary>
-		/// Makes the specified color transparent for this FreeImageBitmap.
+		/// Makes the specified color transparent for this <see cref="FreeImageBitmap"/>.
 		/// </summary>
-		/// <param name="transparentColor">The Color structure that represents
+		/// <param name="transparentColor">The <see cref="System.Drawing.Color"/> structure that represents
 		/// the color to make transparent.</param>
+		/// <exception cref="NotImplementedException">
+		/// This method is not implemented.</exception>
 		public void MakeTransparent(Color transparentColor)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			throw new System.NotImplementedException();
 		}
 
 		/// <summary>
-		/// Sets the color of the specified pixel in this FreeImageBitmap.
+		/// Sets the <see cref="System.Drawing.Color"/> of the specified pixel in this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		/// <param name="x">The x-coordinate of the pixel to set.</param>
 		/// <param name="y">The y-coordinate of the pixel to set.</param>
-		/// <param name="color">A Color structure that represents the color
+		/// <param name="color">A <see cref="System.Drawing.Color"/> structure that represents the color
 		/// to assign to the specified pixel.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="NotSupportedException">The type of this bitmap is not supported.</exception>
 		public unsafe void SetPixel(int x, int y, Color color)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			if (FreeImage.GetImageType(dib) == FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
 				if (ColorDepth == 16 || ColorDepth == 24 || ColorDepth == 32)
@@ -12857,7 +11365,7 @@ namespace FreeImageAPI
 					RGBQUAD* palette = (RGBQUAD*)FreeImage.GetPalette(dib);
 					for (int i = 0; i < colorsUsed; i++)
 					{
-						if (palette[i].color == color)
+						if (palette[i].Color == color)
 						{
 							byte index = (byte)i;
 							if (!FreeImage.SetPixelIndex(dib, (uint)x, (uint)y, ref index))
@@ -12874,13 +11382,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Sets the resolution for this FreeImageBitmap.
+		/// Sets the resolution for this <see cref="FreeImageBitmap"/>.
 		/// </summary>
-		/// <param name="xDpi">The horizontal resolution, in dots per inch, of the FreeImageBitmap.</param>
-		/// <param name="yDpi">The vertical resolution, in dots per inch, of the FreeImageBitmap.</param>
+		/// <param name="xDpi">The horizontal resolution, in dots per inch, of this <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="yDpi">The vertical resolution, in dots per inch, of this <see cref="FreeImageBitmap"/>.</param>
 		public void SetResolution(float xDpi, float yDpi)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImage.SetResolutionX(dib, (uint)xDpi);
 			FreeImage.SetResolutionY(dib, (uint)yDpi);
 		}
@@ -12888,6 +11396,8 @@ namespace FreeImageAPI
 		/// <summary>
 		/// This function is not yet implemented.
 		/// </summary>
+		/// <exception cref="NotImplementedException">
+		/// This method is not implemented.</exception>
 		public BitmapData LockBits(Rectangle rect, ImageLockMode flags, PixelFormat format)
 		{
 			throw new NotImplementedException();
@@ -12896,6 +11406,8 @@ namespace FreeImageAPI
 		/// <summary>
 		/// This function is not yet implemented.
 		/// </summary>
+		/// <exception cref="NotImplementedException">
+		/// This method is not implemented.</exception>
 		public BitmapData LockBits(Rectangle rect, ImageLockMode flags, PixelFormat format, BitmapData bitmapData)
 		{
 			throw new NotImplementedException();
@@ -12904,19 +11416,22 @@ namespace FreeImageAPI
 		/// <summary>
 		/// This function is not yet implemented.
 		/// </summary>
+		/// <exception cref="NotImplementedException">
+		/// This method is not implemented.</exception>
 		public void UnlockBits(BitmapData bitmapdata)
 		{
 			throw new NotImplementedException();
 		}
 
 		/// <summary>
-		/// Converts this FreeImageBitmap into a different color depth.
-		/// The parameter 'bpp' specifies color depth, greyscale conversion
+		/// Converts this <see cref="FreeImageBitmap"/> into a different color depth.
+		/// The parameter <paramref name="bpp"/> specifies color depth, greyscale conversion
 		/// and palette reorder.
-		/// <para>Adding the 'FICD_FORCE_GREYSCALE' flag will first perform a
-		/// convesion to greyscale. This can be done with any target color depth.</para>
-		/// <para>Adding the 'FICD_REORDER_PALETTE' flag will allow the algorithm
-		/// to reorder the palette. This operation will not be performed to
+		/// <para>Adding the <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_FORCE_GREYSCALE"/> flag
+		/// will first perform a convesion to greyscale. This can be done with any target
+		/// color depth.</para>
+		/// <para>Adding the <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_REORDER_PALETTE"/> flag
+		/// will allow the algorithm to reorder the palette. This operation will not be performed to
 		/// non-greyscale images to prevent data lost by mistake.</para>
 		/// </summary>
 		/// <param name="bpp">A bitfield containing information about the conversion
@@ -12924,13 +11439,13 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool ConvertColorDepth(FREE_IMAGE_COLOR_DEPTH bpp)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return ReplaceDib(FreeImage.ConvertColorDepth(dib, bpp, false));
 		}
 
 		/// <summary>
-		/// Converts this bitmap's FREE_IMAGE_TYPE to 'type' creating
-		/// a new instance.
+		/// Converts this <see cref="FreeImageBitmap"/> <see cref="FREE_IMAGE_TYPE"/> to
+		/// <paramref name="type"/> initializing a new instance.
 		/// In case source and destination type are the same, the operation fails.
 		/// An error message can be catched using the 'Message' event.
 		/// </summary>
@@ -12939,12 +11454,12 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool ConvertType(FREE_IMAGE_TYPE type, bool scaleLinear)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return (ImageType == type) ? false : ReplaceDib(FreeImage.ConvertToType(dib, type, scaleLinear));
 		}
 
 		/// <summary>
-		/// Converts this bitmap's FREE_IMAGE_TYPE to 'type'.
+		/// Converts this <see cref="FreeImageBitmap"/> <see cref="FreeImageBitmap"/> to <paramref name="type"/>.
 		/// In case source and destination type are the same, the operation fails.
 		/// An error message can be catched using the 'Message' event.
 		/// </summary>
@@ -12953,7 +11468,7 @@ namespace FreeImageAPI
 		/// <returns>The converted instance.</returns>
 		public FreeImageBitmap GetTypeConvertedInstance(FREE_IMAGE_TYPE type, bool scaleLinear)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			if (ImageType != type)
 			{
@@ -12968,14 +11483,14 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts this FreeImageBitmap into a different color depth creating
+		/// Converts this <see cref="FreeImageBitmap"/> into a different color depth initializing
 		/// a new instance.
-		/// The parameter 'bpp' specifies color depth, greyscale conversion
+		/// The parameter <paramref name="bpp"/> specifies color depth, greyscale conversion
 		/// and palette reorder.
-		/// <para>Adding the 'FICD_FORCE_GREYSCALE' flag will first perform a
-		/// convesion to greyscale. This can be done with any target color depth.</para>
-		/// <para>Adding the 'FICD_REORDER_PALETTE' flag will allow the algorithm
-		/// to reorder the palette. This operation will not be performed to
+		/// <para>Adding the <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_FORCE_GREYSCALE"/> flag will
+		/// first perform a convesion to greyscale. This can be done with any target color depth.</para>
+		/// <para>Adding the <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_REORDER_PALETTE"/> flag will
+		/// allow the algorithm to reorder the palette. This operation will not be performed to
 		/// non-greyscale images to prevent data lost by mistake.</para>
 		/// </summary>
 		/// <param name="bpp">A bitfield containing information about the conversion
@@ -12983,7 +11498,7 @@ namespace FreeImageAPI
 		/// <returns>The converted instance.</returns>
 		public FreeImageBitmap GetColorConvertedInstance(FREE_IMAGE_COLOR_DEPTH bpp)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib = FreeImage.ConvertColorDepth(dib, bpp, false);
 			if (newDib == dib)
@@ -12999,11 +11514,11 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Rescales this FreeImageBitmap to the specified size using the
+		/// Rescales this <see cref="FreeImageBitmap"/> to the specified size using the
 		/// specified filter.
 		/// </summary>
 		/// <param name="newSize">The Size structure that represent the
-		/// size of the new FreeImageBitmap.</param>
+		/// size of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="filter">Filter to use for resizing.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool Rescale(Size newSize, FREE_IMAGE_FILTER filter)
@@ -13012,25 +11527,25 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Rescales this FreeImageBitmap to the specified size using the
+		/// Rescales this <see cref="FreeImageBitmap"/> to the specified size using the
 		/// specified filter.
 		/// </summary>
-		/// <param name="width">Width of the new FreeImageBitmap.</param>
-		/// <param name="height">Height of the new FreeImageBitmap.</param>
+		/// <param name="width">Width of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">Height of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="filter">Filter to use for resizing.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool Rescale(int width, int height, FREE_IMAGE_FILTER filter)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return ReplaceDib(FreeImage.Rescale(dib, width, height, filter));
 		}
 
 		/// <summary>
-		/// Rescales this FreeImageBitmap to the specified size using the
-		/// specified filter creating a new instance.
+		/// Rescales this <see cref="FreeImageBitmap"/> to the specified size using the
+		/// specified filter initializing a new instance.
 		/// </summary>
 		/// <param name="newSize">The Size structure that represent the
-		/// size of the new FreeImageBitmap.</param>
+		/// size of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="filter">Filter to use for resizing.</param>
 		/// <returns>The rescaled instance.</returns>
 		public FreeImageBitmap GetScaledInstance(Size newSize, FREE_IMAGE_FILTER filter)
@@ -13039,16 +11554,16 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Rescales this FreeImageBitmap to the specified size using the
-		/// specified filter creating a new instance.
+		/// Rescales this <see cref="FreeImageBitmap"/> to the specified size using the
+		/// specified filter initializing a new instance.
 		/// </summary>
-		/// <param name="width">Width of the new FreeImageBitmap.</param>
-		/// <param name="height">Height of the new FreeImageBitmap.</param>
+		/// <param name="width">Width of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">Height of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="filter">Filter to use for resizing.</param>
 		/// <returns>The rescaled instance.</returns>
 		public FreeImageBitmap GetScaledInstance(int width, int height, FREE_IMAGE_FILTER filter)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib = FreeImage.Rescale(dib, width, height, filter);
 			if (!newDib.IsNull)
@@ -13061,7 +11576,8 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Converts a High Dynamic Range image to a 24-bit RGB image using a global
-		/// operator based on logarithmic compression of luminance values, imitating the human response to light.
+		/// operator based on logarithmic compression of luminance values, imitating
+		/// the human response to light.
 		/// </summary>
 		/// <param name="gamma">A gamma correction that is applied after the tone mapping.
 		/// A value of 1 means no correction.</param>
@@ -13069,7 +11585,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool TmoDrago03(double gamma, double exposure)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return ReplaceDib(FreeImage.TmoDrago03(dib, gamma, exposure));
 		}
 
@@ -13082,7 +11598,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool TmoReinhard05(double intensity, double contrast)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return ReplaceDib(FreeImage.TmoReinhard05(dib, intensity, contrast));
 		}
 
@@ -13094,7 +11610,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool TmoFattal02(double color_saturation, double attenuation)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return ReplaceDib(FreeImage.TmoFattal02(dib, color_saturation, attenuation));
 		}
 
@@ -13107,7 +11623,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool Rotate(double angle)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			bool result = false;
 			if (ColorDepth == 4)
 			{
@@ -13121,7 +11637,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Rotates this FreeImageBitmap by the specified angle creating a new instance.
+		/// Rotates this <see cref="FreeImageBitmap"/> by the specified angle initializing a new instance.
 		/// For 1- and 4-bit images, rotation is limited to angles whose value is an integer
 		/// multiple of 90.
 		/// </summary>
@@ -13129,7 +11645,7 @@ namespace FreeImageAPI
 		/// <returns>The rotated instance.</returns>
 		public FreeImageBitmap GetRotatedInstance(double angle)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib;
 			if (ColorDepth == 4)
@@ -13163,13 +11679,13 @@ namespace FreeImageAPI
 		public bool Rotate(double angle, double xShift, double yShift,
 			double xOrigin, double yOrigin, bool useMask)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return ReplaceDib(FreeImage.RotateEx(dib, angle, xShift, yShift, xOrigin, yOrigin, useMask));
 		}
 
 		/// <summary>
 		/// This method performs a rotation and / or translation of an 8-bit greyscale,
-		/// 24- or 32-bit image, using a 3rd order (cubic) B-Spline returning a new instance.
+		/// 24- or 32-bit image, using a 3rd order (cubic) B-Spline initializing a new instance.
 		/// </summary>
 		/// <param name="angle">The angle of rotation.</param>
 		/// <param name="xShift">Horizontal image translation.</param>
@@ -13182,7 +11698,7 @@ namespace FreeImageAPI
 		public FreeImageBitmap GetRotatedInstance(double angle, double xShift, double yShift,
 			double xOrigin, double yOrigin, bool useMask)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib = FreeImage.RotateEx(
 				dib, angle, xShift, yShift, xOrigin, yOrigin, useMask);
@@ -13203,7 +11719,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool AdjustCurve(byte[] lookUpTable, FREE_IMAGE_COLOR_CHANNEL channel)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.AdjustCurve(dib, lookUpTable, channel);
 		}
 
@@ -13215,7 +11731,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool AdjustGamma(double gamma)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.AdjustGamma(dib, gamma);
 		}
 
@@ -13227,7 +11743,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool AdjustBrightness(double percentage)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.AdjustBrightness(dib, percentage);
 		}
 
@@ -13239,7 +11755,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool AdjustContrast(double percentage)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.AdjustContrast(dib, percentage);
 		}
 
@@ -13249,7 +11765,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool Invert()
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.Invert(dib);
 		}
 
@@ -13261,7 +11777,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool GetHistogram(FREE_IMAGE_COLOR_CHANNEL channel, out int[] histogram)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			histogram = new int[256];
 			return FreeImage.GetHistogram(dib, histogram, channel);
 		}
@@ -13273,7 +11789,7 @@ namespace FreeImageAPI
 		/// <returns>The color channel in a new instance.</returns>
 		public FreeImageBitmap GetChannel(FREE_IMAGE_COLOR_CHANNEL channel)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib = FreeImage.GetChannel(dib, channel);
 			if (!newDib.IsNull)
@@ -13288,13 +11804,13 @@ namespace FreeImageAPI
 		/// Insert a 8-bit dib into a 24- or 32-bit image.
 		/// Both images must have to same width and height.
 		/// </summary>
-		/// <param name="bitmap">The FreeImageBitmap to insert.</param>
+		/// <param name="bitmap">The <see cref="FreeImageBitmap"/> to insert.</param>
 		/// <param name="channel">The color channel to replace.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool SetChannel(FreeImageBitmap bitmap, FREE_IMAGE_COLOR_CHANNEL channel)
 		{
-			ThrowOnDisposed();
-			bitmap.ThrowOnDisposed();
+			EnsureNotDisposed();
+			bitmap.EnsureNotDisposed();
 			return FreeImage.SetChannel(dib, bitmap.dib, channel);
 		}
 
@@ -13305,7 +11821,7 @@ namespace FreeImageAPI
 		/// <returns>The color channel in a new instance.</returns>
 		public FreeImageBitmap GetComplexChannel(FREE_IMAGE_COLOR_CHANNEL channel)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib = FreeImage.GetComplexChannel(dib, channel);
 			if (!newDib.IsNull)
@@ -13320,29 +11836,29 @@ namespace FreeImageAPI
 		/// Set the real or imaginary part of a complex image.
 		/// Both images must have to same width and height.
 		/// </summary>
-		/// <param name="bitmap">The FreeImageBitmap to insert.</param>
+		/// <param name="bitmap">The <see cref="FreeImageBitmap"/> to insert.</param>
 		/// <param name="channel">The color channel to replace.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool SetComplexChannel(FreeImageBitmap bitmap, FREE_IMAGE_COLOR_CHANNEL channel)
 		{
-			ThrowOnDisposed();
-			bitmap.ThrowOnDisposed();
+			EnsureNotDisposed();
+			bitmap.EnsureNotDisposed();
 			return FreeImage.SetComplexChannel(dib, bitmap.dib, channel);
 		}
 
 		/// <summary>
-		/// Copy a sub part of this FreeImageBitmap.
+		/// Copy a sub part of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		/// <param name="rect">The subpart to copy.</param>
 		/// <returns>The sub part in a new instance.</returns>
 		public FreeImageBitmap Copy(Rectangle rect)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return Copy(rect.Left, rect.Top, rect.Right, rect.Bottom);
 		}
 
 		/// <summary>
-		/// Copy a sub part of this FreeImageBitmap.
+		/// Copy a sub part of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
 		/// <param name="left">Specifies the left position of the cropped rectangle.</param>
 		/// <param name="top">Specifies the top position of the cropped rectangle.</param>
@@ -13351,7 +11867,7 @@ namespace FreeImageAPI
 		/// <returns>The sub part in a new instance.</returns>
 		public FreeImageBitmap Copy(int left, int top, int right, int bottom)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib = FreeImage.Copy(dib, left, top, right, bottom);
 			if (!newDib.IsNull)
@@ -13363,10 +11879,10 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Alpha blend or combine a sub part image with the current image.
-		/// The bit depth of 'bitmap' must be greater than or equal to the bit depth this instance.
+		/// Alpha blend or combine a sub part image with this <see cref="FreeImageBitmap"/>.
+		/// The bit depth of <paramref name="bitmap"/> must be greater than or equal to the bit depth this instance.
 		/// </summary>
-		/// <param name="bitmap">The FreeImageBitmap to paste into this instance.</param>
+		/// <param name="bitmap">The <see cref="FreeImageBitmap"/> to paste into this instance.</param>
 		/// <param name="left">Specifies the left position of the sub image.</param>
 		/// <param name="top">Specifies the top position of the sub image.</param>
 		/// <param name="alpha">alpha blend factor.
@@ -13375,16 +11891,16 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool Paste(FreeImageBitmap bitmap, int left, int top, int alpha)
 		{
-			ThrowOnDisposed();
-			bitmap.ThrowOnDisposed();
+			EnsureNotDisposed();
+			bitmap.EnsureNotDisposed();
 			return FreeImage.Paste(dib, bitmap.dib, left, top, alpha);
 		}
 
 		/// <summary>
-		/// Alpha blend or combine a sub part image with the current image.
-		/// The bit depth of 'bitmap' must be greater than or equal to the bit depth this instance.
+		/// Alpha blend or combine a sub part image with tthis <see cref="FreeImageBitmap"/>.
+		/// The bit depth of <paramref name="bitmap"/> must be greater than or equal to the bit depth this instance.
 		/// </summary>
-		/// <param name="bitmap">The FreeImageBitmap to paste into this instance.</param>
+		/// <param name="bitmap">The <see cref="FreeImageBitmap"/> to paste into this instance.</param>
 		/// <param name="point">Specifies the position of the sub image.</param>
 		/// <param name="alpha">alpha blend factor.
 		/// The source and destination images are alpha blended if alpha=0..255.
@@ -13392,27 +11908,28 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool Paste(FreeImageBitmap bitmap, Point point, int alpha)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return Paste(bitmap, point.X, point.Y, alpha);
 		}
 
 		/// <summary>
 		/// This method composite a transparent foreground image against a single background color or
 		/// against a background image.
-		/// In case 'useBitmapBackground' is false and 'applicationBackground' and 'bitmapBackGround'
+		/// In case <paramref name="useBitmapBackground"/> is false and <paramref name="applicationBackground"/>
+		/// and <paramref name="bitmapBackGround"/>
 		/// are null, a checkerboard will be used as background.
 		/// </summary>
 		/// <param name="useBitmapBackground">When true the background of this instance is used
 		/// if it contains one.</param>
-		/// <param name="applicationBackground">Backgroundcolor used in case 'useBitmapBackground' is false
-		/// and 'applicationBackground' is not null.</param>
-		/// <param name="bitmapBackGround">Background used in case 'useBitmapBackground' is false and 
-		/// 'applicationBackground' is null.</param>
+		/// <param name="applicationBackground">Backgroundcolor used in case <paramref name="useBitmapBackground"/> is false
+		/// and <paramref name="applicationBackground"/> is not null.</param>
+		/// <param name="bitmapBackGround">Background used in case <paramref name="useBitmapBackground"/>
+		/// is false and <paramref name="applicationBackground"/> is null.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool Composite(bool useBitmapBackground, Color? applicationBackground, FreeImageBitmap bitmapBackGround)
 		{
-			ThrowOnDisposed();
-			bitmapBackGround.ThrowOnDisposed();
+			EnsureNotDisposed();
+			bitmapBackGround.EnsureNotDisposed();
 			RGBQUAD? rgb = applicationBackground;
 			return ReplaceDib(
 				FreeImage.Composite(
@@ -13430,7 +11947,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool PreMultiplyWithAlpha()
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.PreMultiplyWithAlpha(dib);
 		}
 
@@ -13441,7 +11958,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool MultigridPoissonSolver(int ncycle)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return ReplaceDib(FreeImage.MultigridPoissonSolver(dib, ncycle));
 		}
 
@@ -13464,7 +11981,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool AdjustColors(double brightness, double contrast, double gamma, bool invert)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.AdjustColors(dib, brightness, contrast, gamma, invert);
 		}
 
@@ -13486,7 +12003,7 @@ namespace FreeImageAPI
 		/// </exception>
 		public uint ApplyColorMapping(RGBQUAD[] srccolors, RGBQUAD[] dstcolors, bool ignore_alpha, bool swap)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			if (srccolors == null)
 			{
 				throw new ArgumentNullException("srccolors");
@@ -13512,7 +12029,7 @@ namespace FreeImageAPI
 		/// <returns>The total number of pixels changed.</returns>
 		public uint SwapColors(RGBQUAD color_a, RGBQUAD color_b, bool ignore_alpha)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.SwapColors(dib, ref color_a, ref color_b, ignore_alpha);
 		}
 
@@ -13535,7 +12052,7 @@ namespace FreeImageAPI
 		/// </exception>
 		public uint ApplyPaletteIndexMapping(byte[] srcindices, byte[] dstindices, uint count, bool swap)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			if (srcindices == null)
 			{
 				throw new ArgumentNullException("srcindices");
@@ -13559,7 +12076,7 @@ namespace FreeImageAPI
 		/// <returns>The total number of pixels changed.</returns>
 		public uint SwapPaletteIndices(byte index_a, byte index_b)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			return FreeImage.SwapPaletteIndices(dib, ref index_a, ref index_b);
 		}
 
@@ -13582,12 +12099,12 @@ namespace FreeImageAPI
 		/// Creates a new ICC-Profile.
 		/// </summary>
 		/// <param name="data">The data of the new ICC-Profile.</param>
-		/// <param name="size">The number of bytes of 'data' to use.</param>
+		/// <param name="size">The number of bytes of <paramref name="data"/> to use.</param>
 		/// <returns>The new ICC-Profile of the bitmap.</returns>
 		/// <exception cref="ArgumentNullException"><paramref name="data"/> is null.</exception>
 		public FIICCPROFILE CreateICCProfile(byte[] data, int size)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			if (data == null)
 			{
 				throw new ArgumentNullException("data");
@@ -13595,15 +12112,35 @@ namespace FreeImageAPI
 			return FreeImage.CreateICCProfileEx(dib, data, size);
 		}
 
+		/// <summary>
+		/// Determines whether this and the specified instances are the same.
+		/// </summary>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if this instance is the same <paramref name="obj"/>
+		/// or if both are null references; otherwise, false.</returns>
+		public override bool Equals(object obj)
+		{
+			return ReferenceEquals(this, obj);
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="FreeImageBitmap"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FreeImageBitmap"/>.</returns>
+		public override int GetHashCode()
+		{
+			return dib.GetHashCode();
+		}
+
 		#endregion
 
 		#region Static functions
 
 		/// <summary>
-		/// Returns a value that indicates whether the pixel format for this image contains alpha information.
+		/// Returns a value that indicates whether the pixel format for this <see cref="FreeImageBitmap"/> contains alpha information.
 		/// </summary>
-		/// <param name="pixfmt">The PixelFormat to test.</param>
-		/// <returns>true if pixfmt contains alpha information; otherwise, false.</returns>
+		/// <param name="pixfmt">The <see cref="System.Drawing.Imaging.PixelFormat"/> to test.</param>
+		/// <returns><b>true</b> if pixfmt contains alpha information; otherwise, <b>false</b>.</returns>
 		public static bool IsAlphaPixelFormat(PixelFormat pixfmt)
 		{
 			return Bitmap.IsAlphaPixelFormat(pixfmt);
@@ -13612,7 +12149,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Returns a value that indicates whether the pixel format is 32 bits per pixel.
 		/// </summary>
-		/// <param name="pixfmt">The PixelFormat to test.</param>
+		/// <param name="pixfmt">The <see cref="System.Drawing.Imaging.PixelFormat"/> to test.</param>
 		/// <returns>true if pixfmt is canonical; otherwise, false.</returns>
 		public static bool IsCanonicalPixelFormat(PixelFormat pixfmt)
 		{
@@ -13622,7 +12159,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Returns a value that indicates whether the pixel format is 64 bits per pixel.
 		/// </summary>
-		/// <param name="pixfmt">The PixelFormat enumeration to test.</param>
+		/// <param name="pixfmt">The <see cref="System.Drawing.Imaging.PixelFormat"/> enumeration to test.</param>
 		/// <returns>true if pixfmt is extended; otherwise, false.</returns>
 		public static bool IsExtendedPixelFormat(PixelFormat pixfmt)
 		{
@@ -13630,10 +12167,10 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a FreeImageBitmap from a Windows handle to an icon.
+		/// Creates a <see cref="FreeImageBitmap"/> from a Windows handle to an icon.
 		/// </summary>
 		/// <param name="hicon">A handle to an icon.</param>
-		/// <returns>The FreeImageBitmap that this method creates.</returns>
+		/// <returns>The <see cref="FreeImageBitmap"/> that this method creates.</returns>
 		public static FreeImageBitmap FromHicon(IntPtr hicon)
 		{
 			using (Bitmap bitmap = Bitmap.FromHicon(hicon))
@@ -13643,12 +12180,12 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a FreeImageBitmap from the specified Windows resource.
+		/// Creates a <see cref="FreeImageBitmap"/> from the specified Windows resource.
 		/// </summary>
 		/// <param name="hinstance">A handle to an instance of the executable
 		/// file that contains the resource.</param>
 		/// <param name="bitmapName">A string containing the name of the resource bitmap.</param>
-		/// <returns>The FreeImageBitmap that this method creates.</returns>
+		/// <returns>The <see cref="FreeImageBitmap"/> that this method creates.</returns>
 		public static FreeImageBitmap FromResource(IntPtr hinstance, string bitmapName)
 		{
 			using (Bitmap bitmap = Bitmap.FromResource(hinstance, bitmapName))
@@ -13658,34 +12195,34 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates an FreeImageImage from the specified file.
+		/// Creates a <see cref="FreeImageBitmap"/> from the specified file.
 		/// </summary>
 		/// <param name="filename">A string that contains the name of the file
-		/// from which to create the FreeImageBitmap.</param>
-		/// <returns>The FreeImageImage this method creates.</returns>
+		/// from which to create the <see cref="FreeImageBitmap"/>.</param>
+		/// <returns>The <see cref="FreeImageBitmap"/> this method creates.</returns>
 		public static FreeImageBitmap FromFile(string filename)
 		{
 			return new FreeImageBitmap(filename);
 		}
 
 		/// <summary>
-		/// Creates an Image from the specified file
+		/// Creates a <see cref="FreeImageBitmap"/> from the specified file
 		/// using embedded color management information in that file.
 		/// </summary>
 		/// <param name="filename">A string that contains the
-		/// name of the file from which to create the FreeImageBitmap.</param>
+		/// name of the file from which to create the <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="useEmbeddedColorManagement">Ignored.</param>
-		/// <returns>The FreeImageBitmap this method creates.</returns>
+		/// <returns>The <see cref="FreeImageBitmap"/> this method creates.</returns>
 		public static FreeImageBitmap FromFile(string filename, bool useEmbeddedColorManagement)
 		{
 			return new FreeImageBitmap(filename);
 		}
 
 		/// <summary>
-		/// Creates a FreeImageBitmap from a handle to a GDI bitmap.
+		/// Creates a <see cref="FreeImageBitmap"/> from a handle to a GDI bitmap.
 		/// </summary>
-		/// <param name="hbitmap">The GDI bitmap handle from which to create the FreeImageBitmap.</param>
-		/// <returns>The FreeImageBitmap this method creates.</returns>
+		/// <param name="hbitmap">The GDI bitmap handle from which to create the <see cref="FreeImageBitmap"/>.</param>
+		/// <returns>The <see cref="FreeImageBitmap"/> this method creates.</returns>
 		public static FreeImageBitmap FromHbitmap(IntPtr hbitmap)
 		{
 			FreeImageBitmap result = null;
@@ -13699,11 +12236,11 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a FreeImageBitmap from a handle to a GDI bitmap and a handle to a GDI palette.
+		/// Creates a <see cref="FreeImageBitmap"/> from a handle to a GDI bitmap and a handle to a GDI palette.
 		/// </summary>
-		/// <param name="hbitmap">The GDI bitmap handle from which to create the FreeImageBitmap.</param>
+		/// <param name="hbitmap">The GDI bitmap handle from which to create the <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="hpalette">Ignored.</param>
-		/// <returns>The FreeImageBitmap this method creates.</returns>
+		/// <returns>The <see cref="FreeImageBitmap"/> this method creates.</returns>
 		public static FreeImageBitmap FromHbitmap(IntPtr hbitmap, IntPtr hpalette)
 		{
 			return FromHbitmap(hbitmap);
@@ -13713,17 +12250,17 @@ namespace FreeImageAPI
 		/// Frees a bitmap handle.
 		/// </summary>
 		/// <param name="hbitmap">Handle to a bitmap.</param>
-		/// <returns>True on success, false on failure.</returns>
+		/// <returns><b>true</b> on success, <b>false</b> on failure.</returns>
 		public static bool FreeHbitmap(IntPtr hbitmap)
 		{
 			return FreeImage.FreeHbitmap(hbitmap);
 		}
 
 		/// <summary>
-		/// Creates a FreeImageBitmap from the specified data stream.
+		/// Creates a <see cref="FreeImageBitmap"/> from the specified data stream.
 		/// </summary>
-		/// <param name="stream">A Stream that contains the data for this FreeImageBitmap.</param>
-		/// <returns>The FreeImageBitmap this method creates.</returns>
+		/// <param name="stream">A <see cref="Stream"/> that contains the data for this <see cref="FreeImageBitmap"/>.</param>
+		/// <returns>The <see cref="FreeImageBitmap"/> this method creates.</returns>
 		public static FreeImageBitmap FromStream(Stream stream)
 		{
 			try
@@ -13737,23 +12274,23 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a FreeImageBitmap from the specified data stream.
+		/// Creates a <see cref="FreeImageBitmap"/> from the specified data stream.
 		/// </summary>
-		/// <param name="stream">A Stream that contains the data for this FreeImageBitmap.</param>
+		/// <param name="stream">A <see cref="Stream"/> that contains the data for this <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="useEmbeddedColorManagement">Ignored.</param>
-		/// <returns>The FreeImageBitmap this method creates.</returns>
+		/// <returns>The <see cref="FreeImageBitmap"/> this method creates.</returns>
 		public static FreeImageBitmap FromStream(Stream stream, bool useEmbeddedColorManagement)
 		{
 			return new FreeImageBitmap(stream);
 		}
 
 		/// <summary>
-		/// Creates a FreeImageBitmap from the specified data stream.
+		/// Creates a <see cref="FreeImageBitmap"/> from the specified data stream.
 		/// </summary>
-		/// <param name="stream">A Stream that contains the data for this FreeImageBitmap.</param>
+		/// <param name="stream">A <see cref="Stream"/> that contains the data for this <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="useEmbeddedColorManagement">Ignored.</param>
 		/// <param name="validateImageData">Ignored.</param>
-		/// <returns>The FreeImageBitmap this method creates.</returns>
+		/// <returns>The <see cref="FreeImageBitmap"/> this method creates.</returns>
 		public static FreeImageBitmap FromStream(Stream stream, bool useEmbeddedColorManagement, bool validateImageData)
 		{
 			return new FreeImageBitmap(stream);
@@ -13763,7 +12300,7 @@ namespace FreeImageAPI
 		/// Returns the color depth, in number of bits per pixel,
 		/// of the specified pixel format.
 		/// </summary>
-		/// <param name="pixfmt">The PixelFormat member that specifies
+		/// <param name="pixfmt">The <see cref="System.Drawing.Imaging.PixelFormat"/> member that specifies
 		/// the format for which to find the size.</param>
 		/// <returns>The color depth of the specified pixel format.</returns>
 		public static int GetPixelFormatSize(PixelFormat pixfmt)
@@ -13889,7 +12426,7 @@ namespace FreeImageAPI
 		/// single call to AdjustCurve().
 		/// </summary>
 		/// <param name="lookUpTable">Output lookup table to be used with AdjustCurve().
-		/// The size of 'LUT' is assumed to be 256.</param>
+		/// The size of <paramref name="lookUpTable"/> is assumed to be 256.</param>
 		/// <param name="brightness">Percentage brightness value where -100 &lt;= brightness &lt;= 100.
 		/// <para>A value of 0 means no change, less than 0 will make the image darker and greater
 		/// than 0 will make the image brighter.</para></param>
@@ -13923,7 +12460,7 @@ namespace FreeImageAPI
 		/// another multiple-frame image.
 		/// </summary>
 		/// <param name="filename">File to add this frame to.</param>
-		/// <param name="bitmap">A FreeImageBitmap that contains the frame to add.</param>
+		/// <param name="bitmap">A <see cref="FreeImageBitmap"/> that contains the frame to add.</param>
 		/// <param name="format">Format of the image.</param>
 		/// <param name="loadFlags">Flags to enable or disable plugin-features.</param>
 		/// <param name="saveFlags">Flags to enable or disable plugin-features.</param>
@@ -13951,7 +12488,7 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentNullException("bitmap");
 			}
-			bitmap.ThrowOnDisposed();
+			bitmap.EnsureNotDisposed();
 			if (bitmap.dib.IsNull)
 			{
 				throw new Exception();
@@ -13974,10 +12511,10 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a new instance of the 'PropertyItem' class which
+		/// Returns a new instance of the <see cref="PropertyItem"/> class which
 		/// has no public accessible constructor.
 		/// </summary>
-		/// <returns>A new instace of 'PropertyItem'.</returns>
+		/// <returns>A new instace of <see cref="PropertyItem"/>.</returns>
 		public static PropertyItem CreateNewPropertyItem()
 		{
 			return FreeImage.CreatePropertyItem();
@@ -13990,7 +12527,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Throws an exception in case the instance has already been disposed.
 		/// </summary>
-		protected void ThrowOnDisposed()
+		protected void EnsureNotDisposed()
 		{
 			lock (lockObject)
 			{
@@ -14003,11 +12540,11 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Tries to replace the wrapped FIBITMAP with a new one.
+		/// Tries to replace the wrapped <see cref="FIBITMAP"/> with a new one.
 		/// In case the new dib is null or the same as the already
 		/// wrapped one, nothing will be changed and the result will
 		/// be false.
-		/// Otherwise the wrapped FIBITMAP will be unloaded and replaced.
+		/// Otherwise the wrapped <see cref="FIBITMAP"/> will be unloaded and replaced.
 		/// </summary>
 		/// <param name="newDib">The new dib.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
@@ -14024,7 +12561,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Unloads currently wrapped FIBITMAP or unlocks the locked page
+		/// Unloads currently wrapped <see cref="FIBITMAP"/> or unlocks the locked page
 		/// in case it came from a multipaged bitmap.
 		/// </summary>
 		protected void UnloadDib()
@@ -14045,7 +12582,7 @@ namespace FreeImageAPI
 		#region Interfaces
 
 		/// <summary>
-		/// Helper class to store informations for 'SaveAdd'.
+		/// Helper class to store informations for <see cref="FreeImageBitmap.SaveAdd()"/>.
 		/// </summary>
 		private class SaveInformation : ICloneable
 		{
@@ -14061,12 +12598,12 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new object that is a copy of the current instance.
+		/// Creates a deep copy of this <see cref="FreeImageBitmap"/>.
 		/// </summary>
-		/// <returns>A new object that is a copy of this instance.</returns>
+		/// <returns>A deep copy of this <see cref="FreeImageBitmap"/>.</returns>
 		public object Clone()
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib = FreeImage.Clone(dib);
 			if (!dib.IsNull)
@@ -14119,9 +12656,9 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
+		/// Retrieves an object that can iterate through the individual scanlines in this <see cref="FreeImageBitmap"/>.
 		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
+		/// <returns>An <see cref="IEnumerator"/> for the <see cref="FreeImageBitmap"/>.</returns>
 		/// <exception cref="ArgumentException">The bitmaps's type is not supported.</exception>
 		IEnumerator IEnumerable.GetEnumerator()
 		{
@@ -14130,7 +12667,7 @@ namespace FreeImageAPI
 
 		void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
 		{
-			ThrowOnDisposed();
+			EnsureNotDisposed();
 			using (MemoryStream memory = new MemoryStream(DataSize))
 			{
 				if (!FreeImage.SaveToStream(ref dib, memory, FREE_IMAGE_FORMAT.FIF_TIFF, FREE_IMAGE_SAVE_FLAGS.TIFF_LZW, false))
@@ -14211,57 +12748,639 @@ namespace FreeImageAPI
 		}
 	}
 
-	// FreeImages itself is plugin based. Each supported format is integrated by a seperat plugin,
-	// that handles loading, saving, descriptions, identifing ect.
-	// And of course the user can create own plugins and use them in FreeImage.
-	// To do that the above mentioned predefined methodes need to be implemented.
-	//
-	// The class below handles the creation of such a plugin. The class itself is abstract
-	// as well as some core functions that need to be implemented.
-	// The class can be used to enable or disable the plugin in FreeImage after regististration or
-	// retrieve the formatid, assigned by FreeImage.
-	// The class handles the callback functions, garbage collector and pointer operation to make
-	// the implementation as user friendly as possible.
-	//
-	// How to:
-	// There are two functions that need to be implemented: 'GetImplementedMethods' and 'FormatProc'.
-	// 'GetImplementedMethods' is used by the constructor of the abstract class. FreeImage wants
-	// a list of the implemented functions. Each function is represented by a function pointer
-	// (a .NET delegate). In case a function is not implemented FreeImage recieves an empty
-	// delegate (null). To tell the constructor which functions have been implemented the information
-	// is represented by a disjunction of 'MethodFlags'.
-	//
-	// For example:
-	//		return MethodFlags.LoadProc | MethodFlags.SaveProc;
-	//
-	// The above statement means that LoadProc and SaveProc have been implemented by the user.
-	// Keep in mind, that each function has a standard implementation that has static return
-	// values that may cause errors if listed in 'GetImplementedMethods' without a real implementation.
-	//
-	// 'FormatProc' is used by some checks of FreeImage and must be implemented.
-	// 'LoadProc' for example can be implemented if the plugin supports reading, but it
-	// doesn't have to, the plugin could only be used to save an already loaded bitmap in
-	// a special format.
+	/// <summary>
+	/// Class representing a FreeImage format.
+	/// </summary>
+	public sealed class FreeImagePlugin
+	{
+		private readonly FREE_IMAGE_FORMAT fif;
+
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="fif">The FreeImage format to wrap.</param>
+		internal FreeImagePlugin(FREE_IMAGE_FORMAT fif)
+		{
+			this.fif = fif;
+		}
+
+		/// <summary>
+		/// Gets the format of this instance.
+		/// </summary>
+		public FREE_IMAGE_FORMAT FIFormat
+		{
+			get
+			{
+				return fif;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets whether this plugin is enabled.
+		/// </summary>
+		public bool Enabled
+		{
+			get
+			{
+				return (FreeImage.IsPluginEnabled(fif) == 1);
+			}
+			set
+			{
+				FreeImage.SetPluginEnabled(fif, value);
+			}
+		}
+
+		/// <summary>
+		/// Gets a string describing the format.
+		/// </summary>
+		public string Format
+		{
+			get
+			{
+				return FreeImage.GetFormatFromFIF(fif);
+			}
+		}
+
+		/// <summary>
+		/// Gets a comma-delimited file extension list describing the bitmap formats
+		/// this plugin can read and/or write.
+		/// </summary>
+		public string ExtentsionList
+		{
+			get
+			{
+				return FreeImage.GetFIFExtensionList(fif);
+			}
+		}
+
+		/// <summary>
+		/// Gets a descriptive string that describes the bitmap formats
+		/// this plugin can read and/or write.
+		/// </summary>
+		public string Description
+		{
+			get
+			{
+				return FreeImage.GetFIFDescription(fif);
+			}
+		}
+
+		/// <summary>
+		/// Returns a regular expression string that can be used by
+		/// a regular expression engine to identify the bitmap.
+		/// FreeImageQt makes use of this function.
+		/// </summary>
+		public string RegExpr
+		{
+			get
+			{
+				return FreeImage.GetFIFRegExpr(fif);
+			}
+		}
+
+		/// <summary>
+		/// Gets whether this plugin can load bitmaps.
+		/// </summary>
+		public bool SupportsReading
+		{
+			get
+			{
+				return FreeImage.FIFSupportsReading(fif);
+			}
+		}
+
+		/// <summary>
+		/// Gets whether this plugin can save bitmaps.
+		/// </summary>
+		public bool SupportsWriting
+		{
+			get
+			{
+				return FreeImage.FIFSupportsWriting(fif);
+			}
+		}
+
+		/// <summary>
+		/// Checks whether this plugin can save a bitmap in the desired data type.
+		/// </summary>
+		/// <param name="type">The desired image type.</param>
+		/// <returns>True if this plugin can save bitmaps as the desired type, else false.</returns>
+		public bool SupportsExportType(FREE_IMAGE_TYPE type)
+		{
+			return FreeImage.FIFSupportsExportType(fif, type);
+		}
+
+		/// <summary>
+		/// Checks whether this plugin can save bitmaps in the desired bit depth.
+		/// </summary>
+		/// <param name="bpp">The desired bit depth.</param>
+		/// <returns>True if this plugin can save bitmaps in the desired bit depth, else false.</returns>
+		public bool SupportsExportBPP(int bpp)
+		{
+			return FreeImage.FIFSupportsExportBPP(fif, bpp);
+		}
+
+		/// <summary>
+		/// Gets whether this plugin can load or save an ICC profile.
+		/// </summary>
+		public bool SupportsICCProfiles
+		{
+			get
+			{
+				return FreeImage.FIFSupportsICCProfiles(fif);
+			}
+		}
+
+		/// <summary>
+		/// Checks whether an extension is valid for this format.
+		/// </summary>
+		/// <param name="extension">The desired extension.</param>
+		/// <returns>True if the extension is valid for this format, false otherwise.</returns>
+		public bool ValidExtension(string extension)
+		{
+			return FreeImage.IsExtensionValidForFIF(fif, extension);
+		}
+
+		/// <summary>
+		/// Checks whether an extension is valid for this format.
+		/// </summary>
+		/// <param name="extension">The desired extension.</param>
+		/// <param name="comparisonType">The string comparison type.</param>
+		/// <returns>True if the extension is valid for this format, false otherwise.</returns>
+		public bool ValidExtension(string extension, StringComparison comparisonType)
+		{
+			return FreeImage.IsExtensionValidForFIF(fif, extension, comparisonType);
+		}
+
+		/// <summary>
+		/// Checks whether a filename is valid for this format.
+		/// </summary>
+		/// <param name="filename">The desired filename.</param>
+		/// <returns>True if the filename is valid for this format, false otherwise.</returns>
+		public bool ValidFilename(string filename)
+		{
+			return FreeImage.IsFilenameValidForFIF(fif, filename);
+		}
+
+		/// <summary>
+		/// Checks whether a filename is valid for this format.
+		/// </summary>
+		/// <param name="filename">The desired filename.</param>
+		/// <param name="comparisonType">The string comparison type.</param>
+		/// <returns>True if the filename is valid for this format, false otherwise.</returns>
+		public bool ValidFilename(string filename, StringComparison comparisonType)
+		{
+			return FreeImage.IsFilenameValidForFIF(fif, filename, comparisonType);
+		}
+
+		/// <summary>
+		/// Gets a descriptive string that describes the bitmap formats
+		/// this plugin can read and/or write.
+		/// </summary>
+		/// <returns>A descriptive string that describes the bitmap formats.</returns>
+		public override string ToString()
+		{
+			return Description;
+		}
+	}
 
 	/// <summary>
-	/// Wrapper class for creating an own FreeImage-Plugin.
+	/// Internal class wrapping stream io functions.
 	/// </summary>
+	/// <remarks>
+	/// FreeImage can read files from a disk or a network drive but also allows the user to
+	/// implement their own loading or saving functions to load them directly from an ftp or web
+	/// server for example.
+	/// <para/>
+	/// In .NET streams are a common way to handle data. The <b>FreeImageStreamIO</b> class handles
+	/// the loading and saving from and to streams. It implements the funtions FreeImage needs
+	/// to load data from an an arbitrary source.
+	/// <para/>
+	/// FreeImage requests a <see cref="FreeImageAPI.FreeImageIO"/> structure containing pointers (delegates) to these
+	/// functions. <b>FreeImageStreamIO</b> implements the function creates the structure and
+	/// prevents the garbage collector from moving these functions in memory.
+	/// <para/>
+	/// The class is for internal use only.
+	/// </remarks>
+	internal static class FreeImageStreamIO
+	{
+		private static GCHandle readHandle;
+		private static GCHandle writeHandle;
+		private static GCHandle seekHandle;
+		private static GCHandle tellHandle;
+
+		/// <summary>
+		/// <see cref="FreeImageAPI.FreeImageIO"/> structure that can be used to read from streams via
+		/// <see cref="FreeImageAPI.FreeImage.LoadFromHandle(FREE_IMAGE_FORMAT, ref FreeImageIO, fi_handle, FREE_IMAGE_LOAD_FLAGS)"/>.
+		/// </summary>
+		public static FreeImageIO io;
+
+		/// <summary>
+		/// Initializes a new instances which can be used to
+		/// create a FreeImage compatible <see cref="FreeImageAPI.FreeImageIO"/> structure.
+		/// </summary>
+		static FreeImageStreamIO()
+		{
+			io.readProc = new ReadProc(streamRead);
+			io.writeProc = new WriteProc(streamWrite);
+			io.seekProc = new SeekProc(streamSeek);
+			io.tellProc = new TellProc(streamTell);
+			readHandle = GCHandle.Alloc(io.readProc, GCHandleType.Normal);
+			writeHandle = GCHandle.Alloc(io.writeProc, GCHandleType.Normal);
+			seekHandle = GCHandle.Alloc(io.seekProc, GCHandleType.Normal);
+			tellHandle = GCHandle.Alloc(io.tellProc, GCHandleType.Normal);
+		}
+
+		/// <summary>
+		/// Reads the requested data from the stream and writes it to the given address.
+		/// </summary>
+		static unsafe uint streamRead(IntPtr buffer, uint size, uint count, fi_handle handle)
+		{
+			Stream stream = handle.GetObject() as Stream;
+			if ((stream == null) || (!stream.CanRead))
+			{
+				return 0;
+			}
+			uint readCount = 0;
+			byte* ptr = (byte*)buffer;
+			byte[] bufferTemp = new byte[size];
+			int read;
+			while (readCount < count)
+			{
+				read = stream.Read(bufferTemp, 0, (int)size);
+				if (read != (int)size)
+				{
+					stream.Seek(-read, SeekOrigin.Current);
+					break;
+				}
+				for (int i = 0; i < read; i++, ptr++)
+				{
+					*ptr = bufferTemp[i];
+				}
+				readCount++;
+			}
+			return (uint)readCount;
+		}
+
+		/// <summary>
+		/// Reads the given data and writes it into the stream.
+		/// </summary>
+		static unsafe uint streamWrite(IntPtr buffer, uint size, uint count, fi_handle handle)
+		{
+			Stream stream = handle.GetObject() as Stream;
+			if ((stream == null) || (!stream.CanWrite))
+			{
+				return 0;
+			}
+			uint writeCount = 0;
+			byte[] bufferTemp = new byte[size];
+			byte* ptr = (byte*)buffer;
+			while (writeCount < count)
+			{
+				for (int i = 0; i < size; i++, ptr++)
+				{
+					bufferTemp[i] = *ptr;
+				}
+				try
+				{
+					stream.Write(bufferTemp, 0, bufferTemp.Length);
+				}
+				catch
+				{
+					return writeCount;
+				}
+				writeCount++;
+			}
+			return writeCount;
+		}
+
+		/// <summary>
+		/// Moves the streams position.
+		/// </summary>
+		static int streamSeek(fi_handle handle, int offset, SeekOrigin origin)
+		{
+			Stream stream = handle.GetObject() as Stream;
+			if (stream == null)
+			{
+				return 1;
+			}
+			stream.Seek((long)offset, origin);
+			return 0;
+		}
+
+		/// <summary>
+		/// Returns the streams current position
+		/// </summary>
+		static int streamTell(fi_handle handle)
+		{
+			Stream stream = handle.GetObject() as Stream;
+			if (stream == null)
+			{
+				return -1;
+			}
+			return (int)stream.Position;
+		}
+	}
+
+	/// <summary>
+	/// Class handling metadata of a FreeImage bitmap.
+	/// </summary>
+	public class ImageMetadata : IEnumerable, IComparable, IComparable<ImageMetadata>
+	{
+		private readonly List<MetadataModel> data;
+		private readonly FIBITMAP dib;
+		private bool hideEmptyModels;
+
+		/// <summary>
+		/// Initializes a new instance based on the specified <see cref="FIBITMAP"/>,
+		/// showing all known models.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public ImageMetadata(FIBITMAP dib) : this(dib, false) { }
+
+		/// <summary>
+		/// Initializes a new instance based on the specified <see cref="FIBITMAP"/>,
+		/// showing or hiding empry models.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="hideEmptyModels">When <b>true</b>, empty metadata models
+		/// will be hidden until a tag to this model is added.</param>
+		public ImageMetadata(FIBITMAP dib, bool hideEmptyModels)
+		{
+			if (dib.IsNull) throw new ArgumentNullException("dib");
+			data = new List<MetadataModel>(FreeImage.FREE_IMAGE_MDMODELS.Length);
+			this.dib = dib;
+			this.hideEmptyModels = hideEmptyModels;
+
+			foreach (Type exportedType in Assembly.GetAssembly(this.GetType()).GetExportedTypes())
+			{
+				if (exportedType.IsClass &&
+					exportedType.IsPublic &&
+					exportedType.BaseType != null &&
+					exportedType.BaseType == typeof(MetadataModel))
+				{
+					ConstructorInfo constructorInfo = exportedType.GetConstructor(new Type[] { typeof(FIBITMAP) });
+					if (constructorInfo != null)
+					{
+						MetadataModel model = (MetadataModel)constructorInfo.Invoke(new object[] { dib });
+						if (model != null)
+						{
+							data.Add(model);
+						}
+					}
+				}
+			}
+			data.Capacity = data.Count;
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="MetadataModel"/> of the specified type.
+		/// <para>In case the getter returns <c>null</c> the model is not contained
+		/// by the list.</para>
+		/// <para><c>null</c> can be used calling the setter to destroy the model.</para>
+		/// </summary>
+		/// <param name="model">Type of the model.</param>
+		/// <returns>The <see cref="FreeImageAPI.MetadataModel"/> object of the specified type.</returns>
+		public MetadataModel this[FREE_IMAGE_MDMODEL model]
+		{
+			get
+			{
+				for (int i = 0; i < data.Count; i++)
+				{
+					if (data[i].Model == model)
+					{
+						if (!data[i].Exists && hideEmptyModels)
+						{
+							return null;
+						}
+						return data[i];
+					}
+				}
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the <see cref="FreeImageAPI.MetadataModel"/> at the specified index.
+		/// <para>In case the getter returns <c>null</c> the model is not contained
+		/// by the list.</para>
+		/// <para><c>null</c> can be used calling the setter to destroy the model.</para>
+		/// </summary>
+		/// <param name="index">Index of the <see cref="FreeImageAPI.MetadataModel"/> within
+		/// this instance.</param>
+		/// <returns>The <see cref="FreeImageAPI.MetadataModel"/> object at the specified index.</returns>
+		public MetadataModel this[int index]
+		{
+			get
+			{
+				if (index < 0 || index >= data.Count)
+				{
+					throw new ArgumentOutOfRangeException("index");
+				}
+				return (hideEmptyModels && !data[index].Exists) ? null : data[index];
+			}
+		}
+
+		/// <summary>
+		/// Returns a list of all visible <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>.
+		/// </summary>
+		public List<MetadataModel> List
+		{
+			get
+			{
+				if (hideEmptyModels)
+				{
+					List<MetadataModel> result = new List<MetadataModel>();
+					for (int i = 0; i < data.Count; i++)
+					{
+						if (data[i].Exists)
+						{
+							result.Add(data[i]);
+						}
+					}
+					return result;
+				}
+				else
+				{
+					return data;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Adds new tag to the bitmap or updates its value in case it already exists.
+		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
+		/// </summary>
+		/// <param name="tag">The tag to add or update.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="tag"/> is null.</exception>
+		public bool AddTag(MetadataTag tag)
+		{
+			for (int i = 0; i < data.Count; i++)
+			{
+				if (tag.Model == data[i].Model)
+				{
+					return data[i].AddTag(tag);
+				}
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Returns the number of visible <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>.
+		/// </summary>
+		public int Count
+		{
+			get
+			{
+				if (hideEmptyModels)
+				{
+					int count = 0;
+					for (int i = 0; i < data.Count; i++)
+					{
+						if (data[i].Exists)
+						{
+							count++;
+						}
+					}
+					return count;
+				}
+				else
+				{
+					return data.Count;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets whether empty <see cref="FreeImageAPI.MetadataModel">MetadataModels</see> are hidden.
+		/// </summary>
+		public bool HideEmptyModels
+		{
+			get
+			{
+				return hideEmptyModels;
+			}
+			set
+			{
+				hideEmptyModels = value;
+			}
+		}
+
+		/// <summary>
+		/// Retrieves an object that can iterate through the individual
+		/// <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>
+		/// in this <see cref="ImageMetadata"/>.
+		/// </summary>
+		/// <returns>An <see cref="IEnumerator"/> for this <see cref="ImageMetadata"/>.</returns>
+		public IEnumerator GetEnumerator()
+		{
+			if (hideEmptyModels)
+			{
+				List<MetadataModel> tempList = new List<MetadataModel>(data.Count);
+				for (int i = 0; i < data.Count; i++)
+				{
+					if (data[i].Exists)
+					{
+						tempList.Add(data[i]);
+					}
+				}
+				return tempList.GetEnumerator();
+			}
+			else
+			{
+				return data.GetEnumerator();
+			}
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="ImageMetadata"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is ImageMetadata))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((ImageMetadata)obj);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="ImageMetadata"/> object.
+		/// </summary>
+		/// <param name="other">A <see cref="ImageMetadata"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(ImageMetadata other)
+		{
+			return this.dib.CompareTo(other.dib);
+		}
+	}
+
+	/// <summary>
+	/// Class representing own FreeImage-Plugins.
+	/// </summary>
+	/// <remarks>
+	/// FreeImages itself is plugin based. Each supported format is integrated by a seperat plugin,
+	/// that handles loading, saving, descriptions, identifing ect.
+	/// And of course the user can create own plugins and use them in FreeImage.
+	/// To do that the above mentioned predefined methodes need to be implemented.
+	/// <para/>
+	/// The class below handles the creation of such a plugin. The class itself is abstract
+	/// as well as some core functions that need to be implemented.
+	/// The class can be used to enable or disable the plugin in FreeImage after regististration or
+	/// retrieve the formatid, assigned by FreeImage.
+	/// The class handles the callback functions, garbage collector and pointer operation to make
+	/// the implementation as user friendly as possible.
+	/// <para/>
+	/// How to:
+	/// There are two functions that need to be implemented:
+	/// <see cref="FreeImageAPI.LocalPlugin.GetImplementedMethods"/> and
+	/// <see cref="FreeImageAPI.LocalPlugin.FormatProc"/>.
+	/// <see cref="FreeImageAPI.LocalPlugin.GetImplementedMethods"/> is used by the constructor
+	/// of the abstract class. FreeImage wants a list of the implemented functions. Each function is
+	/// represented by a function pointer (a .NET <see cref="System.Delegate"/>). In case a function
+	/// is not implemented FreeImage recieves an empty <b>delegate</b>). To tell the constructor
+	/// which functions have been implemented the information is represented by a disjunction of
+	/// <see cref="FreeImageAPI.LocalPlugin.MethodFlags"/>.
+	/// <para/>
+	/// For example:
+	///		return MethodFlags.LoadProc | MethodFlags.SaveProc;
+	/// <para/>
+	/// The above statement means that LoadProc and SaveProc have been implemented by the user.
+	/// Keep in mind, that each function has a standard implementation that has static return
+	/// values that may cause errors if listed in
+	/// <see cref="FreeImageAPI.LocalPlugin.GetImplementedMethods"/> without a real implementation.
+	/// <para/>
+	/// <see cref="FreeImageAPI.LocalPlugin.FormatProc"/> is used by some checks of FreeImage and
+	/// must be implemented. <see cref="FreeImageAPI.LocalPlugin.LoadProc"/> for example can be
+	/// implemented if the plugin supports reading, but it doesn't have to, the plugin could only
+	/// be used to save an already loaded bitmap in a special format.
+	/// </remarks>
 	public abstract class LocalPlugin
 	{
 		/// <summary>
-		/// Struct containing function pointers
+		/// Struct containing function pointers.
 		/// </summary>
 		private Plugin plugin;
 		/// <summary>
-		/// Delegate for register callback by FreeImage
+		/// Delegate for register callback by FreeImage.
 		/// </summary>
 		private InitProc initProc;
 		/// <summary>
-		/// GCHandles to prevent the garbage collector from chaning function addresses
+		/// GCHandles to prevent the garbage collector from chaning function addresses.
 		/// </summary>
 		private GCHandle[] handles = new GCHandle[16];
 		/// <summary>
-		/// The format id assiged to the plugin
+		/// The format id assiged to the plugin.
 		/// </summary>
 		protected FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 		/// <summary>
@@ -14280,20 +13399,79 @@ namespace FreeImageAPI
 		[Flags]
 		protected enum MethodFlags
 		{
+			/// <summary>
+			/// No mothods implemented.
+			/// </summary>
 			None = 0x0,
+
+			/// <summary>
+			/// DescriptionProc has been implemented.
+			/// </summary>
 			DescriptionProc = 0x1,
+
+			/// <summary>
+			/// ExtensionListProc has been implemented.
+			/// </summary>
 			ExtensionListProc = 0x2,
+
+			/// <summary>
+			/// RegExprProc has been implemented.
+			/// </summary>
 			RegExprProc = 0x4,
+
+			/// <summary>
+			/// OpenProc has been implemented.
+			/// </summary>
 			OpenProc = 0x8,
+
+			/// <summary>
+			/// CloseProc has been implemented.
+			/// </summary>
 			CloseProc = 0x10,
+
+			/// <summary>
+			/// PageCountProc has been implemented.
+			/// </summary>
 			PageCountProc = 0x20,
+
+			/// <summary>
+			/// PageCapabilityProc has been implemented.
+			/// </summary>
 			PageCapabilityProc = 0x40,
+
+			/// <summary>
+			/// LoadProc has been implemented.
+			/// </summary>
 			LoadProc = 0x80,
+
+			/// <summary>
+			/// SaveProc has been implemented.
+			/// </summary>
 			SaveProc = 0x100,
+
+			/// <summary>
+			/// ValidateProc has been implemented.
+			/// </summary>
 			ValidateProc = 0x200,
+
+			/// <summary>
+			/// MimeProc has been implemented.
+			/// </summary>
 			MimeProc = 0x400,
+
+			/// <summary>
+			/// SupportsExportBPPProc has been implemented.
+			/// </summary>
 			SupportsExportBPPProc = 0x800,
+
+			/// <summary>
+			/// SupportsExportTypeProc has been implemented.
+			/// </summary>
 			SupportsExportTypeProc = 0x1000,
+
+			/// <summary>
+			/// SupportsICCProfilesProc has been implemented.
+			/// </summary>
 			SupportsICCProfilesProc = 0x2000
 		}
 
@@ -14307,7 +13485,7 @@ namespace FreeImageAPI
 		protected abstract MethodFlags GetImplementedMethods();
 
 		/// <summary>
-		/// Implementation of 'FormatProc'
+		/// Implementation of <b>FormatProc</b>
 		/// </summary>
 		/// <returns>A string containing the plugins format.</returns>
 		protected abstract string FormatProc();
@@ -14383,72 +13561,72 @@ namespace FreeImageAPI
 			int i = 0;
 			implementedMethods = GetImplementedMethods();
 
-			if ((implementedMethods & MethodFlags.DescriptionProc) > 0)
+			if ((implementedMethods & MethodFlags.DescriptionProc) != 0)
 			{
 				plugin.descriptionProc = new DescriptionProc(DescriptionProc);
 				handles[i++] = GetHandle(plugin.descriptionProc);
 			}
-			if ((implementedMethods & MethodFlags.ExtensionListProc) > 0)
+			if ((implementedMethods & MethodFlags.ExtensionListProc) != 0)
 			{
 				plugin.extensionListProc = new ExtensionListProc(ExtensionListProc);
 				handles[i++] = GetHandle(plugin.extensionListProc);
 			}
-			if ((implementedMethods & MethodFlags.RegExprProc) > 0)
+			if ((implementedMethods & MethodFlags.RegExprProc) != 0)
 			{
 				plugin.regExprProc = new RegExprProc(RegExprProc);
 				handles[i++] = GetHandle(plugin.regExprProc);
 			}
-			if ((implementedMethods & MethodFlags.OpenProc) > 0)
+			if ((implementedMethods & MethodFlags.OpenProc) != 0)
 			{
 				plugin.openProc = new OpenProc(OpenProc);
 				handles[i++] = GetHandle(plugin.openProc);
 			}
-			if ((implementedMethods & MethodFlags.CloseProc) > 0)
+			if ((implementedMethods & MethodFlags.CloseProc) != 0)
 			{
 				plugin.closeProc = new CloseProc(CloseProc);
 				handles[i++] = GetHandle(plugin.closeProc);
 			}
-			if ((implementedMethods & MethodFlags.PageCountProc) > 0)
+			if ((implementedMethods & MethodFlags.PageCountProc) != 0)
 			{
 				plugin.pageCountProc = new PageCountProc(PageCountProc);
 				handles[i++] = GetHandle(plugin.pageCountProc);
 			}
-			if ((implementedMethods & MethodFlags.PageCapabilityProc) > 0)
+			if ((implementedMethods & MethodFlags.PageCapabilityProc) != 0)
 			{
 				plugin.pageCapabilityProc = new PageCapabilityProc(PageCapabilityProc);
 				handles[i++] = GetHandle(plugin.pageCapabilityProc);
 			}
-			if ((implementedMethods & MethodFlags.LoadProc) > 0)
+			if ((implementedMethods & MethodFlags.LoadProc) != 0)
 			{
 				plugin.loadProc = new LoadProc(LoadProc);
 				handles[i++] = GetHandle(plugin.loadProc);
 			}
-			if ((implementedMethods & MethodFlags.SaveProc) > 0)
+			if ((implementedMethods & MethodFlags.SaveProc) != 0)
 			{
 				plugin.saveProc = new SaveProc(SaveProc);
 				handles[i++] = GetHandle(plugin.saveProc);
 			}
-			if ((implementedMethods & MethodFlags.ValidateProc) > 0)
+			if ((implementedMethods & MethodFlags.ValidateProc) != 0)
 			{
 				plugin.validateProc = new ValidateProc(ValidateProc);
 				handles[i++] = GetHandle(plugin.validateProc);
 			}
-			if ((implementedMethods & MethodFlags.MimeProc) > 0)
+			if ((implementedMethods & MethodFlags.MimeProc) != 0)
 			{
 				plugin.mimeProc = new MimeProc(MimeProc);
 				handles[i++] = GetHandle(plugin.mimeProc);
 			}
-			if ((implementedMethods & MethodFlags.SupportsExportBPPProc) > 0)
+			if ((implementedMethods & MethodFlags.SupportsExportBPPProc) != 0)
 			{
 				plugin.supportsExportBPPProc = new SupportsExportBPPProc(SupportsExportBPPProc);
 				handles[i++] = GetHandle(plugin.supportsExportBPPProc);
 			}
-			if ((implementedMethods & MethodFlags.SupportsExportTypeProc) > 0)
+			if ((implementedMethods & MethodFlags.SupportsExportTypeProc) != 0)
 			{
 				plugin.supportsExportTypeProc = new SupportsExportTypeProc(SupportsExportTypeProc);
 				handles[i++] = GetHandle(plugin.supportsExportTypeProc);
 			}
-			if ((implementedMethods & MethodFlags.SupportsICCProfilesProc) > 0)
+			if ((implementedMethods & MethodFlags.SupportsICCProfilesProc) != 0)
 			{
 				plugin.supportsICCProfilesProc = new SupportsICCProfilesProc(SupportsICCProfilesProc);
 				handles[i++] = GetHandle(plugin.supportsICCProfilesProc);
@@ -14470,12 +13648,17 @@ namespace FreeImageAPI
 			}
 		}
 
+		/// <summary>
+		/// Releases all resources used by the instance.
+		/// </summary>
 		~LocalPlugin()
 		{
 			for (int i = 0; i < handles.Length; i++)
 			{
 				if (handles[i].IsAllocated)
+				{
 					handles[i].Free();
+				}
 			}
 		}
 
@@ -14500,16 +13683,24 @@ namespace FreeImageAPI
 			get
 			{
 				if (registered)
+				{
 					return (FreeImage.IsPluginEnabled(format) > 0);
+				}
 				else
+				{
 					throw new ObjectDisposedException("plugin not registered");
+				}
 			}
 			set
 			{
 				if (registered)
+				{
 					FreeImage.SetPluginEnabled(format, value);
+				}
 				else
+				{
 					throw new ObjectDisposedException("plugin not registered");
+				}
 			}
 		}
 
@@ -14522,7 +13713,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets the FREE_IMAGE_FORMAT FreeImage assigned to this plugin.
+		/// Gets the <see cref="FREE_IMAGE_FORMAT"/> FreeImage assigned to this plugin.
 		/// </summary>
 		public FREE_IMAGE_FORMAT Format
 		{
@@ -14588,132 +13779,2660 @@ namespace FreeImageAPI
 		}
 	}
 
-	// FreeImage can read files from a disk or a network drive but also allows the user to
-	// implement their own loading or saving functions to load them directly from an ftp or web
-	// server for example.
-	//
-	// In .NET streams are a common way to handle data. The FreeImageStreamIO class handles
-	// the loading and saving from and to streams. It implements the funtions FreeImage needs
-	// to load data from an an arbitrary source.
-	//
-	// FreeImage requests a 'FreeImageIO' structure containing pointers (delegates) to these
-	// functions. FreeImageStreamIO implements the function creates the structure and
-	// prevents the garbage collector from moving these functions in memory.
-	//
-	// The class is for internal use only.
-
 	/// <summary>
-	/// Internal class wrapping stream io functions.
+	/// Represents unmanaged memory, containing an array of a given structure.
 	/// </summary>
-	internal static class FreeImageStreamIO
+	/// <typeparam name="T">Structuretype represented by the instance.</typeparam>
+	/// <remarks>
+	/// <see cref="System.Boolean"/> and <see cref="System.Char"/> can not be marshalled.
+	/// <para/>
+	/// Use <see cref="System.Int32"/> instead of <see cref="System.Boolean"/> and
+	/// <see cref="System.Byte"/> instead of <see cref="System.Char"/>.
+	/// </remarks>
+	public unsafe class MemoryArray<T> : ICloneable, ICollection, IEnumerable<T>, IEquatable<MemoryArray<T>> where T : struct
 	{
-		private static GCHandle readHandle;
-		private static GCHandle writeHandle;
-		private static GCHandle seekHandle;
-		private static GCHandle tellHandle;
+		/// <summary>
+		/// Baseaddress of the wrapped memory.
+		/// </summary>
+		protected readonly byte* baseAddress;
 
 		/// <summary>
-		/// FreeImageIO structure that can be used to read
-		/// from streams via 'LoadFromHandle'.
+		/// Number of elements being wrapped.
 		/// </summary>
-		public static FreeImageIO io;
+		protected readonly int length;
 
 		/// <summary>
-		/// Creates a new FreeImageStreamIO class which can be used to
-		/// create a FreeImage compatible FreeImageIO structure.
+		/// Size, in bytes, of each element.
 		/// </summary>
-		static FreeImageStreamIO()
+		protected readonly int size;
+
+		/// <summary>
+		/// Array of <b>T</b> containing a single element.
+		/// The array is used as a workaround, because there are no pointer for generic types.
+		/// </summary>
+		protected readonly T[] buffer;
+
+		/// <summary>
+		/// Pointer to the element of <b>buffer</b>.
+		/// </summary>
+		protected readonly byte* ptr;
+
+		/// <summary>
+		/// Handle for pinning <b>buffer</b>.
+		/// </summary>
+		protected readonly GCHandle handle;
+
+		/// <summary>
+		/// Indicates whether the wrapped memory is handled like a bitfield.
+		/// </summary>
+		protected readonly bool isOneBit;
+
+		/// <summary>
+		/// Indicates whther the wrapped memory is handles like 4-bit blocks.
+		/// </summary>
+		protected readonly bool isFourBit;
+
+		/// <summary>
+		/// An object that can be used to synchronize access to the <see cref="MemoryArray&lt;T&gt;"/>.
+		/// </summary>
+		protected object syncRoot = null;
+
+		/// <summary>
+		/// Initializes a new instance.
+		/// </summary>
+		protected MemoryArray()
 		{
-			io.readProc = new ReadProc(streamRead);
-			io.writeProc = new WriteProc(streamWrite);
-			io.seekProc = new SeekProc(streamSeek);
-			io.tellProc = new TellProc(streamTell);
-			readHandle = GCHandle.Alloc(io.readProc, GCHandleType.Normal);
-			writeHandle = GCHandle.Alloc(io.writeProc, GCHandleType.Normal);
-			seekHandle = GCHandle.Alloc(io.seekProc, GCHandleType.Normal);
-			tellHandle = GCHandle.Alloc(io.tellProc, GCHandleType.Normal);
 		}
 
-		// Reads the requested data from the stream and writes it to the given address
-		static unsafe uint streamRead(IntPtr buffer, uint size, uint count, fi_handle handle)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MemoryArray&lt;T&gt;"/> class. 
+		/// </summary>
+		/// <param name="baseAddress">Address of the memory block.</param>
+		/// <param name="length">Length of the array.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="baseAddress"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="length"/> is less or equal zero.</exception>
+		/// <exception cref="NotSupportedException">
+		/// The type is not supported.</exception>
+		public MemoryArray(IntPtr baseAddress, int length)
+			: this(baseAddress.ToPointer(), length)
 		{
-			Stream stream = handle.GetObject() as Stream;
-			if ((stream == null) || (!stream.CanRead))
-				return 0;
-			uint readCount = 0;
-			byte* ptr = (byte*)buffer;
-			byte[] bufferTemp = new byte[size];
-			int read;
-			while (readCount < count)
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MemoryArray&lt;T&gt;"/> class. 
+		/// </summary>
+		/// <param name="baseAddress">Address of the memory block.</param>
+		/// <param name="length">Length of the array.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="baseAddress"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="length"/> is less or equal zero.</exception>
+		/// <exception cref="NotSupportedException">
+		/// The type is not supported.</exception>
+		public MemoryArray(void* baseAddress, int length)
+		{
+			if (typeof(T) == typeof(FI1BIT))
 			{
-				read = stream.Read(bufferTemp, 0, (int)size);
-				if (read != (int)size)
-				{
-					stream.Seek(-read, SeekOrigin.Current);
-					break;
-				}
-				for (int i = 0; i < read; i++, ptr++)
-					*ptr = bufferTemp[i];
-				readCount++;
+				isOneBit = true;
 			}
-			return (uint)readCount;
-		}
-
-		// Reads the given data and writes it into the stream
-		static unsafe uint streamWrite(IntPtr buffer, uint size, uint count, fi_handle handle)
-		{
-			Stream stream = handle.GetObject() as Stream;
-			if ((stream == null) || (!stream.CanWrite))
-				return 0;
-			uint writeCount = 0;
-			byte[] bufferTemp = new byte[size];
-			byte* ptr = (byte*)buffer;
-			while (writeCount < count)
+			else if (typeof(T) == typeof(FI4BIT))
 			{
-				for (int i = 0; i < size; i++, ptr++)
-					bufferTemp[i] = *ptr;
-				try
-				{
-					stream.Write(bufferTemp, 0, bufferTemp.Length);
-				}
-				catch
-				{
-					return writeCount;
-				}
-				writeCount++;
+				isFourBit = true;
 			}
-			return writeCount;
+			else
+			{
+				T[] dummy = new T[2];
+				long marshalledSize = Marshal.SizeOf(typeof(T));
+				long structureSize =
+					Marshal.UnsafeAddrOfPinnedArrayElement(dummy, 1).ToInt64() -
+					Marshal.UnsafeAddrOfPinnedArrayElement(dummy, 0).ToInt64();
+				if (marshalledSize != structureSize)
+				{
+					throw new NotSupportedException(
+						"The desired type can not be handled, " +
+						"because it's managed and unmanaged size in bytes are different.");
+				}
+			}
+
+			if (baseAddress == null)
+			{
+				throw new ArgumentNullException("baseAddress");
+			}
+			if (length < 1)
+			{
+				throw new ArgumentOutOfRangeException("length");
+			}
+
+			this.baseAddress = (byte*)baseAddress;
+			this.length = (int)length;
+
+			if (!isOneBit && !isFourBit)
+			{
+				this.size = Marshal.SizeOf(typeof(T));
+				// Create an array containing a single element.
+				// Due to the fact, that it's not possible to create pointers
+				// of generic types, an array is used to obtain the memory
+				// address of an element of T.
+				this.buffer = new T[1];
+				// The array is pinned immediately to prevent the GC from
+				// moving it to a different position in memory.
+				this.handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+				// The array and its content have beed pinned, so that its address
+				// can be safely requested and stored for the whole lifetime
+				// of the instace.
+				this.ptr = (byte*)Marshal.UnsafeAddrOfPinnedArrayElement(this.buffer, 0);
+			}
 		}
 
-		// Moves the streams position
-		static int streamSeek(fi_handle handle, int offset, SeekOrigin origin)
+		/// <summary>
+		/// Frees the allocated <see cref="System.Runtime.InteropServices.GCHandle"/>.
+		/// </summary>
+		~MemoryArray()
 		{
-			Stream stream = handle.GetObject() as Stream;
-			if (stream == null)
-				return 1;
-			stream.Seek((long)offset, origin);
-			return 0;
+			if (handle.IsAllocated)
+			{
+				handle.Free();
+			}
 		}
 
-		// Returns the streams current position
-		static int streamTell(fi_handle handle)
+		/// <summary>
+		/// Tests whether two specified <see cref="MemoryArray&lt;T&gt;"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="MemoryArray&lt;T&gt;"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="MemoryArray&lt;T&gt;"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="MemoryArray&lt;T&gt;"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(MemoryArray<T> left, MemoryArray<T> right)
 		{
-			Stream stream = handle.GetObject() as Stream;
-			if (stream == null)
-				return -1;
-			return (int)stream.Position;
+			if (object.ReferenceEquals(left, right))
+			{
+				return true;
+			}
+			if (object.ReferenceEquals(right, null) ||
+				object.ReferenceEquals(left, null) ||
+				(left.length != right.length))
+			{
+				return false;
+			}
+			if (left.baseAddress == right.baseAddress)
+			{
+				return true;
+			}
+			return FreeImage.CompareMemory(left.baseAddress, right.baseAddress, (uint)left.length);
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="MemoryArray&lt;T&gt;"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="MemoryArray&lt;T&gt;"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="MemoryArray&lt;T&gt;"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="MemoryArray&lt;T&gt;"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(MemoryArray<T> left, MemoryArray<T> right)
+		{
+			return (!(left == right));
+		}
+
+		/// <summary>
+		/// Gets the value at the specified position.
+		/// </summary>
+		/// <param name="index">A 32-bit integer that represents the position
+		/// of the array element to get.</param>
+		/// <returns>The value at the specified position.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="index"/> is outside the range of valid indexes
+		/// for the unmanaged array.</exception>
+		public T GetValue(int index)
+		{
+			if ((index >= this.length) || (index < 0))
+			{
+				throw new ArgumentOutOfRangeException("index");
+			}
+
+			return GetValueInternal(index);
+		}
+
+		private T GetValueInternal(int index)
+		{
+			if (isOneBit)
+			{
+				return (T)(object)(FI1BIT)(((baseAddress[index / 8] & ((1 << (7 - (index % 8))))) == 0) ? 0 : 1);
+			}
+			else if (isFourBit)
+			{
+				return (T)(object)(FI4BIT)(((index % 2) == 0) ? (baseAddress[index / 2] >> 4) : (baseAddress[index / 2] & 0x0F));
+			}
+			else
+			{
+				CopyMemory(ptr, baseAddress + (index * size), size);
+				return buffer[0];
+			}
+		}
+
+		/// <summary>
+		/// Sets a value to the element at the specified position.
+		/// </summary>
+		/// <param name="value">The new value for the specified element.</param>
+		/// <param name="index">A 32-bit integer that represents the
+		/// position of the array element to set.</param>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="index"/> is outside the range of valid indexes
+		/// for the unmanaged array.</exception>
+		public void SetValue(T value, int index)
+		{
+			if ((index >= this.length) || (index < 0))
+			{
+				throw new ArgumentOutOfRangeException("index");
+			}
+			SetValueInternal(value, index);
+		}
+
+		private void SetValueInternal(T value, int index)
+		{
+			if (isOneBit)
+			{
+				if ((FI1BIT)(object)value != 0)
+				{
+					baseAddress[index / 8] |= (byte)(1 << (7 - (index % 8)));
+				}
+				else
+				{
+					baseAddress[index / 8] &= (byte)(~(1 << (7 - (index % 8))));
+				}
+			}
+			else if (isFourBit)
+			{
+				if ((index % 2) == 0)
+				{
+					baseAddress[index / 2] = (byte)((baseAddress[index / 2] & 0x0F) | ((FI4BIT)(object)value << 4));
+				}
+				else
+				{
+					baseAddress[index / 2] = (byte)((baseAddress[index / 2] & 0xF0) | ((FI4BIT)(object)value & 0x0F));
+				}
+			}
+			else
+			{
+				buffer[0] = value;
+				CopyMemory(baseAddress + (index * size), ptr, size);
+			}
+		}
+
+		/// <summary>
+		/// Gets the values at the specified position and length.
+		/// </summary>
+		/// <param name="index">A 32-bit integer that represents the position
+		/// of the array elements to get.</param>
+		/// <param name="length"> A 32-bit integer that represents the length
+		/// of the array elements to get.</param>
+		/// <returns>The values at the specified position and length.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="index"/> is outside the range of valid indexes
+		/// for the unmanaged array or <paramref name="length"/> is greater than the number of elements
+		/// from <paramref name="index"/> to the end of the unmanaged array.</exception>
+		public T[] GetValues(int index, int length)
+		{
+			if ((index >= this.length) || (index < 0))
+			{
+				throw new ArgumentOutOfRangeException("index");
+			}
+			if (((index + length) > this.length) || (length < 1))
+			{
+				throw new ArgumentOutOfRangeException("length");
+			}
+
+			T[] data = new T[length];
+			if (isOneBit || isFourBit)
+			{
+				for (int i = 0; i < length; i++)
+				{
+					data[i] = GetValueInternal(i);
+				}
+			}
+			else
+			{
+				GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+				byte* dst = (byte*)Marshal.UnsafeAddrOfPinnedArrayElement(data, 0);
+				CopyMemory(dst, baseAddress + (size * index), size * length);
+				handle.Free();
+			}
+			return data;
+		}
+
+		/// <summary>
+		/// Sets the values at the specified position.
+		/// </summary>
+		/// <param name="values">An array containing the new values for the specified elements.</param>
+		/// <param name="index">A 32-bit integer that represents the position
+		/// of the array elements to set.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="values"/> is a null reference (Nothing in Visual Basic).</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="index"/> is outside the range of valid indexes
+		/// for the unmanaged array or <paramref name="values.Length"/> is greater than the number of elements
+		/// from <paramref name="index"/> to the end of the array.</exception>
+		public void SetValues(T[] values, int index)
+		{
+			if (values == null)
+			{
+				throw new ArgumentNullException("values");
+			}
+			if ((index >= this.length) || (index < 0))
+			{
+				throw new ArgumentOutOfRangeException("index");
+			}
+			if ((index + values.Length) > this.length)
+			{
+				throw new ArgumentOutOfRangeException("values.Length");
+			}
+
+			if (isOneBit || isFourBit)
+			{
+				for (int i = 0; i != values.Length; )
+				{
+					SetValueInternal(values[i++], index++);
+				}
+			}
+			else
+			{
+				GCHandle handle = GCHandle.Alloc(values, GCHandleType.Pinned);
+				byte* src = (byte*)Marshal.UnsafeAddrOfPinnedArrayElement(values, 0);
+				CopyMemory(baseAddress + (index * size), src, size * length);
+				handle.Free();
+			}
+		}
+
+		/// <summary>
+		/// Copies the entire array to a compatible one-dimensional <see cref="System.Array"/>,
+		/// starting at the specified index of the target array.
+		/// </summary>
+		/// <param name="array">The one-dimensional <see cref="System.Array"/> that is the destination
+		/// of the elements copied from <see cref="MemoryArray&lt;T&gt;"/>.
+		/// The <see cref="System.Array"/> must have zero-based indexing.</param>
+		/// <param name="index">The zero-based index in <paramref name="array"/>
+		/// at which copying begins.</param>
+		public void CopyTo(Array array, int index)
+		{
+			if (!(array is T[]))
+			{
+				throw new InvalidCastException("array");
+			}
+			try
+			{
+				CopyTo((T[])array, 0, index, length);
+			}
+			catch (ArgumentOutOfRangeException ex)
+			{
+				throw new ArgumentException(ex.Message, ex);
+			}
+		}
+
+		/// <summary>
+		/// Copies a range of elements from the unmanaged array starting at the specified
+		/// <typeparamref name="sourceIndex"/> and pastes them to <paramref name="array"/>
+		/// starting at the specified <paramref name="destinationIndex"/>.
+		/// The length and the indexes are specified as 32-bit integers.
+		/// </summary>
+		/// <param name="array">The array that receives the data.</param>
+		/// <param name="sourceIndex">A 32-bit integer that represents the index
+		/// in the unmanaged array at which copying begins.</param>
+		/// <param name="destinationIndex">A 32-bit integer that represents the index in
+		/// the destination array at which storing begins.</param>
+		/// <param name="length">A 32-bit integer that represents the number of elements to copy.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="array"/> is a null reference (Nothing in Visual Basic).</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="sourceIndex"/> is outside the range of valid indexes
+		/// for the unmanaged array or <paramref name="length"/> is greater than the number of elements
+		/// from <paramref name="index"/> to the end of the unmanaged array
+		/// <para>-or-</para>
+		/// <paramref name="destinationIndex"/> is outside the range of valid indexes
+		/// for the array or <paramref name="length"/> is greater than the number of elements
+		/// from <paramref name="index"/> to the end of the array.
+		/// </exception>
+		public void CopyTo(T[] array, int sourceIndex, int destinationIndex, int length)
+		{
+			if (array == null)
+			{
+				throw new ArgumentNullException("array");
+			}
+			if ((sourceIndex >= this.length) || (sourceIndex < 0))
+			{
+				throw new ArgumentOutOfRangeException("sourceIndex");
+			}
+			if ((destinationIndex >= array.Length) || (destinationIndex < 0))
+			{
+				throw new ArgumentOutOfRangeException("destinationIndex");
+			}
+			if ((sourceIndex + length > this.length) ||
+				(destinationIndex + length > array.Length) ||
+				(length < 1))
+			{
+				throw new ArgumentOutOfRangeException("length");
+			}
+
+			if (isOneBit || isFourBit)
+			{
+				for (int i = 0; i != length; i++)
+				{
+					array[destinationIndex++] = GetValueInternal(sourceIndex++);
+				}
+			}
+			else
+			{
+				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+				byte* dst = (byte*)Marshal.UnsafeAddrOfPinnedArrayElement(array, destinationIndex);
+				CopyMemory(dst, baseAddress + (size * sourceIndex), size * length);
+				handle.Free();
+			}
+		}
+
+		/// <summary>
+		/// Copies a range of elements from the array starting at the specified
+		/// <typeparamref name="sourceIndex"/> and pastes them to the unmanaged array
+		/// starting at the specified <paramref name="destinationIndex"/>.
+		/// The length and the indexes are specified as 32-bit integers.
+		/// </summary>
+		/// <param name="array">The array that holds the data.</param>
+		/// <param name="sourceIndex">A 32-bit integer that represents the index
+		/// in the array at which copying begins.</param>
+		/// <param name="destinationIndex">A 32-bit integer that represents the index in
+		/// the unmanaged array at which storing begins.</param>
+		/// <param name="length">A 32-bit integer that represents the number of elements to copy.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="array"/> is a null reference (Nothing in Visual Basic).</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="sourceIndex"/> is outside the range of valid indexes
+		/// for the array or <paramref name="length"/> is greater than the number of elements
+		/// from <paramref name="index"/> to the end of the array
+		/// <para>-or-</para>
+		/// <paramref name="destinationIndex"/> is outside the range of valid indexes
+		/// for the unmanaged array or <paramref name="length"/> is greater than the number of elements
+		/// from <paramref name="index"/> to the end of the unmanaged array.
+		/// </exception>
+		public void CopyFrom(T[] array, int sourceIndex, int destinationIndex, int length)
+		{
+			if (array == null)
+			{
+				throw new ArgumentNullException("array");
+			}
+			if ((destinationIndex >= this.length) || (destinationIndex < 0))
+			{
+				throw new ArgumentOutOfRangeException("destinationIndex");
+			}
+			if ((sourceIndex >= array.Length) || (sourceIndex < 0))
+			{
+				throw new ArgumentOutOfRangeException("sourceIndex");
+			}
+			if ((destinationIndex + length > this.length) ||
+				(sourceIndex + length > array.Length) ||
+				(length < 1))
+			{
+				throw new ArgumentOutOfRangeException("length");
+			}
+
+			if (isOneBit || isFourBit)
+			{
+				for (int i = 0; i != length; i++)
+				{
+					SetValueInternal(array[sourceIndex++], destinationIndex++);
+				}
+			}
+			else
+			{
+				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+				byte* src = (byte*)Marshal.UnsafeAddrOfPinnedArrayElement(array, sourceIndex);
+				CopyMemory(baseAddress + (size * destinationIndex), src, size * length);
+				handle.Free();
+			}
+		}
+
+		/// <summary>
+		/// Returns the represented block of memory as an array of <see cref="Byte"/>.
+		/// </summary>
+		/// <returns>The represented block of memory.</returns>
+		public byte[] ToByteArray()
+		{
+			byte[] result;
+			if (isOneBit)
+			{
+				result = new byte[(length + 7) / 8];
+			}
+			else if (isFourBit)
+			{
+				result = new byte[(length + 3) / 4];
+			}
+			else
+			{
+				result = new byte[size * length];
+			}
+			fixed (byte* dst = result)
+			{
+				CopyMemory(dst, baseAddress, result.Length);
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Gets or sets the value at the specified position in the array.
+		/// </summary>
+		/// <param name="index">A 32-bit integer that represents the position
+		/// of the array element to get.</param>
+		/// <returns>The value at the specified position in the array.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="index"/> is outside the range of valid indexes
+		/// for the unmanaged array.</exception>
+		public T this[int index]
+		{
+			get
+			{
+				return GetValue(index);
+			}
+			set
+			{
+				SetValue(value, index);
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the values of the unmanaged array.
+		/// </summary>
+		public T[] Data
+		{
+			get
+			{
+				return GetValues(0, length);
+			}
+			set
+			{
+				if (value == null)
+				{
+					throw new ArgumentNullException("value");
+				}
+				if (value.Length != length)
+				{
+					throw new ArgumentOutOfRangeException("value.Lengt");
+				}
+				SetValues(value, 0);
+			}
+		}
+
+		/// <summary>
+		/// Gets the length of the unmanaged array.
+		/// </summary>
+		public int Length
+		{
+			get
+			{
+				return length;
+			}
+		}
+
+		/// <summary>
+		/// Gets the base address of the represented memory block.
+		/// </summary>
+		public IntPtr BaseAddress
+		{
+			get
+			{
+				return new IntPtr(baseAddress);
+			}
+		}
+
+		/// <summary>
+		/// Creates a shallow copy of the <see cref="MemoryArray&lt;T&gt;"/>.
+		/// </summary>
+		/// <returns>A shallow copy of the <see cref="MemoryArray&lt;T&gt;"/>.</returns>
+		public object Clone()
+		{
+			return new MemoryArray<T>(baseAddress, length);
+		}
+
+		/// <summary>
+		/// Gets a 32-bit integer that represents the total number of elements
+		/// in the <see cref="MemoryArray&lt;T&gt;"/>.
+		/// </summary>
+		public int Count
+		{
+			get { return length; }
+		}
+
+		/// <summary>
+		/// Gets a value indicating whether access to the <see cref="MemoryArray&lt;T&gt;"/>
+		/// is synchronized (thread safe).
+		/// </summary>
+		public bool IsSynchronized
+		{
+			get { return false; }
+		}
+
+		/// <summary>
+		/// Gets an object that can be used to synchronize access to the <see cref="MemoryArray&lt;T&gt;"/>.
+		/// </summary>
+		public object SyncRoot
+		{
+			get
+			{
+				if (syncRoot == null)
+				{
+					System.Threading.Interlocked.CompareExchange(ref syncRoot, new object(), null);
+				}
+				return syncRoot;
+			}
+		}
+
+		/// <summary>
+		/// Retrieves an object that can iterate through the individual
+		/// elements in this <see cref="MemoryArray&lt;T&gt;"/>.
+		/// </summary>
+		/// <returns>An <see cref="IEnumerator"/> for the <see cref="MemoryArray&lt;T&gt;"/>.</returns>
+		public IEnumerator GetEnumerator()
+		{
+			T[] values = GetValues(0, length);
+			for (int i = 0; i != values.Length; i++)
+			{
+				yield return values[i];
+			}
+		}
+
+		/// <summary>
+		/// Retrieves an object that can iterate through the individual
+		/// elements in this <see cref="MemoryArray&lt;T&gt;"/>.
+		/// </summary>
+		/// <returns>An <see cref="IEnumerator&lt;T&gt;"/> for the <see cref="MemoryArray&lt;T&gt;"/>.</returns>
+		IEnumerator<T> IEnumerable<T>.GetEnumerator()
+		{
+			T[] values = GetValues(0, length);
+			for (int i = 0; i != values.Length; i++)
+			{
+				yield return values[i];
+			}
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="MemoryArray&lt;T&gt;"/> structure is equivalent to this
+		/// <see cref="MemoryArray&lt;T&gt;"/> structure.
+		/// </summary>
+		/// <param name="obj">The structure to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="MemoryArray&lt;T&gt;"/>
+		/// instance equivalent to this <see cref="MemoryArray&lt;T&gt;"/> structure; otherwise,
+		/// <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return ((obj is MemoryArray<T>) && Equals((MemoryArray<T>)obj));
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="MemoryArray&lt;T&gt;"/> structure is equivalent to this
+		/// <see cref="MemoryArray&lt;T&gt;"/> structure.
+		/// </summary>
+		/// <param name="other">The structure to test.</param>
+		/// <returns><b>true</b> if <paramref name="other"/> is equivalent to this
+		/// <see cref="MemoryArray&lt;T&gt;"/> structure; otherwise,
+		/// <b>false</b>.</returns>
+		public bool Equals(MemoryArray<T> other)
+		{
+			return ((this.baseAddress == other.baseAddress) && (this.length == other.length));
+		}
+
+		/// <summary>
+		/// Serves as a hash function for a particular type.
+		/// </summary>
+		/// <returns>A hash code for the current <see cref="MemoryArray&lt;T&gt;"/>.</returns>
+		public override int GetHashCode()
+		{
+			return (int)baseAddress ^ length;
+		}
+
+		/// <summary>
+		/// Copies a block of memory from one location to another.
+		/// </summary>
+		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
+		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
+		/// <param name="len">Size of the block of memory to copy, in bytes.</param>
+		protected static unsafe void CopyMemory(byte* dest, byte* src, int len)
+		{
+			if (len >= 0x10)
+			{
+				do
+				{
+					*((int*)dest) = *((int*)src);
+					*((int*)(dest + 4)) = *((int*)(src + 4));
+					*((int*)(dest + 8)) = *((int*)(src + 8));
+					*((int*)(dest + 12)) = *((int*)(src + 12));
+					dest += 0x10;
+					src += 0x10;
+				}
+				while ((len -= 0x10) >= 0x10);
+			}
+			if (len > 0)
+			{
+				if ((len & 8) != 0)
+				{
+					*((int*)dest) = *((int*)src);
+					*((int*)(dest + 4)) = *((int*)(src + 4));
+					dest += 8;
+					src += 8;
+				}
+				if ((len & 4) != 0)
+				{
+					*((int*)dest) = *((int*)src);
+					dest += 4;
+					src += 4;
+				}
+				if ((len & 2) != 0)
+				{
+					*((short*)dest) = *((short*)src);
+					dest += 2;
+					src += 2;
+				}
+				if ((len & 1) != 0)
+				{
+					*dest = *src;
+				}
+			}
 		}
 	}
 
-	// As mentioned above FreeImage can load bitmaps from arbitrary sources.
-	// .NET works with different streams like File- or NetConnection-strams.
-	// NetConnection streams, which are used to load files from web servers,
-	// for example cannot seek.
-	// But FreeImage frequently uses the seek operation when loading bitmaps.
-	// StreamWrapper wrapps a stream and makes it seekable by caching all read
-	// data into an internal MemoryStream to jump back- and forward.
-	// StreamWapper is for internal use and only for loading from streams.
+	/// <summary>
+	/// Base class that represents a collection of all tags contained in a metadata model.
+	/// </summary>
+	/// <remarks>
+	/// The <b>MetedataModel</b> class is an abstract base class, which is inherited by
+	/// several derived classes, one for each existing metadata model.
+	/// </remarks> 
+	public abstract class MetadataModel : IEnumerable
+	{
+		/// <summary>
+		/// Handle to a FreeImage-bitmap.
+		/// </summary>
+		protected readonly FIBITMAP dib;
 
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="dib"/> is null.</exception>
+		protected MetadataModel(FIBITMAP dib)
+		{
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException("dib");
+			}
+			this.dib = dib;
+		}
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public abstract FREE_IMAGE_MDMODEL Model
+		{
+			get;
+		}
+
+		/// <summary>
+		/// Adds new tag to the bitmap or updates its value in case it already exists.
+		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
+		/// </summary>
+		/// <param name="tag">The tag to add or update.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="tag"/> is null.</exception>
+		/// <exception cref="ArgumentException">
+		/// The tags model differs from this instances model.</exception>
+		public bool AddTag(MetadataTag tag)
+		{
+			if (tag == null)
+			{
+				throw new ArgumentNullException("tag");
+			}
+			if (tag.Model != Model)
+			{
+				throw new ArgumentException("tag.Model");
+			}
+			return tag.AddToImage(dib);
+		}
+
+		/// <summary>
+		/// Adds a list of tags to the bitmap or updates their values in case they already exist.
+		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
+		/// </summary>
+		/// <param name="list">A list of tags to add or update.</param>
+		/// <returns>Returns the number of successfully added tags.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="list"/> is null.</exception>
+		public int AddTag(IEnumerable<MetadataTag> list)
+		{
+			if (list == null)
+			{
+				throw new ArgumentNullException("list");
+			}
+			int count = 0;
+			foreach (MetadataTag tag in list)
+			{
+				if (tag.Model == Model && tag.AddToImage(dib))
+				{
+					count++;
+				}
+			}
+			return count;
+		}
+
+		/// <summary>
+		/// Removes the specified tag from the bitmap.
+		/// </summary>
+		/// <param name="key">The key of the tag.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="key"/> is null.</exception>
+		public bool RemoveTag(string key)
+		{
+			if (key == null)
+			{
+				throw new ArgumentNullException("key");
+			}
+			return FreeImage.SetMetadata(Model, dib, key, 0);
+		}
+
+		/// <summary>
+		/// Destroys the metadata model
+		/// which will remove all tags of this model from the bitmap.
+		/// </summary>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool DestoryModel()
+		{
+			return FreeImage.SetMetadata(Model, dib, null, 0);
+		}
+
+		/// <summary>
+		/// Returns the specified metadata tag.
+		/// </summary>
+		/// <param name="key">The key of the tag.</param>
+		/// <returns>The metadata tag.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="key"/> is null.</exception>
+		public MetadataTag GetTag(string key)
+		{
+			if (key == null)
+			{
+				throw new ArgumentNullException("key");
+			}
+			MetadataTag tag;
+			return FreeImage.GetMetadata(Model, dib, key, out tag) ? tag : null;
+		}
+
+		/// <summary>
+		/// Returns whether the specified tag exists.
+		/// </summary>
+		/// <param name="key">The key of the tag.</param>
+		/// <returns>True in case the tag exists, else false.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="key"/> is null.</exception>
+		public bool TagExists(string key)
+		{
+			if (key == null)
+			{
+				throw new ArgumentNullException("key");
+			}
+			MetadataTag tag;
+			return FreeImage.GetMetadata(Model, dib, key, out tag);
+		}
+
+		/// <summary>
+		/// Returns a list of all metadata tags this instance represents.
+		/// </summary>
+		public List<MetadataTag> List
+		{
+			get
+			{
+				List<MetadataTag> list = new List<MetadataTag>((int)FreeImage.GetMetadataCount(Model, dib));
+				MetadataTag tag;
+				FIMETADATA mdHandle = FreeImage.FindFirstMetadata(Model, dib, out tag);
+				if (!mdHandle.IsNull)
+				{
+					do
+					{
+						list.Add(tag);
+					}
+					while (FreeImage.FindNextMetadata(mdHandle, out tag));
+					FreeImage.FindCloseMetadata(mdHandle);
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Returns the tag at the given index.
+		/// </summary>
+		/// <param name="index">Index of the tag to return.</param>
+		/// <returns>The tag at the given index.</returns>
+		protected MetadataTag GetTagFromIndex(int index)
+		{
+			if (index >= Count || index < 0)
+			{
+				throw new ArgumentOutOfRangeException("index");
+			}
+			MetadataTag tag;
+			int count = 0;
+			FIMETADATA mdHandle = FreeImage.FindFirstMetadata(Model, dib, out tag);
+			if (!mdHandle.IsNull)
+			{
+				try
+				{
+					do
+					{
+						if (count++ == index)
+						{
+							break;
+						}
+					}
+					while (FreeImage.FindNextMetadata(mdHandle, out tag));
+				}
+				finally
+				{
+					FreeImage.FindCloseMetadata(mdHandle);
+				}				
+			}
+			return tag;
+		}
+
+		/// <summary>
+		/// Returns the metadata tag at the given index. This operation is slow when accessing all tags.
+		/// </summary>
+		/// <param name="index">Index of the tag.</param>
+		/// <returns>The metadata tag.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="index"/> is greater or equal <b>Count</b>
+		/// or index is less than zero.</exception>
+		public MetadataTag this[int index]
+		{
+			get
+			{
+				return GetTagFromIndex(index);
+			}
+		}
+
+		/// <summary>
+		/// Retrieves an object that can iterate through the individual MetadataTags in this MetadataModel.
+		/// </summary>
+		/// <returns>An <see cref="IEnumerator"/> for the <see cref="FreeImageAPI.MetadataModel"/>.</returns>
+		public IEnumerator GetEnumerator()
+		{
+			return List.GetEnumerator();
+		}
+
+		/// <summary>
+		/// Returns the number of metadata tags this instance represents.
+		/// </summary>
+		public int Count
+		{
+			get { return (int)FreeImage.GetMetadataCount(Model, dib); }
+		}
+
+		/// <summary>
+		/// Returns whether this model exists in the bitmaps metadata structure.
+		/// </summary>
+		public bool Exists
+		{
+			get
+			{
+				return Count > 0;
+			}
+		}
+
+		/// <summary>
+		/// Searches for a pattern in each metadata tag and returns the result as a list.
+		/// </summary>
+		/// <param name="searchPattern">The regular expression to use for the search.</param>
+		/// <param name="flags">A bitfield that controls which fields should be searched in.</param>
+		/// <returns>A list containing all found metadata tags.</returns>
+		/// <exception cref="ArgumentNullException">
+		/// <typeparamref name="searchPattern"/> is null.</exception>
+		/// <exception cref="ArgumentException">
+		/// <typeparamref name="searchPattern"/> is empty.</exception>
+		public List<MetadataTag> RegexSearch(string searchPattern, MD_SEARCH_FLAGS flags)
+		{
+			if (searchPattern == null)
+			{
+				throw new ArgumentNullException("searchString");
+			}
+			if (searchPattern.Length == 0)
+			{
+				throw new ArgumentException("searchString is empty");
+			}
+			List<MetadataTag> result = new List<MetadataTag>(Count);
+			Regex regex = new Regex(searchPattern);
+			List<MetadataTag> list = List;
+			foreach (MetadataTag tag in list)
+			{
+				if (((flags & MD_SEARCH_FLAGS.KEY) > 0) && regex.Match(tag.Key).Success)
+				{
+					result.Add(tag);
+					continue;
+				}
+				if (((flags & MD_SEARCH_FLAGS.DESCRIPTION) > 0) && regex.Match(tag.Description).Success)
+				{
+					result.Add(tag);
+					continue;
+				}
+				if (((flags & MD_SEARCH_FLAGS.TOSTRING) > 0) && regex.Match(tag.ToString()).Success)
+				{
+					result.Add(tag);
+					continue;
+				}
+			}
+			result.Capacity = result.Count;
+			return result;
+		}
+
+		/// <summary>
+		/// Converts the model of the MetadataModel object to its equivalent string representation.
+		/// </summary>
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
+		{
+			return Model.ToString();
+		}
+	}
+
+	#region Metadata Models
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_ANIMATION"/>.
+	/// </summary>
+	public class MDM_ANIMATION : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_ANIMATION(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_ANIMATION; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_COMMENTS"/>.
+	/// </summary>
+	public class MDM_COMMENTS : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_COMMENTS(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_COMMENTS; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_CUSTOM"/>.
+	/// </summary>
+	public class MDM_CUSTOM : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_CUSTOM(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_CUSTOM; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF"/>.
+	/// </summary>
+	public class MDM_EXIF_EXIF : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_EXIF_EXIF(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_GPS"/>.
+	/// </summary>
+	public class MDM_EXIF_GPS : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_EXIF_GPS(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_EXIF_GPS; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_INTEROP"/>.
+	/// </summary>
+	public class MDM_INTEROP : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_INTEROP(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_EXIF_INTEROP; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_MAIN"/>.
+	/// </summary>
+	public class MDM_MAIN : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_MAIN(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_EXIF_MAIN; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_MAKERNOTE"/>.
+	/// </summary>
+	public class MDM_MAKERNOTE : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_MAKERNOTE(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_EXIF_MAKERNOTE; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_GEOTIFF"/>.
+	/// </summary>
+	public class MDM_GEOTIFF : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_GEOTIFF(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_GEOTIFF; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_IPTC"/>.
+	/// </summary>
+	public class MDM_IPTC : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_IPTC(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_IPTC; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_NODATA"/>.
+	/// </summary>
+	public class MDM_NODATA : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_NODATA(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_NODATA; }
+		}
+	}
+
+	/// <summary>
+	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_XMP"/>.
+	/// </summary>
+	public class MDM_XMP : MetadataModel
+	{
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public MDM_XMP(FIBITMAP dib) : base(dib) { }
+
+		/// <summary>
+		/// Retrieves the datamodel that this instance represents.
+		/// </summary>
+		public override FREE_IMAGE_MDMODEL Model
+		{
+			get { return FREE_IMAGE_MDMODEL.FIMD_XMP; }
+		}
+	}
+
+	#endregion
+
+	/// <summary>
+	/// Manages metadata objects and operations.
+	/// </summary>
+	public class MetadataTag : IComparable, IComparable<MetadataTag>, ICloneable, IEquatable<MetadataTag>, IDisposable
+	{
+		/// <summary>
+		/// The encapsulated FreeImage-tag.
+		/// </summary>
+		internal protected FITAG tag;
+		/// <summary>
+		/// The metadata model of <see cref="tag"/>.
+		/// </summary>
+		internal protected FREE_IMAGE_MDMODEL model;
+		/// <summary>
+		/// Indicates whether this instance has already been disposed.
+		/// </summary>
+		protected bool disposed = false;
+		/// <summary>
+		/// Indicates whether this instance was created by FreeImage or
+		/// by the user.
+		/// </summary>
+		protected bool selfCreated;
+		/// <summary>
+		/// List linking metadata-model and Type.
+		/// </summary>
+		protected static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
+		/// <summary>
+		/// List linking Type and metadata-model.
+		/// </summary>
+		protected static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
+
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		protected MetadataTag()
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="model">The new model the tag should be of.</param>
+		public MetadataTag(FREE_IMAGE_MDMODEL model)
+		{
+			this.model = model;
+			tag = FreeImage.CreateTag();
+			selfCreated = true;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="tag">The <see cref="FITAG"/> to represent.</param>
+		/// <param name="dib">The bitmap <paramref name="tag"/> was extracted from.</param>
+		public MetadataTag(FITAG tag, FIBITMAP dib)
+		{
+			if (tag.IsNull)
+			{
+				throw new ArgumentNullException("tag");
+			}
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException("dib");
+			}
+			this.tag = tag;
+			model = GetModel(dib, tag);
+			selfCreated = false;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
+		/// <param name="tag">The <see cref="FITAG"/> to represent.</param>
+		/// <param name="model">The model of <paramref name="tag"/>.</param>
+		public MetadataTag(FITAG tag, FREE_IMAGE_MDMODEL model)
+		{
+			if (tag.IsNull)
+			{
+				throw new ArgumentNullException("tag");
+			}
+			this.tag = tag;
+			this.model = model;
+			selfCreated = false;
+		}
+
+		static MetadataTag()
+		{
+			idList = new Dictionary<FREE_IMAGE_MDTYPE, Type>();
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_BYTE, typeof(byte));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SHORT, typeof(ushort));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_LONG, typeof(uint));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_RATIONAL, typeof(FIURational));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SBYTE, typeof(sbyte));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_UNDEFINED, typeof(byte));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SSHORT, typeof(short));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SLONG, typeof(int));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SRATIONAL, typeof(FIRational));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_FLOAT, typeof(float));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_DOUBLE, typeof(double));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_IFD, typeof(uint));
+			idList.Add(FREE_IMAGE_MDTYPE.FIDT_PALETTE, typeof(RGBQUAD));
+
+			typeList = new Dictionary<Type, FREE_IMAGE_MDTYPE>();
+			typeList.Add(typeof(ushort), FREE_IMAGE_MDTYPE.FIDT_SHORT);
+			typeList.Add(typeof(ushort[]), FREE_IMAGE_MDTYPE.FIDT_SHORT);
+			typeList.Add(typeof(string), FREE_IMAGE_MDTYPE.FIDT_ASCII);
+			typeList.Add(typeof(uint), FREE_IMAGE_MDTYPE.FIDT_LONG);
+			typeList.Add(typeof(uint[]), FREE_IMAGE_MDTYPE.FIDT_LONG);
+			typeList.Add(typeof(FIURational), FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
+			typeList.Add(typeof(FIURational[]), FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
+			typeList.Add(typeof(sbyte), FREE_IMAGE_MDTYPE.FIDT_SBYTE);
+			typeList.Add(typeof(sbyte[]), FREE_IMAGE_MDTYPE.FIDT_SBYTE);
+			typeList.Add(typeof(byte), FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
+			typeList.Add(typeof(byte[]), FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
+			typeList.Add(typeof(short), FREE_IMAGE_MDTYPE.FIDT_SSHORT);
+			typeList.Add(typeof(short[]), FREE_IMAGE_MDTYPE.FIDT_SSHORT);
+			typeList.Add(typeof(int), FREE_IMAGE_MDTYPE.FIDT_SLONG);
+			typeList.Add(typeof(int[]), FREE_IMAGE_MDTYPE.FIDT_SLONG);
+			typeList.Add(typeof(FIRational), FREE_IMAGE_MDTYPE.FIDT_SRATIONAL);
+			typeList.Add(typeof(FIRational[]), FREE_IMAGE_MDTYPE.FIDT_SRATIONAL);
+			typeList.Add(typeof(float), FREE_IMAGE_MDTYPE.FIDT_FLOAT);
+			typeList.Add(typeof(float[]), FREE_IMAGE_MDTYPE.FIDT_FLOAT);
+			typeList.Add(typeof(double), FREE_IMAGE_MDTYPE.FIDT_DOUBLE);
+			typeList.Add(typeof(double[]), FREE_IMAGE_MDTYPE.FIDT_DOUBLE);
+			typeList.Add(typeof(RGBQUAD), FREE_IMAGE_MDTYPE.FIDT_PALETTE);
+			typeList.Add(typeof(RGBQUAD[]), FREE_IMAGE_MDTYPE.FIDT_PALETTE);
+		}
+
+		/// <summary>
+		/// Releases all resources used by the instance.
+		/// </summary>
+		~MetadataTag()
+		{
+			Dispose();
+		}
+
+		/// <summary>
+		/// Determines whether two specified <see cref="MetadataTag"/> objects have the same value.
+		/// </summary>
+		/// <param name="left">A <see cref="MetadataTag"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <param name="right">A <see cref="MetadataTag"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <returns>
+		/// <b>true</b> if the value of left is the same as the value of right; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(MetadataTag left, MetadataTag right)
+		{
+			// Check whether both are null
+			if (Object.ReferenceEquals(left, null) && Object.ReferenceEquals(right, null))
+			{
+				return true;
+			}
+			// Check whether only one is null
+			if (Object.ReferenceEquals(left, null) || Object.ReferenceEquals(right, null))
+			{
+				return false;
+			}
+			left.CheckDisposed();
+			right.CheckDisposed();
+			// Check all properties
+			if ((left.Key != right.Key) ||
+				(left.ID != right.ID) ||
+				(left.Description != right.Description) ||
+				(left.Count != right.Count) ||
+				(left.Length != right.Length) ||
+				(left.Model != right.Model) ||
+				(left.Type != right.Type))
+			{
+				return false;
+			}
+			if (left.Length == 0)
+			{
+				return true;
+			}
+			IntPtr ptr1 = FreeImage.GetTagValue(left.tag);
+			IntPtr ptr2 = FreeImage.GetTagValue(right.tag);
+			return FreeImage.CompareMemory(ptr1, ptr2, left.Length);
+		}
+
+		/// <summary>
+		/// Determines whether two specified <see cref="MetadataTag"/> objects have different values.
+		/// </summary>
+		/// <param name="left">A <see cref="MetadataTag"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <param name="right">A <see cref="MetadataTag"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <returns>
+		/// true if the value of left is different from the value of right; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(MetadataTag left, MetadataTag right)
+		{
+			return !(left == right);
+		}
+
+		/// <summary>
+		/// Extracts the value of a <see cref="MetadataTag"/> instance to a <see cref="FITAG"/> handle.
+		/// </summary>
+		/// <param name="value">A <see cref="MetadataTag"/> instance.</param>
+		/// <returns>A new instance of <see cref="FITAG"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator FITAG(MetadataTag value)
+		{
+			return value.tag;
+		}
+
+		private static FREE_IMAGE_MDMODEL GetModel(FIBITMAP dib, FITAG tag)
+		{
+			FITAG value;
+			foreach (FREE_IMAGE_MDMODEL model in FreeImage.FREE_IMAGE_MDMODELS)
+			{
+				FIMETADATA mData = FreeImage.FindFirstMetadata(model, dib, out value);
+				if (mData.IsNull)
+				{
+					continue;
+				}
+				try
+				{
+					do
+					{
+						if (value == tag)
+						{
+							return model;
+						}
+					}
+					while (FreeImage.FindNextMetadata(mData, out value));
+				}
+				finally
+				{
+					if (!mData.IsNull)
+					{
+						FreeImage.FindCloseMetadata(mData);
+					}
+				}
+			}
+			throw new ArgumentException("'tag' is no metadata object of 'dib'");
+		}
+
+		/// <summary>
+		/// Gets the model of the metadata.
+		/// </summary>
+		public FREE_IMAGE_MDMODEL Model
+		{
+			get { CheckDisposed(); return model; }
+		}
+
+		/// <summary>
+		/// Gets or sets the key of the metadata.
+		/// </summary>
+		public string Key
+		{
+			get { CheckDisposed(); return FreeImage.GetTagKey(tag); }
+			set { CheckDisposed(); FreeImage.SetTagKey(tag, value); }
+		}
+
+		/// <summary>
+		/// Gets or sets the description of the metadata.
+		/// </summary>
+		public string Description
+		{
+			get { CheckDisposed(); return FreeImage.GetTagDescription(tag); }
+			set { CheckDisposed(); FreeImage.SetTagDescription(tag, value); }
+		}
+
+		/// <summary>
+		/// Gets or sets the ID of the metadata.
+		/// </summary>
+		public ushort ID
+		{
+			get { CheckDisposed(); return FreeImage.GetTagID(tag); }
+			set { CheckDisposed(); FreeImage.SetTagID(tag, value); }
+		}
+
+		/// <summary>
+		/// Gets the type of the metadata.
+		/// </summary>
+		public FREE_IMAGE_MDTYPE Type
+		{
+			get { CheckDisposed(); return FreeImage.GetTagType(tag); }
+			protected set { FreeImage.SetTagType(tag, value); }
+		}
+
+		/// <summary>
+		/// Gets the number of elements the metadata object contains.
+		/// </summary>
+		public uint Count
+		{
+			get { CheckDisposed(); return Type == FREE_IMAGE_MDTYPE.FIDT_ASCII ? FreeImage.GetTagCount(tag) - 1 : FreeImage.GetTagCount(tag); }
+			protected set { FreeImage.SetTagCount(tag, value); }
+		}
+
+		/// <summary>
+		/// Gets the length of the value in bytes.
+		/// </summary>
+		public uint Length
+		{
+			get { CheckDisposed(); return Type == FREE_IMAGE_MDTYPE.FIDT_ASCII ? FreeImage.GetTagLength(tag) - 1 : FreeImage.GetTagLength(tag); }
+			protected set { FreeImage.SetTagLength(tag, value); }
+		}
+
+		private unsafe byte[] GetData()
+		{
+			uint length = Length;
+			byte[] value = new byte[length];
+			byte* ptr = (byte*)FreeImage.GetTagValue(tag);
+			for (int i = 0; i < length; i++)
+			{
+				value[i] = ptr[i];
+			}
+			return value;
+		}
+
+		/// <summary>
+		/// Gets or sets the value of the metadata.
+		/// <para> In case value is of byte or byte[], <see cref="FREE_IMAGE_MDTYPE.FIDT_UNDEFINED"/> is assumed.</para>
+		/// <para> In case value is of uint or uint[], <see cref="FREE_IMAGE_MDTYPE.FIDT_LONG"/> is assumed.</para>
+		/// </summary>
+		public unsafe object Value
+		{
+			get
+			{
+				CheckDisposed();
+				int cnt = (int)Count;
+
+				if (Type == FREE_IMAGE_MDTYPE.FIDT_ASCII)
+				{
+					byte* value = (byte*)FreeImage.GetTagValue(tag);
+					StringBuilder sb = new StringBuilder();
+					for (int i = 0; i < cnt; i++)
+					{
+						sb.Append(Convert.ToChar(value[i]));
+					}
+					return sb.ToString();
+				}
+				else if (Type == FREE_IMAGE_MDTYPE.FIDT_NOTYPE)
+				{
+					return null;
+				}
+
+				Array array = Array.CreateInstance(idList[Type], Count);
+				void* src = (void*)FreeImage.GetTagValue(tag);
+				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+				void* dst = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
+				FreeImage.CopyMemory(dst, src, Length);
+				handle.Free();
+				return array;
+			}
+			set
+			{
+				SetValue(value);
+			}
+		}
+
+		/// <summary>
+		/// Sets the value of the metadata.
+		/// <para> In case value is of byte or byte[] <see cref="FREE_IMAGE_MDTYPE.FIDT_UNDEFINED"/> is assumed.</para>
+		/// <para> In case value is of uint or uint[] <see cref="FREE_IMAGE_MDTYPE.FIDT_LONG"/> is assumed.</para>
+		/// </summary>
+		/// <param name="value">New data of the metadata.</param>
+		/// <returns>True on success, false on failure.</returns>
+		/// <exception cref="NotSupportedException">
+		/// The data format is not supported.</exception>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="value"/> is null.</exception>
+		public bool SetValue(object value)
+		{
+			Type type = value.GetType();
+			if (!typeList.ContainsKey(type))
+			{
+				throw new NotSupportedException();
+			}
+			return SetValue(value, typeList[type]);
+		}
+
+		/// <summary>
+		/// Sets the value of the metadata.
+		/// </summary>
+		/// <param name="value">New data of the metadata.</param>
+		/// <param name="type">Type of the data.</param>
+		/// <returns>True on success, false on failure.</returns>
+		/// <exception cref="NotSupportedException">
+		/// The data type is not supported.</exception>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="value"/> is null.</exception>
+		/// <exception cref="ArgumentException">
+		/// <paramref name="value"/> and <paramref name="type"/> to not fit.</exception>
+		public bool SetValue(object value, FREE_IMAGE_MDTYPE type)
+		{
+			CheckDisposed();
+			if ((!value.GetType().IsArray) && (!(value is string)))
+			{
+				Array array = Array.CreateInstance(value.GetType(), 1);
+				array.SetValue(value, 0);
+				return SetArrayValue(array, type);
+			}
+			return SetArrayValue(value, type);
+		}
+
+		/// <summary>
+		/// Sets the value of this tag to the value of <paramref name="value"/>
+		/// using the given type.
+		/// </summary>
+		/// <param name="value">New value of the tag.</param>
+		/// <param name="type">Data-type of the tag.</param>
+		/// <returns></returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="value"/> is a null reference.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		/// <paramref name="type"/> is FIDT_ASCII and
+		/// <paramref name="value"/> is not String.
+		/// <paramref name="type"/> is not FIDT_ASCII and
+		/// <paramref name="value"/> is not Array.</exception>
+		/// <exception cref="NotSupportedException">
+		/// <paramref name="type"/> is FIDT_NOTYPE.</exception>
+		protected unsafe bool SetArrayValue(object value, FREE_IMAGE_MDTYPE type)
+		{
+			if (value == null)
+			{
+				throw new ArgumentNullException("value");
+			}
+
+			byte[] data = null;
+
+			if (type == FREE_IMAGE_MDTYPE.FIDT_ASCII)
+			{
+				string tempValue = value as string;
+				if (tempValue == null)
+				{
+					throw new ArgumentException("value");
+				}
+				Type = type;
+				Count = (uint)(tempValue.Length + 1);
+				Length = (uint)((tempValue.Length * sizeof(byte)) + 1);
+				data = new byte[Length + 1];
+
+				for (int i = 0; i < tempValue.Length; i++)
+				{
+					data[i] = (byte)tempValue[i];
+				}
+				data[data.Length - 1] = 0;
+			}
+			else if (type == FREE_IMAGE_MDTYPE.FIDT_NOTYPE)
+			{
+				throw new NotSupportedException();
+			}
+			else
+			{
+				Array array = value as Array;
+				if (array == null)
+				{
+					throw new ArgumentException("value");
+				}
+				Type = type;
+				Count = (uint)array.Length;
+				Length = (uint)(array.Length * Marshal.SizeOf(idList[type]));
+				data = new byte[Length];
+				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+				void* src = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
+				fixed (byte* dst = data)
+				{
+					FreeImage.CopyMemory(dst, src, Length);
+				}
+				handle.Free();
+			}
+
+			return FreeImage.SetTagValue(tag, data);
+		}
+
+		/// <summary>
+		/// Add this metadata to an image.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <returns>True on success, false on failure.</returns>
+		public bool AddToImage(FIBITMAP dib)
+		{
+			CheckDisposed();
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException("dib");
+			}
+			if (Key == null)
+			{
+				throw new ArgumentNullException("Key");
+			}
+			if (!selfCreated)
+			{
+				tag = FreeImage.CloneTag(tag);
+				if (tag.IsNull)
+				{
+					throw new Exception();
+				}
+				selfCreated = true;
+			}
+			if (!FreeImage.SetMetadata(Model, dib, Key, tag))
+			{
+				return false;
+			}
+			FREE_IMAGE_MDMODEL _model = Model;
+			string _key = Key;
+			selfCreated = false;
+			FreeImage.DeleteTag(tag);
+			return FreeImage.GetMetadata(_model, dib, _key, out tag);
+		}
+
+		/// <summary>
+		/// Gets a .NET PropertyItem for this metadata tag.
+		/// </summary>
+		/// <returns>The .NET PropertyItem.</returns>
+		public unsafe System.Drawing.Imaging.PropertyItem GetPropertyItem()
+		{
+			System.Drawing.Imaging.PropertyItem item = FreeImage.CreatePropertyItem();
+			item.Id = ID;
+			item.Len = (int)Length;
+			item.Type = (short)Type;
+			byte[] data = new byte[item.Len];
+			byte* ptr = (byte*)FreeImage.GetTagValue(tag);
+			for (int i = 0; i < data.Length; i++)
+			{
+				data[i] = ptr[i];
+			}
+			item.Value = data;
+			return item;
+		}
+
+		/// <summary>
+		/// Converts the value of the <see cref="MetadataTag"/> object
+		/// to its equivalent string representation.
+		/// </summary>
+		/// <returns>The string representation of the value of this instance.</returns>
+		public override string ToString()
+		{
+			CheckDisposed();
+			string fiString = FreeImage.TagToString(model, tag, 0);
+
+			if (String.IsNullOrEmpty(fiString))
+			{
+				return tag.ToString();
+			}
+			else
+			{
+				return fiString;
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of this <see cref="MetadataTag"/>.
+		/// </summary>
+		/// <returns>A deep copy of this <see cref="MetadataTag"/>.</returns>
+		public object Clone()
+		{
+			CheckDisposed();
+			MetadataTag clone = new MetadataTag();
+			clone.model = model;
+			clone.tag = FreeImage.CloneTag(tag);
+			clone.selfCreated = true;
+			return clone;
+		}
+
+		/// <summary>
+		/// Tests whether the specified object is a <see cref="MetadataTag"/> instance
+		/// and is equivalent to this <see cref="MetadataTag"/> instance.
+		/// </summary>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="MetadataTag"/> instance
+		/// equivalent to this <see cref="MetadataTag"/> instance; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
+		{
+			return ((obj is MetadataTag) && (Equals((MetadataTag)obj)));
+		}
+
+		/// <summary>
+		/// Tests whether the specified <see cref="MetadataTag"/> instance is equivalent to this <see cref="MetadataTag"/> instance.
+		/// </summary>
+		/// <param name="other">A <see cref="MetadataTag"/> instance to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> equivalent to this <see cref="MetadataTag"/> instance;
+		/// otherwise, <b>false</b>.</returns>
+		public bool Equals(MetadataTag other)
+		{
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="MetadataTag"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="MetadataTag"/>.</returns>
+		public override int GetHashCode()
+		{
+			return tag.GetHashCode();
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="MetadataTag"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is MetadataTag))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((MetadataTag)obj);
+		}
+
+		/// <summary>
+		/// Compares the current instance with another object of the same type.
+		/// </summary>
+		/// <param name="other">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		public int CompareTo(MetadataTag other)
+		{
+			CheckDisposed();
+			other.CheckDisposed();
+			return tag.CompareTo(other.tag);
+		}
+
+		/// <summary>
+		/// Releases all resources used by the instance.
+		/// </summary>
+		public void Dispose()
+		{
+			if (!disposed)
+			{
+				disposed = true;
+				if (selfCreated)
+				{
+					FreeImage.DeleteTag(tag);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets whether this instance has already been disposed.
+		/// </summary>
+		public bool Disposed
+		{
+			get { return disposed; }
+		}
+
+		/// <summary>
+		/// Throwns an <see cref="ObjectDisposedException"/> in case
+		/// this instance has already been disposed.
+		/// </summary>
+		protected void CheckDisposed()
+		{
+			if (disposed)
+			{
+				throw new ObjectDisposedException("The object has already been disposed.");
+			}
+		}
+	}
+
+	/// <summary>
+	/// Provides methods for working with the standard bitmap palette.
+	/// </summary>
+	public class Palette : MemoryArray<RGBQUAD>
+	{
+		/// <summary>
+		/// Initializes a new instance for the given FreeImage bitmap.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public Palette(FIBITMAP dib)
+			: base(FreeImage.GetPalette(dib), (int)FreeImage.GetColorsUsed(dib))
+		{
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException();
+			}
+			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
+			{
+				throw new ArgumentException("dib");
+			}
+			if (FreeImage.GetBPP(dib) > 8u)
+			{
+				throw new ArgumentException("dib");
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the palette through an array of <see cref="RGBQUAD"/>.
+		/// </summary>
+		public RGBQUAD[] AsArray
+		{
+			get
+			{
+				return Data;
+			}
+			set
+			{
+				Data = value;
+			}
+		}
+
+		/// <summary>
+		/// Get an array of <see cref="System.Drawing.Color"/> that the block of memory represents.
+		/// This property is used for internal palette operations.
+		/// </summary>
+		internal unsafe Color[] ColorData
+		{
+			get
+			{
+				Color[] data = new Color[length];
+				for (int i = 0; i < length; i++)
+				{
+					data[i] = Color.FromArgb((int)(((uint*)baseAddress)[i] | 0xFF000000));
+				}
+				return data;
+			}
+		}
+
+		/// <summary>
+		/// Returns the palette as an array of <see cref="RGBQUAD"/>.
+		/// </summary>
+		/// <returns>The palette as an array of <see cref="RGBQUAD"/>.</returns>
+		public RGBQUAD[] ToArray()
+		{
+			return Data;
+		}
+
+		/// <summary>
+		/// Creates a linear palette based on the provided <paramref name="color"/>.
+		/// </summary>
+		/// <param name="color">The <see cref="System.Drawing.Color"/> used to colorize the palette.</param>
+		/// <remarks>
+		/// Only call this method on linear palettes.
+		/// </remarks>
+		public void Colorize(Color color)
+		{
+			Colorize(color, 0.5d);
+		}
+
+		/// <summary>
+		/// Creates a linear palette based on the provided <paramref name="color"/>.
+		/// </summary>
+		/// <param name="color">The <see cref="System.Drawing.Color"/> used to colorize the palette.</param>
+		/// <param name="splitSize">The position of the color within the new palette.
+		/// 0 &lt; <paramref name="splitSize"/> &lt; 1.</param>
+		/// <remarks>
+		/// Only call this method on linear palettes.
+		/// </remarks>
+		public void Colorize(Color color, double splitSize)
+		{
+			Colorize(color, (int)(length * splitSize));
+		}
+
+		/// <summary>
+		/// Creates a linear palette based on the provided <paramref name="color"/>.
+		/// </summary>
+		/// <param name="color">The <see cref="System.Drawing.Color"/> used to colorize the palette.</param>
+		/// <param name="splitSize">The position of the color within the new palette.
+		/// 0 &lt; <paramref name="splitSize"/> &lt; <see cref="MemoryArray&lt;T&gt;.Length"/>.</param>
+		/// <remarks>
+		/// Only call this method on linear palettes.
+		/// </remarks>
+		public void Colorize(Color color, int splitSize)
+		{
+			if (splitSize < 1 || splitSize >= length)
+			{
+				throw new ArgumentOutOfRangeException("splitSize");
+			}
+
+			RGBQUAD[] pal = new RGBQUAD[length];
+
+			double red = color.R;
+			double green = color.G;
+			double blue = color.B;
+
+			int i = 0;
+			double r, g, b;
+
+			r = red / splitSize;
+			g = green / splitSize;
+			b = blue / splitSize;
+
+			for (; i <= splitSize; i++)
+			{
+				pal[i].rgbRed = (byte)(i * r);
+				pal[i].rgbGreen = (byte)(i * g);
+				pal[i].rgbBlue = (byte)(i * b);
+			}
+
+			r = (255 - red) / (length - splitSize);
+			g = (255 - green) / (length - splitSize);
+			b = (255 - blue) / (length - splitSize);
+
+			for (; i < length; i++)
+			{
+				pal[i].rgbRed = (byte)(red + ((i - splitSize) * r));
+				pal[i].rgbGreen = (byte)(green + ((i - splitSize) * g));
+				pal[i].rgbBlue = (byte)(blue + ((i - splitSize) * b));
+			}
+
+			Data = pal;
+		}
+
+		/// <summary>
+		/// Saves this <see cref="Palette"/> to the specified file.
+		/// </summary>
+		/// <param name="filename">
+		/// A string that contains the name of the file to which to save this <see cref="Palette"/>.
+		/// </param>
+		public void Save(string filename)
+		{
+			using (Stream stream = new FileStream(filename, FileMode.Create, FileAccess.Write))
+			{
+				Save(stream);
+			}
+		}
+
+		/// <summary>
+		/// Saves this <see cref="Palette"/> to the specified stream.
+		/// </summary>
+		/// <param name="stream">
+		/// The <see cref="Stream"/> where the image will be saved.
+		/// </param>
+		public void Save(Stream stream)
+		{
+			Save(new BinaryWriter(stream));
+		}
+
+		/// <summary>
+		/// Saves this <see cref="Palette"/> using the specified writer.
+		/// </summary>
+		/// <param name="writer">
+		/// The <see cref="BinaryWriter"/> used to save the image.
+		/// </param>
+		public void Save(BinaryWriter writer)
+		{
+			writer.Write(ToByteArray());
+		}
+
+		/// <summary>
+		/// Loads a palette from the specified file.
+		/// </summary>
+		/// <param name="filename">The name of the palette file.</param>
+		public void Load(string filename)
+		{
+			using (Stream stream = new FileStream(filename, FileMode.Open, FileAccess.Read))
+			{
+				Load(stream);
+			}
+		}
+
+		/// <summary>
+		/// Loads a palette from the specified stream.
+		/// </summary>
+		/// <param name="stream">The stream to load the palette from.</param>
+		public void Load(Stream stream)
+		{
+			Load(new BinaryReader(stream));
+		}
+
+		/// <summary>
+		/// Loads a palette from the reader.
+		/// </summary>
+		/// <param name="reader">The reader to load the palette from.</param>
+		public unsafe void Load(BinaryReader reader)
+		{
+			int size = length * sizeof(RGBQUAD);
+			byte[] data = reader.ReadBytes(size);
+			fixed(byte* src = data)
+			{
+				CopyMemory(baseAddress, src, data.Length);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Class representing all registered <see cref="FreeImageAPI.FreeImagePlugin"/> in FreeImage.
+	/// </summary>
+	public static class PluginRepository
+	{
+		private static readonly List<FreeImagePlugin> plugins = null;
+		private static readonly List<FreeImagePlugin> localPlugins = null;
+
+		static PluginRepository()
+		{
+			plugins = new List<FreeImagePlugin>(FreeImage.GetFIFCount());
+			localPlugins = new List<FreeImagePlugin>(0);
+			for (int i = 0; i < plugins.Capacity; i++)
+			{
+				plugins.Add(new FreeImagePlugin((FREE_IMAGE_FORMAT)i));
+			}
+		}
+
+		/// <summary>
+		/// Adds local plugin to this class.
+		/// </summary>
+		/// <param name="localPlugin">The registered plugin.</param>
+		internal static void RegisterLocalPlugin(LocalPlugin localPlugin)
+		{
+			FreeImagePlugin plugin = new FreeImagePlugin(localPlugin.Format);
+			plugins.Add(plugin);
+			localPlugins.Add(plugin);
+		}
+
+		/// <summary>
+		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/>, representing the given format.
+		/// </summary>
+		/// <param name="fif">The representing format.</param>
+		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		public static FreeImagePlugin Plugin(FREE_IMAGE_FORMAT fif)
+		{
+			return Plugin((int)fif);
+		}
+
+		/// <summary>
+		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/>,
+		/// representing the format at the given index.
+		/// </summary>
+		/// <param name="index">The index of the representing format.</param>
+		/// <returns>An instance of <see cref="FreeImagePlugin"/>.</returns>
+		public static FreeImagePlugin Plugin(int index)
+		{
+			return (index >= 0) ? plugins[index] : null;
+		}
+
+		/// <summary>
+		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.
+		/// <typeparamref name="expression"/> is searched in:
+		/// <c>Format</c>, <c>RegExpr</c>,
+		/// <c>ValidExtension</c> and <c>ValidFilename</c>.
+		/// </summary>
+		/// <param name="expression">The expression to search for.</param>
+		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		public static FreeImagePlugin Plugin(string expression)
+		{
+			FreeImagePlugin result = null;
+			expression = expression.ToLower();
+
+			foreach (FreeImagePlugin plugin in plugins)
+			{
+				if (plugin.Format.ToLower().Contains(expression) ||
+					plugin.RegExpr.ToLower().Contains(expression) ||
+					plugin.ValidExtension(expression, StringComparison.CurrentCultureIgnoreCase) ||
+					plugin.ValidFilename(expression, StringComparison.CurrentCultureIgnoreCase))
+				{
+					result = plugin;
+					break;
+				}
+			}
+
+			return result;
+		}
+
+		/// <summary>
+		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/> for the given format.
+		/// </summary>
+		/// <param name="format">The format of the Plugin.</param>
+		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		public static FreeImagePlugin PluginFromFormat(string format)
+		{
+			return Plugin(FreeImage.GetFIFFromFormat(format));
+		}
+
+		/// <summary>
+		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/> for the given filename.
+		/// </summary>
+		/// <param name="filename">The valid filename for the plugin.</param>
+		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		public static FreeImagePlugin PluginFromFilename(string filename)
+		{
+			return Plugin(FreeImage.GetFIFFromFilename(filename));
+		}
+
+		/// <summary>
+		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/> for the given mime.
+		/// </summary>
+		/// <param name="mime">The valid mime for the plugin.</param>
+		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		public static FreeImagePlugin PluginFromMime(string mime)
+		{
+			return Plugin(FreeImage.GetFIFFromMime(mime));
+		}
+
+		/// <summary>
+		/// Gets the number of registered plugins.
+		/// </summary>
+		public static int FIFCount
+		{
+			get
+			{
+				return FreeImage.GetFIFCount();
+			}
+		}
+
+		/// <summary>
+		/// Gets a readonly collection of all plugins.
+		/// </summary>
+		public static ReadOnlyCollection<FreeImagePlugin> PluginList
+		{
+			get
+			{
+				return plugins.AsReadOnly();
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of plugins that are only able to
+		/// read but not to write.
+		/// </summary>
+		public static List<FreeImagePlugin> ReadOnlyPlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (p.SupportsReading && !p.SupportsWriting) 
+					{
+						list.Add(p); 
+					}
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of plugins that are only able to
+		/// write but not to read.
+		/// </summary>
+		public static List<FreeImagePlugin> WriteOnlyPlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (!p.SupportsReading && p.SupportsWriting)
+					{
+						list.Add(p);
+					}
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of plugins that are not able to
+		/// read or write.
+		/// </summary>
+		public static List<FreeImagePlugin> StupidPlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (!p.SupportsReading && !p.SupportsWriting)
+					{
+						list.Add(p);
+					}
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of plugins that are able to read.
+		/// </summary>
+		public static List<FreeImagePlugin> ReadablePlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (p.SupportsReading)
+					{
+						list.Add(p);
+					}
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of plugins that are able to write.
+		/// </summary>
+		public static List<FreeImagePlugin> WriteablePlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (p.SupportsWriting)
+					{
+						list.Add(p);
+					}
+				}
+				return list;
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of local plugins.
+		/// </summary>
+		public static ReadOnlyCollection<FreeImagePlugin> LocalPlugins
+		{
+			get
+			{
+				return localPlugins.AsReadOnly();  
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of built-in plugins.
+		/// </summary>
+		public static List<FreeImagePlugin> BuiltInPlugins
+		{
+			get
+			{
+				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
+				foreach (FreeImagePlugin p in plugins)
+				{
+					if (!localPlugins.Contains(p))
+					{
+						list.Add(p);
+					}
+				}
+				return list;
+			}
+		}
+		
+		/// <summary>
+		/// Windows or OS/2 Bitmap File (*.BMP)
+		/// </summary>
+		public static FreeImagePlugin BMP { get { return plugins[0]; } }
+
+		/// <summary>
+		/// Independent JPEG Group (*.JPG, *.JIF, *.JPEG, *.JPE)
+		/// </summary>
+		public static FreeImagePlugin ICO { get { return plugins[1]; } }
+
+		/// <summary>
+		/// Independent JPEG Group (*.JPG, *.JIF, *.JPEG, *.JPE)
+		/// </summary>
+		public static FreeImagePlugin JPEG { get { return plugins[2]; } }
+
+		/// <summary>
+		/// JPEG Network Graphics (*.JNG)
+		/// </summary>
+		public static FreeImagePlugin JNG { get { return plugins[3]; } }
+
+		/// <summary>
+		/// Commodore 64 Koala format (*.KOA)
+		/// </summary>
+		public static FreeImagePlugin KOALA { get { return plugins[4]; } }
+
+		/// <summary>
+		/// Amiga IFF (*.IFF, *.LBM)
+		/// </summary>
+		public static FreeImagePlugin LBM { get { return plugins[5]; } }
+
+		/// <summary>
+		/// Amiga IFF (*.IFF, *.LBM)
+		/// </summary>
+		public static FreeImagePlugin IFF { get { return plugins[5]; } }
+
+		/// <summary>
+		/// Multiple Network Graphics (*.MNG)
+		/// </summary>
+		public static FreeImagePlugin MNG { get { return plugins[6]; } }
+
+		/// <summary>
+		/// Portable Bitmap (ASCII) (*.PBM)
+		/// </summary>
+		public static FreeImagePlugin PBM { get { return plugins[7]; } }
+
+		/// <summary>
+		/// Portable Bitmap (BINARY) (*.PBM)
+		/// </summary>
+		public static FreeImagePlugin PBMRAW { get { return plugins[8]; } }
+
+		/// <summary>
+		/// Kodak PhotoCD (*.PCD)
+		/// </summary>
+		public static FreeImagePlugin PCD { get { return plugins[9]; } }
+
+		/// <summary>
+		/// Zsoft Paintbrush PCX bitmap format (*.PCX)
+		/// </summary>
+		public static FreeImagePlugin PCX { get { return plugins[10]; } }
+
+		/// <summary>
+		/// Portable Graymap (ASCII) (*.PGM)
+		/// </summary>
+		public static FreeImagePlugin PGM { get { return plugins[11]; } }
+
+		/// <summary>
+		/// Portable Graymap (BINARY) (*.PGM)
+		/// </summary>
+		public static FreeImagePlugin PGMRAW { get { return plugins[12]; } }
+
+		/// <summary>
+		/// Portable Network Graphics (*.PNG)
+		/// </summary>
+		public static FreeImagePlugin PNG { get { return plugins[13]; } }
+
+		/// <summary>
+		/// Portable Pixelmap (ASCII) (*.PPM)
+		/// </summary>
+		public static FreeImagePlugin PPM { get { return plugins[14]; } }
+
+		/// <summary>
+		/// Portable Pixelmap (BINARY) (*.PPM)
+		/// </summary>
+		public static FreeImagePlugin PPMRAW { get { return plugins[15]; } }
+
+		/// <summary>
+		/// Sun Rasterfile (*.RAS)
+		/// </summary>
+		public static FreeImagePlugin RAS { get { return plugins[16]; } }
+
+		/// <summary>
+		/// truevision Targa files (*.TGA, *.TARGA)
+		/// </summary>
+		public static FreeImagePlugin TARGA { get { return plugins[17]; } }
+
+		/// <summary>
+		/// Tagged Image File Format (*.TIF, *.TIFF)
+		/// </summary>
+		public static FreeImagePlugin TIFF { get { return plugins[18]; } }
+
+		/// <summary>
+		/// Wireless Bitmap (*.WBMP)
+		/// </summary>
+		public static FreeImagePlugin WBMP { get { return plugins[19]; } }
+
+		/// <summary>
+		/// Adobe Photoshop (*.PSD)
+		/// </summary>
+		public static FreeImagePlugin PSD { get { return plugins[20]; } }
+
+		/// <summary>
+		/// Dr. Halo (*.CUT)
+		/// </summary>
+		public static FreeImagePlugin CUT { get { return plugins[21]; } }
+
+		/// <summary>
+		/// X11 Bitmap Format (*.XBM)
+		/// </summary>
+		public static FreeImagePlugin XBM { get { return plugins[22]; } }
+
+		/// <summary>
+		/// X11 Pixmap Format (*.XPM)
+		/// </summary>
+		public static FreeImagePlugin XPM { get { return plugins[23]; } }
+
+		/// <summary>
+		/// DirectDraw Surface (*.DDS)
+		/// </summary>
+		public static FreeImagePlugin DDS { get { return plugins[24]; } }
+
+		/// <summary>
+		/// Graphics Interchange Format (*.GIF)
+		/// </summary>
+		public static FreeImagePlugin GIF { get { return plugins[25]; } }
+
+		/// <summary>
+		/// High Dynamic Range (*.HDR)
+		/// </summary>
+		public static FreeImagePlugin HDR { get { return plugins[26]; } }
+
+		/// <summary>
+		/// Raw Fax format CCITT G3 (*.G3)
+		/// </summary>
+		public static FreeImagePlugin FAXG3 { get { return plugins[27]; } }
+
+		/// <summary>
+		/// Silicon Graphics SGI image format (*.SGI)
+		/// </summary>
+		public static FreeImagePlugin SGI { get { return plugins[28]; } }
+
+		/// <summary>
+		/// OpenEXR format (*.EXR)
+		/// </summary>
+		public static FreeImagePlugin EXR { get { return plugins[29]; } }
+
+		/// <summary>
+		/// JPEG-2000 format (*.J2K, *.J2C)
+		/// </summary>
+		public static FreeImagePlugin J2K { get { return plugins[30]; } }
+
+		/// <summary>
+		/// JPEG-2000 format (*.JP2)
+		/// </summary>
+		public static FreeImagePlugin JP2 { get { return plugins[31]; } }
+	}
+
+	/// <summary>
+	/// Provides mathods for working with generic bitmap scanlines.
+	/// </summary>
+	/// <typeparam name="T">Type of the bitmaps' scanlines.</typeparam>
+	public sealed class Scanline<T> : MemoryArray<T> where T : struct
+	{
+		/// <summary>
+		/// Initializes a new instance based on the specified FreeImage bitmap.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		public Scanline(FIBITMAP dib)
+			: this(dib, 0)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance based on the specified FreeImage bitmap.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="scanline">Index of the zero based scanline.</param>
+		public Scanline(FIBITMAP dib, int scanline)
+			: this(dib, scanline, (int)(typeof(T) == typeof(FI1BIT) ?
+				FreeImage.GetBPP(dib) * FreeImage.GetWidth(dib) :
+				typeof(T) == typeof(FI4BIT) ?
+				FreeImage.GetBPP(dib) * FreeImage.GetWidth(dib) / 4 :
+				(FreeImage.GetBPP(dib) * FreeImage.GetWidth(dib)) / (Marshal.SizeOf(typeof(T)) * 8)))
+		{
+		}
+
+		internal Scanline(FIBITMAP dib, int scanline, int length)
+			: base(FreeImage.GetScanLine(dib, scanline), length)
+		{
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException("dib");
+			}
+			if ((scanline < 0) || (scanline >= FreeImage.GetHeight(dib)))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
+			}
+		}
+	}
+
+	/// <summary>
+	/// Class wrapping streams, implementing a buffer for read data,
+	/// so that seek operations can be made.
+	/// </summary>
+	/// <remarks>
+	/// FreeImage can load bitmaps from arbitrary sources.
+	/// .NET works with different streams like File- or NetConnection-strams.
+	/// NetConnection streams, which are used to load files from web servers,
+	/// for example cannot seek.
+	/// But FreeImage frequently uses the seek operation when loading bitmaps.
+	/// <b>StreamWrapper</b> wrapps a stream and makes it seekable by caching all read
+	/// data into an internal MemoryStream to jump back- and forward.
+	/// StreamWapper is for internal use and only for loading from streams.
+	/// </remarks>
 	internal class StreamWrapper : Stream
 	{
 		/// <summary>
@@ -14738,7 +16457,7 @@ namespace FreeImageAPI
 		private bool disposed = false;
 
 		/// <summary>
-		/// Creates a new StreamWrapper
+		/// Initializes a new instance based on the specified <see cref="Stream"/>.
 		/// </summary>
 		/// <param name="stream">The stream to wrap.</param>
 		/// <param name="blocking">When true the wrapper always tries to read the requested
@@ -14753,6 +16472,9 @@ namespace FreeImageAPI
 			this.blocking = blocking;
 		}
 
+		/// <summary>
+		/// Releases all resources used by the instance.
+		/// </summary>
 		~StreamWrapper()
 		{
 			Dispose(false);
@@ -14940,7 +16662,10 @@ namespace FreeImageAPI
 				disposed = true;
 				if (disposing)
 				{
-					if (memoryStream != null) memoryStream.Dispose();
+					if (memoryStream != null)
+					{
+						memoryStream.Dispose();
+					}
 				}
 			}
 		}
@@ -14954,1763 +16679,6 @@ namespace FreeImageAPI
 		{
 			if (disposed) throw new ObjectDisposedException("StreamWrapper");
 		}
-	}
-
-	/// <summary>
-	/// Manages metadata objects and operations.
-	/// </summary>
-	public class MetadataTag : IComparable, IComparable<MetadataTag>, ICloneable, IEquatable<MetadataTag>, IDisposable
-	{
-		internal protected FITAG tag;
-		internal protected FREE_IMAGE_MDMODEL model;
-		protected bool disposed = false;
-		protected bool selfCreated;
-		protected static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
-		protected static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
-
-		protected MetadataTag()
-		{
-		}
-
-		/// <summary>
-		/// Creates a new instance of this class.
-		/// </summary>
-		/// <param name="model">The new model the tag should be of.</param>
-		public MetadataTag(FREE_IMAGE_MDMODEL model)
-		{
-			this.model = model;
-			tag = FreeImage.CreateTag();
-			selfCreated = true;
-		}
-
-		/// <summary>
-		/// Creates a new instance of this class.
-		/// </summary>
-		/// <param name="tag">The FITAG to wrap.</param>
-		/// <param name="dib">The bitmap 'tag' was extracted from.</param>
-		public MetadataTag(FITAG tag, FIBITMAP dib)
-		{
-			if (tag.IsNull)
-			{
-				throw new ArgumentNullException("tag");
-			}
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException("dib");
-			}
-			this.tag = tag;
-			model = GetModel(dib, tag);
-			selfCreated = false;
-		}
-
-		/// <summary>
-		/// Creates a new instance of this class.
-		/// </summary>
-		/// <param name="tag">The FITAG to wrap.</param>
-		/// <param name="model">The model of 'tag'.</param>
-		public MetadataTag(FITAG tag, FREE_IMAGE_MDMODEL model)
-		{
-			if (tag.IsNull)
-			{
-				throw new ArgumentNullException("tag");
-			}
-			this.tag = tag;
-			this.model = model;
-			selfCreated = false;
-		}
-
-		static MetadataTag()
-		{
-			idList = new Dictionary<FREE_IMAGE_MDTYPE, Type>();
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_BYTE, typeof(byte));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SHORT, typeof(ushort));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_LONG, typeof(uint));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_RATIONAL, typeof(FIURational));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SBYTE, typeof(sbyte));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_UNDEFINED, typeof(byte));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SSHORT, typeof(short));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SLONG, typeof(int));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_SRATIONAL, typeof(FIRational));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_FLOAT, typeof(float));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_DOUBLE, typeof(double));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_IFD, typeof(uint));
-			idList.Add(FREE_IMAGE_MDTYPE.FIDT_PALETTE, typeof(RGBQUAD));
-
-			typeList = new Dictionary<Type, FREE_IMAGE_MDTYPE>();
-			typeList.Add(typeof(ushort), FREE_IMAGE_MDTYPE.FIDT_SHORT);
-			typeList.Add(typeof(ushort[]), FREE_IMAGE_MDTYPE.FIDT_SHORT);
-			typeList.Add(typeof(string), FREE_IMAGE_MDTYPE.FIDT_ASCII);
-			typeList.Add(typeof(uint), FREE_IMAGE_MDTYPE.FIDT_LONG);
-			typeList.Add(typeof(uint[]), FREE_IMAGE_MDTYPE.FIDT_LONG);
-			typeList.Add(typeof(FIURational), FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
-			typeList.Add(typeof(FIURational[]), FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
-			typeList.Add(typeof(sbyte), FREE_IMAGE_MDTYPE.FIDT_SBYTE);
-			typeList.Add(typeof(sbyte[]), FREE_IMAGE_MDTYPE.FIDT_SBYTE);
-			typeList.Add(typeof(byte), FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
-			typeList.Add(typeof(byte[]), FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
-			typeList.Add(typeof(short), FREE_IMAGE_MDTYPE.FIDT_SSHORT);
-			typeList.Add(typeof(short[]), FREE_IMAGE_MDTYPE.FIDT_SSHORT);
-			typeList.Add(typeof(int), FREE_IMAGE_MDTYPE.FIDT_SLONG);
-			typeList.Add(typeof(int[]), FREE_IMAGE_MDTYPE.FIDT_SLONG);
-			typeList.Add(typeof(FIRational), FREE_IMAGE_MDTYPE.FIDT_SRATIONAL);
-			typeList.Add(typeof(FIRational[]), FREE_IMAGE_MDTYPE.FIDT_SRATIONAL);
-			typeList.Add(typeof(float), FREE_IMAGE_MDTYPE.FIDT_FLOAT);
-			typeList.Add(typeof(float[]), FREE_IMAGE_MDTYPE.FIDT_FLOAT);
-			typeList.Add(typeof(double), FREE_IMAGE_MDTYPE.FIDT_DOUBLE);
-			typeList.Add(typeof(double[]), FREE_IMAGE_MDTYPE.FIDT_DOUBLE);
-			typeList.Add(typeof(RGBQUAD), FREE_IMAGE_MDTYPE.FIDT_PALETTE);
-			typeList.Add(typeof(RGBQUAD[]), FREE_IMAGE_MDTYPE.FIDT_PALETTE);
-		}
-
-		~MetadataTag()
-		{
-			Dispose();
-		}
-
-		public static bool operator ==(MetadataTag value1, MetadataTag value2)
-		{
-			// Check whether both are null
-			if (Object.ReferenceEquals(value1, null) && Object.ReferenceEquals(value2, null))
-			{
-				return true;
-			}
-			// Check whether only one is null
-			if (Object.ReferenceEquals(value1, null) || Object.ReferenceEquals(value2, null))
-			{
-				return false;
-			}
-			// Check all properties
-			if ((value1.Key != value2.Key) ||
-				(value1.ID != value2.ID) ||
-				(value1.Description != value2.Description) ||
-				(value1.Count != value2.Count) ||
-				(value1.Length != value2.Length) ||
-				(value1.Model != value2.Model) ||
-				(value1.Type != value2.Type))
-			{
-				return false;
-			}
-			if (value1.Length == 0)
-			{
-				return true;
-			}
-			IntPtr ptr1 = FreeImage.GetTagValue(value1.tag);
-			IntPtr ptr2 = FreeImage.GetTagValue(value2.tag);
-			return FreeImage.CompareMemory(ptr1, ptr2, value1.Length);
-		}
-
-		public static bool operator !=(MetadataTag value1, MetadataTag value2)
-		{
-			return !(value1 == value2);
-		}
-
-		public static implicit operator FITAG(MetadataTag value)
-		{
-			return value.tag;
-		}
-
-		protected FREE_IMAGE_MDMODEL GetModel(FIBITMAP dib, FITAG tag)
-		{
-			FITAG value;
-			foreach (FREE_IMAGE_MDMODEL model in FreeImage.FREE_IMAGE_MDMODELS)
-			{
-				FIMETADATA mData = FreeImage.FindFirstMetadata(model, dib, out value);
-				if (mData.IsNull)
-				{
-					continue;
-				}
-				try
-				{
-					do
-					{
-						if (value == tag)
-						{
-							return model;
-						}
-					}
-					while (FreeImage.FindNextMetadata(mData, out value));
-				}
-				finally
-				{
-					if (!mData.IsNull)
-					{
-						FreeImage.FindCloseMetadata(mData);
-					}
-				}
-			}
-			throw new ArgumentException("'tag' is no metadata object of 'dib'");
-		}
-
-		/// <summary>
-		/// Gets the model of the metadata.
-		/// </summary>
-		public FREE_IMAGE_MDMODEL Model
-		{
-			get { CheckDisposed(); return model; }
-		}
-
-		/// <summary>
-		/// Gets or sets the key of the metadata.
-		/// </summary>
-		public string Key
-		{
-			get { CheckDisposed(); return FreeImage.GetTagKey(tag); }
-			set { CheckDisposed(); FreeImage.SetTagKey(tag, value); }
-		}
-
-		/// <summary>
-		/// Gets or sets the description of the metadata.
-		/// </summary>
-		public string Description
-		{
-			get { CheckDisposed(); return FreeImage.GetTagDescription(tag); }
-			set { CheckDisposed(); FreeImage.SetTagDescription(tag, value); }
-		}
-
-		/// <summary>
-		/// Gets or sets the ID of the metadata.
-		/// </summary>
-		public ushort ID
-		{
-			get { CheckDisposed(); return FreeImage.GetTagID(tag); }
-			set { CheckDisposed(); FreeImage.SetTagID(tag, value); }
-		}
-
-		/// <summary>
-		/// Gets the type of the metadata.
-		/// </summary>
-		public FREE_IMAGE_MDTYPE Type
-		{
-			get { CheckDisposed(); return FreeImage.GetTagType(tag); }
-			protected set { FreeImage.SetTagType(tag, value); }
-		}
-
-		/// <summary>
-		/// Gets the number of elements the metadata object contains.
-		/// </summary>
-		public uint Count
-		{
-			get { CheckDisposed(); return Type == FREE_IMAGE_MDTYPE.FIDT_ASCII ? FreeImage.GetTagCount(tag) - 1 : FreeImage.GetTagCount(tag); }
-			protected set { FreeImage.SetTagCount(tag, value); }
-		}
-
-		/// <summary>
-		/// Gets the length of the value in bytes.
-		/// </summary>
-		public uint Length
-		{
-			get { CheckDisposed(); return Type == FREE_IMAGE_MDTYPE.FIDT_ASCII ? FreeImage.GetTagLength(tag) - 1 : FreeImage.GetTagLength(tag); }
-			protected set { FreeImage.SetTagLength(tag, value); }
-		}
-
-		private unsafe byte[] GetData()
-		{
-			uint length = Length;
-			byte[] value = new byte[length];
-			byte* ptr = (byte*)FreeImage.GetTagValue(tag);
-			for (int i = 0; i < length; i++)
-			{
-				value[i] = ptr[i];
-			}
-			return value;
-		}
-
-		/// <summary>
-		/// Gets or sets the value of the metadata.
-		/// <para> In case value is of byte or byte[], FREE_IMAGE_MDTYPE.FIDT_UNDEFINED is assumed.</para>
-		/// <para> In case value is of uint or uint[], FREE_IMAGE_MDTYPE.FIDT_LONG is assumed.</para>
-		/// </summary>
-		public unsafe object Value
-		{
-			get
-			{
-				CheckDisposed();
-				int cnt = (int)Count;
-
-				if (Type == FREE_IMAGE_MDTYPE.FIDT_ASCII)
-				{
-					byte* value = (byte*)FreeImage.GetTagValue(tag);
-					StringBuilder sb = new StringBuilder();
-					for (int i = 0; i < cnt; i++)
-					{
-						sb.Append(Convert.ToChar(value[i]));
-					}
-					return sb.ToString();
-				}
-				else if (Type == FREE_IMAGE_MDTYPE.FIDT_NOTYPE)
-				{
-					return null;
-				}
-
-				Array array = Array.CreateInstance(idList[Type], Count);
-				void* src = (void*)FreeImage.GetTagValue(tag);
-				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
-				void* dst = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
-				FreeImage.MoveMemory(dst, src, Length);
-				handle.Free();
-				return array;
-			}
-			set
-			{
-				SetValue(value);
-			}
-		}
-
-		/// <summary>
-		/// Sets the value of the metadata.
-		/// <para> In case value is of byte or byte[] FREE_IMAGE_MDTYPE.FIDT_UNDEFINED is assumed.</para>
-		/// <para> In case value is of uint or uint[] FREE_IMAGE_MDTYPE.FIDT_LONG is assumed.</para>
-		/// </summary>
-		/// <param name="value">New data of the metadata.</param>
-		/// <returns>True on success, false on failure.</returns>
-		/// <exception cref="NotSupportedException">
-		/// Thrown in case the data format is not supported.</exception>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'value' is null.</exception>
-		public bool SetValue(object value)
-		{
-			Type type = value.GetType();
-			if (!typeList.ContainsKey(type))
-			{
-				throw new NotSupportedException();
-			}
-			return SetValue(value, typeList[type]);
-		}
-
-		/// <summary>
-		/// Sets the value of the metadata.
-		/// </summary>
-		/// <param name="value">New data of the metadata.</param>
-		/// <param name="type">Type of the data.</param>
-		/// <returns>True on success, false on failure.</returns>
-		/// <exception cref="NotSupportedException">
-		/// Thrown in case the data type is not supported.</exception>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'value' is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown in case 'value' and 'type' to not fit.</exception>
-		public bool SetValue(object value, FREE_IMAGE_MDTYPE type)
-		{
-			CheckDisposed();
-			if ((!value.GetType().IsArray) && (!(value is string)))
-			{
-				Array array = Array.CreateInstance(value.GetType(), 1);
-				array.SetValue(value, 0);
-				return SetArrayValue(array, type);
-			}
-			return SetArrayValue(value, type);
-		}
-
-		protected unsafe bool SetArrayValue(object value, FREE_IMAGE_MDTYPE type)
-		{
-			if (value == null)
-			{
-				throw new ArgumentNullException("value");
-			}
-
-			byte[] data = null;
-
-			if (type == FREE_IMAGE_MDTYPE.FIDT_ASCII)
-			{
-				string tempValue = value as string;
-				if (tempValue == null)
-				{
-					throw new ArgumentException("value");
-				}
-				Type = type;
-				Count = (uint)(tempValue.Length + 1);
-				Length = (uint)((tempValue.Length * sizeof(byte)) + 1);
-				data = new byte[Length + 1];
-
-				for (int i = 0; i < tempValue.Length; i++)
-				{
-					data[i] = (byte)tempValue[i];
-				}
-				data[data.Length - 1] = 0;
-			}
-			else if (type == FREE_IMAGE_MDTYPE.FIDT_NOTYPE)
-			{
-				throw new NotSupportedException();
-			}
-			else
-			{
-				Array array = value as Array;
-				if (array == null)
-				{
-					throw new ArgumentException("value");
-				}
-				Type = type;
-				Count = (uint)array.Length;
-				Length = (uint)(array.Length * Marshal.SizeOf(idList[type]));
-				data = new byte[Length];
-				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
-				void* src = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
-				fixed (byte* dst = data)
-				{
-					FreeImage.MoveMemory(dst, src, Length);
-				}
-				handle.Free();
-			}
-
-			return FreeImage.SetTagValue(tag, data);
-		}
-
-		/// <summary>
-		/// Add this metadata to an image.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>True on success, false on failure.</returns>
-		public bool AddToImage(FIBITMAP dib)
-		{
-			CheckDisposed();
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException("dib");
-			}
-			if (Key == null)
-			{
-				throw new ArgumentNullException("Key");
-			}
-			if (!selfCreated)
-			{
-				tag = FreeImage.CloneTag(tag);
-				if (tag.IsNull)
-				{
-					throw new Exception();
-				}
-				selfCreated = true;
-			}
-			if (!FreeImage.SetMetadata(Model, dib, Key, tag))
-			{
-				return false;
-			}
-			FREE_IMAGE_MDMODEL _model = Model;
-			string _key = Key;
-			selfCreated = false;
-			FreeImage.DeleteTag(tag);
-			return FreeImage.GetMetadata(_model, dib, _key, out tag);
-		}
-
-		/// <summary>
-		/// Gets a .NET PropertyItem for this metadata tag.
-		/// </summary>
-		/// <returns>The .NET PropertyItem.</returns>
-		public unsafe System.Drawing.Imaging.PropertyItem GetPropertyItem()
-		{
-			System.Drawing.Imaging.PropertyItem item = FreeImage.CreatePropertyItem();
-			item.Id = ID;
-			item.Len = (int)Length;
-			item.Type = (short)Type;
-			byte[] data = new byte[item.Len];
-			byte* ptr = (byte*)FreeImage.GetTagValue(tag);
-			for (int i = 0; i < data.Length; i++)
-			{
-				data[i] = ptr[i];
-			}
-			item.Value = data;
-			return item;
-		}
-
-		/// <summary>
-		/// Returns a String that represents the current Object.
-		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
-		public override string ToString()
-		{
-			CheckDisposed();
-			string fiString = FreeImage.TagToString(model, tag, 0);
-
-			if (String.IsNullOrEmpty(fiString))
-			{
-				return tag.ToString();
-			}
-			else
-			{
-				return fiString;
-			}
-		}
-
-		/// <summary>
-		/// Creates a new object that is a copy of the current instance.
-		/// </summary>
-		/// <returns>A new object that is a copy of this instance.</returns>
-		public object Clone()
-		{
-			CheckDisposed();
-			MetadataTag clone = new MetadataTag();
-			clone.model = model;
-			clone.tag = FreeImage.CloneTag(tag);
-			clone.selfCreated = true;
-			return clone;
-		}
-
-		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(MetadataTag other)
-		{
-			CheckDisposed();
-			return (this.tag == other.tag) && (this.model == other.model);
-		}
-
-		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
-		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
-		public int CompareTo(object obj)
-		{
-			CheckDisposed();
-			if (obj is MetadataTag)
-			{
-				return CompareTo((MetadataTag)obj);
-			}
-			throw new ArgumentException("obj");
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(MetadataTag other)
-		{
-			CheckDisposed();
-			return tag.CompareTo(other.tag);
-		}
-
-		/// <summary>
-		/// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-		/// </summary>
-		public void Dispose()
-		{
-			if (!disposed)
-			{
-				disposed = true;
-				if (selfCreated)
-				{
-					FreeImage.DeleteTag(tag);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets whether this instance has already been disposed.
-		/// </summary>
-		public bool Disposed
-		{
-			get { return disposed; }
-		}
-
-		protected void CheckDisposed()
-		{
-			if (disposed)
-			{
-				throw new ObjectDisposedException("The object has already been disposed.");
-			}
-		}
-	}
-
-	/// <summary>
-	/// Base class for managing different metadata models.
-	/// </summary>
-	public abstract class MetadataModel : IEnumerable
-	{
-		protected readonly FIBITMAP dib;
-
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'dib' is null.</exception>
-		protected MetadataModel(FIBITMAP dib)
-		{
-			if (dib.IsNull) throw new ArgumentNullException("dib");
-			this.dib = dib;
-		}
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public abstract FREE_IMAGE_MDMODEL Model
-		{
-			get;
-		}
-
-		/// <summary>
-		/// Adds new tag to the bitmap
-		/// or updates its value in case it already exists.
-		/// 'tag.Key' will be used as key.
-		/// </summary>
-		/// <param name="tag">The tag to add or update.</param>
-		/// <returns>Returns true on success, false on failure.</returns>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'tag' is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown in case the tags model differs from this instances model.</exception>
-		public bool AddTag(MetadataTag tag)
-		{
-			if (tag == null) throw new ArgumentNullException("tag");
-			if (tag.Model != Model) throw new ArgumentException("tag.Model");
-			return tag.AddToImage(dib);
-		}
-
-		/// <summary>
-		/// Adds a list of tags to the bitmap
-		/// or updates their values in case they already exist.
-		/// 'tag.Key' will be used as key.
-		/// </summary>
-		/// <param name="list">A list of tags to add or update.</param>
-		/// <returns>Returns the number of successfully added tags.</returns>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'list' is null.</exception>
-		public int AddTag(IEnumerable<MetadataTag> list)
-		{
-			if (list == null) throw new ArgumentNullException("list");
-			int count = 0;
-			foreach (MetadataTag tag in list)
-			{
-				if (tag.Model == Model && tag.AddToImage(dib))
-					count++;
-			}
-			return count;
-		}
-
-		/// <summary>
-		/// Removes the specified tag from the bitmap.
-		/// </summary>
-		/// <param name="key">The key of the tag.</param>
-		/// <returns>Returns true on success, false on failure.</returns>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'key' is null.</exception>
-		public bool RemoveTag(string key)
-		{
-			if (key == null) throw new ArgumentNullException("key");
-			return FreeImage.SetMetadata(Model, dib, key, 0);
-		}
-
-		/// <summary>
-		/// Destroys the metadata model
-		/// which will remove all tags of this model from the bitmap.
-		/// </summary>
-		/// <returns>Returns true on success, false on failure.</returns>
-		public bool DestoryModel()
-		{
-			return FreeImage.SetMetadata(Model, dib, null, 0);
-		}
-
-		/// <summary>
-		/// Returns the specified metadata tag.
-		/// </summary>
-		/// <param name="key">The key of the tag.</param>
-		/// <returns>The metadata tag.</returns>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'key' is null.</exception>
-		public MetadataTag GetTag(string key)
-		{
-			if (key == null) throw new ArgumentNullException("key");
-			MetadataTag tag;
-			return FreeImage.GetMetadata(Model, dib, key, out tag) ? tag : null;
-		}
-
-		/// <summary>
-		/// Returns whether the specified tag exists.
-		/// </summary>
-		/// <param name="key">The key of the tag.</param>
-		/// <returns>True in case the tag exists, else false.</returns>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'key' is null.</exception>
-		public bool TagExists(string key)
-		{
-			if (key == null) throw new ArgumentNullException("key");
-			MetadataTag tag;
-			return FreeImage.GetMetadata(Model, dib, key, out tag);
-		}
-
-		/// <summary>
-		/// Returns a list of all metadata tags this instance represents.
-		/// </summary>
-		public List<MetadataTag> List
-		{
-			get
-			{
-				List<MetadataTag> list = new List<MetadataTag>((int)FreeImage.GetMetadataCount(Model, dib));
-				MetadataTag tag;
-				FIMETADATA mdHandle = FreeImage.FindFirstMetadata(Model, dib, out tag);
-				if (!mdHandle.IsNull)
-				{
-					do
-					{
-						list.Add(tag);
-					}
-					while (FreeImage.FindNextMetadata(mdHandle, out tag));
-					FreeImage.FindCloseMetadata(mdHandle);
-				}
-				return list;
-			}
-		}
-
-		protected MetadataTag GetTagFromIndex(int index)
-		{
-			if (index >= Count || index < 0) throw new ArgumentOutOfRangeException("index");
-			MetadataTag tag;
-			int count = 0;
-			FIMETADATA mdHandle = FreeImage.FindFirstMetadata(Model, dib, out tag);
-			if (!mdHandle.IsNull)
-			{
-				do
-				{
-					if (count++ == index)
-						break;
-				}
-				while (FreeImage.FindNextMetadata(mdHandle, out tag));
-				FreeImage.FindCloseMetadata(mdHandle);
-			}
-			return tag;
-		}
-
-		/// <summary>
-		/// Returns the metadata tag at the given index.
-		/// This operation is slow when accessing all tags.
-		/// </summary>
-		/// <param name="index">Index of the tag.</param>
-		/// <returns>The metadata tag.</returns>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown in case index is greater or equal 'Count'
-		/// or index is less than zero.</exception>
-		public MetadataTag this[int index]
-		{
-			get
-			{
-				return GetTagFromIndex(index);
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			return List.GetEnumerator();
-		}
-
-		/// <summary>
-		/// Returns the number of metadata tags this instance represents.
-		/// </summary>
-		public int Count
-		{
-			get { return (int)FreeImage.GetMetadataCount(Model, dib); }
-		}
-
-		/// <summary>
-		/// Returns whether this model exists in the bitmaps metadata structure.
-		/// </summary>
-		public bool Exists
-		{
-			get
-			{
-				return Count > 0;
-			}
-		}
-
-		/// <summary>
-		/// Searches for a pattern in each metadata tag and returns the result as a list.
-		/// </summary>
-		/// <param name="searchPattern">The regular expression to use for the search.</param>
-		/// <param name="flags">A bitfield that controls which fields should be searched in.</param>
-		/// <returns>A list containing all found metadata tags.</returns>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'searchPattern' is null.</exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown in case 'searchPattern' is empty.</exception>
-		public List<MetadataTag> RegexSearch(string searchPattern, MD_SEARCH_FLAGS flags)
-		{
-			if (searchPattern == null) throw new ArgumentNullException("searchString");
-			if (searchPattern.Length == 0) throw new ArgumentException("searchString is empty");
-			List<MetadataTag> result = new List<MetadataTag>(Count);
-			Regex regex = new Regex(searchPattern);
-			List<MetadataTag> list = List;
-			foreach (MetadataTag tag in list)
-			{
-				if (((flags & MD_SEARCH_FLAGS.KEY) > 0) && regex.Match(tag.Key).Success)
-				{
-					result.Add(tag);
-					continue;
-				}
-				if (((flags & MD_SEARCH_FLAGS.DESCRIPTION) > 0) && regex.Match(tag.Description).Success)
-				{
-					result.Add(tag);
-					continue;
-				}
-				if (((flags & MD_SEARCH_FLAGS.TOSTRING) > 0) && regex.Match(tag.ToString()).Success)
-				{
-					result.Add(tag);
-					continue;
-				}
-			}
-			result.Capacity = result.Count;
-			return result;
-		}
-
-		/// <summary>
-		/// Returns a String that represents the current Object.
-		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
-		public override string ToString()
-		{
-			return Model.ToString();
-		}
-	}
-
-	#region Metadata Models
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_ANIMATION.
-	/// </summary>
-	public class MDM_ANIMATION : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_ANIMATION(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_ANIMATION; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_COMMENTS.
-	/// </summary>
-	public class MDM_COMMENTS : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_COMMENTS(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_COMMENTS; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_CUSTOM.
-	/// </summary>
-	public class MDM_CUSTOM : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_CUSTOM(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_CUSTOM; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_EXIF_EXIF.
-	/// </summary>
-	public class MDM_EXIF_EXIF : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_EXIF_EXIF(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_EXIF_GPS.
-	/// </summary>
-	public class MDM_EXIF_GPS : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_EXIF_GPS(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_EXIF_GPS; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_EXIF_INTEROP.
-	/// </summary>
-	public class MDM_INTEROP : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_INTEROP(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_EXIF_INTEROP; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_EXIF_MAIN.
-	/// </summary>
-	public class MDM_MAIN : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_MAIN(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_EXIF_MAIN; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_EXIF_MAKERNOTE.
-	/// </summary>
-	public class MDM_MAKERNOTE : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_MAKERNOTE(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_EXIF_MAKERNOTE; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_GEOTIFF.
-	/// </summary>
-	public class MDM_GEOTIFF : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_GEOTIFF(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_GEOTIFF; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_IPTC.
-	/// </summary>
-	public class MDM_IPTC : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_IPTC(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_IPTC; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_NODATA.
-	/// </summary>
-	public class MDM_NODATA : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_NODATA(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_NODATA; }
-		}
-	}
-
-	/// <summary>
-	/// Class that manages the metadata model type FIMD_XMP.
-	/// </summary>
-	public class MDM_XMP : MetadataModel
-	{
-		/// <summary>
-		/// Creates a new instance of the class.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public MDM_XMP(FIBITMAP dib) : base(dib) { }
-
-		/// <summary>
-		/// Retrieves the datamodel that this instance represents.
-		/// </summary>
-		public override FREE_IMAGE_MDMODEL Model
-		{
-			get { return FREE_IMAGE_MDMODEL.FIMD_XMP; }
-		}
-	}
-
-	#endregion
-
-	/// <summary>
-	/// Class handling metadata of a FreeImage bitmap.
-	/// </summary>
-	public class ImageMetadata : IEnumerable, IComparable, IComparable<ImageMetadata>
-	{
-		private readonly List<MetadataModel> data;
-		private readonly FIBITMAP dib;
-		private bool hideEmptyModels;
-
-		/// <summary>
-		/// Creates a new ImageMetadata instance, showing all known models.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		public ImageMetadata(FIBITMAP dib) : this(dib, false) { }
-
-		/// <summary>
-		/// Creates a new ImageMetadata instance.
-		/// </summary>
-		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="hideEmptyModels">When true, empty metadata models
-		/// will be hidden until a tag to this model is added.</param>
-		public ImageMetadata(FIBITMAP dib, bool hideEmptyModels)
-		{
-			if (dib.IsNull) throw new ArgumentNullException("dib");
-			data = new List<MetadataModel>(FreeImage.FREE_IMAGE_MDMODELS.Length);
-			this.dib = dib;
-			this.hideEmptyModels = hideEmptyModels;
-
-			foreach (Type exportedType in Assembly.GetAssembly(this.GetType()).GetExportedTypes())
-			{
-				if (exportedType.IsClass &&
-					exportedType.IsPublic &&
-					exportedType.BaseType != null &&
-					exportedType.BaseType == typeof(MetadataModel))
-				{
-					ConstructorInfo constructorInfo = exportedType.GetConstructor(new Type[] { typeof(FIBITMAP) });
-					if (constructorInfo != null)
-					{
-						MetadataModel model = (MetadataModel)constructorInfo.Invoke(new object[] { dib });
-						if (model != null)
-						{
-							data.Add(model);
-						}
-					}
-				}
-			}
-			data.Capacity = data.Count;
-		}
-
-		/// <summary>
-		/// Gets or sets the MetadataModel of the specified type.
-		/// <para>In case the getter returns null the model is not contained
-		/// by the list.</para>
-		/// <para>'null' can be used calling the setter to destroy the model.</para>
-		/// </summary>
-		/// <param name="model">Type of the model.</param>
-		/// <returns>The MetadataModel object of the specified type.</returns>
-		public MetadataModel this[FREE_IMAGE_MDMODEL model]
-		{
-			get
-			{
-				for (int i = 0; i < data.Count; i++)
-				{
-					if (data[i].Model == model)
-					{
-						if (!data[i].Exists && hideEmptyModels)
-							return null;
-						return data[i];
-					}
-				}
-				return null;
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the MetadataModel at the specified index.
-		/// <para>In case the getter returns null the model is not contained
-		/// by the list.</para>
-		/// <para>'null' can be used calling the setter to destroy the model.</para>
-		/// </summary>
-		/// <param name="index">Index of the MetadataModel within this instance.</param>
-		/// <returns>The MetadataModel object at the specified index.</returns>
-		public MetadataModel this[int index]
-		{
-			get
-			{
-				if (index < 0 || index >= data.Count) throw new ArgumentOutOfRangeException("index");
-				return (hideEmptyModels && !data[index].Exists) ? null : data[index];
-			}
-		}
-
-		/// <summary>
-		/// Returns a list of all visible metadata models.
-		/// </summary>
-		public List<MetadataModel> List
-		{
-			get
-			{
-				if (hideEmptyModels)
-				{
-					List<MetadataModel> result = new List<MetadataModel>();
-					for (int i = 0; i < data.Count; i++)
-						if (data[i].Exists)
-							result.Add(data[i]);
-					return result;
-				}
-				else
-				{
-					return data;
-				}
-			}
-		}
-
-		/// <summary>
-		/// Adds new tag to the bitmap
-		/// or updates its value in case it already exists.
-		/// 'tag.Key' will be used as key.
-		/// </summary>
-		/// <param name="tag">The tag to add or update.</param>
-		/// <returns>Returns true on success, false on failure.</returns>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'tag' is null.</exception>
-		public bool AddTag(MetadataTag tag)
-		{
-			for (int i = 0; i < data.Count; i++)
-			{
-				if (tag.Model == data[i].Model)
-				{
-					return data[i].AddTag(tag);
-				}
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Returns the number of visible metadata models.
-		/// </summary>
-		public int Count
-		{
-			get
-			{
-				if (hideEmptyModels)
-				{
-					int count = 0;
-					for (int i = 0; i < data.Count; i++)
-						if (data[i].Exists)
-							count++;
-					return count;
-				}
-				else
-				{
-					return data.Count;
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets whether empty metadata models are hidden.
-		/// </summary>
-		public bool HideEmptyModels
-		{
-			get
-			{
-				return hideEmptyModels;
-			}
-			set
-			{
-				hideEmptyModels = value;
-			}
-		}
-
-		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
-		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
-		public IEnumerator GetEnumerator()
-		{
-			if (hideEmptyModels)
-			{
-				List<MetadataModel> tempList = new List<MetadataModel>(data.Count);
-				for (int i = 0; i < data.Count; i++)
-					if (data[i].Exists)
-						tempList.Add(data[i]);
-				return tempList.GetEnumerator();
-			}
-			else
-			{
-				return data.GetEnumerator();
-			}
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is ImageMetadata)
-			{
-				return CompareTo((ImageMetadata)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(ImageMetadata other)
-		{
-			return this.dib.CompareTo(other.dib);
-		}
-	}
-
-	/// <summary>
-	/// Class wrapping a FreeImage format.
-	/// </summary>
-	public sealed class FreeImagePlugin
-	{
-		private readonly FREE_IMAGE_FORMAT fif;
-
-		/// <summary>
-		/// Creates a new instance of this class.
-		/// </summary>
-		/// <param name="fif">The FreeImage format to wrap.</param>
-		internal FreeImagePlugin(FREE_IMAGE_FORMAT fif)
-		{
-			this.fif = fif;
-		}
-
-		/// <summary>
-		/// Gets the format of this instance.
-		/// </summary>
-		public FREE_IMAGE_FORMAT FIFormat
-		{
-			get
-			{
-				return fif;
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets whether this plugin is enabled.
-		/// </summary>
-		public bool Enabled
-		{
-			get
-			{
-				return (FreeImage.IsPluginEnabled(fif) == 1);
-			}
-			set
-			{
-				FreeImage.SetPluginEnabled(fif, value);
-			}
-		}
-
-		/// <summary>
-		/// Gets a string describing the format.
-		/// </summary>
-		public string Format
-		{
-			get
-			{
-				return FreeImage.GetFormatFromFIF(fif);
-			}
-		}
-
-		/// <summary>
-		/// Gets a comma-delimited file extension list describing the bitmap formats
-		/// this plugin can read and/or write.
-		/// </summary>
-		public string ExtentsionList
-		{
-			get
-			{
-				return FreeImage.GetFIFExtensionList(fif);
-			}
-		}
-
-		/// <summary>
-		/// Gets a descriptive string that describes the bitmap formats
-		/// this plugin can read and/or write.
-		/// </summary>
-		public string Description
-		{
-			get
-			{
-				return FreeImage.GetFIFDescription(fif);
-			}
-		}
-
-		/// <summary>
-		/// Returns a regular expression string that can be used by
-		/// a regular expression engine to identify the bitmap.
-		/// FreeImageQt makes use of this function.
-		/// </summary>
-		public string RegExpr
-		{
-			get
-			{
-				return FreeImage.GetFIFRegExpr(fif);
-			}
-		}
-
-		/// <summary>
-		/// Gets whether this plugin can load bitmaps.
-		/// </summary>
-		public bool SupportsReading
-		{
-			get
-			{
-				return FreeImage.FIFSupportsReading(fif);
-			}
-		}
-
-		/// <summary>
-		/// Gets whether this plugin can save bitmaps.
-		/// </summary>
-		public bool SupportsWriting
-		{
-			get
-			{
-				return FreeImage.FIFSupportsWriting(fif);
-			}
-		}
-
-		/// <summary>
-		/// Checks whether this plugin can save a bitmap in the desired data type.
-		/// </summary>
-		/// <param name="type">The desired image type.</param>
-		/// <returns>True if this plugin can save bitmaps as the desired type, else false.</returns>
-		public bool SupportsExportType(FREE_IMAGE_TYPE type)
-		{
-			return FreeImage.FIFSupportsExportType(fif, type);
-		}
-
-		/// <summary>
-		/// Checks whether this plugin can save bitmaps in the desired bit depth.
-		/// </summary>
-		/// <param name="bpp">The desired bit depth.</param>
-		/// <returns>True if this plugin can save bitmaps in the desired bit depth, else false.</returns>
-		public bool SupportsExportBPP(int bpp)
-		{
-			return FreeImage.FIFSupportsExportBPP(fif, bpp);
-		}
-
-		/// <summary>
-		/// Gets whether this plugin can load or save an ICC profile.
-		/// </summary>
-		public bool SupportsICCProfiles
-		{
-			get
-			{
-				return FreeImage.FIFSupportsICCProfiles(fif);
-			}
-		}
-
-		/// <summary>
-		/// Checks whether an extension is valid for this format.
-		/// </summary>
-		/// <param name="extension">The desired extension.</param>
-		/// <returns>True if the extension is valid for this format, false otherwise.</returns>
-		public bool ValidExtension(string extension)
-		{
-			return FreeImage.IsExtensionValidForFIF(fif, extension);
-		}
-
-		/// <summary>
-		/// Checks whether an extension is valid for this format.
-		/// </summary>
-		/// <param name="extension">The desired extension.</param>
-		/// <param name="comparisonType">The string comparison type.</param>
-		/// <returns>True if the extension is valid for this format, false otherwise.</returns>
-		public bool ValidExtension(string extension, StringComparison comparisonType)
-		{
-			return FreeImage.IsExtensionValidForFIF(fif, extension, comparisonType);
-		}
-
-		/// <summary>
-		/// Checks whether a filename is valid for this format.
-		/// </summary>
-		/// <param name="filename">The desired filename.</param>
-		/// <returns>True if the filename is valid for this format, false otherwise.</returns>
-		public bool ValidFilename(string filename)
-		{
-			return FreeImage.IsFilenameValidForFIF(fif, filename);
-		}
-
-		/// <summary>
-		/// Checks whether a filename is valid for this format.
-		/// </summary>
-		/// <param name="filename">The desired filename.</param>
-		/// <param name="comparisonType">The string comparison type.</param>
-		/// <returns>True if the filename is valid for this format, false otherwise.</returns>
-		public bool ValidFilename(string filename, StringComparison comparisonType)
-		{
-			return FreeImage.IsFilenameValidForFIF(fif, filename, comparisonType);
-		}
-
-		/// <summary>
-		/// Returns a String that represents the current Object.
-		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
-		public override string ToString()
-		{
-			return Description;
-		}
-	}
-
-	/// <summary>
-	/// Class wrapping all registered plugins in FreeImage.
-	/// </summary>
-	public static class PluginRepository
-	{
-		private static readonly List<FreeImagePlugin> plugins = null;
-		private static readonly List<FreeImagePlugin> localPlugins = null;
-
-		static PluginRepository()
-		{
-			plugins = new List<FreeImagePlugin>(FreeImage.GetFIFCount());
-			localPlugins = new List<FreeImagePlugin>(0);
-			for (int i = 0; i < plugins.Capacity; i++)
-			{
-				plugins.Add(new FreeImagePlugin((FREE_IMAGE_FORMAT)i));
-			}
-		}
-
-		/// <summary>
-		/// Adds local plugin to this class.
-		/// </summary>
-		/// <param name="localPlugin">The registered plugin.</param>
-		internal static void RegisterLocalPlugin(LocalPlugin localPlugin)
-		{
-			FreeImagePlugin plugin = new FreeImagePlugin(localPlugin.Format);
-			plugins.Add(plugin);
-			localPlugins.Add(plugin);
-		}
-
-		/// <summary>
-		/// Returns an instance of 'Plugin', wrapping the given format.
-		/// </summary>
-		/// <param name="fif">The format to wrap.</param>
-		/// <returns>An instance of 'Plugin'.</returns>
-		public static FreeImagePlugin Plugin(FREE_IMAGE_FORMAT fif)
-		{
-			return Plugin((int)fif);
-		}
-
-		/// <summary>
-		/// Returns an instance of 'Plugin', wrapping the format at the given index.
-		/// </summary>
-		/// <param name="index">The index of the format to wrap.</param>
-		/// <returns>An instance of 'Plugin'.</returns>
-		public static FreeImagePlugin Plugin(int index)
-		{
-			return (index >= 0) ? plugins[index] : null;
-		}
-
-		/// <summary>
-		/// Returns an instance of 'Plugin'.
-		/// <typeparamref name="expression"/> is searched in:
-		/// <c>Format</c>, <c>RegExpr</c>,
-		/// <c>ValidExtension</c> and <c>ValidFilename</c>.
-		/// </summary>
-		/// <param name="expression">The expression to search for.</param>
-		/// <returns>An instance of 'Plugin'.</returns>
-		public static FreeImagePlugin Plugin(string expression)
-		{
-			FreeImagePlugin result = null;
-			expression = expression.ToLower();
-
-			foreach (FreeImagePlugin plugin in plugins)
-			{
-				if (plugin.Format.ToLower().Contains(expression) ||
-					plugin.RegExpr.ToLower().Contains(expression) ||
-					plugin.ValidExtension(expression, StringComparison.CurrentCultureIgnoreCase) ||
-					plugin.ValidFilename(expression, StringComparison.CurrentCultureIgnoreCase))
-				{
-					result = plugin;
-					break;
-				}
-			}
-
-			return result;
-		}
-
-		/// <summary>
-		/// Returns an instance of 'Plugin' for the given format.
-		/// </summary>
-		/// <param name="format">The format of the Plugin.</param>
-		/// <returns>An instance of 'Plugin'.</returns>
-		public static FreeImagePlugin PluginFromFormat(string format)
-		{
-			return Plugin(FreeImage.GetFIFFromFormat(format));
-		}
-
-		/// <summary>
-		/// Returns an instance of 'Plugin' for the given filename.
-		/// </summary>
-		/// <param name="filename">The valid filename for the plugin.</param>
-		/// <returns>An instance of 'Plugin'.</returns>
-		public static FreeImagePlugin PluginFromFilename(string filename)
-		{
-			return Plugin(FreeImage.GetFIFFromFilename(filename));
-		}
-
-		/// <summary>
-		/// Returns an instance of 'Plugin' for the given mime.
-		/// </summary>
-		/// <param name="mime">The valid mime for the plugin.</param>
-		/// <returns>An instance of 'Plugin'.</returns>
-		public static FreeImagePlugin PluginFromMime(string mime)
-		{
-			return Plugin(FreeImage.GetFIFFromMime(mime));
-		}
-
-		/// <summary>
-		/// Gets the number of registered plugins.
-		/// </summary>
-		public static int FIFCount
-		{
-			get
-			{
-				return FreeImage.GetFIFCount();
-			}
-		}
-
-		/// <summary>
-		/// Gets a readonly collection of all plugins.
-		/// </summary>
-		public static ReadOnlyCollection<FreeImagePlugin> PluginList
-		{
-			get
-			{
-				return plugins.AsReadOnly();
-			}
-		}
-
-		/// <summary>
-		/// Gets a list of plugins that are only able to
-		/// read but not to write.
-		/// </summary>
-		public static List<FreeImagePlugin> ReadOnlyPlugins
-		{
-			get
-			{
-				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
-				foreach (FreeImagePlugin p in plugins)
-				{
-					if (p.SupportsReading && !p.SupportsWriting) 
-					{
-						list.Add(p); 
-					}
-				}
-				return list;
-			}
-		}
-
-		/// <summary>
-		/// Gets a list of plugins that are only able to
-		/// write but not to read.
-		/// </summary>
-		public static List<FreeImagePlugin> WriteOnlyPlugins
-		{
-			get
-			{
-				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
-				foreach (FreeImagePlugin p in plugins)
-				{
-					if (!p.SupportsReading && p.SupportsWriting)
-					{
-						list.Add(p);
-					}
-				}
-				return list;
-			}
-		}
-
-		/// <summary>
-		/// Gets a list of plugins that are not able to
-		/// read or write.
-		/// </summary>
-		public static List<FreeImagePlugin> StupidPlugins
-		{
-			get
-			{
-				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
-				foreach (FreeImagePlugin p in plugins)
-				{
-					if (!p.SupportsReading && !p.SupportsWriting)
-					{
-						list.Add(p);
-					}
-				}
-				return list;
-			}
-		}
-
-		/// <summary>
-		/// Gets a list of plugins that are able to read.
-		/// </summary>
-		public static List<FreeImagePlugin> ReadablePlugins
-		{
-			get
-			{
-				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
-				foreach (FreeImagePlugin p in plugins)
-				{
-					if (p.SupportsReading)
-					{
-						list.Add(p);
-					}
-				}
-				return list;
-			}
-		}
-
-		/// <summary>
-		/// Gets a list of plugins that are able to write.
-		/// </summary>
-		public static List<FreeImagePlugin> WriteablePlugins
-		{
-			get
-			{
-				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
-				foreach (FreeImagePlugin p in plugins)
-				{
-					if (p.SupportsWriting)
-					{
-						list.Add(p);
-					}
-				}
-				return list;
-			}
-		}
-
-		/// <summary>
-		/// Gets a list of local plugins.
-		/// </summary>
-		public static ReadOnlyCollection<FreeImagePlugin> LocalPlugins
-		{
-			get
-			{
-				return localPlugins.AsReadOnly();  
-			}
-		}
-
-		/// <summary>
-		/// Gets a list of built-in plugins.
-		/// </summary>
-		public static List<FreeImagePlugin> BuiltInPlugins
-		{
-			get
-			{
-				List<FreeImagePlugin> list = new List<FreeImagePlugin>();
-				foreach (FreeImagePlugin p in plugins)
-				{
-					if (!localPlugins.Contains(p))
-					{
-						list.Add(p);
-					}
-				}
-				return list;
-			}
-		}
-
-		public static FreeImagePlugin BMP { get { return plugins[0]; } }
-		public static FreeImagePlugin ICO { get { return plugins[1]; } }
-		public static FreeImagePlugin JPEG { get { return plugins[2]; } }
-		public static FreeImagePlugin JNG { get { return plugins[3]; } }
-		public static FreeImagePlugin KOALA { get { return plugins[4]; } }
-		public static FreeImagePlugin LBM { get { return plugins[5]; } }
-		public static FreeImagePlugin IFF { get { return plugins[5]; } }
-		public static FreeImagePlugin MNG { get { return plugins[6]; } }
-		public static FreeImagePlugin PBM { get { return plugins[7]; } }
-		public static FreeImagePlugin PBMRAW { get { return plugins[8]; } }
-		public static FreeImagePlugin PCD { get { return plugins[9]; } }
-		public static FreeImagePlugin PCX { get { return plugins[10]; } }
-		public static FreeImagePlugin PGM { get { return plugins[11]; } }
-		public static FreeImagePlugin PGMRAW { get { return plugins[12]; } }
-		public static FreeImagePlugin PNG { get { return plugins[13]; } }
-		public static FreeImagePlugin PPM { get { return plugins[14]; } }
-		public static FreeImagePlugin PPMRAW { get { return plugins[15]; } }
-		public static FreeImagePlugin RAS { get { return plugins[16]; } }
-		public static FreeImagePlugin TARGA { get { return plugins[17]; } }
-		public static FreeImagePlugin TIFF { get { return plugins[18]; } }
-		public static FreeImagePlugin WBMP { get { return plugins[19]; } }
-		public static FreeImagePlugin PSD { get { return plugins[20]; } }
-		public static FreeImagePlugin CUT { get { return plugins[21]; } }
-		public static FreeImagePlugin XBM { get { return plugins[22]; } }
-		public static FreeImagePlugin XPM { get { return plugins[23]; } }
-		public static FreeImagePlugin DDS { get { return plugins[24]; } }
-		public static FreeImagePlugin GIF { get { return plugins[25]; } }
-		public static FreeImagePlugin HDR { get { return plugins[26]; } }
-		public static FreeImagePlugin FAXG3 { get { return plugins[27]; } }
-		public static FreeImagePlugin SGI { get { return plugins[28]; } }
-		public static FreeImagePlugin EXR { get { return plugins[29]; } }
-		public static FreeImagePlugin J2K { get { return plugins[30]; } }
-		public static FreeImagePlugin JP2 { get { return plugins[31]; } }
 	}
 
 	#endregion
@@ -16814,6 +16782,25 @@ namespace FreeImageAPI
 	}
 
 	/// <summary>
+	/// Flags for copying data from a bitmap to another.
+	/// </summary>
+	public enum FREE_IMAGE_METADATA_COPY
+	{
+		/// <summary>
+		/// Exisiting metadata will remain unchanged.
+		/// </summary>
+		KEEP_EXISITNG = 0x0,
+		/// <summary>
+		/// Existing metadata will be cleared.
+		/// </summary>
+		CLEAR_EXISTING = 0x1,
+		/// <summary>
+		/// Existing metadata will be overwritten.
+		/// </summary>
+		REPLACE_EXISTING = 0x2
+	}
+
+	/// <summary>
 	/// List different search modes.
 	/// </summary>
 	[System.Flags]
@@ -16833,30 +16820,11 @@ namespace FreeImageAPI
 		TOSTRING = 0x4,
 	}
 
-	/// <summary>
-	/// Flags for copying data from a bitmap to another.
-	/// </summary>
-	public enum FREE_IMAGE_METADATA_COPY
-	{
-		/// <summary>
-		/// Exisiting metadata will remain unchanged.
-		/// </summary>
-		KEEP_EXISITNG = 0x0,
-		/// <summary>
-		/// Existing metadata will be cleared.
-		/// </summary>
-		CLEAR_EXISTING = 0x1,
-		/// <summary>
-		/// Existing metadata will be overwritten.
-		/// </summary>
-		REPLACE_EXISTING = 0x2
-	}
-
 	#endregion
 
 	/// <summary>
 	/// Static class importing functions from the FreeImage library
-	/// and providing additional wrapper functions.
+	/// and providing additional functions.
 	/// </summary>
 	public static partial class FreeImage
 	{
@@ -16878,6 +16846,40 @@ namespace FreeImageAPI
 		private const int DIB_RGB_COLORS = 0;
 		private const int DIB_PAL_COLORS = 1;
 		private const int CBM_INIT = 0x4;
+
+		/// <summary>
+		/// An uncompressed format.
+		/// </summary>
+		public const int BI_RGB = 0;
+
+		/// <summary>
+		/// A run-length encoded (RLE) format for bitmaps with 8 bpp. The compression format is a 2-byte
+		/// format consisting of a count byte followed by a byte containing a color index.
+		/// </summary>
+		public const int BI_RLE8 = 1;
+
+		/// <summary>
+		/// An RLE format for bitmaps with 4 bpp. The compression format is a 2-byte format consisting
+		/// of a count byte followed by two word-length color indexes.
+		/// </summary>
+		public const int BI_RLE4 = 2;
+
+		/// <summary>
+		/// Specifies that the bitmap is not compressed and that the color table consists of three
+		/// <b>DWORD</b> color masks that specify the red, green, and blue components, respectively,
+		/// of each pixel. This is valid when used with 16- and 32-bpp bitmaps.
+		/// </summary>
+		public const int BI_BITFIELDS = 3;
+
+		/// <summary>
+		/// <b>Windows 98/Me, Windows 2000/XP:</b> Indicates that the image is a JPEG image.
+		/// </summary>
+		public const int BI_JPEG = 4;
+
+		/// <summary>
+		/// <b>Windows 98/Me, Windows 2000/XP:</b> Indicates that the image is a PNG image.
+		/// </summary>
+		public const int BI_PNG = 5;
 
 		#endregion
 
@@ -16947,6 +16949,10 @@ namespace FreeImageAPI
 				// No exception thrown, the dll seems to be present
 				return true;
 			}
+			catch (DllNotFoundException)
+			{
+				return false;
+			}
 			catch (EntryPointNotFoundException)
 			{
 				return false;
@@ -16958,33 +16964,33 @@ namespace FreeImageAPI
 		#region Bitmap management functions
 
 		/// <summary>
-		/// Converts a FreeImage bitmap to a .NET bitmap.
+		/// Converts a FreeImage bitmap to a .NET <see cref="System.Drawing.Bitmap"/>.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>The converted .NET bitmap.</returns>
+		/// <returns>The converted .NET <see cref="System.Drawing.Bitmap"/>.</returns>
 		/// <remarks>Copying metadata has been disabled until a proper way
 		/// of reading and storing metadata in a .NET bitmap is found.</remarks>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if the image type of <paramref name="dib"/> is not FIT_BITMAP.</exception>
+		/// The image type of <paramref name="dib"/> is not FIT_BITMAP.</exception>
 		public static Bitmap GetBitmap(FIBITMAP dib)
 		{
 			return GetBitmap(dib, true);
 		}
 
 		/// <summary>
-		/// Converts a FreeImage bitmap to a .NET bitmap.
+		/// Converts a FreeImage bitmap to a .NET <see cref="System.Drawing.Bitmap"/>.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="copyMetadata">When true existing metadata will be copied.</param>
-		/// <returns>The converted .NET bitmap.</returns>
+		/// <returns>The converted .NET <see cref="System.Drawing.Bitmap"/>.</returns>
 		/// <remarks>Copying metadata has been disabled until a proper way
 		/// of reading and storing metadata in a .NET bitmap is found.</remarks>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if the image type of <paramref name="dib"/> is not FIT_BITMAP.</exception>
+		/// The image type of <paramref name="dib"/> is not FIT_BITMAP.</exception>
 		internal static Bitmap GetBitmap(FIBITMAP dib, bool copyMetadata)
 		{
 			if (dib.IsNull)
@@ -16995,24 +17001,25 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentException("Only bitmaps with type of FIT_BITMAP can be converted.");
 			}
+
 			PixelFormat format = GetPixelFormat(dib);
+
+			if ((format == PixelFormat.Undefined) && (GetBPP(dib) == 16u))
+			{
+				throw new ArgumentException("Only 16bit 555 and 565 are supported.");
+			}
+
 			int height = (int)GetHeight(dib);
 			int width = (int)GetWidth(dib);
 			int pitch = (int)GetPitch(dib);
+
 			Bitmap result = new Bitmap(width, height, format);
 			BitmapData data;
 			// Locking the complete bitmap in writeonly mode
 			data = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, format);
 			// Writing the bitmap data directly into the new created .NET bitmap.
-			ConvertToRawBits(
-				data.Scan0,
-				dib,
-				pitch,
-				GetBPP(dib),
-				GetRedMask(dib),
-				GetGreenMask(dib),
-				GetBlueMask(dib),
-				true);
+			ConvertToRawBits(data.Scan0, dib, pitch, GetBPP(dib),
+				GetRedMask(dib), GetGreenMask(dib), GetBlueMask(dib), true);
 			// Unlock the bitmap
 			result.UnlockBits(data);
 			// Apply the bitmaps resolution
@@ -17023,7 +17030,7 @@ namespace FreeImageAPI
 				// Get the bitmaps palette to apply changes
 				ColorPalette palette = result.Palette;
 				// Get the orgininal palette
-				Color[] colorPalette = new RGBQUADARRAY(dib).ColorData;
+				Color[] colorPalette = new Palette(dib).ColorData;
 				// Copy each value
 				if (palette.Entries.Length == colorPalette.Length)
 				{
@@ -17086,33 +17093,33 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts an .NET bitmap into a FreeImage bitmap.
+		/// Converts an .NET <see cref="System.Drawing.Bitmap"/> into a FreeImage bitmap.
 		/// </summary>
-		/// <param name="bitmap">The bitmap to convert.</param>
+		/// <param name="bitmap">The <see cref="System.Drawing.Bitmap"/> to convert.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <remarks>Copying metadata has been disabled until a proper way
 		/// of reading and storing metadata in a .NET bitmap is found.</remarks>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="bitmap"/> is null.</exception>
+		/// <paramref name="bitmap"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps pixelformat is invalid.</exception>
+		/// The bitmaps pixelformat is invalid.</exception>
 		public static FIBITMAP CreateFromBitmap(Bitmap bitmap)
 		{
 			return CreateFromBitmap(bitmap, false);
 		}
 
 		/// <summary>
-		/// Converts an .NET bitmap into a FreeImage bitmap.
+		/// Converts an .NET <see cref="System.Drawing.Bitmap"/> into a FreeImage bitmap.
 		/// </summary>
-		/// <param name="bitmap">The bitmap to convert.</param>
+		/// <param name="bitmap">The <see cref="System.Drawing.Bitmap"/> to convert.</param>
 		/// <param name="copyMetadata">When true existing metadata will be copied.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <remarks>Copying metadata has been disabled until a proper way
 		/// of reading and storing metadata in a .NET bitmap is found.</remarks>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="bitmap"/> is null.</exception>
+		/// <paramref name="bitmap"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps pixelformat is invalid.</exception>
+		/// The bitmaps pixelformat is invalid.</exception>
 		internal static FIBITMAP CreateFromBitmap(Bitmap bitmap, bool copyMetadata)
 		{
 			if (bitmap == null)
@@ -17144,12 +17151,12 @@ namespace FreeImageAPI
 			// Handle palette
 			if (GetPalette(result) != IntPtr.Zero)
 			{
-				RGBQUADARRAY palette = new RGBQUADARRAY(result);
+				Palette palette = new Palette(result);
 				if (palette.Length == bitmap.Palette.Entries.Length)
 				{
 					for (int i = 0; i < palette.Length; i++)
 					{
-						palette.SetColor(i, bitmap.Palette.Entries[i]);
+						palette[i] = (RGBQUAD)bitmap.Palette.Entries[i];
 					}
 				}
 			}
@@ -17171,15 +17178,15 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a .NET Bitmap to a file.
+		/// Saves a .NET <see cref="System.Drawing.Bitmap"/> to a file.
 		/// </summary>
-		/// <param name="bitmap">The .NET bitmap to save.</param>
+		/// <param name="bitmap">The .NET <see cref="System.Drawing.Bitmap"/> to save.</param>
 		/// <param name="filename">Name of the file to save to.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="bitmap"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="bitmap"/> or <paramref name="filename"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps pixelformat is invalid.</exception>
+		/// The bitmaps pixelformat is invalid.</exception>
 		public static bool SaveBitmap(
 			Bitmap bitmap,
 			string filename)
@@ -17192,16 +17199,16 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a .NET Bitmap to a file.
+		/// Saves a .NET <see cref="System.Drawing.Bitmap"/> to a file.
 		/// </summary>
-		/// <param name="bitmap">The .NET bitmap to save.</param>
+		/// <param name="bitmap">The .NET <see cref="System.Drawing.Bitmap"/> to save.</param>
 		/// <param name="filename">Name of the file to save to.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="bitmap"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="bitmap"/> or <paramref name="filename"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps pixelformat is invalid.</exception>
+		/// The bitmaps pixelformat is invalid.</exception>
 		public static bool SaveBitmap(
 			Bitmap bitmap,
 			string filename,
@@ -17215,18 +17222,18 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a .NET Bitmap to a file.
+		/// Saves a .NET <see cref="System.Drawing.Bitmap"/> to a file.
 		/// </summary>
-		/// <param name="bitmap">The .NET bitmap to save.</param>
+		/// <param name="bitmap">The .NET <see cref="System.Drawing.Bitmap"/> to save.</param>
 		/// <param name="filename">Name of the file to save to.</param>
-		/// <param name="format">Format of the image. If the format should be taken from the
-		/// filename use 'FIF_UNKNOWN'.</param>
+		/// <param name="format">Format of the bitmap. If the format should be taken from the
+		/// filename use <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="bitmap"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="bitmap"/> or <paramref name="filename"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if the bitmaps pixelformat is invalid.</exception>
+		/// The bitmaps pixelformat is invalid.</exception>
 		public static bool SaveBitmap(
 			Bitmap bitmap,
 			string filename,
@@ -17246,7 +17253,7 @@ namespace FreeImageAPI
 		/// <param name="filename">The complete name of the file to load.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists.</exception>
+		/// <paramref name="filename"/> does not exists.</exception>
 		public static FIBITMAP LoadEx(string filename)
 		{
 			FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
@@ -17261,7 +17268,7 @@ namespace FreeImageAPI
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists.</exception>
+		/// <paramref name="filename"/> does not exists.</exception>
 		public static FIBITMAP LoadEx(string filename, FREE_IMAGE_LOAD_FLAGS flags)
 		{
 			FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
@@ -17270,16 +17277,18 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Loads a FreeImage bitmap.
-		/// In case the loading format is 'FIF_UNKNOWN' the files real format is being analysed.
-		/// If no plugin can read the file, format remains 'FIF_UNKNOWN' and 0 is returned.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> the files
+		/// real format is being analysed. If no plugin can read the file, format remains
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> and 0 is returned.
 		/// The file will be loaded with default loading flags.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
-		/// <param name="format">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="format">Format of the image. If the format is unknown use
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.
 		/// In case a suitable format was found by LoadEx it will be returned in format.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists.</exception>
+		/// <paramref name="filename"/> does not exists.</exception>
 		public static FIBITMAP LoadEx(string filename, ref FREE_IMAGE_FORMAT format)
 		{
 			return LoadEx(filename, FREE_IMAGE_LOAD_FLAGS.DEFAULT, ref format);
@@ -17287,18 +17296,20 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Loads a FreeImage bitmap.
-		/// In case the loading format is 'FIF_UNKNOWN' the files real format is being analysed.
-		/// If no plugin can read the file, format remains 'FIF_UNKNOWN' and 0 is returned.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> the files
+		/// real format is being analysed. If no plugin can read the file, format remains
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> and 0 is returned.
 		/// Load flags can be provided by the flags parameter.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
-		/// <param name="format">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="format">Format of the image. If the format is unknown use
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.
 		/// In case a suitable format was found by LoadEx it will be returned in format.
 		/// </param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists.</exception>
+		/// <paramref name="filename"/> does not exists.</exception>
 		public static FIBITMAP LoadEx(string filename, FREE_IMAGE_LOAD_FLAGS flags, ref FREE_IMAGE_FORMAT format)
 		{
 			// check if file exists
@@ -17321,17 +17332,17 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Loads a .NET Bitmap from a file.
+		/// Loads a .NET <see cref="System.Drawing.Bitmap"/> from a file.
 		/// </summary>
 		/// <param name="filename">Name of the file to be loaded.</param>
 		/// <param name="format">Format of the image. If the format should be taken from the
-		/// filename use 'FIF_UNKNOWN'.</param>
+		/// filename use <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
-		/// <returns>Returns true on success, false on failure.</returns>
+		/// <returns>The loaded .NET <see cref="System.Drawing.Bitmap"/>.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists.</exception>
+		/// <paramref name="filename"/> does not exists.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if the image type of the image is not FIT_BITMAP.</exception>
+		/// The image type of the image is not <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>.</exception>
 		public static Bitmap LoadBitmap(string filename, FREE_IMAGE_LOAD_FLAGS flags, ref FREE_IMAGE_FORMAT format)
 		{
 			FIBITMAP dib = LoadEx(filename, flags, ref format);
@@ -17341,7 +17352,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Deletes a previously loaded FIBITMAP from memory and resets the handle to null.
+		/// Deletes a previously loaded FreeImage bitmap from memory and resets the handle to 0.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public static void UnloadEx(ref FIBITMAP dib)
@@ -17354,7 +17365,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a file.
+		/// Saves a previously loaded FreeImage bitmap to a file.
 		/// The format is taken off the filename.
 		/// If no suitable format was found false will be returned.
 		/// </summary>
@@ -17364,7 +17375,7 @@ namespace FreeImageAPI
 		/// selected format or if no extension was specified.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
 		public static bool SaveEx(
 			FIBITMAP dib,
 			string filename)
@@ -17379,8 +17390,9 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a file.
-		/// In case the loading format is 'FIF_UNKNOWN' the format is taken off the filename.
+		/// Saves a previously loaded FreeImage bitmap to a file.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>
+		/// the format is taken off the filename.
 		/// If no suitable format was found false will be returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
@@ -17388,10 +17400,10 @@ namespace FreeImageAPI
 		/// The extension will be corrected if it is no valid extension for the
 		/// selected format or if no extension was specified.</param>
 		/// <param name="format">Format of the image. If the format should be taken from the
-		/// filename use 'FIF_UNKNOWN'.</param>
+		/// filename use <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
 		public static bool SaveEx(
 			FIBITMAP dib,
 			string filename,
@@ -17407,7 +17419,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a file.
+		/// Saves a previously loaded FreeImage bitmap to a file.
 		/// The format is taken off the filename.
 		/// If no suitable format was found false will be returned.
 		/// </summary>
@@ -17419,7 +17431,7 @@ namespace FreeImageAPI
 		/// If the function failed and returned false, the bitmap was not unloaded.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
 		public static bool SaveEx(
 			ref FIBITMAP dib,
 			string filename,
@@ -17435,7 +17447,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a file.
+		/// Saves a previously loaded FreeImage bitmap to a file.
 		/// The format is taken off the filename.
 		/// If no suitable format was found false will be returned.
 		/// Save flags can be provided by the flags parameter.
@@ -17447,7 +17459,7 @@ namespace FreeImageAPI
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
 		public static bool SaveEx(
 			FIBITMAP dib,
 			string filename,
@@ -17463,7 +17475,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a file.
+		/// Saves a previously loaded FreeImage bitmap to a file.
 		/// The format is taken off the filename.
 		/// If no suitable format was found false will be returned.
 		/// Save flags can be provided by the flags parameter.
@@ -17477,7 +17489,7 @@ namespace FreeImageAPI
 		/// If the function failed and returned false, the bitmap was not unloaded.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
 		public static bool SaveEx(
 			ref FIBITMAP dib,
 			string filename,
@@ -17494,8 +17506,9 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a file.
-		/// In case the loading format is 'FIF_UNKNOWN' the format is taken off the filename.
+		/// Saves a previously loaded FreeImage bitmap to a file.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>
+		/// the format is taken off the filename.
 		/// If no suitable format was found false will be returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
@@ -17503,12 +17516,12 @@ namespace FreeImageAPI
 		/// The extension will be corrected if it is no valid extension for the
 		/// selected format or if no extension was specified.</param>
 		/// <param name="format">Format of the image. If the format should be taken from the
-		/// filename use 'FIF_UNKNOWN'.</param>
+		/// filename use <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.</param>
 		/// <param name="unloadSource">When true the structure will be unloaded on success.
 		/// If the function failed and returned false, the bitmap was not unloaded.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
 		public static bool SaveEx(
 			ref FIBITMAP dib,
 			string filename,
@@ -17525,8 +17538,9 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a file.
-		/// In case the loading format is 'FIF_UNKNOWN' the format is taken off the filename.
+		/// Saves a previously loaded FreeImage bitmap to a file.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>
+		/// the format is taken off the filename.
 		/// If no suitable format was found false will be returned.
 		/// Save flags can be provided by the flags parameter.
 		/// </summary>
@@ -17535,11 +17549,11 @@ namespace FreeImageAPI
 		/// The extension will be corrected if it is no valid extension for the
 		/// selected format or if no extension was specified.</param>
 		/// <param name="format">Format of the image. If the format should be taken from the
-		/// filename use 'FIF_UNKNOWN'.</param>
+		/// filename use <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
 		public static bool SaveEx(
 			FIBITMAP dib,
 			string filename,
@@ -17556,31 +17570,34 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded <c>FIBITMAP</c> to a file.
-		/// In case the loading format is 'FIF_UNKNOWN' the format is taken off the filename.
+		/// Saves a previously loaded FreeImage bitmap to a file.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>
+		/// the format is taken off the filename.
 		/// If no suitable format was found false will be returned.
 		/// Save flags can be provided by the flags parameter.
 		/// The bitmaps color depth can be set by 'colorDepth'.
-		/// If set to 'FICD_AUTO' a suitable color depth will be taken if available.
+		/// If set to <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_AUTO"/> a suitable color depth
+		/// will be taken if available.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="filename">The complete name of the file to save to.
 		/// The extension will be corrected if it is no valid extension for the
 		/// selected format or if no extension was specified.</param>
 		/// <param name="format">Format of the image. If the format should be taken from the
-		/// filename use 'FIF_UNKNOWN'.</param>
+		/// filename use <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <param name="colorDepth">The new color depth of the bitmap.
-		/// Set to 'FIC_AUTO' if Save should take the best suitable color depth.
+		/// Set to <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_AUTO"/> if Save should take the
+		/// best suitable color depth.
 		/// If a color depth is selected that the provided format cannot write an
 		/// error-message will be thrown.</param>
 		/// <param name="unloadSource">When true the structure will be unloaded on success.
 		/// If the function failed and returned false, the bitmap was not unloaded.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentException">
-		/// Thrown in case a direct color conversion failed.</exception>
+		/// A direct color conversion failed.</exception>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
 		public static bool SaveEx(
 			ref FIBITMAP dib,
 			string filename,
@@ -17651,9 +17668,9 @@ namespace FreeImageAPI
 		/// <param name="stream">The stream to read from.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="stream"/> is null.</exception>
+		/// <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> is not capable of reading.</exception>
+		/// <paramref name="stream"/> is not capable of reading.</exception>
 		public static FIBITMAP LoadFromStream(
 			Stream stream)
 		{
@@ -17669,9 +17686,9 @@ namespace FreeImageAPI
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="stream"/> is null.</exception>
+		/// <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> is not capable of reading.</exception>
+		/// <paramref name="stream"/> is not capable of reading.</exception>
 		public static FIBITMAP LoadFromStream(
 			Stream stream,
 			FREE_IMAGE_LOAD_FLAGS flags)
@@ -17682,17 +17699,19 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Loads a FreeImage bitmap.
-		/// In case the loading format is 'FIF_UNKNOWN' the bitmaps real format is being analysed.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> the
+		/// bitmaps real format is being analysed.
 		/// The stream must be set to the correct position before calling LoadFromStream.
 		/// </summary>
 		/// <param name="stream">The stream to read from.</param>
-		/// <param name="format">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="format">Format of the image. If the format is unknown use
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.
 		/// In case a suitable format was found by LoadFromStream it will be returned in format.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="stream"/> is null.</exception>
+		/// <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> is not capable of reading.</exception>
+		/// <paramref name="stream"/> is not capable of reading.</exception>
 		public static FIBITMAP LoadFromStream(
 			Stream stream,
 			ref FREE_IMAGE_FORMAT format)
@@ -17702,18 +17721,20 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Loads a FreeImage bitmap.
-		/// In case the loading format is 'FIF_UNKNOWN' the bitmaps real format is being analysed.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>
+		/// the bitmaps real format is being analysed.
 		/// The stream must be set to the correct position before calling LoadFromStream.
 		/// </summary>
 		/// <param name="stream">The stream to read from.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
-		/// <param name="format">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="format">Format of the image. If the format is unknown use
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.
 		/// In case a suitable format was found by LoadFromStream it will be returned in format.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="stream"/> is null.</exception>
+		/// <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> is not capable of reading.</exception>
+		/// <paramref name="stream"/> is not capable of reading.</exception>
 		public static FIBITMAP LoadFromStream(
 			Stream stream,
 			FREE_IMAGE_LOAD_FLAGS flags,
@@ -17752,7 +17773,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a stream.
+		/// Saves a previously loaded FreeImage bitmap to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
@@ -17760,9 +17781,9 @@ namespace FreeImageAPI
 		/// <param name="format">Format of the image.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> cannot write.</exception>
+		/// <paramref name="stream"/> cannot write.</exception>
 		public static bool SaveToStream(
 			FIBITMAP dib,
 			Stream stream,
@@ -17778,7 +17799,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a stream.
+		/// Saves a previously loaded FreeImage bitmap to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
@@ -17787,9 +17808,9 @@ namespace FreeImageAPI
 		/// <param name="unloadSource">When true the structure will be unloaded on success.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> cannot write.</exception>
+		/// <paramref name="stream"/> cannot write.</exception>
 		public static bool SaveToStream(
 			ref FIBITMAP dib,
 			Stream stream,
@@ -17806,7 +17827,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a stream.
+		/// Saves a previously loaded FreeImage bitmap to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
@@ -17815,9 +17836,9 @@ namespace FreeImageAPI
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> cannot write.</exception>
+		/// <paramref name="stream"/> cannot write.</exception>
 		public static bool SaveToStream(
 			FIBITMAP dib,
 			Stream stream,
@@ -17834,7 +17855,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a stream.
+		/// Saves a previously loaded FreeImage bitmap to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
@@ -17844,9 +17865,9 @@ namespace FreeImageAPI
 		/// <param name="unloadSource">When true the structure will be unloaded on success.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> cannot write.</exception>
+		/// <paramref name="stream"/> cannot write.</exception>
 		public static bool SaveToStream(
 			ref FIBITMAP dib,
 			Stream stream,
@@ -17863,7 +17884,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a stream.
+		/// Saves a previously loaded FreeImage bitmap to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
@@ -17871,14 +17892,15 @@ namespace FreeImageAPI
 		/// <param name="format">Format of the image.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <param name="colorDepth">The new color depth of the bitmap.
-		/// Set to 'FIC_AUTO' if SaveToStream should take the best suitable color depth.
+		/// Set to <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_AUTO"/> if SaveToStream should
+		/// take the best suitable color depth.
 		/// If a color depth is selected that the provided format cannot write an
 		/// error-message will be thrown.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> cannot write.</exception>
+		/// <paramref name="stream"/> cannot write.</exception>
 		public static bool SaveToStream(
 			FIBITMAP dib,
 			Stream stream,
@@ -17896,7 +17918,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Saves a previously loaded FIBITMAP to a stream.
+		/// Saves a previously loaded FreeImage bitmap to a stream.
 		/// The stream must be set to the correct position before calling SaveToStream.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
@@ -17904,15 +17926,16 @@ namespace FreeImageAPI
 		/// <param name="format">Format of the image.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <param name="colorDepth">The new color depth of the bitmap.
-		/// Set to 'FIC_AUTO' if SaveToStream should take the best suitable color depth.
+		/// Set to <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_AUTO"/> if SaveToStream should
+		/// take the best suitable color depth.
 		/// If a color depth is selected that the provided format cannot write an
 		/// error-message will be thrown.</param>
 		/// <param name="unloadSource">When true the structure will be unloaded on success.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> cannot write.</exception>
+		/// <paramref name="stream"/> cannot write.</exception>
 		public static bool SaveToStream(
 			ref FIBITMAP dib,
 			Stream stream,
@@ -17979,7 +18002,7 @@ namespace FreeImageAPI
 		/// <param name="extension">The desired extension.</param>
 		/// <returns>True if the extension is valid for the given format, false otherwise.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="extension"/> is null.</exception>
+		/// <paramref name="extension"/> is null.</exception>
 		public static bool IsExtensionValidForFIF(FREE_IMAGE_FORMAT fif, string extension)
 		{
 			return IsExtensionValidForFIF(fif, extension, StringComparison.CurrentCulture);
@@ -17993,7 +18016,7 @@ namespace FreeImageAPI
 		/// <param name="comparisonType">The string comparison type.</param>
 		/// <returns>True if the extension is valid for the given format, false otherwise.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="extension"/> is null.</exception>
+		/// <paramref name="extension"/> is null.</exception>
 		public static bool IsExtensionValidForFIF(FREE_IMAGE_FORMAT fif, string extension, StringComparison comparisonType)
 		{
 			if (extension == null)
@@ -18025,7 +18048,7 @@ namespace FreeImageAPI
 		/// <param name="filename">The desired filename.</param>
 		/// <returns>True if the filename is valid for the given format, false otherwise.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="filename"/> is null.</exception>
+		/// <paramref name="filename"/> is null.</exception>
 		public static bool IsFilenameValidForFIF(FREE_IMAGE_FORMAT fif, string filename)
 		{
 			return IsFilenameValidForFIF(fif, filename, StringComparison.CurrentCulture);
@@ -18039,7 +18062,7 @@ namespace FreeImageAPI
 		/// <param name="comparisonType">The string comparison type.</param>
 		/// <returns>True if the filename is valid for the given format, false otherwise.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="filename"/> is null.</exception>
+		/// <paramref name="filename"/> is null.</exception>
 		public static bool IsFilenameValidForFIF(FREE_IMAGE_FORMAT fif, string filename, StringComparison comparisonType)
 		{
 			if (filename == null)
@@ -18092,7 +18115,7 @@ namespace FreeImageAPI
 		/// <param name="filename">The complete name of the file to load.</param>
 		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists while opening.</exception>
+		/// <paramref name="filename"/> does not exists while opening.</exception>
 		public static FIMULTIBITMAP OpenMultiBitmapEx(
 			string filename)
 		{
@@ -18113,7 +18136,7 @@ namespace FreeImageAPI
 		/// <param name="keep_cache_in_memory">When true performance is increased at the cost of memory.</param>
 		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists while opening.</exception>
+		/// <paramref name="filename"/> does not exists while opening.</exception>
 		public static FIMULTIBITMAP OpenMultiBitmapEx(
 			string filename,
 			bool keep_cache_in_memory)
@@ -18136,7 +18159,7 @@ namespace FreeImageAPI
 		/// <param name="keep_cache_in_memory">When true performance is increased at the cost of memory.</param>
 		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists while opening.</exception>
+		/// <paramref name="filename"/> does not exists while opening.</exception>
 		public static FIMULTIBITMAP OpenMultiBitmapEx(
 			string filename,
 			bool read_only,
@@ -18161,7 +18184,7 @@ namespace FreeImageAPI
 		/// <param name="keep_cache_in_memory">When true performance is increased at the cost of memory.</param>
 		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists while opening.</exception>
+		/// <paramref name="filename"/> does not exists while opening.</exception>
 		public static FIMULTIBITMAP OpenMultiBitmapEx(
 			string filename,
 			bool create_new,
@@ -18180,18 +18203,20 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Loads a FreeImage multi-paged bitmap.
-		/// In case the loading format is 'FIF_UNKNOWN' the files real format is being analysed.
-		/// If no plugin can read the file, format remains 'FIF_UNKNOWN' and 0 is returned.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> the files real
+		/// format is being analysed. If no plugin can read the file, format remains
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> and 0 is returned.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
-		/// <param name="format">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="format">Format of the image. If the format is unknown use
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.
 		/// In case a suitable format was found by LoadEx it will be returned in format.</param>
 		/// <param name="create_new">When true a new bitmap is created.</param>
 		/// <param name="read_only">When true the bitmap will be loaded read only.</param>
 		/// <param name="keep_cache_in_memory">When true performance is increased at the cost of memory.</param>
 		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists while opening.</exception>
+		/// <paramref name="filename"/> does not exists while opening.</exception>
 		public static FIMULTIBITMAP OpenMultiBitmapEx(
 			string filename,
 			ref FREE_IMAGE_FORMAT format,
@@ -18210,12 +18235,14 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Loads a FreeImage multi-paged bitmap.
-		/// In case the loading format is 'FIF_UNKNOWN' the files real format is being analysed.
-		/// If no plugin can read the file, format remains 'FIF_UNKNOWN' and 0 is returned.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> the files
+		/// real format is being analysed. If no plugin can read the file, format remains
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> and 0 is returned.
 		/// Load flags can be provided by the flags parameter.
 		/// </summary>
 		/// <param name="filename">The complete name of the file to load.</param>
-		/// <param name="format">Format of the image. If the format is unknown use 'FIF_UNKNOWN'.
+		/// <param name="format">Format of the image. If the format is unknown use 
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/>.
 		/// In case a suitable format was found by LoadEx it will be returned in format.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <param name="create_new">When true a new bitmap is created.</param>
@@ -18223,7 +18250,7 @@ namespace FreeImageAPI
 		/// <param name="keep_cache_in_memory">When true performance is increased at the cost of memory.</param>
 		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
-		/// Thrown in case <paramref name="filename"/> does not exists while opening.</exception>
+		/// <paramref name="filename"/> does not exists while opening.</exception>
 		public static FIMULTIBITMAP OpenMultiBitmapEx(
 			string filename,
 			ref FREE_IMAGE_FORMAT format,
@@ -18250,7 +18277,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Closes a previously opened multi-page bitmap and, when the bitmap was not opened read-only, applies any changes made to it.
+		/// Closes a previously opened multi-page bitmap and, when the bitmap was not opened read-only,
+		/// applies any changes made to it.
 		/// On success the handle will be reset to null.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage multi-paged bitmap.</param>
@@ -18261,7 +18289,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Closes a previously opened multi-page bitmap and, when the bitmap was not opened read-only, applies any changes made to it.
+		/// Closes a previously opened multi-page bitmap and, when the bitmap was not opened read-only,
+		/// applies any changes made to it.
 		/// On success the handle will be reset to null.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage multi-paged bitmap.</param>
@@ -18287,7 +18316,7 @@ namespace FreeImageAPI
 		/// <param name="dib">Handle to a FreeImage multi-paged bitmap.</param>
 		/// <returns>Number of locked pages.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static int GetLockedPageCount(FIMULTIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -18305,7 +18334,7 @@ namespace FreeImageAPI
 		/// <param name="dib">Handle to a FreeImage multi-paged bitmap.</param>
 		/// <returns>List containing the indexes of the locked pages.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static int[] GetLockedPages(FIMULTIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -18331,8 +18360,11 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Loads a FreeImage multi-paged bitmap from a stream and returns the
 		/// FreeImage memory stream used as temporary buffer.
-		/// The bitmap can not be modified by calling 'AppendPage', 'InsertPage',
-		/// 'MovePage' or 'DeletePage'.
+		/// The bitmap can not be modified by calling
+		/// <see cref="FreeImage.AppendPage(FIMULTIBITMAP,FIBITMAP)"/>,
+		/// <see cref="FreeImage.InsertPage(FIMULTIBITMAP,Int32,FIBITMAP)"/>,
+		/// <see cref="FreeImage.MovePage(FIMULTIBITMAP,Int32,Int32)"/> or
+		/// <see cref="FreeImage.DeletePage(FIMULTIBITMAP,Int32)"/>.
 		/// </summary>
 		/// <param name="stream">The stream to read from.</param>
 		/// <param name="format">Format of the image.</param>
@@ -18340,9 +18372,9 @@ namespace FreeImageAPI
 		/// <param name="memory">The temporary memory buffer used to load the bitmap.</param>
 		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="stream"/> is null.</exception>
+		/// <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if <paramref name="stream"/> can not read.</exception>
+		/// <paramref name="stream"/> can not read.</exception>
 		public static FIMULTIBITMAP LoadMultiBitmapFromStream(
 			Stream stream,
 			FREE_IMAGE_FORMAT format,
@@ -18386,9 +18418,9 @@ namespace FreeImageAPI
 		/// <param name="stream">Name of the stream to analyze.</param>
 		/// <returns>Type of the bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="stream"/> is null.</exception>
+		/// <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown if stream can not read.</exception>
+		/// <paramref name="stream"/> can not read.</exception>
 		public static FREE_IMAGE_FORMAT GetFileTypeFromStream(Stream stream)
 		{
 			if (stream == null)
@@ -18414,16 +18446,16 @@ namespace FreeImageAPI
 		#region Pixel access functions
 
 		/// <summary>
-		/// Retrieves an hBitmap for a FIBITMAP.
+		/// Retrieves an hBitmap for a FreeImage bitmap.
 		/// Call FreeHbitmap(IntPtr) to free the handle.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="hdc">A reference device context.
 		/// Use IntPtr.Zero if no reference is available.</param>
 		/// <param name="unload">When true dib will be unloaded if the function succeeded.</param>
-		/// <returns>The hBitmap for the FIBITMAP.</returns>
+		/// <returns>The hBitmap for the FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static unsafe IntPtr GetHbitmap(FIBITMAP dib, IntPtr hdc, bool unload)
 		{
 			if (dib.IsNull)
@@ -18448,9 +18480,9 @@ namespace FreeImageAPI
 				if (hBitmap != IntPtr.Zero && ppvBits != IntPtr.Zero)
 				{
 					// Copy the data into the dc
-					MoveMemory(
-						(void*)ppvBits,
-						(void*)GetBits(dib),
+					CopyMemory(
+						ppvBits,
+						GetBits(dib),
 						(GetHeight(dib) * GetPitch(dib)));
 					// Success: we unload the bitmap
 					if (unload)
@@ -18468,20 +18500,20 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns an HBITMAP created by the CreateDIBitmap() function which in turn
+		/// Returns an HBITMAP created by the <c>CreateDIBitmap()</c> function which in turn
 		/// has always the same color depth as the reference DC, which may be provided
-		/// through the 'reference' parameter. The desktop DC will be used,
-		/// if 'IntPtr.Zero' DC is specified.
-		/// Call FreeHbitmap(IntPtr) to free the handle.
+		/// through <paramref name="hdc"/>. The desktop DC will be used,
+		/// if <c>IntPtr.Zero</c> DC is specified.
+		/// Call <see cref="FreeImage.FreeHbitmap(IntPtr)"/> to free the handle.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="hdc">Handle to a device context.</param>
 		/// <param name="unload">When true the structure will be unloaded on success.
 		/// If the function failed and returned false, the bitmap was not unloaded.</param>
 		/// <returns>If the function succeeds, the return value is a handle to the
-		/// compatible bitmap. If the function fails, the return value is NULL.</returns>
+		/// compatible bitmap. If the function fails, the return value is <see cref="IntPtr.Zero"/>.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static IntPtr GetBitmapForDevice(FIBITMAP dib, IntPtr hdc, bool unload)
 		{
 			if (dib.IsNull)
@@ -18522,7 +18554,7 @@ namespace FreeImageAPI
 		/// <param name="hdc">Handle to a device context.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="hbitmap"/> is null.</exception>
+		/// <paramref name="hbitmap"/> is null.</exception>
 		public unsafe static FIBITMAP CreateFromHbitmap(IntPtr hbitmap, IntPtr hdc)
 		{
 			if (hbitmap == IntPtr.Zero)
@@ -18589,12 +18621,13 @@ namespace FreeImageAPI
 		#region Bitmap information functions
 
 		/// <summary>
-		/// Retrieves a DIB's resolution in X-direction measured in 'dots per inch' (DPI) and not in 'dots per meter'.
+		/// Retrieves a DIB's resolution in X-direction measured in 'dots per inch' (DPI) and not in
+		/// 'dots per meter'.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>The resolution in 'dots per inch'.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static uint GetResolutionX(FIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -18605,12 +18638,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Retrieves a DIB's resolution in Y-direction measured in 'dots per inch' (DPI) and not in 'dots per meter'.
+		/// Retrieves a DIB's resolution in Y-direction measured in 'dots per inch' (DPI) and not in
+		/// 'dots per meter'.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>The resolution in 'dots per inch'.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static uint GetResolutionY(FIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -18621,12 +18655,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Sets a DIB's resolution in X-direction measured in 'dots per inch' (DPI) and not in 'dots per meter'.
+		/// Sets a DIB's resolution in X-direction measured in 'dots per inch' (DPI) and not in
+		/// 'dots per meter'.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="res">The new resolution in 'dots per inch'.</param>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static void SetResolutionX(FIBITMAP dib, uint res)
 		{
 			if (dib.IsNull)
@@ -18637,12 +18672,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Sets a DIB's resolution in Y-direction measured in 'dots per inch' (DPI) and not in 'dots per meter'.
+		/// Sets a DIB's resolution in Y-direction measured in 'dots per inch' (DPI) and not in
+		/// 'dots per meter'.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="res">The new resolution in 'dots per inch'.</param>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static void SetResolutionY(FIBITMAP dib, uint res)
 		{
 			if (dib.IsNull)
@@ -18661,7 +18697,7 @@ namespace FreeImageAPI
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>True if the image is a greyscale image, else false.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static unsafe bool IsGreyscaleImage(FIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -18695,26 +18731,26 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a structure that wraps the palette of a FreeImage bitmap.
+		/// Returns a structure that represents the palette of a FreeImage bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>A structure wrapping the bitmaps palette.</returns>
+		/// <returns>A structure representing the bitmaps palette.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
-		public static RGBQUADARRAY GetPaletteEx(FIBITMAP dib)
+		/// <paramref name="dib"/> is null.</exception>
+		public static Palette GetPaletteEx(FIBITMAP dib)
 		{
-			return new RGBQUADARRAY(dib);
+			return new Palette(dib);
 		}
 
 		/// <summary>
-		/// Returns the BITMAPINFOHEADER structure of a FreeImage bitmap.
+		/// Returns the <see cref="BITMAPINFOHEADER"/> structure of a FreeImage bitmap.
 		/// The structure is a copy, so changes will have no effect on
 		/// the bitmap itself.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>BITMAPINFOHEADER structure of the bitmap.</returns>
+		/// <returns><see cref="BITMAPINFOHEADER"/> structure of the bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static unsafe BITMAPINFOHEADER GetInfoHeaderEx(FIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -18725,14 +18761,14 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns the BITMAPINFO structure of a FreeImage bitmap.
+		/// Returns the <see cref="BITMAPINFO"/> structure of a FreeImage bitmap.
 		/// The structure is a copy, so changes will have no effect on
 		/// the bitmap itself.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>BITMAPINFO structure of the bitmap.</returns>
+		/// <returns><see cref="BITMAPINFO"/> structure of the bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static BITMAPINFO GetInfoEx(FIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -18748,8 +18784,7 @@ namespace FreeImageAPI
 			}
 			else
 			{
-				RGBQUADARRAY array = new RGBQUADARRAY(ptr, result.bmiHeader.biClrUsed);
-				result.bmiColors = array.Data;
+				result.bmiColors = new MemoryArray<RGBQUAD>(ptr, (int)result.bmiHeader.biClrUsed).Data;
 			}
 			return result;
 		}
@@ -18758,9 +18793,9 @@ namespace FreeImageAPI
 		/// Returns the pixelformat of the bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>Pixelformat of the bitmap.</returns>
+		/// <returns><see cref="System.Drawing.Imaging.PixelFormat"/> of the bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static PixelFormat GetPixelFormat(FIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -18810,14 +18845,16 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Retrieves all parameters needed to create a new FreeImage bitmap from
-		/// the format of a .NET image.
+		/// the format of a .NET <see cref="System.Drawing.Image"/>.
 		/// </summary>
-		/// <param name="format">The format of the .NET image.</param>
+		/// <param name="format">The <see cref="System.Drawing.Imaging.PixelFormat"/>
+		/// of the .NET <see cref="System.Drawing.Image"/>.</param>
 		/// <param name="bpp">Returns the color depth for the new bitmap.</param>
 		/// <param name="red_mask">Returns the red_mask for the new bitmap.</param>
 		/// <param name="green_mask">Returns the green_mask for the new bitmap.</param>
 		/// <param name="blue_mask">Returns the blue_mask for the new bitmap.</param>
-		/// <returns>True in case <paramref name="format"/> represents FIT_BITMAP, else false.</returns>
+		/// <returns>True in case <paramref name="format"/> is
+		/// <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>, else false.</returns>
 		public static bool GetFormatParameters(
 			PixelFormat format,
 			out uint bpp,
@@ -18865,6 +18902,7 @@ namespace FreeImageAPI
 					blue_mask = FI_RGBA_BLUE_MASK;
 					result = true;
 					break;
+				case PixelFormat.Format32bppRgb:
 				case PixelFormat.Format32bppArgb:
 					bpp = 32;
 					red_mask = FI_RGBA_RED_MASK;
@@ -19001,51 +19039,14 @@ namespace FreeImageAPI
 						}
 						break;
 					case 16:
-						if ((GetRedMask(dib1) == FI16_565_RED_MASK) &&
-							(GetGreenMask(dib1) == FI16_565_GREEN_MASK) &&
-							(GetBlueMask(dib1) == FI16_565_BLUE_MASK) &&
-							(GetRedMask(dib2) == FI16_565_RED_MASK) &&
-							(GetGreenMask(dib2) == FI16_565_GREEN_MASK) &&
-							(GetBlueMask(dib2) == FI16_565_BLUE_MASK))
+						short* sPtr1, sPtr2;
+						for (int i = 0; i < height; i++)
 						{
-							for (int i = 0; i < height; i++)
+							sPtr1 = (short*)GetScanLine(dib1, i);
+							sPtr2 = (short*)GetScanLine(dib2, i);
+							for (int x = 0; x < width; x++)
 							{
-								ptr1 = (byte*)GetScanLine(dib1, i);
-								ptr2 = (byte*)GetScanLine(dib2, i);
-								if (!CompareMemory(ptr1, ptr2, line))
-								{
-									return false;
-								}
-							}
-						}
-						else if ((GetRedMask(dib1) == FI16_555_RED_MASK) &&
-							(GetGreenMask(dib1) == FI16_555_GREEN_MASK) &&
-							(GetBlueMask(dib1) == FI16_555_BLUE_MASK) &&
-							(GetRedMask(dib2) == FI16_555_RED_MASK) &&
-							(GetGreenMask(dib2) == FI16_555_GREEN_MASK) &&
-							(GetBlueMask(dib2) == FI16_555_BLUE_MASK))
-						{
-							short* sPtr1, sPtr2;
-							for (int i = 0; i < height; i++)
-							{
-								sPtr1 = (short*)GetScanLine(dib1, i);
-								sPtr2 = (short*)GetScanLine(dib2, i);
-								for (int x = 0; x < width; x++)
-								{
-									if ((sPtr1[x] << 1) != (sPtr2[x] << 1))
-									{
-										return false;
-									}
-								}
-							}
-						}
-						else
-						{
-							for (int i = 0; i < height; i++)
-							{
-								FI16RGBARRAY array1 = new FI16RGBARRAY(dib1, i);
-								FI16RGBARRAY array2 = new FI16RGBARRAY(dib2, i);
-								if (array1 != array2)
+								if ((sPtr1[x] << 1) != (sPtr2[x] << 1))
 								{
 									return false;
 								}
@@ -19170,13 +19171,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns the bitmap's transparency table.
+		/// Returns the FreeImage bitmap's transparency table.
 		/// The array is empty in case the bitmap has no transparency table.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>The bitmap's transparency table.</returns>
+		/// <returns>The FreeImage bitmap's transparency table.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static unsafe byte[] GetTransparencyTableEx(FIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -19194,12 +19195,12 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Set the bitmap's transparency table. Only affects palletised bitmaps.
+		/// Set the FreeImage bitmap's transparency table. Only affects palletised bitmaps.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="table">The bitmap's new transparency table.</param>
+		/// <param name="table">The FreeImage bitmap's new transparency table.</param>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> or <paramref name="table"/> is null.</exception>
+		/// <paramref name="dib"/> or <paramref name="table"/> is null.</exception>
 		public static void SetTransparencyTable(FIBITMAP dib, byte[] table)
 		{
 			if (dib.IsNull)
@@ -19217,13 +19218,14 @@ namespace FreeImageAPI
 		/// This function returns the number of unique colors actually used by the
 		/// specified 1-, 4-, 8-, 16-, 24- or 32-bit image. This might be different from
 		/// what function FreeImage_GetColorsUsed() returns, which actually returns the
-		/// palette size for palletised images. Works for FIT_BITMAP type images only.
+		/// palette size for palletised images. Works for
+		/// <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/> type images only.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <returns>Returns the number of unique colors used by the image specified or
 		/// zero, if the image type cannot be handled.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static unsafe int GetUniqueColors(FIBITMAP dib)
 		{
 			if (dib.IsNull)
@@ -19407,32 +19409,56 @@ namespace FreeImageAPI
 			return result;
 		}
 
+		/// <summary>
+		/// Verifies whether the FreeImage bitmap is 16bit 555.
+		/// </summary>
+		/// <param name="dib">The FreeImage bitmap to verify.</param>
+		/// <returns><b>true</b> if the bitmap is RGB16-555; otherwise <b>false</b>.</returns>
+		public static bool IsRGB555(FIBITMAP dib)
+		{
+			return ((GetRedMask(dib) == FI16_555_RED_MASK) &&
+					(GetGreenMask(dib) == FI16_555_GREEN_MASK) &&
+					(GetBlueMask(dib) == FI16_555_BLUE_MASK));
+		}
+
+		/// <summary>
+		/// Verifies whether the FreeImage bitmap is 16bit 565.
+		/// </summary>
+		/// <param name="dib">The FreeImage bitmap to verify.</param>
+		/// <returns><b>true</b> if the bitmap is RGB16-565; otherwise <b>false</b>.</returns>
+		public static bool IsRGB565(FIBITMAP dib)
+		{
+			return ((GetRedMask(dib) == FI16_565_RED_MASK) &&
+					(GetGreenMask(dib) == FI16_565_GREEN_MASK) &&
+					(GetBlueMask(dib) == FI16_565_BLUE_MASK));
+		}
+
 		#endregion
 
 		#region ICC profile functions
 
 		/// <summary>
-		/// Creates a new ICC-Profile for a bitmap.
+		/// Creates a new ICC-Profile for a FreeImage bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="data">The data of the new ICC-Profile.</param>
 		/// <returns>The new ICC-Profile of the bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIICCPROFILE CreateICCProfileEx(FIBITMAP dib, byte[] data)
 		{
 			return new FIICCPROFILE(dib, data);
 		}
 
 		/// <summary>
-		/// Creates a new ICC-Profile for a bitmap.
+		/// Creates a new ICC-Profile for a FreeImage bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="data">The data of the new ICC-Profile.</param>
-		/// <param name="size">The number of bytes of 'data' to use.</param>
-		/// <returns>The new ICC-Profile of the bitmap.</returns>
+		/// <param name="size">The number of bytes of <paramref name="data"/> to use.</param>
+		/// <returns>The new ICC-Profile of the FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIICCPROFILE CreateICCProfileEx(FIBITMAP dib, byte[] data, int size)
 		{
 			return new FIICCPROFILE(dib, data, size);
@@ -19443,14 +19469,14 @@ namespace FreeImageAPI
 		#region Conversion functions
 
 		/// <summary>
-		/// Converts a bitmap from one color depth to another.
-		/// If the conversion fails the original bitmap is returned.
+		/// Converts a FreeImage bitmap from one color depth to another.
+		/// If the conversion fails the original FreeImage bitmap is returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="conversion">The desired output format.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIBITMAP ConvertColorDepth(
 			FIBITMAP dib,
 			FREE_IMAGE_COLOR_DEPTH conversion)
@@ -19465,15 +19491,15 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts a bitmap from one color depth to another.
-		/// If the conversion fails the original bitmap is returned.
+		/// Converts a FreeImage bitmap from one color depth to another.
+		/// If the conversion fails the original FreeImage bitmap is returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="conversion">The desired output format.</param>
 		/// <param name="unloadSource">When true the structure will be unloaded on success.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIBITMAP ConvertColorDepth(
 			FIBITMAP dib,
 			FREE_IMAGE_COLOR_DEPTH conversion,
@@ -19489,15 +19515,16 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts a bitmap from one color depth to another.
-		/// If the conversion fails the original bitmap is returned.
+		/// Converts a FreeImage bitmap from one color depth to another.
+		/// If the conversion fails the original FreeImage bitmap is returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="conversion">The desired output format.</param>
-		/// <param name="threshold">Threshold value when converting to 'FICF_MONOCHROME_THRESHOLD'.</param>
+		/// <param name="threshold">Threshold value when converting with
+		/// <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_01_BPP_THRESHOLD"/>.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIBITMAP ConvertColorDepth(
 			FIBITMAP dib,
 			FREE_IMAGE_COLOR_DEPTH conversion,
@@ -19513,15 +19540,16 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts a bitmap from one color depth to another.
-		/// If the conversion fails the original bitmap is returned.
+		/// Converts a FreeImage bitmap from one color depth to another.
+		/// If the conversion fails the original FreeImage bitmap is returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="conversion">The desired output format.</param>
-		/// <param name="ditherMethod">Dither algorithm when converting to 'FICF_MONOCHROME_DITHER'.</param>
+		/// <param name="ditherMethod">Dither algorithm when converting 
+		/// with <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_01_BPP_DITHER"/>.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIBITMAP ConvertColorDepth(
 			FIBITMAP dib,
 			FREE_IMAGE_COLOR_DEPTH conversion,
@@ -19538,15 +19566,15 @@ namespace FreeImageAPI
 
 
 		/// <summary>
-		/// Converts a bitmap from one color depth to another.
-		/// If the conversion fails the original bitmap is returned.
+		/// Converts a FreeImage bitmap from one color depth to another.
+		/// If the conversion fails the original FreeImage bitmap is returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="conversion">The desired output format.</param>
 		/// <param name="quantizationMethod">The quantization algorithm for conversion to 8-bit color depth.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIBITMAP ConvertColorDepth(
 			FIBITMAP dib,
 			FREE_IMAGE_COLOR_DEPTH conversion,
@@ -19562,16 +19590,17 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts a bitmap from one color depth to another.
-		/// If the conversion fails the original bitmap is returned.
+		/// Converts a FreeImage bitmap from one color depth to another.
+		/// If the conversion fails the original FreeImage bitmap is returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="conversion">The desired output format.</param>
-		/// <param name="threshold">Threshold value when converting to 'FICF_MONOCHROME_THRESHOLD'.</param>
+		/// <param name="threshold">Threshold value when converting with
+		/// <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_01_BPP_THRESHOLD"/>.</param>
 		/// <param name="unloadSource">When true the structure will be unloaded on success.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIBITMAP ConvertColorDepth(
 			FIBITMAP dib,
 			FREE_IMAGE_COLOR_DEPTH conversion,
@@ -19588,16 +19617,17 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts a bitmap from one color depth to another.
-		/// If the conversion fails the original bitmap is returned.
+		/// Converts a FreeImage bitmap from one color depth to another.
+		/// If the conversion fails the original FreeImage bitmap is returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="conversion">The desired output format.</param>
-		/// <param name="ditherMethod">Dither algorithm when converting to 'FICF_MONOCHROME_DITHER'.</param>
+		/// <param name="ditherMethod">Dither algorithm when converting with
+		/// <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_01_BPP_DITHER"/>.</param>
 		/// <param name="unloadSource">When true the structure will be unloaded on success.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIBITMAP ConvertColorDepth(
 			FIBITMAP dib,
 			FREE_IMAGE_COLOR_DEPTH conversion,
@@ -19615,8 +19645,8 @@ namespace FreeImageAPI
 
 
 		/// <summary>
-		/// Converts a bitmap from one color depth to another.
-		/// If the conversion fails the original bitmap is returned.
+		/// Converts a FreeImage bitmap from one color depth to another.
+		/// If the conversion fails the original FreeImage bitmap is returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="conversion">The desired output format.</param>
@@ -19624,7 +19654,7 @@ namespace FreeImageAPI
 		/// <param name="unloadSource">When true the structure will be unloaded on success.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIBITMAP ConvertColorDepth(
 			FIBITMAP dib,
 			FREE_IMAGE_COLOR_DEPTH conversion,
@@ -19641,18 +19671,20 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts a bitmap from one color depth to another.
-		/// If the conversion fails the original bitmap is returned.
+		/// Converts a FreeImage bitmap from one color depth to another.
+		/// If the conversion fails the original FreeImage bitmap is returned.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="conversion">The desired output format.</param>
-		/// <param name="threshold">Threshold value when converting to 'FICD_01_BPP_THRESHOLD'.</param>
-		/// <param name="ditherMethod">Dither algorithm when converting to 'FICD_01_BPP_DITHER'.</param>
+		/// <param name="threshold">Threshold value when converting with
+		/// <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_01_BPP_THRESHOLD"/>.</param>
+		/// <param name="ditherMethod">Dither algorithm when converting with
+		/// <see cref="FREE_IMAGE_COLOR_DEPTH.FICD_01_BPP_DITHER"/>.</param>
 		/// <param name="quantizationMethod">The quantization algorithm for conversion to 8-bit color depth.</param>
 		/// <param name="unloadSource">When true the structure will be unloaded on success.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		internal static FIBITMAP ConvertColorDepth(
 			FIBITMAP dib,
 			FREE_IMAGE_COLOR_DEPTH conversion,
@@ -19838,15 +19870,15 @@ namespace FreeImageAPI
 		#region Metadata
 
 		/// <summary>
-		/// Copies metadata from one bitmap to another.
+		/// Copies metadata from one FreeImage bitmap to another.
 		/// </summary>
-		/// <param name="src">Source bitmap containing the metadata.</param>
-		/// <param name="dst">Bitmap to copy the metadata to.</param>
+		/// <param name="src">Source FreeImage bitmap containing the metadata.</param>
+		/// <param name="dst">FreeImage bitmap to copy the metadata to.</param>
 		/// <param name="flags">Flags to switch different copy modes.</param>
 		/// <returns>Returns -1 on failure else the number of copied tags.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="src"/> or <paramref name="dst"/> is null.</exception>
-		public static int CopyMetadata(FIBITMAP src, FIBITMAP dst, FREE_IMAGE_METADATA_COPY flags)
+		/// <paramref name="src"/> or <paramref name="dst"/> is null.</exception>
+		public static int CloneMetadataEx(FIBITMAP src, FIBITMAP dst, FREE_IMAGE_METADATA_COPY flags)
 		{
 			if (src.IsNull)
 			{
@@ -19900,16 +19932,11 @@ namespace FreeImageAPI
 		/// Returns the comment of a JPEG, PNG or GIF image.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <returns>Comment of the image, or null in case no comment exists.</returns>
+		/// <returns>Comment of the FreeImage bitmp, or null in case no comment exists.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static string GetImageComment(FIBITMAP dib)
 		{
-			if (dib.IsNull)
-			{
-				throw new ArgumentNullException("dib");
-			}
-
 			string result = null;
 			if (dib.IsNull)
 			{
@@ -19928,10 +19955,11 @@ namespace FreeImageAPI
 		/// Sets the comment of a JPEG, PNG or GIF image.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="comment">New comment of the image. Use null to remove the comment.</param>
+		/// <param name="comment">New comment of the FreeImage bitmap.
+		/// Use null to remove the comment.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static bool SetImageComment(FIBITMAP dib, string comment)
 		{
 			if (dib.IsNull)
@@ -19955,15 +19983,15 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Retrieve a metadata attached to a dib.
+		/// Retrieve a metadata attached to a FreeImage bitmap.
 		/// </summary>
 		/// <param name="model">The metadata model to look for.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="key">The metadata field name.</param>
-		/// <param name="tag">A MetadataTag structure returned by the function.</param>
+		/// <param name="tag">A <see cref="MetadataTag"/> structure returned by the function.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static bool GetMetadata(
 			FREE_IMAGE_MDMODEL model,
 			FIBITMAP dib,
@@ -19991,15 +20019,15 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Attach a new metadata tag to a dib.
+		/// Attach a new metadata tag to a FreeImage bitmap.
 		/// </summary>
 		/// <param name="model">The metadata model used to store the tag.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="key">The tag field name.</param>
-		/// <param name="tag">The metadata tag to be attached.</param>
+		/// <param name="tag">The <see cref="MetadataTag"/> to be attached.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static bool SetMetadata(
 			FREE_IMAGE_MDMODEL model,
 			FIBITMAP dib,
@@ -20022,7 +20050,7 @@ namespace FreeImageAPI
 		/// <returns>Unique search handle that can be used to call FindNextMetadata or FindCloseMetadata.
 		/// Null if the metadata model does not exist.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static FIMETADATA FindFirstMetadata(
 			FREE_IMAGE_MDMODEL model,
 			FIBITMAP dib,
@@ -20099,22 +20127,22 @@ namespace FreeImageAPI
 		#region Rotation and flipping
 
 		/// <summary>
-		/// This function rotates a 4-bit color image.
+		/// Rotates a 4-bit color FreeImage bitmap.
 		/// Allowed values for <paramref name="angle"/> are 90, 180 and 270.
 		/// In case <paramref name="angle"/> is 0 or 360 a clone is returned.
-		/// Null is returned for other values or in case the rotation fails.
+		/// 0 is returned for other values or in case the rotation fails.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="angle">The angle of rotation.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		/// <remarks>
 		/// This function is kind of temporary due to FreeImage's lack of
-		/// rotating 4-bit images. It's particularly used by FreeImageBitmap's
+		/// rotating 4-bit images. It's particularly used by <see cref="FreeImageBitmap"/>'s
 		/// method RotateFlip. This function will be removed as soon as FreeImage
 		/// supports rotating 4-bit images.
 		/// </remarks>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public static unsafe FIBITMAP Rotate4bit(FIBITMAP dib, double angle)
 		{
 			if (dib.IsNull)
@@ -20130,7 +20158,7 @@ namespace FreeImageAPI
 				((ang % 90) == 0))
 			{
 				int width, height, xOrg, yOrg;
-				FI4BITARRAY[] src, dst;
+				Scanline<FI4BIT>[] src, dst;
 				width = (int)GetWidth(dib);
 				height = (int)GetHeight(dib);
 				byte index = 0;
@@ -20150,8 +20178,8 @@ namespace FreeImageAPI
 							yOrg = height - 1;
 							for (int x = 0; x < height; x++, yOrg--)
 							{
-								index = src[yOrg].GetIndexUnsafe(y);
-								dst[y].SetIndexUnsafe(x, index);
+								index = src[yOrg][y];
+								dst[y][x] = index;
 							}
 						}
 						break;
@@ -20171,8 +20199,8 @@ namespace FreeImageAPI
 							xOrg = width - 1;
 							for (int x = 0; x < width; x++, xOrg--)
 							{
-								index = src[yOrg].GetIndexUnsafe(xOrg);
-								dst[y].SetIndexUnsafe(x, index);
+								index = src[yOrg][xOrg];
+								dst[y][x] = index;
 							}
 						}
 						break;
@@ -20190,8 +20218,8 @@ namespace FreeImageAPI
 						{
 							for (int x = 0; x < height; x++)
 							{
-								index = src[x].GetIndexUnsafe(xOrg);
-								dst[y].SetIndexUnsafe(x, index);
+								index = src[x][xOrg];
+								dst[y][x] = index;
 							}
 						}
 						break;
@@ -20280,7 +20308,7 @@ namespace FreeImageAPI
 
 				while (*ptr != 0)
 				{
-					sb.Append((char)*(ptr++));
+					sb.Append((char)(*(ptr++)));
 				}
 				result = sb.ToString();
 			}
@@ -20344,14 +20372,13 @@ namespace FreeImageAPI
 			MoveMemory(newPal, orgPal, size);
 		}
 
-		private static unsafe FI4BITARRAY[] Get04BitScanlines(FIBITMAP dib)
+		private static unsafe Scanline<FI4BIT>[] Get04BitScanlines(FIBITMAP dib)
 		{
 			int height = (int)GetHeight(dib);
-			uint width = GetWidth(dib);
-			FI4BITARRAY[] array = new FI4BITARRAY[height];
+			Scanline<FI4BIT>[] array = new Scanline<FI4BIT>[height];
 			for (int i = 0; i < height; i++)
 			{
-				array[i] = new FI4BITARRAY(GetScanLine(dib, i), width);
+				array[i] = new Scanline<FI4BIT>(dib, i);
 			}
 			return array;
 		}
@@ -20415,7 +20442,7 @@ namespace FreeImageAPI
 		/// <param name="buf2">Pointer to a block of memory to compare.</param>
 		/// <param name="length">Specifies the number of bytes to be compared.</param>
 		/// <returns>If all bytes compare as equal, true is returned.</returns>
-		internal static unsafe bool CompareMemory(void* buf1, void* buf2, uint length)
+		public static unsafe bool CompareMemory(void* buf1, void* buf2, uint length)
 		{
 			return (length == RtlCompareMemory(buf1, buf2, length));
 		}
@@ -20427,7 +20454,7 @@ namespace FreeImageAPI
 		/// <param name="buf2">Pointer to a block of memory to compare.</param>
 		/// <param name="length">Specifies the number of bytes to be compared.</param>
 		/// <returns>If all bytes compare as equal, true is returned.</returns>
-		internal static unsafe bool CompareMemory(void* buf1, void* buf2, long length)
+		public static unsafe bool CompareMemory(void* buf1, void* buf2, long length)
 		{
 			return (length == RtlCompareMemory(buf1, buf2, checked((uint)length)));
 		}
@@ -20441,19 +20468,19 @@ namespace FreeImageAPI
 		/// <returns>If all bytes compare as equal, true is returned.</returns>
 		public static unsafe bool CompareMemory(IntPtr buf1, IntPtr buf2, uint length)
 		{
-			if (buf1 == IntPtr.Zero)
-			{
-				throw new ArgumentNullException("buf1");
-			}
-			if (buf2 == IntPtr.Zero)
-			{
-				throw new ArgumentNullException("buf2");
-			}
-			if (length == 0u)
-			{
-				throw new ArgumentOutOfRangeException("length");
-			}
-			return (length == RtlCompareMemory((void*)buf1, (void*)buf2, length));
+			return (length == RtlCompareMemory(buf1.ToPointer(), buf2.ToPointer(), length));
+		}
+
+		/// <summary>
+		/// Compares blocks of memory.
+		/// </summary>
+		/// <param name="buf1">Pointer to a block of memory to compare.</param>
+		/// <param name="buf2">Pointer to a block of memory to compare.</param>
+		/// <param name="length">Specifies the number of bytes to be compared.</param>
+		/// <returns>If all bytes compare as equal, true is returned.</returns>
+		public static unsafe bool CompareMemory(IntPtr buf1, IntPtr buf2, long length)
+		{
+			return (length == RtlCompareMemory(buf1.ToPointer(), buf2.ToPointer(), checked((uint)length)));
 		}
 
 		/// <summary>
@@ -20462,7 +20489,7 @@ namespace FreeImageAPI
 		/// <param name="dst">Pointer to the starting address of the move destination.</param>
 		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
 		/// <param name="size">Size of the block of memory to move, in bytes.</param>
-		internal static unsafe void MoveMemory(void* dst, void* src, long size)
+		public static unsafe void MoveMemory(void* dst, void* src, long size)
 		{
 			MoveMemory(dst, src, checked((uint)size));
 		}
@@ -20475,44 +20502,139 @@ namespace FreeImageAPI
 		/// <param name="size">Size of the block of memory to move, in bytes.</param>
 		public static unsafe void MoveMemory(IntPtr dst, IntPtr src, uint size)
 		{
-			if (dst == IntPtr.Zero)
-			{
-				throw new ArgumentNullException("dst");
-			}
-			if (src == IntPtr.Zero)
-			{
-				throw new ArgumentNullException("src");
-			}
-			if (size == 0u)
-			{
-				throw new ArgumentOutOfRangeException("size");
-			}
-			MoveMemory((void*)dst, (void*)src, size);
+			MoveMemory(dst.ToPointer(), src.ToPointer(), size);
 		}
 
-		internal static unsafe void CopyMemory(void* dst, void* src, uint size)
+		/// <summary>
+		/// Moves a block of memory from one location to another.
+		/// </summary>
+		/// <param name="dst">Pointer to the starting address of the move destination.</param>
+		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
+		/// <param name="size">Size of the block of memory to move, in bytes.</param>
+		public static unsafe void MoveMemory(IntPtr dst, IntPtr src, long size)
 		{
-			if ((dst != null) && (src != null) && (size != 0))
+			MoveMemory(dst.ToPointer(), src.ToPointer(), checked((uint)size));
+		}
+
+		/// <summary>
+		/// Copies a block of memory from one location to another.
+		/// </summary>
+		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
+		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
+		/// <param name="len">Size of the block of memory to copy, in bytes.</param>
+		/// <remarks>
+		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(void*, void*, uint)"/>.
+		/// However, if both blocks overlap the result is undefined.
+		/// </remarks>
+		public static unsafe void CopyMemory(byte* dest, byte* src, int len)
+		{
+			if (len >= 0x10)
 			{
-				uint* uDst = (uint*)dst;
-				uint* uSrc = (uint*)src;
-				while (size >= 4)
+				do
 				{
-					uDst[0] = uSrc[0];
-					uDst++;
-					uSrc++;
-					size -= 4;
+					*((int*)dest) = *((int*)src);
+					*((int*)(dest + 4)) = *((int*)(src + 4));
+					*((int*)(dest + 8)) = *((int*)(src + 8));
+					*((int*)(dest + 12)) = *((int*)(src + 12));
+					dest += 0x10;
+					src += 0x10;
 				}
-				byte* bDst = (byte*)uDst;
-				byte* bSrc = (byte*)uSrc;
-				while (size > 0)
+				while ((len -= 0x10) >= 0x10);
+			}
+			if (len > 0)
+			{
+				if ((len & 8) != 0)
 				{
-					bDst[0] = bSrc[0];
-					bDst++;
-					bSrc++;
-					size--;
+					*((int*)dest) = *((int*)src);
+					*((int*)(dest + 4)) = *((int*)(src + 4));
+					dest += 8;
+					src += 8;
+				}
+				if ((len & 4) != 0)
+				{
+					*((int*)dest) = *((int*)src);
+					dest += 4;
+					src += 4;
+				}
+				if ((len & 2) != 0)
+				{
+					*((short*)dest) = *((short*)src);
+					dest += 2;
+					src += 2;
+				}
+				if ((len & 1) != 0)
+				{
+					*dest = *src;
 				}
 			}
+		}
+
+		/// <summary>
+		/// Copies a block of memory from one location to another.
+		/// </summary>
+		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
+		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
+		/// <param name="size">Size of the block of memory to copy, in bytes.</param>
+		/// <remarks>
+		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(void*, void*, long)"/>.
+		/// However, if both blocks overlap the result is undefined.
+		/// </remarks>
+		public static unsafe void CopyMemory(void* dest, void* src, long size)
+		{
+			CopyMemory((byte*)dest, (byte*)src, checked((int)size));
+		}
+
+		/// <summary>
+		/// Copies a block of memory from one location to another.
+		/// </summary>
+		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
+		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
+		/// <param name="size">Size of the block of memory to copy, in bytes.</param>
+		/// <remarks>
+		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(void*, void*, long)"/>.
+		/// However, if both blocks overlap the result is undefined.
+		/// </remarks>
+		public static unsafe void CopyMemory(void* dest, void* src, int size)
+		{
+			CopyMemory((byte*)dest, (byte*)src, size);
+		}
+
+		/// <summary>
+		/// Copies a block of memory from one location to another.
+		/// </summary>
+		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
+		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
+		/// <param name="size">Size of the block of memory to copy, in bytes.</param>
+		/// <remarks>
+		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(IntPtr, IntPtr, uint)"/>.
+		/// However, if both blocks overlap the result is undefined.
+		/// </remarks>
+		public static unsafe void CopyMemory(IntPtr dest, IntPtr src, int size)
+		{
+			CopyMemory((byte*)dest, (byte*)src, size);
+		}
+
+		/// <summary>
+		/// Copies a block of memory from one location to another.
+		/// </summary>
+		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
+		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
+		/// <param name="size">Size of the block of memory to copy, in bytes.</param>
+		/// <remarks>
+		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(IntPtr, IntPtr, long)"/>.
+		/// However, if both blocks overlap the result is undefined.
+		/// </remarks>
+		public static unsafe void CopyMemory(IntPtr dest, IntPtr src, long size)
+		{
+			CopyMemory((byte*)dest, (byte*)src, checked((int)size));
+		}
+
+		internal static string ColorToString(Color color)
+		{
+			return string.Format(
+				System.Globalization.CultureInfo.CurrentCulture,
+				"{{Name={0}, ARGB=({1}, {2}, {3}, {4})}}",
+				new object[] { color.Name, color.A, color.R, color.G, color.B });
 		}
 
 		#endregion
@@ -20641,7 +20763,7 @@ namespace FreeImageAPI
 		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
 		/// <param name="size">Size of the block of memory to move, in bytes.</param>
 		[DllImport("Kernel32.dll", EntryPoint = "RtlMoveMemory", SetLastError = false)]
-		internal static unsafe extern void MoveMemory(void* dst, void* src, uint size);
+		public static unsafe extern void MoveMemory(void* dst, void* src, uint size);
 
 		/// <summary>
 		/// The RtlCompareMemory routine compares blocks of memory
