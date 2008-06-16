@@ -58,9 +58,10 @@ namespace FreeImageNET_SFM
 
 				return 0;
 			}
-			catch
+			catch (Exception ex)
 			{
-				Console.WriteLine("Error while parsing.");
+				Console.WriteLine(ex.ToString());
+				//Console.WriteLine("Error while parsing.");
 				return 3;
 			}
 			finally
@@ -68,12 +69,7 @@ namespace FreeImageNET_SFM
 				if (textOut != null)
 				{
 					textOut.Flush();
-					textOut.Dispose();
-				}
-
-				if (fStream != null)
-				{
-					fStream.Dispose();
+					textOut.Close();
 				}
 			}
 		}
