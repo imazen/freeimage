@@ -3,8 +3,11 @@ This file gives you a short description of the .NET wrapper's folders
 and what's located in them.
 
 
-"Doc"   (not in CVS)
-Scripts for creating a Microsoft Help API documentation (CHM file).
+"Doc"
+Sandcastle Help File Builder project file for creating a Microsoft Help API
+documentation (CHM file).
+FreeImage.NET uses Eric Woodruff's Sandcastle Help File Builder GUI to
+generate the API documentation. See http://www.codeplex.com/SHFB
 
 "Library"
 Source code of the C# .NET wrapper. Builds the FreeImageNET.dll.
