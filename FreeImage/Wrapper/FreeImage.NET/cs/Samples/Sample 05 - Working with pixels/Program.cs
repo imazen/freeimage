@@ -68,19 +68,19 @@ namespace Sample05
 			for (int i = 0; i < (height / 2); i++)
 			{
 				// Get scanline from the bottom part of the bitmap
-				RGBTRIPLEARRAY rgbtArrayBottom = new RGBTRIPLEARRAY(dib, i);
+				Scanline<RGBTRIPLE> scanlineBottom = new Scanline<RGBTRIPLE>(dib, i);
 
 				// Get scanline from the top part of the bitmap
-				RGBTRIPLEARRAY rgbtArrayTop = new RGBTRIPLEARRAY(dib, height - 1 - i);
+				Scanline<RGBTRIPLE> scanlineTop = new Scanline<RGBTRIPLE>(dib, height - 1 - i);
 
 				// Get arrays of RGBTRIPPLEs that contain the bitmaps real pixel data
 				// of the two scanlines.
-				RGBTRIPLE[] rgbtBottom = rgbtArrayBottom.Data;
-				RGBTRIPLE[] rgbtTop = rgbtArrayTop.Data;
+				RGBTRIPLE[] rgbtBottom = scanlineBottom.Data;
+				RGBTRIPLE[] rgbtTop = scanlineTop.Data;
 
 				// Restore the scanline across to switch the bitmaps lines.
-				rgbtArrayBottom.Data = rgbtTop;
-				rgbtArrayTop.Data = rgbtBottom;
+				scanlineBottom.Data = rgbtTop;
+				scanlineTop.Data = rgbtBottom;
 			}
 
 			// Store the bitmap to disk
@@ -115,10 +115,10 @@ namespace Sample05
 			for (int i = 0; i < FreeImage.GetHeight(dib); i++)
 			{
 				// Get scanline
-				RGBTRIPLEARRAY rgbtArray = new RGBTRIPLEARRAY(dib, i);
+				Scanline<RGBTRIPLE> scanline = new Scanline<RGBTRIPLE>(dib, i);
 
 				// Get pixeldata from scanline
-				RGBTRIPLE[] rgbt = rgbtArray.Data;
+				RGBTRIPLE[] rgbt = scanline.Data;
 
 				// Iterate over each pixel reducing the colors intensity to 3/4 which
 				// will darken the bitmap.
@@ -136,7 +136,7 @@ namespace Sample05
 				}
 
 				// Write the darkened scanline back to memory
-				rgbtArray.Data = rgbt;
+				scanline.Data = rgbt;
 			}
 
 			// Store the bitmap to disk
@@ -168,7 +168,7 @@ namespace Sample05
 			}
 
 			// Get the bitmaps palette
-			RGBQUADARRAY palette = FreeImage.GetPaletteEx(dib);
+			Palette palette = FreeImage.GetPaletteEx(dib);
 
 			int size = (int)palette.Length;
 
@@ -192,7 +192,7 @@ namespace Sample05
 			for (int i = 0; i < FreeImage.GetHeight(dib); i++)
 			{
 				// Get scanline
-				FI4BITARRAY scanline = new FI4BITARRAY(dib, i);
+				Scanline<FI4BIT> scanline = new Scanline<FI4BIT>(dib, i);
 
 				// Iterate over all pixels swapping the palette index
 				// so that the color will stay the same
