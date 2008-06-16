@@ -28,13 +28,14 @@
 
 // ==========================================================
 // To build the project without VS use the following commandline:
-// "csc.exe /out:FreeImageNET.dll /target:library /doc:FreeImageNET.XML /debug- /o /nowarn:659,660,661,1591 /unsafe+ /filealign:512 FreeImage.cs"
+// "csc.exe /out:FreeImageNET.dll /target:library /doc:FreeImageNET.XML /debug- /o /unsafe+ /filealign:512 FreeImage.cs"
 // ==========================================================
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -56,11 +57,11 @@ namespace FreeImageAPI
 {
 	#region Structs
 
-	// FIBITMAP, FIMULTIBITMAP, FIMEMORY, FIMETADATA and FITAG are wrapped pointers.
-	// The strcutures contain a single IntPtr wrapping the unmanaged memory address.
-	// The structures implement conversions between Int and IntPtr and the 'Equals'
-	// method.
-	// The 'IsNull' property allows a null-pointer check.
+#include "Structs\BITMAP.cs"
+
+#include "Structs\BITMAPINFOHEADER.cs"
+
+#include "Structs\BITMAPINFO.cs"
 
 #include "Structs\FIBITMAP.cs"
 
@@ -73,22 +74,6 @@ namespace FreeImageAPI
 #include "Structs\FITAG.cs"
 
 #include "Structs\FreeImageIO.cs"
-
-	// Bitmaps are made up of different structures.
-	// Some bitmaps have palettes that define the used colors and the bitmaps real
-	// data links to the palette index.
-	// Others don't have a palette and each pixel is stored directly.
-	//
-	// No matter which type of bitmap is accessed FreeImage provides pointers to
-	// beginning of a structure and its length.
-	// In unmanaged code pointers would be used to access the data. In .NET
-	// unsafe code is needed to that.
-	//
-	// RGBQUAD, RGBTRIPLE, FIRGB16, FIRGBA16, FIRGBF and FIRGBAF represent
-	// the structures that bitmaps use to store their data.
-	// Its up to the coder to choose the right one.
-	//
-	// Each structure can be converted from and to the .NETs structure 'Color'.
 
 #include "Structs\RGBQUAD.cs"
 
@@ -103,12 +88,6 @@ namespace FreeImageAPI
 #include "Structs\FIRGBF.cs"
 
 #include "Structs\FICOMPLEX.cs"
-
-#include "Structs\BITMAP.cs"
-
-#include "Structs\BITMAPINFOHEADER.cs"
-
-#include "Structs\BITMAPINFO.cs"
 
 #include "Structs\FIICCPROFILE.cs"
 
@@ -167,57 +146,19 @@ namespace FreeImageAPI
 {
 	#region Structs
 
-	// RGBQUADARRAY, RGBTRIPLEARRAY, FIRGB16ARRAY, FIRGBFARRAY and FIRGBAFARRAY
-	// are structures that wrap a block of memory. Each structure has its own
-	// definitions (size, color position ect).
-	//
-	// In unmanaged code pointers would be used to access a bitmaps data.
-	// In .NET unsafe code is needed to perform the same operations.
-	// All mentioned structures have the same core methods and properties.
-	// They return Colors or the original structure (RGBQUADARRAY returns
-	// RGBQUADs ect) that can be altered and then saved back to the bitmap
-	// (always keep in mind, that the structure returns a copy of the block
-	// of memory; any change made to it must be saved back or will be lost).
-	//
-	// These structures provide a comfortable way of accessing a bitmaps data.
-	// The structure is defined by the base address of the memory-block to wrap
-	// and the !number of elements! the block contains, not the size of the block
-	// in bytes.
-	// Keep in mind that the structure accepts any length and can be used to
-	// write in memory that does not belong to the bitmap, which will lead to
-	// data loss.
+#include "Structs\fi_handle.cs"
 
-#include "Structs\RGBQUADARRAY.cs"
+#include "Structs\FI1BIT.cs"
 
-#include "Structs\RGBTRIPLEARRAY.cs"
+#include "Structs\FI4BIT.cs"
 
-#include "Structs\FIRGBA16ARRAY.cs"
+#include "Structs\FI16RGB555.cs"
 
-#include "Structs\FIRGB16ARRAY.cs"
-
-#include "Structs\FIRGBAFARRAY.cs"
-
-#include "Structs\FIRGBFARRAY.cs"
-
-#include "Structs\BitSettings.cs"
-
-#include "Structs\FI16RGB.cs"
-
-#include "Structs\FI16RGBARRAY.cs"
-
-#include "Structs\FI8BITARRAY.cs"
-
-#include "Structs\FI4BITARRAY.cs"
-
-#include "Structs\FI1BITARRAY.cs"
-
-#include "Structs\FICOMPLEXARRAY.cs"
+#include "Structs\FI16RGB565.cs"
 
 #include "Structs\FIRational.cs"
 
 #include "Structs\FIURational.cs"
-
-#include "Structs\fi_handle.cs"
 
 	#endregion
 
@@ -227,13 +168,15 @@ namespace FreeImageAPI
 
 #include "Classes\FreeImageEngine.cs"
 
-#include "Classes\LocalPlugin.cs"
+#include "Classes\FreeImagePlugin.cs"
 
 #include "Classes\FreeImageStreamIO.cs"
 
-#include "Classes\StreamWrapper.cs"
+#include "Classes\ImageMetadata.cs"
 
-#include "Classes\MetadataTag.cs"
+#include "Classes\LocalPlugin.cs"
+
+#include "Classes\MemoryArray.cs"
 
 #include "Classes\MetadataModel.cs"
 
@@ -243,11 +186,15 @@ namespace FreeImageAPI
 
 	#endregion
 
-#include "Classes\ImageMetadata.cs"
+#include "Classes\MetadataTag.cs"
 
-#include "Classes\FreeImagePlugin.cs"
+#include "Classes\Palette.cs"
 
 #include "Classes\PluginRepository.cs"
+
+#include "Classes\Scanline.cs"
+
+#include "Classes\StreamWrapper.cs"
 
 	#endregion
 
@@ -257,9 +204,9 @@ namespace FreeImageAPI
 
 #include "Enumerations\FREE_IMAGE_COMPARE_FLAGS.cs"
 
-#include "Enumerations\MD_SEARCH_FLAGS.cs"
-
 #include "Enumerations\FREE_IMAGE_METADATA_COPY.cs"
+
+#include "Enumerations\MD_SEARCH_FLAGS.cs"
 
 	#endregion
 
