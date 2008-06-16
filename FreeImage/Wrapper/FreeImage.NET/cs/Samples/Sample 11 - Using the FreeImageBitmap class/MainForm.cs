@@ -293,15 +293,19 @@ namespace Sample11
 						// Check whether the bitmap has a palette
 						if (bitmap.HasPalette)
 						{
-							// Use the RGBQUADARRAY structure to handle the bitmap's
+							// Use the Palette class to handle the bitmap's
 							// palette. A palette always consist of RGBQUADs.
-							RGBQUADARRAY palette = bitmap.Palette;
+							Palette palette = bitmap.Palette;
 							// Apply the new values for all three color components.
 							for (int i = 0; i < palette.Length; i++)
 							{
-								palette.SetRed(i, (byte)(palette.GetRed(i) & redmask));
-								palette.SetGreen(i, (byte)(palette.GetGreen(i) & greenmask));
-								palette.SetBlue(i, (byte)(palette.GetBlue(i) & bluemask));
+								RGBQUAD rgbq = palette[i];
+
+								rgbq.rgbRed = (byte)(rgbq.rgbRed & redmask);
+								rgbq.rgbGreen = (byte)(rgbq.rgbGreen & greenmask);
+								rgbq.rgbBlue = (byte)(rgbq.rgbBlue & bluemask);
+
+								palette[i] = rgbq;
 							}
 						}
 						// In case the bitmap has no palette it must have a color depth
@@ -311,42 +315,65 @@ namespace Sample11
 						else if (bitmap.ColorDepth == 16)
 						{
 							// Iterate over each scanline
-							// For 16bpp FI16RGBARRAY must be used
-							foreach (FI16RGBARRAY scanline in bitmap)
+							// For 16bpp use either Scanline<FI16RGB555> or Scanline<FI16RGB565>
+							if (bitmap.IsRGB555)
 							{
-								for (int x = 0; x < scanline.Length; x++)
+								foreach (Scanline<FI16RGB555> scanline in bitmap)
 								{
-									scanline.SetRed(x, (byte)(scanline.GetRed(x) & redmask));
-									scanline.SetGreen(x, (byte)(scanline.GetGreen(x) & greenmask));
-									scanline.SetBlue(x, (byte)(scanline.GetBlue(x) & bluemask));
+									for (int x = 0; x < scanline.Length; x++)
+									{
+										FI16RGB555 pixel = scanline[x];
+										pixel.Red = (byte)(pixel.Red & redmask);
+										pixel.Green = (byte)(pixel.Green & greenmask);
+										pixel.Blue = (byte)(pixel.Blue & bluemask);
+										scanline[x] = pixel;
+									}
+								}
+							}
+							else if (bitmap.IsRGB565)
+							{
+								foreach (Scanline<FI16RGB565> scanline in bitmap)
+								{
+									for (int x = 0; x < scanline.Length; x++)
+									{
+										FI16RGB565 pixel = scanline[x];
+										pixel.Red = (byte)(pixel.Red & redmask);
+										pixel.Green = (byte)(pixel.Green & greenmask);
+										pixel.Blue = (byte)(pixel.Blue & bluemask);
+										scanline[x] = pixel;
+									}
 								}
 							}
 						}
 						else if (bitmap.ColorDepth == 24)
 						{
 							// Iterate over each scanline
-							// For 24bpp RGBTRIPLEARRAY must be used
-							foreach (RGBTRIPLEARRAY scanline in bitmap)
+							// For 24bpp Scanline<RGBTRIPLE> must be used
+							foreach (Scanline<RGBTRIPLE> scanline in bitmap)
 							{
 								for (int x = 0; x < scanline.Length; x++)
 								{
-									scanline.SetRed(x, (byte)(scanline.GetRed(x) & redmask));
-									scanline.SetGreen(x, (byte)(scanline.GetGreen(x) & greenmask));
-									scanline.SetBlue(x, (byte)(scanline.GetBlue(x) & bluemask));
+									RGBTRIPLE pixel = scanline[x];
+									pixel.rgbtRed = (byte)(pixel.rgbtRed & redmask);
+									pixel.rgbtGreen = (byte)(pixel.rgbtGreen & greenmask);
+									pixel.rgbtBlue = (byte)(pixel.rgbtBlue & bluemask);
+									scanline[x] = pixel;
 								}
 							}
 						}
 						else if (bitmap.ColorDepth == 32)
 						{
 							// Iterate over each scanline
-							// For 32bpp RGBQUADARRAY must be used
-							foreach (RGBQUADARRAY scanline in bitmap)
+							// For 32bpp Scanline<RGBQUAD> must be used
+							foreach (Scanline<RGBQUAD> scanline in bitmap)
 							{
 								for (int x = 0; x < scanline.Length; x++)
 								{
-									scanline.SetRed(x, (byte)(scanline.GetRed(x) & redmask));
-									scanline.SetGreen(x, (byte)(scanline.GetGreen(x) & greenmask));
-									scanline.SetBlue(x, (byte)(scanline.GetBlue(x) & bluemask));
+									RGBQUAD pixel = scanline[x];
+									pixel.rgbRed = (byte)(pixel.rgbRed & redmask);
+									pixel.rgbGreen = (byte)(pixel.rgbGreen & greenmask);
+									pixel.rgbBlue = (byte)(pixel.rgbBlue & bluemask);
+									scanline[x] = pixel;
 								}
 							}
 						}
