@@ -40,25 +40,42 @@ using System.Runtime.InteropServices;
 namespace FreeImageAPI
 {
 	/// <summary>
-	/// The structure represents a fraction by saving two integeres which are interpreted
-	/// as numerator and denominator. The structure implements all common operations
-	/// like +, -, ++, --, ==, != , >, >==, &lt;, &lt;== and ~ (which switches nominator and
-	/// denomiator). No other bit-operations are implemented.
+	/// The <b>FIRational</b> structure represents a fraction via two <see cref="Int32"/>
+	/// instances which are interpreted as numerator and denominator.
+	/// </summary>
+	/// <remarks>
+	/// The structure tries to approximate the value of <see cref="FreeImageAPI.FIRational(decimal)"/>
+	/// when creating a new instance by using a better algorithm than FreeImage does.
+	/// <para/>
+	/// The structure implements the following operators:
+	/// +, -, ++, --, ==, != , >, >==, &lt;, &lt;== and ~ (which switches nominator and denomiator).
+	/// <para/>
 	/// The structure can be converted into all .NET standard types either implicit or
 	/// explicit.
-	/// </summary>
+	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential), ComVisible(true)]
 	public struct FIRational : IConvertible, IComparable, IFormattable, IComparable<FIRational>, IEquatable<FIRational>
 	{
 		private int numerator;
 		private int denominator;
 
-		public const int MaxValue = Int32.MaxValue;
-		public const int MinValue = Int32.MinValue;
-		public const double Epsilon = 1d / (double)Int32.MaxValue;
+		/// <summary>
+		/// Represents the largest possible value of <see cref="FIRational"/>. This field is constant.
+		/// </summary>
+		public static readonly FIRational MaxValue = new FIRational(Int32.MaxValue, 1);
 
 		/// <summary>
-		/// Creates a new FIRational structure.
+		/// Represents the smallest possible value of <see cref="FIRational"/>. This field is constant.
+		/// </summary>
+		public static readonly FIRational MinValue = new FIRational(Int32.MinValue, 1);
+
+		/// <summary>
+		/// Represents the smallest positive <see cref="FIRational"/> value greater than zero. This field is constant.
+		/// </summary>
+		public static readonly FIRational Epsilon = new FIRational(1, Int32.MaxValue);
+
+		/// <summary>
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="n">The numerator.</param>
 		/// <param name="d">The denominator.</param>
@@ -70,38 +87,30 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure.
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="tag">The tag to read the data from.</param>
 		public unsafe FIRational(FITAG tag)
 		{
 			switch (FreeImage.GetTagType(tag))
 			{
-				case FREE_IMAGE_MDTYPE.FIDT_RATIONAL:
-					uint* pvalue = (uint*)FreeImage.GetTagValue(tag);
-					numerator = (int)pvalue[0];
-					denominator = (int)pvalue[1];
-					Normalize();
-					return;
 				case FREE_IMAGE_MDTYPE.FIDT_SRATIONAL:
 					int* value = (int*)FreeImage.GetTagValue(tag);
 					numerator = (int)value[0];
 					denominator = (int)value[1];
 					Normalize();
 					return;
+				default:
+					throw new ArgumentException("tag");
 			}
-			numerator = 0;
-			denominator = 0;
-			Normalize();
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure by converting the value into
-		/// a fraction. The fraction might slightly differ from value.
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="value">The value to convert into a fraction.</param>
 		/// <exception cref="OverflowException">
-		/// Thrown if <paramref name="value"/> cannot be converted into a fraction
+		/// <paramref name="value"/> cannot be converted into a fraction
 		/// represented by two integer values.</exception>
 		public FIRational(decimal value)
 		{
@@ -127,7 +136,9 @@ namespace FreeImageAPI
 					ApproximateFraction(value, maxDen, out numerator, out denominator);
 					Normalize();
 					if (Math.Abs(((decimal)numerator / (decimal)denominator) - value) > 0.0001m)
+					{
 						throw new OverflowException();
+					}
 				}
 				numerator *= sign;
 				Normalize();
@@ -139,7 +150,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure by cloning.
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="r">The structure to clone from.</param>
 		public FIRational(FIRational r)
@@ -300,10 +311,15 @@ namespace FreeImageAPI
 
 			while (value != 0m)
 			{
-				if (++b == byte.MaxValue || value < epsilon) break;
+				if (++b == byte.MaxValue || value < epsilon)
+				{
+					break;
+				}
 				value = 1m / value;
 				if (Math.Abs((Math.Round(value, precision - 1) - value)) < epsilon)
+				{
 					value = Math.Round(value, precision - 1);
+				}
 				list.Add((int)value);
 				value -= ((int)value);
 			}
@@ -328,7 +344,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Tries 'brute force' to approximate 'value' with a fraction.
+		/// Tries 'brute force' to approximate <paramref name="value"/> with a fraction.
 		/// </summary>
 		private static void ApproximateFraction(decimal value, int maxDen, out int num, out int den)
 		{
@@ -342,7 +358,9 @@ namespace FreeImageAPI
 			{
 				int mul = 1;
 				for (int i = 1; i <= digits; i++)
+				{
 					mul *= 10;
+				}
 				if (mul <= maxDen)
 				{
 					num = (int)(value * mul);
@@ -365,48 +383,58 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FIRational"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
 			return ((IConvertible)this).ToDouble(null).ToString();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Tests whether the specified object is a <see cref="FIRational"/> structure
+		/// and is equivalent to this <see cref="FIRational"/> structure.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRational"/> structure
+		/// equivalent to this <see cref="FIRational"/> structure; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FIRational)
-				return Equals((FIRational)obj);
-			throw new ArgumentException("obj is no FIRational");
+			return ((obj is FIRational) && (this == ((FIRational)obj)));
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FIRational"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIRational"/>.</returns>
 		public override int GetHashCode()
 		{
-			return ToString().GetHashCode();
+			return base.GetHashCode();
 		}
 
 		#region Operators
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator +(FIRational r1)
 		{
 			return r1;
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator -(FIRational r1)
 		{
 			r1.numerator *= -1;
 			return r1;
 		}
 
+		/// <summary>
+		/// Returns the reciprocal value of this instance.
+		/// </summary>
 		public static FIRational operator ~(FIRational r1)
 		{
 			int temp = r1.denominator;
@@ -416,6 +444,9 @@ namespace FreeImageAPI
 			return r1;
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator ++(FIRational r1)
 		{
 			checked
@@ -425,6 +456,9 @@ namespace FreeImageAPI
 			return r1;
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator --(FIRational r1)
 		{
 			checked
@@ -434,6 +468,9 @@ namespace FreeImageAPI
 			return r1;
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator +(FIRational r1, FIRational r2)
 		{
 			long numerator = 0;
@@ -446,11 +483,17 @@ namespace FreeImageAPI
 			}
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator -(FIRational r1, FIRational r2)
 		{
 			return r1 + (-r2);
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator *(FIRational r1, FIRational r2)
 		{
 			long numerator = r1.numerator * r2.numerator;
@@ -462,6 +505,9 @@ namespace FreeImageAPI
 			}
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator /(FIRational r1, FIRational r2)
 		{
 			int temp = r2.denominator;
@@ -470,6 +516,9 @@ namespace FreeImageAPI
 			return r1 * r2;
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static FIRational operator %(FIRational r1, FIRational r2)
 		{
 			r2.Normalize();
@@ -479,6 +528,9 @@ namespace FreeImageAPI
 			return r1 - (r2 * div);
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator ==(FIRational r1, FIRational r2)
 		{
 			r1.Normalize();
@@ -486,29 +538,44 @@ namespace FreeImageAPI
 			return (r1.numerator == r2.numerator) && (r1.denominator == r2.denominator);
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator !=(FIRational r1, FIRational r2)
 		{
 			return !(r1 == r2);
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator >(FIRational r1, FIRational r2)
 		{
 			long denominator = Scm(r1.denominator, r2.denominator);
 			return (r1.numerator * (denominator / r1.denominator)) > (r2.numerator * (denominator / r2.denominator));
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator <(FIRational r1, FIRational r2)
 		{
 			long denominator = Scm(r1.denominator, r2.denominator);
 			return (r1.numerator * (denominator / r1.denominator)) < (r2.numerator * (denominator / r2.denominator));
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator >=(FIRational r1, FIRational r2)
 		{
 			long denominator = Scm(r1.denominator, r2.denominator);
 			return (r1.numerator * (denominator / r1.denominator)) >= (r2.numerator * (denominator / r2.denominator));
 		}
 
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
 		public static bool operator <=(FIRational r1, FIRational r2)
 		{
 			long denominator = Scm(r1.denominator, r2.denominator);
@@ -519,133 +586,263 @@ namespace FreeImageAPI
 
 		#region Conversions
 
-		public static explicit operator bool(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Boolean"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Boolean"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator bool(FIRational value)
 		{
-			return (r.numerator > 0);
+			return (value.numerator != 0);
 		}
 
-		public static explicit operator byte(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Byte"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Byte"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator byte(FIRational value)
 		{
-			return (byte)(double)r;
+			return (byte)(double)value;
 		}
 
-		public static explicit operator char(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Char"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Char"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator char(FIRational value)
 		{
-			return (char)(double)r;
+			return (char)(double)value;
 		}
 
-		public static implicit operator decimal(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Decimal"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Decimal"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator decimal(FIRational value)
 		{
-			return r.denominator == 0 ? 0m : (decimal)r.numerator / (decimal)r.denominator;
+			return value.denominator == 0 ? 0m : (decimal)value.numerator / (decimal)value.denominator;
 		}
 
-		public static implicit operator double(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Double"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Double"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator double(FIRational value)
 		{
-			return r.denominator == 0 ? 0d : (double)r.numerator / (double)r.denominator;
+			return value.denominator == 0 ? 0d : (double)value.numerator / (double)value.denominator;
 		}
 
-		public static explicit operator short(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="Int16"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int16"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator short(FIRational value)
 		{
-			return (short)(double)r;
+			return (short)(double)value;
 		}
 
-		public static explicit operator int(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="Int32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int32"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator int(FIRational value)
 		{
-			return (int)(double)r;
+			return (int)(double)value;
 		}
 
-		public static explicit operator long(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="Int64"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int64"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator long(FIRational value)
 		{
-			return (byte)(double)r;
+			return (byte)(double)value;
 		}
 
-		public static implicit operator float(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="Single"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Single"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator float(FIRational value)
 		{
-			return r.denominator == 0 ? 0f : (float)r.numerator / (float)r.denominator;
+			return value.denominator == 0 ? 0f : (float)value.numerator / (float)value.denominator;
 		}
 
-		public static explicit operator sbyte(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to a <see cref="SByte"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="SByte"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator sbyte(FIRational value)
 		{
-			return (sbyte)(double)r;
+			return (sbyte)(double)value;
 		}
 
-		public static explicit operator ushort(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="UInt16"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt16"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator ushort(FIRational value)
 		{
-			return (ushort)(double)r;
+			return (ushort)(double)value;
 		}
 
-		public static explicit operator uint(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="UInt32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt32"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator uint(FIRational value)
 		{
-			return (uint)(double)r;
+			return (uint)(double)value;
 		}
 
-		public static explicit operator ulong(FIRational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIRational"/> structure to an <see cref="UInt64"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIRational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt64"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator ulong(FIRational value)
 		{
-			return (ulong)(double)r;
+			return (ulong)(double)value;
 		}
 
 		//
 
+		/// <summary>
+		/// Converts the value of a <see cref="Boolean"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Boolean"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(bool value)
 		{
 			return new FIRational(value ? 1 : 0, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Byte"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Byte"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(byte value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Char"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Char"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(char value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Decimal"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Decimal"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(decimal value)
 		{
 			return new FIRational(value);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Double"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Double"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(double value)
 		{
 			return new FIRational((decimal)value);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int16"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int16"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(short value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int32"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int32"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(int value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int64"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int64"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(long value)
 		{
 			return new FIRational((int)value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="SByte"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="SByte"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(sbyte value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Single"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Single"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(float value)
 		{
 			return new FIRational((decimal)value);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt16"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt16"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIRational(ushort value)
 		{
 			return new FIRational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt32"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt32"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(uint value)
 		{
 			return new FIRational((int)value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt64"/> structure to a <see cref="FIRational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt64"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIRational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIRational(ulong value)
 		{
 			return new FIRational((int)value, 1);
@@ -745,17 +942,22 @@ namespace FreeImageAPI
 		#region IComparable Member
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIRational"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is FIRational)
-				return CompareTo((FIRational)obj);
-			else if (obj is IConvertible)
-				return CompareTo(new FIRational(((IConvertible)obj).ToDecimal(null)));
-			throw new ArgumentException("obj is not convertable to double");
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FIRational))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIRational)obj);
 		}
 
 		#endregion
@@ -770,7 +972,10 @@ namespace FreeImageAPI
 		/// <returns>A String containing the value of the current instance in the specified format.</returns>
 		public string ToString(string format, IFormatProvider formatProvider)
 		{
-			if (format == null) format = "";
+			if (format == null)
+			{
+				format = "";
+			}
 			return String.Format(formatProvider, format, ((IConvertible)this).ToDouble(formatProvider));
 		}
 
@@ -779,13 +984,14 @@ namespace FreeImageAPI
 		#region IEquatable<FIRational> Member
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified <see cref="FIRational"/> structure is equivalent to this <see cref="FIRational"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <param name="other">A <see cref="FIRational"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIRational"/> structure
+		/// equivalent to this <see cref="FIRational"/> structure; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIRational other)
 		{
-			return ((FIRational)other).numerator == numerator && ((FIRational)other).denominator == denominator;
+			return (this == other);
 		}
 
 		#endregion
@@ -793,10 +999,11 @@ namespace FreeImageAPI
 		#region IComparable<FIRational> Member
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="FIRational"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="FIRational"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(FIRational other)
 		{
 			FIRational difference = this - other;

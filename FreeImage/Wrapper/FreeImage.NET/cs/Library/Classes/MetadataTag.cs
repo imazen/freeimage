@@ -45,19 +45,41 @@ namespace FreeImageAPI
 	/// </summary>
 	public class MetadataTag : IComparable, IComparable<MetadataTag>, ICloneable, IEquatable<MetadataTag>, IDisposable
 	{
+		/// <summary>
+		/// The encapsulated FreeImage-tag.
+		/// </summary>
 		internal protected FITAG tag;
+		/// <summary>
+		/// The metadata model of <see cref="tag"/>.
+		/// </summary>
 		internal protected FREE_IMAGE_MDMODEL model;
+		/// <summary>
+		/// Indicates whether this instance has already been disposed.
+		/// </summary>
 		protected bool disposed = false;
+		/// <summary>
+		/// Indicates whether this instance was created by FreeImage or
+		/// by the user.
+		/// </summary>
 		protected bool selfCreated;
+		/// <summary>
+		/// List linking metadata-model and Type.
+		/// </summary>
 		protected static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
+		/// <summary>
+		/// List linking Type and metadata-model.
+		/// </summary>
 		protected static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
 
+		/// <summary>
+		/// Initializes a new instance of this class.
+		/// </summary>
 		protected MetadataTag()
 		{
 		}
 
 		/// <summary>
-		/// Creates a new instance of this class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="model">The new model the tag should be of.</param>
 		public MetadataTag(FREE_IMAGE_MDMODEL model)
@@ -68,10 +90,10 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new instance of this class.
+		/// Initializes a new instance of this class.
 		/// </summary>
-		/// <param name="tag">The FITAG to wrap.</param>
-		/// <param name="dib">The bitmap 'tag' was extracted from.</param>
+		/// <param name="tag">The <see cref="FITAG"/> to represent.</param>
+		/// <param name="dib">The bitmap <paramref name="tag"/> was extracted from.</param>
 		public MetadataTag(FITAG tag, FIBITMAP dib)
 		{
 			if (tag.IsNull)
@@ -88,10 +110,10 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new instance of this class.
+		/// Initializes a new instance of this class.
 		/// </summary>
-		/// <param name="tag">The FITAG to wrap.</param>
-		/// <param name="model">The model of 'tag'.</param>
+		/// <param name="tag">The <see cref="FITAG"/> to represent.</param>
+		/// <param name="model">The model of <paramref name="tag"/>.</param>
 		public MetadataTag(FITAG tag, FREE_IMAGE_MDMODEL model)
 		{
 			if (tag.IsNull)
@@ -146,54 +168,80 @@ namespace FreeImageAPI
 			typeList.Add(typeof(RGBQUAD[]), FREE_IMAGE_MDTYPE.FIDT_PALETTE);
 		}
 
+		/// <summary>
+		/// Releases all resources used by the instance.
+		/// </summary>
 		~MetadataTag()
 		{
 			Dispose();
 		}
 
-		public static bool operator ==(MetadataTag value1, MetadataTag value2)
+		/// <summary>
+		/// Determines whether two specified <see cref="MetadataTag"/> objects have the same value.
+		/// </summary>
+		/// <param name="left">A <see cref="MetadataTag"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <param name="right">A <see cref="MetadataTag"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <returns>
+		/// <b>true</b> if the value of left is the same as the value of right; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(MetadataTag left, MetadataTag right)
 		{
 			// Check whether both are null
-			if (Object.ReferenceEquals(value1, null) && Object.ReferenceEquals(value2, null))
+			if (Object.ReferenceEquals(left, null) && Object.ReferenceEquals(right, null))
 			{
 				return true;
 			}
 			// Check whether only one is null
-			if (Object.ReferenceEquals(value1, null) || Object.ReferenceEquals(value2, null))
+			if (Object.ReferenceEquals(left, null) || Object.ReferenceEquals(right, null))
 			{
 				return false;
 			}
+			left.CheckDisposed();
+			right.CheckDisposed();
 			// Check all properties
-			if ((value1.Key != value2.Key) ||
-				(value1.ID != value2.ID) ||
-				(value1.Description != value2.Description) ||
-				(value1.Count != value2.Count) ||
-				(value1.Length != value2.Length) ||
-				(value1.Model != value2.Model) ||
-				(value1.Type != value2.Type))
+			if ((left.Key != right.Key) ||
+				(left.ID != right.ID) ||
+				(left.Description != right.Description) ||
+				(left.Count != right.Count) ||
+				(left.Length != right.Length) ||
+				(left.Model != right.Model) ||
+				(left.Type != right.Type))
 			{
 				return false;
 			}
-			if (value1.Length == 0)
+			if (left.Length == 0)
 			{
 				return true;
 			}
-			IntPtr ptr1 = FreeImage.GetTagValue(value1.tag);
-			IntPtr ptr2 = FreeImage.GetTagValue(value2.tag);
-			return FreeImage.CompareMemory(ptr1, ptr2, value1.Length);
+			IntPtr ptr1 = FreeImage.GetTagValue(left.tag);
+			IntPtr ptr2 = FreeImage.GetTagValue(right.tag);
+			return FreeImage.CompareMemory(ptr1, ptr2, left.Length);
 		}
 
-		public static bool operator !=(MetadataTag value1, MetadataTag value2)
+		/// <summary>
+		/// Determines whether two specified <see cref="MetadataTag"/> objects have different values.
+		/// </summary>
+		/// <param name="left">A <see cref="MetadataTag"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <param name="right">A <see cref="MetadataTag"/> or a null reference (<b>Nothing</b> in Visual Basic).</param>
+		/// <returns>
+		/// true if the value of left is different from the value of right; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(MetadataTag left, MetadataTag right)
 		{
-			return !(value1 == value2);
+			return !(left == right);
 		}
 
+		/// <summary>
+		/// Extracts the value of a <see cref="MetadataTag"/> instance to a <see cref="FITAG"/> handle.
+		/// </summary>
+		/// <param name="value">A <see cref="MetadataTag"/> instance.</param>
+		/// <returns>A new instance of <see cref="FITAG"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FITAG(MetadataTag value)
 		{
 			return value.tag;
 		}
 
-		protected FREE_IMAGE_MDMODEL GetModel(FIBITMAP dib, FITAG tag)
+		private static FREE_IMAGE_MDMODEL GetModel(FIBITMAP dib, FITAG tag)
 		{
 			FITAG value;
 			foreach (FREE_IMAGE_MDMODEL model in FreeImage.FREE_IMAGE_MDMODELS)
@@ -301,8 +349,8 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Gets or sets the value of the metadata.
-		/// <para> In case value is of byte or byte[], FREE_IMAGE_MDTYPE.FIDT_UNDEFINED is assumed.</para>
-		/// <para> In case value is of uint or uint[], FREE_IMAGE_MDTYPE.FIDT_LONG is assumed.</para>
+		/// <para> In case value is of byte or byte[], <see cref="FREE_IMAGE_MDTYPE.FIDT_UNDEFINED"/> is assumed.</para>
+		/// <para> In case value is of uint or uint[], <see cref="FREE_IMAGE_MDTYPE.FIDT_LONG"/> is assumed.</para>
 		/// </summary>
 		public unsafe object Value
 		{
@@ -330,7 +378,7 @@ namespace FreeImageAPI
 				void* src = (void*)FreeImage.GetTagValue(tag);
 				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
 				void* dst = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
-				FreeImage.MoveMemory(dst, src, Length);
+				FreeImage.CopyMemory(dst, src, Length);
 				handle.Free();
 				return array;
 			}
@@ -342,15 +390,15 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Sets the value of the metadata.
-		/// <para> In case value is of byte or byte[] FREE_IMAGE_MDTYPE.FIDT_UNDEFINED is assumed.</para>
-		/// <para> In case value is of uint or uint[] FREE_IMAGE_MDTYPE.FIDT_LONG is assumed.</para>
+		/// <para> In case value is of byte or byte[] <see cref="FREE_IMAGE_MDTYPE.FIDT_UNDEFINED"/> is assumed.</para>
+		/// <para> In case value is of uint or uint[] <see cref="FREE_IMAGE_MDTYPE.FIDT_LONG"/> is assumed.</para>
 		/// </summary>
 		/// <param name="value">New data of the metadata.</param>
 		/// <returns>True on success, false on failure.</returns>
 		/// <exception cref="NotSupportedException">
-		/// Thrown in case the data format is not supported.</exception>
+		/// The data format is not supported.</exception>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'value' is null.</exception>
+		/// <paramref name="value"/> is null.</exception>
 		public bool SetValue(object value)
 		{
 			Type type = value.GetType();
@@ -368,11 +416,11 @@ namespace FreeImageAPI
 		/// <param name="type">Type of the data.</param>
 		/// <returns>True on success, false on failure.</returns>
 		/// <exception cref="NotSupportedException">
-		/// Thrown in case the data type is not supported.</exception>
+		/// The data type is not supported.</exception>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'value' is null.</exception>
+		/// <paramref name="value"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown in case 'value' and 'type' to not fit.</exception>
+		/// <paramref name="value"/> and <paramref name="type"/> to not fit.</exception>
 		public bool SetValue(object value, FREE_IMAGE_MDTYPE type)
 		{
 			CheckDisposed();
@@ -385,6 +433,23 @@ namespace FreeImageAPI
 			return SetArrayValue(value, type);
 		}
 
+		/// <summary>
+		/// Sets the value of this tag to the value of <paramref name="value"/>
+		/// using the given type.
+		/// </summary>
+		/// <param name="value">New value of the tag.</param>
+		/// <param name="type">Data-type of the tag.</param>
+		/// <returns></returns>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="value"/> is a null reference.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		/// <paramref name="type"/> is FIDT_ASCII and
+		/// <paramref name="value"/> is not String.
+		/// <paramref name="type"/> is not FIDT_ASCII and
+		/// <paramref name="value"/> is not Array.</exception>
+		/// <exception cref="NotSupportedException">
+		/// <paramref name="type"/> is FIDT_NOTYPE.</exception>
 		protected unsafe bool SetArrayValue(object value, FREE_IMAGE_MDTYPE type)
 		{
 			if (value == null)
@@ -431,7 +496,7 @@ namespace FreeImageAPI
 				void* src = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
 				fixed (byte* dst = data)
 				{
-					FreeImage.MoveMemory(dst, src, Length);
+					FreeImage.CopyMemory(dst, src, Length);
 				}
 				handle.Free();
 			}
@@ -496,9 +561,10 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the value of the <see cref="MetadataTag"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
 			CheckDisposed();
@@ -515,9 +581,9 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new object that is a copy of the current instance.
+		/// Creates a deep copy of this <see cref="MetadataTag"/>.
 		/// </summary>
-		/// <returns>A new object that is a copy of this instance.</returns>
+		/// <returns>A deep copy of this <see cref="MetadataTag"/>.</returns>
 		public object Clone()
 		{
 			CheckDisposed();
@@ -529,29 +595,54 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified object is a <see cref="MetadataTag"/> instance
+		/// and is equivalent to this <see cref="MetadataTag"/> instance.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
-		public bool Equals(MetadataTag other)
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="MetadataTag"/> instance
+		/// equivalent to this <see cref="MetadataTag"/> instance; otherwise, <b>false</b>.</returns>
+		public override bool Equals(object obj)
 		{
-			CheckDisposed();
-			return (this.tag == other.tag) && (this.model == other.model);
+			return ((obj is MetadataTag) && (Equals((MetadataTag)obj)));
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Tests whether the specified <see cref="MetadataTag"/> instance is equivalent to this <see cref="MetadataTag"/> instance.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="other">A <see cref="MetadataTag"/> instance to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> equivalent to this <see cref="MetadataTag"/> instance;
+		/// otherwise, <b>false</b>.</returns>
+		public bool Equals(MetadataTag other)
+		{
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Returns a hash code for this <see cref="MetadataTag"/> structure.
+		/// </summary>
+		/// <returns>An integer value that specifies the hash code for this <see cref="MetadataTag"/>.</returns>
+		public override int GetHashCode()
+		{
+			return tag.GetHashCode();
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="MetadataTag"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			CheckDisposed();
-			if (obj is MetadataTag)
+			if (obj == null)
 			{
-				return CompareTo((MetadataTag)obj);
+				return 1;
 			}
-			throw new ArgumentException("obj");
+			if (!(obj is MetadataTag))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((MetadataTag)obj);
 		}
 
 		/// <summary>
@@ -562,11 +653,12 @@ namespace FreeImageAPI
 		public int CompareTo(MetadataTag other)
 		{
 			CheckDisposed();
+			other.CheckDisposed();
 			return tag.CompareTo(other.tag);
 		}
 
 		/// <summary>
-		/// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+		/// Releases all resources used by the instance.
 		/// </summary>
 		public void Dispose()
 		{
@@ -588,6 +680,10 @@ namespace FreeImageAPI
 			get { return disposed; }
 		}
 
+		/// <summary>
+		/// Throwns an <see cref="ObjectDisposedException"/> in case
+		/// this instance has already been disposed.
+		/// </summary>
 		protected void CheckDisposed()
 		{
 			if (disposed)

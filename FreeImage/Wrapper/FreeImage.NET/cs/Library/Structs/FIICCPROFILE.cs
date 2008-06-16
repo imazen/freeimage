@@ -49,25 +49,25 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
-		/// Creates a new ICC-Profile for dib.
+		/// Creates a new ICC-Profile for <paramref name="dib"/>.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="data">The ICC-Profile data.</param>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public FIICCPROFILE(FIBITMAP dib, byte[] data)
 			: this(dib, data, (int)data.Length)
 		{
 		}
 
 		/// <summary>
-		/// Creates a new ICC-Profile for dib.
+		/// Creates a new ICC-Profile for <paramref name="dib"/>.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="data">The ICC-Profile data.</param>
 		/// <param name="size">Number of bytes to use from data.</param>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown if <paramref name="dib"/> is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		public unsafe FIICCPROFILE(FIBITMAP dib, byte[] data, int size)
 		{
 			if (dib.IsNull)
@@ -88,7 +88,6 @@ namespace FreeImageAPI
 		public ICC_FLAGS Flags
 		{
 			get { return flags; }
-			set { flags = value; }
 		}
 
 		/// <summary>
@@ -115,9 +114,10 @@ namespace FreeImageAPI
 			get
 			{
 				byte[] result = new byte[size];
-				byte* ptr = (byte*)data;
-				for (int i = 0; i < size; i++)
-					result[i] = ptr[i];
+				fixed (byte* dst = result)
+				{
+					FreeImage.CopyMemory(dst, data.ToPointer(), size);
+				}
 				return result;
 			}
 		}
@@ -129,7 +129,7 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				return ((flags & ICC_FLAGS.FIICC_COLOR_IS_CMYK) > 0);
+				return ((flags & ICC_FLAGS.FIICC_COLOR_IS_CMYK) != 0);
 			}
 		}
 	}

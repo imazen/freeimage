@@ -50,16 +50,18 @@ namespace FreeImageAPI
 		private bool hideEmptyModels;
 
 		/// <summary>
-		/// Creates a new ImageMetadata instance, showing all known models.
+		/// Initializes a new instance based on the specified <see cref="FIBITMAP"/>,
+		/// showing all known models.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		public ImageMetadata(FIBITMAP dib) : this(dib, false) { }
 
 		/// <summary>
-		/// Creates a new ImageMetadata instance.
+		/// Initializes a new instance based on the specified <see cref="FIBITMAP"/>,
+		/// showing or hiding empry models.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="hideEmptyModels">When true, empty metadata models
+		/// <param name="hideEmptyModels">When <b>true</b>, empty metadata models
 		/// will be hidden until a tag to this model is added.</param>
 		public ImageMetadata(FIBITMAP dib, bool hideEmptyModels)
 		{
@@ -90,13 +92,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets or sets the MetadataModel of the specified type.
-		/// <para>In case the getter returns null the model is not contained
+		/// Gets or sets the <see cref="MetadataModel"/> of the specified type.
+		/// <para>In case the getter returns <c>null</c> the model is not contained
 		/// by the list.</para>
-		/// <para>'null' can be used calling the setter to destroy the model.</para>
+		/// <para><c>null</c> can be used calling the setter to destroy the model.</para>
 		/// </summary>
 		/// <param name="model">Type of the model.</param>
-		/// <returns>The MetadataModel object of the specified type.</returns>
+		/// <returns>The <see cref="FreeImageAPI.MetadataModel"/> object of the specified type.</returns>
 		public MetadataModel this[FREE_IMAGE_MDMODEL model]
 		{
 			get
@@ -106,7 +108,9 @@ namespace FreeImageAPI
 					if (data[i].Model == model)
 					{
 						if (!data[i].Exists && hideEmptyModels)
+						{
 							return null;
+						}
 						return data[i];
 					}
 				}
@@ -115,24 +119,28 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets or sets the MetadataModel at the specified index.
-		/// <para>In case the getter returns null the model is not contained
+		/// Gets or sets the <see cref="FreeImageAPI.MetadataModel"/> at the specified index.
+		/// <para>In case the getter returns <c>null</c> the model is not contained
 		/// by the list.</para>
-		/// <para>'null' can be used calling the setter to destroy the model.</para>
+		/// <para><c>null</c> can be used calling the setter to destroy the model.</para>
 		/// </summary>
-		/// <param name="index">Index of the MetadataModel within this instance.</param>
-		/// <returns>The MetadataModel object at the specified index.</returns>
+		/// <param name="index">Index of the <see cref="FreeImageAPI.MetadataModel"/> within
+		/// this instance.</param>
+		/// <returns>The <see cref="FreeImageAPI.MetadataModel"/> object at the specified index.</returns>
 		public MetadataModel this[int index]
 		{
 			get
 			{
-				if (index < 0 || index >= data.Count) throw new ArgumentOutOfRangeException("index");
+				if (index < 0 || index >= data.Count)
+				{
+					throw new ArgumentOutOfRangeException("index");
+				}
 				return (hideEmptyModels && !data[index].Exists) ? null : data[index];
 			}
 		}
 
 		/// <summary>
-		/// Returns a list of all visible metadata models.
+		/// Returns a list of all visible <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>.
 		/// </summary>
 		public List<MetadataModel> List
 		{
@@ -142,8 +150,12 @@ namespace FreeImageAPI
 				{
 					List<MetadataModel> result = new List<MetadataModel>();
 					for (int i = 0; i < data.Count; i++)
+					{
 						if (data[i].Exists)
+						{
 							result.Add(data[i]);
+						}
+					}
 					return result;
 				}
 				else
@@ -154,14 +166,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Adds new tag to the bitmap
-		/// or updates its value in case it already exists.
-		/// 'tag.Key' will be used as key.
+		/// Adds new tag to the bitmap or updates its value in case it already exists.
+		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
 		/// </summary>
 		/// <param name="tag">The tag to add or update.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'tag' is null.</exception>
+		/// <paramref name="tag"/> is null.</exception>
 		public bool AddTag(MetadataTag tag)
 		{
 			for (int i = 0; i < data.Count; i++)
@@ -175,7 +186,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns the number of visible metadata models.
+		/// Returns the number of visible <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>.
 		/// </summary>
 		public int Count
 		{
@@ -185,8 +196,12 @@ namespace FreeImageAPI
 				{
 					int count = 0;
 					for (int i = 0; i < data.Count; i++)
+					{
 						if (data[i].Exists)
+						{
 							count++;
+						}
+					}
 					return count;
 				}
 				else
@@ -197,7 +212,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets or sets whether empty metadata models are hidden.
+		/// Gets or sets whether empty <see cref="FreeImageAPI.MetadataModel">MetadataModels</see> are hidden.
 		/// </summary>
 		public bool HideEmptyModels
 		{
@@ -212,17 +227,23 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
+		/// Retrieves an object that can iterate through the individual
+		/// <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>
+		/// in this <see cref="ImageMetadata"/>.
 		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
+		/// <returns>An <see cref="IEnumerator"/> for this <see cref="ImageMetadata"/>.</returns>
 		public IEnumerator GetEnumerator()
 		{
 			if (hideEmptyModels)
 			{
 				List<MetadataModel> tempList = new List<MetadataModel>(data.Count);
 				for (int i = 0; i < data.Count; i++)
+				{
 					if (data[i].Exists)
+					{
 						tempList.Add(data[i]);
+					}
+				}
 				return tempList.GetEnumerator();
 			}
 			else
@@ -232,24 +253,30 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="ImageMetadata"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is ImageMetadata)
+			if (obj == null)
 			{
-				return CompareTo((ImageMetadata)obj);
+				return 1;
 			}
-			throw new ArgumentException();
+			if (!(obj is ImageMetadata))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((ImageMetadata)obj);
 		}
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="ImageMetadata"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="ImageMetadata"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(ImageMetadata other)
 		{
 			return this.dib.CompareTo(other.dib);

@@ -41,21 +41,31 @@ using System.Text.RegularExpressions;
 namespace FreeImageAPI
 {
 	/// <summary>
-	/// Base class for managing different metadata models.
+	/// Base class that represents a collection of all tags contained in a metadata model.
 	/// </summary>
+	/// <remarks>
+	/// The <b>MetedataModel</b> class is an abstract base class, which is inherited by
+	/// several derived classes, one for each existing metadata model.
+	/// </remarks> 
 	public abstract class MetadataModel : IEnumerable
 	{
+		/// <summary>
+		/// Handle to a FreeImage-bitmap.
+		/// </summary>
 		protected readonly FIBITMAP dib;
 
 		/// <summary>
-		/// Creates a new instance of the class.
+		/// Initializes a new instance of this class.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'dib' is null.</exception>
+		/// <paramref name="dib"/> is null.</exception>
 		protected MetadataModel(FIBITMAP dib)
 		{
-			if (dib.IsNull) throw new ArgumentNullException("dib");
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException("dib");
+			}
 			this.dib = dib;
 		}
 
@@ -68,40 +78,49 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Adds new tag to the bitmap
-		/// or updates its value in case it already exists.
-		/// 'tag.Key' will be used as key.
+		/// Adds new tag to the bitmap or updates its value in case it already exists.
+		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
 		/// </summary>
 		/// <param name="tag">The tag to add or update.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'tag' is null.</exception>
+		/// <paramref name="tag"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown in case the tags model differs from this instances model.</exception>
+		/// The tags model differs from this instances model.</exception>
 		public bool AddTag(MetadataTag tag)
 		{
-			if (tag == null) throw new ArgumentNullException("tag");
-			if (tag.Model != Model) throw new ArgumentException("tag.Model");
+			if (tag == null)
+			{
+				throw new ArgumentNullException("tag");
+			}
+			if (tag.Model != Model)
+			{
+				throw new ArgumentException("tag.Model");
+			}
 			return tag.AddToImage(dib);
 		}
 
 		/// <summary>
-		/// Adds a list of tags to the bitmap
-		/// or updates their values in case they already exist.
-		/// 'tag.Key' will be used as key.
+		/// Adds a list of tags to the bitmap or updates their values in case they already exist.
+		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
 		/// </summary>
 		/// <param name="list">A list of tags to add or update.</param>
 		/// <returns>Returns the number of successfully added tags.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'list' is null.</exception>
+		/// <paramref name="list"/> is null.</exception>
 		public int AddTag(IEnumerable<MetadataTag> list)
 		{
-			if (list == null) throw new ArgumentNullException("list");
+			if (list == null)
+			{
+				throw new ArgumentNullException("list");
+			}
 			int count = 0;
 			foreach (MetadataTag tag in list)
 			{
 				if (tag.Model == Model && tag.AddToImage(dib))
+				{
 					count++;
+				}
 			}
 			return count;
 		}
@@ -112,10 +131,13 @@ namespace FreeImageAPI
 		/// <param name="key">The key of the tag.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'key' is null.</exception>
+		/// <paramref name="key"/> is null.</exception>
 		public bool RemoveTag(string key)
 		{
-			if (key == null) throw new ArgumentNullException("key");
+			if (key == null)
+			{
+				throw new ArgumentNullException("key");
+			}
 			return FreeImage.SetMetadata(Model, dib, key, 0);
 		}
 
@@ -135,10 +157,13 @@ namespace FreeImageAPI
 		/// <param name="key">The key of the tag.</param>
 		/// <returns>The metadata tag.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'key' is null.</exception>
+		/// <paramref name="key"/> is null.</exception>
 		public MetadataTag GetTag(string key)
 		{
-			if (key == null) throw new ArgumentNullException("key");
+			if (key == null)
+			{
+				throw new ArgumentNullException("key");
+			}
 			MetadataTag tag;
 			return FreeImage.GetMetadata(Model, dib, key, out tag) ? tag : null;
 		}
@@ -149,10 +174,13 @@ namespace FreeImageAPI
 		/// <param name="key">The key of the tag.</param>
 		/// <returns>True in case the tag exists, else false.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'key' is null.</exception>
+		/// <paramref name="key"/> is null.</exception>
 		public bool TagExists(string key)
 		{
-			if (key == null) throw new ArgumentNullException("key");
+			if (key == null)
+			{
+				throw new ArgumentNullException("key");
+			}
 			MetadataTag tag;
 			return FreeImage.GetMetadata(Model, dib, key, out tag);
 		}
@@ -180,33 +208,48 @@ namespace FreeImageAPI
 			}
 		}
 
+		/// <summary>
+		/// Returns the tag at the given index.
+		/// </summary>
+		/// <param name="index">Index of the tag to return.</param>
+		/// <returns>The tag at the given index.</returns>
 		protected MetadataTag GetTagFromIndex(int index)
 		{
-			if (index >= Count || index < 0) throw new ArgumentOutOfRangeException("index");
+			if (index >= Count || index < 0)
+			{
+				throw new ArgumentOutOfRangeException("index");
+			}
 			MetadataTag tag;
 			int count = 0;
 			FIMETADATA mdHandle = FreeImage.FindFirstMetadata(Model, dib, out tag);
 			if (!mdHandle.IsNull)
 			{
-				do
+				try
 				{
-					if (count++ == index)
-						break;
+					do
+					{
+						if (count++ == index)
+						{
+							break;
+						}
+					}
+					while (FreeImage.FindNextMetadata(mdHandle, out tag));
 				}
-				while (FreeImage.FindNextMetadata(mdHandle, out tag));
-				FreeImage.FindCloseMetadata(mdHandle);
+				finally
+				{
+					FreeImage.FindCloseMetadata(mdHandle);
+				}				
 			}
 			return tag;
 		}
 
 		/// <summary>
-		/// Returns the metadata tag at the given index.
-		/// This operation is slow when accessing all tags.
+		/// Returns the metadata tag at the given index. This operation is slow when accessing all tags.
 		/// </summary>
 		/// <param name="index">Index of the tag.</param>
 		/// <returns>The metadata tag.</returns>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// Thrown in case index is greater or equal 'Count'
+		/// <paramref name="index"/> is greater or equal <b>Count</b>
 		/// or index is less than zero.</exception>
 		public MetadataTag this[int index]
 		{
@@ -217,9 +260,9 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns an enumerator that iterates through a collection.
+		/// Retrieves an object that can iterate through the individual MetadataTags in this MetadataModel.
 		/// </summary>
-		/// <returns>An IEnumerator object that can be used to iterate through the collection.</returns>
+		/// <returns>An <see cref="IEnumerator"/> for the <see cref="FreeImageAPI.MetadataModel"/>.</returns>
 		public IEnumerator GetEnumerator()
 		{
 			return List.GetEnumerator();
@@ -251,13 +294,19 @@ namespace FreeImageAPI
 		/// <param name="flags">A bitfield that controls which fields should be searched in.</param>
 		/// <returns>A list containing all found metadata tags.</returns>
 		/// <exception cref="ArgumentNullException">
-		/// Thrown in case 'searchPattern' is null.</exception>
+		/// <typeparamref name="searchPattern"/> is null.</exception>
 		/// <exception cref="ArgumentException">
-		/// Thrown in case 'searchPattern' is empty.</exception>
+		/// <typeparamref name="searchPattern"/> is empty.</exception>
 		public List<MetadataTag> RegexSearch(string searchPattern, MD_SEARCH_FLAGS flags)
 		{
-			if (searchPattern == null) throw new ArgumentNullException("searchString");
-			if (searchPattern.Length == 0) throw new ArgumentException("searchString is empty");
+			if (searchPattern == null)
+			{
+				throw new ArgumentNullException("searchString");
+			}
+			if (searchPattern.Length == 0)
+			{
+				throw new ArgumentException("searchString is empty");
+			}
 			List<MetadataTag> result = new List<MetadataTag>(Count);
 			Regex regex = new Regex(searchPattern);
 			List<MetadataTag> list = List;
@@ -284,9 +333,9 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the model of the MetadataModel object to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
 			return Model.ToString();

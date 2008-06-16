@@ -40,25 +40,42 @@ using System.Runtime.InteropServices;
 namespace FreeImageAPI
 {
 	/// <summary>
-	/// The structure represents a fraction by saving two unsigned integeres which are interpreted
-	/// as numerator and denominator. The structure implements all common operations
-	/// like +, -, ++, --, ==, != , >, >==, &lt;, &lt;== and ~ (which switches nominator and
-	/// denomiator). No other bit-operations are implemented.
+	/// The <b>FIURational</b> structure represents a fraction via two <see cref="UInt32"/>
+	/// instances which are interpreted as numerator and denominator.
+	/// </summary>
+	/// <remarks>
+	/// The structure tries to approximate the value of <see cref="FreeImageAPI.FIURational(decimal)"/>
+	/// when creating a new instance by using a better algorithm than FreeImage does.
+	/// <para/>
+	/// The structure implements the following operators:
+	/// +, ++, --, ==, != , >, >==, &lt;, &lt;== and ~ (which switches nominator and denomiator).
+	/// <para/>
 	/// The structure can be converted into all .NET standard types either implicit or
 	/// explicit.
-	/// </summary>
+	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential), ComVisible(true)]
 	public struct FIURational : IConvertible, IComparable, IFormattable, IComparable<FIURational>, IEquatable<FIURational>
 	{
 		private uint numerator;
 		private uint denominator;
 
-		public const uint MaxValue = UInt32.MaxValue;
-		public const uint MinValue = UInt32.MinValue;
-		public const double Epsilon = 1d / (double)UInt32.MaxValue;
+		/// <summary>
+		/// Represents the largest possible value of <see cref="FIURational"/>. This field is constant.
+		/// </summary>
+		public static readonly FIURational MaxValue = new FIURational(UInt32.MaxValue, 1u);
 
 		/// <summary>
-		/// Creates a new FIRational structure.
+		/// Represents the smallest possible value of <see cref="FIURational"/>. This field is constant.
+		/// </summary>
+		public static readonly FIURational MinValue = new FIURational(0u, 1u);
+
+		/// <summary>
+		/// Represents the smallest positive <see cref="FIURational"/> value greater than zero. This field is constant.
+		/// </summary>
+		public static readonly FIURational Epsilon = new FIURational(1, Int32.MaxValue);
+
+		/// <summary>
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="n">The numerator.</param>
 		/// <param name="d">The denominator.</param>
@@ -70,7 +87,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure.
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="tag">The tag to read the data from.</param>
 		public unsafe FIURational(FITAG tag)
@@ -83,21 +100,17 @@ namespace FreeImageAPI
 					denominator = pvalue[1];
 					Normalize();
 					return;
-				case FREE_IMAGE_MDTYPE.FIDT_SRATIONAL:
+				default:
 					throw new ArgumentException("tag");
 			}
-			numerator = 0;
-			denominator = 0;
-			Normalize();
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure by converting the value into
-		/// a fraction. The fraction might slightly differ from value.
+		///Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="value">The value to convert into a fraction.</param>
 		/// <exception cref="OverflowException">
-		/// Thrown if <paramref name="value"/> cannot be converted into a fraction
+		/// <paramref name="value"/> cannot be converted into a fraction
 		/// represented by two integer values.</exception>
 		public FIURational(decimal value)
 		{
@@ -122,7 +135,9 @@ namespace FreeImageAPI
 					ApproximateFraction(value, maxDen, out numerator, out denominator);
 					Normalize();
 					if (Math.Abs(((decimal)numerator / (decimal)denominator) - value) > 0.0001m)
+					{
 						throw new OverflowException();
+					}
 				}
 				Normalize();
 			}
@@ -133,7 +148,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Creates a new FIRational structure by cloning.
+		/// Initializes a new instance based on the specified parameters.
 		/// </summary>
 		/// <param name="r">The structure to clone from.</param>
 		public FIURational(FIURational r)
@@ -281,10 +296,15 @@ namespace FreeImageAPI
 
 			while (value != 0m)
 			{
-				if (++b == byte.MaxValue || value < epsilon) break;
+				if (++b == byte.MaxValue || value < epsilon)
+				{
+					break;
+				}
 				value = 1m / value;
 				if (Math.Abs((Math.Round(value, precision - 1) - value)) < epsilon)
+				{
 					value = Math.Round(value, precision - 1);
+				}
 				list.Add((int)value);
 				value -= ((int)value);
 			}
@@ -309,7 +329,7 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Tries 'brute force' to approximate 'value' with a fraction.
+		/// Tries 'brute force' to approximate <paramref name="value"/> with a fraction.
 		/// </summary>
 		private static void ApproximateFraction(decimal value, int maxDen, out uint num, out uint den)
 		{
@@ -323,7 +343,9 @@ namespace FreeImageAPI
 			{
 				uint mul = 1;
 				for (int i = 1; i <= digits; i++)
+				{
 					mul *= 10;
+				}
 				if (mul <= maxDen)
 				{
 					num = (uint)(value * mul);
@@ -346,74 +368,91 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FIURational"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
 			return ((IConvertible)this).ToDouble(null).ToString();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Tests whether the specified object is a <see cref="FIURational"/> structure
+		/// and is equivalent to this <see cref="FIURational"/> structure.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The object to test.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIURational"/> structure
+		/// equivalent to this <see cref="FIURational"/> structure; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FIURational)
-				return Equals((FIURational)obj);
-			throw new ArgumentException("obj is no FIRational");
+			return ((obj is FIURational) && (this == ((FIURational)obj)));
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FIURational"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIURational"/>.</returns>
 		public override int GetHashCode()
 		{
-			return ToString().GetHashCode();
+			return base.GetHashCode();
 		}
 
 		#region Operators
 
-		public static FIURational operator +(FIURational r1)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator +(FIURational value)
 		{
-			return r1;
+			return value;
 		}
 
-		public static FIURational operator ~(FIURational r1)
+		/// <summary>
+		/// Returns the reciprocal value of this instance.
+		/// </summary>
+		public static FIURational operator ~(FIURational value)
 		{
-			uint temp = r1.denominator;
-			r1.denominator = r1.numerator;
-			r1.numerator = temp;
-			r1.Normalize();
-			return r1;
+			uint temp = value.denominator;
+			value.denominator = value.numerator;
+			value.numerator = temp;
+			value.Normalize();
+			return value;
 		}
 
-		public static FIURational operator ++(FIURational r1)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator ++(FIURational value)
 		{
 			checked
 			{
-				r1.numerator += r1.denominator;
+				value.numerator += value.denominator;
 			}
-			return r1;
+			return value;
 		}
 
-		public static FIURational operator --(FIURational r1)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator --(FIURational value)
 		{
 			checked
 			{
-				r1.numerator -= r1.denominator;
+				value.numerator -= value.denominator;
 			}
-			return r1;
+			return value;
 		}
 
-		public static FIURational operator +(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator +(FIURational left, FIURational right)
 		{
 			ulong numerator = 0;
-			ulong denominator = Scm(r1.denominator, r2.denominator);
-			numerator = (r1.numerator * (denominator / r1.denominator)) + (r2.numerator * (denominator / r2.denominator));
+			ulong denominator = Scm(left.denominator, right.denominator);
+			numerator = (left.numerator * (denominator / left.denominator)) +
+						(right.numerator * (denominator / right.denominator));
 			Normalize(ref numerator, ref denominator);
 			checked
 			{
@@ -421,28 +460,34 @@ namespace FreeImageAPI
 			}
 		}
 
-		public static FIURational operator -(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator -(FIURational left, FIURational right)
 		{
 			checked
 			{
-				if (r1.denominator != r2.denominator)
+				if (left.denominator != right.denominator)
 				{
-					uint denom = r1.denominator;
-					r1.numerator *= r2.denominator;
-					r1.denominator *= r2.denominator;
-					r2.numerator *= denom;
-					r2.denominator *= denom;
+					uint denom = left.denominator;
+					left.numerator *= right.denominator;
+					left.denominator *= right.denominator;
+					right.numerator *= denom;
+					right.denominator *= denom;
 				}
-				r1.numerator -= r2.numerator;
-				r1.Normalize();
-				return r1;
+				left.numerator -= right.numerator;
+				left.Normalize();
+				return left;
 			}
 		}
 
-		public static FIURational operator *(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator *(FIURational left, FIURational r2)
 		{
-			ulong numerator = r1.numerator * r2.numerator;
-			ulong denominator = r1.denominator * r2.denominator;
+			ulong numerator = left.numerator * r2.numerator;
+			ulong denominator = left.denominator * r2.denominator;
 			Normalize(ref numerator, ref denominator);
 			checked
 			{
@@ -450,190 +495,350 @@ namespace FreeImageAPI
 			}
 		}
 
-		public static FIURational operator /(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator /(FIURational left, FIURational right)
 		{
-			uint temp = r2.denominator;
-			r2.denominator = r2.numerator;
-			r2.numerator = temp;
-			return r1 * r2;
+			uint temp = right.denominator;
+			right.denominator = right.numerator;
+			right.numerator = temp;
+			return left * right;
 		}
 
-		public static FIURational operator %(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static FIURational operator %(FIURational left, FIURational right)
 		{
-			r2.Normalize();
-			if (Math.Abs(r2.numerator) < r2.denominator)
+			right.Normalize();
+			if (Math.Abs(right.numerator) < right.denominator)
 				return new FIURational(0, 0);
-			int div = (int)(r1 / r2);
-			return r1 - (r2 * div);
+			int div = (int)(left / right);
+			return left - (right * div);
 		}
 
-		public static bool operator ==(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator ==(FIURational left, FIURational right)
 		{
-			r1.Normalize();
-			r2.Normalize();
-			return (r1.numerator == r2.numerator) && (r1.denominator == r2.denominator);
+			left.Normalize();
+			right.Normalize();
+			return (left.numerator == right.numerator) && (left.denominator == right.denominator);
 		}
 
-		public static bool operator !=(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator !=(FIURational left, FIURational right)
 		{
-			return !(r1 == r2);
+			left.Normalize();
+			right.Normalize();
+			return (left.numerator != right.numerator) || (left.denominator != right.denominator);
 		}
 
-		public static bool operator >(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator >(FIURational left, FIURational right)
 		{
-			ulong denominator = Scm(r1.denominator, r2.denominator);
-			return (r1.numerator * (denominator / r1.denominator)) > (r2.numerator * (denominator / r2.denominator));
+			ulong denominator = Scm(left.denominator, right.denominator);
+			return (left.numerator * (denominator / left.denominator)) >
+				(right.numerator * (denominator / right.denominator));
 		}
 
-		public static bool operator <(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator <(FIURational left, FIURational right)
 		{
-			ulong denominator = Scm(r1.denominator, r2.denominator);
-			return (r1.numerator * (denominator / r1.denominator)) < (r2.numerator * (denominator / r2.denominator));
+			ulong denominator = Scm(left.denominator, right.denominator);
+			return (left.numerator * (denominator / left.denominator)) <
+				(right.numerator * (denominator / right.denominator));
 		}
 
-		public static bool operator >=(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator >=(FIURational left, FIURational right)
 		{
-			ulong denominator = Scm(r1.denominator, r2.denominator);
-			return (r1.numerator * (denominator / r1.denominator)) >= (r2.numerator * (denominator / r2.denominator));
+			ulong denominator = Scm(left.denominator, right.denominator);
+			return (left.numerator * (denominator / left.denominator)) >=
+				(right.numerator * (denominator / right.denominator));
 		}
 
-		public static bool operator <=(FIURational r1, FIURational r2)
+		/// <summary>
+		/// Standard implementation of the operator.
+		/// </summary>
+		public static bool operator <=(FIURational left, FIURational right)
 		{
-			ulong denominator = Scm(r1.denominator, r2.denominator);
-			return (r1.numerator * (denominator / r1.denominator)) <= (r2.numerator * (denominator / r2.denominator));
+			ulong denominator = Scm(left.denominator, right.denominator);
+			return (left.numerator * (denominator / left.denominator)) <=
+				(right.numerator * (denominator / right.denominator));
 		}
 
 		#endregion
 
 		#region Conversions
 
-		public static explicit operator bool(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Boolean"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Boolean"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator bool(FIURational value)
 		{
-			return (r.numerator > 0);
+			return (value.numerator != 0);
 		}
 
-		public static explicit operator byte(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Byte"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Byte"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator byte(FIURational value)
 		{
-			return (byte)(double)r;
+			return (byte)(double)value;
 		}
 
-		public static explicit operator char(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Char"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Char"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator char(FIURational value)
 		{
-			return (char)(double)r;
+			return (char)(double)value;
 		}
 
-		public static implicit operator decimal(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Decimal"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Decimal"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator decimal(FIURational value)
 		{
-			return r.denominator == 0 ? 0m : (decimal)r.numerator / (decimal)r.denominator;
+			return value.denominator == 0 ? 0m : (decimal)value.numerator / (decimal)value.denominator;
 		}
 
-		public static implicit operator double(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Double"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Double"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator double(FIURational value)
 		{
-			return r.denominator == 0 ? 0d : (double)r.numerator / (double)r.denominator;
+			return value.denominator == 0 ? 0d : (double)value.numerator / (double)value.denominator;
 		}
 
-		public static explicit operator short(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="Int16"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int16"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator short(FIURational value)
 		{
-			return (short)(double)r;
+			return (short)(double)value;
 		}
 
-		public static explicit operator int(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="Int32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int32"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator int(FIURational value)
 		{
-			return (int)(double)r;
+			return (int)(double)value;
 		}
 
-		public static explicit operator long(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="Int64"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Int64"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator long(FIURational value)
 		{
-			return (byte)(double)r;
+			return (byte)(double)value;
 		}
 
-		public static implicit operator float(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="Single"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="Single"/> initialized to <paramref name="value"/>.</returns>
+		public static implicit operator float(FIURational value)
 		{
-			return r.denominator == 0 ? 0f : (float)r.numerator / (float)r.denominator;
+			return value.denominator == 0 ? 0f : (float)value.numerator / (float)value.denominator;
 		}
 
-		public static explicit operator sbyte(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to a <see cref="SByte"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="SByte"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator sbyte(FIURational value)
 		{
-			return (sbyte)(double)r;
+			return (sbyte)(double)value;
 		}
 
-		public static explicit operator ushort(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="UInt16"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt16"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator ushort(FIURational value)
 		{
-			return (ushort)(double)r;
+			return (ushort)(double)value;
 		}
 
-		public static explicit operator uint(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="UInt32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt32"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator uint(FIURational value)
 		{
-			return (uint)(double)r;
+			return (uint)(double)value;
 		}
 
-		public static explicit operator ulong(FIURational r)
+		/// <summary>
+		/// Converts the value of a <see cref="FIURational"/> structure to an <see cref="UInt32"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="FIURational"/> structure.</param>
+		/// <returns>A new instance of <see cref="UInt32"/> initialized to <paramref name="value"/>.</returns>
+		public static explicit operator ulong(FIURational value)
 		{
-			return (ulong)(double)r;
+			return (ulong)(double)value;
 		}
 
 		//
 
+		/// <summary>
+		/// Converts the value of a <see cref="Boolean"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Boolean"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(bool value)
 		{
 			return new FIURational(value ? 1u : 0u, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Byte"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Byte"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(byte value)
 		{
 			return new FIURational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Char"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Char"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(char value)
 		{
 			return new FIURational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Decimal"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Decimal"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(decimal value)
 		{
 			return new FIURational(value);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Double"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Double"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(double value)
 		{
 			return new FIURational((decimal)value);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int16"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int16"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(short value)
 		{
 			return new FIURational((uint)value, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int32"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int32"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(int value)
 		{
 			return new FIURational((uint)value, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="Int64"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="Int64"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(long value)
 		{
 			return new FIURational((uint)value, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="SByte"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="SByte"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(sbyte value)
 		{
 			return new FIURational((uint)value, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of a <see cref="Single"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">A <see cref="Single"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(float value)
 		{
 			return new FIURational((decimal)value);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt16"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt16"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static implicit operator FIURational(ushort value)
 		{
 			return new FIURational(value, 1);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt32"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt32"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(uint value)
 		{
 			return new FIURational(value, 1u);
 		}
 
+		/// <summary>
+		/// Converts the value of an <see cref="UInt64"/> structure to a <see cref="FIURational"/> structure.
+		/// </summary>
+		/// <param name="value">An <see cref="UInt64"/> structure.</param>
+		/// <returns>A new instance of <see cref="FIURational"/> initialized to <paramref name="value"/>.</returns>
 		public static explicit operator FIURational(ulong value)
 		{
 			return new FIURational((uint)value, 1u);
@@ -733,17 +938,22 @@ namespace FreeImageAPI
 		#region IComparable Member
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIURational"/>.</exception>
 		public int CompareTo(object obj)
 		{
-			if (obj is FIURational)
-				return CompareTo((FIURational)obj);
-			else if (obj is IConvertible)
-				return CompareTo(new FIURational(((IConvertible)obj).ToDecimal(null)));
-			throw new ArgumentException("obj is not convertable to double");
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FIURational))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIURational)obj);
 		}
 
 		#endregion
@@ -758,33 +968,38 @@ namespace FreeImageAPI
 		/// <returns>A String containing the value of the current instance in the specified format.</returns>
 		public string ToString(string format, IFormatProvider formatProvider)
 		{
-			if (format == null) format = "";
+			if (format == null)
+			{
+				format = "";
+			}
 			return String.Format(formatProvider, format, ((IConvertible)this).ToDouble(formatProvider));
 		}
 
 		#endregion
 
-		#region IEquatable<FIRational> Member
+		#region IEquatable<FIURational> Member
 
 		/// <summary>
-		/// Indicates whether the current object is equal to another object of the same type.
+		/// Tests whether the specified <see cref="FIURational"/> structure is equivalent to this <see cref="FIURational"/> structure.
 		/// </summary>
-		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <param name="other">A <see cref="FIURational"/> structure to compare to this instance.</param>
+		/// <returns><b>true</b> if <paramref name="obj"/> is a <see cref="FIURational"/> structure
+		/// equivalent to this <see cref="FIURational"/> structure; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIURational other)
 		{
-			return ((FIURational)other).numerator == numerator && ((FIURational)other).denominator == denominator;
+			return (this == other);
 		}
 
 		#endregion
 
-		#region IComparable<FIRational> Member
+		#region IComparable<FIURational> Member
 
 		/// <summary>
-		/// Compares the current instance with another object of the same type.
+		/// Compares this instance with a specified <see cref="FIURational"/> object.
 		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
+		/// <param name="other">A <see cref="FIURational"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
 		public int CompareTo(FIURational other)
 		{
 			FIURational difference = this - other;

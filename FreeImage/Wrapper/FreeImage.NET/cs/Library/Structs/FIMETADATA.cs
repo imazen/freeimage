@@ -39,114 +39,187 @@ using System.Runtime.InteropServices;
 namespace FreeImageAPI
 {
 	/// <summary>
-	/// Handle to a metadata model
+	/// The <b>FIMETADATA</b> structure is an unique search handle for metadata search operations.
 	/// </summary>
+	/// <remarks>
+	/// The <b>FIMETADATA</b> structure is usually returned by the
+	/// <see cref="FreeImageAPI.FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL, FIBITMAP, out FITAG)"/>
+	/// function and then used on subsequent calls to
+	/// <see cref="FreeImageAPI.FreeImage.FindNextMetadata(FIMETADATA, out FITAG)"/>.
+	/// When the <b>FIMETADATA</b> handle is no longer used, it needs to be freed by the
+	/// <see cref="FreeImageAPI.FreeImage.FindCloseMetadata(FIMETADATA)"/> function.
+	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FIMETADATA : IComparable, IComparable<FIMETADATA>, IEquatable<FIMETADATA>
 	{
 		private IntPtr data;
-		public FIMETADATA(int ptr) { data = new IntPtr(ptr); }
-		public FIMETADATA(IntPtr ptr) { data = ptr; }
 
-		public static bool operator !=(FIMETADATA value1, FIMETADATA value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIMETADATA"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIMETADATA"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIMETADATA"/> structure.</param>
+		public FIMETADATA(int ptr)
 		{
-			return value1.data != value2.data;
+			data = new IntPtr(ptr);
 		}
 
-		public static bool operator ==(FIMETADATA value1, FIMETADATA value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIMETADATA"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIMETADATA"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIMETADATA"/> structure.</param>
+		public FIMETADATA(IntPtr ptr)
 		{
-			return value1.data == value2.data;
+			data = ptr;
 		}
 
+		/// <summary>
+		/// Tests whether two specified <see cref="FIMETADATA"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FIMETADATA"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FIMETADATA"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIMETADATA"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FIMETADATA left, FIMETADATA right)
+		{
+			return (left.data == right.data);
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FIMETADATA"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FIMETADATA"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FIMETADATA"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIMETADATA"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FIMETADATA left, FIMETADATA right)
+		{
+			return (left.data != right.data);
+		}
+
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMETADATA"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMETADATA"/> structure.</param>
+		/// <returns>A <see cref="FIMETADATA"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIMETADATA(int ptr)
 		{
 			return new FIMETADATA(ptr);
 		}
 
-		public static implicit operator int(FIMETADATA fi)
+		/// <summary>
+		/// Converts the <see cref="FIMETADATA"/> structure specified in <paramref name="handle"/> to a 32-bit value.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIMETADATA"/> structure to be converted into a 32-bit value.</param>
+		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIMETADATA"/> structure.</returns>
+		public static implicit operator int(FIMETADATA handle)
 		{
-			return fi.data.ToInt32();
+			return handle.data.ToInt32();
 		}
 
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMETADATA"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMETADATA"/> structure.</param>
+		/// <returns>A <see cref="FIMETADATA"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIMETADATA(IntPtr ptr)
 		{
 			return new FIMETADATA(ptr);
 		}
 
-		public static implicit operator IntPtr(FIMETADATA fi)
+		/// <summary>
+		/// Converts the <see cref="FIMETADATA"/> structure specified in <paramref name="handle"/> to an IntPtr.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIMETADATA"/> structure to be converted into an IntPtr.</param>
+		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIMETADATA"/> structure.</returns>
+		public static implicit operator IntPtr(FIMETADATA handle)
 		{
-			return fi.data;
+			return handle.data;
 		}
 
 		/// <summary>
-		/// Gets whether the pointer is a null pointer.
+		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
-		public bool IsNull { get { return data == IntPtr.Zero; } }
+		/// <value><b>true</b> if this <see cref="FIMETADATA"/> is a null pointer;
+		/// otherwise, <b>false</b>.</value>		
+		public bool IsNull
+		{
+			get
+			{
+				return (data == IntPtr.Zero);
+			}
+		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FIMETADATA"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
-			return String.Format("0x{0:X}", (uint)data);
+			return data.ToString();
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FIMETADATA"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIMETADATA"/>.</returns>
 		public override int GetHashCode()
 		{
 			return data.GetHashCode();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="Object"/>.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The <see cref="Object"/> to compare with the current <see cref="Object"/>.</param>
+		/// <returns><b>true</b> if the specified <see cref="Object"/> is equal to the current <see cref="Object"/>; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FIMETADATA)
-			{
-				return Equals((FIMETADATA)obj);
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is FIMETADATA)
-			{
-				return CompareTo((FIMETADATA)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FIMETADATA other)
-		{
-			return this.data.ToInt64().CompareTo(other.data.ToInt64());
+			return ((obj is FIMETADATA) && (this == ((FIMETADATA)obj)));
 		}
 
 		/// <summary>
 		/// Indicates whether the current object is equal to another object of the same type.
 		/// </summary>
 		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <returns><b>true</b> if the current object is equal to the other parameter; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIMETADATA other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIMETADATA"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FIMETADATA))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIMETADATA)obj);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="FIMETADATA"/> object.
+		/// </summary>
+		/// <param name="other">A <see cref="FIMETADATA"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(FIMETADATA other)
+		{
+			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
 }

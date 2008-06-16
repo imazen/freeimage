@@ -39,114 +39,184 @@ using System.Runtime.InteropServices;
 namespace FreeImageAPI
 {
 	/// <summary>
-	/// Handle to FIBITMAP structure
+	/// The <b>FIBITMAP</b> structure is a handle to a FreeImage bimtap.
 	/// </summary>
+	/// <remarks>
+	/// The handle represented by a <b>FIBITBAP</b> structure provides
+	/// access to either a singlepage bitmap or exactly one page of
+	/// a multipage bitmap.
+	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FIBITMAP : IComparable, IComparable<FIBITMAP>, IEquatable<FIBITMAP>
 	{
 		private IntPtr data;
-		public FIBITMAP(int ptr) { data = new IntPtr(ptr); }
-		public FIBITMAP(IntPtr ptr) { data = ptr; }
 
-		public static bool operator !=(FIBITMAP value1, FIBITMAP value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIBITMAP"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIBITMAP"/> structure.</param>
+		public FIBITMAP(int ptr)
 		{
-			return value1.data != value2.data;
+			data = new IntPtr(ptr);
 		}
 
-		public static bool operator ==(FIBITMAP value1, FIBITMAP value2)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FIBITMAP"/> structure to the value indicated by
+		/// a specified pointer to a native <see cref="FIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A pointer to a native <see cref="FIBITMAP"/> structure.</param>
+		public FIBITMAP(IntPtr ptr)
 		{
-			return value1.data == value2.data;
+			data = ptr;
 		}
 
+		/// <summary>
+		/// Tests whether two specified <see cref="FIBITMAP"/> structures are equivalent.
+		/// </summary>
+		/// <param name="left">The <see cref="FIBITMAP"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="FIBITMAP"/> that is to the right of the equality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIBITMAP"/> structures are equal; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator ==(FIBITMAP left, FIBITMAP right)
+		{
+			return (left.data == right.data);
+		}
+
+		/// <summary>
+		/// Tests whether two specified <see cref="FIBITMAP"/> structures are different.
+		/// </summary>
+		/// <param name="left">The <see cref="FIBITMAP"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="FIBITMAP"/> that is to the right of the inequality operator.</param>
+		/// <returns>
+		/// <b>true</b> if the two <see cref="FIBITMAP"/> structures are different; otherwise, <b>false</b>.
+		/// </returns>
+		public static bool operator !=(FIBITMAP left, FIBITMAP right)
+		{
+			return (left.data != right.data);
+		}
+
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIBITMAP"/> structure.</param>
+		/// <returns>A <see cref="FIBITMAP"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIBITMAP(int ptr)
 		{
 			return new FIBITMAP(ptr);
 		}
 
-		public static implicit operator int(FIBITMAP fi)
+		/// <summary>
+		/// Converts the <see cref="FIBITMAP"/> structure specified in <paramref name="handle"/> to a 32-bit value.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIBITMAP"/> structure to be converted into a 32-bit value.</param>
+		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIBITMAP"/> structure.</returns>
+		public static implicit operator int(FIBITMAP handle)
 		{
-			return fi.data.ToInt32();
+			return handle.data.ToInt32();
 		}
 
+		/// <summary>
+		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIBITMAP"/> structure.
+		/// </summary>
+		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIBITMAP"/> structure.</param>
+		/// <returns>A <see cref="FIBITMAP"/> structure initialized with the specified pointer.</returns>
 		public static implicit operator FIBITMAP(IntPtr ptr)
 		{
 			return new FIBITMAP(ptr);
 		}
 
-		public static implicit operator IntPtr(FIBITMAP fi)
+		/// <summary>
+		/// Converts the <see cref="FIBITMAP"/> structure specified in <paramref name="handle"/> to an IntPtr.
+		/// </summary>
+		/// <param name="handle">A <see cref="FIBITMAP"/> structure to be converted into an IntPtr.</param>
+		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIBITMAP"/> structure.</returns>
+		public static implicit operator IntPtr(FIBITMAP handle)
 		{
-			return fi.data;
+			return handle.data;
 		}
 
 		/// <summary>
-		/// Gets whether the pointer is a null pointer.
+		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
-		public bool IsNull { get { return data == IntPtr.Zero; } }
+		/// <value><b>true</b> if this <see cref="FIBITMAP"/> is a null pointer;
+		/// otherwise, <b>false</b>.</value>		
+		public bool IsNull
+		{
+			get
+			{
+				return (data == IntPtr.Zero);
+			}
+		}
 
 		/// <summary>
-		/// Returns a String that represents the current Object.
+		/// Converts the numeric value of the <see cref="FIBITMAP"/> object
+		/// to its equivalent string representation.
 		/// </summary>
-		/// <returns>A String that represents the current Object.</returns>
+		/// <returns>The string representation of the value of this instance.</returns>
 		public override string ToString()
 		{
-			return String.Format("0x{0:X}", (uint)data);
+			return data.ToString();
 		}
 
 		/// <summary>
-		/// Serves as a hash function for a particular type.
+		/// Returns a hash code for this <see cref="FIBITMAP"/> structure.
 		/// </summary>
-		/// <returns>A hash code for the current Object.</returns>
+		/// <returns>An integer value that specifies the hash code for this <see cref="FIBITMAP"/>.</returns>
 		public override int GetHashCode()
 		{
 			return data.GetHashCode();
 		}
 
 		/// <summary>
-		/// Determines whether the specified Object is equal to the current Object.
+		/// Determines whether the specified <see cref="Object"/> is equal to the current <see cref="Object"/>.
 		/// </summary>
-		/// <param name="obj">The Object to compare with the current Object.</param>
-		/// <returns>True if the specified Object is equal to the current Object; otherwise, false.</returns>
+		/// <param name="obj">The <see cref="Object"/> to compare with the current <see cref="Object"/>.</param>
+		/// <returns><b>true</b> if the specified <see cref="Object"/> is equal to the current <see cref="Object"/>; otherwise, <b>false</b>.</returns>
 		public override bool Equals(object obj)
 		{
-			if (obj is FIBITMAP)
-			{
-				return Equals((FIBITMAP)obj);
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="obj">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(object obj)
-		{
-			if (obj is FIBITMAP)
-			{
-				return CompareTo((FIBITMAP)obj);
-			}
-			throw new ArgumentException();
-		}
-
-		/// <summary>
-		/// Compares the current instance with another object of the same type.
-		/// </summary>
-		/// <param name="other">An object to compare with this instance.</param>
-		/// <returns>A 32-bit signed integer that indicates the relative order of the objects being compared.</returns>
-		public int CompareTo(FIBITMAP other)
-		{
-			return this.data.ToInt64().CompareTo(other.data.ToInt64());
+			return ((obj is FIBITMAP) && (this == ((FIBITMAP)obj)));
 		}
 
 		/// <summary>
 		/// Indicates whether the current object is equal to another object of the same type.
 		/// </summary>
 		/// <param name="other">An object to compare with this object.</param>
-		/// <returns>True if the current object is equal to the other parameter; otherwise, false.</returns>
+		/// <returns><b>true</b> if the current object is equal to the other parameter; otherwise, <b>false</b>.</returns>
 		public bool Equals(FIBITMAP other)
 		{
-			return this == other;
+			return (this == other);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="Object"/>.
+		/// </summary>
+		/// <param name="obj">An object to compare with this instance.</param>
+		/// <returns>A 32-bit signed integer indicating the lexical relationship between the two comparands.</returns>
+		/// <exception cref="ArgumentException"><paramref name="obj"/> is not a <see cref="FIBITMAP"/>.</exception>
+		public int CompareTo(object obj)
+		{
+			if (obj == null)
+			{
+				return 1;
+			}
+			if (!(obj is FIBITMAP))
+			{
+				throw new ArgumentException();
+			}
+			return CompareTo((FIBITMAP)obj);
+		}
+
+		/// <summary>
+		/// Compares this instance with a specified <see cref="FIBITMAP"/> object.
+		/// </summary>
+		/// <param name="other">A <see cref="FIBITMAP"/> to compare.</param>
+		/// <returns>A signed number indicating the relative values of this instance
+		/// and <paramref name="other"/>.</returns>
+		public int CompareTo(FIBITMAP other)
+		{
+			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
 }
