@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using FreeImageAPI;
+using FreeImageAPI.Metadata;
 
 namespace Sample10
 {

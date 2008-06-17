@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using FreeImageAPI;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.IO.Compression;
 using System.IO;
+using System.IO.Compression;
+using FreeImageAPI;
+using FreeImageAPI.IO;
+using FreeImageAPI.Plugins;
 
 namespace Sample08
 {

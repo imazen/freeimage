@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 using FreeImageAPI;
+using FreeImageAPI.Metadata;
 
 namespace Sample11
 {

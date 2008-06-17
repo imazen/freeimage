@@ -41,6 +41,8 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using FreeImageAPI.IO;
+using FreeImageAPI.Metadata;
 
 namespace FreeImageAPI
 {

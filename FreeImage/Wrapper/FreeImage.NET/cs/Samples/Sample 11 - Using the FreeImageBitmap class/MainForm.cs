@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using FreeImageAPI;
+using FreeImageAPI.Metadata;
+using FreeImageAPI.Plugins;
 
 namespace Sample11
 {

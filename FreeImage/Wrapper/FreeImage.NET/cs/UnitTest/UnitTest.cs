@@ -2,8 +2,6 @@ using System;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Text;
-using FreeImageAPI;
-using NUnit.Framework;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Drawing.Imaging;
@@ -13,6 +11,11 @@ using System.Reflection;
 using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Collections;
+using FreeImageAPI;
+using FreeImageAPI.IO;
+using FreeImageAPI.Metadata;
+using FreeImageAPI.Plugins;
+using NUnit.Framework;
 
 namespace FreeImageNETUnitTest
 {
@@ -2398,7 +2401,7 @@ namespace FreeImageNETUnitTest
 			using (fi_handle handle = new fi_handle(stream))
 			{
 
-				FreeImageIO io = FreeImageAPI.FreeImageStreamIO.io;
+				FreeImageIO io = FreeImageAPI.IO.FreeImageStreamIO.io;
 				Assert.IsNotNull(io.readProc);
 				Assert.IsNotNull(io.writeProc);
 				Assert.IsNotNull(io.seekProc);
