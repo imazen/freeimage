@@ -52,6 +52,7 @@ namespace FreeImageAPI
 	/// for the <b>FI16RGB565</b> structure and my be used in all situations which require
 	/// an <b>FI16RGB565</b> type.
 	/// </para>
+	/// </remarks>
 	/// <example>
 	/// The following code example demonstrates the various conversions between the
 	/// <b>FI16RGB565</b> structure and the <see cref="System.Drawing.Color"/> structure.
@@ -69,7 +70,6 @@ namespace FreeImageAPI
 	///	Color another = fi16rgb.Color;
 	/// </code>
 	/// </example>
-	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FI16RGB565 : IComparable, IComparable<FI16RGB565>, IEquatable<FI16RGB565>
 	{
