@@ -37,7 +37,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.IO
 {
 	/// <summary>
 	/// Internal class wrapping stream io functions.
@@ -51,7 +51,7 @@ namespace FreeImageAPI
 	/// the loading and saving from and to streams. It implements the funtions FreeImage needs
 	/// to load data from an an arbitrary source.
 	/// <para/>
-	/// FreeImage requests a <see cref="FreeImageAPI.FreeImageIO"/> structure containing pointers (delegates) to these
+	/// FreeImage requests a <see cref="FreeImageAPI.IO.FreeImageIO"/> structure containing pointers (delegates) to these
 	/// functions. <b>FreeImageStreamIO</b> implements the function creates the structure and
 	/// prevents the garbage collector from moving these functions in memory.
 	/// <para/>
@@ -65,14 +65,14 @@ namespace FreeImageAPI
 		private static GCHandle tellHandle;
 
 		/// <summary>
-		/// <see cref="FreeImageAPI.FreeImageIO"/> structure that can be used to read from streams via
+		/// <see cref="FreeImageAPI.IO.FreeImageIO"/> structure that can be used to read from streams via
 		/// <see cref="FreeImageAPI.FreeImage.LoadFromHandle(FREE_IMAGE_FORMAT, ref FreeImageIO, fi_handle, FREE_IMAGE_LOAD_FLAGS)"/>.
 		/// </summary>
 		public static FreeImageIO io;
 
 		/// <summary>
 		/// Initializes a new instances which can be used to
-		/// create a FreeImage compatible <see cref="FreeImageAPI.FreeImageIO"/> structure.
+		/// create a FreeImage compatible <see cref="FreeImageAPI.IO.FreeImageIO"/> structure.
 		/// </summary>
 		static FreeImageStreamIO()
 		{

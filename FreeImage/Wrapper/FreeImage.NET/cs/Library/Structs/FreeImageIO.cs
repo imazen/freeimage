@@ -35,7 +35,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.IO
 {
 	/// <summary>
 	/// Structure for implementing access to custom handles.

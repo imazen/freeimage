@@ -37,7 +37,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.IO
 {
 	/// <summary>
 	/// Wrapper for a custom handle.

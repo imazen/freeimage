@@ -36,7 +36,7 @@
 using System;
 using System.IO;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.IO
 {
 	/// <summary>
 	/// Class wrapping streams, implementing a buffer for read data,
