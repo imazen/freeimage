@@ -36,8 +36,9 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using FreeImageAPI.IO;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.Plugins
 {
 	/// <summary>
 	/// Class representing own FreeImage-Plugins.
@@ -57,14 +58,14 @@ namespace FreeImageAPI
 	/// <para/>
 	/// How to:
 	/// There are two functions that need to be implemented:
-	/// <see cref="FreeImageAPI.LocalPlugin.GetImplementedMethods"/> and
-	/// <see cref="FreeImageAPI.LocalPlugin.FormatProc"/>.
-	/// <see cref="FreeImageAPI.LocalPlugin.GetImplementedMethods"/> is used by the constructor
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.GetImplementedMethods"/> and
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.FormatProc"/>.
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.GetImplementedMethods"/> is used by the constructor
 	/// of the abstract class. FreeImage wants a list of the implemented functions. Each function is
 	/// represented by a function pointer (a .NET <see cref="System.Delegate"/>). In case a function
 	/// is not implemented FreeImage recieves an empty <b>delegate</b>). To tell the constructor
 	/// which functions have been implemented the information is represented by a disjunction of
-	/// <see cref="FreeImageAPI.LocalPlugin.MethodFlags"/>.
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.MethodFlags"/>.
 	/// <para/>
 	/// For example:
 	///		return MethodFlags.LoadProc | MethodFlags.SaveProc;
@@ -72,10 +73,10 @@ namespace FreeImageAPI
 	/// The above statement means that LoadProc and SaveProc have been implemented by the user.
 	/// Keep in mind, that each function has a standard implementation that has static return
 	/// values that may cause errors if listed in
-	/// <see cref="FreeImageAPI.LocalPlugin.GetImplementedMethods"/> without a real implementation.
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.GetImplementedMethods"/> without a real implementation.
 	/// <para/>
-	/// <see cref="FreeImageAPI.LocalPlugin.FormatProc"/> is used by some checks of FreeImage and
-	/// must be implemented. <see cref="FreeImageAPI.LocalPlugin.LoadProc"/> for example can be
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.FormatProc"/> is used by some checks of FreeImage and
+	/// must be implemented. <see cref="FreeImageAPI.Plugins.LocalPlugin.LoadProc"/> for example can be
 	/// implemented if the plugin supports reading, but it doesn't have to, the plugin could only
 	/// be used to save an already loaded bitmap in a special format.
 	/// </remarks>

@@ -1,6 +1,6 @@
 using System;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.Plugins
 {
 	/// <summary>
 	/// Class representing a FreeImage format.

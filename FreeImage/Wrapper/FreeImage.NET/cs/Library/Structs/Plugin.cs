@@ -35,8 +35,9 @@
 
 using System;
 using System.Runtime.InteropServices;
+using FreeImageAPI.Plugins;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.Plugins
 {
 	/// <summary>
 	/// The structure contains functionpointers that make up a FreeImage plugin.

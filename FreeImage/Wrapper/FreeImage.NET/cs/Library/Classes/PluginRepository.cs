@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.Plugins
 {
 	/// <summary>
-	/// Class representing all registered <see cref="FreeImageAPI.FreeImagePlugin"/> in FreeImage.
+	/// Class representing all registered <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/> in FreeImage.
 	/// </summary>
 	public static class PluginRepository
 	{
@@ -34,17 +34,17 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/>, representing the given format.
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>, representing the given format.
 		/// </summary>
 		/// <param name="fif">The representing format.</param>
-		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		/// <returns>An instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.</returns>
 		public static FreeImagePlugin Plugin(FREE_IMAGE_FORMAT fif)
 		{
 			return Plugin((int)fif);
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/>,
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>,
 		/// representing the format at the given index.
 		/// </summary>
 		/// <param name="index">The index of the representing format.</param>
@@ -55,13 +55,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.
 		/// <typeparamref name="expression"/> is searched in:
 		/// <c>Format</c>, <c>RegExpr</c>,
 		/// <c>ValidExtension</c> and <c>ValidFilename</c>.
 		/// </summary>
 		/// <param name="expression">The expression to search for.</param>
-		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		/// <returns>An instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.</returns>
 		public static FreeImagePlugin Plugin(string expression)
 		{
 			FreeImagePlugin result = null;
@@ -83,30 +83,30 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/> for the given format.
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/> for the given format.
 		/// </summary>
 		/// <param name="format">The format of the Plugin.</param>
-		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		/// <returns>An instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.</returns>
 		public static FreeImagePlugin PluginFromFormat(string format)
 		{
 			return Plugin(FreeImage.GetFIFFromFormat(format));
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/> for the given filename.
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/> for the given filename.
 		/// </summary>
 		/// <param name="filename">The valid filename for the plugin.</param>
-		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		/// <returns>An instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.</returns>
 		public static FreeImagePlugin PluginFromFilename(string filename)
 		{
 			return Plugin(FreeImage.GetFIFFromFilename(filename));
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/> for the given mime.
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/> for the given mime.
 		/// </summary>
 		/// <param name="mime">The valid mime for the plugin.</param>
-		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		/// <returns>An instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.</returns>
 		public static FreeImagePlugin PluginFromMime(string mime)
 		{
 			return Plugin(FreeImage.GetFIFFromMime(mime));
