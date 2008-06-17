@@ -42,6 +42,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Collections;
 using System.Collections.Generic;
+using FreeImageAPI.Metadata;
 
 namespace FreeImageAPI
 {
@@ -61,17 +62,17 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Format of the sourceimage.
 		/// </summary>
-		protected FREE_IMAGE_FORMAT originalFormat = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+		private FREE_IMAGE_FORMAT originalFormat = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 
 		/// <summary>
 		/// Handle to the encapsulated FreeImage-bitmap.
 		/// </summary>
-		protected FIBITMAP dib = 0;
+		private FIBITMAP dib = 0;
 
 		/// <summary>
 		/// Handle to the encapsulated FreeImage-multipagebitmap.
 		/// </summary>
-		protected FIMULTIBITMAP mdib = 0;
+		private FIMULTIBITMAP mdib = 0;
 
 		#endregion
 
@@ -89,7 +90,7 @@ namespace FreeImageAPI
 		/// For internal use only.
 		/// </summary>
 		/// <exception cref="Exception">The operation failed.</exception>
-		internal FreeImageBitmap(FIBITMAP dib)
+		internal protected FreeImageBitmap(FIBITMAP dib)
 		{
 			if (dib.IsNull)
 			{
@@ -3368,7 +3369,7 @@ namespace FreeImageAPI
 		/// </exception>
 		/// <exception cref="FileNotFoundException"><paramref name="filename"/> does not exist.</exception>
 		/// <exception cref="Exception">Saving the image failed.</exception>
-		internal static void SaveAdd(
+		public static void SaveAdd(
 			string filename,
 			FreeImageBitmap bitmap,
 			FREE_IMAGE_FORMAT format,
@@ -3426,7 +3427,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Throws an exception in case the instance has already been disposed.
 		/// </summary>
-		protected void EnsureNotDisposed()
+		private void EnsureNotDisposed()
 		{
 			lock (lockObject)
 			{
@@ -3447,7 +3448,7 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="newDib">The new dib.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
-		protected bool ReplaceDib(FIBITMAP newDib)
+		private bool ReplaceDib(FIBITMAP newDib)
 		{
 			bool result = false;
 			if (dib != newDib && (!newDib.IsNull))
@@ -3463,7 +3464,7 @@ namespace FreeImageAPI
 		/// Unloads currently wrapped <see cref="FIBITMAP"/> or unlocks the locked page
 		/// in case it came from a multipaged bitmap.
 		/// </summary>
-		protected void UnloadDib()
+		private void UnloadDib()
 		{
 			if (mdib.IsNull || FreeImage.GetLockedPageCount(mdib) == 0)
 			{
