@@ -9,7 +9,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Provides methods for working with the standard bitmap palette.
 	/// </summary>
-	public class Palette : MemoryArray<RGBQUAD>
+	public sealed class Palette : MemoryArray<RGBQUAD>
 	{
 		/// <summary>
 		/// Initializes a new instance for the given FreeImage bitmap.
