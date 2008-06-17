@@ -2,12 +2,20 @@
     <assemblies>
         <assembly assemblyPath="..\Bin\FreeImageNET.dll" xmlCommentsPath="..\Bin\FreeImageNET.XML" commentsOnly="False" />
     </assemblies>
+    <namespaceSummaries>
+        <namespaceSummaryItem name="" isDocumented="False" />
+        <namespaceSummaryItem name="FreeImageAPI" isDocumented="True" />
+        <namespaceSummaryItem name="FreeImageAPI.Classes" isDocumented="True" />
+        <namespaceSummaryItem name="FreeImageAPI.IO" isDocumented="True" />
+        <namespaceSummaryItem name="FreeImageAPI.Metadata" isDocumented="True" />
+        <namespaceSummaryItem name="FreeImageAPI.Plugins" isDocumented="True" />
+    </namespaceSummaries>
     <ProjectSummary />
     <MissingTags>AutoDocumentCtors</MissingTags>
-    <VisibleItems>None</VisibleItems>
+    <VisibleItems>InheritedMembers, Protected</VisibleItems>
     <HtmlHelp1xCompilerPath path="" />
     <HtmlHelp2xCompilerPath path="" />
-    <OutputPath>.\</OutputPath>
+    <OutputPath>.\Out\</OutputPath>
     <SandcastlePath path="" />
     <WorkingPath path="" />
     <CleanIntermediates>True</CleanIntermediates>
@@ -33,7 +41,7 @@
     <SdkLinkType>Msdn</SdkLinkType>
     <SdkLinkTarget>Self</SdkLinkTarget>
     <PresentationStyle>vs2005</PresentationStyle>
-    <NamingMethod>MemberName</NamingMethod>
+    <NamingMethod>HashedMemberName</NamingMethod>
     <SyntaxFilters>Standard</SyntaxFilters>
     <ShowFeedbackControl>False</ShowFeedbackControl>
     <ContentPlacement>AboveNamespaces</ContentPlacement>
