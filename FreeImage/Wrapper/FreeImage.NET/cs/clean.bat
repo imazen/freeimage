@@ -1,13 +1,5 @@
 @ECHO OFF
 
-IF NOT EXIST Doc GOTO nodoc
-
-cd Doc
-call clean.bat
-cd ..
-
-:nodoc
-
 rd "Library\bin" /s /q
 rd "Library\obj" /s /q
 
@@ -52,4 +44,5 @@ rd "UnitTest\obj" /s /q
 
 del "FreeImage.net.VisualState.xml"
 del "TestResult.xml"
-del "FreeImage.NET.suo" /A:H
+del *.suo /A:H /S /Q
+del *.user /S /Q
