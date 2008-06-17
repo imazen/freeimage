@@ -33,12 +33,12 @@
 // $Id$
 // ==========================================================
 
-namespace FreeImageAPI
+namespace FreeImageAPI.Metadata
 {
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_ANIMATION"/>.
 	/// </summary>
-	public class MDM_ANIMATION : MetadataModel
+	public sealed class MDM_ANIMATION : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -58,7 +58,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_COMMENTS"/>.
 	/// </summary>
-	public class MDM_COMMENTS : MetadataModel
+	public sealed class MDM_COMMENTS : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -78,7 +78,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_CUSTOM"/>.
 	/// </summary>
-	public class MDM_CUSTOM : MetadataModel
+	public sealed class MDM_CUSTOM : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -98,7 +98,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF"/>.
 	/// </summary>
-	public class MDM_EXIF_EXIF : MetadataModel
+	public sealed class MDM_EXIF_EXIF : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -118,7 +118,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_GPS"/>.
 	/// </summary>
-	public class MDM_EXIF_GPS : MetadataModel
+	public sealed class MDM_EXIF_GPS : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -138,7 +138,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_INTEROP"/>.
 	/// </summary>
-	public class MDM_INTEROP : MetadataModel
+	public sealed class MDM_INTEROP : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -178,7 +178,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_MAKERNOTE"/>.
 	/// </summary>
-	public class MDM_MAKERNOTE : MetadataModel
+	public sealed class MDM_MAKERNOTE : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -198,7 +198,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_GEOTIFF"/>.
 	/// </summary>
-	public class MDM_GEOTIFF : MetadataModel
+	public sealed class MDM_GEOTIFF : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -218,7 +218,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_IPTC"/>.
 	/// </summary>
-	public class MDM_IPTC : MetadataModel
+	public sealed class MDM_IPTC : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -238,7 +238,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_NODATA"/>.
 	/// </summary>
-	public class MDM_NODATA : MetadataModel
+	public sealed class MDM_NODATA : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -258,7 +258,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_XMP"/>.
 	/// </summary>
-	public class MDM_XMP : MetadataModel
+	public sealed class MDM_XMP : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.

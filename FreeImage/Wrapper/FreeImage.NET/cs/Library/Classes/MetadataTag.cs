@@ -38,43 +38,43 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.Metadata
 {
 	/// <summary>
 	/// Manages metadata objects and operations.
 	/// </summary>
-	public class MetadataTag : IComparable, IComparable<MetadataTag>, ICloneable, IEquatable<MetadataTag>, IDisposable
+	public sealed class MetadataTag : IComparable, IComparable<MetadataTag>, ICloneable, IEquatable<MetadataTag>, IDisposable
 	{
 		/// <summary>
 		/// The encapsulated FreeImage-tag.
 		/// </summary>
-		internal protected FITAG tag;
+		internal FITAG tag;
 		/// <summary>
 		/// The metadata model of <see cref="tag"/>.
 		/// </summary>
-		internal protected FREE_IMAGE_MDMODEL model;
+		private FREE_IMAGE_MDMODEL model;
 		/// <summary>
 		/// Indicates whether this instance has already been disposed.
 		/// </summary>
-		protected bool disposed = false;
+		private bool disposed = false;
 		/// <summary>
 		/// Indicates whether this instance was created by FreeImage or
 		/// by the user.
 		/// </summary>
-		protected bool selfCreated;
+		private bool selfCreated;
 		/// <summary>
 		/// List linking metadata-model and Type.
 		/// </summary>
-		protected static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
+		private static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
 		/// <summary>
 		/// List linking Type and metadata-model.
 		/// </summary>
-		protected static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
+		private static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
 
 		/// <summary>
 		/// Initializes a new instance of this class.
 		/// </summary>
-		protected MetadataTag()
+		private MetadataTag()
 		{
 		}
 
@@ -314,7 +314,7 @@ namespace FreeImageAPI
 		public FREE_IMAGE_MDTYPE Type
 		{
 			get { CheckDisposed(); return FreeImage.GetTagType(tag); }
-			protected set { FreeImage.SetTagType(tag, value); }
+			private set { FreeImage.SetTagType(tag, value); }
 		}
 
 		/// <summary>
@@ -323,7 +323,7 @@ namespace FreeImageAPI
 		public uint Count
 		{
 			get { CheckDisposed(); return Type == FREE_IMAGE_MDTYPE.FIDT_ASCII ? FreeImage.GetTagCount(tag) - 1 : FreeImage.GetTagCount(tag); }
-			protected set { FreeImage.SetTagCount(tag, value); }
+			private set { FreeImage.SetTagCount(tag, value); }
 		}
 
 		/// <summary>
@@ -332,7 +332,7 @@ namespace FreeImageAPI
 		public uint Length
 		{
 			get { CheckDisposed(); return Type == FREE_IMAGE_MDTYPE.FIDT_ASCII ? FreeImage.GetTagLength(tag) - 1 : FreeImage.GetTagLength(tag); }
-			protected set { FreeImage.SetTagLength(tag, value); }
+			private set { FreeImage.SetTagLength(tag, value); }
 		}
 
 		private unsafe byte[] GetData()
@@ -450,7 +450,7 @@ namespace FreeImageAPI
 		/// <paramref name="value"/> is not Array.</exception>
 		/// <exception cref="NotSupportedException">
 		/// <paramref name="type"/> is FIDT_NOTYPE.</exception>
-		protected unsafe bool SetArrayValue(object value, FREE_IMAGE_MDTYPE type)
+		private unsafe bool SetArrayValue(object value, FREE_IMAGE_MDTYPE type)
 		{
 			if (value == null)
 			{
@@ -684,7 +684,7 @@ namespace FreeImageAPI
 		/// Throwns an <see cref="ObjectDisposedException"/> in case
 		/// this instance has already been disposed.
 		/// </summary>
-		protected void CheckDisposed()
+		private void CheckDisposed()
 		{
 			if (disposed)
 			{

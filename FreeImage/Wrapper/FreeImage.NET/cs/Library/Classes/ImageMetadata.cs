@@ -38,7 +38,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.Metadata
 {
 	/// <summary>
 	/// Class handling metadata of a FreeImage bitmap.
@@ -98,7 +98,7 @@ namespace FreeImageAPI
 		/// <para><c>null</c> can be used calling the setter to destroy the model.</para>
 		/// </summary>
 		/// <param name="model">Type of the model.</param>
-		/// <returns>The <see cref="FreeImageAPI.MetadataModel"/> object of the specified type.</returns>
+		/// <returns>The <see cref="FreeImageAPI.Metadata.MetadataModel"/> object of the specified type.</returns>
 		public MetadataModel this[FREE_IMAGE_MDMODEL model]
 		{
 			get
@@ -119,14 +119,15 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets or sets the <see cref="FreeImageAPI.MetadataModel"/> at the specified index.
+		/// Gets or sets the <see cref="FreeImageAPI.Metadata.MetadataModel"/> at the specified index.
 		/// <para>In case the getter returns <c>null</c> the model is not contained
 		/// by the list.</para>
 		/// <para><c>null</c> can be used calling the setter to destroy the model.</para>
 		/// </summary>
-		/// <param name="index">Index of the <see cref="FreeImageAPI.MetadataModel"/> within
+		/// <param name="index">Index of the <see cref="FreeImageAPI.Metadata.MetadataModel"/> within
 		/// this instance.</param>
-		/// <returns>The <see cref="FreeImageAPI.MetadataModel"/> object at the specified index.</returns>
+		/// <returns>The <see cref="FreeImageAPI.Metadata.MetadataModel"/>
+		/// object at the specified index.</returns>
 		public MetadataModel this[int index]
 		{
 			get
@@ -140,7 +141,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a list of all visible <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>.
+		/// Returns a list of all visible
+		/// <see cref="FreeImageAPI.Metadata.MetadataModel">MetadataModels</see>.
 		/// </summary>
 		public List<MetadataModel> List
 		{
@@ -167,7 +169,7 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Adds new tag to the bitmap or updates its value in case it already exists.
-		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
+		/// <see cref="FreeImageAPI.Metadata.MetadataTag.Key"/> will be used as key.
 		/// </summary>
 		/// <param name="tag">The tag to add or update.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
@@ -186,7 +188,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns the number of visible <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>.
+		/// Returns the number of visible
+		/// <see cref="FreeImageAPI.Metadata.MetadataModel">MetadataModels</see>.
 		/// </summary>
 		public int Count
 		{
@@ -212,7 +215,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets or sets whether empty <see cref="FreeImageAPI.MetadataModel">MetadataModels</see> are hidden.
+		/// Gets or sets whether empty
+		/// <see cref="FreeImageAPI.Metadata.MetadataModel">MetadataModels</see> are hidden.
 		/// </summary>
 		public bool HideEmptyModels
 		{
@@ -228,7 +232,7 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Retrieves an object that can iterate through the individual
-		/// <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>
+		/// <see cref="FreeImageAPI.Metadata.MetadataModel">MetadataModels</see>
 		/// in this <see cref="ImageMetadata"/>.
 		/// </summary>
 		/// <returns>An <see cref="IEnumerator"/> for this <see cref="ImageMetadata"/>.</returns>

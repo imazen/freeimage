@@ -38,7 +38,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.Metadata
 {
 	/// <summary>
 	/// Base class that represents a collection of all tags contained in a metadata model.
@@ -52,7 +52,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Handle to a FreeImage-bitmap.
 		/// </summary>
-		protected readonly FIBITMAP dib;
+		private readonly FIBITMAP dib;
 
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -79,7 +79,7 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Adds new tag to the bitmap or updates its value in case it already exists.
-		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
+		/// <see cref="FreeImageAPI.Metadata.MetadataTag.Key"/> will be used as key.
 		/// </summary>
 		/// <param name="tag">The tag to add or update.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
@@ -102,7 +102,7 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Adds a list of tags to the bitmap or updates their values in case they already exist.
-		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
+		/// <see cref="FreeImageAPI.Metadata.MetadataTag.Key"/> will be used as key.
 		/// </summary>
 		/// <param name="list">A list of tags to add or update.</param>
 		/// <returns>Returns the number of successfully added tags.</returns>
@@ -262,7 +262,8 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Retrieves an object that can iterate through the individual MetadataTags in this MetadataModel.
 		/// </summary>
-		/// <returns>An <see cref="IEnumerator"/> for the <see cref="FreeImageAPI.MetadataModel"/>.</returns>
+		/// <returns>An <see cref="IEnumerator"/> for the
+		/// <see cref="FreeImageAPI.Metadata.MetadataModel"/>.</returns>
 		public IEnumerator GetEnumerator()
 		{
 			return List.GetEnumerator();
