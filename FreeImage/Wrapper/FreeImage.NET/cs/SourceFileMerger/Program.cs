@@ -95,10 +95,10 @@ namespace FreeImageNET_SFM
 				{
 					lineNumber++;
 				}
-                lineNumber += 2;
+                //lineNumber += 2;
             }
 
-			for (; lineNumber < content.Length - 1; lineNumber++)
+			for (; lineNumber < content.Length; lineNumber++)
 			{
 				line = content[lineNumber].Trim();
 				match = searchPattern.Match(line);
