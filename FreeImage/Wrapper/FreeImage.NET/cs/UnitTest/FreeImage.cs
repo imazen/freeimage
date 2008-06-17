@@ -46,6 +46,10 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
+using FreeImageAPI;
+using FreeImageAPI.IO;
+using FreeImageAPI.Metadata;
+using FreeImageAPI.Plugins;
 
 /////////////////////////////////////////////////////
 //                                                 //
@@ -53,10 +57,10 @@ using System.Text.RegularExpressions;
 //                                                 //
 /////////////////////////////////////////////////////
 
-namespace FreeImageAPI
-{
 	#region Structs
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>BITMAP</b> structure defines the type, width, height, color format, and bit values of a bitmap.
 	/// </summary>
@@ -120,7 +124,10 @@ namespace FreeImageAPI
 		/// </summary>
 		public IntPtr bmBits;
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// This structure contains information about the dimensions and color format
 	/// of a device-independent bitmap (DIB).
@@ -432,7 +439,10 @@ namespace FreeImageAPI
 			return base.GetHashCode();
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>BITMAPINFO</b> structure defines the dimensions and color information for a DIB.
 	/// </summary>
@@ -595,7 +605,10 @@ namespace FreeImageAPI
 			return hash;
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FIBITMAP</b> structure is a handle to a FreeImage bimtap.
 	/// </summary>
@@ -777,7 +790,10 @@ namespace FreeImageAPI
 			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FIMULTIBITMAP</b> structure is a handle to a FreeImage multipaged bimtap.
 	/// </summary>
@@ -954,7 +970,10 @@ namespace FreeImageAPI
 			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FIMEMORY</b> structure is a handle to an opened memory stream.
 	/// </summary>
@@ -1131,7 +1150,10 @@ namespace FreeImageAPI
 			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FIMETADATA</b> structure is an unique search handle for metadata search operations.
 	/// </summary>
@@ -1316,7 +1338,10 @@ namespace FreeImageAPI
 			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FITAG</b> structure is a handle to a FreeImage metadata tag.
 	/// </summary>
@@ -1493,7 +1518,10 @@ namespace FreeImageAPI
 			return this.data.ToInt64().CompareTo(other.data.ToInt64());
 		}
 	}
+}
 
+namespace FreeImageAPI.IO
+{
 	/// <summary>
 	/// Structure for implementing access to custom handles.
 	/// </summary>
@@ -1520,7 +1548,10 @@ namespace FreeImageAPI
 		/// </summary>
 		public TellProc tellProc;
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>RGBQUAD</b> structure describes a color consisting of relative
 	/// intensities of red, green, blue and alpha value. Each single color
@@ -1786,7 +1817,10 @@ namespace FreeImageAPI
 			return FreeImage.ColorToString(Color);
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>RGBTRIPLE</b> structure describes a color consisting of relative
 	/// intensities of red, green and blue value. Each single color component
@@ -2040,7 +2074,10 @@ namespace FreeImageAPI
 			return FreeImage.ColorToString(Color);
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FIRGBA16</b> structure describes a color consisting of relative
 	/// intensities of red, green, blue and alpha value. Each single color
@@ -2270,7 +2307,10 @@ namespace FreeImageAPI
 			return FreeImage.ColorToString(Color);
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FIRGB16</b> structure describes a color consisting of relative
 	/// intensities of red, green, blue and alpha value. Each single color
@@ -2496,7 +2536,10 @@ namespace FreeImageAPI
 			return FreeImage.ColorToString(Color);
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FIRGBAF</b> structure describes a color consisting of relative
 	/// intensities of red, green, blue and alpha value. Each single color
@@ -2731,7 +2774,10 @@ namespace FreeImageAPI
 			return FreeImage.ColorToString(Color);
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FIRGBF</b> structure describes a color consisting of relative
 	/// intensities of red, green, blue and alpha value. Each single color
@@ -2962,7 +3008,10 @@ namespace FreeImageAPI
 			return FreeImage.ColorToString(Color);
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FICOMPLEX</b> structure describes a color consisting of a real and an imaginary part.
 	/// Each part is using 4 bytes of data.
@@ -3068,7 +3117,10 @@ namespace FreeImageAPI
 			return base.GetHashCode();
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// This Structure contains ICC-Profile data.
 	/// </summary>
@@ -3164,7 +3216,10 @@ namespace FreeImageAPI
 			}
 		}
 	}
+}
 
+namespace FreeImageAPI.Plugins
+{
 	/// <summary>
 	/// The structure contains functionpointers that make up a FreeImage plugin.
 	/// </summary>
@@ -3255,11 +3310,14 @@ namespace FreeImageAPI
 		/// </summary>
 		public SupportsICCProfilesProc supportsICCProfilesProc;
 	}
+}
 
 	#endregion
 
 	#region Enums
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// I/O image format identifiers.
 	/// </summary>
@@ -3402,7 +3460,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FIF_JP2 = 31
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Image types used in FreeImage.
 	/// </summary>
@@ -3461,7 +3522,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FIT_RGBAF = 12
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Image color types used in FreeImage.
 	/// </summary>
@@ -3492,7 +3556,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FIC_CMYK = 5
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Color quantization algorithms.
 	/// Constants used in FreeImage_ColorQuantize.
@@ -3508,7 +3575,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FIQ_NNQUANT = 1
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Dithering algorithms.
 	/// Constants used in FreeImage_Dither.
@@ -3544,7 +3614,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FID_BAYER16x16 = 6
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Lossless JPEG transformations constants used in FreeImage_JPEGTransform.
 	/// </summary>
@@ -3583,7 +3656,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FIJPEG_OP_ROTATE_270 = 7
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Tone mapping operators. Constants used in FreeImage_ToneMapping.
 	/// </summary>
@@ -3602,7 +3678,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FITMO_FATTAL02
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Upsampling / downsampling filters. Constants used in FreeImage_Rescale.
 	/// </summary>
@@ -3633,7 +3712,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FILTER_LANCZOS3 = 5
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Color channels. Constants used in color manipulation routines.
 	/// </summary>
@@ -3680,7 +3762,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FICC_PHASE = 9
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Tag data type information (based on TIFF specifications)
 	/// Note: RATIONALs are the ratio of two 32-bit integer values.
@@ -3748,7 +3833,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FIDT_PALETTE = 14
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Metadata models supported by FreeImage.
 	/// </summary>
@@ -3803,7 +3891,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FIMD_CUSTOM = 10
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Flags used in load functions.
 	/// </summary>
@@ -3863,7 +3954,10 @@ namespace FreeImageAPI
 		/// </summary>
 		TIFF_CMYK = 0x0001
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Flags used in save functions.
 	/// </summary>
@@ -4009,7 +4103,10 @@ namespace FreeImageAPI
 		/// </summary>
 		TIFF_JPEG = 0x8000
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Flags for ICC profiles.
 	/// </summary>
@@ -4025,11 +4122,14 @@ namespace FreeImageAPI
 		/// </summary>
 		FIICC_COLOR_IS_CMYK = 0x01
 	}
+}
 
 	#endregion
 
 	#region Delegates
 
+namespace FreeImageAPI
+{
 	// Delegates used by the FreeImageIO structure
 
 	/// <summary>
@@ -4040,7 +4140,10 @@ namespace FreeImageAPI
 	// DLL_API is missing in the definition of the callbackfuntion.
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void OutputMessageFunction(FREE_IMAGE_FORMAT fif, string message);
+}
 
+namespace FreeImageAPI.IO
+{
 	/// <summary>
 	/// Delegate to the C++ function <b>fread</b>.
 	/// </summary>
@@ -4082,7 +4185,10 @@ namespace FreeImageAPI
 	public delegate int TellProc(fi_handle handle);
 
 	// Delegates used by 'Plugin' structure
+}
 
+namespace FreeImageAPI.Plugins
+{
 	/// <summary>
 	/// Delegate to a function that returns a string which describes
 	/// the plugins format.
@@ -4172,9 +4278,12 @@ namespace FreeImageAPI
 	/// Callback function used by FreeImage to register plugins.
 	/// </summary>
 	public delegate void InitProc(ref Plugin plugin, int format_id);
+}
 
 	#endregion
 
+namespace FreeImageAPI
+{
 	public static partial class FreeImage
 	{
 		#region Constants
@@ -6395,10 +6504,10 @@ namespace FreeImageAPI
 //                                                 //
 /////////////////////////////////////////////////////
 
-namespace FreeImageAPI
-{
 	#region Structs
 
+namespace FreeImageAPI.IO
+{
 	/// <summary>
 	/// Wrapper for a custom handle.
 	/// </summary>
@@ -6613,7 +6722,10 @@ namespace FreeImageAPI
 			}
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FI1BIT</b> structure represents a single bit.
 	/// It's value can be <i>0</i> or <i>1</i>.
@@ -6666,7 +6778,10 @@ namespace FreeImageAPI
 			return value.ToString();
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FI4BIT</b> structure represents the half of a <see cref="Byte"/>.
 	/// It's valuerange is between <i>0</i> and <i>15</i>.
@@ -6719,7 +6834,10 @@ namespace FreeImageAPI
 			return value.ToString();
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FI16RGB555</b> structure describes a color consisting of relative
 	/// intensities of red, green, blue and alpha value. Each single color
@@ -6733,6 +6851,7 @@ namespace FreeImageAPI
 	/// for the <b>FI16RGB555</b> structure and my be used in all situations which require
 	/// an <b>FI16RGB555</b> type.
 	/// </para>
+	/// </remarks>
 	/// <example>
 	/// The following code example demonstrates the various conversions between the
 	/// <b>FI16RGB555</b> structure and the <see cref="System.Drawing.Color"/> structure.
@@ -6750,7 +6869,6 @@ namespace FreeImageAPI
 	///	Color another = fi16rgb.Color;
 	/// </code>
 	/// </example>
-	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FI16RGB555 : IComparable, IComparable<FI16RGB555>, IEquatable<FI16RGB555>
 	{
@@ -6955,7 +7073,10 @@ namespace FreeImageAPI
 			return FreeImage.ColorToString(Color);
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FI16RGB565</b> structure describes a color consisting of relative
 	/// intensities of red, green, blue and alpha value. Each single color
@@ -6969,6 +7090,7 @@ namespace FreeImageAPI
 	/// for the <b>FI16RGB565</b> structure and my be used in all situations which require
 	/// an <b>FI16RGB565</b> type.
 	/// </para>
+	/// </remarks>
 	/// <example>
 	/// The following code example demonstrates the various conversions between the
 	/// <b>FI16RGB565</b> structure and the <see cref="System.Drawing.Color"/> structure.
@@ -6986,7 +7108,6 @@ namespace FreeImageAPI
 	///	Color another = fi16rgb.Color;
 	/// </code>
 	/// </example>
-	/// </remarks>
 	[Serializable, StructLayout(LayoutKind.Sequential)]
 	public struct FI16RGB565 : IComparable, IComparable<FI16RGB565>, IEquatable<FI16RGB565>
 	{
@@ -7191,7 +7312,10 @@ namespace FreeImageAPI
 			return FreeImage.ColorToString(Color);
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FIRational</b> structure represents a fraction via two <see cref="Int32"/>
 	/// instances which are interpreted as numerator and denominator.
@@ -8168,7 +8292,10 @@ namespace FreeImageAPI
 
 		#endregion
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// The <b>FIURational</b> structure represents a fraction via two <see cref="UInt32"/>
 	/// instances which are interpreted as numerator and denominator.
@@ -9141,11 +9268,14 @@ namespace FreeImageAPI
 
 		#endregion
 	}
+}
 
 	#endregion
 
 	#region Classes
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Encapsulates a FreeImage-bitmap.
 	/// </summary>
@@ -9162,17 +9292,17 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Format of the sourceimage.
 		/// </summary>
-		protected FREE_IMAGE_FORMAT originalFormat = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+		private FREE_IMAGE_FORMAT originalFormat = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 
 		/// <summary>
 		/// Handle to the encapsulated FreeImage-bitmap.
 		/// </summary>
-		protected FIBITMAP dib = 0;
+		private FIBITMAP dib = 0;
 
 		/// <summary>
 		/// Handle to the encapsulated FreeImage-multipagebitmap.
 		/// </summary>
-		protected FIMULTIBITMAP mdib = 0;
+		private FIMULTIBITMAP mdib = 0;
 
 		#endregion
 
@@ -9190,7 +9320,7 @@ namespace FreeImageAPI
 		/// For internal use only.
 		/// </summary>
 		/// <exception cref="Exception">The operation failed.</exception>
-		internal FreeImageBitmap(FIBITMAP dib)
+		internal protected FreeImageBitmap(FIBITMAP dib)
 		{
 			if (dib.IsNull)
 			{
@@ -12469,7 +12599,7 @@ namespace FreeImageAPI
 		/// </exception>
 		/// <exception cref="FileNotFoundException"><paramref name="filename"/> does not exist.</exception>
 		/// <exception cref="Exception">Saving the image failed.</exception>
-		internal static void SaveAdd(
+		public static void SaveAdd(
 			string filename,
 			FreeImageBitmap bitmap,
 			FREE_IMAGE_FORMAT format,
@@ -12527,7 +12657,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Throws an exception in case the instance has already been disposed.
 		/// </summary>
-		protected void EnsureNotDisposed()
+		private void EnsureNotDisposed()
 		{
 			lock (lockObject)
 			{
@@ -12548,7 +12678,7 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="newDib">The new dib.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
-		protected bool ReplaceDib(FIBITMAP newDib)
+		private bool ReplaceDib(FIBITMAP newDib)
 		{
 			bool result = false;
 			if (dib != newDib && (!newDib.IsNull))
@@ -12564,7 +12694,7 @@ namespace FreeImageAPI
 		/// Unloads currently wrapped <see cref="FIBITMAP"/> or unlocks the locked page
 		/// in case it came from a multipaged bitmap.
 		/// </summary>
-		protected void UnloadDib()
+		private void UnloadDib()
 		{
 			if (mdib.IsNull || FreeImage.GetLockedPageCount(mdib) == 0)
 			{
@@ -12681,7 +12811,10 @@ namespace FreeImageAPI
 
 		#endregion
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Class handling non-bitmap related functions.
 	/// </summary>
@@ -12747,7 +12880,10 @@ namespace FreeImageAPI
 			}
 		}
 	}
+}
 
+namespace FreeImageAPI.Plugins
+{
 	/// <summary>
 	/// Class representing a FreeImage format.
 	/// </summary>
@@ -12943,7 +13079,10 @@ namespace FreeImageAPI
 			return Description;
 		}
 	}
+}
 
+namespace FreeImageAPI.IO
+{
 	/// <summary>
 	/// Internal class wrapping stream io functions.
 	/// </summary>
@@ -12956,7 +13095,7 @@ namespace FreeImageAPI
 	/// the loading and saving from and to streams. It implements the funtions FreeImage needs
 	/// to load data from an an arbitrary source.
 	/// <para/>
-	/// FreeImage requests a <see cref="FreeImageAPI.FreeImageIO"/> structure containing pointers (delegates) to these
+	/// FreeImage requests a <see cref="FreeImageAPI.IO.FreeImageIO"/> structure containing pointers (delegates) to these
 	/// functions. <b>FreeImageStreamIO</b> implements the function creates the structure and
 	/// prevents the garbage collector from moving these functions in memory.
 	/// <para/>
@@ -12970,14 +13109,14 @@ namespace FreeImageAPI
 		private static GCHandle tellHandle;
 
 		/// <summary>
-		/// <see cref="FreeImageAPI.FreeImageIO"/> structure that can be used to read from streams via
+		/// <see cref="FreeImageAPI.IO.FreeImageIO"/> structure that can be used to read from streams via
 		/// <see cref="FreeImageAPI.FreeImage.LoadFromHandle(FREE_IMAGE_FORMAT, ref FreeImageIO, fi_handle, FREE_IMAGE_LOAD_FLAGS)"/>.
 		/// </summary>
 		public static FreeImageIO io;
 
 		/// <summary>
 		/// Initializes a new instances which can be used to
-		/// create a FreeImage compatible <see cref="FreeImageAPI.FreeImageIO"/> structure.
+		/// create a FreeImage compatible <see cref="FreeImageAPI.IO.FreeImageIO"/> structure.
 		/// </summary>
 		static FreeImageStreamIO()
 		{
@@ -13081,7 +13220,10 @@ namespace FreeImageAPI
 			return (int)stream.Position;
 		}
 	}
+}
 
+namespace FreeImageAPI.Metadata
+{
 	/// <summary>
 	/// Class handling metadata of a FreeImage bitmap.
 	/// </summary>
@@ -13140,7 +13282,7 @@ namespace FreeImageAPI
 		/// <para><c>null</c> can be used calling the setter to destroy the model.</para>
 		/// </summary>
 		/// <param name="model">Type of the model.</param>
-		/// <returns>The <see cref="FreeImageAPI.MetadataModel"/> object of the specified type.</returns>
+		/// <returns>The <see cref="FreeImageAPI.Metadata.MetadataModel"/> object of the specified type.</returns>
 		public MetadataModel this[FREE_IMAGE_MDMODEL model]
 		{
 			get
@@ -13161,14 +13303,15 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets or sets the <see cref="FreeImageAPI.MetadataModel"/> at the specified index.
+		/// Gets or sets the <see cref="FreeImageAPI.Metadata.MetadataModel"/> at the specified index.
 		/// <para>In case the getter returns <c>null</c> the model is not contained
 		/// by the list.</para>
 		/// <para><c>null</c> can be used calling the setter to destroy the model.</para>
 		/// </summary>
-		/// <param name="index">Index of the <see cref="FreeImageAPI.MetadataModel"/> within
+		/// <param name="index">Index of the <see cref="FreeImageAPI.Metadata.MetadataModel"/> within
 		/// this instance.</param>
-		/// <returns>The <see cref="FreeImageAPI.MetadataModel"/> object at the specified index.</returns>
+		/// <returns>The <see cref="FreeImageAPI.Metadata.MetadataModel"/>
+		/// object at the specified index.</returns>
 		public MetadataModel this[int index]
 		{
 			get
@@ -13182,7 +13325,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns a list of all visible <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>.
+		/// Returns a list of all visible
+		/// <see cref="FreeImageAPI.Metadata.MetadataModel">MetadataModels</see>.
 		/// </summary>
 		public List<MetadataModel> List
 		{
@@ -13209,7 +13353,7 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Adds new tag to the bitmap or updates its value in case it already exists.
-		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
+		/// <see cref="FreeImageAPI.Metadata.MetadataTag.Key"/> will be used as key.
 		/// </summary>
 		/// <param name="tag">The tag to add or update.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
@@ -13228,7 +13372,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns the number of visible <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>.
+		/// Returns the number of visible
+		/// <see cref="FreeImageAPI.Metadata.MetadataModel">MetadataModels</see>.
 		/// </summary>
 		public int Count
 		{
@@ -13254,7 +13399,8 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Gets or sets whether empty <see cref="FreeImageAPI.MetadataModel">MetadataModels</see> are hidden.
+		/// Gets or sets whether empty
+		/// <see cref="FreeImageAPI.Metadata.MetadataModel">MetadataModels</see> are hidden.
 		/// </summary>
 		public bool HideEmptyModels
 		{
@@ -13270,7 +13416,7 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Retrieves an object that can iterate through the individual
-		/// <see cref="FreeImageAPI.MetadataModel">MetadataModels</see>
+		/// <see cref="FreeImageAPI.Metadata.MetadataModel">MetadataModels</see>
 		/// in this <see cref="ImageMetadata"/>.
 		/// </summary>
 		/// <returns>An <see cref="IEnumerator"/> for this <see cref="ImageMetadata"/>.</returns>
@@ -13324,7 +13470,10 @@ namespace FreeImageAPI
 			return this.dib.CompareTo(other.dib);
 		}
 	}
+}
 
+namespace FreeImageAPI.Plugins
+{
 	/// <summary>
 	/// Class representing own FreeImage-Plugins.
 	/// </summary>
@@ -13343,14 +13492,14 @@ namespace FreeImageAPI
 	/// <para/>
 	/// How to:
 	/// There are two functions that need to be implemented:
-	/// <see cref="FreeImageAPI.LocalPlugin.GetImplementedMethods"/> and
-	/// <see cref="FreeImageAPI.LocalPlugin.FormatProc"/>.
-	/// <see cref="FreeImageAPI.LocalPlugin.GetImplementedMethods"/> is used by the constructor
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.GetImplementedMethods"/> and
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.FormatProc"/>.
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.GetImplementedMethods"/> is used by the constructor
 	/// of the abstract class. FreeImage wants a list of the implemented functions. Each function is
 	/// represented by a function pointer (a .NET <see cref="System.Delegate"/>). In case a function
 	/// is not implemented FreeImage recieves an empty <b>delegate</b>). To tell the constructor
 	/// which functions have been implemented the information is represented by a disjunction of
-	/// <see cref="FreeImageAPI.LocalPlugin.MethodFlags"/>.
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.MethodFlags"/>.
 	/// <para/>
 	/// For example:
 	///		return MethodFlags.LoadProc | MethodFlags.SaveProc;
@@ -13358,10 +13507,10 @@ namespace FreeImageAPI
 	/// The above statement means that LoadProc and SaveProc have been implemented by the user.
 	/// Keep in mind, that each function has a standard implementation that has static return
 	/// values that may cause errors if listed in
-	/// <see cref="FreeImageAPI.LocalPlugin.GetImplementedMethods"/> without a real implementation.
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.GetImplementedMethods"/> without a real implementation.
 	/// <para/>
-	/// <see cref="FreeImageAPI.LocalPlugin.FormatProc"/> is used by some checks of FreeImage and
-	/// must be implemented. <see cref="FreeImageAPI.LocalPlugin.LoadProc"/> for example can be
+	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.FormatProc"/> is used by some checks of FreeImage and
+	/// must be implemented. <see cref="FreeImageAPI.Plugins.LocalPlugin.LoadProc"/> for example can be
 	/// implemented if the plugin supports reading, but it doesn't have to, the plugin could only
 	/// be used to save an already loaded bitmap in a special format.
 	/// </remarks>
@@ -13778,7 +13927,10 @@ namespace FreeImageAPI
 			return io.tellProc(handle);
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Represents unmanaged memory, containing an array of a given structure.
 	/// </summary>
@@ -14537,7 +14689,10 @@ namespace FreeImageAPI
 			}
 		}
 	}
+}
 
+namespace FreeImageAPI.Metadata
+{
 	/// <summary>
 	/// Base class that represents a collection of all tags contained in a metadata model.
 	/// </summary>
@@ -14550,7 +14705,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Handle to a FreeImage-bitmap.
 		/// </summary>
-		protected readonly FIBITMAP dib;
+		private readonly FIBITMAP dib;
 
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -14577,7 +14732,7 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Adds new tag to the bitmap or updates its value in case it already exists.
-		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
+		/// <see cref="FreeImageAPI.Metadata.MetadataTag.Key"/> will be used as key.
 		/// </summary>
 		/// <param name="tag">The tag to add or update.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
@@ -14600,7 +14755,7 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Adds a list of tags to the bitmap or updates their values in case they already exist.
-		/// <see cref="FreeImageAPI.MetadataTag.Key"/> will be used as key.
+		/// <see cref="FreeImageAPI.Metadata.MetadataTag.Key"/> will be used as key.
 		/// </summary>
 		/// <param name="list">A list of tags to add or update.</param>
 		/// <returns>Returns the number of successfully added tags.</returns>
@@ -14760,7 +14915,8 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Retrieves an object that can iterate through the individual MetadataTags in this MetadataModel.
 		/// </summary>
-		/// <returns>An <see cref="IEnumerator"/> for the <see cref="FreeImageAPI.MetadataModel"/>.</returns>
+		/// <returns>An <see cref="IEnumerator"/> for the
+		/// <see cref="FreeImageAPI.Metadata.MetadataModel"/>.</returns>
 		public IEnumerator GetEnumerator()
 		{
 			return List.GetEnumerator();
@@ -14839,13 +14995,16 @@ namespace FreeImageAPI
 			return Model.ToString();
 		}
 	}
+}
 
 	#region Metadata Models
 
+namespace FreeImageAPI.Metadata
+{
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_ANIMATION"/>.
 	/// </summary>
-	public class MDM_ANIMATION : MetadataModel
+	public sealed class MDM_ANIMATION : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -14865,7 +15024,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_COMMENTS"/>.
 	/// </summary>
-	public class MDM_COMMENTS : MetadataModel
+	public sealed class MDM_COMMENTS : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -14885,7 +15044,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_CUSTOM"/>.
 	/// </summary>
-	public class MDM_CUSTOM : MetadataModel
+	public sealed class MDM_CUSTOM : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -14905,7 +15064,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF"/>.
 	/// </summary>
-	public class MDM_EXIF_EXIF : MetadataModel
+	public sealed class MDM_EXIF_EXIF : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -14925,7 +15084,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_GPS"/>.
 	/// </summary>
-	public class MDM_EXIF_GPS : MetadataModel
+	public sealed class MDM_EXIF_GPS : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -14945,7 +15104,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_INTEROP"/>.
 	/// </summary>
-	public class MDM_INTEROP : MetadataModel
+	public sealed class MDM_INTEROP : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -14985,7 +15144,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_EXIF_MAKERNOTE"/>.
 	/// </summary>
-	public class MDM_MAKERNOTE : MetadataModel
+	public sealed class MDM_MAKERNOTE : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -15005,7 +15164,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_GEOTIFF"/>.
 	/// </summary>
-	public class MDM_GEOTIFF : MetadataModel
+	public sealed class MDM_GEOTIFF : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -15025,7 +15184,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_IPTC"/>.
 	/// </summary>
-	public class MDM_IPTC : MetadataModel
+	public sealed class MDM_IPTC : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -15045,7 +15204,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_NODATA"/>.
 	/// </summary>
-	public class MDM_NODATA : MetadataModel
+	public sealed class MDM_NODATA : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -15065,7 +15224,7 @@ namespace FreeImageAPI
 	/// <summary>
 	/// Represents a collection of all tags contained in the metadata model <see cref="FREE_IMAGE_MDMODEL.FIMD_XMP"/>.
 	/// </summary>
-	public class MDM_XMP : MetadataModel
+	public sealed class MDM_XMP : MetadataModel
 	{
 		/// <summary>
 		/// Initializes a new instance of this class.
@@ -15081,44 +15240,47 @@ namespace FreeImageAPI
 			get { return FREE_IMAGE_MDMODEL.FIMD_XMP; }
 		}
 	}
+}
 
 	#endregion
 
+namespace FreeImageAPI.Metadata
+{
 	/// <summary>
 	/// Manages metadata objects and operations.
 	/// </summary>
-	public class MetadataTag : IComparable, IComparable<MetadataTag>, ICloneable, IEquatable<MetadataTag>, IDisposable
+	public sealed class MetadataTag : IComparable, IComparable<MetadataTag>, ICloneable, IEquatable<MetadataTag>, IDisposable
 	{
 		/// <summary>
 		/// The encapsulated FreeImage-tag.
 		/// </summary>
-		internal protected FITAG tag;
+		internal FITAG tag;
 		/// <summary>
 		/// The metadata model of <see cref="tag"/>.
 		/// </summary>
-		internal protected FREE_IMAGE_MDMODEL model;
+		private FREE_IMAGE_MDMODEL model;
 		/// <summary>
 		/// Indicates whether this instance has already been disposed.
 		/// </summary>
-		protected bool disposed = false;
+		private bool disposed = false;
 		/// <summary>
 		/// Indicates whether this instance was created by FreeImage or
 		/// by the user.
 		/// </summary>
-		protected bool selfCreated;
+		private bool selfCreated;
 		/// <summary>
 		/// List linking metadata-model and Type.
 		/// </summary>
-		protected static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
+		private static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
 		/// <summary>
 		/// List linking Type and metadata-model.
 		/// </summary>
-		protected static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
+		private static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
 
 		/// <summary>
 		/// Initializes a new instance of this class.
 		/// </summary>
-		protected MetadataTag()
+		private MetadataTag()
 		{
 		}
 
@@ -15358,7 +15520,7 @@ namespace FreeImageAPI
 		public FREE_IMAGE_MDTYPE Type
 		{
 			get { CheckDisposed(); return FreeImage.GetTagType(tag); }
-			protected set { FreeImage.SetTagType(tag, value); }
+			private set { FreeImage.SetTagType(tag, value); }
 		}
 
 		/// <summary>
@@ -15367,7 +15529,7 @@ namespace FreeImageAPI
 		public uint Count
 		{
 			get { CheckDisposed(); return Type == FREE_IMAGE_MDTYPE.FIDT_ASCII ? FreeImage.GetTagCount(tag) - 1 : FreeImage.GetTagCount(tag); }
-			protected set { FreeImage.SetTagCount(tag, value); }
+			private set { FreeImage.SetTagCount(tag, value); }
 		}
 
 		/// <summary>
@@ -15376,7 +15538,7 @@ namespace FreeImageAPI
 		public uint Length
 		{
 			get { CheckDisposed(); return Type == FREE_IMAGE_MDTYPE.FIDT_ASCII ? FreeImage.GetTagLength(tag) - 1 : FreeImage.GetTagLength(tag); }
-			protected set { FreeImage.SetTagLength(tag, value); }
+			private set { FreeImage.SetTagLength(tag, value); }
 		}
 
 		private unsafe byte[] GetData()
@@ -15494,7 +15656,7 @@ namespace FreeImageAPI
 		/// <paramref name="value"/> is not Array.</exception>
 		/// <exception cref="NotSupportedException">
 		/// <paramref name="type"/> is FIDT_NOTYPE.</exception>
-		protected unsafe bool SetArrayValue(object value, FREE_IMAGE_MDTYPE type)
+		private unsafe bool SetArrayValue(object value, FREE_IMAGE_MDTYPE type)
 		{
 			if (value == null)
 			{
@@ -15728,7 +15890,7 @@ namespace FreeImageAPI
 		/// Throwns an <see cref="ObjectDisposedException"/> in case
 		/// this instance has already been disposed.
 		/// </summary>
-		protected void CheckDisposed()
+		private void CheckDisposed()
 		{
 			if (disposed)
 			{
@@ -15736,11 +15898,14 @@ namespace FreeImageAPI
 			}
 		}
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Provides methods for working with the standard bitmap palette.
 	/// </summary>
-	public class Palette : MemoryArray<RGBQUAD>
+	public sealed class Palette : MemoryArray<RGBQUAD>
 	{
 		/// <summary>
 		/// Initializes a new instance for the given FreeImage bitmap.
@@ -15951,9 +16116,12 @@ namespace FreeImageAPI
 			}
 		}
 	}
+}
 
+namespace FreeImageAPI.Plugins
+{
 	/// <summary>
-	/// Class representing all registered <see cref="FreeImageAPI.FreeImagePlugin"/> in FreeImage.
+	/// Class representing all registered <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/> in FreeImage.
 	/// </summary>
 	public static class PluginRepository
 	{
@@ -15982,17 +16150,17 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/>, representing the given format.
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>, representing the given format.
 		/// </summary>
 		/// <param name="fif">The representing format.</param>
-		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		/// <returns>An instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.</returns>
 		public static FreeImagePlugin Plugin(FREE_IMAGE_FORMAT fif)
 		{
 			return Plugin((int)fif);
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/>,
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>,
 		/// representing the format at the given index.
 		/// </summary>
 		/// <param name="index">The index of the representing format.</param>
@@ -16003,13 +16171,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.
 		/// <typeparamref name="expression"/> is searched in:
 		/// <c>Format</c>, <c>RegExpr</c>,
 		/// <c>ValidExtension</c> and <c>ValidFilename</c>.
 		/// </summary>
 		/// <param name="expression">The expression to search for.</param>
-		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		/// <returns>An instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.</returns>
 		public static FreeImagePlugin Plugin(string expression)
 		{
 			FreeImagePlugin result = null;
@@ -16031,30 +16199,30 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/> for the given format.
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/> for the given format.
 		/// </summary>
 		/// <param name="format">The format of the Plugin.</param>
-		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		/// <returns>An instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.</returns>
 		public static FreeImagePlugin PluginFromFormat(string format)
 		{
 			return Plugin(FreeImage.GetFIFFromFormat(format));
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/> for the given filename.
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/> for the given filename.
 		/// </summary>
 		/// <param name="filename">The valid filename for the plugin.</param>
-		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		/// <returns>An instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.</returns>
 		public static FreeImagePlugin PluginFromFilename(string filename)
 		{
 			return Plugin(FreeImage.GetFIFFromFilename(filename));
 		}
 
 		/// <summary>
-		/// Returns an instance of <see cref="FreeImageAPI.FreeImagePlugin"/> for the given mime.
+		/// Returns an instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/> for the given mime.
 		/// </summary>
 		/// <param name="mime">The valid mime for the plugin.</param>
-		/// <returns>An instance of <see cref="FreeImageAPI.FreeImagePlugin"/>.</returns>
+		/// <returns>An instance of <see cref="FreeImageAPI.Plugins.FreeImagePlugin"/>.</returns>
 		public static FreeImagePlugin PluginFromMime(string mime)
 		{
 			return Plugin(FreeImage.GetFIFFromMime(mime));
@@ -16375,7 +16543,10 @@ namespace FreeImageAPI
 		/// </summary>
 		public static FreeImagePlugin JP2 { get { return plugins[31]; } }
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Provides mathods for working with generic bitmap scanlines.
 	/// </summary>
@@ -16418,7 +16589,10 @@ namespace FreeImageAPI
 			}
 		}
 	}
+}
 
+namespace FreeImageAPI.IO
+{
 	/// <summary>
 	/// Class wrapping streams, implementing a buffer for read data,
 	/// so that seek operations can be made.
@@ -16680,11 +16854,14 @@ namespace FreeImageAPI
 			if (disposed) throw new ObjectDisposedException("StreamWrapper");
 		}
 	}
+}
 
 	#endregion
 
 	#region Enums
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Enumeration used for color conversions.
 	/// FREE_IMAGE_COLOR_DEPTH contains several colors to convert to.
@@ -16752,7 +16929,10 @@ namespace FreeImageAPI
 		/// </summary>
 		FICD_COLOR_MASK = FICD_01_BPP | FICD_04_BPP | FICD_08_BPP | FICD_16_BPP | FICD_24_BPP | FICD_32_BPP
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// List of combinable compare modes.
 	/// </summary>
@@ -16780,7 +16960,10 @@ namespace FreeImageAPI
 		/// </summary>
 		COMPLETE = (HEADER | PALETTE | DATA | METADATA)
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Flags for copying data from a bitmap to another.
 	/// </summary>
@@ -16799,7 +16982,10 @@ namespace FreeImageAPI
 		/// </summary>
 		REPLACE_EXISTING = 0x2
 	}
+}
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// List different search modes.
 	/// </summary>
@@ -16819,9 +17005,12 @@ namespace FreeImageAPI
 		/// </summary>
 		TOSTRING = 0x4,
 	}
+}
 
 	#endregion
 
+namespace FreeImageAPI
+{
 	/// <summary>
 	/// Static class importing functions from the FreeImage library
 	/// and providing additional functions.
