@@ -149,10 +149,7 @@ namespace FreeImageAPI
 		/// </returns>
 		public static bool operator ==(RGBQUAD left, RGBQUAD right)
 		{
-			return ((left.rgbBlue == right.rgbBlue) &&
-					(left.rgbGreen == right.rgbGreen) &&
-					(left.rgbRed == right.rgbRed) &&
-					(left.rgbReserved == right.rgbReserved));
+			return (left.uintValue == right.uintValue);
 		}
 
 		/// <summary>
@@ -165,7 +162,7 @@ namespace FreeImageAPI
 		/// </returns>
 		public static bool operator !=(RGBQUAD left, RGBQUAD right)
 		{
-			return !(left == right);
+			return (left.uintValue != right.uintValue);
 		}
 
 		/// <summary>
