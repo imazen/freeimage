@@ -14,6 +14,16 @@ namespace FreeImageAPI
 	public struct FI1BIT
 	{
 		/// <summary>
+		/// Represents the largest possible value of <see cref="FI1BIT"/>. This field is constant.
+		/// </summary>
+		public const byte MaxValue = 0x01;
+
+		/// <summary>
+		/// Represents the smallest possible value of <see cref="FI1BIT"/>. This field is constant.
+		/// </summary>
+		public const byte MinValue = 0x00;
+
+		/// <summary>
 		/// The value of the structure.
 		/// </summary>
 		private byte value;
@@ -24,7 +34,7 @@ namespace FreeImageAPI
 		/// <param name="value">The value to initialize with.</param>
 		private FI1BIT(byte value)
 		{
-			this.value = (byte)(value & 0x01);
+			this.value = (byte)(value & MaxValue);
 		}
 
 		/// <summary>
