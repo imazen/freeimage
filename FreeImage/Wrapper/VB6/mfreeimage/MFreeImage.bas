@@ -152,8 +152,28 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'June 06, 2008 - 2.3
+'+ [Carsten Klein] added new compression flags to the JPEG and PNG plugins
+'! [Carsten Klein] renamed wrapper function FreeImage_CloneMetadata() to FreeImage_CloneMetadataEx(): now, there is a native function called FreeImage_CloneMetadata().
+'+ [Carsten Klein] added private and internal function declaration for FreeImage_CloneMetadata() along with it's public Boolean returning wrapper function.
+'- [Carsten Klein] removed the FreeImage_ColorQuantizeEx() stuff from both functions FreeImage_ConvertColorDepth() and FreeImage_ConvertColorDepthIOP(): removed parameters PaletteSize, ReserveSize and ReservePalette.
+'- [Carsten Klein] changed declaration of FreeImage_ColorQuantizeEx() to be a internal function private to the wrapper with an 'Int' appendix.
+'+ [Carsten Klein] added two more VB-friendly public wrapper functions FreeImage_ColorQuantizeEx() and FreeImage_ColorQuantizeExIOP().
+'+ [Carsten Klein] added wrapper function FreeImage_GetPalettePtr(): gets the pointer to a specified array of RGBQUADs: intended to be used together with any of the ColorQuantizeEx functions.
+'! [Carsten Klein] changed constant FREEIMAGE_MINOR_VERSION: set to 11 to match current version 3.11.0
+'
+'! now FreeImage version 3.11.0
+'
+'December 14, 2007 - 2.2.1
+'+ [Carsten Klein] added constants for member 'biCompression' in BITMAPINFOHEADER struct
+'+ [Carsten Klein] added wrapper function FreeImage_GetInfoHeaderEx(), which returns a fully populated BITMAPINFOHEADER struct for a bitmap.
+'* [Carsten Klein] fixed a bug in FreeImage_GetFileTypeFromMemoryEx(): now calls FreeImage_CloseMemory() releasing the hStream to prevent memory leaks.
+'+ [Carsten Klein] added wrapper function FreeImage_GetColorizedPalette(): returns a colorized greyscale palettte.
+'+ [Carsten Klein] added wrapper function FreeImage_Colorize(): applies a colorized greyscale palettte obtained from FreeImage_GetColorizedPalette() to a bitmap.
+'+ [Carsten Klein] added wrapper function FreeImage_Sepia(): calls FreeImage_Colorize() with proper parameters to apply a so called sepia palette to a bitmap.
+'
 'December 12, 2007 - 2.2
-'* [Carsten Klein] Fixed a small bug in FreeImage_PaintTransparent, which now calls function FreeImage_ConvertTo32Bits instead of FreeImage_ConvertTo32Bits2.
+'* [Carsten Klein] fixed a small bug in FreeImage_PaintTransparent, which now calls function FreeImage_ConvertTo32Bits instead of FreeImage_ConvertTo32Bits2.
 '
 'November 15, 2007 - 2.1
 '* [Carsten Klein] adjusted page numbers of the API documentation in FreeImage function declarations to match FreeImage 3.10.0 API documentation
@@ -164,7 +184,7 @@ Option Explicit
 '! [Carsten Klein] changed declaration of FreeImage_SetOutputMessage(): now points transparently to the __stdcall version of this function in the library.
 '+ [Carsten Klein] added function declaraton for FreeImage_MultigridPoissonSolver().
 '+ [Carsten Klein] added function declaraton for FreeImage_GetTransparentIndex() and FreeImage_SetTransparentIndex().
-'+ [Carsten Klein] added private and internal function declaraton for FreeImage_AdjustColors() along with it's public Boolean returning wrapper function.
+'+ [Carsten Klein] added private and internal function declaration for FreeImage_AdjustColors() along with it's public Boolean returning wrapper function.
 '+ [Carsten Klein] added function declaraton for FreeImage_GetAdjustColorsLookupTable().
 '+ [Carsten Klein] added wrapper function FreeImage_GetAdjustColorsLookupTableEx(): this takes a real VB style Byte array ton receive the lookup table created.
 '+ [Carsten Klein] added function declaraton for FreeImage_ApplyColorMapping().
@@ -1006,7 +1026,7 @@ End Enum
 
 ' Version information
 Public Const FREEIMAGE_MAJOR_VERSION As Long = 3
-Public Const FREEIMAGE_MINOR_VERSION As Long = 10
+Public Const FREEIMAGE_MINOR_VERSION As Long = 11
 Public Const FREEIMAGE_RELEASE_SERIAL As Long = 0
 
 ' Memory stream pointer operation flags
@@ -1059,62 +1079,71 @@ Public Const BMP_DEFAULT As Long = 0
 Public Const BMP_SAVE_RLE As Long = 1
 Public Const CUT_DEFAULT As Long = 0
 Public Const DDS_DEFAULT As Long = 0
-Public Const EXR_DEFAULT As Long = 0              ' save data as half with piz-based wavelet compression
-Public Const EXR_FLOAT As Long = &H1              ' save data as float instead of as half (not recommended)
-Public Const EXR_NONE As Long = &H2               ' save with no compression
-Public Const EXR_ZIP As Long = &H4                ' save with zlib compression, in blocks of 16 scan lines
-Public Const EXR_PIZ As Long = &H8                ' save with piz-based wavelet compression
-Public Const EXR_PXR24 As Long = &H10             ' save with lossy 24-bit float compression
-Public Const EXR_B44 As Long = &H20               ' save with lossy 44% float compression - goes to 22% when combined with EXR_LC
-Public Const EXR_LC As Long = &H40                ' save images with one luminance and two chroma channels, rather than as RGB (lossy compression)
+Public Const EXR_DEFAULT As Long = 0                 ' save data as half with piz-based wavelet compression
+Public Const EXR_FLOAT As Long = &H1                 ' save data as float instead of as half (not recommended)
+Public Const EXR_NONE As Long = &H2                  ' save with no compression
+Public Const EXR_ZIP As Long = &H4                   ' save with zlib compression, in blocks of 16 scan lines
+Public Const EXR_PIZ As Long = &H8                   ' save with piz-based wavelet compression
+Public Const EXR_PXR24 As Long = &H10                ' save with lossy 24-bit float compression
+Public Const EXR_B44 As Long = &H20                  ' save with lossy 44% float compression - goes to 22% when combined with EXR_LC
+Public Const EXR_LC As Long = &H40                   ' save images with one luminance and two chroma channels, rather than as RGB (lossy compression)
 Public Const FAXG3_DEFAULT As Long = 0
 Public Const GIF_DEFAULT As Long = 0
-Public Const GIF_LOAD256 As Long = 1              ' Load the image as a 256 color image with ununsed palette entries, if it's 16 or 2 color
-Public Const GIF_PLAYBACK As Long = 2             ''Play' the GIF to generate each frame (as 32bpp) instead of returning raw frame data when loading
+Public Const GIF_LOAD256 As Long = 1                 ' Load the image as a 256 color image with ununsed palette entries, if it's 16 or 2 color
+Public Const GIF_PLAYBACK As Long = 2                ''Play' the GIF to generate each frame (as 32bpp) instead of returning raw frame data when loading
 Public Const HDR_DEFAULT As Long = 0
 Public Const ICO_DEFAULT As Long = 0
-Public Const ICO_MAKEALPHA As Long = 1            ' convert to 32bpp and create an alpha channel from the AND-mask when loading
+Public Const ICO_MAKEALPHA As Long = 1               ' convert to 32bpp and create an alpha channel from the AND-mask when loading
 Public Const IFF_DEFAULT As Long = 0
-Public Const J2K_DEFAULT  As Long = 0             ' save with a 16:1 rate
-Public Const JP2_DEFAULT As Long = 0              ' save with a 16:1 rate
-Public Const JPEG_DEFAULT As Long = 0             ' loading (see JPEG_FAST); saving (see JPEG_QUALITYGOOD)
-Public Const JPEG_FAST As Long = &H1              ' load the file as fast as possible, sacrificing some quality
-Public Const JPEG_ACCURATE As Long = &H2          ' load the file with the best quality, sacrificing some speed
-Public Const JPEG_CMYK As Long = &H4              ' load separated CMYK "as is" (use 'OR' to combine with other flags)
-Public Const JPEG_QUALITYSUPERB As Long = &H80    ' save with superb quality (100:1)
-Public Const JPEG_QUALITYGOOD As Long = &H100     ' save with good quality (75:1)
-Public Const JPEG_QUALITYNORMAL As Long = &H200   ' save with normal quality (50:1)
-Public Const JPEG_QUALITYAVERAGE As Long = &H400  ' save with average quality (25:1)
-Public Const JPEG_QUALITYBAD As Long = &H800      ' save with bad quality (10:1)
-Public Const JPEG_PROGRESSIVE As Long = &H2000    ' save as a progressive-JPEG (use 'OR' to combine with other save flags)
+Public Const J2K_DEFAULT  As Long = 0                ' save with a 16:1 rate
+Public Const JP2_DEFAULT As Long = 0                 ' save with a 16:1 rate
+Public Const JPEG_DEFAULT As Long = 0                ' loading (see JPEG_FAST); saving (see JPEG_QUALITYGOOD|JPEG_SUBSAMPLING_420)
+Public Const JPEG_FAST As Long = &H1                 ' load the file as fast as possible, sacrificing some quality
+Public Const JPEG_ACCURATE As Long = &H2             ' load the file with the best quality, sacrificing some speed
+Public Const JPEG_CMYK As Long = &H4                 ' load separated CMYK "as is" (use 'OR' to combine with other flags)
+Public Const JPEG_QUALITYSUPERB As Long = &H80       ' save with superb quality (100:1)
+Public Const JPEG_QUALITYGOOD As Long = &H100        ' save with good quality (75:1)
+Public Const JPEG_QUALITYNORMAL As Long = &H200      ' save with normal quality (50:1)
+Public Const JPEG_QUALITYAVERAGE As Long = &H400     ' save with average quality (25:1)
+Public Const JPEG_QUALITYBAD As Long = &H800         ' save with bad quality (10:1)
+Public Const JPEG_PROGRESSIVE As Long = &H2000       ' save as a progressive-JPEG (use 'OR' to combine with other save flags)
+Public Const JPEG_SUBSAMPLING_411 As Long = &H1000   ' save with high 4x1 chroma subsampling (4:1:1)
+Public Const JPEG_SUBSAMPLING_420 As Long = &H4000   ' save with medium 2x2 medium chroma subsampling (4:2:0) - default value
+Public Const JPEG_SUBSAMPLING_422 As Long = &H8000   ' save with low 2x1 chroma subsampling (4:2:2)
+Public Const JPEG_SUBSAMPLING_444 As Long = &H10000  ' save with no chroma subsampling (4:4:4)
 Public Const KOALA_DEFAULT As Long = 0
 Public Const LBM_DEFAULT As Long = 0
 Public Const MNG_DEFAULT As Long = 0
 Public Const PCD_DEFAULT As Long = 0
-Public Const PCD_BASE As Long = 1                 ' load the bitmap sized 768 x 512
-Public Const PCD_BASEDIV4 As Long = 2             ' load the bitmap sized 384 x 256
-Public Const PCD_BASEDIV16 As Long = 3            ' load the bitmap sized 192 x 128
+Public Const PCD_BASE As Long = 1                    ' load the bitmap sized 768 x 512
+Public Const PCD_BASEDIV4 As Long = 2                ' load the bitmap sized 384 x 256
+Public Const PCD_BASEDIV16 As Long = 3               ' load the bitmap sized 192 x 128
 Public Const PCX_DEFAULT As Long = 0
 Public Const PNG_DEFAULT As Long = 0
-Public Const PNG_IGNOREGAMMA As Long = 1          ' avoid gamma correction
+Public Const PNG_IGNOREGAMMA As Long = 1             ' avoid gamma correction
+Public Const PNG_Z_BEST_SPEED As Long = &H1          ' save using ZLib level 1 compression flag (default value is 6)
+Public Const PNG_Z_DEFAULT_COMPRESSION As Long = &H6 ' save using ZLib level 6 compression flag (default recommended value)
+Public Const PNG_Z_BEST_COMPRESSION As Long = &H9    ' save using ZLib level 9 compression flag (default value is 6)
+Public Const PNG_Z_NO_COMPRESSION As Long = &H100    ' save without ZLib compression
+Public Const PNG_INTERLACED As Long = &H200          ' save using Adam7 interlacing (use | to combine with other save flags)
 Public Const PNM_DEFAULT As Long = 0
-Public Const PNM_SAVE_RAW As Long = 0             ' if set the writer saves in RAW format (i.e. P4, P5 or P6)
-Public Const PNM_SAVE_ASCII As Long = 1           ' if set the writer saves in ASCII format (i.e. P1, P2 or P3)
+Public Const PNM_SAVE_RAW As Long = 0                ' if set the writer saves in RAW format (i.e. P4, P5 or P6)
+Public Const PNM_SAVE_ASCII As Long = 1              ' if set the writer saves in ASCII format (i.e. P1, P2 or P3)
 Public Const PSD_DEFAULT As Long = 0
 Public Const RAS_DEFAULT As Long = 0
 Public Const SGI_DEFAULT As Long = 0
 Public Const TARGA_DEFAULT As Long = 0
-Public Const TARGA_LOAD_RGB888 As Long = 1        ' if set the loader converts RGB555 and ARGB8888 -> RGB888
+Public Const TARGA_LOAD_RGB888 As Long = 1           ' if set the loader converts RGB555 and ARGB8888 -> RGB888
 Public Const TIFF_DEFAULT As Long = 0
-Public Const TIFF_CMYK As Long = &H1              ' reads/stores tags for separated CMYK (use 'OR' to combine with compression flags)
-Public Const TIFF_PACKBITS As Long = &H100        ' save using PACKBITS compression
-Public Const TIFF_DEFLATE As Long = &H200         ' save using DEFLATE compression (a.k.a. ZLIB compression)
-Public Const TIFF_ADOBE_DEFLATE As Long = &H400   ' save using ADOBE DEFLATE compression
-Public Const TIFF_NONE As Long = &H800            ' save without any compression
-Public Const TIFF_CCITTFAX3 As Long = &H1000      ' save using CCITT Group 3 fax encoding
-Public Const TIFF_CCITTFAX4 As Long = &H2000      ' save using CCITT Group 4 fax encoding
-Public Const TIFF_LZW As Long = &H4000            ' save using LZW compression
-Public Const TIFF_JPEG As Long = &H8000           ' save using JPEG compression
+Public Const TIFF_CMYK As Long = &H1                 ' reads/stores tags for separated CMYK (use 'OR' to combine with compression flags)
+Public Const TIFF_PACKBITS As Long = &H100           ' save using PACKBITS compression
+Public Const TIFF_DEFLATE As Long = &H200            ' save using DEFLATE compression (a.k.a. ZLIB compression)
+Public Const TIFF_ADOBE_DEFLATE As Long = &H400      ' save using ADOBE DEFLATE compression
+Public Const TIFF_NONE As Long = &H800               ' save without any compression
+Public Const TIFF_CCITTFAX3 As Long = &H1000         ' save using CCITT Group 3 fax encoding
+Public Const TIFF_CCITTFAX4 As Long = &H2000         ' save using CCITT Group 4 fax encoding
+Public Const TIFF_LZW As Long = &H4000               ' save using LZW compression
+Public Const TIFF_JPEG As Long = &H8000              ' save using JPEG compression
 Public Const WBMP_DEFAULT As Long = 0
 Public Const XBM_DEFAULT As Long = 0
 Public Const XPM_DEFAULT As Long = 0
@@ -1256,6 +1285,15 @@ Public Enum FREE_IMAGE_SAVE_OPTIONS
    FISO_JPEG_QUALITYAVERAGE = JPEG_QUALITYAVERAGE ' save with average quality (25:1)
    FISO_JPEG_QUALITYBAD = JPEG_QUALITYBAD         ' save with bad quality (10:1)
    FISO_JPEG_PROGRESSIVE = JPEG_PROGRESSIVE       ' save as a progressive-JPEG (use 'OR' to combine with other save flags)
+   FISO_JPEG_SUBSAMPLING_411 = JPEG_SUBSAMPLING_411      ' save with high 4x1 chroma subsampling (4:1:1)
+   FISO_JPEG_SUBSAMPLING_420 = JPEG_SUBSAMPLING_420      ' save with medium 2x2 medium chroma subsampling (4:2:0) - default value
+   FISO_JPEG_SUBSAMPLING_422 = JPEG_SUBSAMPLING_422      ' save with low 2x1 chroma subsampling (4:2:2)
+   FISO_JPEG_SUBSAMPLING_444 = JPEG_SUBSAMPLING_444      ' save with no chroma subsampling (4:4:4)
+   FISO_PNG_Z_BEST_SPEED = PNG_Z_BEST_SPEED              ' save using ZLib level 1 compression flag (default value is 6)
+   FISO_PNG_Z_DEFAULT_COMPRESSION = PNG_Z_DEFAULT_COMPRESSION ' save using ZLib level 6 compression flag (default recommended value)
+   FISO_PNG_Z_BEST_COMPRESSION = PNG_Z_BEST_COMPRESSION  ' save using ZLib level 9 compression flag (default value is 6)
+   FISO_PNG_Z_NO_COMPRESSION = PNG_Z_NO_COMPRESSION      ' save without ZLib compression
+   FISO_PNG_INTERLACED = PNG_INTERLACED           ' save using Adam7 interlacing (use | to combine with other save flags)
    FISO_PNM_DEFAULT = PNM_DEFAULT
    FISO_PNM_SAVE_RAW = PNM_SAVE_RAW               ' if set the writer saves in RAW format (i.e. P4, P5 or P6)
    FISO_PNM_SAVE_ASCII = PNM_SAVE_ASCII           ' if set the writer saves in ASCII format (i.e. P1, P2 or P3)
@@ -1281,6 +1319,10 @@ End Enum
    Const FISO_JPEG_QUALITYAVERAGE = JPEG_QUALITYAVERAGE
    Const FISO_JPEG_QUALITYBAD = JPEG_QUALITYBAD
    Const FISO_JPEG_PROGRESSIVE = JPEG_PROGRESSIVE
+   Const FISO_JPEG_SUBSAMPLING_411 = JPEG_SUBSAMPLING_411
+   Const FISO_JPEG_SUBSAMPLING_420 = JPEG_SUBSAMPLING_420
+   Const FISO_JPEG_SUBSAMPLING_422 = JPEG_SUBSAMPLING_422
+   Const FISO_JPEG_SUBSAMPLING_444 = JPEG_SUBSAMPLING_444
    Const FISO_PNM_DEFAULT = PNM_DEFAULT
    Const FISO_PNM_SAVE_RAW = PNM_SAVE_RAW
    Const FISO_PNM_SAVE_ASCII = PNM_SAVE_ASCII
@@ -1726,6 +1768,13 @@ Public Type BITMAPINFO
    bmiColors(0) As RGBQUAD
 End Type
 
+Public Const BI_RGB As Long = 0
+Public Const BI_RLE8 As Long = 1
+Public Const BI_RLE4 As Long = 2
+Public Const BI_BITFIELDS As Long = 3
+Public Const BI_JPEG As Long = 4
+Public Const BI_PNG As Long = 5
+
 Public Type FIICCPROFILE
    Flags As Integer
    Size As Long
@@ -2110,7 +2159,7 @@ Public Declare Function FreeImage_ColorQuantize Lib "FreeImage.dll" Alias "_Free
            ByVal dib As Long, _
            ByVal quantize As FREE_IMAGE_QUANTIZE) As Long
            
-Public Declare Function FreeImage_ColorQuantizeEx Lib "FreeImage.dll" Alias "_FreeImage_ColorQuantizeEx@20" ( _
+Private Declare Function FreeImage_ColorQuantizeExInt Lib "FreeImage.dll" Alias "_FreeImage_ColorQuantizeEx@20" ( _
            ByVal dib As Long, _
   Optional ByVal quantize As FREE_IMAGE_QUANTIZE = FIQ_WUQUANT, _
   Optional ByVal PaletteSize As Long = 256, _
@@ -2119,7 +2168,7 @@ Public Declare Function FreeImage_ColorQuantizeEx Lib "FreeImage.dll" Alias "_Fr
 
 Public Declare Function FreeImage_Threshold Lib "FreeImage.dll" Alias "_FreeImage_Threshold@8" ( _
            ByVal dib As Long, _
-           ByVal T As Byte) As Long
+           ByVal t As Byte) As Long
 
 Public Declare Function FreeImage_Dither Lib "FreeImage.dll" Alias "_FreeImage_Dither@8" ( _
            ByVal dib As Long, _
@@ -2449,6 +2498,10 @@ Private Declare Function FreeImage_FindNextMetadataInt Lib "FreeImage.dll" Alias
 
 Public Declare Sub FreeImage_FindCloseMetadata Lib "FreeImage.dll" Alias "_FreeImage_FindCloseMetadata@4" ( _
            ByVal mdhandle As Long)
+           
+Public Declare Function FreeImage_CloneMetadataInt Lib "FreeImage.dll" Alias "_FreeImage_CloneMetadata@8" ( _
+           ByVal dst As Long, _
+           ByVal src As Long) As Long
 
 
 ' Metadata accessors (p. 66 to 66)
@@ -3450,6 +3503,15 @@ Public Function FreeImage_FindNextMetadata(ByVal mdhandle As Long, _
                                            
 End Function
 
+Public Function FreeImage_CloneMetadata(ByVal dst As Long, _
+                                        ByVal src As Long) As Boolean
+                                           
+   ' Thin wrapper function returning a real VB Boolean value
+
+   FreeImage_CloneMetadata = (FreeImage_CloneMetadataInt(dst, src) = 1)
+                                           
+End Function
+
 Public Function FreeImage_GetMetadata(ByRef Model As Long, _
                                       ByVal dib As Long, _
                                       ByVal Key As String, _
@@ -4270,6 +4332,8 @@ Dim alResult() As Long
 
 End Function
 
+' Memory and Stream functions
+
 Public Function FreeImage_GetFileTypeFromMemoryEx(ByRef Data As Variant, _
                                          Optional ByRef size_in_bytes As Long = 0) As FREE_IMAGE_FORMAT
 
@@ -4300,6 +4364,7 @@ Dim lDataPtr As Long
    If (hStream) Then
       ' on success, detect image type
       FreeImage_GetFileTypeFromMemoryEx = FreeImage_GetFileTypeFromMemory(hStream)
+      Call FreeImage_CloseMemory(hStream)
    Else
       FreeImage_GetFileTypeFromMemoryEx = FIF_UNKNOWN
    End If
@@ -5280,9 +5345,9 @@ Dim bSetTag As Boolean
 
 End Function
 
-Public Function FreeImage_CloneMetadata(ByVal SrcDIB As Long, _
-                                        ByVal DstDIB As Long, _
-                               Optional ByVal Model As FREE_IMAGE_MDMODEL = FIMD_NODATA) As Long
+Public Function FreeImage_CloneMetadataEx(ByVal SrcDIB As Long, _
+                                          ByVal DstDIB As Long, _
+                                 Optional ByVal Model As FREE_IMAGE_MDMODEL = FIMD_NODATA) As Long
                                
    ' This derived helper function copies several metadata tags from one
    ' image to another. It is very similar to FreeImage_CopyMetadata().
@@ -5297,18 +5362,21 @@ Public Function FreeImage_CloneMetadata(ByVal SrcDIB As Long, _
    
    ' This function will most likely be used in a end user application and should
    ' be invoked through a menu command called: "Set/Apply Metadata From Source Image..."
+   
+   ' This function returns the number of tags copied or zero when there are no tags
+   ' in the source image or an error occured.
                                             
    If ((SrcDIB <> 0) And (DstDIB <> 0)) Then
       If ((Model >= FIMD_COMMENTS) And (Model <= FIMD_CUSTOM)) Then
          If (FreeImage_RemoveMetadataModel(DstDIB, Model)) Then
-            FreeImage_CloneMetadata = FreeImage_CopyMetadata(SrcDIB, DstDIB, _
+            FreeImage_CloneMetadataEx = FreeImage_CopyMetadata(SrcDIB, DstDIB, _
                                                              True, Model)
          End If
       Else
          For Model = FIMD_COMMENTS To FIMD_CUSTOM
-            FreeImage_CloneMetadata = FreeImage_CloneMetadata _
-                                    + FreeImage_CloneMetadata(SrcDIB, DstDIB, _
-                                                              Model)
+            FreeImage_CloneMetadataEx = FreeImage_CloneMetadataEx _
+                                      + FreeImage_CloneMetadataEx(SrcDIB, DstDIB, _
+                                                                  Model)
          Next Model
       End If
    End If
@@ -5471,7 +5539,7 @@ End Function
 
 Public Function FreeImage_IsExtensionValidForFIF(ByVal fif As FREE_IMAGE_FORMAT, _
                                                  ByVal extension As String, _
-                                        Optional ByVal compare As VbCompareMethod = vbBinaryCompare) As Boolean
+                                        Optional ByVal Compare As VbCompareMethod = vbBinaryCompare) As Boolean
    
    ' This function tests, whether a given filename extension is valid
    ' for a certain image format (fif).
@@ -5479,13 +5547,13 @@ Public Function FreeImage_IsExtensionValidForFIF(ByVal fif As FREE_IMAGE_FORMAT,
    FreeImage_IsExtensionValidForFIF = (InStr(1, _
                                              FreeImage_GetFIFExtensionList(fif) & ",", _
                                              extension & ",", _
-                                             compare) > 0)
+                                             Compare) > 0)
 
 End Function
 
 Public Function FreeImage_IsFilenameValidForFIF(ByVal fif As FREE_IMAGE_FORMAT, _
                                                 ByVal Filename As String, _
-                                       Optional ByVal compare As VbCompareMethod = vbBinaryCompare) As Boolean
+                                       Optional ByVal Compare As VbCompareMethod = vbBinaryCompare) As Boolean
                                                 
 Dim strExtension As String
 Dim i As Long
@@ -5499,7 +5567,7 @@ Dim i As Long
       FreeImage_IsFilenameValidForFIF = (InStr(1, _
                                                FreeImage_GetFIFExtensionList(fif) & ",", _
                                                strExtension & ",", _
-                                               compare) > 0)
+                                               Compare) > 0)
    End If
    
 End Function
@@ -5681,6 +5749,22 @@ Public Function FreeImage_HasICCProfile(ByVal dib As Long) As Boolean
 
 End Function
 
+' Bitmap Info functions
+
+Public Function FreeImage_GetInfoHeaderEx(ByVal dib As Long) As BITMAPINFOHEADER
+
+Dim lpInfoHeader As Long
+
+   ' This function is a wrapper around FreeImage_GetInfoHeader() and returns a fully
+   ' populated BITMAPINFOHEADER structure for a given bitmap.
+
+   lpInfoHeader = FreeImage_GetInfoHeader(dib)
+   If (lpInfoHeader) Then
+      Call CopyMemory(FreeImage_GetInfoHeaderEx, ByVal lpInfoHeader, LenB(FreeImage_GetInfoHeaderEx))
+   End If
+
+End Function
+
 ' Image color depth conversion wrapper
 
 Public Function FreeImage_ConvertColorDepth(ByVal hDIB As Long, _
@@ -5688,10 +5772,7 @@ Public Function FreeImage_ConvertColorDepth(ByVal hDIB As Long, _
                                    Optional ByVal bUnloadSource As Boolean, _
                                    Optional ByVal bThreshold As Byte = 128, _
                                    Optional ByVal eDitherMethod As FREE_IMAGE_DITHER = FID_FS, _
-                                   Optional ByVal eQuantizationMethod As FREE_IMAGE_QUANTIZE = FIQ_WUQUANT, _
-                                   Optional ByVal lPaletteSize As Long = 256, _
-                                   Optional ByRef vntReservePalette As Variant, _
-                                   Optional ByVal lReserveSize As Long) As Long
+                                   Optional ByVal eQuantizationMethod As FREE_IMAGE_QUANTIZE = FIQ_WUQUANT) As Long
                                             
 Dim hDIBNew As Long
 Dim hDIBTemp As Long
@@ -5715,22 +5796,6 @@ Dim bAdjustReservePaletteSize As Boolean
    ' you can "change" an image with this function rather than getting a new DIB
    ' pointer. There is no more need for a second DIB variable at the caller's site.
    
-   ' The optional 'lPaletteSize' parameter lets you specify the desired size (the
-   ' number of actually used palette entries) of the output palette when converting
-   ' to an 8 bit color image. When 'lPaletteSize' differs from 256, this function
-   ' uses 'FreeImage_ColorQuantizeEx' to get the converted image.
-   
-   ' Both parameters 'vntReservePalette' and 'lReserveSize' also work together with
-   ' the 'FreeImage_ColorQuantizeEx' function. 'vntReservePalette' may either be a
-   ' pointer to palette data (pointer to an array of type RGBQUAD) or an array of
-   ' type Long, which must contain the palette data. You can receive palette data as
-   ' an array of type Long with the function 'FreeImage_GetPaletteExLong'. According
-   ' to the FreeImage API documentation, lReserveSize must contain the number of
-   ' palette entries used from the reserve palette and may be omitted, if
-   ' 'vntReservePalette' is an array. In that case, 'lReserveSize' will be assumed
-   ' to be the number of array elements.
-   
-
    bForceLinearRamp = ((eConversionFlag And FICF_REORDER_GREYSCALE_PALETTE) = 0)
    lBPP = FreeImage_GetBPP(hDIB)
 
@@ -5779,49 +5844,19 @@ Dim bAdjustReservePaletteSize As Boolean
          End If
          
       Case FICF_PALETTISED_8BPP
-         ' check 'lPaletteSize' and adjust if needed
-         If (lPaletteSize > 256) Then
-            lPaletteSize = 256
-         
-         ElseIf (lPaletteSize < 2) Then
-            lPaletteSize = 2
-         
-         End If
-         
-         bAdjustReservePaletteSize = (lReserveSize <= 0)
-         
-         ' check for reserve palette
-         lpReservePalette = pGetMemoryBlockPtrFromVariant(vntReservePalette, _
-                                                          lReserveSize)
-                                                          
-         If (bAdjustReservePaletteSize) Then
-            lReserveSize = lReserveSize \ 4
-         End If
-         
          ' note, that the FreeImage library only quantizes 24 bit images
-          ' do not convert any 8 bit images, as long as 'lPaletteSize' is 256
-         If ((lBPP <> 8) Or (lPaletteSize <> 256)) Then
+         ' do not convert any 8 bit images
+         If (lBPP <> 8) Then
             ' images with a color depth of 24 bits can directly be
             ' converted with the FreeImage_ColorQuantize function;
             ' other images need to be converted to 24 bits first
             If (lBPP = 24) Then
-               If (lPaletteSize = 256) Then
-                  hDIBNew = FreeImage_ColorQuantize(hDIB, eQuantizationMethod)
-               Else
-                  hDIBNew = FreeImage_ColorQuantizeEx(hDIB, eQuantizationMethod, _
-                                                      lPaletteSize, lReserveSize, lpReservePalette)
-               End If
+               hDIBNew = FreeImage_ColorQuantize(hDIB, eQuantizationMethod)
             Else
                hDIBTemp = FreeImage_ConvertTo24Bits(hDIB)
-               If (lPaletteSize = 256) Then
-                  hDIBNew = FreeImage_ColorQuantize(hDIBTemp, eQuantizationMethod)
-               Else
-                  hDIBNew = FreeImage_ColorQuantizeEx(hDIBTemp, eQuantizationMethod, _
-                                                      lPaletteSize, lReserveSize, lpReservePalette)
-               End If
+               hDIBNew = FreeImage_ColorQuantize(hDIBTemp, eQuantizationMethod)
                Call FreeImage_Unload(hDIBTemp)
             End If
-            
          End If
          
       Case FICF_RGB_15BPP
@@ -5858,6 +5893,85 @@ Dim bAdjustReservePaletteSize As Boolean
    End If
 
 End Function
+
+Public Function FreeImage_ColorQuantizeEx(ByVal dib As Long, _
+                                 Optional ByVal quantize As FREE_IMAGE_QUANTIZE = FIQ_WUQUANT, _
+                                 Optional ByVal bUnloadSource As Boolean = False, _
+                                 Optional ByVal PaletteSize As Long = 256, _
+                                 Optional ByVal ReserveSize As Long = 0, _
+                                 Optional ByRef ReservePalette As Variant = Null) As Long
+  
+Dim hTmp As Long
+Dim lpPalette As Long
+Dim lBlockSize As Long
+Dim lElementSize As Long
+
+   ' This function is a more VB-friendly wrapper around FreeImage_ColorQuantizeEx,
+   ' which lets you specify the ReservePalette to be used not only as a pointer, but
+   ' also as a real VB-style array of type Long, where each Long item takes a color
+   ' in ARGB format (&HAARRGGBB). The native FreeImage function FreeImage_ColorQuantizeEx
+   ' is declared private and named FreeImage_ColorQuantizeExInt and so hidden from the
+   ' world outside the wrapper.
+   
+   ' In contrast to the FreeImage API documentation, ReservePalette is of type Variant
+   ' and may either be a pointer to palette data (pointer to an array of type RGBQUAD
+   ' == VarPtr(atMyPalette(0)) in VB) or an array of type Long, which then must contain
+   ' the palette data in ARGB format. You can receive palette data as an array Longs
+   ' from function FreeImage_GetPaletteExLong.
+   ' Although ReservePalette is of type Variant, arrays of type RGBQUAD can not be
+   ' passed, as long as RGBQUAD is not declared as a public type in a public object
+   ' module. So, when dealing with RGBQUAD arrays, you are stuck on VarPtr or may
+   ' use function FreeImage_GetPalettePtr, which is a more meaningfully named
+   ' convenience wrapper around VarPtr.
+   
+   ' The optional 'bUnloadSource' parameter is for unloading the original image, so
+   ' you can "change" an image with this function rather than getting a new DIB
+   ' pointer. There is no more need for a second DIB variable at the caller's site.
+   
+   ' All other parameters work according to the FreeImage API documentation.
+   
+   ' Note: Currently, any provided ReservePalette is only used, if quantize is
+   '       FIQ_NNQUANT. This seems to be either a bug or an undocumented
+   '       limitation of the FreeImage library (up to version 3.11.0).
+
+   If (dib) Then
+      If (FreeImage_GetBPP(dib) <> 24) Then
+         hTmp = dib
+         dib = FreeImage_ConvertTo24Bits(dib)
+         If (bUnloadSource) Then
+            Call FreeImage_Unload(hTmp)
+         End If
+         bUnloadSource = True
+      End If
+      
+      ' adjust PaletteSize
+      If (PaletteSize < 2) Then
+         PaletteSize = 2
+      ElseIf (PaletteSize > 256) Then
+         PaletteSize = 256
+      End If
+      
+      lpPalette = pGetMemoryBlockPtrFromVariant(ReservePalette, lBlockSize, lElementSize)
+      
+      FreeImage_ColorQuantizeEx = FreeImage_ColorQuantizeExInt(dib, _
+                                       quantize, PaletteSize, ReserveSize, lpPalette)
+      
+      If (bUnloadSource) Then
+         Call FreeImage_Unload(dib)
+      End If
+   End If
+
+End Function
+
+Public Function FreeImage_GetPalettePtr(ByRef Palette() As RGBQUAD) As Long
+
+   ' Returns a pointer to an array of RGBQUAD. This is sometimes refered to as
+   ' a palette.
+
+   FreeImage_GetPalettePtr = VarPtr(Palette(0))
+
+End Function
+
 
 ' Image Rescale wrapper functions
 
@@ -9159,6 +9273,7 @@ Public Function SaveImageContainerEx(ByRef Container As Object, _
 
 End Function
 
+
 '--------------------------------------------------------------------------------
 ' OlePicture aware toolkit, rescale and conversion functions
 '--------------------------------------------------------------------------------
@@ -9263,11 +9378,8 @@ Public Function FreeImage_ConvertColorDepthIOP(ByRef IOlePicture As IPicture, _
                                                ByVal eConversionFlag As FREE_IMAGE_CONVERSION_FLAGS, _
                                       Optional ByVal bThreshold As Byte = 128, _
                                       Optional ByVal eDitherMethod As FREE_IMAGE_DITHER = FID_FS, _
-                                      Optional ByVal eQuantizationMethod As FREE_IMAGE_QUANTIZE = FIQ_WUQUANT, _
-                                      Optional ByVal lPaletteSize As Long = 256, _
-                                      Optional ByRef vntReservePalette As Variant, _
-                                      Optional ByVal lReserveSize As Long) As IPicture
-                                   
+                                      Optional ByVal eQuantizationMethod As FREE_IMAGE_QUANTIZE = FIQ_WUQUANT) As IPicture
+
 Dim hDIB As Long
 
    ' IOlePicture based wrapper for wrapper function FreeImage_ConvertColorDepth()
@@ -9275,9 +9387,27 @@ Dim hDIB As Long
    hDIB = FreeImage_CreateFromOlePicture(IOlePicture)
    If (hDIB) Then
       hDIB = FreeImage_ConvertColorDepth(hDIB, eConversionFlag, True, _
-                                         bThreshold, eDitherMethod, eQuantizationMethod, _
-                                         lPaletteSize, vntReservePalette, lReserveSize)
+                                         bThreshold, eDitherMethod, eQuantizationMethod)
       Set FreeImage_ConvertColorDepthIOP = FreeImage_GetOlePicture(hDIB, , True)
+   End If
+
+End Function
+
+Public Function FreeImage_ColorQuantizeExIOP(ByRef IOlePicture As IPicture, _
+                                 Optional ByVal quantize As FREE_IMAGE_QUANTIZE = FIQ_WUQUANT, _
+                                 Optional ByVal PaletteSize As Long = 256, _
+                                 Optional ByVal ReserveSize As Long = 0, _
+                                 Optional ByRef ReservePalette As Variant = Null) As IPicture
+                                 
+Dim hDIB As Long
+
+   ' IOlePicture based wrapper for wrapper function FreeImage_ColorQuantizeEx()
+
+   hDIB = FreeImage_CreateFromOlePicture(IOlePicture)
+   If (hDIB) Then
+      hDIB = FreeImage_ColorQuantizeEx(hDIB, quantize, True, _
+                                       PaletteSize, ReserveSize, ReservePalette)
+      Set FreeImage_ColorQuantizeExIOP = FreeImage_GetOlePicture(hDIB, , True)
    End If
 
 End Function
@@ -9577,6 +9707,84 @@ Dim hDIBResult As Long
       End If
    End If
    
+End Function
+
+
+'--------------------------------------------------------------------------------
+' VB-coded Toolkit functions
+'--------------------------------------------------------------------------------
+
+Public Function FreeImage_GetColorizedPalette(ByVal Color As OLE_COLOR, _
+                                     Optional ByVal SplitValue As Variant = 0.5) As RGBQUAD()
+
+Dim atPalette(255) As RGBQUAD
+Dim lSplitIndex As Long
+Dim lSplitIndexInv As Long
+Dim lRed As Long
+Dim lGreen As Long
+Dim lBlue As Long
+Dim i As Long
+
+   ' compute the split index
+   Select Case VarType(SplitValue)
+   
+   Case vbByte, vbInteger, vbLong
+      lSplitIndex = SplitValue
+      
+   Case vbDouble, vbSingle, vbDecimal
+      lSplitIndex = 256 * SplitValue
+   
+   Case Else
+      lSplitIndex = 128
+   
+   End Select
+   
+   ' check ranges of split index
+   If (lSplitIndex < 0) Then
+      lSplitIndex = 0
+   ElseIf (lSplitIndex > 255) Then
+      lSplitIndex = 255
+   End If
+   lSplitIndexInv = 256 - lSplitIndex
+
+   ' extract color components red, green and blue
+   lRed = (Color And &HFF)
+   lGreen = ((Color \ &H100&) And &HFF)
+   lBlue = ((Color \ &H10000) And &HFF)
+
+   For i = 0 To lSplitIndex - 1
+      With atPalette(i)
+         .rgbRed = (lRed / lSplitIndex) * i
+         .rgbGreen = (lGreen / lSplitIndex) * i
+         .rgbBlue = (lBlue / lSplitIndex) * i
+      End With
+   Next i
+   For i = lSplitIndex To 255
+      With atPalette(i)
+         .rgbRed = lRed + ((255 - lRed) / lSplitIndexInv) * (i - lSplitIndex)
+         .rgbGreen = lGreen + ((255 - lGreen) / lSplitIndexInv) * (i - lSplitIndex)
+         .rgbBlue = lBlue + ((255 - lBlue) / lSplitIndexInv) * (i - lSplitIndex)
+      End With
+   Next i
+   
+   FreeImage_GetColorizedPalette = atPalette
+
+End Function
+
+Public Function FreeImage_Colorize(ByVal dib As Long, _
+                                   ByVal Color As OLE_COLOR, _
+                          Optional ByVal SplitValue As Variant = 0.5) As Long
+                          
+   FreeImage_Colorize = FreeImage_ConvertToGreyscale(dib)
+   Call FreeImage_SetPalette(FreeImage_Colorize, FreeImage_GetColorizedPalette(Color, SplitValue))
+
+End Function
+
+Public Function FreeImage_Sepia(ByVal dib As Long, _
+                       Optional ByVal SplitValue As Variant = 0.5) As Long
+
+   FreeImage_Sepia = FreeImage_Colorize(dib, &H658AA2, SplitValue)  ' RGB(162, 138, 101)
+
 End Function
 
 
