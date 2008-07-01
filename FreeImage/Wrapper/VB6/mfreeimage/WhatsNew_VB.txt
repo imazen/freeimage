@@ -5,6 +5,9 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+June 30, 2008 - 2.4
+* [Carsten Klein] fixed some minor issues in FreeImage_PaintTransparent()
+
 June 06, 2008 - 2.3
 + [Carsten Klein] added new compression flags to the JPEG and PNG plugins
 ! [Carsten Klein] renamed wrapper function FreeImage_CloneMetadata() to FreeImage_CloneMetadataEx(): now, there is a native function called FreeImage_CloneMetadata().

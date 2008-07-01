@@ -152,6 +152,9 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'June 30, 2008 - 2.4
+'* [Carsten Klein] fixed some minor issues in FreeImage_PaintTransparent()
+'
 'June 06, 2008 - 2.3
 '+ [Carsten Klein] added new compression flags to the JPEG and PNG plugins
 '! [Carsten Klein] renamed wrapper function FreeImage_CloneMetadata() to FreeImage_CloneMetadataEx(): now, there is a native function called FreeImage_CloneMetadata().
@@ -6283,6 +6286,7 @@ Public Function FreeImage_PaintTransparent(ByVal hDC As Long, _
                                   Optional ByVal Alpha As Byte = 255) As Long
                                   
 Dim lpPalette As Long
+Dim bIsTransparent As Boolean
 
    ' This function paints a device independent bitmap to any device context and
    ' thereby honors any transparency information associated with the bitmap.
@@ -6356,7 +6360,8 @@ Dim lpPalette As Long
          Call CopyMemory(alPalMod(0), ByVal lpPalette, lPaletteSize)
          abTT = FreeImage_GetTransparencyTableEx(hDIB)
          
-         If (Alpha = 255) Then
+         If ((Alpha = 255) And _
+             (lnDestHeight >= lnSrcHeight) And (lnDestWidth >= lnSrcWidth)) Then
             
             ' create a mask palette and a modified version of the
             ' original palette
@@ -6364,29 +6369,43 @@ Dim lpPalette As Long
                If (abTT(i) = 0) Then
                   alPalMask(i) = &HFFFFFFFF
                   alPalMod(i) = &H0
+                  bIsTransparent = True
                End If
             Next i
+
+            If (Not bIsTransparent) Then
+               
+               ' if there is no transparency in the image, paint it with
+               ' a single SRCCOPY
+               Call StretchDIBits(hDC, _
+                                  lXDest, lYDest, lnDestWidth, lnDestHeight, _
+                                  lXSrc, lYSrc, lnSrcWidth, lnSrcHeight, _
+                                  FreeImage_GetBits(hDIB), _
+                                  FreeImage_GetInfo(hDIB), _
+                                  DIB_RGB_COLORS, SRCCOPY)
+            Else
             
-            ' set mask palette and paint with SRCAND
-            Call CopyMemory(ByVal lpPalette, alPalMask(0), lPaletteSize)
-            Call StretchDIBits(hDC, _
-                               lXDest, lYDest, lnDestWidth, lnDestHeight, _
-                               lXSrc, lYSrc, lnSrcWidth, lnSrcHeight, _
-                               FreeImage_GetBits(hDIB), _
-                               FreeImage_GetInfo(hDIB), _
-                               DIB_RGB_COLORS, SRCAND)
-            
-            ' set mask modified and paint with SRCPAINT
-            Call CopyMemory(ByVal lpPalette, alPalMod(0), lPaletteSize)
-            Call StretchDIBits(hDC, _
-                               lXDest, lYDest, lnDestWidth, lnDestHeight, _
-                               lXSrc, lYSrc, lnSrcWidth, lnSrcHeight, _
-                               FreeImage_GetBits(hDIB), _
-                               FreeImage_GetInfo(hDIB), _
-                               DIB_RGB_COLORS, SRCPAINT)
-                               
-            ' restore original palette
-            Call CopyMemory(ByVal lpPalette, alPalOrg(0), lPaletteSize)
+               ' set mask palette and paint with SRCAND
+               Call CopyMemory(ByVal lpPalette, alPalMask(0), lPaletteSize)
+               Call StretchDIBits(hDC, _
+                                  lXDest, lYDest, lnDestWidth, lnDestHeight, _
+                                  lXSrc, lYSrc, lnSrcWidth, lnSrcHeight, _
+                                  FreeImage_GetBits(hDIB), _
+                                  FreeImage_GetInfo(hDIB), _
+                                  DIB_RGB_COLORS, SRCAND)
+               
+               ' set mask modified and paint with SRCPAINT
+               Call CopyMemory(ByVal lpPalette, alPalMod(0), lPaletteSize)
+               Call StretchDIBits(hDC, _
+                                  lXDest, lYDest, lnDestWidth, lnDestHeight, _
+                                  lXSrc, lYSrc, lnSrcWidth, lnSrcHeight, _
+                                  FreeImage_GetBits(hDIB), _
+                                  FreeImage_GetInfo(hDIB), _
+                                  DIB_RGB_COLORS, SRCPAINT)
+                                  
+               ' restore original palette
+               Call CopyMemory(ByVal lpPalette, alPalOrg(0), lPaletteSize)
+            End If
             
             ' we are done, do not paint with AlphaBlend() any more
             hDIB = 0
