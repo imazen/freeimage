@@ -1662,10 +1662,7 @@ namespace FreeImageAPI
 		/// </returns>
 		public static bool operator ==(RGBQUAD left, RGBQUAD right)
 		{
-			return ((left.rgbBlue == right.rgbBlue) &&
-					(left.rgbGreen == right.rgbGreen) &&
-					(left.rgbRed == right.rgbRed) &&
-					(left.rgbReserved == right.rgbReserved));
+			return (left.uintValue == right.uintValue);
 		}
 
 		/// <summary>
@@ -1678,7 +1675,7 @@ namespace FreeImageAPI
 		/// </returns>
 		public static bool operator !=(RGBQUAD left, RGBQUAD right)
 		{
-			return !(left == right);
+			return (left.uintValue != right.uintValue);
 		}
 
 		/// <summary>
@@ -6573,12 +6570,12 @@ namespace FreeImageAPI.IO
 		}
 
 		/// <summary>
-		/// Tests whether two specified <see cref="fi_handle"/> structures are different.
+		/// Tests whether two specified <see cref="fi_handle"/> structures are equivalent.
 		/// </summary>
-		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the inequality operator.</param>
-		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the inequality operator.</param>
+		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the equality operator.</param>
 		/// <returns>
-		/// <b>true</b> if the two <see cref="fi_handle"/> structures are different; otherwise, <b>false</b>.
+		/// <b>true</b> if the two <see cref="fi_handle"/> structures are equal; otherwise, <b>false</b>.
 		/// </returns>
 		public static bool operator ==(fi_handle left, fi_handle right)
 		{
@@ -6586,12 +6583,12 @@ namespace FreeImageAPI.IO
 		}
 
 		/// <summary>
-		/// Tests whether two specified <see cref="fi_handle"/> structures are equivalent.
+		/// Tests whether two specified <see cref="fi_handle"/> structures are different.
 		/// </summary>
-		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the equality operator.</param>
-		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the equality operator.</param>
+		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the inequality operator.</param>
 		/// <returns>
-		/// <b>true</b> if the two <see cref="fi_handle"/> structures are equal; otherwise, <b>false</b>.
+		/// <b>true</b> if the two <see cref="fi_handle"/> structures are different; otherwise, <b>false</b>.
 		/// </returns>
 		public static bool operator !=(fi_handle left, fi_handle right)
 		{
@@ -6735,6 +6732,16 @@ namespace FreeImageAPI
 	public struct FI1BIT
 	{
 		/// <summary>
+		/// Represents the largest possible value of <see cref="FI1BIT"/>. This field is constant.
+		/// </summary>
+		public const byte MaxValue = 0x01;
+
+		/// <summary>
+		/// Represents the smallest possible value of <see cref="FI1BIT"/>. This field is constant.
+		/// </summary>
+		public const byte MinValue = 0x00;
+
+		/// <summary>
 		/// The value of the structure.
 		/// </summary>
 		private byte value;
@@ -6745,7 +6752,7 @@ namespace FreeImageAPI
 		/// <param name="value">The value to initialize with.</param>
 		private FI1BIT(byte value)
 		{
-			this.value = (byte)(value & 0x01);
+			this.value = (byte)(value & MaxValue);
 		}
 
 		/// <summary>
@@ -6791,6 +6798,16 @@ namespace FreeImageAPI
 	public struct FI4BIT
 	{
 		/// <summary>
+		/// Represents the largest possible value of <see cref="FI4BIT"/>. This field is constant.
+		/// </summary>
+		public const byte MaxValue = 0x0F;
+
+		/// <summary>
+		/// Represents the smallest possible value of <see cref="FI4BIT"/>. This field is constant.
+		/// </summary>
+		public const byte MinValue = 0x00;
+
+		/// <summary>
 		/// The value of the structure.
 		/// </summary>
 		private byte value;
@@ -6801,7 +6818,7 @@ namespace FreeImageAPI
 		/// <param name="value">The value to initialize with.</param>
 		private FI4BIT(byte value)
 		{
-			this.value = (byte)(value & 0x0F);
+			this.value = (byte)(value & MaxValue);
 		}
 
 		/// <summary>
@@ -11696,6 +11713,137 @@ namespace FreeImageAPI
 			EnsureNotDisposed();
 			FreeImageBitmap result = null;
 			FIBITMAP newDib = FreeImage.Rescale(dib, width, height, filter);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit to 8bit creating a new
+		/// palette with the specified <paramref name="paletteSize"/> using the specified
+		/// <paramref name="algorithm"/>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Quantize(FREE_IMAGE_QUANTIZE algorithm, int paletteSize)
+		{
+			return Quantize(algorithm, paletteSize, 0, (RGBQUAD[])null);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit to 8bit creating a new
+		/// palette with the specified <paramref name="paletteSize"/> using the specified
+		/// <paramref name="algorithm"/> and the specified
+		/// <paramref name="reservePalette">palette</paramref> up to the
+		/// specified <paramref name="paletteSize">length</paramref>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Quantize(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, Palette reservePalette)
+		{
+			return Quantize(algorithm, paletteSize, reservePalette.Length, reservePalette.Data);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit to 8bit creating a new
+		/// palette with the specified <paramref name="paletteSize"/> using the specified
+		/// <paramref name="algorithm"/> and the specified
+		/// <paramref name="reservePalette">palette</paramref> up to the
+		/// specified <paramref name="paletteSize">length</paramref>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reserveSize">Size of the provided palette of ReservePalette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Quantize(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, int reserveSize, Palette reservePalette)
+		{
+			return Quantize(algorithm, paletteSize, reserveSize, reservePalette.Data);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit to 8bit creating a new
+		/// palette with the specified <paramref name="paletteSize"/> using the specified
+		/// <paramref name="algorithm"/> and the specified
+		/// <paramref name="reservePalette">palette</paramref> up to the
+		/// specified <paramref name="paletteSize">length</paramref>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reserveSize">Size of the provided palette of ReservePalette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Quantize(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, int reserveSize, RGBQUAD[] reservePalette)
+		{
+			EnsureNotDisposed();
+			return ReplaceDib(FreeImage.ColorQuantizeEx(dib, algorithm, paletteSize, reserveSize, reservePalette));
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit, using the specified
+		/// <paramref name="algorithm"/> initializing a new 8 bit instance with the
+		/// specified <paramref name="paletteSize"/>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <returns>The quantized instance.</returns>
+		public FreeImageBitmap GetQuantizedInstance(FREE_IMAGE_QUANTIZE algorithm, int paletteSize)
+		{
+			return GetQuantizedInstance(algorithm, paletteSize, 0, (RGBQUAD[])null);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit, using the specified
+		/// <paramref name="algorithm"/> and <paramref name="reservePalette">palette</paramref>
+		/// initializing a new 8 bit instance with the specified <paramref name="paletteSize"/>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>The quantized instance.</returns>
+		public FreeImageBitmap GetQuantizedInstance(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, Palette reservePalette)
+		{
+			return GetQuantizedInstance(algorithm, paletteSize, reservePalette.Length, reservePalette);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit, using the specified
+		/// <paramref name="algorithm"/> and up to <paramref name="reserveSize"/>
+		/// entries from <paramref name="reservePalette">palette</paramref> initializing
+		/// a new 8 bit instance with the specified <paramref name="paletteSize"/>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reserveSize">Size of the provided palette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>The quantized instance.</returns>
+		public FreeImageBitmap GetQuantizedInstance(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, int reserveSize, Palette reservePalette)
+		{
+			return GetQuantizedInstance(algorithm, paletteSize, reserveSize, reservePalette.Data);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit, using the specified
+		/// <paramref name="algorithm"/> and up to <paramref name="reserveSize"/>
+		/// entries from <paramref name="reservePalette">palette</paramref> initializing
+		/// a new 8 bit instance with the specified <paramref name="paletteSize"/>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reserveSize">Size of the provided palette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>The quantized instance.</returns>
+		public FreeImageBitmap GetQuantizedInstance(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, int reserveSize, RGBQUAD[] reservePalette)
+		{
+			EnsureNotDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.ColorQuantizeEx(dib, algorithm, paletteSize, reserveSize, reservePalette);
 			if (!newDib.IsNull)
 			{
 				result = new FreeImageBitmap();
