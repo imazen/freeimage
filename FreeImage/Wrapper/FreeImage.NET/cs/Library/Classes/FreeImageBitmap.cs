@@ -2475,6 +2475,137 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit to 8bit creating a new
+		/// palette with the specified <paramref name="paletteSize"/> using the specified
+		/// <paramref name="algorithm"/>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Quantize(FREE_IMAGE_QUANTIZE algorithm, int paletteSize)
+		{
+			return Quantize(algorithm, paletteSize, 0, (RGBQUAD[])null);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit to 8bit creating a new
+		/// palette with the specified <paramref name="paletteSize"/> using the specified
+		/// <paramref name="algorithm"/> and the specified
+		/// <paramref name="reservePalette">palette</paramref> up to the
+		/// specified <paramref name="paletteSize">length</paramref>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Quantize(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, Palette reservePalette)
+		{
+			return Quantize(algorithm, paletteSize, reservePalette.Length, reservePalette.Data);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit to 8bit creating a new
+		/// palette with the specified <paramref name="paletteSize"/> using the specified
+		/// <paramref name="algorithm"/> and the specified
+		/// <paramref name="reservePalette">palette</paramref> up to the
+		/// specified <paramref name="paletteSize">length</paramref>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reserveSize">Size of the provided palette of ReservePalette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Quantize(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, int reserveSize, Palette reservePalette)
+		{
+			return Quantize(algorithm, paletteSize, reserveSize, reservePalette.Data);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit to 8bit creating a new
+		/// palette with the specified <paramref name="paletteSize"/> using the specified
+		/// <paramref name="algorithm"/> and the specified
+		/// <paramref name="reservePalette">palette</paramref> up to the
+		/// specified <paramref name="paletteSize">length</paramref>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reserveSize">Size of the provided palette of ReservePalette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Quantize(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, int reserveSize, RGBQUAD[] reservePalette)
+		{
+			EnsureNotDisposed();
+			return ReplaceDib(FreeImage.ColorQuantizeEx(dib, algorithm, paletteSize, reserveSize, reservePalette));
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit, using the specified
+		/// <paramref name="algorithm"/> initializing a new 8 bit instance with the
+		/// specified <paramref name="paletteSize"/>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <returns>The quantized instance.</returns>
+		public FreeImageBitmap GetQuantizedInstance(FREE_IMAGE_QUANTIZE algorithm, int paletteSize)
+		{
+			return GetQuantizedInstance(algorithm, paletteSize, 0, (RGBQUAD[])null);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit, using the specified
+		/// <paramref name="algorithm"/> and <paramref name="reservePalette">palette</paramref>
+		/// initializing a new 8 bit instance with the specified <paramref name="paletteSize"/>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>The quantized instance.</returns>
+		public FreeImageBitmap GetQuantizedInstance(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, Palette reservePalette)
+		{
+			return GetQuantizedInstance(algorithm, paletteSize, reservePalette.Length, reservePalette);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit, using the specified
+		/// <paramref name="algorithm"/> and up to <paramref name="reserveSize"/>
+		/// entries from <paramref name="reservePalette">palette</paramref> initializing
+		/// a new 8 bit instance with the specified <paramref name="paletteSize"/>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reserveSize">Size of the provided palette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>The quantized instance.</returns>
+		public FreeImageBitmap GetQuantizedInstance(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, int reserveSize, Palette reservePalette)
+		{
+			return GetQuantizedInstance(algorithm, paletteSize, reserveSize, reservePalette.Data);
+		}
+
+		/// <summary>
+		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit, using the specified
+		/// <paramref name="algorithm"/> and up to <paramref name="reserveSize"/>
+		/// entries from <paramref name="reservePalette">palette</paramref> initializing
+		/// a new 8 bit instance with the specified <paramref name="paletteSize"/>.
+		/// </summary>
+		/// <param name="algorithm">The color reduction algorithm to be used.</param>
+		/// <param name="paletteSize">Size of the desired output palette.</param>
+		/// <param name="reserveSize">Size of the provided palette.</param>
+		/// <param name="reservePalette">The provided palette.</param>
+		/// <returns>The quantized instance.</returns>
+		public FreeImageBitmap GetQuantizedInstance(FREE_IMAGE_QUANTIZE algorithm, int paletteSize, int reserveSize, RGBQUAD[] reservePalette)
+		{
+			EnsureNotDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.ColorQuantizeEx(dib, algorithm, paletteSize, reserveSize, reservePalette);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap();
+				result.dib = newDib;
+			}
+			return result;
+		}
+
+		/// <summary>
 		/// Converts a High Dynamic Range image to a 24-bit RGB image using a global
 		/// operator based on logarithmic compression of luminance values, imitating
 		/// the human response to light.
