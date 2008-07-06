@@ -174,10 +174,10 @@ ConvertAnyTag(FITAG *tag) {
 		{
 			unsigned long *pvalue = (unsigned long *)FreeImage_GetTagValue(tag);
 
-			sprintf(format, "%p", pvalue[0]);
+			sprintf(format, "%X", pvalue[0]);
 			buffer += format;
 			for(i = 1; i < tag_count; i++) {
-				sprintf(format, " %p",	pvalue[i]);
+				sprintf(format, " %X",	pvalue[i]);
 				buffer += format;
 			}
 			break;
