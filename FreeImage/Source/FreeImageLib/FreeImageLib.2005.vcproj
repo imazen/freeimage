@@ -398,6 +398,10 @@
 					RelativePath="..\FreeImage\PluginXPM.cpp"
 					>
 				</File>
+				<File
+					RelativePath="..\FreeImage\TIFFLogLuv.cpp"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="DeprecationMgr"

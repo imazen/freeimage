@@ -35,10 +35,8 @@
 #endif
 
 #include "../LibTIFF/tiffiop.h"
-
 #include "FreeImage.h"
 #include "Utilities.h"
-
 #include "../Metadata/FreeImageTag.h"
 
 // ----------------------------------------------------------
@@ -60,6 +58,13 @@ void tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib);
 BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib);
 
 // ----------------------------------------------------------
+//   LogLuv conversion functions interface (see TIFFLogLuv.cpp)
+// ----------------------------------------------------------
+
+void tiff_ConvertLineXYZToRGB(BYTE *target, BYTE *source, double stonits, int width_in_pixels);
+void tiff_ConvertLineRGBToXYZ(BYTE *target, BYTE *source, int width_in_pixels);
+
+// ----------------------------------------------------------
 
 /** Supported loading methods */
 typedef enum {
@@ -67,7 +72,8 @@ typedef enum {
 	LoadAsCMYK			= 1, 
 	LoadAs8BitTrns		= 2, 
 	LoadAsGenericStrip	= 3, 
-	LoadAsTiled			= 4
+	LoadAsTiled			= 4,
+	LoadAsRGBF			= 5
 } TIFFLoadMethod;
 
 // ----------------------------------------------------------
@@ -552,6 +558,9 @@ ReadImageType(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel) {
 					case 64:
 						fit = FIT_DOUBLE;
 						break;
+					case 96:
+						fit = FIT_RGBF;
+						break;
 				}
 				break;
 			case SAMPLEFORMAT_COMPLEXIEEEFP:
@@ -635,7 +644,9 @@ WriteCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint1
 	uint16 compression;
 	uint16 bitsperpixel = bitspersample * samplesperpixel;
 
-	if ((flags & TIFF_PACKBITS) == TIFF_PACKBITS) {
+	if(photometric == PHOTOMETRIC_LOGLUV) {
+		compression = COMPRESSION_SGILOG;
+	} else if ((flags & TIFF_PACKBITS) == TIFF_PACKBITS) {
 		compression = COMPRESSION_PACKBITS;
 	} else if ((flags & TIFF_DEFLATE) == TIFF_DEFLATE) {
 		compression = COMPRESSION_DEFLATE;
@@ -963,7 +974,8 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 		(type == FIT_DOUBLE)  ||
 		(type == FIT_COMPLEX) || 
 		(type == FIT_RGB16)   || 
-		(type == FIT_RGBA16)
+		(type == FIT_RGBA16)  || 
+		(type == FIT_RGBF)
 	);
 }
 
@@ -1095,8 +1107,10 @@ FindLoadMethod(TIFF *tif, FREE_IMAGE_TYPE image_type, int flags) {
 		case PHOTOMETRIC_CIELAB:
 		case PHOTOMETRIC_ICCLAB:
 		case PHOTOMETRIC_ITULAB:
-		case PHOTOMETRIC_LOGLUV:
 			loadMethod = LoadAsRBGA;
+			break;
+		case PHOTOMETRIC_LOGLUV:
+			loadMethod = LoadAsRGBF;
 			break;
 		case PHOTOMETRIC_SEPARATED:
 			if(planar_config == PLANARCONFIG_CONTIG) {
@@ -1155,7 +1169,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		uint16 planar_config;
 
 		FIBITMAP *dib = NULL;
-		BYTE *bits = NULL;		// pointer to dib data
 		uint32 iccSize = 0;		// ICC profile length
 		void *iccBuf = NULL;	// ICC profile data		
 
@@ -1172,6 +1185,21 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
 			TIFFGetField(tif, TIFFTAG_COMPRESSION, &compression);
+
+			// check for HDR formats
+			// ---------------------------------------------------------------------------------
+
+			if(photometric == PHOTOMETRIC_LOGLUV) {
+				// check the compression
+				if(compression != COMPRESSION_SGILOG && compression != COMPRESSION_SGILOG24) {
+					throw "Only support SGILOG compressed LogLuv data";
+				}
+				// set decoder to output in IEEE 32-bit float XYZ values
+				TIFFSetField(tif, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_FLOAT);
+			}
+
+			// ---------------------------------------------------------------------------------
+
 			TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
 			TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
 			TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplesperpixel);
@@ -1271,7 +1299,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if (samplesperpixel == 4) {
 					// 32-bit RGBA
 					for (uint32 y = 0; y < height; y++) {
-						bits = FreeImage_GetScanLine(dib, y);
+						BYTE *bits = FreeImage_GetScanLine(dib, y);
 						for (uint32 x = 0; x < width; x++) {
 							bits[FI_RGBA_BLUE]	= (BYTE)TIFFGetB(row[x]);
 							bits[FI_RGBA_GREEN] = (BYTE)TIFFGetG(row[x]);
@@ -1288,7 +1316,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				} else {
 					// 24-bit RGB
 					for (uint32 y = 0; y < height; y++) {
-						bits = FreeImage_GetScanLine(dib, y);
+						BYTE *bits = FreeImage_GetScanLine(dib, y);
 						for (uint32 x = 0; x < width; x++) {
 							bits[FI_RGBA_BLUE]	= (BYTE)TIFFGetB(row[x]);
 							bits[FI_RGBA_GREEN] = (BYTE)TIFFGetG(row[x]);
@@ -1339,7 +1367,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// In the tiff file the lines are save from up to down 
 				// In a DIB the lines must be saved from down to up
 
-				bits = FreeImage_GetBits(dib) + height * dst_pitch;
+				BYTE *bits = FreeImage_GetScanLine(dib, height - 1);
 
 				// read the tiff lines and save them in the DIB
 
@@ -1357,8 +1385,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							throw "Parsing error";
 						}
 						for (int l = 0; l < nrow; l++) {
-							bits -= dst_pitch;
-
 							BYTE *p = bits;
 							BYTE *b = buf + l * src_line;
 
@@ -1371,6 +1397,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								p++;
 								b += samplesperpixel;
 							}
+							bits -= dst_pitch;
 						}
 					}
 
@@ -1395,8 +1422,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						} 
 
 						for (int l = 0; l < nrow; l++) {
-							bits -= dst_pitch;
-
 							BYTE *p = bits;
 							BYTE *g = grey + l * src_line;
 							BYTE *a = alpha + l * src_line;
@@ -1411,13 +1436,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								g++;
 								a++;
 							}
+							bits -= dst_pitch;
 						}
 					}
 
 					free(buf);
 
 				}
-
 				
 				FreeImage_SetTransparencyTable(dib, &trns[0], 256);
 				FreeImage_SetTransparent(dib, TRUE);
@@ -1458,7 +1483,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// In the tiff file the lines are save from up to down 
 				// In a DIB the lines must be saved from down to up
 
-				bits = FreeImage_GetBits(dib) + height * dst_pitch;
+				BYTE *bits = FreeImage_GetScanLine(dib, height - 1);
 
 				// read the tiff lines and save them in the DIB
 
@@ -1476,8 +1501,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						if(isCMYKA) {
 							// CMYKA picture
 							for (int l = 0; l < nrow; l++) {
-								bits -= dst_pitch;
-
 								// Here we know: samples-per-pixel was >= 5 on CMYKA picture
 								// This should be converted to RGBA or CMYK, depending on 
 								// TIFF_CMYK is given. The resulting image always has 32bpp.
@@ -1499,14 +1522,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									b += samplesperpixel;
 									p += spp;
 								}
+								bits -= dst_pitch;
 							}								
 						}
 						else  {
 							// CMYK picture: just copy
-							for (int l = 0; l < nrow; l++) {
-								bits -= dst_pitch;
+							for (int l = 0; l < nrow; l++) {								
 								BYTE *b = buf + l * src_line;
 								memcpy(bits, b, src_line);
+								bits -= dst_pitch;
 							}
 						}						
 					}
@@ -1535,7 +1559,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						if ((flags & TIFF_CMYK) == TIFF_CMYK) {
 							// CMYK or CMYKA picture: load as 32-bit CMYK, skipping possibly present alpha channel(s)
 							for (int l = 0; l < nrow; l++) {
-								bits -= dst_pitch;								
 								channel = buf;
 								for(sample = 0; sample < spp; sample++) {
 									BYTE *src_bits = channel + l * src_line;
@@ -1546,12 +1569,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									}
 									channel += stripsize;
 								}
+								bits -= dst_pitch;
 							}
 						}
 						else if(isCMYKA) {
 							// CMYKA picture: convert to RGBA, skipping possibly some alpha channel(s)
 							for (int l = 0; l < nrow; l++) {
-								bits -= dst_pitch;								
 								BYTE *c_channel = buf + l * src_line;
 								BYTE *m_channel = buf + stripsize + l * src_line;
 								BYTE *y_channel = buf + 2*stripsize + l * src_line;
@@ -1567,12 +1590,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 										has_alpha = TRUE;
 									dst_bits += spp;
 								}
+								bits -= dst_pitch;
 							}
 						}
 						else  {							
 							// CMYK picture: convert to RGB
-							for (int l = 0; l < nrow; l++) {
-								bits -= dst_pitch;								
+							for (int l = 0; l < nrow; l++) {								
 								BYTE *c_channel = buf + l * src_line;
 								BYTE *m_channel = buf + stripsize + l * src_line;
 								BYTE *y_channel = buf + 2*stripsize + l * src_line;
@@ -1585,6 +1608,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									dst_bits[FI_RGBA_BLUE]	= (k*(255-y_channel[x]))/255;
 									dst_bits += spp;
 								}
+								bits -= dst_pitch;
 							}
 						}						
 					}
@@ -1621,7 +1645,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// In the tiff file the lines are save from up to down 
 				// In a DIB the lines must be saved from down to up
 
-				bits = FreeImage_GetBits(dib) + height * dst_pitch;
+				BYTE *bits = FreeImage_GetScanLine(dib, height - 1);
 
 				// read the tiff lines and save them in the DIB
 
@@ -1643,9 +1667,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						} 
 						// color/greyscale picture (1-, 4-, 8-bit) or special type (int, long, double, ...)
 						// ... just copy 
-						for (int l = 0; l < nrow; l++) {
-							bits -= dst_pitch;
+						for (int l = 0; l < nrow; l++) {							
 							memcpy(bits, buf + l * src_line, src_line);
+							bits -= dst_pitch;
 						}
 					}
 
@@ -1684,8 +1708,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						}
 
 						// reconstruct the picture						
-						for (int l = 0; l < nrow; l++) {
-							bits -= dst_pitch;								
+						for (int l = 0; l < nrow; l++) {							
 							channel = buf;
 							for(sample = 0; sample < samplesperpixel; sample++) {
 								BYTE *src_bits = channel + l * src_line;
@@ -1697,6 +1720,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								}
 								channel += stripsize;
 							}
+							bits -= dst_pitch;
 						}
 					}
 
@@ -1750,7 +1774,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// In the tiff file the lines are save from up to down 
 				// In a DIB the lines must be saved from down to up
 
-				bits = FreeImage_GetScanLine(dib, height - 1);
+				BYTE *bits = FreeImage_GetScanLine(dib, height - 1);
 
 				// read the tiff lines and save them in the DIB
 
@@ -1792,6 +1816,63 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 
 				free(tileBuffer);
+
+			} else if(loadMethod == LoadAsRGBF) {
+				// ---------------------------------------------------------------------------------
+				// RGBF loading
+				// ---------------------------------------------------------------------------------
+
+				double	stonits;	// input conversion to nits
+				if (!TIFFGetField(tif, TIFFTAG_STONITS, &stonits)) {
+					stonits = 1;
+				}
+				
+				// create a new DIB
+				dib = CreateImageType(image_type, width, height, bitspersample, samplesperpixel);
+				if (dib == NULL) {
+					throw FI_MSG_ERROR_MEMORY;
+				}
+
+				// fill in the resolution (english or universal)
+
+				ReadResolution(tif, dib);
+
+				// calculate the line + pitch (separate for scr & dest)
+
+				tsize_t src_line = TIFFScanlineSize(tif);
+				int dst_pitch = FreeImage_GetPitch(dib);
+
+				// In the tiff file the lines are save from up to down 
+				// In a DIB the lines must be saved from down to up
+
+				BYTE *bits = FreeImage_GetScanLine(dib, height - 1);
+
+				// read the tiff lines and save them in the DIB
+
+				if(planar_config == PLANARCONFIG_CONTIG) {
+					BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
+					if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
+
+					for (uint32 y = 0; y < height; y += rowsperstrip) {
+						int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
+
+						if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, y, 0), buf, nrow * src_line) == -1) {
+							free(buf);
+							throw "Parsing error";
+						} 
+						// convert from XYZ to RGB
+						for (int l = 0; l < nrow; l++) {						
+							tiff_ConvertLineXYZToRGB(bits, buf + l * src_line, stonits, width);
+							bits -= dst_pitch;
+						}
+					}
+
+					free(buf);
+				}
+				else if(planar_config == PLANARCONFIG_SEPARATE) {
+					// this cannot happend according to the LogLuv specification
+					throw "Unable to handle PLANARCONFIG_SEPARATE LogLuv images";
+				}
 
 			} else {
 				// ---------------------------------------------------------------------------------
@@ -1894,6 +1975,15 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			// unassociated alpha data is transparency information
 			sampleinfo[0] = EXTRASAMPLE_UNASSALPHA;
 			TIFFSetField(out, TIFFTAG_EXTRASAMPLES, 1, sampleinfo);
+		} else if(image_type == FIT_RGBF) {
+			// 96-bit RGBF => store with a LogLuv encoding
+
+			samplesperpixel = 3;
+			bitspersample = bitsperpixel / samplesperpixel;
+			photometric	= PHOTOMETRIC_LOGLUV;
+			// the library converts to and from floating-point XYZ CIE values
+			TIFFSetField(out, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_FLOAT);
+			// TIFFSetField(out, TIFFTAG_STONITS, 1.0);   // assume unknown 
 		} else {
 			// special image type (int, long, double, ...)
 
@@ -2067,6 +2157,19 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				}
 			}
 
+		} else if(image_type == FIT_RGBF) {
+			// RGBF image => store as XYZ using a LogLuv encoding
+
+			BYTE *buffer = (BYTE *)malloc(pitch * sizeof(BYTE));
+			if(buffer == NULL) throw FI_MSG_ERROR_MEMORY;
+
+			for (y = 0; y < height; y++) {
+				// get a copy of the scanline and convert from RGB to XYZ
+				tiff_ConvertLineRGBToXYZ(buffer, FreeImage_GetScanLine(dib, height - y - 1), width);
+				// write the scanline to disc
+				TIFFWriteScanline(out, buffer, y, 0);
+			}
+			free(buffer);
 		} else {
 			// special bitmap type (int, long, double, etc.)
 

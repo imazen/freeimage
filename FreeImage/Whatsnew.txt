@@ -18,6 +18,8 @@ Month day, 2007 - 3.11.0
 + [Lucian Sabo] added new compression flags to the JPEG plugin (chroma subsampling options)
 + [Noam Gat] added support for SGI grayscale + alpha pics to SGI plugin
 + [Herve Drolon] added FreeImage_CloneMetadata
++ [Herve Drolon] added loading support for Windows Vista icons in ICO Plugin
++ [Herve Drolon] added loading and saving support for RGBF images to the TIF plugin (using the LogLuv codec)
 * [Will Bryant] fixed makefile for MacOSX Tiger and Leopard
 * [Maria Gullickson] fixed a 'divide by 0' error in PNM plugin and FreeImage_Rescale function
 * [Yves Schmid] fixed a bug with Exif metadata reading in TIFF images
@@ -30,6 +32,7 @@ Month day, 2007 - 3.11.0
 * [Martin Dyring-Andersen] fixed a crash problem with images containing exif data emitted by Picassa
 * [Herve Drolon] removed RGBA to RGB transparent conversion in EXR plugin
 * [Glenn Pierce] improved the speed of FreeImage_FlipHorizontal
+* [Carsten Klein] fixed 65535 pixels width/height limitation in FreeImage_Paste
 
 November 19th, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-10-05)

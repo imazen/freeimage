@@ -85,6 +85,7 @@
 				ProgramDatabaseFile=".\Release/FreeImage.pdb"
 				ImportLibrary=".\Release/FreeImage.lib"
 				TargetMachine="1"
+				Profile="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -365,6 +366,10 @@
 				</File>
 				<File
 					RelativePath="Source\FreeImage\PluginXPM.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\FreeImage\TIFFLogLuv.cpp"
 					>
 				</File>
 			</Filter>

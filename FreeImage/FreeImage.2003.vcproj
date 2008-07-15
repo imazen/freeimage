@@ -32,6 +32,7 @@
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="FALSE"
+				TreatWChar_tAsBuiltInType="TRUE"
 				PrecompiledHeaderFile=".\Release/FreeImage.pch"
 				AssemblerListingLocation=".\Release/"
 				ObjectFile=".\Release/"
@@ -98,6 +99,7 @@ copy Source\FreeImage.h Dist
 				StringPooling="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
+				TreatWChar_tAsBuiltInType="TRUE"
 				PrecompiledHeaderFile=".\Debug/FreeImage.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
@@ -270,6 +272,9 @@ copy Source\FreeImage.h Dist
 				</File>
 				<File
 					RelativePath="Source\FreeImage\PluginXPM.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\FreeImage\TIFFLogLuv.cpp">
 				</File>
 			</Filter>
 			<Filter
