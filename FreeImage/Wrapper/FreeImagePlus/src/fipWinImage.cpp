@@ -410,7 +410,7 @@ void fipWinImage::drawEx(HDC hDC, RECT& rcDest, BOOL useFileBkg, RGBQUAD *appBkC
 				_display_dib = FreeImage_ConvertToStandardType(dib_double, TRUE);
 				// Free image of type FIT_DOUBLE
 				FreeImage_Unload(dib_double);
-			} else if((image_type == FIT_RGBF) || (image_type == FIT_RGB16)) {
+			} else if((image_type == FIT_RGBF) || (image_type == FIT_RGBAF) || (image_type == FIT_RGB16)) {
 				// Apply a tone mapping algorithm and convert to 24-bit 
 				_display_dib = FreeImage_ToneMapping(_dib, _tmo, _tmo_param_1, _tmo_param_2);
 			} else if(image_type == FIT_RGBA16) {

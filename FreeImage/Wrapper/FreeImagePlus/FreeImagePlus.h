@@ -76,6 +76,9 @@
 class FIP_API fipObject
 {
 public:
+	/// Destructor
+	virtual ~fipObject(){};
+	
 	/**@name Information functions */
 	//@{
 	/// Returns TRUE if the object is allocated, FALSE otherwise
@@ -118,7 +121,7 @@ public:
 	*/
 	fipImage(FREE_IMAGE_TYPE image_type = FIT_BITMAP, WORD width = 0, WORD height = 0, WORD bpp = 0);
 	/// Destructor
-	~fipImage();
+	virtual ~fipImage();
 	/**
 	Image allocator
 	@see FreeImage_AllocateT
@@ -889,7 +892,7 @@ public:
 	fipWinImage(FREE_IMAGE_TYPE image_type = FIT_BITMAP, WORD width = 0, WORD height = 0, WORD bpp = 0);
 
 	/// Destructor
-	~fipWinImage();
+	virtual ~fipWinImage();
 
 	/// Destroy image data
 	virtual void clear();
@@ -1068,7 +1071,7 @@ public :
 	Free any allocated memory
 	@see FreeImage_CloseMemory
 	*/
-	~fipMemoryIO();
+	virtual ~fipMemoryIO();
 
 	/** Returns TRUE if the internal memory buffer is a valid buffer, returns FALSE otherwise
 	*/
@@ -1177,7 +1180,7 @@ public:
 	Destructor
 	Close the file stream if not already done. 
 	*/
-	~fipMultiPage();
+	virtual ~fipMultiPage();
 
 	/// Returns TRUE if the multi-page stream is opened
 	BOOL isValid() const;
@@ -1310,7 +1313,7 @@ public:
 	Destructor
 	@see FreeImage_DeleteTag
 	*/
-	~fipTag();
+	virtual ~fipTag();
 	/**
 	Construct a FIDT_ASCII tag (ASCII string).<br>
 	This method is useful to store comments or IPTC tags. 
@@ -1488,7 +1491,7 @@ public:
 	Destructor
 	@see FreeImage_FindCloseMetadata
 	*/
-	~fipMetadataFind();
+	virtual ~fipMetadataFind();
 	/**
 	Provides information about the first instance of a tag that matches 
 	the metadata model specified in the <i>model</i> argument. 

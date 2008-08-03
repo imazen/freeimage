@@ -5,6 +5,10 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+August 3rd, 2008
+* [dimitriy.b] fixed warnings about "non virtual destructor with virtual class members" with gcc 4.1.2
+* [Herve Drolon] fixed display of RGBAF EXR images in fipWinImage::drawEx
+
 October 10th, 2007
 * [Terry Russell] fixed a memory leak in fipWinImage::captureWindow
 

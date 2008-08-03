@@ -40,9 +40,10 @@ BOOL fipTag::setKeyValue(const char *key, const char *value) {
 	if(_tag) {
 		BOOL bSuccess = TRUE;
 		// fill the tag
+		DWORD tag_length = (DWORD)(strlen(value) + 1);
 		bSuccess &= FreeImage_SetTagKey(_tag, key);
-		bSuccess &= FreeImage_SetTagLength(_tag, strlen(value) + 1);
-		bSuccess &= FreeImage_SetTagCount(_tag, strlen(value) + 1);
+		bSuccess &= FreeImage_SetTagLength(_tag, tag_length);
+		bSuccess &= FreeImage_SetTagCount(_tag, tag_length);
 		bSuccess &= FreeImage_SetTagType(_tag, FIDT_ASCII);
 		bSuccess &= FreeImage_SetTagValue(_tag, value);
 		return bSuccess;
