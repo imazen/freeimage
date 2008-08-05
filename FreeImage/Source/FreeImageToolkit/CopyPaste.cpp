@@ -610,6 +610,27 @@ FreeImage_Copy(FIBITMAP *src, int left, int top, int right, int bottom) {
 	// copy metadata from src to dst
 	FreeImage_CloneMetadata(dst, src);
 	
+	// clone IsTransparent member 
+	FreeImage_SetTransparent(dst, FreeImage_IsTransparent(src)); 
+	
+	// copy transparency table 
+	memcpy(FreeImage_GetTransparencyTable(dst), FreeImage_GetTransparencyTable(src), FreeImage_GetTransparencyCount(src) * sizeof(BYTE)); 
+	
+	// clone background color 
+	RGBQUAD *bkcolor = NULL; 
+	if( FreeImage_GetBackgroundColor(src, bkcolor) ) {
+		FreeImage_SetBackgroundColor(dst, bkcolor); 
+	}
+	
+	// clone resolution 
+	FreeImage_SetDotsPerMeterX(dst, FreeImage_GetDotsPerMeterX(src)); 
+	FreeImage_SetDotsPerMeterY(dst, FreeImage_GetDotsPerMeterY(src)); 
+	
+	// clone ICC profile 
+	FIICCPROFILE *src_profile = FreeImage_GetICCProfile(src); 
+	FIICCPROFILE *dst_profile = FreeImage_CreateICCProfile(dst, src_profile->data, src_profile->size); 
+	dst_profile->flags = src_profile->flags; 
+	
 	return dst;
 }
 
@@ -631,6 +652,9 @@ FreeImage_Paste(FIBITMAP *dst, FIBITMAP *src, int left, int top, int alpha) {
 	if(!src || !dst) return FALSE;
 
 	// check the size of src image
+	if((left < 0) || (top < 0)) {
+		return FALSE;
+	}
 	if((left + FreeImage_GetWidth(src) > FreeImage_GetWidth(dst)) || (top + FreeImage_GetHeight(src) > FreeImage_GetHeight(dst))) {
 		return FALSE;
 	}
