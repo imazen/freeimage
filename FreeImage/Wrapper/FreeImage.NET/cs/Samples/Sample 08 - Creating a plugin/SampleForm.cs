@@ -31,7 +31,7 @@ namespace Sample08
 		public SampleForm()
 		{
 			InitializeComponent();
-			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message += new OutputMessageFunction(FreeImage_Message);
 
 			// Creating a new instance of the plugin will register it automatically.
 			serialPlugin = new SerializationPlugin();
@@ -97,8 +97,8 @@ namespace Sample08
 		{
 			// Creat a new dialog
 			OpenFileDialog ofd = new OpenFileDialog();
-			
-			FIBITMAP dib = 0;
+
+			FIBITMAP dib = new FIBITMAP();
 			try
 			{
 				// Apply settings
@@ -156,7 +156,7 @@ namespace Sample08
 			// Create a new dialog
 			SaveFileDialog sfd = new SaveFileDialog();
 
-			FIBITMAP dib = 0;
+			FIBITMAP dib = new FIBITMAP();
 			try
 			{
 				// Check if the picture box contains a bitmap that can be saved.

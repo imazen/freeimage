@@ -19,7 +19,7 @@ namespace Sample10
 			}
 
 			// Add this class to the FreeImage-Message-Callback
-			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message += new OutputMessageFunction(FreeImage_Message);
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
@@ -48,7 +48,7 @@ namespace Sample10
 		{
 			// Create variables
 			OpenFileDialog ofd = new OpenFileDialog();
-			FIBITMAP dib = 0;
+			FIBITMAP dib = new FIBITMAP();
 			try
 			{
 				// Apply settings

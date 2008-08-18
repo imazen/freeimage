@@ -16,13 +16,13 @@ namespace Sample03
 			}
 
 			// Add this class to the message event
-			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message += new OutputMessageFunction(FreeImage_Message);
 
 			Sample sample = new Sample();
 			sample.Example();
 
 			// Remove this class from the message event
-			FreeImage.Message -= new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message -= new OutputMessageFunction(FreeImage_Message);
 		}
 
 		static void FreeImage_Message(FREE_IMAGE_FORMAT fif, string message)
@@ -33,7 +33,7 @@ namespace Sample03
 
 	public class Sample
 	{
-		FIBITMAP dib = 0;
+		FIBITMAP dib = new FIBITMAP();
 
 		public void Example()
 		{

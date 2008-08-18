@@ -36,7 +36,7 @@ namespace Sample01
 	{
 		const string fileName = @"Sample.jpg";
 		const string outFileName = @"Sample.tif";
-		FIBITMAP dib = 0;
+		FIBITMAP dib = new FIBITMAP();
 		string message = null;
 
 		public void Example01()
@@ -88,7 +88,7 @@ namespace Sample01
 				FreeImage.Unload(dib);
 
 			// Make sure to set the handle to null so that it is clear that the handle is not pointing to a bitmap.
-			dib = 0;
+			dib.SetNull();
 		}
 
 		public void Example02()
@@ -149,7 +149,7 @@ namespace Sample01
 			}
 
 			// Add this class to the callback event.
-			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message += new OutputMessageFunction(FreeImage_Message);
 
 			// Try to save the bitmap as a gif
 			if (!FreeImage.Save(FREE_IMAGE_FORMAT.FIF_GIF, dib, @"Sample_fail.gif", FREE_IMAGE_SAVE_FLAGS.DEFAULT))
@@ -168,7 +168,7 @@ namespace Sample01
 			FreeImage.UnloadEx(ref dib);
 
 			// Remove this class from the callback event.
-			FreeImage.Message -= new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message -= new OutputMessageFunction(FreeImage_Message);
 		}
 
 		void FreeImage_Message(FREE_IMAGE_FORMAT fif, string message)
