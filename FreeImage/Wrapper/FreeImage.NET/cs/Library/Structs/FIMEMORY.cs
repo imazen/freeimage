@@ -47,26 +47,6 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="FIMEMORY"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIMEMORY"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIMEMORY"/> structure.</param>
-		public FIMEMORY(int ptr)
-		{
-			data = new IntPtr(ptr);
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FIMEMORY"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIMEMORY"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIMEMORY"/> structure.</param>
-		public FIMEMORY(IntPtr ptr)
-		{
-			data = ptr;
-		}
-
-		/// <summary>
 		/// Tests whether two specified <see cref="FIMEMORY"/> structures are equivalent.
 		/// </summary>
 		/// <param name="left">The <see cref="FIMEMORY"/> that is to the left of the equality operator.</param>
@@ -93,46 +73,6 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMEMORY"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMEMORY"/> structure.</param>
-		/// <returns>A <see cref="FIMEMORY"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIMEMORY(int ptr)
-		{
-			return new FIMEMORY(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIMEMORY"/> structure specified in <paramref name="handle"/> to a 32-bit value.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIMEMORY"/> structure to be converted into a 32-bit value.</param>
-		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIMEMORY"/> structure.</returns>
-		public static implicit operator int(FIMEMORY handle)
-		{
-			return handle.data.ToInt32();
-		}
-
-		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMEMORY"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMEMORY"/> structure.</param>
-		/// <returns>A <see cref="FIMEMORY"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIMEMORY(IntPtr ptr)
-		{
-			return new FIMEMORY(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIMEMORY"/> structure specified in <paramref name="handle"/> to an IntPtr.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIMEMORY"/> structure to be converted into an IntPtr.</param>
-		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIMEMORY"/> structure.</returns>
-		public static implicit operator IntPtr(FIMEMORY handle)
-		{
-			return handle.data;
-		}
-
-		/// <summary>
 		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
 		/// <value><b>true</b> if this <see cref="FIMEMORY"/> is a null pointer;
@@ -143,6 +83,14 @@ namespace FreeImageAPI
 			{
 				return (data == IntPtr.Zero);
 			}
+		}
+
+		/// <summary>
+		/// Sets the handle to <i>null</i>.
+		/// </summary>
+		public void SetNull()
+		{
+			data = IntPtr.Zero;
 		}
 
 		/// <summary>

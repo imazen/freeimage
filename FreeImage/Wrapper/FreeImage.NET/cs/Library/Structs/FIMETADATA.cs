@@ -55,26 +55,6 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="FIMETADATA"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIMETADATA"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIMETADATA"/> structure.</param>
-		public FIMETADATA(int ptr)
-		{
-			data = new IntPtr(ptr);
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FIMETADATA"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIMETADATA"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIMETADATA"/> structure.</param>
-		public FIMETADATA(IntPtr ptr)
-		{
-			data = ptr;
-		}
-
-		/// <summary>
 		/// Tests whether two specified <see cref="FIMETADATA"/> structures are equivalent.
 		/// </summary>
 		/// <param name="left">The <see cref="FIMETADATA"/> that is to the left of the equality operator.</param>
@@ -101,46 +81,6 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMETADATA"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMETADATA"/> structure.</param>
-		/// <returns>A <see cref="FIMETADATA"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIMETADATA(int ptr)
-		{
-			return new FIMETADATA(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIMETADATA"/> structure specified in <paramref name="handle"/> to a 32-bit value.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIMETADATA"/> structure to be converted into a 32-bit value.</param>
-		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIMETADATA"/> structure.</returns>
-		public static implicit operator int(FIMETADATA handle)
-		{
-			return handle.data.ToInt32();
-		}
-
-		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMETADATA"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMETADATA"/> structure.</param>
-		/// <returns>A <see cref="FIMETADATA"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIMETADATA(IntPtr ptr)
-		{
-			return new FIMETADATA(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIMETADATA"/> structure specified in <paramref name="handle"/> to an IntPtr.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIMETADATA"/> structure to be converted into an IntPtr.</param>
-		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIMETADATA"/> structure.</returns>
-		public static implicit operator IntPtr(FIMETADATA handle)
-		{
-			return handle.data;
-		}
-
-		/// <summary>
 		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
 		/// <value><b>true</b> if this <see cref="FIMETADATA"/> is a null pointer;
@@ -151,6 +91,14 @@ namespace FreeImageAPI
 			{
 				return (data == IntPtr.Zero);
 			}
+		}
+
+		/// <summary>
+		/// Sets the handle to <i>null</i>.
+		/// </summary>
+		public void SetNull()
+		{
+			data = IntPtr.Zero;
 		}
 
 		/// <summary>
