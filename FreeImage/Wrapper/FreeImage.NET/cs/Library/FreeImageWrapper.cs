@@ -107,48 +107,6 @@ namespace FreeImageAPI
 
 		#endregion
 
-		#region Callback
-
-		// Callback delegate
-		private static OutputMessageFunction outputMessageFunction;
-		// Handle to pin the functions address
-		private static GCHandle outputMessageHandle;
-
-		static FreeImage()
-		{
-			// Check if FreeImage.dll is present and cancel setting the callbackfuntion if not
-			if (!IsAvailable())
-			{
-				return;
-			}
-			// Create a delegate (function pointer) to 'OnMessage'
-			outputMessageFunction = new OutputMessageFunction(OnMessage);
-			// Pin the object so the garbage collector does not move it around in memory
-			outputMessageHandle = GCHandle.Alloc(outputMessageFunction, GCHandleType.Normal);
-			// Set the callback
-			SetOutputMessage(outputMessageFunction);
-		}
-
-		/// <summary>
-		/// Internal callback
-		/// </summary>
-		private static void OnMessage(FREE_IMAGE_FORMAT fif, string message)
-		{
-			// Invoke the message
-			if (Message != null)
-			{
-				Message.Invoke(fif, message);
-			}
-		}
-
-		/// <summary>
-		/// Internal errors in FreeImage generate a logstring that can be
-		/// captured by this event.
-		/// </summary>
-		public static event OutputMessageFunction Message;
-
-		#endregion
-
 		#region General functions
 
 		/// <summary>
@@ -541,7 +499,7 @@ namespace FreeImageAPI
 			{
 				throw new FileNotFoundException(filename + " could not be found.");
 			}
-			FIBITMAP dib = 0;
+			FIBITMAP dib = new FIBITMAP();
 			if (format == FREE_IMAGE_FORMAT.FIF_UNKNOWN)
 			{
 				// query all plugins to see if one can read the file
@@ -584,7 +542,7 @@ namespace FreeImageAPI
 			if (!dib.IsNull)
 			{
 				Unload(dib);
-				dib = 0;
+				dib.SetNull();
 			}
 		}
 
@@ -985,7 +943,7 @@ namespace FreeImageAPI
 			}
 			if (!FIFSupportsReading(format))
 			{
-				return 0;
+				return new FIBITMAP();
 			}
 			// Create a 'FreeImageIO' structure for calling 'LoadFromHandle'
 			// using the internal structure 'FreeImageStreamIO'.
@@ -1198,7 +1156,7 @@ namespace FreeImageAPI
 					result = SaveToHandle(format, dibToSave, ref io, handle, flags);
 				}
 			}
-			catch
+			finally
 			{
 				// Always unload a temporary created bitmap.
 				if (dibToSave != dib)
@@ -1492,7 +1450,7 @@ namespace FreeImageAPI
 				// Check if a plugin can read the data
 				format = GetFileType(filename, 0);
 			}
-			FIMULTIBITMAP dib = 0;
+			FIMULTIBITMAP dib = new FIMULTIBITMAP();
 			if (FIFSupportsReading(format))
 			{
 				dib = OpenMultiBitmap(format, filename, create_new, read_only, keep_cache_in_memory, flags);
@@ -1527,7 +1485,7 @@ namespace FreeImageAPI
 			{
 				if (CloseMultiBitmap(dib, flags))
 				{
-					dib = 0;
+					dib.SetNull();
 					result = true;
 				}
 			}
@@ -1786,7 +1744,7 @@ namespace FreeImageAPI
 				throw new ArgumentNullException("hbitmap");
 			}
 
-			FIBITMAP dib = 0;
+			FIBITMAP dib = new FIBITMAP();
 			BITMAP bm;
 			uint colors;
 			bool release;
@@ -2922,8 +2880,8 @@ namespace FreeImageAPI
 				throw new ArgumentNullException("dib");
 			}
 
-			FIBITMAP result = 0;
-			FIBITMAP dibTemp = 0;
+			FIBITMAP result = new FIBITMAP();
+			FIBITMAP dibTemp = new FIBITMAP();
 			uint bpp = GetBPP(dib);
 			bool reorderPalette = ((conversion & FREE_IMAGE_COLOR_DEPTH.FICD_REORDER_PALETTE) > 0);
 			bool forceGreyscale = ((conversion & FREE_IMAGE_COLOR_DEPTH.FICD_FORCE_GREYSCALE) > 0);
@@ -3113,7 +3071,7 @@ namespace FreeImageAPI
 				throw new ArgumentNullException("dst");
 			}
 
-			FITAG tag = 0, tag2 = 0;
+			FITAG tag = new FITAG(), tag2 = new FITAG();
 			int copied = 0;
 
 			// Clear all existing metadata
@@ -3201,7 +3159,7 @@ namespace FreeImageAPI
 			}
 			else
 			{
-				result = SetMetadata(FREE_IMAGE_MDMODEL.FIMD_COMMENTS, dib, "Comment", 0);
+				result = SetMetadata(FREE_IMAGE_MDMODEL.FIMD_COMMENTS, dib, "Comment", new FITAG());
 			}
 			return result;
 		}
@@ -3374,7 +3332,7 @@ namespace FreeImageAPI
 				throw new ArgumentNullException("dib");
 			}
 
-			FIBITMAP result = 0;
+			FIBITMAP result = new FIBITMAP();
 			int ang = (int)angle;
 
 			if ((GetImageType(dib) == FREE_IMAGE_TYPE.FIT_BITMAP) &&
