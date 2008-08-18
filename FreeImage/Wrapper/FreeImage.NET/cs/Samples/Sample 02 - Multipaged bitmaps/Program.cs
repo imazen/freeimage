@@ -23,7 +23,7 @@ namespace Sample02
 	public class Sample
 	{
 		const string fileName = @"multipaged.tif";
-		FIMULTIBITMAP dib = 0;
+		FIMULTIBITMAP dib = new FIMULTIBITMAP();
 		Random rand = new Random();
 
 		public void Example()
@@ -50,7 +50,7 @@ namespace Sample02
 			int count = FreeImage.GetPageCount(dib);
 
 			// Multipaged bitmaps consist of multiple single FIBITMAPs
-			FIBITMAP page = 0;
+			FIBITMAP page = new FIBITMAP();
 
 			// There are bitmaps we can work with.
 			if (count > 0)

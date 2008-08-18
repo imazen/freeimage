@@ -40,7 +40,7 @@ namespace Sample09
 				MessageBox.Show("Please enter a valid URL.", "Error");
 				return;
 			}
-			FIBITMAP dib = 0;
+			FIBITMAP dib = new FIBITMAP();
 			Stream sourceStream = null;
 			try
 			{
@@ -95,7 +95,7 @@ namespace Sample09
 			}
 			SaveFileDialog sfd = null;
 			FileStream fStream = null;
-			FIBITMAP dib = 0;
+			FIBITMAP dib = new FIBITMAP();
 			try
 			{
 				sfd = new SaveFileDialog();

@@ -36,7 +36,7 @@ namespace Sample05
 
 	public class Sample
 	{
-		FIBITMAP dib = 0;
+		FIBITMAP dib = new FIBITMAP();
 
 		public void Example01()
 		{
