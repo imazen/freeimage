@@ -146,7 +146,7 @@ namespace FreeImageNETUnitTest
 
 		public FreeImageAPI.FIBITMAP GetBitmap(ImageType type, ImageColorType colorType)
 		{
-			FreeImageAPI.FIBITMAP result = 0;
+			FreeImageAPI.FIBITMAP result = new FreeImageAPI.FIBITMAP();
 			string filename = GetBitmapPath(type, colorType);
 			if (!String.IsNullOrEmpty(filename) && File.Exists(filename))
 				result = FreeImageAPI.FreeImage.LoadEx(filename);
