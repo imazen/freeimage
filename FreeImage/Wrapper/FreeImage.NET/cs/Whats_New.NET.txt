@@ -5,6 +5,17 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+August 18, 2008 - 1.03
+* [Eric T. Wilson] Added GC.AddMemoryPressure and GC.RemoveMemoryPressure to FreeImageBitmap class.
++ [Eric T. Wilson] Added ToBitmap method to FreeImageBitmap class.
+! [Eric T. Wilson] Changed implicit conversion operators to and from System.Drawing.Bitmap to explicit operators.
+- [Eric T. Wilson] Removed Message event from FreeImage class. Use event FreeImageEngine.Message instead.
+- [Eric T. Wilson] Removed contructors ctor(int) and ctor(IntPtr) from FIBITMAP, FIMULTIBITMAP, FIMEMORY, FIMETADATA and FITAG.
+- [Eric T. Wilson] Removed implicit conversion operators from and to int and IntPtr from FIBITMAP, FIMULTIBITMAP, FIMEMORY, FIMETADATA and FITAG.
++ [Jean-Philippe Goerke] Added SetNull method to FIBITMAP, FIMULTIBITMAP, FIMEMORY, FIMETADATA and FITAG.
+! [Jean-Philippe Goerke] Changed handling of multipage images in FreeImageBitmap: As with System.Drawing.Bitmap, any changes applied to an active frame are no longer written back to the multipage image loaded.
+* [Jean-Philippe Goerke] Fixed a bug in FreeImage.SaveToStream(ref FIBITMAP, Stream, 	FREE_IMAGE_FORMAT, FREE_IMAGE_SAVE_FLAGS, FREE_IMAGE_COLOR_DEPTH, bool): changed catch block into a finally block.
+
 July 25, 2008 - 1.02
 + [Jean-Philippe Goerke] Improved handling of XMP metadata in MetadataTag.cs: Key is now set to "XMLPacket" not changeable if Model is FREE_IMAGE_MDMODEL.FIMD_XMP.
 
