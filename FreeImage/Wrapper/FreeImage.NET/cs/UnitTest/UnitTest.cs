@@ -29,13 +29,13 @@ namespace FreeImageNETUnitTest
 		[TestFixtureSetUp]
 		public void Init()
 		{
-			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message += new OutputMessageFunction(FreeImage_Message);
 		}
 
 		[TestFixtureTearDown]
 		public void DeInit()
 		{
-			FreeImage.Message -= new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message -= new OutputMessageFunction(FreeImage_Message);
 		}
 
 		[SetUp]
@@ -89,7 +89,7 @@ namespace FreeImageNETUnitTest
 				FreeImage.FI_RGBA_GREEN_MASK,
 				FreeImage.FI_RGBA_BLUE_MASK);
 
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FreeImage.UnloadEx(ref dib);
 		}
 
@@ -98,7 +98,7 @@ namespace FreeImageNETUnitTest
 		{
 			dib = FreeImage.AllocateT(FREE_IMAGE_TYPE.FIT_RGBA16, 31, 555, 64, 0, 0, 0);
 
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FreeImage.UnloadEx(ref dib);
 		}
 
@@ -106,7 +106,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Clone()
 		{
 			dib = FreeImage.Allocate(1, 1, 32, 0, 0, 0);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.Clone(dib);
 			Assert.AreNotEqual(0, temp);
@@ -118,21 +118,21 @@ namespace FreeImageNETUnitTest
 		[Test]
 		public void FreeImage_Load()
 		{
-			Assert.AreEqual(0, dib);
+			Assert.That(dib.IsNull);
 			dib = FreeImage.Load(FREE_IMAGE_FORMAT.FIF_JPEG, iManager.baseDirectory + @"JPEG\Image.jpg", FREE_IMAGE_LOAD_FLAGS.DEFAULT);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FreeImage.UnloadEx(ref dib);
-			Assert.AreEqual(0, dib);
+			Assert.That(dib.IsNull);
 		}
 
 		[Test]
 		public void FreeImage_Unload()
 		{
-			Assert.AreEqual(0, dib);
+			Assert.That(dib.IsNull);
 			dib = FreeImage.Load(FREE_IMAGE_FORMAT.FIF_JPEG, iManager.baseDirectory + @"JPEG\Image.jpg", FREE_IMAGE_LOAD_FLAGS.DEFAULT);
 			Assert.IsNotNull(dib);
 			FreeImage.Unload(dib);
-			dib = 0;
+			dib.SetNull();
 		}
 
 		[Test]
@@ -145,7 +145,7 @@ namespace FreeImageNETUnitTest
 			using (fi_handle handle = new fi_handle(mStream))
 			{
 				dib = FreeImage.LoadFromHandle(FREE_IMAGE_FORMAT.FIF_BMP, ref io, handle, FREE_IMAGE_LOAD_FLAGS.DEFAULT);
-				Assert.AreNotEqual(0, dib);
+				Assert.That(!dib.IsNull);
 
 				FreeImage.UnloadEx(ref dib);
 			}
@@ -156,7 +156,7 @@ namespace FreeImageNETUnitTest
 		{
 			string filename = @"test.bmp";
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Assert.IsTrue(FreeImage.Save(FREE_IMAGE_FORMAT.FIF_BMP, dib, filename, FREE_IMAGE_SAVE_FLAGS.DEFAULT));
 			Assert.IsTrue(File.Exists(filename));
@@ -177,7 +177,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Memory()
 		{
 			dib = FreeImage.Allocate(1, 1, 1, 0, 0, 0);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIMEMORY mem = FreeImage.OpenMemory(IntPtr.Zero, 0);
 			Assert.AreNotEqual(0, mem);
 			FreeImage.SaveToMemory(FREE_IMAGE_FORMAT.FIF_TIFF, dib, mem, FREE_IMAGE_SAVE_FLAGS.DEFAULT);
@@ -337,7 +337,7 @@ namespace FreeImageNETUnitTest
 			Assert.AreEqual(3, FreeImage.GetPageCount(mdib));
 			FreeImage.CloseMultiBitmapEx(ref mdib);
 			FreeImage.UnloadEx(ref dib);
-			mdib = 0;
+			mdib.SetNull();
 			mdib = FreeImage.OpenMultiBitmap(FREE_IMAGE_FORMAT.FIF_TIFF, @"test.tif", false, false, true, FREE_IMAGE_LOAD_FLAGS.DEFAULT);
 			Assert.AreNotEqual(0, mdib);
 			Assert.AreEqual(3, FreeImage.GetPageCount(mdib));
@@ -353,7 +353,7 @@ namespace FreeImageNETUnitTest
 			Assert.AreEqual(2, pages.Length);
 			FreeImage.UnlockPage(mdib, dib, false);
 			FreeImage.UnlockPage(mdib, temp, true);
-			dib = 0;
+			dib.SetNull();
 			Assert.IsTrue(FreeImage.MovePage(mdib, 0, 1));
 			FreeImage.CloseMultiBitmapEx(ref mdib);
 			Assert.IsTrue(System.IO.File.Exists("test.tif"));
@@ -376,7 +376,7 @@ namespace FreeImageNETUnitTest
 		[Test]
 		public void FreeImage_GetFileTypeFromMemory()
 		{
-			Assert.AreEqual(FREE_IMAGE_FORMAT.FIF_UNKNOWN, FreeImage.GetFileTypeFromMemory(new FIMEMORY(0), 0));
+			Assert.AreEqual(FREE_IMAGE_FORMAT.FIF_UNKNOWN, FreeImage.GetFileTypeFromMemory(new FIMEMORY(), 0));
 		}
 
 		[Test]
@@ -409,7 +409,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetBits()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_01_Threshold);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			Assert.AreNotEqual(IntPtr.Zero, FreeImage.GetBits(dib));
 			FreeImage.UnloadEx(ref dib);
 		}
@@ -418,7 +418,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetScanLine()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_04_Greyscale_MinIsBlack);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			Assert.AreNotEqual(IntPtr.Zero, FreeImage.GetScanLine(dib, 0));
 			FreeImage.UnloadEx(ref dib);
 		}
@@ -427,7 +427,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetPixelIndex_SetPixelIndex()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_04_Greyscale_Unordered);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			byte index_old, index_new;
 			Assert.IsTrue(FreeImage.GetPixelIndex(dib, 31, 10, out index_old));
 			index_new = index_old == byte.MaxValue ? (byte)0 : (byte)(index_old + 1);
@@ -441,7 +441,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetPixelColor_SetPixelColor()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			RGBQUAD value_old, value_new;
 			Assert.IsTrue(FreeImage.GetPixelColor(dib, 77, 61, out value_old));
 			value_new = (value_old == (RGBQUAD)Color.White) ? Color.Black : Color.White;
@@ -455,7 +455,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Bitmap_information_functions()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_08_Greyscale_MinIsBlack);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			Assert.AreEqual(FREE_IMAGE_TYPE.FIT_BITMAP, FreeImage.GetImageType(dib));
 			Assert.AreNotEqual(0, FreeImage.GetColorsUsed(dib));
 			Assert.AreEqual(8, FreeImage.GetBPP(dib));
@@ -491,7 +491,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetICCProfile()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			new FIICCPROFILE(dib, new byte[] { 0xFF, 0xAA, 0x00, 0x33 });
 			FIICCPROFILE p = FreeImage.GetICCProfileEx(dib);
 			Assert.AreEqual(4, p.Size);
@@ -503,7 +503,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_CreateICCProfile()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			byte[] data = new byte[256];
 			Assert.AreNotEqual(IntPtr.Zero, FreeImage.CreateICCProfile(dib, data, 256));
 			FreeImage.UnloadEx(ref dib);
@@ -513,7 +513,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_DestroyICCProfile()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FreeImage.DestroyICCProfile(dib);
 			FreeImage.UnloadEx(ref dib);
 		}
@@ -522,7 +522,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ConvertTo4Bits()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ConvertTo4Bits(dib);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(4, FreeImage.GetBPP(temp));
@@ -534,7 +534,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ConvertTo8Bits()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ConvertTo8Bits(dib);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(8, FreeImage.GetBPP(temp));
@@ -546,7 +546,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ConvertToGreyscale()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ConvertToGreyscale(dib);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(8, FreeImage.GetBPP(temp));
@@ -558,7 +558,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ConvertTo16Bits555()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ConvertTo16Bits555(dib);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(16, FreeImage.GetBPP(temp));
@@ -570,7 +570,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ConvertTo16Bits565()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ConvertTo16Bits565(dib);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(16, FreeImage.GetBPP(temp));
@@ -582,7 +582,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ConvertTo24Bits()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ConvertTo24Bits(dib);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(24, FreeImage.GetBPP(temp));
@@ -594,7 +594,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ConvertTo32Bits()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ConvertTo32Bits(dib);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(32, FreeImage.GetBPP(temp));
@@ -606,7 +606,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ColorQuantize()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ColorQuantize(dib, FREE_IMAGE_QUANTIZE.FIQ_WUQUANT);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(8, FreeImage.GetBPP(temp));
@@ -623,7 +623,7 @@ namespace FreeImageNETUnitTest
 			RGBQUAD[] table = palette.Data;
 
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.ColorQuantizeEx(dib, FREE_IMAGE_QUANTIZE.FIQ_WUQUANT, (int)palette.Length, (int)palette.Length, table);
 			Assert.AreNotEqual(0, temp);
@@ -638,7 +638,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Threshold()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.Threshold(dib, 128);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(1, FreeImage.GetBPP(temp));
@@ -650,7 +650,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Dither()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.Dither(dib, FREE_IMAGE_DITHER.FID_FS);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(1, FreeImage.GetBPP(temp));
@@ -662,7 +662,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_RawBits()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			IntPtr buffer = Marshal.AllocHGlobal((int)FreeImage.GetDIBSize(dib));
 			FreeImage.ConvertToRawBits(
 				buffer,
@@ -695,7 +695,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ConvertToRGBF()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ConvertToRGBF(dib);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(FREE_IMAGE_TYPE.FIT_RGBF, FreeImage.GetImageType(temp));
@@ -707,7 +707,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ConvertToStandardType()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_04_Greyscale_MinIsBlack);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ConvertToStandardType(dib, true);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(FREE_IMAGE_COLOR_TYPE.FIC_PALETTE, FreeImage.GetColorType(temp));
@@ -719,7 +719,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_ConvertToType()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08_Greyscale_Unordered);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP temp = FreeImage.ConvertToType(dib, FREE_IMAGE_TYPE.FIT_UINT32, true);
 			Assert.AreNotEqual(0, temp);
 			Assert.AreEqual(FREE_IMAGE_TYPE.FIT_UINT32, FreeImage.GetImageType(temp));
@@ -732,7 +732,7 @@ namespace FreeImageNETUnitTest
 		{
 			FIBITMAP temp;
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP rgbf = FreeImage.ConvertToRGBF(dib);
 			Assert.AreNotEqual(0, rgbf);
@@ -753,7 +753,7 @@ namespace FreeImageNETUnitTest
 		{
 			FIBITMAP temp;
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP rgbf = FreeImage.ConvertToRGBF(dib);
 			Assert.AreNotEqual(0, rgbf);
@@ -774,7 +774,7 @@ namespace FreeImageNETUnitTest
 		{
 			FIBITMAP temp;
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP rgbf = FreeImage.ConvertToRGBF(dib);
 			Assert.AreNotEqual(0, rgbf);
@@ -795,7 +795,7 @@ namespace FreeImageNETUnitTest
 		{
 			FIBITMAP temp;
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP rgbf = FreeImage.ConvertToRGBF(dib);
 			Assert.AreNotEqual(0, rgbf);
@@ -863,7 +863,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Tag_accessors()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -881,7 +881,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetTagKey()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -898,7 +898,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetTagDescription()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -915,7 +915,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetTagID()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -932,7 +932,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetTagType()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -949,7 +949,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetTagCount()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -966,7 +966,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetTagLength()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -983,7 +983,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetTagValue()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -1000,7 +1000,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_SetTagKey()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -1017,7 +1017,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_SetTagDescription()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -1034,7 +1034,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_SetTagID()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -1051,7 +1051,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_SetTagType()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -1068,7 +1068,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_SetTagCount()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -1085,7 +1085,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_SetTagLength()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -1102,7 +1102,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_SetTagValue()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -1125,7 +1125,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetMetadataCount()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Assert.AreNotEqual(0, FreeImage.GetMetadataCount(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib));
 			FreeImage.UnloadEx(ref dib);
@@ -1135,7 +1135,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_TagToString()
 		{
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FITAG tag;
 			FIMETADATA mData = FreeImage.FindFirstMetadata(FREE_IMAGE_MDMODEL.FIMD_EXIF_EXIF, dib, out tag);
@@ -1152,7 +1152,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_RotateClassic()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.RotateClassic(dib, 45d);
 			Assert.AreNotEqual(0, temp);
@@ -1165,7 +1165,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_RotateEx()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.RotateEx(dib, 261d, 0d, 33d, 51d, 9d, true);
 			Assert.AreNotEqual(0, temp);
@@ -1178,7 +1178,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_FlipHorizontal()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Assert.IsTrue(FreeImage.FlipHorizontal(dib));
 
@@ -1189,7 +1189,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_FlipVertical()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Assert.IsTrue(FreeImage.FlipVertical(dib));
 
@@ -1220,7 +1220,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Rescale()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_16_555);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.Rescale(dib, 100, 100, FREE_IMAGE_FILTER.FILTER_BICUBIC);
 			Assert.AreNotEqual(0, temp);
@@ -1233,7 +1233,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_MakeThumbnail()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_16_555);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.MakeThumbnail(dib, 50, false);
 			Assert.AreNotEqual(0, temp);
@@ -1246,7 +1246,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_AdjustCurve()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			byte[] lut = new byte[256];
 			Assert.IsTrue(FreeImage.AdjustCurve(dib, lut, FREE_IMAGE_COLOR_CHANNEL.FICC_GREEN));
@@ -1258,7 +1258,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_AdjustGamma()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Assert.IsTrue(FreeImage.AdjustGamma(dib, 1.3d));
 
@@ -1269,7 +1269,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_AdjustBrightness()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Assert.IsTrue(FreeImage.AdjustBrightness(dib, 1.3d));
 
@@ -1280,7 +1280,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_AdjustContrast()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Assert.IsTrue(FreeImage.AdjustContrast(dib, 1.3d));
 
@@ -1291,7 +1291,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Invert()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_16_555);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Assert.IsTrue(FreeImage.Invert(dib));
 
@@ -1302,7 +1302,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetHistogram()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			int[] histo = new int[256];
 			Assert.IsTrue(FreeImage.GetHistogram(dib, histo, FREE_IMAGE_COLOR_CHANNEL.FICC_RED));
@@ -1314,7 +1314,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetChannel()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.GetChannel(dib, FREE_IMAGE_COLOR_CHANNEL.FICC_GREEN);
 			Assert.AreNotEqual(0, temp);
@@ -1327,7 +1327,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_SetChannel()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FIBITMAP dib8 = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08);
 			Assert.AreNotEqual(0, dib8);
 
@@ -1341,7 +1341,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetComplexChannel()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.ConvertToType(dib, FREE_IMAGE_TYPE.FIT_COMPLEX, true);
 			Assert.AreNotEqual(0, temp);
@@ -1358,7 +1358,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_SetComplexChannel()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08_Greyscale_Unordered);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.ConvertToType(dib, FREE_IMAGE_TYPE.FIT_COMPLEX, true);
 			Assert.AreNotEqual(0, temp);
@@ -1377,7 +1377,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Copy()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08_Greyscale_MinIsBlack);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.Copy(dib, 5, 9, 44, 2);
 			Assert.AreNotEqual(0, temp);
@@ -1390,7 +1390,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Paste()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08_Greyscale_MinIsBlack);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FIBITMAP temp = FreeImage.Allocate(3, 3, 8, 0, 0, 0);
 			Assert.IsTrue(FreeImage.Paste(dib, temp, 31, 3, 256));
@@ -1403,10 +1403,10 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_Composite()
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08_Greyscale_MinIsBlack);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			RGBQUAD rgbq = new RGBQUAD();
 
-			FIBITMAP temp = FreeImage.Composite(dib, false, ref rgbq, 0);
+			FIBITMAP temp = FreeImage.Composite(dib, false, ref rgbq, new FIBITMAP());
 			Assert.AreNotEqual(0, temp);
 
 			FreeImage.UnloadEx(ref temp);
@@ -1599,19 +1599,19 @@ namespace FreeImageNETUnitTest
 	public class ImportedStructsTest
 	{
 		ImageManager iManager = new ImageManager();
-		FIBITMAP dib = 0;
+		FIBITMAP dib = new FIBITMAP();
 		string freeImageCallback = null;
 
 		[TestFixtureSetUp]
 		public void Init()
 		{
-			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message += new OutputMessageFunction(FreeImage_Message);
 		}
 
 		[TestFixtureTearDown]
 		public void DeInit()
 		{
-			FreeImage.Message -= new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message -= new OutputMessageFunction(FreeImage_Message);
 		}
 
 		[SetUp]
@@ -1882,59 +1882,6 @@ namespace FreeImageNETUnitTest
 		{
 			FIBITMAP var = new FIBITMAP();
 			Assert.IsTrue(var.IsNull);
-
-			var = 41;
-			Assert.IsFalse(var.IsNull);
-
-			var = 0;
-			Assert.IsTrue(var.IsNull);
-
-			var = new IntPtr(654321);
-			Assert.AreEqual(654321, var);
-
-			var = IntPtr.Zero;
-			Assert.AreEqual(0, var);
-
-			var = 654321;
-			FIBITMAP compVar = var;
-			Assert.AreEqual(654321, compVar);
-			Assert.AreEqual(var, compVar);
-
-			var = 733;
-			compVar = 733;
-
-			Assert.AreEqual(var, compVar);
-			Assert.AreEqual(0, var.CompareTo(compVar));
-			Assert.AreEqual(0, var.CompareTo((object)compVar));
-
-			compVar = 33;
-			Assert.AreEqual(1, var.CompareTo(compVar));
-			Assert.AreEqual(1, var.CompareTo((object)compVar));
-
-			compVar = 9999;
-			Assert.AreEqual(-1, var.CompareTo(compVar));
-			Assert.AreEqual(-1, var.CompareTo((object)compVar));
-
-			var = 1000;
-			compVar = 1000;
-			Assert.IsTrue(var == compVar);
-			Assert.IsFalse(var != compVar);
-			Assert.IsTrue(var.Equals(compVar));
-			Assert.IsTrue(var.Equals((object)compVar));
-			Assert.That(var.CompareTo(compVar) == 0);
-			Assert.That(var.CompareTo((object)compVar) == 0);
-
-			compVar = 2000;
-			Assert.IsFalse(var == compVar);
-			Assert.IsTrue(var != compVar);
-			Assert.IsFalse(var.Equals(compVar));
-			Assert.IsFalse(var.Equals((object)compVar));
-			Assert.That(var.CompareTo(compVar) < 0);
-			Assert.That(var.CompareTo((object)compVar) < 0);
-
-			compVar = 500;
-			Assert.That(var.CompareTo(compVar) > 0);
-			Assert.That(var.CompareTo((object)compVar) > 0);
 		}
 
 		[Test]
@@ -1964,7 +1911,7 @@ namespace FreeImageNETUnitTest
 			Assert.AreEqual(0, var.Size);
 
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			byte[] data = new byte[512];
 			rand.NextBytes(data);
@@ -2011,19 +1958,19 @@ namespace FreeImageNETUnitTest
 	public class WrapperStructsTest
 	{
 		ImageManager iManager = new ImageManager();
-		FIBITMAP dib = 0;
+		FIBITMAP dib = new FIBITMAP();
 		string freeImageCallback = null;
 
 		[TestFixtureSetUp]
 		public void Init()
 		{
-			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message += new OutputMessageFunction(FreeImage_Message);
 		}
 
 		[TestFixtureTearDown]
 		public void DeInit()
 		{
-			FreeImage.Message -= new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message -= new OutputMessageFunction(FreeImage_Message);
 		}
 
 		[SetUp]
@@ -3212,19 +3159,19 @@ namespace FreeImageNETUnitTest
 	public class WrapperFunctionsTest
 	{
 		ImageManager iManager = new ImageManager();
-		FIBITMAP dib = 0;
+		FIBITMAP dib = new FIBITMAP();
 		string freeImageCallback = null;
 
 		[TestFixtureSetUp]
 		public void Init()
 		{
-			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message += new OutputMessageFunction(FreeImage_Message);
 		}
 
 		[TestFixtureTearDown]
 		public void DeInit()
 		{
-			FreeImage.Message -= new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message -= new OutputMessageFunction(FreeImage_Message);
 		}
 
 		[SetUp]
@@ -3278,7 +3225,7 @@ namespace FreeImageNETUnitTest
 
 			try
 			{
-				bitmap = FreeImage.GetBitmap(0);
+				bitmap = FreeImage.GetBitmap(new FIBITMAP());
 			}
 			catch
 			{
@@ -3286,7 +3233,7 @@ namespace FreeImageNETUnitTest
 			Assert.IsNull(bitmap);
 
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			bitmap = FreeImage.GetBitmap(dib);
 			Assert.IsNotNull(bitmap);
@@ -3304,7 +3251,7 @@ namespace FreeImageNETUnitTest
 			Assert.IsNotNull(bitmap);
 
 			dib = FreeImage.CreateFromBitmap(bitmap);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Assert.AreEqual((int)FreeImage.GetHeight(dib), bitmap.Height);
 			Assert.AreEqual((int)FreeImage.GetWidth(dib), bitmap.Width);
@@ -3334,7 +3281,7 @@ namespace FreeImageNETUnitTest
 			Assert.IsTrue(File.Exists(@"test.png"));
 
 			dib = FreeImage.Load(FREE_IMAGE_FORMAT.FIF_PNG, @"test.png", FREE_IMAGE_LOAD_FLAGS.DEFAULT);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FreeImage.UnloadEx(ref dib);
 
@@ -3347,20 +3294,20 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_LoadEx()
 		{
 			dib = FreeImage.LoadEx(iManager.GetBitmapPath(ImageType.Odd, ImageColorType.Type_16_555));
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			FreeImage.UnloadEx(ref dib);
 
 			FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_TIFF;
 
 			dib = FreeImage.LoadEx(iManager.GetBitmapPath(ImageType.Odd, ImageColorType.Type_16_565), ref format);
-			Assert.AreEqual(0, dib);
+			Assert.That(dib.IsNull);
 			Assert.AreEqual(FREE_IMAGE_FORMAT.FIF_TIFF, format);
 			FreeImage.UnloadEx(ref dib);
 
 			format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 			dib = FreeImage.LoadEx(iManager.GetBitmapPath(ImageType.JPEG, ImageColorType.Type_16_565),
 				FREE_IMAGE_LOAD_FLAGS.DEFAULT, ref format);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			Assert.AreEqual(FREE_IMAGE_FORMAT.FIF_JPEG, format);
 
 			FreeImage.UnloadEx(ref dib);
@@ -3369,15 +3316,15 @@ namespace FreeImageNETUnitTest
 		[Test]
 		public void FreeImage_UnloadEx()
 		{
-			Assert.AreEqual(0, dib);
+			Assert.That(dib.IsNull);
 			FreeImage.UnloadEx(ref dib);
-			Assert.AreEqual(0, dib);
+			Assert.That(dib.IsNull);
 
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_16_555);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			FreeImage.UnloadEx(ref dib);
-			Assert.AreEqual(0, dib);
+			Assert.That(dib.IsNull);
 		}
 
 		[Test]
@@ -3385,7 +3332,7 @@ namespace FreeImageNETUnitTest
 		{
 			FREE_IMAGE_FORMAT format;
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Assert.IsTrue(FreeImage.SaveEx(dib, @"test.png"));
 			Assert.IsTrue(File.Exists(@"test.png"));
@@ -3431,7 +3378,7 @@ namespace FreeImageNETUnitTest
 			Assert.IsNotNull(fStream);
 
 			dib = FreeImage.LoadFromStream(fStream);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			Assert.That(FreeImage.GetBPP(dib) == 16);
 			Assert.That(FreeImage.GetGreenMask(dib) == FreeImage.FI16_565_GREEN_MASK);
 
@@ -3443,7 +3390,7 @@ namespace FreeImageNETUnitTest
 
 			format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 			dib = FreeImage.LoadFromStream(fStream, FREE_IMAGE_LOAD_FLAGS.DEFAULT, ref format);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			Assert.That(FreeImage.GetBPP(dib) == 24);
 			Assert.That(format == FREE_IMAGE_FORMAT.FIF_JPEG);
 			FreeImage.UnloadEx(ref dib);
@@ -3452,20 +3399,20 @@ namespace FreeImageNETUnitTest
 			fStream = new FileStream(iManager.GetBitmapPath(ImageType.Even, ImageColorType.Type_32), FileMode.Open);
 			format = FREE_IMAGE_FORMAT.FIF_TIFF;
 			dib = FreeImage.LoadFromStream(fStream, FREE_IMAGE_LOAD_FLAGS.DEFAULT, ref format);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			Assert.That(FreeImage.GetBPP(dib) == 32);
 			Assert.That(format == FREE_IMAGE_FORMAT.FIF_TIFF);
 
 			FreeImage.UnloadEx(ref dib);
 
-			Assert.AreEqual(0, dib);
+			Assert.That(dib.IsNull);
 			dib = FreeImage.LoadFromStream(new MemoryStream(new byte[] { }));
-			Assert.AreEqual(0, dib);
+			Assert.That(dib.IsNull);
 
 			format = FREE_IMAGE_FORMAT.FIF_BMP;
 			fStream.Position = 0;
 			dib = FreeImage.LoadFromStream(fStream, ref format);
-			Assert.AreEqual(0, dib);
+			Assert.That(dib.IsNull);
 			Assert.AreEqual(FREE_IMAGE_FORMAT.FIF_BMP, format);
 
 			fStream.Close();
@@ -3475,7 +3422,7 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_SaveToStream()
 		{
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_08_Greyscale_MinIsBlack);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 
 			Stream stream = new FileStream(@"out_stream.bmp", FileMode.Create);
 			Assert.IsNotNull(stream);
@@ -3828,7 +3775,7 @@ namespace FreeImageNETUnitTest
 			BITMAPINFO info;
 
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_01_Dither);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			info = FreeImage.GetInfoEx(dib);
 			Assert.AreEqual(FreeImage.GetBPP(dib), info.bmiHeader.biBitCount);
 			Assert.AreEqual(FreeImage.GetWidth(dib), info.bmiHeader.biWidth);
@@ -3836,7 +3783,7 @@ namespace FreeImageNETUnitTest
 			FreeImage.UnloadEx(ref dib);
 
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_04_Greyscale_MinIsBlack);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			info = FreeImage.GetInfoEx(dib);
 			Assert.AreEqual(FreeImage.GetBPP(dib), info.bmiHeader.biBitCount);
 			Assert.AreEqual(FreeImage.GetWidth(dib), info.bmiHeader.biWidth);
@@ -3844,7 +3791,7 @@ namespace FreeImageNETUnitTest
 			FreeImage.UnloadEx(ref dib);
 
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08_Greyscale_Unordered);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			info = FreeImage.GetInfoEx(dib);
 			Assert.AreEqual(FreeImage.GetBPP(dib), info.bmiHeader.biBitCount);
 			Assert.AreEqual(FreeImage.GetWidth(dib), info.bmiHeader.biWidth);
@@ -3852,7 +3799,7 @@ namespace FreeImageNETUnitTest
 			FreeImage.UnloadEx(ref dib);
 
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_16_555);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			info = FreeImage.GetInfoEx(dib);
 			Assert.AreEqual(FreeImage.GetBPP(dib), info.bmiHeader.biBitCount);
 			Assert.AreEqual(FreeImage.GetWidth(dib), info.bmiHeader.biWidth);
@@ -3860,7 +3807,7 @@ namespace FreeImageNETUnitTest
 			FreeImage.UnloadEx(ref dib);
 
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_16_565);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			info = FreeImage.GetInfoEx(dib);
 			Assert.AreEqual(FreeImage.GetBPP(dib), info.bmiHeader.biBitCount);
 			Assert.AreEqual(FreeImage.GetWidth(dib), info.bmiHeader.biWidth);
@@ -3868,7 +3815,7 @@ namespace FreeImageNETUnitTest
 			FreeImage.UnloadEx(ref dib);
 
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_24);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			info = FreeImage.GetInfoEx(dib);
 			Assert.AreEqual(FreeImage.GetBPP(dib), info.bmiHeader.biBitCount);
 			Assert.AreEqual(FreeImage.GetWidth(dib), info.bmiHeader.biWidth);
@@ -3876,7 +3823,7 @@ namespace FreeImageNETUnitTest
 			FreeImage.UnloadEx(ref dib);
 
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
-			Assert.AreNotEqual(0, dib);
+			Assert.That(!dib.IsNull);
 			info = FreeImage.GetInfoEx(dib);
 			Assert.AreEqual(FreeImage.GetBPP(dib), info.bmiHeader.biBitCount);
 			Assert.AreEqual(FreeImage.GetWidth(dib), info.bmiHeader.biWidth);
@@ -4684,19 +4631,19 @@ namespace FreeImageNETUnitTest
 	public class FreeImageBitmapTest
 	{
 		ImageManager iManager = new ImageManager();
-		FIBITMAP dib = 0;
+		FIBITMAP dib = new FIBITMAP();
 		string freeImageCallback = null;
 
 		[TestFixtureSetUp]
 		public void Init()
 		{
-			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message += new OutputMessageFunction(FreeImage_Message);
 		}
 
 		[TestFixtureTearDown]
 		public void DeInit()
 		{
-			FreeImage.Message -= new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message -= new OutputMessageFunction(FreeImage_Message);
 		}
 
 		[SetUp]
