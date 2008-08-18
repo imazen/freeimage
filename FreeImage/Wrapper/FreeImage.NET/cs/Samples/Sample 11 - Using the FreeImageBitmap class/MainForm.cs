@@ -79,7 +79,7 @@ namespace Sample11
 			}
 
 			// Set the new bitmap.
-			pictureBox.Image = bitmap = newBitmap;
+			pictureBox.Image = (Bitmap)(bitmap = newBitmap);
 
 			// Update gui.
 			UpdateBitmapInformations();
@@ -208,7 +208,7 @@ namespace Sample11
 							pictureBox.Image.Dispose();
 						}
 						// Display the result
-						pictureBox.Image = temp;
+						pictureBox.Image = (Bitmap)temp;
 					}
 				}
 			}
@@ -384,7 +384,7 @@ namespace Sample11
 						{
 							pictureBox.Image.Dispose();
 						}
-						pictureBox.Image = bitmap;
+						pictureBox.Image = (Bitmap)bitmap;
 					}
 				}
 			}
