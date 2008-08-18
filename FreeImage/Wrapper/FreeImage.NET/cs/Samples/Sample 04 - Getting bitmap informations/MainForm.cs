@@ -19,12 +19,12 @@ namespace Sample04
 		public MainForm()
 		{
 			InitializeComponent();
-			FreeImage.Message += new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message += new OutputMessageFunction(FreeImage_Message);
 		}
 
 		~MainForm()
 		{
-			FreeImage.Message -= new OutputMessageFunction(FreeImage_Message);
+			FreeImageEngine.Message -= new OutputMessageFunction(FreeImage_Message);
 		}
 
 		void FreeImage_Message(FREE_IMAGE_FORMAT fif, string message)
