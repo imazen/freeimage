@@ -54,8 +54,8 @@ namespace FreeImageAPI
 	{
 		#region Fields
 
-		private bool disposed = false;
-		private object tag = null;
+		private bool disposed;
+		private object tag;
 		private object lockObject = new object();
 		private SaveInformation saveInformation = new SaveInformation();
 
@@ -67,12 +67,12 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Handle to the encapsulated FreeImage-bitmap.
 		/// </summary>
-		private FIBITMAP dib = 0;
+		private FIBITMAP dib;
 
 		/// <summary>
 		/// Handle to the encapsulated FreeImage-multipagebitmap.
 		/// </summary>
-		private FIMULTIBITMAP mdib = 0;
+		private FIMULTIBITMAP mdib;
 
 		#endregion
 
@@ -97,6 +97,7 @@ namespace FreeImageAPI
 				throw new Exception();
 			}
 			this.dib = dib;
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -113,6 +114,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -163,6 +165,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -226,6 +229,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -275,15 +279,13 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
-			else
+			dib = FreeImage.Rescale(temp, width, height, FREE_IMAGE_FILTER.FILTER_BICUBIC);
+			FreeImage.Unload(temp);
+			if (dib.IsNull)
 			{
-				dib = FreeImage.Rescale(temp, width, height, FREE_IMAGE_FILTER.FILTER_BICUBIC);
-				FreeImage.Unload(temp);
-				if (dib.IsNull)
-				{
-					throw new Exception();
-				}
+				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -362,6 +364,7 @@ namespace FreeImageAPI
 				throw new Exception();
 			}
 
+			AddMemoryPressure();
 			originalFormat = format;
 		}
 
@@ -455,7 +458,7 @@ namespace FreeImageAPI
 				{
 					if (!FreeImage.CloseMultiBitmapEx(ref mdib, FREE_IMAGE_SAVE_FLAGS.DEFAULT))
 					{
-						throw new Exception();
+						throw new Exception("Unable to unload temporary FIMULTIBITMAP.");
 					}
 
 					dib = FreeImage.LoadEx(filename, flags, ref format);
@@ -464,6 +467,7 @@ namespace FreeImageAPI
 						throw new Exception();
 					}
 
+					AddMemoryPressure();
 					return;
 				}
 				else
@@ -471,6 +475,7 @@ namespace FreeImageAPI
 					dib = FreeImage.LockPage(mdib, 0);
 					if (!dib.IsNull)
 					{
+						AddMemoryPressure();
 						return;
 					}
 				}
@@ -500,6 +505,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -559,6 +565,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -593,6 +600,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -633,10 +641,12 @@ namespace FreeImageAPI
 
 			dib = FreeImage.ConvertFromRawBits(
 				scan0, width, height, stride, bpp, redMask, greenMask, blueMask, topDown);
+
 			if (dib.IsNull)
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -649,15 +659,18 @@ namespace FreeImageAPI
 			try
 			{
 				byte[] data = (byte[])info.GetValue("Bitmap Data", typeof(byte[]));
-				if (data != null && data.Length > 0)
+				if ((data != null) && (data.Length > 0))
 				{
 					MemoryStream memory = new MemoryStream(data);
 					FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_TIFF;
 					dib = FreeImage.LoadFromStream(memory, ref format);
-				}
-				if (dib.IsNull)
-				{
-					throw new Exception();
+
+					if (dib.IsNull)
+					{
+						throw new Exception();
+					}
+
+					AddMemoryPressure();
 				}
 			}
 			catch
@@ -684,16 +697,15 @@ namespace FreeImageAPI
 		/// <param name="value">A <see cref="FreeImageBitmap"/> instance.</param>
 		/// <returns>A new instance of <see cref="Bitmap"/> initialized to <paramref name="value"/>.</returns>
 		/// <remarks>
-		/// The implicit conversion from <see cref="FreeImageBitmap"/> into Bitmap
+		/// The explicit conversion from <see cref="FreeImageBitmap"/> into Bitmap
 		/// allows to create an instance on the fly and use it as if
 		/// was a Bitmap. This way it can be directly used with a
 		/// PixtureBox for example without having to call any
 		/// conversion operations.
 		/// </remarks>
-		public static implicit operator Bitmap(FreeImageBitmap value)
+		public static explicit operator Bitmap(FreeImageBitmap value)
 		{
-			value.EnsureNotDisposed();
-			return FreeImage.GetBitmap(value.dib, true);
+			return value.ToBitmap();
 		}
 
 		/// <summary>
@@ -702,20 +714,13 @@ namespace FreeImageAPI
 		/// <param name="value">A <see cref="Bitmap"/> instance.</param>
 		/// <returns>A new instance of <see cref="FreeImageBitmap"/> initialized to <paramref name="value"/>.</returns>
 		/// <remarks>
-		/// The implicit conversion from <see cref="Bitmap"/> into <see cref="FreeImageBitmap"/>
+		/// The explicit conversion from <see cref="Bitmap"/> into <see cref="FreeImageBitmap"/>
 		/// allows to create an instance on the fly to perform
 		/// image processing operations and converting it back.
 		/// </remarks>
-		public static implicit operator FreeImageBitmap(Bitmap value)
+		public static explicit operator FreeImageBitmap(Bitmap value)
 		{
-			FreeImageBitmap result = null;
-			FIBITMAP newDib = FreeImage.CreateFromBitmap(value, true);
-			if (!newDib.IsNull)
-			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
-			}
-			return result;
+			return new FreeImageBitmap(value);
 		}
 
 		/// <summary>
@@ -1511,8 +1516,7 @@ namespace FreeImageAPI
 				dib, thumbWidth, thumbHeight, FREE_IMAGE_FILTER.FILTER_BICUBIC);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -1533,10 +1537,19 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.MakeThumbnail(dib, maxPixelSize, convert);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
+		}
+
+		/// <summary>
+		/// Converts this <see cref="FreeImageBitmap"/> instance to a <see cref="Bitmap"/> instance.
+		/// </summary>
+		/// <returns>A new instance of <see cref="Bitmap"/> initialized this instance.</returns>
+		public Bitmap ToBitmap()
+		{
+			EnsureNotDisposed();
+			return FreeImage.GetBitmap(dib, true);
 		}
 
 		/// <summary>
@@ -1841,7 +1854,7 @@ namespace FreeImageAPI
 		{
 			EnsureNotDisposed();
 
-			FIBITMAP newDib = 0;
+			FIBITMAP newDib = new FIBITMAP();
 			uint bpp = FreeImage.GetBPP(dib);
 
 			switch (rotateFlipType)
@@ -2100,13 +2113,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Selects the frame specified by the dimension and index.
+		/// Selects the frame specified by the index.
 		/// </summary>
 		/// <param name="frameIndex">The index of the active frame.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="frameIndex"/> is out of range.
-		/// </exception>
+		/// <paramref name="frameIndex"/> is out of range.</exception>
 		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="InvalidOperationException">The loaded bitmap is not multipaged.</exception>
 		public void SelectActiveFrame(int frameIndex)
 		{
 			EnsureNotDisposed();
@@ -2114,17 +2127,27 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentOutOfRangeException("frameIndex");
 			}
-			if (!mdib.IsNull)
+			if (mdib.IsNull)
 			{
-				if (frameIndex >= FrameCount)
-				{
-					throw new ArgumentOutOfRangeException("frameIndex");
-				}
-				ReplaceDib(FreeImage.LockPage(mdib, frameIndex));
+				throw new InvalidOperationException("No multipaged bitmap loaded.");
+			}
+			if (frameIndex >= FrameCount)
+			{
+				throw new ArgumentOutOfRangeException("frameIndex");
+			}
+
+			if (FreeImage.GetLockedPages(mdib)[0] != frameIndex)
+			{
+				long size = DataSize;
+				FreeImage.UnlockPage(mdib, dib, false);
+				GC.RemoveMemoryPressure(size);
+
+				dib = FreeImage.LockPage(mdib, frameIndex);
 				if (dib.IsNull)
 				{
 					throw new Exception();
 				}
+				AddMemoryPressure();
 			}
 		}
 
@@ -2375,8 +2398,7 @@ namespace FreeImageAPI
 				FIBITMAP newDib = FreeImage.ConvertToType(dib, type, scaleLinear);
 				if (!newDib.IsNull)
 				{
-					result = new FreeImageBitmap();
-					result.dib = newDib;
+					result = new FreeImageBitmap(newDib);
 				}
 			}
 			return result;
@@ -2407,8 +2429,7 @@ namespace FreeImageAPI
 			}
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -2468,8 +2489,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.Rescale(dib, width, height, filter);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -2599,8 +2619,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.ColorQuantizeEx(dib, algorithm, paletteSize, reserveSize, reservePalette);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -2689,8 +2708,7 @@ namespace FreeImageAPI
 			}
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -2735,8 +2753,7 @@ namespace FreeImageAPI
 				dib, angle, xShift, yShift, xOrigin, yOrigin, useMask);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -2825,8 +2842,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.GetChannel(dib, channel);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -2857,8 +2873,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.GetComplexChannel(dib, channel);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -2903,8 +2918,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.Copy(dib, left, top, right, bottom);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -3143,6 +3157,11 @@ namespace FreeImageAPI
 			return FreeImage.CreateICCProfileEx(dib, data, size);
 		}
 
+		private void AddMemoryPressure()
+		{
+			GC.AddMemoryPressure(DataSize);
+		}
+
 		/// <summary>
 		/// Determines whether this and the specified instances are the same.
 		/// </summary>
@@ -3260,8 +3279,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.CreateFromHbitmap(hbitmap, IntPtr.Zero);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -3294,14 +3312,7 @@ namespace FreeImageAPI
 		/// <returns>The <see cref="FreeImageBitmap"/> this method creates.</returns>
 		public static FreeImageBitmap FromStream(Stream stream)
 		{
-			try
-			{
-				return new FreeImageBitmap(stream);
-			}
-			catch
-			{
-				return null;
-			}
+			return new FreeImageBitmap(stream);
 		}
 
 		/// <summary>
@@ -3522,7 +3533,7 @@ namespace FreeImageAPI
 			bitmap.EnsureNotDisposed();
 			if (bitmap.dib.IsNull)
 			{
-				throw new Exception();
+				throw new ArgumentNullException("bitmap");
 			}
 
 			FIMULTIBITMAP mpBitmap =
@@ -3582,10 +3593,22 @@ namespace FreeImageAPI
 		private bool ReplaceDib(FIBITMAP newDib)
 		{
 			bool result = false;
-			if (dib != newDib && (!newDib.IsNull))
+			if ((dib != newDib) && (!newDib.IsNull))
 			{
-				UnloadDib();
-				dib = newDib;
+				if (mdib.IsNull)
+				{
+					UnloadDib();
+					dib = newDib;
+					AddMemoryPressure();
+				}
+				else
+				{
+					UnloadDib();
+					FreeImage.CloseMultiBitmapEx(ref mdib);
+
+					dib = newDib;
+					AddMemoryPressure();
+				}
 				result = true;
 			}
 			return result;
@@ -3597,14 +3620,18 @@ namespace FreeImageAPI
 		/// </summary>
 		private void UnloadDib()
 		{
-			if (mdib.IsNull || FreeImage.GetLockedPageCount(mdib) == 0)
+			if (mdib.IsNull)
 			{
+				long size = FreeImage.GetDIBSize(dib);
 				FreeImage.UnloadEx(ref dib);
+				GC.RemoveMemoryPressure(size);
 			}
 			else if (!dib.IsNull)
 			{
+				long size = FreeImage.GetDIBSize(dib);
 				FreeImage.UnlockPage(mdib, dib, false);
-				dib = 0;
+				GC.RemoveMemoryPressure(size);
+				dib.SetNull();
 			}
 		}
 
@@ -3639,9 +3666,8 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.Clone(dib);
 			if (!dib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
-				result.saveInformation = saveInformation.Clone() as SaveInformation;
+				result = new FreeImageBitmap(newDib);
+				result.saveInformation = (SaveInformation)saveInformation.Clone();
 				result.tag = tag;
 				result.originalFormat = originalFormat;
 			}
