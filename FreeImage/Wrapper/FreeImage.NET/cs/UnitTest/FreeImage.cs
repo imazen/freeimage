@@ -623,26 +623,6 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="FIBITMAP"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIBITMAP"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIBITMAP"/> structure.</param>
-		public FIBITMAP(int ptr)
-		{
-			data = new IntPtr(ptr);
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FIBITMAP"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIBITMAP"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIBITMAP"/> structure.</param>
-		public FIBITMAP(IntPtr ptr)
-		{
-			data = ptr;
-		}
-
-		/// <summary>
 		/// Tests whether two specified <see cref="FIBITMAP"/> structures are equivalent.
 		/// </summary>
 		/// <param name="left">The <see cref="FIBITMAP"/> that is to the left of the equality operator.</param>
@@ -669,49 +649,9 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIBITMAP"/> structure.
+		/// Gets whether the handle is a null or not.
 		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIBITMAP"/> structure.</param>
-		/// <returns>A <see cref="FIBITMAP"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIBITMAP(int ptr)
-		{
-			return new FIBITMAP(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIBITMAP"/> structure specified in <paramref name="handle"/> to a 32-bit value.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIBITMAP"/> structure to be converted into a 32-bit value.</param>
-		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIBITMAP"/> structure.</returns>
-		public static implicit operator int(FIBITMAP handle)
-		{
-			return handle.data.ToInt32();
-		}
-
-		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIBITMAP"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIBITMAP"/> structure.</param>
-		/// <returns>A <see cref="FIBITMAP"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIBITMAP(IntPtr ptr)
-		{
-			return new FIBITMAP(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIBITMAP"/> structure specified in <paramref name="handle"/> to an IntPtr.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIBITMAP"/> structure to be converted into an IntPtr.</param>
-		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIBITMAP"/> structure.</returns>
-		public static implicit operator IntPtr(FIBITMAP handle)
-		{
-			return handle.data;
-		}
-
-		/// <summary>
-		/// Gets whether the pointer is a null pointer or not.
-		/// </summary>
-		/// <value><b>true</b> if this <see cref="FIBITMAP"/> is a null pointer;
+		/// <value><b>true</b> if this <see cref="FIBITMAP"/> handle is a null;
 		/// otherwise, <b>false</b>.</value>		
 		public bool IsNull
 		{
@@ -719,6 +659,14 @@ namespace FreeImageAPI
 			{
 				return (data == IntPtr.Zero);
 			}
+		}
+
+		/// <summary>
+		/// Sets the handle to <i>null</i>.
+		/// </summary>
+		public void SetNull()
+		{
+			data = IntPtr.Zero;
 		}
 
 		/// <summary>
@@ -803,26 +751,6 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="FIMULTIBITMAP"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIMULTIBITMAP"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIMULTIBITMAP"/> structure.</param>
-		public FIMULTIBITMAP(int ptr)
-		{
-			data = new IntPtr(ptr);
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FIMULTIBITMAP"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIMULTIBITMAP"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIMULTIBITMAP"/> structure.</param>
-		public FIMULTIBITMAP(IntPtr ptr)
-		{
-			data = ptr;
-		}
-
-		/// <summary>
 		/// Tests whether two specified <see cref="FIMULTIBITMAP"/> structures are equivalent.
 		/// </summary>
 		/// <param name="left">The <see cref="FIMULTIBITMAP"/> that is to the left of the equality operator.</param>
@@ -849,49 +777,9 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMULTIBITMAP"/> structure.
+		/// Gets whether the handle is a null or not.
 		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMULTIBITMAP"/> structure.</param>
-		/// <returns>A <see cref="FIMULTIBITMAP"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIMULTIBITMAP(int ptr)
-		{
-			return new FIMULTIBITMAP(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIMULTIBITMAP"/> structure specified in <paramref name="handle"/> to a 32-bit value.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIMULTIBITMAP"/> structure to be converted into a 32-bit value.</param>
-		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIMULTIBITMAP"/> structure.</returns>
-		public static implicit operator int(FIMULTIBITMAP handle)
-		{
-			return handle.data.ToInt32();
-		}
-
-		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMULTIBITMAP"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMULTIBITMAP"/> structure.</param>
-		/// <returns>A <see cref="FIMULTIBITMAP"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIMULTIBITMAP(IntPtr ptr)
-		{
-			return new FIMULTIBITMAP(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIMULTIBITMAP"/> structure specified in <paramref name="handle"/> to an IntPtr.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIMULTIBITMAP"/> structure to be converted into an IntPtr.</param>
-		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIMULTIBITMAP"/> structure.</returns>
-		public static implicit operator IntPtr(FIMULTIBITMAP handle)
-		{
-			return handle.data;
-		}
-
-		/// <summary>
-		/// Gets whether the pointer is a null pointer or not.
-		/// </summary>
-		/// <value><b>true</b> if this <see cref="FIMULTIBITMAP"/> is a null pointer;
+		/// <value><b>true</b> if this <see cref="FIMULTIBITMAP"/> handle is a null;
 		/// otherwise, <b>false</b>.</value>		
 		public bool IsNull
 		{
@@ -899,6 +787,14 @@ namespace FreeImageAPI
 			{
 				return (data == IntPtr.Zero);
 			}
+		}
+
+		/// <summary>
+		/// Sets the handle to <i>null</i>.
+		/// </summary>
+		public void SetNull()
+		{
+			data = IntPtr.Zero;
 		}
 
 		/// <summary>
@@ -983,26 +879,6 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="FIMEMORY"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIMEMORY"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIMEMORY"/> structure.</param>
-		public FIMEMORY(int ptr)
-		{
-			data = new IntPtr(ptr);
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FIMEMORY"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIMEMORY"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIMEMORY"/> structure.</param>
-		public FIMEMORY(IntPtr ptr)
-		{
-			data = ptr;
-		}
-
-		/// <summary>
 		/// Tests whether two specified <see cref="FIMEMORY"/> structures are equivalent.
 		/// </summary>
 		/// <param name="left">The <see cref="FIMEMORY"/> that is to the left of the equality operator.</param>
@@ -1029,46 +905,6 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMEMORY"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMEMORY"/> structure.</param>
-		/// <returns>A <see cref="FIMEMORY"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIMEMORY(int ptr)
-		{
-			return new FIMEMORY(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIMEMORY"/> structure specified in <paramref name="handle"/> to a 32-bit value.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIMEMORY"/> structure to be converted into a 32-bit value.</param>
-		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIMEMORY"/> structure.</returns>
-		public static implicit operator int(FIMEMORY handle)
-		{
-			return handle.data.ToInt32();
-		}
-
-		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMEMORY"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMEMORY"/> structure.</param>
-		/// <returns>A <see cref="FIMEMORY"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIMEMORY(IntPtr ptr)
-		{
-			return new FIMEMORY(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIMEMORY"/> structure specified in <paramref name="handle"/> to an IntPtr.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIMEMORY"/> structure to be converted into an IntPtr.</param>
-		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIMEMORY"/> structure.</returns>
-		public static implicit operator IntPtr(FIMEMORY handle)
-		{
-			return handle.data;
-		}
-
-		/// <summary>
 		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
 		/// <value><b>true</b> if this <see cref="FIMEMORY"/> is a null pointer;
@@ -1079,6 +915,14 @@ namespace FreeImageAPI
 			{
 				return (data == IntPtr.Zero);
 			}
+		}
+
+		/// <summary>
+		/// Sets the handle to <i>null</i>.
+		/// </summary>
+		public void SetNull()
+		{
+			data = IntPtr.Zero;
 		}
 
 		/// <summary>
@@ -1171,26 +1015,6 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="FIMETADATA"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIMETADATA"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIMETADATA"/> structure.</param>
-		public FIMETADATA(int ptr)
-		{
-			data = new IntPtr(ptr);
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FIMETADATA"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FIMETADATA"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FIMETADATA"/> structure.</param>
-		public FIMETADATA(IntPtr ptr)
-		{
-			data = ptr;
-		}
-
-		/// <summary>
 		/// Tests whether two specified <see cref="FIMETADATA"/> structures are equivalent.
 		/// </summary>
 		/// <param name="left">The <see cref="FIMETADATA"/> that is to the left of the equality operator.</param>
@@ -1217,46 +1041,6 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMETADATA"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMETADATA"/> structure.</param>
-		/// <returns>A <see cref="FIMETADATA"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIMETADATA(int ptr)
-		{
-			return new FIMETADATA(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIMETADATA"/> structure specified in <paramref name="handle"/> to a 32-bit value.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIMETADATA"/> structure to be converted into a 32-bit value.</param>
-		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FIMETADATA"/> structure.</returns>
-		public static implicit operator int(FIMETADATA handle)
-		{
-			return handle.data.ToInt32();
-		}
-
-		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FIMETADATA"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FIMETADATA"/> structure.</param>
-		/// <returns>A <see cref="FIMETADATA"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FIMETADATA(IntPtr ptr)
-		{
-			return new FIMETADATA(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FIMETADATA"/> structure specified in <paramref name="handle"/> to an IntPtr.
-		/// </summary>
-		/// <param name="handle">A <see cref="FIMETADATA"/> structure to be converted into an IntPtr.</param>
-		/// <returns>An IntPtr initialized with the pointer of the <see cref="FIMETADATA"/> structure.</returns>
-		public static implicit operator IntPtr(FIMETADATA handle)
-		{
-			return handle.data;
-		}
-
-		/// <summary>
 		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
 		/// <value><b>true</b> if this <see cref="FIMETADATA"/> is a null pointer;
@@ -1267,6 +1051,14 @@ namespace FreeImageAPI
 			{
 				return (data == IntPtr.Zero);
 			}
+		}
+
+		/// <summary>
+		/// Sets the handle to <i>null</i>.
+		/// </summary>
+		public void SetNull()
+		{
+			data = IntPtr.Zero;
 		}
 
 		/// <summary>
@@ -1351,26 +1143,6 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="FITAG"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FITAG"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FITAG"/> structure.</param>
-		public FITAG(int ptr)
-		{
-			data = new IntPtr(ptr);
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FITAG"/> structure to the value indicated by
-		/// a specified pointer to a native <see cref="FITAG"/> structure.
-		/// </summary>
-		/// <param name="ptr">A pointer to a native <see cref="FITAG"/> structure.</param>
-		public FITAG(IntPtr ptr)
-		{
-			data = ptr;
-		}
-
-		/// <summary>
 		/// Tests whether two specified <see cref="FITAG"/> structures are equivalent.
 		/// </summary>
 		/// <param name="left">The <see cref="FITAG"/> that is to the left of the equality operator.</param>
@@ -1397,46 +1169,6 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FITAG"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FITAG"/> structure.</param>
-		/// <returns>A <see cref="FITAG"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FITAG(int ptr)
-		{
-			return new FITAG(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FITAG"/> structure specified in <paramref name="handle"/> to a 32-bit value.
-		/// </summary>
-		/// <param name="handle">A <see cref="FITAG"/> structure to be converted into a 32-bit value.</param>
-		/// <returns>A 32-bit value initialized with the pointer of the <see cref="FITAG"/> structure.</returns>
-		public static implicit operator int(FITAG handle)
-		{
-			return handle.data.ToInt32();
-		}
-
-		/// <summary>
-		/// Converts the pointer specified in <paramref name="ptr"/> to a <see cref="FITAG"/> structure.
-		/// </summary>
-		/// <param name="ptr">A 32-bit value to be converted into a <see cref="FITAG"/> structure.</param>
-		/// <returns>A <see cref="FITAG"/> structure initialized with the specified pointer.</returns>
-		public static implicit operator FITAG(IntPtr ptr)
-		{
-			return new FITAG(ptr);
-		}
-
-		/// <summary>
-		/// Converts the <see cref="FITAG"/> structure specified in <paramref name="handle"/> to an IntPtr.
-		/// </summary>
-		/// <param name="handle">A <see cref="FITAG"/> structure to be converted into an IntPtr.</param>
-		/// <returns>An IntPtr initialized with the pointer of the <see cref="FITAG"/> structure.</returns>
-		public static implicit operator IntPtr(FITAG handle)
-		{
-			return handle.data;
-		}
-
-		/// <summary>
 		/// Gets whether the pointer is a null pointer or not.
 		/// </summary>
 		/// <value><b>true</b> if this <see cref="FITAG"/> is a null pointer;
@@ -1447,6 +1179,14 @@ namespace FreeImageAPI
 			{
 				return (data == IntPtr.Zero);
 			}
+		}
+
+		/// <summary>
+		/// Sets the handle to <i>null</i>.
+		/// </summary>
+		public void SetNull()
+		{
+			data = IntPtr.Zero;
 		}
 
 		/// <summary>
@@ -4451,10 +4191,11 @@ namespace FreeImageAPI
 		/// <summary>
 		/// You use the function FreeImage_SetOutputMessage to capture the log string
 		/// so that you can show it to the user of the program.
-		/// The callback is implemented in the <see cref="Message"/> event of this class.
+		/// The callback is implemented in the <see cref="FreeImageEngine.Message"/> event of this class.
 		/// </summary>
 		/// <remarks>The function is private because FreeImage can only have a single
-		/// callback function. To use the callback use the <see cref="Message"/> event of this class.</remarks>
+		/// callback function. To use the callback use the <see cref="FreeImageEngine.Message"/>
+		/// event of this class.</remarks>
 		/// <param name="omf">Handler to the callback function.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetOutputMessage")]
 		internal static extern void SetOutputMessage(OutputMessageFunction omf);
@@ -9301,8 +9042,8 @@ namespace FreeImageAPI
 	{
 		#region Fields
 
-		private bool disposed = false;
-		private object tag = null;
+		private bool disposed;
+		private object tag;
 		private object lockObject = new object();
 		private SaveInformation saveInformation = new SaveInformation();
 
@@ -9314,12 +9055,12 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Handle to the encapsulated FreeImage-bitmap.
 		/// </summary>
-		private FIBITMAP dib = 0;
+		private FIBITMAP dib;
 
 		/// <summary>
 		/// Handle to the encapsulated FreeImage-multipagebitmap.
 		/// </summary>
-		private FIMULTIBITMAP mdib = 0;
+		private FIMULTIBITMAP mdib;
 
 		#endregion
 
@@ -9344,6 +9085,7 @@ namespace FreeImageAPI
 				throw new Exception();
 			}
 			this.dib = dib;
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -9360,6 +9102,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -9410,6 +9153,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -9473,6 +9217,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -9522,15 +9267,13 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
-			else
+			dib = FreeImage.Rescale(temp, width, height, FREE_IMAGE_FILTER.FILTER_BICUBIC);
+			FreeImage.Unload(temp);
+			if (dib.IsNull)
 			{
-				dib = FreeImage.Rescale(temp, width, height, FREE_IMAGE_FILTER.FILTER_BICUBIC);
-				FreeImage.Unload(temp);
-				if (dib.IsNull)
-				{
-					throw new Exception();
-				}
+				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -9609,6 +9352,7 @@ namespace FreeImageAPI
 				throw new Exception();
 			}
 
+			AddMemoryPressure();
 			originalFormat = format;
 		}
 
@@ -9702,7 +9446,7 @@ namespace FreeImageAPI
 				{
 					if (!FreeImage.CloseMultiBitmapEx(ref mdib, FREE_IMAGE_SAVE_FLAGS.DEFAULT))
 					{
-						throw new Exception();
+						throw new Exception("Unable to unload temporary FIMULTIBITMAP.");
 					}
 
 					dib = FreeImage.LoadEx(filename, flags, ref format);
@@ -9711,6 +9455,7 @@ namespace FreeImageAPI
 						throw new Exception();
 					}
 
+					AddMemoryPressure();
 					return;
 				}
 				else
@@ -9718,6 +9463,7 @@ namespace FreeImageAPI
 					dib = FreeImage.LockPage(mdib, 0);
 					if (!dib.IsNull)
 					{
+						AddMemoryPressure();
 						return;
 					}
 				}
@@ -9747,6 +9493,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -9806,6 +9553,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -9840,6 +9588,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -9880,10 +9629,12 @@ namespace FreeImageAPI
 
 			dib = FreeImage.ConvertFromRawBits(
 				scan0, width, height, stride, bpp, redMask, greenMask, blueMask, topDown);
+
 			if (dib.IsNull)
 			{
 				throw new Exception();
 			}
+			AddMemoryPressure();
 		}
 
 		/// <summary>
@@ -9896,15 +9647,18 @@ namespace FreeImageAPI
 			try
 			{
 				byte[] data = (byte[])info.GetValue("Bitmap Data", typeof(byte[]));
-				if (data != null && data.Length > 0)
+				if ((data != null) && (data.Length > 0))
 				{
 					MemoryStream memory = new MemoryStream(data);
 					FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_TIFF;
 					dib = FreeImage.LoadFromStream(memory, ref format);
-				}
-				if (dib.IsNull)
-				{
-					throw new Exception();
+
+					if (dib.IsNull)
+					{
+						throw new Exception();
+					}
+
+					AddMemoryPressure();
 				}
 			}
 			catch
@@ -9931,16 +9685,15 @@ namespace FreeImageAPI
 		/// <param name="value">A <see cref="FreeImageBitmap"/> instance.</param>
 		/// <returns>A new instance of <see cref="Bitmap"/> initialized to <paramref name="value"/>.</returns>
 		/// <remarks>
-		/// The implicit conversion from <see cref="FreeImageBitmap"/> into Bitmap
+		/// The explicit conversion from <see cref="FreeImageBitmap"/> into Bitmap
 		/// allows to create an instance on the fly and use it as if
 		/// was a Bitmap. This way it can be directly used with a
 		/// PixtureBox for example without having to call any
 		/// conversion operations.
 		/// </remarks>
-		public static implicit operator Bitmap(FreeImageBitmap value)
+		public static explicit operator Bitmap(FreeImageBitmap value)
 		{
-			value.EnsureNotDisposed();
-			return FreeImage.GetBitmap(value.dib, true);
+			return value.ToBitmap();
 		}
 
 		/// <summary>
@@ -9949,20 +9702,13 @@ namespace FreeImageAPI
 		/// <param name="value">A <see cref="Bitmap"/> instance.</param>
 		/// <returns>A new instance of <see cref="FreeImageBitmap"/> initialized to <paramref name="value"/>.</returns>
 		/// <remarks>
-		/// The implicit conversion from <see cref="Bitmap"/> into <see cref="FreeImageBitmap"/>
+		/// The explicit conversion from <see cref="Bitmap"/> into <see cref="FreeImageBitmap"/>
 		/// allows to create an instance on the fly to perform
 		/// image processing operations and converting it back.
 		/// </remarks>
-		public static implicit operator FreeImageBitmap(Bitmap value)
+		public static explicit operator FreeImageBitmap(Bitmap value)
 		{
-			FreeImageBitmap result = null;
-			FIBITMAP newDib = FreeImage.CreateFromBitmap(value, true);
-			if (!newDib.IsNull)
-			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
-			}
-			return result;
+			return new FreeImageBitmap(value);
 		}
 
 		/// <summary>
@@ -10758,8 +10504,7 @@ namespace FreeImageAPI
 				dib, thumbWidth, thumbHeight, FREE_IMAGE_FILTER.FILTER_BICUBIC);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -10780,10 +10525,19 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.MakeThumbnail(dib, maxPixelSize, convert);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
+		}
+
+		/// <summary>
+		/// Converts this <see cref="FreeImageBitmap"/> instance to a <see cref="Bitmap"/> instance.
+		/// </summary>
+		/// <returns>A new instance of <see cref="Bitmap"/> initialized this instance.</returns>
+		public Bitmap ToBitmap()
+		{
+			EnsureNotDisposed();
+			return FreeImage.GetBitmap(dib, true);
 		}
 
 		/// <summary>
@@ -11088,7 +10842,7 @@ namespace FreeImageAPI
 		{
 			EnsureNotDisposed();
 
-			FIBITMAP newDib = 0;
+			FIBITMAP newDib = new FIBITMAP();
 			uint bpp = FreeImage.GetBPP(dib);
 
 			switch (rotateFlipType)
@@ -11347,13 +11101,13 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Selects the frame specified by the dimension and index.
+		/// Selects the frame specified by the index.
 		/// </summary>
 		/// <param name="frameIndex">The index of the active frame.</param>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="frameIndex"/> is out of range.
-		/// </exception>
+		/// <paramref name="frameIndex"/> is out of range.</exception>
 		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="InvalidOperationException">The loaded bitmap is not multipaged.</exception>
 		public void SelectActiveFrame(int frameIndex)
 		{
 			EnsureNotDisposed();
@@ -11361,17 +11115,27 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentOutOfRangeException("frameIndex");
 			}
-			if (!mdib.IsNull)
+			if (mdib.IsNull)
 			{
-				if (frameIndex >= FrameCount)
-				{
-					throw new ArgumentOutOfRangeException("frameIndex");
-				}
-				ReplaceDib(FreeImage.LockPage(mdib, frameIndex));
+				throw new InvalidOperationException("No multipaged bitmap loaded.");
+			}
+			if (frameIndex >= FrameCount)
+			{
+				throw new ArgumentOutOfRangeException("frameIndex");
+			}
+
+			if (FreeImage.GetLockedPages(mdib)[0] != frameIndex)
+			{
+				long size = DataSize;
+				FreeImage.UnlockPage(mdib, dib, false);
+				GC.RemoveMemoryPressure(size);
+
+				dib = FreeImage.LockPage(mdib, frameIndex);
 				if (dib.IsNull)
 				{
 					throw new Exception();
 				}
+				AddMemoryPressure();
 			}
 		}
 
@@ -11622,8 +11386,7 @@ namespace FreeImageAPI
 				FIBITMAP newDib = FreeImage.ConvertToType(dib, type, scaleLinear);
 				if (!newDib.IsNull)
 				{
-					result = new FreeImageBitmap();
-					result.dib = newDib;
+					result = new FreeImageBitmap(newDib);
 				}
 			}
 			return result;
@@ -11654,8 +11417,7 @@ namespace FreeImageAPI
 			}
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -11715,8 +11477,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.Rescale(dib, width, height, filter);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -11846,8 +11607,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.ColorQuantizeEx(dib, algorithm, paletteSize, reserveSize, reservePalette);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -11936,8 +11696,7 @@ namespace FreeImageAPI
 			}
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -11982,8 +11741,7 @@ namespace FreeImageAPI
 				dib, angle, xShift, yShift, xOrigin, yOrigin, useMask);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -12072,8 +11830,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.GetChannel(dib, channel);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -12104,8 +11861,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.GetComplexChannel(dib, channel);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -12150,8 +11906,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.Copy(dib, left, top, right, bottom);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -12390,6 +12145,11 @@ namespace FreeImageAPI
 			return FreeImage.CreateICCProfileEx(dib, data, size);
 		}
 
+		private void AddMemoryPressure()
+		{
+			GC.AddMemoryPressure(DataSize);
+		}
+
 		/// <summary>
 		/// Determines whether this and the specified instances are the same.
 		/// </summary>
@@ -12507,8 +12267,7 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.CreateFromHbitmap(hbitmap, IntPtr.Zero);
 			if (!newDib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -12541,14 +12300,7 @@ namespace FreeImageAPI
 		/// <returns>The <see cref="FreeImageBitmap"/> this method creates.</returns>
 		public static FreeImageBitmap FromStream(Stream stream)
 		{
-			try
-			{
-				return new FreeImageBitmap(stream);
-			}
-			catch
-			{
-				return null;
-			}
+			return new FreeImageBitmap(stream);
 		}
 
 		/// <summary>
@@ -12769,7 +12521,7 @@ namespace FreeImageAPI
 			bitmap.EnsureNotDisposed();
 			if (bitmap.dib.IsNull)
 			{
-				throw new Exception();
+				throw new ArgumentNullException("bitmap");
 			}
 
 			FIMULTIBITMAP mpBitmap =
@@ -12829,10 +12581,22 @@ namespace FreeImageAPI
 		private bool ReplaceDib(FIBITMAP newDib)
 		{
 			bool result = false;
-			if (dib != newDib && (!newDib.IsNull))
+			if ((dib != newDib) && (!newDib.IsNull))
 			{
-				UnloadDib();
-				dib = newDib;
+				if (mdib.IsNull)
+				{
+					UnloadDib();
+					dib = newDib;
+					AddMemoryPressure();
+				}
+				else
+				{
+					UnloadDib();
+					FreeImage.CloseMultiBitmapEx(ref mdib);
+
+					dib = newDib;
+					AddMemoryPressure();
+				}
 				result = true;
 			}
 			return result;
@@ -12844,14 +12608,18 @@ namespace FreeImageAPI
 		/// </summary>
 		private void UnloadDib()
 		{
-			if (mdib.IsNull || FreeImage.GetLockedPageCount(mdib) == 0)
+			if (mdib.IsNull)
 			{
+				long size = FreeImage.GetDIBSize(dib);
 				FreeImage.UnloadEx(ref dib);
+				GC.RemoveMemoryPressure(size);
 			}
 			else if (!dib.IsNull)
 			{
+				long size = FreeImage.GetDIBSize(dib);
 				FreeImage.UnlockPage(mdib, dib, false);
-				dib = 0;
+				GC.RemoveMemoryPressure(size);
+				dib.SetNull();
 			}
 		}
 
@@ -12886,9 +12654,8 @@ namespace FreeImageAPI
 			FIBITMAP newDib = FreeImage.Clone(dib);
 			if (!dib.IsNull)
 			{
-				result = new FreeImageBitmap();
-				result.dib = newDib;
-				result.saveInformation = saveInformation.Clone() as SaveInformation;
+				result = new FreeImageBitmap(newDib);
+				result.saveInformation = (SaveInformation)saveInformation.Clone();
 				result.tag = tag;
 				result.originalFormat = originalFormat;
 			}
@@ -12968,6 +12735,40 @@ namespace FreeImageAPI
 	/// </summary>
 	public static class FreeImageEngine
 	{
+		#region Callback
+
+		// Callback delegate
+		private static OutputMessageFunction outputMessageFunction;
+		// Handle to pin the functions address
+		private static GCHandle outputMessageHandle;
+
+		static FreeImageEngine()
+		{
+			// Check if FreeImage.dll is present and cancel setting the callbackfuntion if not
+			if (!IsAvailable)
+			{
+				return;
+			}
+			// Create a delegate (function pointer) to 'OnMessage'
+			outputMessageFunction = new OutputMessageFunction(OnMessage);
+			// Pin the object so the garbage collector does not move it around in memory
+			outputMessageHandle = GCHandle.Alloc(outputMessageFunction, GCHandleType.Normal);
+			// Set the callback
+			FreeImage.SetOutputMessage(outputMessageFunction);
+		}
+
+		/// <summary>
+		/// Internal callback
+		/// </summary>
+		private static void OnMessage(FREE_IMAGE_FORMAT fif, string message)
+		{
+			// Invoke the message
+			if (Message != null)
+			{
+				Message.Invoke(fif, message);
+			}
+		}
+
 		/// <summary>
 		/// Gets a value indicating if the FreeImage DLL is available or not.
 		/// </summary>
@@ -12983,17 +12784,9 @@ namespace FreeImageAPI
 		/// Internal errors in FreeImage generate a logstring that can be
 		/// captured by this event.
 		/// </summary>
-		public static event OutputMessageFunction Message
-		{
-			add
-			{
-				FreeImage.Message += value;
-			}
-			remove
-			{
-				FreeImage.Message -= value;
-			}
-		}
+		public static event OutputMessageFunction Message;
+
+		#endregion
 
 		/// <summary>
 		/// Gets a string containing the current version of the library.
@@ -13820,7 +13613,7 @@ namespace FreeImageAPI.Plugins
 		/// <summary>
 		/// Function that can be implemented.
 		/// </summary>
-		protected virtual FIBITMAP LoadProc(ref FreeImageIO io, fi_handle handle, int page, int flags, IntPtr data) { return 0; }
+		protected virtual FIBITMAP LoadProc(ref FreeImageIO io, fi_handle handle, int page, int flags, IntPtr data) { return new FIBITMAP(); }
 		/// <summary>
 		/// Function that can be implemented.
 		/// </summary>
@@ -14939,7 +14732,7 @@ namespace FreeImageAPI.Metadata
 			{
 				throw new ArgumentNullException("key");
 			}
-			return FreeImage.SetMetadata(Model, dib, key, 0);
+			return FreeImage.SetMetadata(Model, dib, key, new FITAG());
 		}
 
 		/// <summary>
@@ -14949,7 +14742,7 @@ namespace FreeImageAPI.Metadata
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool DestoryModel()
 		{
-			return FreeImage.SetMetadata(Model, dib, null, 0);
+			return FreeImage.SetMetadata(Model, dib, null, new FITAG());
 		}
 
 		/// <summary>
@@ -17242,48 +17035,6 @@ namespace FreeImageAPI
 
 		#endregion
 
-		#region Callback
-
-		// Callback delegate
-		private static OutputMessageFunction outputMessageFunction;
-		// Handle to pin the functions address
-		private static GCHandle outputMessageHandle;
-
-		static FreeImage()
-		{
-			// Check if FreeImage.dll is present and cancel setting the callbackfuntion if not
-			if (!IsAvailable())
-			{
-				return;
-			}
-			// Create a delegate (function pointer) to 'OnMessage'
-			outputMessageFunction = new OutputMessageFunction(OnMessage);
-			// Pin the object so the garbage collector does not move it around in memory
-			outputMessageHandle = GCHandle.Alloc(outputMessageFunction, GCHandleType.Normal);
-			// Set the callback
-			SetOutputMessage(outputMessageFunction);
-		}
-
-		/// <summary>
-		/// Internal callback
-		/// </summary>
-		private static void OnMessage(FREE_IMAGE_FORMAT fif, string message)
-		{
-			// Invoke the message
-			if (Message != null)
-			{
-				Message.Invoke(fif, message);
-			}
-		}
-
-		/// <summary>
-		/// Internal errors in FreeImage generate a logstring that can be
-		/// captured by this event.
-		/// </summary>
-		public static event OutputMessageFunction Message;
-
-		#endregion
-
 		#region General functions
 
 		/// <summary>
@@ -17676,7 +17427,7 @@ namespace FreeImageAPI
 			{
 				throw new FileNotFoundException(filename + " could not be found.");
 			}
-			FIBITMAP dib = 0;
+			FIBITMAP dib = new FIBITMAP();
 			if (format == FREE_IMAGE_FORMAT.FIF_UNKNOWN)
 			{
 				// query all plugins to see if one can read the file
@@ -17719,7 +17470,7 @@ namespace FreeImageAPI
 			if (!dib.IsNull)
 			{
 				Unload(dib);
-				dib = 0;
+				dib.SetNull();
 			}
 		}
 
@@ -18120,7 +17871,7 @@ namespace FreeImageAPI
 			}
 			if (!FIFSupportsReading(format))
 			{
-				return 0;
+				return new FIBITMAP();
 			}
 			// Create a 'FreeImageIO' structure for calling 'LoadFromHandle'
 			// using the internal structure 'FreeImageStreamIO'.
@@ -18333,7 +18084,7 @@ namespace FreeImageAPI
 					result = SaveToHandle(format, dibToSave, ref io, handle, flags);
 				}
 			}
-			catch
+			finally
 			{
 				// Always unload a temporary created bitmap.
 				if (dibToSave != dib)
@@ -18627,7 +18378,7 @@ namespace FreeImageAPI
 				// Check if a plugin can read the data
 				format = GetFileType(filename, 0);
 			}
-			FIMULTIBITMAP dib = 0;
+			FIMULTIBITMAP dib = new FIMULTIBITMAP();
 			if (FIFSupportsReading(format))
 			{
 				dib = OpenMultiBitmap(format, filename, create_new, read_only, keep_cache_in_memory, flags);
@@ -18662,7 +18413,7 @@ namespace FreeImageAPI
 			{
 				if (CloseMultiBitmap(dib, flags))
 				{
-					dib = 0;
+					dib.SetNull();
 					result = true;
 				}
 			}
@@ -18921,7 +18672,7 @@ namespace FreeImageAPI
 				throw new ArgumentNullException("hbitmap");
 			}
 
-			FIBITMAP dib = 0;
+			FIBITMAP dib = new FIBITMAP();
 			BITMAP bm;
 			uint colors;
 			bool release;
@@ -20057,8 +19808,8 @@ namespace FreeImageAPI
 				throw new ArgumentNullException("dib");
 			}
 
-			FIBITMAP result = 0;
-			FIBITMAP dibTemp = 0;
+			FIBITMAP result = new FIBITMAP();
+			FIBITMAP dibTemp = new FIBITMAP();
 			uint bpp = GetBPP(dib);
 			bool reorderPalette = ((conversion & FREE_IMAGE_COLOR_DEPTH.FICD_REORDER_PALETTE) > 0);
 			bool forceGreyscale = ((conversion & FREE_IMAGE_COLOR_DEPTH.FICD_FORCE_GREYSCALE) > 0);
@@ -20248,7 +19999,7 @@ namespace FreeImageAPI
 				throw new ArgumentNullException("dst");
 			}
 
-			FITAG tag = 0, tag2 = 0;
+			FITAG tag = new FITAG(), tag2 = new FITAG();
 			int copied = 0;
 
 			// Clear all existing metadata
@@ -20336,7 +20087,7 @@ namespace FreeImageAPI
 			}
 			else
 			{
-				result = SetMetadata(FREE_IMAGE_MDMODEL.FIMD_COMMENTS, dib, "Comment", 0);
+				result = SetMetadata(FREE_IMAGE_MDMODEL.FIMD_COMMENTS, dib, "Comment", new FITAG());
 			}
 			return result;
 		}
@@ -20509,7 +20260,7 @@ namespace FreeImageAPI
 				throw new ArgumentNullException("dib");
 			}
 
-			FIBITMAP result = 0;
+			FIBITMAP result = new FIBITMAP();
 			int ang = (int)angle;
 
 			if ((GetImageType(dib) == FREE_IMAGE_TYPE.FIT_BITMAP) &&
