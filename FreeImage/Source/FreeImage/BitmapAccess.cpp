@@ -890,9 +890,12 @@ FreeImage_CloneMetadata(FIBITMAP *dst, FIBITMAP *src) {
 	METADATAMAP *src_metadata = ((FREEIMAGEHEADER *)src->data)->metadata;
 	METADATAMAP *dst_metadata = ((FREEIMAGEHEADER *)dst->data)->metadata;
 
-	// copy metadata models
+	// copy metadata models, *except* the FIMD_ANIMATION model
 	for(METADATAMAP::iterator i = (*src_metadata).begin(); i != (*src_metadata).end(); i++) {
 		int model = (*i).first;
+		if(model == (int)FIMD_ANIMATION) {
+			continue;
+		}
 		TAGMAP *src_tagmap = (*i).second;
 
 		if(src_tagmap) {
