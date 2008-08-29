@@ -5,6 +5,15 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+August 29, 2008 - 1.04
++ [Jean-Philippe Goerke] Added new target architectures x86 and x64 to the Visual Studio 2005 solution and project files.
++ [Jean-Philippe Goerke] Added static readonly field Zero to FIBITMAP, FIMEMORY, FIMETADATA, FIMULTIBITMAP and FITAG.
+! [Jean-Philippe Goerke] Changed CreateFromBitmap to handle all formats contained by System.Drawing.Imaging.PixelFormat.
++ [Jean-Philippe Goerke] Added overload for ConvertFromRawBits to class FreeImage which supports creating images of any FREE_IMAGE_TYPE from raw bits.
++ [Jean-Philippe Goerke] Added method GetTypeParameters to class FreeImage.
+! [Jean-Philippe Goerke] Both constructors FreeImageBitmap.ctor(int,int,PixelFormat) and FreeImageBitmap.ctor(int,int,int,PixelFormat,IntPtr) now work with all formats defined in PixelFormat.
++ [Jean-Philippe Goerke] Added new constructor FreeImageBitmap.ctor(int,int,int,int,FREE_IMAGE_TYPE,IntPtr) to FreeImageBitmap class.
+
 August 18, 2008 - 1.03
 * [Eric T. Wilson] Added GC.AddMemoryPressure and GC.RemoveMemoryPressure to FreeImageBitmap class.
 + [Eric T. Wilson] Added ToBitmap method to FreeImageBitmap class.
