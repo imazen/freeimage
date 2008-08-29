@@ -47,6 +47,11 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
+		/// A read-only field that represents a handle that has been initialized to zero.
+		/// </summary>
+		public static readonly FITAG Zero;
+
+		/// <summary>
 		/// Tests whether two specified <see cref="FITAG"/> structures are equivalent.
 		/// </summary>
 		/// <param name="left">The <see cref="FITAG"/> that is to the left of the equality operator.</param>

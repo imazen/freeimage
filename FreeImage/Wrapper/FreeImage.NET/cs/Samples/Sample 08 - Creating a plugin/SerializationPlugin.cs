@@ -99,7 +99,7 @@ namespace Sample08
 				// Create a free-image message
 				FreeImage.OutputMessageProc(format, "Invalid format.");
 				// return 0 (operation failed)
-				return new FIBITMAP();
+				return FIBITMAP.Zero;
 			}
 
 			SerialDib sdib;

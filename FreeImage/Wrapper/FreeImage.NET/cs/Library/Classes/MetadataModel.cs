@@ -138,7 +138,7 @@ namespace FreeImageAPI.Metadata
 			{
 				throw new ArgumentNullException("key");
 			}
-			return FreeImage.SetMetadata(Model, dib, key, new FITAG());
+			return FreeImage.SetMetadata(Model, dib, key, FITAG.Zero);
 		}
 
 		/// <summary>
@@ -148,7 +148,7 @@ namespace FreeImageAPI.Metadata
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool DestoryModel()
 		{
-			return FreeImage.SetMetadata(Model, dib, null, new FITAG());
+			return FreeImage.SetMetadata(Model, dib, null, FITAG.Zero);
 		}
 
 		/// <summary>

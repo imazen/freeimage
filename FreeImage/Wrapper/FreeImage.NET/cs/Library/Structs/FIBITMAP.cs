@@ -52,6 +52,11 @@ namespace FreeImageAPI
 		private IntPtr data;
 
 		/// <summary>
+		/// A read-only field that represents a handle that has been initialized to zero.
+		/// </summary>
+		public static readonly FIBITMAP Zero;
+
+		/// <summary>
 		/// Tests whether two specified <see cref="FIBITMAP"/> structures are equivalent.
 		/// </summary>
 		/// <param name="left">The <see cref="FIBITMAP"/> that is to the left of the equality operator.</param>

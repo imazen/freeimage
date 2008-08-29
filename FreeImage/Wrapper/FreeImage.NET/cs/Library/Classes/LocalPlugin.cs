@@ -238,7 +238,7 @@ namespace FreeImageAPI.Plugins
 		/// <summary>
 		/// Function that can be implemented.
 		/// </summary>
-		protected virtual FIBITMAP LoadProc(ref FreeImageIO io, fi_handle handle, int page, int flags, IntPtr data) { return new FIBITMAP(); }
+		protected virtual FIBITMAP LoadProc(ref FreeImageIO io, fi_handle handle, int page, int flags, IntPtr data) { return FIBITMAP.Zero; }
 		/// <summary>
 		/// Function that can be implemented.
 		/// </summary>
