@@ -3863,30 +3863,105 @@ namespace FreeImageNETUnitTest
 		public void FreeImage_GetFormatParameters()
 		{
 			uint bpp, red, green, blue;
+			FREE_IMAGE_TYPE type;
 
-			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format16bppRgb555, out bpp, out red, out green, out blue));
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format16bppArgb1555, out type, out bpp, out red, out green, out blue));
 			Assert.AreEqual(16, bpp);
 			Assert.AreEqual(red, FreeImage.FI16_555_RED_MASK);
 			Assert.AreEqual(green, FreeImage.FI16_555_GREEN_MASK);
 			Assert.AreEqual(blue, FreeImage.FI16_555_BLUE_MASK);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_BITMAP);
 
-			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format32bppArgb, out bpp, out red, out green, out blue));
-			Assert.AreEqual(32, bpp);
-			Assert.AreEqual(red, FreeImage.FI_RGBA_RED_MASK);
-			Assert.AreEqual(green, FreeImage.FI_RGBA_GREEN_MASK);
-			Assert.AreEqual(blue, FreeImage.FI_RGBA_BLUE_MASK);
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format16bppGrayScale, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(16, bpp);
+			Assert.AreEqual(red, 0);
+			Assert.AreEqual(green, 0);
+			Assert.AreEqual(blue, 0);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_UINT16);
 
-			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format24bppRgb, out bpp, out red, out green, out blue));
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format16bppRgb555, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(16, bpp);
+			Assert.AreEqual(red, FreeImage.FI16_555_RED_MASK);
+			Assert.AreEqual(green, FreeImage.FI16_555_GREEN_MASK);
+			Assert.AreEqual(blue, FreeImage.FI16_555_BLUE_MASK);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_BITMAP);
+
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format16bppRgb565, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(16, bpp);
+			Assert.AreEqual(red, FreeImage.FI16_565_RED_MASK);
+			Assert.AreEqual(green, FreeImage.FI16_565_GREEN_MASK);
+			Assert.AreEqual(blue, FreeImage.FI16_565_BLUE_MASK);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_BITMAP);
+
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format1bppIndexed, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(1, bpp);
+			Assert.AreEqual(red, 0);
+			Assert.AreEqual(green, 0);
+			Assert.AreEqual(blue, 0);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_BITMAP);
+
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format24bppRgb, out type, out bpp, out red, out green, out blue));
 			Assert.AreEqual(24, bpp);
 			Assert.AreEqual(red, FreeImage.FI_RGBA_RED_MASK);
 			Assert.AreEqual(green, FreeImage.FI_RGBA_GREEN_MASK);
 			Assert.AreEqual(blue, FreeImage.FI_RGBA_BLUE_MASK);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_BITMAP);
 
-			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format4bppIndexed, out bpp, out red, out green, out blue));
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format32bppArgb, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(32, bpp);
+			Assert.AreEqual(red, FreeImage.FI_RGBA_RED_MASK);
+			Assert.AreEqual(green, FreeImage.FI_RGBA_GREEN_MASK);
+			Assert.AreEqual(blue, FreeImage.FI_RGBA_BLUE_MASK);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_BITMAP);
+
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format32bppPArgb, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(32, bpp);
+			Assert.AreEqual(red, FreeImage.FI_RGBA_RED_MASK);
+			Assert.AreEqual(green, FreeImage.FI_RGBA_GREEN_MASK);
+			Assert.AreEqual(blue, FreeImage.FI_RGBA_BLUE_MASK);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_BITMAP);
+
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format32bppRgb, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(32, bpp);
+			Assert.AreEqual(red, FreeImage.FI_RGBA_RED_MASK);
+			Assert.AreEqual(green, FreeImage.FI_RGBA_GREEN_MASK);
+			Assert.AreEqual(blue, FreeImage.FI_RGBA_BLUE_MASK);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_BITMAP);
+
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format48bppRgb, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(48, bpp);
+			Assert.AreEqual(red, 0);
+			Assert.AreEqual(green, 0);
+			Assert.AreEqual(blue, 0);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_RGB16);
+
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format4bppIndexed, out type, out bpp, out red, out green, out blue));
 			Assert.AreEqual(4, bpp);
 			Assert.AreEqual(red, 0);
 			Assert.AreEqual(green, 0);
 			Assert.AreEqual(blue, 0);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_BITMAP);
+
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format64bppArgb, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(64, bpp);
+			Assert.AreEqual(red, 0);
+			Assert.AreEqual(green, 0);
+			Assert.AreEqual(blue, 0);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_RGBA16);
+
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format64bppPArgb, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(64, bpp);
+			Assert.AreEqual(red, 0);
+			Assert.AreEqual(green, 0);
+			Assert.AreEqual(blue, 0);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_RGBA16);
+
+			Assert.IsTrue(FreeImage.GetFormatParameters(PixelFormat.Format8bppIndexed, out type, out bpp, out red, out green, out blue));
+			Assert.AreEqual(8, bpp);
+			Assert.AreEqual(red, 0);
+			Assert.AreEqual(green, 0);
+			Assert.AreEqual(blue, 0);
+			Assert.AreEqual(type, FREE_IMAGE_TYPE.FIT_BITMAP);
 		}
 
 		[Test]
