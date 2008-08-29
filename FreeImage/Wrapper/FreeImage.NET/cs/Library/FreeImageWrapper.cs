@@ -309,10 +309,12 @@ namespace FreeImageAPI
 				throw new ArgumentNullException("bitmap");
 			}
 			uint bpp, red_mask, green_mask, blue_mask;
-			if (!GetFormatParameters(bitmap.PixelFormat, out bpp, out red_mask, out green_mask, out blue_mask))
+			FREE_IMAGE_TYPE type;
+			if (!GetFormatParameters(bitmap.PixelFormat, out type, out bpp, out red_mask, out green_mask, out blue_mask))
 			{
 				throw new ArgumentException("The bitmaps pixelformat is invalid.");
 			}
+
 			// Locking the complete bitmap in readonly mode
 			BitmapData data = bitmap.LockBits(
 				new Rectangle(0, 0, bitmap.Width, bitmap.Height),
@@ -321,6 +323,7 @@ namespace FreeImageAPI
 			FIBITMAP result =
 				ConvertFromRawBits(
 					data.Scan0,
+					type,
 					data.Width,
 					data.Height,
 					data.Stride,
@@ -357,6 +360,64 @@ namespace FreeImageAPI
 			//    }
 			//}
 			return result;
+		}
+
+		/// <summary>
+		/// Converts a raw bitmap somewhere in memory to a FreeImage bitmap.
+		/// The parameters in this function are used to describe the raw bitmap.
+		/// </summary>
+		/// <param name="bits">Pointer to start of the raw bits.</param>
+		/// <param name="type">Type of the bitmap.</param>
+		/// <param name="width">Width of the bitmap.</param>
+		/// <param name="height">Height of the bitmap.</param>
+		/// <param name="pitch">Defines the total width of a scanline in the source bitmap,
+		/// including padding bytes that may be applied.</param>
+		/// <param name="bpp">The bit depth of the bitmap.</param>
+		/// <param name="red_mask">The bit-layout of the color components in the bitmap.</param>
+		/// <param name="green_mask">The bit-layout of the color components in the bitmap.</param>
+		/// <param name="blue_mask">The bit-layout of the color components in the bitmap.</param>
+		/// <param name="topdown">Stores the bitmap top-left pixel first when it is true
+		/// or bottom-left pixel first when it is false</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		public static unsafe FIBITMAP ConvertFromRawBits(
+			IntPtr bits,
+			FREE_IMAGE_TYPE type,
+			int width,
+			int height,
+			int pitch,
+			uint bpp,
+			uint red_mask,
+			uint green_mask,
+			uint blue_mask,
+			bool topdown)
+		{
+			byte* addr = (byte*)bits;
+			if ((addr == null) || (width <= 0) || (height <= 0))
+			{
+				return FIBITMAP.Zero;
+			}
+
+			FIBITMAP dib = AllocateT(type, width, height, (int)bpp, red_mask, green_mask, blue_mask);
+			if (dib != FIBITMAP.Zero)
+			{
+				if (topdown)
+				{
+					for (int i = height - 1; i >= 0; --i)
+					{
+						CopyMemory((byte*)GetScanLine(dib, i), addr, (int)GetLine(dib));
+						addr += pitch;
+					}
+				}
+				else
+				{
+					for (int i = 0; i < height; ++i)
+					{
+						CopyMemory((byte*)GetScanLine(dib, i), addr, (int)GetLine(dib));
+						addr += pitch;
+					}
+				}
+			}
+			return dib;
 		}
 
 		/// <summary>
@@ -943,7 +1004,7 @@ namespace FreeImageAPI
 			}
 			if (!FIFSupportsReading(format))
 			{
-				return new FIBITMAP();
+				return FIBITMAP.Zero;
 			}
 			// Create a 'FreeImageIO' structure for calling 'LoadFromHandle'
 			// using the internal structure 'FreeImageStreamIO'.
@@ -2031,20 +2092,23 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="format">The <see cref="System.Drawing.Imaging.PixelFormat"/>
 		/// of the .NET <see cref="System.Drawing.Image"/>.</param>
+		/// <param name="type">Returns the type used for the new bitmap.</param>
 		/// <param name="bpp">Returns the color depth for the new bitmap.</param>
 		/// <param name="red_mask">Returns the red_mask for the new bitmap.</param>
 		/// <param name="green_mask">Returns the green_mask for the new bitmap.</param>
 		/// <param name="blue_mask">Returns the blue_mask for the new bitmap.</param>
-		/// <returns>True in case <paramref name="format"/> is
-		/// <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>, else false.</returns>
+		/// <returns>True in case a matching conversion exists; else false.
+		/// </returns>
 		public static bool GetFormatParameters(
 			PixelFormat format,
+			out FREE_IMAGE_TYPE type,
 			out uint bpp,
 			out uint red_mask,
 			out uint green_mask,
 			out uint blue_mask)
 		{
 			bool result = false;
+			type = FREE_IMAGE_TYPE.FIT_UNKNOWN;
 			bpp = 0;
 			red_mask = 0;
 			green_mask = 0;
@@ -2052,18 +2116,22 @@ namespace FreeImageAPI
 			switch (format)
 			{
 				case PixelFormat.Format1bppIndexed:
+					type = FREE_IMAGE_TYPE.FIT_BITMAP;
 					bpp = 1;
 					result = true;
 					break;
 				case PixelFormat.Format4bppIndexed:
+					type = FREE_IMAGE_TYPE.FIT_BITMAP;
 					bpp = 4;
 					result = true;
 					break;
 				case PixelFormat.Format8bppIndexed:
+					type = FREE_IMAGE_TYPE.FIT_BITMAP;
 					bpp = 8;
 					result = true;
 					break;
 				case PixelFormat.Format16bppRgb565:
+					type = FREE_IMAGE_TYPE.FIT_BITMAP;
 					bpp = 16;
 					red_mask = FI16_565_RED_MASK;
 					green_mask = FI16_565_GREEN_MASK;
@@ -2071,6 +2139,8 @@ namespace FreeImageAPI
 					result = true;
 					break;
 				case PixelFormat.Format16bppRgb555:
+				case PixelFormat.Format16bppArgb1555:
+					type = FREE_IMAGE_TYPE.FIT_BITMAP;
 					bpp = 16;
 					red_mask = FI16_555_RED_MASK;
 					green_mask = FI16_555_GREEN_MASK;
@@ -2078,6 +2148,7 @@ namespace FreeImageAPI
 					result = true;
 					break;
 				case PixelFormat.Format24bppRgb:
+					type = FREE_IMAGE_TYPE.FIT_BITMAP;
 					bpp = 24;
 					red_mask = FI_RGBA_RED_MASK;
 					green_mask = FI_RGBA_GREEN_MASK;
@@ -2086,10 +2157,85 @@ namespace FreeImageAPI
 					break;
 				case PixelFormat.Format32bppRgb:
 				case PixelFormat.Format32bppArgb:
+				case PixelFormat.Format32bppPArgb:
+					type = FREE_IMAGE_TYPE.FIT_BITMAP;
 					bpp = 32;
 					red_mask = FI_RGBA_RED_MASK;
 					green_mask = FI_RGBA_GREEN_MASK;
 					blue_mask = FI_RGBA_BLUE_MASK;
+					result = true;
+					break;
+				case PixelFormat.Format16bppGrayScale:
+					type = FREE_IMAGE_TYPE.FIT_UINT16;
+					bpp = 16;
+					result = true;
+					break;
+				case PixelFormat.Format48bppRgb:
+					type = FREE_IMAGE_TYPE.FIT_RGB16;
+					bpp = 48;
+					result = true;
+					break;
+				case PixelFormat.Format64bppArgb:
+				case PixelFormat.Format64bppPArgb:
+					type = FREE_IMAGE_TYPE.FIT_RGBA16;
+					bpp = 64;
+					result = true;
+					break;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Retrieves all parameters needed to create a new FreeImage bitmap from
+		/// raw bits <see cref="System.Drawing.Image"/>.
+		/// </summary>
+		/// <param name="type">The <see cref="FREE_IMAGE_TYPE"/>
+		/// of the data in memory.</param>
+		/// <param name="bpp">The color depth for the data.</param>
+		/// <param name="red_mask">Returns the red_mask for the data.</param>
+		/// <param name="green_mask">Returns the green_mask for the data.</param>
+		/// <param name="blue_mask">Returns the blue_mask for the data.</param>
+		/// <returns>True in case a matching conversion exists; else false.
+		/// </returns>
+		public static bool GetTypeParameters(
+			FREE_IMAGE_TYPE type,
+			int bpp,
+			out uint red_mask,
+			out uint green_mask,
+			out uint blue_mask)
+		{
+			bool result = false;
+			red_mask = 0;
+			green_mask = 0;
+			blue_mask = 0;
+			switch (type)
+			{
+				case FREE_IMAGE_TYPE.FIT_BITMAP:
+					switch (bpp)
+					{
+						case 1:
+						case 4:
+						case 8:
+							result = true;
+							break;
+						case 16:
+							result = true;
+							red_mask = FI16_555_RED_MASK;
+							green_mask = FI16_555_GREEN_MASK;
+							blue_mask = FI16_555_BLUE_MASK;
+							break;
+						case 24:
+						case 32:
+							result = true;
+							red_mask = FI_RGBA_RED_MASK;
+							green_mask = FI_RGBA_GREEN_MASK;
+							blue_mask = FI_RGBA_BLUE_MASK;
+							break;
+					}
+					break;
+				case FREE_IMAGE_TYPE.FIT_UNKNOWN:
+					break;
+				default:
 					result = true;
 					break;
 			}
@@ -3159,7 +3305,7 @@ namespace FreeImageAPI
 			}
 			else
 			{
-				result = SetMetadata(FREE_IMAGE_MDMODEL.FIMD_COMMENTS, dib, "Comment", new FITAG());
+				result = SetMetadata(FREE_IMAGE_MDMODEL.FIMD_COMMENTS, dib, "Comment", FITAG.Zero);
 			}
 			return result;
 		}
