@@ -173,6 +173,14 @@ namespace FreeImageAPI
 		/// bases on the specified image.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
+		/// <remarks>
+		/// Although this constructor supports creating images in both formats
+		/// <see cref="System.Drawing.Imaging.PixelFormat.Format32bppPArgb"/>
+		/// and <see cref="System.Drawing.Imaging.PixelFormat.Format64bppPArgb"/>, bitmaps
+		/// created in these formats are treated like any normal 32-bit RGBA and 64-bit RGBA
+		/// images respectively. Currently, there is no  support for automatic premultiplying images in
+		/// <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		/// <exception cref="Exception">The operation failed.</exception>
 		public FreeImageBitmap(Image original)
 			: this(original as Bitmap)
@@ -186,6 +194,14 @@ namespace FreeImageAPI
 		/// <param name="original">The original to clone from.</param>
 		/// <param name="newSize">The Size structure that represent the
 		/// size of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <remarks>
+		/// Although this constructor supports creating images in both formats
+		/// <see cref="System.Drawing.Imaging.PixelFormat.Format32bppPArgb"/>
+		/// and <see cref="System.Drawing.Imaging.PixelFormat.Format64bppPArgb"/>, bitmaps
+		/// created in these formats are treated like any normal 32-bit RGBA and 64-bit RGBA
+		/// images respectively. Currently, there is no  support for automatic premultiplying images in
+		/// <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
@@ -203,6 +219,14 @@ namespace FreeImageAPI
 		/// <param name="original">The original to clone from.</param>
 		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <remarks>
+		/// Although this constructor supports creating images in both formats
+		/// <see cref="System.Drawing.Imaging.PixelFormat.Format32bppPArgb"/>
+		/// and <see cref="System.Drawing.Imaging.PixelFormat.Format64bppPArgb"/>, bitmaps
+		/// created in these formats are treated like any normal 32-bit RGBA and 64-bit RGBA
+		/// images respectively. Currently, there is no  support for automatic premultiplying images in
+		/// <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
@@ -217,6 +241,14 @@ namespace FreeImageAPI
 		/// bases on the specified image.
 		/// </summary>
 		/// <param name="original">The original to clone from.</param>
+		/// <remarks>
+		/// Although this constructor supports creating images in both formats
+		/// <see cref="System.Drawing.Imaging.PixelFormat.Format32bppPArgb"/>
+		/// and <see cref="System.Drawing.Imaging.PixelFormat.Format64bppPArgb"/>, bitmaps
+		/// created in these formats are treated like any normal 32-bit RGBA and 64-bit RGBA
+		/// images respectively. Currently, there is no  support for automatic premultiplying images in
+		/// <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		/// <exception cref="Exception">The operation failed.</exception>
 		public FreeImageBitmap(Bitmap original)
 		{
@@ -239,6 +271,14 @@ namespace FreeImageAPI
 		/// <param name="original">The original to clone from.</param>
 		/// <param name="newSize">The Size structure that represent the
 		/// size of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <remarks>
+		/// Although this constructor supports creating images in both formats
+		/// <see cref="System.Drawing.Imaging.PixelFormat.Format32bppPArgb"/>
+		/// and <see cref="System.Drawing.Imaging.PixelFormat.Format64bppPArgb"/>, bitmaps
+		/// created in these formats are treated like any normal 32-bit RGBA and 64-bit RGBA
+		/// images respectively. Currently, there is no  support for automatic premultiplying images in
+		/// <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
@@ -256,6 +296,14 @@ namespace FreeImageAPI
 		/// <param name="original">The original to clone from.</param>
 		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <remarks>
+		/// Although this constructor supports creating images in both formats
+		/// <see cref="System.Drawing.Imaging.PixelFormat.Format32bppPArgb"/>
+		/// and <see cref="System.Drawing.Imaging.PixelFormat.Format64bppPArgb"/>, bitmaps
+		/// created in these formats are treated like any normal 32-bit RGBA and 64-bit RGBA
+		/// images respectively. Currently, there is no  support for automatic premultiplying images in
+		/// <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="original"/> is null.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
@@ -541,6 +589,14 @@ namespace FreeImageAPI
 		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="format">The PixelFormat enumeration for the new <see cref="FreeImageBitmap"/>.</param>
+		/// <remarks>
+		/// Although this constructor supports creating images in both formats
+		/// <see cref="System.Drawing.Imaging.PixelFormat.Format32bppPArgb"/>
+		/// and <see cref="System.Drawing.Imaging.PixelFormat.Format64bppPArgb"/>, bitmaps
+		/// created in these formats are treated like any normal 32-bit RGBA and 64-bit RGBA
+		/// images respectively. Currently, there is no  support for automatic premultiplying images in
+		/// <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentException"><paramref name="format"/> is invalid.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
@@ -556,11 +612,12 @@ namespace FreeImageAPI
 				throw new ArgumentOutOfRangeException("height");
 			}
 			uint bpp, redMask, greenMask, blueMask;
-			if (!FreeImage.GetFormatParameters(format, out bpp, out redMask, out greenMask, out blueMask))
+			FREE_IMAGE_TYPE type;
+			if (!FreeImage.GetFormatParameters(format, out type, out bpp, out redMask, out greenMask, out blueMask))
 			{
-				throw new ArgumentException("format is invalid.");
+				throw new ArgumentException("format is invalid");
 			}
-			dib = FreeImage.Allocate(width, height, (int)bpp, redMask, greenMask, blueMask);
+			dib = FreeImage.AllocateT(type, width, height, (int)bpp, redMask, greenMask, blueMask);
 			if (dib.IsNull)
 			{
 				throw new Exception();
@@ -571,7 +628,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified size and type.
 		/// Only non standard bitmaps are supported.
-		/// </summary>
+		/// </summary>	
 		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="type">The type of the bitmap.</param>
@@ -609,13 +666,21 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
-		/// <param name="stride">nteger that specifies the byte offset between the beginning
+		/// <param name="stride">Integer that specifies the byte offset between the beginning
 		/// of one scan line and the next. This is usually (but not necessarily)
 		/// the number of bytes in the pixel format (for example, 2 for 16 bits per pixel)
 		/// multiplied by the width of the bitmap. The value passed to this parameter must
 		/// be a multiple of four..</param>
 		/// <param name="format">The PixelFormat enumeration for the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="scan0">Pointer to an array of bytes that contains the pixel data.</param>
+		/// <remarks>
+		/// Although this constructor supports creating images in both formats
+		/// <see cref="System.Drawing.Imaging.PixelFormat.Format32bppPArgb"/>
+		/// and <see cref="System.Drawing.Imaging.PixelFormat.Format64bppPArgb"/>, bitmaps
+		/// created in these formats are treated like any normal 32-bit RGBA and 64-bit RGBA
+		/// images respectively. Currently, there is no  support for automatic premultiplying images in
+		/// <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentException"><paramref name="format"/> is invalid.</exception>
 		/// <exception cref="ArgumentOutOfRangeException">
@@ -631,16 +696,64 @@ namespace FreeImageAPI
 				throw new ArgumentOutOfRangeException("height");
 			}
 			uint bpp, redMask, greenMask, blueMask;
+			FREE_IMAGE_TYPE type;
 			bool topDown = (stride > 0);
 			stride = (stride > 0) ? stride : (stride * -1);
 
-			if (!FreeImage.GetFormatParameters(format, out bpp, out redMask, out greenMask, out blueMask))
+			if (!FreeImage.GetFormatParameters(format, out type, out bpp, out redMask, out greenMask, out blueMask))
 			{
 				throw new ArgumentException("format is invalid.");
 			}
 
 			dib = FreeImage.ConvertFromRawBits(
-				scan0, width, height, stride, bpp, redMask, greenMask, blueMask, topDown);
+				scan0, type, width, height, stride, bpp, redMask, greenMask, blueMask, topDown);
+
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+			AddMemoryPressure();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified size,
+		/// pixel format and pixel data.
+		/// </summary>
+		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="stride">Integer that specifies the byte offset between the beginning
+		/// of one scan line and the next. This is usually (but not necessarily)
+		/// the number of bytes in the pixel format (for example, 2 for 16 bits per pixel)
+		/// multiplied by the width of the bitmap. The value passed to this parameter must
+		/// be a multiple of four..</param>
+		/// <param name="bpp">The color depth of the new <see cref="FreeImageBitmap"/></param>
+		/// <param name="type">The type for the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="scan0">Pointer to an array of bytes that contains the pixel data.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentException"><paramref name="format"/> is invalid.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="width"/> or <paramref name="height"/> are less or equal zero.</exception>
+		public FreeImageBitmap(int width, int height, int stride, int bpp, FREE_IMAGE_TYPE type, IntPtr scan0)
+		{
+			if (width <= 0)
+			{
+				throw new ArgumentOutOfRangeException("width");
+			}
+			if (height <= 0)
+			{
+				throw new ArgumentOutOfRangeException("height");
+			}
+			uint redMask, greenMask, blueMask;
+			bool topDown = (stride > 0);
+			stride = (stride > 0) ? stride : (stride * -1);
+
+			if (!FreeImage.GetTypeParameters(type, bpp, out redMask, out greenMask, out blueMask))
+			{
+				throw new ArgumentException("bpp and type are invalid or not supported.");
+			}
+
+			dib = FreeImage.ConvertFromRawBits(
+				scan0, type, width, height, stride, (uint)bpp, redMask, greenMask, blueMask, topDown);
 
 			if (dib.IsNull)
 			{
