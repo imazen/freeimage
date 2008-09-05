@@ -264,7 +264,7 @@ FreeImage_JPEGTransform(const char *src_file, const char *dst_file, FREE_IMAGE_J
 		// perform the transformation
 		return LosslessTransform(src_file, dst_file, operation, NULL, perfect);
 
-	} catch(char *text) {
+	} catch(const char *text) {
 		FreeImage_OutputMessageProc(FIF_JPEG, text);
 		return FALSE;
 	}
@@ -294,7 +294,7 @@ FreeImage_JPEGCrop(const char *src_file, const char *dst_file, int left, int top
 		// perform the transformation
 		return LosslessTransform(src_file, dst_file, FIJPEG_OP_NONE, crop, FALSE);
 
-	} catch(char *text) {
+	} catch(const char *text) {
 		FreeImage_OutputMessageProc(FIF_JPEG, text);
 		return FALSE;
 	}

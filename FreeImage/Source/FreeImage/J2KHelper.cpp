@@ -310,7 +310,7 @@ FIBITMAP* J2KImageToFIBITMAP(int format_id, const opj_image_t *image) {
 
 		return dib;
 
-	} catch(char *text) {
+	} catch(const char *text) {
 		if(dib) FreeImage_Unload(dib);
 		FreeImage_OutputMessageProc(format_id, text);
 		return NULL;
