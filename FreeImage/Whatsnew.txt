@@ -9,6 +9,7 @@ Month day, 2008 - 3.12.0
 ! [Herve Drolon] FreeImage_CloneMetadata no longer clone the FIMD_ANIMATION metadata (this was causing problems when saving to GIF format)
 * [Carsten Klein] FreeImage_Copy now copies transparency info, resolution info, ICC profile and metadata
 * [Carsten Klein] check for negative top/left values in FreeImage_Paste
+* [Christian Heimes] changed exceptions with a "catch(char *text)" to a "catch(const char *text)" to make GCC 4.1 happy
 
 
 July 28th, 2008 - 3.11.0
