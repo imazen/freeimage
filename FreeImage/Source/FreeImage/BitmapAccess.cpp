@@ -640,9 +640,9 @@ FreeImage_SetTransparentIndex(FIBITMAP *dib, int index) {
 	if (dib) {
 		int count = FreeImage_GetColorsUsed(dib);
 		if (count) {
-			BYTE *new_tt = (BYTE *)malloc((count - 1) * sizeof(BYTE));
+			BYTE *new_tt = (BYTE *)malloc(count * sizeof(BYTE));
 			memset(new_tt, 0xFF, count);
-			if ((index >= 0) && (index <= count)) {
+			if ((index >= 0) && (index < count)) {
 				new_tt[index] = 0x00;
 			}
 			FreeImage_SetTransparencyTable(dib, new_tt, count);
