@@ -1434,40 +1434,87 @@ namespace FreeImageAPI
 		public static extern FIBITMAP Dither(FIBITMAP dib, FREE_IMAGE_DITHER algorithm);
 
 		/// <summary>
-		/// Converts a raw bitmap somewhere in memory to a FreeImage bitmap.
-		/// The parameters in this function are used to describe the raw bitmap.
+		/// Converts a raw bitmap to a FreeImage bitmap.
 		/// </summary>
-		/// <param name="bits">Pointer to start of the raw bits.</param>
-		/// <param name="width">Width of the bitmap.</param>
-		/// <param name="height">Height of the bitmap.</param>
-		/// <param name="pitch">Defines the total width of a scanline in the source bitmap,
-		/// including padding bytes that may be applied.</param>
-		/// <param name="bpp">The bit depth of the bitmap.</param>
-		/// <param name="red_mask">The bit-layout of the color components in the bitmap.</param>
-		/// <param name="green_mask">The bit-layout of the color components in the bitmap.</param>
-		/// <param name="blue_mask">The bit-layout of the color components in the bitmap.</param>
-		/// <param name="topdown">Stores the bitmap top-left pixel first when it is true
-		/// or bottom-left pixel first when it is false</param>
+		/// <param name="bits">Pointer to the memory block containing the raw bitmap.</param>
+		/// <param name="width">The width in pixels of the raw bitmap.</param>
+		/// <param name="height">The height in pixels of the raw bitmap.</param>
+		/// <param name="pitch">Defines the total width of a scanline in the raw bitmap,
+		/// including padding bytes.</param>
+		/// <param name="bpp">The bit depth (bits per pixel) of the raw bitmap.</param>
+		/// <param name="red_mask">The bit mask describing the bits used to store a single 
+		/// pixel's red component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="green_mask">The bit mask describing the bits used to store a single
+		/// pixel's green component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="blue_mask">The bit mask describing the bits used to store a single
+		/// pixel's blue component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="topdown">If true, the raw bitmap is stored in top-down order (top-left pixel first)
+		/// and in bottom-up order (bottom-left pixel first) otherwise.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ConvertFromRawBits")]
 		public static extern FIBITMAP ConvertFromRawBits(IntPtr bits, int width, int height, int pitch,
 				uint bpp, uint red_mask, uint green_mask, uint blue_mask, bool topdown);
 
 		/// <summary>
-		/// Converts a FreeImage bitmap to a raw piece of memory.
+		/// Converts a raw bitmap to a FreeImage bitmap.
 		/// </summary>
-		/// <param name="bits">Pointer to the start of the raw bits.</param>
+		/// <param name="bits">Array of bytes containing the raw bitmap.</param>
+		/// <param name="width">The width in pixels of the raw bitmap.</param>
+		/// <param name="height">The height in pixels of the raw bitmap.</param>
+		/// <param name="pitch">Defines the total width of a scanline in the raw bitmap,
+		/// including padding bytes.</param>
+		/// <param name="bpp">The bit depth (bits per pixel) of the raw bitmap.</param>
+		/// <param name="red_mask">The bit mask describing the bits used to store a single 
+		/// pixel's red component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="green_mask">The bit mask describing the bits used to store a single
+		/// pixel's green component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="blue_mask">The bit mask describing the bits used to store a single
+		/// pixel's blue component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="topdown">If true, the raw bitmap is stored in top-down order (top-left pixel first)
+		/// and in bottom-up order (bottom-left pixel first) otherwise.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ConvertFromRawBits")]
+		public static extern FIBITMAP ConvertFromRawBits(byte[] bits, int width, int height, int pitch,
+				uint bpp, uint red_mask, uint green_mask, uint blue_mask, bool topdown);
+
+		/// <summary>
+		/// Converts a FreeImage bitmap to a raw bitmap, that is a raw piece of memory.
+		/// </summary>
+		/// <param name="bits">Pointer to the memory block receiving the raw bitmap.</param>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="pitch">Defines the total width of a scanline in the source bitmap,
-		/// including padding bytes that may be applied.</param>
-		/// <param name="bpp">The bit depth of the bitmap.</param>
-		/// <param name="red_mask">The bit-layout of the color components in the bitmap.</param>
-		/// <param name="green_mask">The bit-layout of the color components in the bitmap.</param>
-		/// <param name="blue_mask">The bit-layout of the color components in the bitmap.</param>
-		/// <param name="topdown">Store the bitmap top-left pixel first when it is true
-		/// or bottom-left pixel first when it is false.</param>
+		/// <param name="pitch">The desired total width in bytes of a scanline in the raw bitmap,
+		/// including any padding bytes.</param>
+		/// <param name="bpp">The desired bit depth (bits per pixel) of the raw bitmap.</param>
+		/// <param name="red_mask">The desired bit mask describing the bits used to store a single 
+		/// pixel's red component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="green_mask">The desired bit mask describing the bits used to store a single
+		/// pixel's green component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="blue_mask">The desired bit mask describing the bits used to store a single
+		/// pixel's blue component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="topdown">If true, the raw bitmap will be stored in top-down order (top-left pixel first)
+		/// and in bottom-up order (bottom-left pixel first) otherwise.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ConvertToRawBits")]
 		public static extern void ConvertToRawBits(IntPtr bits, FIBITMAP dib, int pitch, uint bpp,
+				uint red_mask, uint green_mask, uint blue_mask, bool topdown);
+
+		/// <summary>
+		/// Converts a FreeImage bitmap to a raw bitmap, that is a raw piece of memory.
+		/// </summary>
+		/// <param name="bits">Array of bytes receiving the raw bitmap.</param>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="pitch">The desired total width in bytes of a scanline in the raw bitmap,
+		/// including any padding bytes.</param>
+		/// <param name="bpp">The desired bit depth (bits per pixel) of the raw bitmap.</param>
+		/// <param name="red_mask">The desired bit mask describing the bits used to store a single 
+		/// pixel's red component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="green_mask">The desired bit mask describing the bits used to store a single
+		/// pixel's green component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="blue_mask">The desired bit mask describing the bits used to store a single
+		/// pixel's blue component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="topdown">If true, the raw bitmap will be stored in top-down order (top-left pixel first)
+		/// and in bottom-up order (bottom-left pixel first) otherwise.</param>
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ConvertToRawBits")]
+		public static extern void ConvertToRawBits(byte[] bits, FIBITMAP dib, int pitch, uint bpp,
 				uint red_mask, uint green_mask, uint blue_mask, bool topdown);
 
 		/// <summary>
