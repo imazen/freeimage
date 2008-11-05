@@ -63,7 +63,7 @@ namespace FreeImageAPI.Plugins
 	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.GetImplementedMethods"/> is used by the constructor
 	/// of the abstract class. FreeImage wants a list of the implemented functions. Each function is
 	/// represented by a function pointer (a .NET <see cref="System.Delegate"/>). In case a function
-	/// is not implemented FreeImage recieves an empty <b>delegate</b>). To tell the constructor
+	/// is not implemented FreeImage receives an empty <b>delegate</b>). To tell the constructor
 	/// which functions have been implemented the information is represented by a disjunction of
 	/// <see cref="FreeImageAPI.Plugins.LocalPlugin.MethodFlags"/>.
 	/// <para/>
