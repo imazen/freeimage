@@ -398,10 +398,7 @@ namespace FreeImageAPI.Metadata
 
 				Array array = Array.CreateInstance(idList[Type], Count);
 				void* src = (void*)FreeImage.GetTagValue(tag);
-				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
-				void* dst = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
-				FreeImage.CopyMemory(dst, src, Length);
-				handle.Free();
+				FreeImage.CopyMemory(array, src, Length);
 				return array;
 			}
 			set
@@ -514,13 +511,7 @@ namespace FreeImageAPI.Metadata
 				Count = (uint)array.Length;
 				Length = (uint)(array.Length * Marshal.SizeOf(idList[type]));
 				data = new byte[Length];
-				GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
-				void* src = (void*)Marshal.UnsafeAddrOfPinnedArrayElement(array, 0);
-				fixed (byte* dst = data)
-				{
-					FreeImage.CopyMemory(dst, src, Length);
-				}
-				handle.Free();
+				FreeImage.CopyMemory(data, array, Length);
 			}
 
 			return FreeImage.SetTagValue(tag, data);
@@ -572,13 +563,7 @@ namespace FreeImageAPI.Metadata
 			item.Id = ID;
 			item.Len = (int)Length;
 			item.Type = (short)Type;
-			byte[] data = new byte[item.Len];
-			byte* ptr = (byte*)FreeImage.GetTagValue(tag);
-			for (int i = 0; i < data.Length; i++)
-			{
-				data[i] = ptr[i];
-			}
-			item.Value = data;
+			FreeImage.CopyMemory(item.Value = new byte[item.Len], FreeImage.GetTagValue(tag), item.Len);
 			return item;
 		}
 

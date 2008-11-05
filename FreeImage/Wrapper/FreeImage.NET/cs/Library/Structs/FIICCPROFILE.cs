@@ -113,11 +113,8 @@ namespace FreeImageAPI
 		{
 			get
 			{
-				byte[] result = new byte[size];
-				fixed (byte* dst = result)
-				{
-					FreeImage.CopyMemory(dst, data.ToPointer(), size);
-				}
+				byte[] result;
+				FreeImage.CopyMemory(result = new byte[size], data.ToPointer(), size);
 				return result;
 			}
 		}
