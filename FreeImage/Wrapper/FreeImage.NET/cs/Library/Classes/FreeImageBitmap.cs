@@ -50,7 +50,7 @@ namespace FreeImageAPI
 	/// Encapsulates a FreeImage-bitmap.
 	/// </summary>
 	[Serializable, Guid("64a4c935-b757-499c-ab8c-6110316a9e51")]
-	public class FreeImageBitmap : ICloneable, IDisposable, IEnumerable, ISerializable
+	public class FreeImageBitmap : MarshalByRefObject, ICloneable, IDisposable, IEnumerable, ISerializable
 	{
 		#region Fields
 
@@ -726,6 +726,66 @@ namespace FreeImageAPI
 		/// the number of bytes in the pixel format (for example, 2 for 16 bits per pixel)
 		/// multiplied by the width of the bitmap. The value passed to this parameter must
 		/// be a multiple of four..</param>
+		/// <param name="format">The PixelFormat enumeration for the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="bits">Array of bytes containing the bitmap data.</param>
+		/// <remarks>
+		/// Although this constructor supports creating images in both formats
+		/// <see cref="System.Drawing.Imaging.PixelFormat.Format32bppPArgb"/>
+		/// and <see cref="System.Drawing.Imaging.PixelFormat.Format64bppPArgb"/>, bitmaps
+		/// created in these formats are treated like any normal 32-bit RGBA and 64-bit RGBA
+		/// images respectively. Currently, there is no  support for automatic premultiplying images in
+		/// <see cref="FreeImageBitmap"/>.
+		/// </remarks>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentException"><paramref name="format"/> is invalid.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="width"/> or <paramref name="height"/> are less or equal zero.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="bits"/> is null</exception>
+		public FreeImageBitmap(int width, int height, int stride, PixelFormat format, byte[] bits)
+		{
+			if (width <= 0)
+			{
+				throw new ArgumentOutOfRangeException("width");
+			}
+			if (height <= 0)
+			{
+				throw new ArgumentOutOfRangeException("height");
+			}
+			if (bits == null)
+			{
+				throw new ArgumentNullException("bits");
+			}
+			uint bpp, redMask, greenMask, blueMask;
+			FREE_IMAGE_TYPE type;
+			bool topDown = (stride > 0);
+			stride = (stride > 0) ? stride : (stride * -1);
+
+			if (!FreeImage.GetFormatParameters(format, out type, out bpp, out redMask, out greenMask, out blueMask))
+			{
+				throw new ArgumentException("format is invalid.");
+			}
+
+			dib = FreeImage.ConvertFromRawBits(
+				bits, type, width, height, stride, bpp, redMask, greenMask, blueMask, topDown);
+
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+			AddMemoryPressure();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified size,
+		/// pixel format and pixel data.
+		/// </summary>
+		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="stride">Integer that specifies the byte offset between the beginning
+		/// of one scan line and the next. This is usually (but not necessarily)
+		/// the number of bytes in the pixel format (for example, 2 for 16 bits per pixel)
+		/// multiplied by the width of the bitmap. The value passed to this parameter must
+		/// be a multiple of four..</param>
 		/// <param name="bpp">The color depth of the new <see cref="FreeImageBitmap"/></param>
 		/// <param name="type">The type for the new <see cref="FreeImageBitmap"/>.</param>
 		/// <param name="scan0">Pointer to an array of bytes that contains the pixel data.</param>
@@ -754,6 +814,58 @@ namespace FreeImageAPI
 
 			dib = FreeImage.ConvertFromRawBits(
 				scan0, type, width, height, stride, (uint)bpp, redMask, greenMask, blueMask, topDown);
+
+			if (dib.IsNull)
+			{
+				throw new Exception();
+			}
+			AddMemoryPressure();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FreeImageBitmap"/> class bases on the specified size,
+		/// pixel format and pixel data.
+		/// </summary>
+		/// <param name="width">The width, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="height">The height, in pixels, of the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="stride">Integer that specifies the byte offset between the beginning
+		/// of one scan line and the next. This is usually (but not necessarily)
+		/// the number of bytes in the pixel format (for example, 2 for 16 bits per pixel)
+		/// multiplied by the width of the bitmap. The value passed to this parameter must
+		/// be a multiple of four..</param>
+		/// <param name="bpp">The color depth of the new <see cref="FreeImageBitmap"/></param>
+		/// <param name="type">The type for the new <see cref="FreeImageBitmap"/>.</param>
+		/// <param name="bits">Array of bytes containing the bitmap data.</param>
+		/// <exception cref="Exception">The operation failed.</exception>
+		/// <exception cref="ArgumentException"><paramref name="format"/> is invalid.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="width"/> or <paramref name="height"/> are less or equal zero.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="bits"/> is null</exception>
+		public FreeImageBitmap(int width, int height, int stride, int bpp, FREE_IMAGE_TYPE type, byte[] bits)
+		{
+			if (width <= 0)
+			{
+				throw new ArgumentOutOfRangeException("width");
+			}
+			if (height <= 0)
+			{
+				throw new ArgumentOutOfRangeException("height");
+			}
+			if (bits == null)
+			{
+				throw new ArgumentNullException("bits");
+			}
+			uint redMask, greenMask, blueMask;
+			bool topDown = (stride > 0);
+			stride = (stride > 0) ? stride : (stride * -1);
+
+			if (!FreeImage.GetTypeParameters(type, bpp, out redMask, out greenMask, out blueMask))
+			{
+				throw new ArgumentException("bpp and type are invalid or not supported.");
+			}
+
+			dib = FreeImage.ConvertFromRawBits(
+				bits, type, width, height, stride, (uint)bpp, redMask, greenMask, blueMask, topDown);
 
 			if (dib.IsNull)
 			{
@@ -3272,7 +3384,9 @@ namespace FreeImageAPI
 
 		private void AddMemoryPressure()
 		{
-			GC.AddMemoryPressure(DataSize);
+			long dataSize;
+			if ((dataSize = DataSize) > 0L)
+				GC.AddMemoryPressure(dataSize);
 		}
 
 		/// <summary>
@@ -3644,7 +3758,9 @@ namespace FreeImageAPI
 				throw new ArgumentNullException("bitmap");
 			}
 			bitmap.EnsureNotDisposed();
-			if (bitmap.dib.IsNull)
+			
+			FIBITMAP dib = bitmap.dib;
+			if (dib.IsNull)
 			{
 				throw new ArgumentNullException("bitmap");
 			}
@@ -3737,13 +3853,15 @@ namespace FreeImageAPI
 			{
 				long size = FreeImage.GetDIBSize(dib);
 				FreeImage.UnloadEx(ref dib);
-				GC.RemoveMemoryPressure(size);
+				if (size > 0L)
+					GC.RemoveMemoryPressure(size);
 			}
 			else if (!dib.IsNull)
 			{
 				long size = FreeImage.GetDIBSize(dib);
 				FreeImage.UnlockPage(mdib, dib, false);
-				GC.RemoveMemoryPressure(size);
+				if (size > 0L)
+					GC.RemoveMemoryPressure(size);
 				dib.SetNull();
 			}
 		}
