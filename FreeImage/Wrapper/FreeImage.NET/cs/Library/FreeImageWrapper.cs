@@ -60,13 +60,6 @@ namespace FreeImageAPI
 		public static readonly FREE_IMAGE_MDMODEL[] FREE_IMAGE_MDMODELS =
 			(FREE_IMAGE_MDMODEL[])Enum.GetValues(typeof(FREE_IMAGE_MDMODEL));
 
-		/// <summary>
-		/// Saved instance for faster access.
-		/// </summary>
-		private static readonly ConstructorInfo PropertyItemConstructor =
-			typeof(PropertyItem).GetConstructor(
-			BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { }, null);
-
 		private const int DIB_RGB_COLORS = 0;
 		private const int DIB_PAL_COLORS = 1;
 		private const int CBM_INIT = 0x4;
@@ -113,9 +106,9 @@ namespace FreeImageAPI
 		/// Returns the internal version of this FreeImage 3 .NET wrapper.
 		/// </summary>
 		/// <returns>The internal version of this FreeImage 3 .NET wrapper.</returns>
-		public static string GetWrapperVersion()
+		public static Version GetWrapperVersion()
 		{
-			return FREEIMAGE_MAJOR_VERSION + "." + FREEIMAGE_MINOR_VERSION + "." + FREEIMAGE_RELEASE_SERIAL;
+			return new Version(1, 0, 5, 0);
 		}
 
 		/// <summary>
@@ -252,7 +245,7 @@ namespace FreeImageAPI
 								byte* src = (byte*)GetTagValue(tag);
 								fixed (byte* dst = buffer)
 								{
-									MoveMemory(dst, src, (uint)propItem.Len);
+									CopyMemory(dst, src, (uint)propItem.Len);
 								}
 							}
 
@@ -363,21 +356,70 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Converts a raw bitmap somewhere in memory to a FreeImage bitmap.
-		/// The parameters in this function are used to describe the raw bitmap.
+		/// Converts a raw bitmap to a FreeImage bitmap.
 		/// </summary>
-		/// <param name="bits">Pointer to start of the raw bits.</param>
-		/// <param name="type">Type of the bitmap.</param>
-		/// <param name="width">Width of the bitmap.</param>
-		/// <param name="height">Height of the bitmap.</param>
-		/// <param name="pitch">Defines the total width of a scanline in the source bitmap,
-		/// including padding bytes that may be applied.</param>
-		/// <param name="bpp">The bit depth of the bitmap.</param>
-		/// <param name="red_mask">The bit-layout of the color components in the bitmap.</param>
-		/// <param name="green_mask">The bit-layout of the color components in the bitmap.</param>
-		/// <param name="blue_mask">The bit-layout of the color components in the bitmap.</param>
-		/// <param name="topdown">Stores the bitmap top-left pixel first when it is true
-		/// or bottom-left pixel first when it is false</param>
+		/// <param name="bits">Array of bytes containing the raw bitmap.</param>
+		/// <param name="type">The type of the raw bitmap.</param>
+		/// <param name="width">The width in pixels of the raw bitmap.</param>
+		/// <param name="height">The height in pixels of the raw bitmap.</param>
+		/// <param name="pitch">Defines the total width of a scanline in the raw bitmap,
+		/// including padding bytes.</param>
+		/// <param name="bpp">The bit depth (bits per pixel) of the raw bitmap.</param>
+		/// <param name="red_mask">The bit mask describing the bits used to store a single 
+		/// pixel's red component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="green_mask">The bit mask describing the bits used to store a single
+		/// pixel's green component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="blue_mask">The bit mask describing the bits used to store a single
+		/// pixel's blue component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="topdown">If true, the raw bitmap is stored in top-down order (top-left pixel first)
+		/// and in bottom-up order (bottom-left pixel first) otherwise.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		public static unsafe FIBITMAP ConvertFromRawBits(
+			byte[] bits,
+			FREE_IMAGE_TYPE type,
+			int width,
+			int height,
+			int pitch,
+			uint bpp,
+			uint red_mask,
+			uint green_mask,
+			uint blue_mask,
+			bool topdown)
+		{
+			fixed (byte* ptr = bits)
+			{
+				return ConvertFromRawBits(
+					(IntPtr)ptr,
+					type,
+					width,
+					height,
+					pitch,
+					bpp,
+					red_mask,
+					green_mask,
+					blue_mask,
+					topdown);
+			}
+		}
+
+		/// <summary>
+		/// Converts a raw bitmap to a FreeImage bitmap.
+		/// </summary>
+		/// <param name="bits">Pointer to the memory block containing the raw bitmap.</param>
+		/// <param name="type">The type of the raw bitmap.</param>
+		/// <param name="width">The width in pixels of the raw bitmap.</param>
+		/// <param name="height">The height in pixels of the raw bitmap.</param>
+		/// <param name="pitch">Defines the total width of a scanline in the raw bitmap,
+		/// including padding bytes.</param>
+		/// <param name="bpp">The bit depth (bits per pixel) of the raw bitmap.</param>
+		/// <param name="red_mask">The bit mask describing the bits used to store a single 
+		/// pixel's red component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="green_mask">The bit mask describing the bits used to store a single
+		/// pixel's green component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="blue_mask">The bit mask describing the bits used to store a single
+		/// pixel's blue component in the raw bitmap. This is only applied to 16-bpp raw bitmaps.</param>
+		/// <param name="topdown">If true, the raw bitmap is stored in top-down order (top-left pixel first)
+		/// and in bottom-up order (bottom-left pixel first) otherwise.</param>
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		public static unsafe FIBITMAP ConvertFromRawBits(
 			IntPtr bits,
@@ -2517,7 +2559,7 @@ namespace FreeImageAPI
 			byte* ptr = (byte*)GetTransparencyTable(dib);
 			fixed (byte* dst = result)
 			{
-				MoveMemory(dst, ptr, count);
+				CopyMemory(dst, ptr, count);
 			}
 			return result;
 		}
@@ -3452,7 +3494,7 @@ namespace FreeImageAPI
 
 		#endregion
 
-		#region Rotation and flipping
+		#region Rotation and Flipping
 
 		/// <summary>
 		/// Rotates a 4-bit color FreeImage bitmap.
@@ -3681,15 +3723,7 @@ namespace FreeImageAPI
 
 		internal static PropertyItem CreatePropertyItem()
 		{
-			PropertyItem result = null;
-			try
-			{
-				result = (PropertyItem)PropertyItemConstructor.Invoke(null);
-			}
-			catch
-			{
-			}
-			return result;
+			return (PropertyItem)Activator.CreateInstance(typeof(PropertyItem), true);
 		}
 
 		private static unsafe void CopyPalette(FIBITMAP src, FIBITMAP dst)
@@ -3697,7 +3731,7 @@ namespace FreeImageAPI
 			RGBQUAD* orgPal = (RGBQUAD*)GetPalette(src);
 			RGBQUAD* newPal = (RGBQUAD*)GetPalette(dst);
 			uint size = (uint)(sizeof(RGBQUAD) * GetColorsUsed(src));
-			MoveMemory(newPal, orgPal, size);
+			CopyMemory(newPal, orgPal, size);
 		}
 
 		private static unsafe Scanline<FI4BIT>[] Get04BitScanlines(FIBITMAP dib)
@@ -3766,10 +3800,10 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Compares blocks of memory.
 		/// </summary>
-		/// <param name="buf1">Pointer to a block of memory to compare.</param>
-		/// <param name="buf2">Pointer to a block of memory to compare.</param>
+		/// <param name="buf1">A pointer to a block of memory to compare.</param>
+		/// <param name="buf2">A pointer to a block of memory to compare.</param>
 		/// <param name="length">Specifies the number of bytes to be compared.</param>
-		/// <returns>If all bytes compare as equal, true is returned.</returns>
+		/// <returns>true, if all bytes compare as equal, false otherwise.</returns>
 		public static unsafe bool CompareMemory(void* buf1, void* buf2, uint length)
 		{
 			return (length == RtlCompareMemory(buf1, buf2, length));
@@ -3778,10 +3812,10 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Compares blocks of memory.
 		/// </summary>
-		/// <param name="buf1">Pointer to a block of memory to compare.</param>
-		/// <param name="buf2">Pointer to a block of memory to compare.</param>
+		/// <param name="buf1">A pointer to a block of memory to compare.</param>
+		/// <param name="buf2">A pointer to a block of memory to compare.</param>
 		/// <param name="length">Specifies the number of bytes to be compared.</param>
-		/// <returns>If all bytes compare as equal, true is returned.</returns>
+		/// <returns>true, if all bytes compare as equal, false otherwise.</returns>
 		public static unsafe bool CompareMemory(void* buf1, void* buf2, long length)
 		{
 			return (length == RtlCompareMemory(buf1, buf2, checked((uint)length)));
@@ -3790,10 +3824,10 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Compares blocks of memory.
 		/// </summary>
-		/// <param name="buf1">Pointer to a block of memory to compare.</param>
-		/// <param name="buf2">Pointer to a block of memory to compare.</param>
+		/// <param name="buf1">A pointer to a block of memory to compare.</param>
+		/// <param name="buf2">A pointer to a block of memory to compare.</param>
 		/// <param name="length">Specifies the number of bytes to be compared.</param>
-		/// <returns>If all bytes compare as equal, true is returned.</returns>
+		/// <returns>true, if all bytes compare as equal, false otherwise.</returns>
 		public static unsafe bool CompareMemory(IntPtr buf1, IntPtr buf2, uint length)
 		{
 			return (length == RtlCompareMemory(buf1.ToPointer(), buf2.ToPointer(), length));
@@ -3802,10 +3836,10 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Compares blocks of memory.
 		/// </summary>
-		/// <param name="buf1">Pointer to a block of memory to compare.</param>
-		/// <param name="buf2">Pointer to a block of memory to compare.</param>
+		/// <param name="buf1">A pointer to a block of memory to compare.</param>
+		/// <param name="buf2">A pointer to a block of memory to compare.</param>
 		/// <param name="length">Specifies the number of bytes to be compared.</param>
-		/// <returns>If all bytes compare as equal, true is returned.</returns>
+		/// <returns>true, if all bytes compare as equal, false otherwise.</returns>
 		public static unsafe bool CompareMemory(IntPtr buf1, IntPtr buf2, long length)
 		{
 			return (length == RtlCompareMemory(buf1.ToPointer(), buf2.ToPointer(), checked((uint)length)));
@@ -3814,9 +3848,9 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Moves a block of memory from one location to another.
 		/// </summary>
-		/// <param name="dst">Pointer to the starting address of the move destination.</param>
-		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
-		/// <param name="size">Size of the block of memory to move, in bytes.</param>
+		/// <param name="dst">A pointer to the starting address of the move destination.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to be moved.</param>
+		/// <param name="size">The size of the block of memory to move, in bytes.</param>
 		public static unsafe void MoveMemory(void* dst, void* src, long size)
 		{
 			MoveMemory(dst, src, checked((uint)size));
@@ -3825,9 +3859,9 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Moves a block of memory from one location to another.
 		/// </summary>
-		/// <param name="dst">Pointer to the starting address of the move destination.</param>
-		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
-		/// <param name="size">Size of the block of memory to move, in bytes.</param>
+		/// <param name="dst">A pointer to the starting address of the move destination.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to be moved.</param>
+		/// <param name="size">The size of the block of memory to move, in bytes.</param>
 		public static unsafe void MoveMemory(IntPtr dst, IntPtr src, uint size)
 		{
 			MoveMemory(dst.ToPointer(), src.ToPointer(), size);
@@ -3836,9 +3870,9 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Moves a block of memory from one location to another.
 		/// </summary>
-		/// <param name="dst">Pointer to the starting address of the move destination.</param>
-		/// <param name="src">Pointer to the starting address of the block of memory to be moved.</param>
-		/// <param name="size">Size of the block of memory to move, in bytes.</param>
+		/// <param name="dst">A pointer to the starting address of the move destination.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to be moved.</param>
+		/// <param name="size">The size of the block of memory to move, in bytes.</param>
 		public static unsafe void MoveMemory(IntPtr dst, IntPtr src, long size)
 		{
 			MoveMemory(dst.ToPointer(), src.ToPointer(), checked((uint)size));
@@ -3847,9 +3881,9 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Copies a block of memory from one location to another.
 		/// </summary>
-		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
-		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
-		/// <param name="len">Size of the block of memory to copy, in bytes.</param>
+		/// <param name="dest">A pointer to the starting address of the copied block's destination.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to copy.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
 		/// <remarks>
 		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(void*, void*, uint)"/>.
 		/// However, if both blocks overlap the result is undefined.
@@ -3900,61 +3934,218 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Copies a block of memory from one location to another.
 		/// </summary>
-		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
-		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
-		/// <param name="size">Size of the block of memory to copy, in bytes.</param>
+		/// <param name="dest">A pointer to the starting address of the copied block's destination.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to copy.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
 		/// <remarks>
 		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(void*, void*, long)"/>.
 		/// However, if both blocks overlap the result is undefined.
 		/// </remarks>
-		public static unsafe void CopyMemory(void* dest, void* src, long size)
+		public static unsafe void CopyMemory(byte* dest, byte* src, long len)
 		{
-			CopyMemory((byte*)dest, (byte*)src, checked((int)size));
+			CopyMemory(dest, src, checked((int)len));
 		}
 
 		/// <summary>
 		/// Copies a block of memory from one location to another.
 		/// </summary>
-		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
-		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
-		/// <param name="size">Size of the block of memory to copy, in bytes.</param>
+		/// <param name="dest">A pointer to the starting address of the copied block's destination.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to copy.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
 		/// <remarks>
 		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(void*, void*, long)"/>.
 		/// However, if both blocks overlap the result is undefined.
 		/// </remarks>
-		public static unsafe void CopyMemory(void* dest, void* src, int size)
+		public static unsafe void CopyMemory(void* dest, void* src, long len)
 		{
-			CopyMemory((byte*)dest, (byte*)src, size);
+			CopyMemory((byte*)dest, (byte*)src, checked((int)len));
 		}
 
 		/// <summary>
 		/// Copies a block of memory from one location to another.
 		/// </summary>
-		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
-		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
-		/// <param name="size">Size of the block of memory to copy, in bytes.</param>
+		/// <param name="dest">A pointer to the starting address of the copied block's destination.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to copy.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
+		/// <remarks>
+		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(void*, void*, uint)"/>.
+		/// However, if both blocks overlap the result is undefined.
+		/// </remarks>
+		public static unsafe void CopyMemory(void* dest, void* src, int len)
+		{
+			CopyMemory((byte*)dest, (byte*)src, len);
+		}
+
+		/// <summary>
+		/// Copies a block of memory from one location to another.
+		/// </summary>
+		/// <param name="dest">A pointer to the starting address of the copied block's destination.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to copy.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
 		/// <remarks>
 		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(IntPtr, IntPtr, uint)"/>.
 		/// However, if both blocks overlap the result is undefined.
 		/// </remarks>
-		public static unsafe void CopyMemory(IntPtr dest, IntPtr src, int size)
+		public static unsafe void CopyMemory(IntPtr dest, IntPtr src, int len)
 		{
-			CopyMemory((byte*)dest, (byte*)src, size);
+			CopyMemory((byte*)dest, (byte*)src, len);
 		}
 
 		/// <summary>
 		/// Copies a block of memory from one location to another.
 		/// </summary>
-		/// <param name="dest">Pointer to the starting address of the copy destination.</param>
-		/// <param name="src">Pointer to the starting address of the block of memory to be copied.</param>
-		/// <param name="size">Size of the block of memory to copy, in bytes.</param>
+		/// <param name="dest">A pointer to the starting address of the copied block's destination.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to copy.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
 		/// <remarks>
 		/// <b>CopyMemory</b> runs faster than <see cref="MoveMemory(IntPtr, IntPtr, long)"/>.
 		/// However, if both blocks overlap the result is undefined.
 		/// </remarks>
-		public static unsafe void CopyMemory(IntPtr dest, IntPtr src, long size)
+		public static unsafe void CopyMemory(IntPtr dest, IntPtr src, long len)
 		{
-			CopyMemory((byte*)dest, (byte*)src, checked((int)size));
+			CopyMemory((byte*)dest, (byte*)src, checked((int)len));
+		}
+
+		/// <summary>
+		/// Copies a block of memory into an array.
+		/// </summary>
+		/// <param name="dest">An array used as the destination of the copy process.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to copy.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
+		public static unsafe void CopyMemory(Array dest, void* src, int len)
+		{
+			GCHandle handle = GCHandle.Alloc(dest, GCHandleType.Pinned);
+			try
+			{
+				CopyMemory((byte*)handle.AddrOfPinnedObject(), (byte*)src, len);
+			}
+			finally
+			{
+				handle.Free();
+			}
+		}
+
+		/// <summary>
+		/// Copies a block of memory into an array.
+		/// </summary>
+		/// <param name="dest">An array used as the destination of the copy process.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to copy.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
+		public static unsafe void CopyMemory(Array dest, void* src, long len)
+		{
+			CopyMemory(dest, (byte*)src, checked((int)len));
+		}
+
+		/// <summary>
+		/// Copies a block of memory into an array.
+		/// </summary>
+		/// <param name="dest">An array used as the destination of the copy process.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to copy.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
+		public static unsafe void CopyMemory(Array dest, IntPtr src, int len)
+		{
+			CopyMemory(dest, (byte*)src, len);
+		}
+
+		/// <summary>
+		/// Copies a block of memory into an array.
+		/// </summary>
+		/// <param name="dest">An array used as the destination of the copy process.</param>
+		/// <param name="src">A pointer to the starting address of the block of memory to copy.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
+		public static unsafe void CopyMemory(Array dest, IntPtr src, long len)
+		{
+			CopyMemory(dest, (byte*)src, checked((int)len));
+		}
+
+		/// <summary>
+		/// Copies the content of an array to a memory location.
+		/// </summary>
+		/// <param name="dest">A pointer to the starting address of the copied block's destination.</param>
+		/// <param name="src">An array used as the source of the copy process.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
+		public static unsafe void CopyMemory(void* dest, Array src, int len)
+		{
+			GCHandle handle = GCHandle.Alloc(src, GCHandleType.Pinned);
+			try
+			{
+				CopyMemory((byte*)dest, (byte*)handle.AddrOfPinnedObject(), len);
+			}
+			finally
+			{
+				handle.Free();
+			}
+		}
+
+		/// <summary>
+		/// Copies the content of an array to a memory location.
+		/// </summary>
+		/// <param name="dest">A pointer to the starting address of the copied block's destination.</param>
+		/// <param name="src">An array used as the source of the copy process.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
+		public static unsafe void CopyMemory(void* dest, Array src, long len)
+		{
+			CopyMemory((byte*)dest, src, checked((int)len));
+		}
+
+		/// <summary>
+		/// Copies the content of an array to a memory location.
+		/// </summary>
+		/// <param name="dest">A pointer to the starting address of the copied block's destination.</param>
+		/// <param name="src">An array used as the source of the copy process.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
+		public static unsafe void CopyMemory(IntPtr dest, Array src, int len)
+		{
+			CopyMemory((byte*)dest, src, len);
+		}
+
+		/// <summary>
+		/// Copies the content of an array to a memory location.
+		/// </summary>
+		/// <param name="dest">A pointer to the starting address of the copied block's destination.</param>
+		/// <param name="src">An array used as the source of the copy process.</param>
+		/// <param name="len">The size of the block of memory to copy, in bytes.</param>
+		public static unsafe void CopyMemory(IntPtr dest, Array src, long len)
+		{
+			CopyMemory((byte*)dest, src, checked((int)len));
+		}
+
+		/// <summary>
+		/// Copies the content of one array into another array.
+		/// </summary>
+		/// <param name="dest">An array used as the destination of the copy process.</param>
+		/// <param name="src">An array used as the source of the copy process.</param>
+		/// <param name="len">The size of the content to copy, in bytes.</param>
+		public static unsafe void CopyMemory(Array dest, Array src, int len)
+		{
+			GCHandle dHandle = GCHandle.Alloc(dest, GCHandleType.Pinned);
+			try
+			{
+				GCHandle sHandle = GCHandle.Alloc(src, GCHandleType.Pinned);
+				try
+				{
+					CopyMemory((byte*)dHandle.AddrOfPinnedObject(), (byte*)sHandle.AddrOfPinnedObject(), len);
+				}
+				finally
+				{
+					sHandle.Free();
+				}
+			}
+			finally
+			{
+				dHandle.Free();
+			}
+		}
+
+		/// <summary>
+		/// Copies the content of one array into another array.
+		/// </summary>
+		/// <param name="dest">An array used as the destination of the copy process.</param>
+		/// <param name="src">An array used as the source of the copy process.</param>
+		/// <param name="len">The size of the content to copy, in bytes.</param>
+		public static unsafe void CopyMemory(Array dest, Array src, long len)
+		{
+			CopyMemory(dest, src, checked((int)len));
 		}
 
 		internal static string ColorToString(Color color)
@@ -4097,8 +4288,8 @@ namespace FreeImageAPI
 		/// The RtlCompareMemory routine compares blocks of memory
 		/// and returns the number of bytes that are equivalent.
 		/// </summary>
-		/// <param name="buf1">Pointer to a block of memory to compare.</param>
-		/// <param name="buf2">Pointer to a block of memory to compare.</param>
+		/// <param name="buf1">A pointer to a block of memory to compare.</param>
+		/// <param name="buf2">A pointer to a block of memory to compare.</param>
 		/// <param name="count">Specifies the number of bytes to be compared.</param>
 		/// <returns>RtlCompareMemory returns the number of bytes that compare as equal.
 		/// If all bytes compare as equal, the input Length is returned.</returns>
