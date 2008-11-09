@@ -84,6 +84,9 @@ int main(int argc, char *argv[]) {
 
 	// test JPEG lossless transform & cropping
 	testJPEG();
+
+	// test get/set channel
+	testImageChannels(width, height);
 	
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)
 	FreeImage_DeInitialise();

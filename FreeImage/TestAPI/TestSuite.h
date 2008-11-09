@@ -68,6 +68,12 @@ void testMPageCache(char *src_filename);
 
 void testJPEG();
 
+// Channels test suite
+// ==========================================================
+
+void testImageChannels(unsigned width, unsigned height);
+
+
 #endif // TEST_FREEIMAGE_API_H
 
 

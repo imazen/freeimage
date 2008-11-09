@@ -208,6 +208,10 @@
 			>
 		</File>
 		<File
+			RelativePath="testChannels.cpp"
+			>
+		</File>
+		<File
 			RelativePath="testImageType.cpp"
 			>
 		</File>
