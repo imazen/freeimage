@@ -676,6 +676,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define JPEG_FAST           0x0001	// load the file as fast as possible, sacrificing some quality
 #define JPEG_ACCURATE       0x0002	// load the file with the best quality, sacrificing some speed
 #define JPEG_CMYK			0x0004	// load separated CMYK "as is" (use | to combine with other load flags)
+#define JPEG_EXIFROTATE		0x0008	// load and rotate according to Exif 'Orientation' tag if available
 #define JPEG_QUALITYSUPERB  0x80	// save with superb quality (100:1)
 #define JPEG_QUALITYGOOD    0x0100	// save with good quality (75:1)
 #define JPEG_QUALITYNORMAL  0x0200	// save with normal quality (50:1)

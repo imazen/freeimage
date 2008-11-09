@@ -851,6 +851,68 @@ store_size_info(FIBITMAP *dib, JDIMENSION width, JDIMENSION height) {
 	}
 }
 
+// ------------------------------------------------------------
+//   Rotate a dib according to Exif info
+// ------------------------------------------------------------
+
+static void 
+rotate_exif(FIBITMAP **dib) {
+	// check for Exif rotation
+	if(FreeImage_GetMetadataCount(FIMD_EXIF_MAIN, *dib)) {
+		FIBITMAP *rotated = NULL;
+		// process Exif rotation
+		FITAG *tag = NULL;
+		FreeImage_GetMetadata(FIMD_EXIF_MAIN, *dib, "Orientation", &tag);
+		if(tag != NULL) {
+			if(FreeImage_GetTagID(tag) == TAG_ORIENTATION) {
+				unsigned short orientation = *((unsigned short *)FreeImage_GetTagValue(tag));
+				switch (orientation) {
+					case 1:		// "top, left side" => 0°
+						break;
+					case 2:		// "top, right side" => +180°
+						rotated = FreeImage_RotateClassic(*dib, 180);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						break;
+					case 3:		// "bottom, right side"; => -180°
+						rotated = FreeImage_RotateClassic(*dib, 180);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						break;
+					case 4:		// "bottom, left side" => flip left-right
+						FreeImage_FlipHorizontal(*dib);
+						break;
+					case 5:		// "left side, top" => +90° + flip up-down
+						rotated = FreeImage_RotateClassic(*dib, 90);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						FreeImage_FlipVertical(*dib);
+						break;
+					case 6:		// "right side, top" => -90°
+						rotated = FreeImage_RotateClassic(*dib, -90);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						break;
+					case 7:		// "right side, bottom" => -90° + flip up-down
+						rotated = FreeImage_RotateClassic(*dib, -90);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						FreeImage_FlipVertical(*dib);
+						break;
+					case 8:		// "left side, bottom" => +90°
+						rotated = FreeImage_RotateClassic(*dib, 90);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						break;
+					default:
+						break;
+				}
+			}
+		}
+	}
+}
+
+
 // ==========================================================
 // Plugin Implementation
 // ==========================================================
@@ -907,6 +969,9 @@ static BOOL DLL_CALLCONV
 SupportsICCProfiles() {
 	return TRUE;
 }
+
+// ----------------------------------------------------------
+
 
 // ----------------------------------------------------------
 
@@ -1084,6 +1149,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// step 9: release JPEG decompression object
 
 			jpeg_destroy_decompress(&cinfo);
+
+			// check for automatic Exif rotation
+			if((flags & JPEG_EXIFROTATE) == JPEG_EXIFROTATE) {
+				rotate_exif(&dib);
+			}
 
 			// everything went well. return the loaded dib
 
