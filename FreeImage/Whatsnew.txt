@@ -7,11 +7,14 @@ What's New for FreeImage
 
 Month day, 2008 - 3.12.0
 ! [Herve Drolon] FreeImage_CloneMetadata no longer clone the FIMD_ANIMATION metadata (this was causing problems when saving to GIF format)
++ [Herve Drolon] added JPEG_EXIFROTATE load flag to the JPEG plugin
++ [Herve Drolon] added 16-bit RGB(A) and float RGB(A)F support to FreeImage_GetChannel / FreeImage_SetChannel 
++ [Herve Drolon] added src FIT_RGBA16 to dst 32-bit FIT_BITMAP conversion to FreeImage_ConvertToType
 * [Carsten Klein] FreeImage_Copy now copies transparency info, resolution info, ICC profile and metadata
 * [Carsten Klein] check for negative top/left values in FreeImage_Paste
 * [Christian Heimes] changed exceptions with a "catch(char *text)" to a "catch(const char *text)" to make GCC 4.1 happy
 * [Deif Lou] fixed a bug in FreeImage_SetTransparentIndex
-
+* [Thomas Maiwald] BMP plugin: on saving, fixed correct setting of bfSize BMP file header for palettized images
 
 July 28th, 2008 - 3.11.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2008-05-24)
