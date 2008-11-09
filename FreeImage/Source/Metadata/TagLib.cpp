@@ -614,6 +614,8 @@ static TagInfo
     {  0x0096, (char *) "NEFCurve2", (char *) NULL},
     {  0x0099, (char *) "RawImageCenter", (char *) NULL},
     {  0x009A, (char *) "SensorPixelSize", (char *) NULL},
+    {  0x009C, (char *) "SceneAssist", (char *) NULL},
+    {  0x009E, (char *) "RetouchHistory", (char *) NULL},
     {  0x00A0, (char *) "SerialNumber2", (char *) NULL},
     {  0x00A2, (char *) "ImageDataSize", (char *) NULL},
     {  0x00A5, (char *) "ImageCount", (char *) NULL},
