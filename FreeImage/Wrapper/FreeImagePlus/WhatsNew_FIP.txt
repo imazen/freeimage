@@ -5,6 +5,9 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+October 27th, 2008
++ [Herve Drolon] added FIF static identification functions to fipImage
+
 August 3rd, 2008
 * [dimitriy.b] fixed warnings about "non virtual destructor with virtual class members" with gcc 4.1.2
 * [Herve Drolon] fixed display of RGBAF EXR images in fipWinImage::drawEx

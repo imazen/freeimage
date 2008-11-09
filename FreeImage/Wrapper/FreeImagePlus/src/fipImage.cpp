@@ -92,6 +92,7 @@ void fipImage::clear() {
 
 fipImage::fipImage(const fipImage& Image) {
 	_dib = NULL;
+	_fif = FIF_UNKNOWN;
 	FIBITMAP *clone = FreeImage_Clone((FIBITMAP*)Image._dib);
 	replace(clone);
 }
@@ -249,6 +250,55 @@ BOOL fipImage::setPixelColor(unsigned x, unsigned y, RGBQUAD *value) {
 	_bHasChanged = TRUE;
 	return FreeImage_SetPixelColor(_dib, x, y, value);
 }
+
+///////////////////////////////////////////////////////////////////
+// File type identification
+
+FREE_IMAGE_FORMAT fipImage::identifyFIF(const char* lpszPathName) {
+	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
+
+	// check the file signature and get its format
+	// (the second argument is currently not used by FreeImage)
+	fif = FreeImage_GetFileType(lpszPathName, 0);
+	if(fif == FIF_UNKNOWN) {
+		// no signature ?
+		// try to guess the file format from the file extension
+		fif = FreeImage_GetFIFFromFilename(lpszPathName);
+	}
+
+	return fif;
+}
+
+FREE_IMAGE_FORMAT fipImage::identifyFIFU(const wchar_t* lpszPathName) {
+	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
+
+	// check the file signature and get its format
+	// (the second argument is currently not used by FreeImage)
+	fif = FreeImage_GetFileTypeU(lpszPathName, 0);
+	if(fif == FIF_UNKNOWN) {
+		// no signature ?
+		// try to guess the file format from the file extension
+		fif = FreeImage_GetFIFFromFilenameU(lpszPathName);
+	}
+
+	return fif;
+}
+
+FREE_IMAGE_FORMAT fipImage::identifyFIFFromHandle(FreeImageIO *io, fi_handle handle) {
+	if(io && handle) {
+		// check the file signature and get its format
+		return FreeImage_GetFileTypeFromHandle(io, handle, 16);
+	}
+	return FIF_UNKNOWN;
+}
+
+FREE_IMAGE_FORMAT fipImage::identifyFIFFromMemory(FIMEMORY *hmem) {
+	if(hmem != NULL) {
+		return FreeImage_GetFileTypeFromMemory(hmem, 0);
+	}
+	return FIF_UNKNOWN;
+}
+
 
 ///////////////////////////////////////////////////////////////////
 // Loading & Saving

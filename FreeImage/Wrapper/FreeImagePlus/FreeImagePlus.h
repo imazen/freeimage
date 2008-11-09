@@ -105,6 +105,8 @@ class FIP_API fipImage : public fipObject
 protected:
 	/// DIB data
 	FIBITMAP *_dib;
+	/// Original (or last saved) fif format if available, FIF_UNKNOWN otherwise
+	FREE_IMAGE_FORMAT _fif;
 	/// TRUE whenever the display need to be refreshed
 	mutable BOOL _bHasChanged;
 
@@ -192,8 +194,44 @@ public:
 	*/
 	BOOL crop(int left, int top, int right, int bottom);
 
+	//@}
+
+	/** @name File type identification
+	 */
+	//@{	
+	/**
+	@brief Identifies an image from disk, given its file name
+	@param lpszPathName Path and file name of the image to identify.
+	@return Returns the found FreeImage format if successful, returns FIF_UNKNOWN otherwise.
+	@see FreeImage_GetFileType, FreeImage_GetFIFFromFilename, FreeImage documentation
+	*/
+	static FREE_IMAGE_FORMAT identifyFIF(const char* lpszPathName);
+
+	/**
+	UNICODE version of identifyFIF (this function only works under WIN32 and does nothing on other OS)
+	@see FreeImage_GetFileTypeU, FreeImage_GetFIFFromFilenameU, FreeImage documentation
+	*/
+	static FREE_IMAGE_FORMAT identifyFIFU(const wchar_t* lpszPathName);
+
+	/**
+	@brief Identifies an image using the specified FreeImageIO struct and fi_handle.
+	@param io FreeImageIO structure
+	@param handle FreeImage fi_handle
+	@return Returns the found FreeImage format if successful, returns FIF_UNKNOWN otherwise.
+	@see FreeImage_GetFileTypeFromHandle, FreeImage documentation
+	*/
+	static FREE_IMAGE_FORMAT identifyFIFFromHandle(FreeImageIO *io, fi_handle handle);
+
+	/**
+	@brief Identifies an image using the specified memory stream.
+	@param hmem FreeImage memory stream
+	@return Returns the found FreeImage format if successful, returns FIF_UNKNOWN otherwise.
+	@see FreeImage_GetFileTypeFromMemory, FreeImage documentation
+	*/
+	static FREE_IMAGE_FORMAT identifyFIFFromMemory(FIMEMORY *hmem);
 
 	//@}
+
 
 	/** @name Loading & Saving
 	 * Loading and saving is handled by the FreeImage library.
