@@ -5,6 +5,10 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+November 18, 2008 - 1.06
+* [Jean-Philippe Goerke] Fixed a bug in FreeImage.SaveEx.
+! [Jean-Philippe Goerke] Improved method FreeImage.IsFilenameValidForFIF.
+
 November 5, 2008 - 1.05
 ! [Jean-Philippe Goerke] Updated documentation of FreeImage.ConvertFromRawBits and FreeImage.ConvertToRawBits.
 + [Jean-Philippe Goerke] Added new overload ConvertFromRawBits(byte[],int,int,int,uint,uint,uint,uint,bool) to the FreeImage class.
