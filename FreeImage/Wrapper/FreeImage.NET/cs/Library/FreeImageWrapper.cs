@@ -913,19 +913,8 @@ namespace FreeImageAPI
 					// Check valid filename and correct it if needed
 					if (!IsFilenameValidForFIF(format, filename))
 					{
-						int index = filename.LastIndexOf('.');
 						string extension = GetPrimaryExtensionFromFIF(format);
-
-						if (index == -1)
-						{
-							// We have no '.' (dot) so just add the extension
-							filename += "." + extension;
-						}
-						else
-						{
-							// Overwrite the old extension
-							filename = filename.Substring(0, filename.LastIndexOf('.')) + extension;
-						}
+						filename = Path.ChangeExtension(filename, extension);
 					}
 
 					FIBITMAP dibToSave = PrepareBitmapColorDepth(dib, format, colorDepth);
@@ -1356,10 +1345,11 @@ namespace FreeImageAPI
 			}
 			bool result = false;
 			// Extract the filenames extension if it exists
-			int position = filename.LastIndexOf('.');
-			if (position >= 0)
+			string extension = Path.GetExtension(filename);
+			if (extension.Length != 0)
 			{
-				result = IsExtensionValidForFIF(fif, filename.Substring(position + 1), comparisonType);
+				extension = extension.Remove(0, 1);
+				result = IsExtensionValidForFIF(fif, extension, comparisonType);
 			}
 			return result;
 		}
