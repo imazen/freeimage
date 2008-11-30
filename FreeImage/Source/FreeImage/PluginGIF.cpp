@@ -763,6 +763,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 
 			//draw each page into the logical area
+			delay_time = 0;
 			for( page = start; page <= end; page++ ) {
 				PageInfo &info = pageinfo[end - page];
 				//things we can skip having to decode
@@ -777,6 +778,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								*scanline++ = background;
 							}
 						}
+						continue;
 					}
 				}
 
@@ -809,10 +811,19 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							pageline++;
 						}
 					}
+					//copy frame time
+					if( page == end ) {
+						FITAG *tag;
+						if( FreeImage_GetMetadataEx(FIMD_ANIMATION, pagedib, "FrameTime", FIDT_LONG, &tag) ) {
+							delay_time = *(LONG *)FreeImage_GetTagValue(tag);
+						}
+					}
 					FreeImage_Unload(pagedib);
 				}
 			}
 
+			//setup frame time
+			FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameTime", ANIMTAG_FRAMETIME, FIDT_LONG, 1, 4, &delay_time);
 			return dib;
 		}
 
