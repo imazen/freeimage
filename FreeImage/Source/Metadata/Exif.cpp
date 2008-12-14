@@ -172,13 +172,19 @@ processMakerNote(FIBITMAP *dib, char *pval, BOOL msb_order, DWORD *subdirOffset,
 	FreeImage_GetMetadata(FIMD_EXIF_MAIN, dib, "Make", &tagMake);
 	const char *Maker = (char*)FreeImage_GetTagValue(tagMake);
 
-	if((strncmp("OLYMP", pval, 5) == 0) || (strncmp("EPSON", pval, 5) == 0) || (strncmp("AGFA", pval, 4) == 0)) {
-		// Olympus Makernote
+	if((strncmp("OLYMP\x00\x01", pval, 7) == 0) || (strncmp("OLYMP\x00\x02", pval, 7) == 0) || (strncmp("EPSON", pval, 5) == 0) || (strncmp("AGFA", pval, 4) == 0)) {
+		// Olympus Type 1 Makernote
 		// Epson and Agfa use Olympus maker note standard, 
 		// see: http://www.ozhiker.com/electronics/pjmt/jpeg_info/
-		*md_model = TagLib::EXIF_MAKERNOTE_OLYMPUS;
+		*md_model = TagLib::EXIF_MAKERNOTE_OLYMPUSTYPE1;
 		*subdirOffset = 8;
 	} 
+	else if(strncmp("OLYMPUS\x00\x49\x49\x03\x00", pval, 12) == 0) {
+		// Olympus Type 2 Makernote
+		// !!! NOT YET SUPPORTED !!!
+		*subdirOffset = 0;
+		*md_model = TagLib::UNKNOWN;
+	}
 	else if(strncmp("Nikon", pval, 5) == 0) {
 		/* There are two scenarios here:
 		 * Type 1:

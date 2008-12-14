@@ -413,10 +413,10 @@ static TagInfo
   };
 
 /**
-Olympus / Epson / Agfa maker note
+Olympus Type 1 / Epson / Agfa maker note
 */
 static TagInfo
-  exif_olympus_tag_table[] =
+  exif_olympus_type1__tag_table[] =
   {
     {  0x0000, (char *) "MakerNoteVersion", (char *) NULL},
     {  0x0001, (char *) "MinoltaCameraSettingsOld", (char *) NULL},
@@ -945,7 +945,7 @@ TagLib::TagLib() {
 	addMetadataModel(TagLib::EXIF_MAKERNOTE_NIKONTYPE1, exif_nikon_type1_tag_table);
 	addMetadataModel(TagLib::EXIF_MAKERNOTE_NIKONTYPE2, exif_nikon_type2_tag_table);
 	addMetadataModel(TagLib::EXIF_MAKERNOTE_NIKONTYPE3, exif_nikon_type3_tag_table);
-	addMetadataModel(TagLib::EXIF_MAKERNOTE_OLYMPUS, exif_olympus_tag_table);
+	addMetadataModel(TagLib::EXIF_MAKERNOTE_OLYMPUSTYPE1, exif_olympus_type1__tag_table);
 	addMetadataModel(TagLib::EXIF_MAKERNOTE_PANASONIC, exif_panasonic_tag_table);
 	addMetadataModel(TagLib::EXIF_MAKERNOTE_ASAHI, exif_asahi_tag_table);
 	addMetadataModel(TagLib::EXIF_MAKERNOTE_PENTAX, exif_pentax_tag_table);
@@ -1074,7 +1074,7 @@ TagLib::getFreeImageModel(MDMODEL model) {
 		case EXIF_MAKERNOTE_NIKONTYPE1:
 		case EXIF_MAKERNOTE_NIKONTYPE2:
 		case EXIF_MAKERNOTE_NIKONTYPE3:
-		case EXIF_MAKERNOTE_OLYMPUS:
+		case EXIF_MAKERNOTE_OLYMPUSTYPE1:
 		case EXIF_MAKERNOTE_PANASONIC:
 		case EXIF_MAKERNOTE_ASAHI:
 		case EXIF_MAKERNOTE_PENTAX:
