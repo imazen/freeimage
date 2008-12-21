@@ -410,7 +410,8 @@ FI_ENUM(FREE_IMAGE_FORMAT) {
 	FIF_SGI		= 28,
 	FIF_EXR		= 29,
 	FIF_J2K		= 30,
-	FIF_JP2		= 31
+	FIF_JP2		= 31,
+	FIF_PFM		= 32
 };
 
 /** Image type used in FreeImage.
@@ -695,6 +696,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define PCD_BASEDIV4        2		// load the bitmap sized 384 x 256
 #define PCD_BASEDIV16       3		// load the bitmap sized 192 x 128
 #define PCX_DEFAULT         0
+#define PFM_DEFAULT         0
 #define PNG_DEFAULT         0
 #define PNG_IGNOREGAMMA		1		// loading: avoid gamma correction
 #define PNG_Z_BEST_SPEED			0x0001	// save using ZLib level 1 compression flag (default value is 6)

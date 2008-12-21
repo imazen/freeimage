@@ -244,6 +244,9 @@ copy Source\FreeImage.h Dist
 					RelativePath="Source\FreeImage\PluginPCX.cpp">
 				</File>
 				<File
+					RelativePath=".\Source\FreeImage\PluginPFM.cpp">
+				</File>
+				<File
 					RelativePath="Source\FreeImage\PluginPNG.cpp">
 				</File>
 				<File

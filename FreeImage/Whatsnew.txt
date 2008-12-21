@@ -8,6 +8,7 @@ What's New for FreeImage
 Month day, 2008 - 3.12.0
 ! FreeImage now uses libPNG 1.2.33
 ! [Herve Drolon] FreeImage_CloneMetadata no longer clone the FIMD_ANIMATION metadata (this was causing problems when saving to GIF format)
++ [Herve Drolon] added full support for the PFM format
 + [Herve Drolon] added JPEG_EXIFROTATE load flag to the JPEG plugin
 + [Herve Drolon] added 16-bit RGB(A) and float RGB(A)F support to FreeImage_GetChannel / FreeImage_SetChannel 
 + [Herve Drolon] added src FIT_RGBA16 to dst 32-bit FIT_BITMAP conversion to FreeImage_ConvertToType
