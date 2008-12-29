@@ -273,7 +273,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		} else if(image_type == FIT_FLOAT) {
 			const unsigned lineWidth = width;
-			float *lineBuffer = (float*)malloc(lineWidth * sizeof(float));
+			lineBuffer = (float*)malloc(lineWidth * sizeof(float));
 			if(!lineBuffer) {
 				throw "Allocation error";
 			}
