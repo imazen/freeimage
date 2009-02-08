@@ -88,10 +88,11 @@ static BYTE *
 Internal_GetScanLine(FIBITMAP *dib, int scanline, int flipvert) {
 	//assert ((scanline >= 0) && (scanline < (int)FreeImage_GetHeight(dib)));
 
-	if (flipvert)
+	if (flipvert) {
 		return FreeImage_GetScanLine(dib, scanline);
-	else
+	} else {
 		return FreeImage_GetScanLine(dib, FreeImage_GetHeight(dib) - scanline - 1);
+	}
 }
 
 #ifdef FREEIMAGE_BIGENDIAN
@@ -383,10 +384,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							BYTE rle = 0;
 							BYTE *bits;
 							
-							if (fliphoriz)
+							if (fliphoriz) {
 								bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-							else
+							} else {
 								bits = Internal_GetScanLine(dib, y, flipvert);
+							}
 
 							while(1) {
 								io->read_proc(&rle,1, 1, handle);
@@ -409,10 +411,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 											if (y >= header.is_height)
 												goto done89;
 											
-											if (fliphoriz)
+											if (fliphoriz) {
 												bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-											else
+											} else {
 												bits = Internal_GetScanLine(dib, y, flipvert);
+											}
 										}
 									}
 								} else {
@@ -433,10 +436,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 											if (y >= header.is_height)
 												goto done89;
 											
-											if (fliphoriz)
+											if (fliphoriz) {
 												bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-											else
+											} else {
 												bits = Internal_GetScanLine(dib, y, flipvert);
+											}
 										}
 									}
 								}
@@ -482,10 +486,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					int garblen = 0;
 
-					if (header.color_map_type != 0)
+					if (header.color_map_type != 0) {
 						garblen = (int)((header.cm_size + 7) / 8) * header.cm_length; /* should byte align */
-					else
+					} else {
 						garblen = 0;
+					}
 
 					io->seek_proc(handle, start_offset, SEEK_SET);
 					io->seek_proc(handle, sizeof(tagTGAHEADER) + header.id_length + garblen, SEEK_SET);
@@ -500,10 +505,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							for (int y = 0; y < header.is_height; y++) {
 								BYTE *bits;
 								
-								if (fliphoriz)
+								if (fliphoriz) {
 									bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-								else
+								} else {
 									bits = Internal_GetScanLine(dib, y, flipvert);
+								}
 
 								for (int x = 0; x < line; ) {
 									io->read_proc(&pixel, sizeof(WORD), 1, handle);
@@ -536,10 +542,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							while(1) {
 								BYTE *bits;
 								
-								if (fliphoriz)
+								if (fliphoriz) {
 									bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-								else
+								} else {
 									bits = Internal_GetScanLine(dib, y, flipvert);
+								}
 		
 								io->read_proc(&rle,1, 1, handle);
 								
@@ -626,31 +633,38 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					switch (header.image_type) {
 						case TGA_RGB:
 						{
-							FILE_BGR bgr;
-							if (fliphoriz)
+							FILE_BGR* bgr_line = (FILE_BGR*)malloc(header.is_width * sizeof(FILE_BGR));
+							if(!bgr_line) throw FI_MSG_ERROR_MEMORY;
+							
+							if (fliphoriz) {
 								for (unsigned count = header.is_height; count > 0; count--) {
 									BYTE *bits = Internal_GetScanLine(dib, count-1, flipvert);
+									io->read_proc(bgr_line, sizeof(FILE_BGR), header.is_width, handle);
 
+									FILE_BGR *bgr = bgr_line;
 									for (int x = 0; x < line; x += 3) {
-										io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
-
-										bits[x + FI_RGBA_BLUE]	= bgr.b;
-										bits[x + FI_RGBA_GREEN] = bgr.g;
-										bits[x + FI_RGBA_RED]	= bgr.r;
+										bits[x + FI_RGBA_BLUE]	= bgr->b;
+										bits[x + FI_RGBA_GREEN] = bgr->g;
+										bits[x + FI_RGBA_RED]	= bgr->r;
+										bgr++;
 									}
 								}
-							else
+							} else {
 								for (unsigned count = 0; count < header.is_height; count++) {
 									BYTE *bits = Internal_GetScanLine(dib, count, flipvert);
+									io->read_proc(bgr_line, sizeof(FILE_BGR), header.is_width, handle);
 
+									FILE_BGR *bgr = bgr_line;
 									for (int x = 0; x < line; x += 3) {
-										io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
-
-										bits[x + FI_RGBA_BLUE]	= bgr.b;
-										bits[x + FI_RGBA_GREEN] = bgr.g;
-										bits[x + FI_RGBA_RED]	= bgr.r;
+										bits[x + FI_RGBA_BLUE]	= bgr->b;
+										bits[x + FI_RGBA_GREEN] = bgr->g;
+										bits[x + FI_RGBA_RED]	= bgr->r;
+										bgr++;
 									}
 								}
+							}
+
+							free(bgr_line);
 
 							break;
 						}
@@ -662,10 +676,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							BYTE rle;
 							BYTE *bits;
 							
-							if (fliphoriz)
+							if (fliphoriz) {
 								bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-							else
+							} else {
 								bits = Internal_GetScanLine(dib, y, flipvert);
+							}
 							
 							if (alphabits) {
 								while(1) {
@@ -692,10 +707,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 												if (y >= header.is_height)
 													goto done243;
 
-												if (fliphoriz)
+												if (fliphoriz) {
 													bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-												else
+												} else {
 													bits = Internal_GetScanLine(dib, y, flipvert);
+												}
 											}
 										}
 									} else {
@@ -719,10 +735,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 												if (y >= header.is_height)
 													goto done243;											
 
-												if (fliphoriz)
+												if (fliphoriz) {
 													bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-												else
+												} else {
 													bits = Internal_GetScanLine(dib, y, flipvert);
+												}
 											}
 										}
 									}
@@ -751,10 +768,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 												if (y >= header.is_height)
 													goto done243;											
 												
-												if (fliphoriz)
+												if (fliphoriz) {
 													bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-												else
+												} else {
 													bits = Internal_GetScanLine(dib, y, flipvert);
+												}
 											}
 										}
 									} else {
@@ -777,10 +795,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 												if (y >= header.is_height)
 													goto done243;											
 
-												if (fliphoriz)
+												if (fliphoriz) {
 													bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-												else
+												} else {
 													bits = Internal_GetScanLine(dib, y, flipvert);
+												}
 											}
 										}
 									}
@@ -884,10 +903,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								for (unsigned count = 0; count < header.is_height; count++) {
 									BYTE *bits;
 
-									if (fliphoriz)
+									if (fliphoriz) {
 										bits = Internal_GetScanLine(dib, header.is_height - count - 1, flipvert);
-									else
+									} else {
 										bits = Internal_GetScanLine(dib, count, flipvert);
+									}
 
 									for (unsigned cols = 0; cols < header.is_width; cols++) {
 										FILE_BGRA bgra;
@@ -919,10 +939,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							BYTE rle;
 							BYTE *bits;
 							
-							if (fliphoriz)
+							if (fliphoriz) {
 								bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-							else
+							} else {
 								bits = Internal_GetScanLine(dib, y, flipvert);
+							}
 							
 							while(1) {
 								io->read_proc(&rle,1, 1, handle);
@@ -948,10 +969,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 											if (y >= header.is_height)
 												goto done3210;
 
-											if (fliphoriz)
+											if (fliphoriz) {
 												bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-											else
+											} else {
 												bits = Internal_GetScanLine(dib, y, flipvert);
+											}
 										}
 									}
 								} else {
@@ -975,10 +997,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 											if (y >= header.is_height)
 												goto done3210;
 
-											if (fliphoriz)
+											if (fliphoriz) {
 												bits = Internal_GetScanLine(dib, header.is_height - y - 1, flipvert);
-											else
+											} else {
 												bits = Internal_GetScanLine(dib, y, flipvert);
+											}
 										}
 									}
 								}
