@@ -197,13 +197,16 @@ ReplaceExtension(char *result, const char *filename, const char *extension) {
 
 inline void
 SwapShort(WORD *sp) {
-	BYTE *cp = (BYTE *)sp, t = cp[0]; cp[0] = cp[1]; cp[1] = t;
+	// swap bytes 
+	*sp = ( ((*sp & 0x00ff) << 8) | ((*sp & 0xff00) >> 8) ); 
 }
 
 inline void
 SwapLong(DWORD *lp) {
-	BYTE *cp = (BYTE *)lp, t = cp[0]; cp[0] = cp[3]; cp[3] = t;
-	t = cp[1]; cp[1] = cp[2]; cp[2] = t;
+	// swap words 
+	*lp = ( ((*lp & 0x0000ffff) << 16) | ((*lp & 0xffff0000) >> 16) ); 
+	// swap bytes 
+	*lp = ( ((*lp & 0x000000ff) << 8) | ((*lp & 0x0000ff00) >> 8) | ((*lp & 0x00ff0000) << 8) | ((*lp & 0xff000000) >> 8) ); 
 }
 
 // ==========================================================
