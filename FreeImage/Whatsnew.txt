@@ -21,6 +21,7 @@ Month day, 2008 - 3.12.0
 * [Herve Drolon] fixed handling of Exif Olympus Type 2 maker notes (not yet supported but now safely ignored)
 * [Rich Geldreich] fixed DXT1 color endpoint precision problem in DDS plugin
 * [Mihail Naydenov] improved loading speed of 24-bit targa images
+* [Milan Franc] improved big endian / little endian swapping functions
 
 July 28th, 2008 - 3.11.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2008-05-24)
