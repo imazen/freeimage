@@ -230,6 +230,44 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
+		/// Converts an array of <see cref="Color"/> into an array of
+		/// <see cref="RGBQUAD"/>.
+		/// </summary>
+		/// <param name="array">The array to convert.</param>
+		/// <returns>An array of <see cref="RGBQUAD"/>.</returns>
+		public static RGBQUAD[] ToRGBQUAD(Color[] array)
+		{
+			if (array == null)
+				return null;
+
+			RGBQUAD[] result = new RGBQUAD[array.Length];
+			for (int i = 0; i < array.Length; i++)
+			{
+				result[i] = array[i];
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Converts an array of <see cref="RGBQUAD"/> into an array of
+		/// <see cref="Color"/>.
+		/// </summary>
+		/// <param name="array">The array to convert.</param>
+		/// <returns>An array of <see cref="RGBQUAD"/>.</returns>
+		public static Color[] ToColor(RGBQUAD[] array)
+		{
+			if (array == null)
+				return null;
+
+			Color[] result = new Color[array.Length];
+			for (int i = 0; i < array.Length; i++)
+			{
+				result[i] = array[i].Color;
+			}
+			return result;
+		}
+
+		/// <summary>
 		/// Compares this instance with a specified <see cref="Object"/>.
 		/// </summary>
 		/// <param name="obj">An object to compare with this instance.</param>
@@ -243,7 +281,7 @@ namespace FreeImageAPI
 			}
 			if (!(obj is RGBQUAD))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((RGBQUAD)obj);
 		}
