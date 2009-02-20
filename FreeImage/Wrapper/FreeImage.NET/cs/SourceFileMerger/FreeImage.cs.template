@@ -99,6 +99,8 @@ using FreeImageAPI.Plugins;
 
 	#region Enums
 
+#include "Enumerations\DisposalMethodType.cs"
+
 #include "Enumerations\FREE_IMAGE_FORMAT.cs"
 
 #include "Enumerations\FREE_IMAGE_TYPE.cs"
@@ -170,6 +172,8 @@ using FreeImageAPI.Plugins;
 #include "Classes\FreeImagePlugin.cs"
 
 #include "Classes\FreeImageStreamIO.cs"
+
+#include "Classes\GifInformation.cs"
 
 #include "Classes\ImageMetadata.cs"
 
