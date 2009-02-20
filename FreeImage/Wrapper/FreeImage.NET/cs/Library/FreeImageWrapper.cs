@@ -206,16 +206,36 @@ namespace FreeImageAPI
 				ColorPalette palette = result.Palette;
 				// Get the orgininal palette
 				Color[] colorPalette = new Palette(dib).ColorData;
-				// Copy each value
-				if (palette.Entries.Length == colorPalette.Length)
+				// Get the maximum number of palette entries to copy
+				int entriesToCopy = Math.Min(colorPalette.Length, palette.Entries.Length);
+
+				// Check whether the bitmap is transparent
+				if (IsTransparent(dib))
 				{
-					for (int i = 0; i < colorPalette.Length; i++)
+					byte[] transTable = GetTransparencyTableEx(dib);
+					int i = 0;
+					int maxEntriesWithTrans = Math.Min(entriesToCopy, transTable.Length);
+					// Copy palette entries and include transparency
+					for (; i < maxEntriesWithTrans; i++)
+					{
+						palette.Entries[i] = Color.FromArgb(transTable[i], colorPalette[i]);
+					}
+					// Copy palette entries and that have no transparancy
+					for (; i < entriesToCopy; i++)
+					{
+						palette.Entries[i] = Color.FromArgb(0xFF, colorPalette[i]);
+					}
+				}
+				else
+				{
+					for (int i = 0; i < entriesToCopy; i++)
 					{
 						palette.Entries[i] = colorPalette[i];
 					}
-					// Set the bitmaps palette
-					result.Palette = palette;
 				}
+
+				// Set the bitmaps palette
+				result.Palette = palette;
 			}
 			// Copy metadata
 			if (copyMetadata)
@@ -330,12 +350,12 @@ namespace FreeImageAPI
 			if (GetPalette(result) != IntPtr.Zero)
 			{
 				Palette palette = new Palette(result);
-				if (palette.Length == bitmap.Palette.Entries.Length)
+				Color[] colors = bitmap.Palette.Entries;
+				// Only copy available palette entries
+				int entriesToCopy = Math.Min(palette.Length, colors.Length);
+				for (int i = 0; i < entriesToCopy; i++)
 				{
-					for (int i = 0; i < palette.Length; i++)
-					{
-						palette[i] = (RGBQUAD)bitmap.Palette.Entries[i];
-					}
+					palette[i] = (RGBQUAD)colors[i];
 				}
 			}
 			// Handle meta data
@@ -918,17 +938,22 @@ namespace FreeImageAPI
 					}
 
 					FIBITMAP dibToSave = PrepareBitmapColorDepth(dib, format, colorDepth);
-					result = Save(format, dibToSave, filename, flags);
-
-					// Always unload a temporary created bitmap.
-					if (dibToSave != dib)
+					try
 					{
-						UnloadEx(ref dibToSave);
+						result = Save(format, dibToSave, filename, flags);
 					}
-					// On success unload the bitmap
-					if (result && unloadSource)
+					finally
 					{
-						UnloadEx(ref dib);
+						// Always unload a temporary created bitmap.
+						if (dibToSave != dib)
+						{
+							UnloadEx(ref dibToSave);
+						}
+						// On success unload the bitmap
+						if (result && unloadSource)
+						{
+							UnloadEx(ref dib);
+						}
 					}
 				}
 			}
@@ -1230,7 +1255,7 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentException("stream is not capable of writing.");
 			}
-			if ((!FIFSupportsWriting(format)) || (!FIFSupportsExportType(format, FREE_IMAGE_TYPE.FIT_BITMAP)))
+			if ((!FIFSupportsWriting(format)) || (!FIFSupportsExportType(format, GetImageType(dib))))
 			{
 				return false;
 			}
@@ -1279,7 +1304,7 @@ namespace FreeImageAPI
 		/// <paramref name="extension"/> is null.</exception>
 		public static bool IsExtensionValidForFIF(FREE_IMAGE_FORMAT fif, string extension)
 		{
-			return IsExtensionValidForFIF(fif, extension, StringComparison.CurrentCulture);
+			return IsExtensionValidForFIF(fif, extension, StringComparison.CurrentCultureIgnoreCase);
 		}
 
 		/// <summary>
@@ -1325,7 +1350,7 @@ namespace FreeImageAPI
 		/// <paramref name="filename"/> is null.</exception>
 		public static bool IsFilenameValidForFIF(FREE_IMAGE_FORMAT fif, string filename)
 		{
-			return IsFilenameValidForFIF(fif, filename, StringComparison.CurrentCulture);
+			return IsFilenameValidForFIF(fif, filename, StringComparison.CurrentCultureIgnoreCase);
 		}
 
 		/// <summary>
@@ -2366,6 +2391,18 @@ namespace FreeImageAPI
 			{
 				return false;
 			}
+			if (GetRedMask(dib1) != GetRedMask(dib2))
+			{
+				return false;
+			}
+			if (GetGreenMask(dib1) != GetGreenMask(dib2))
+			{
+				return false;
+			}
+			if (GetBlueMask(dib1) != GetBlueMask(dib2))
+			{
+				return false;
+			}
 
 			byte* ptr1, ptr2;
 			int fullBytes;
@@ -2400,15 +2437,31 @@ namespace FreeImageAPI
 						break;
 					case 16:
 						short* sPtr1, sPtr2;
-						for (int i = 0; i < height; i++)
+						short mask = (short)(GetRedMask(dib1) | GetGreenMask(dib1) | GetBlueMask(dib1));
+						if (mask == -1)
 						{
-							sPtr1 = (short*)GetScanLine(dib1, i);
-							sPtr2 = (short*)GetScanLine(dib2, i);
-							for (int x = 0; x < width; x++)
+							for (int i = 0; i < height; i++)
 							{
-								if ((sPtr1[x] << 1) != (sPtr2[x] << 1))
+								sPtr1 = (short*)GetScanLine(dib1, i);
+								sPtr2 = (short*)GetScanLine(dib2, i);
+								if (!CompareMemory(sPtr1, sPtr1, line))
 								{
 									return false;
+								}
+							}
+						}
+						else
+						{
+							for (int i = 0; i < height; i++)
+							{
+								sPtr1 = (short*)GetScanLine(dib1, i);
+								sPtr2 = (short*)GetScanLine(dib2, i);
+								for (int x = 0; x < width; x++)
+								{
+									if ((sPtr1[x] & mask) != (sPtr2[x] & mask))
+									{
+										return false;
+									}
 								}
 							}
 						}
@@ -2475,7 +2528,7 @@ namespace FreeImageAPI
 						}
 						break;
 					default:
-						throw new NotSupportedException();
+						throw new NotSupportedException("Only 1, 4, 8, 16, 24 and 32 bpp bitmaps are supported.");
 				}
 			}
 			else
@@ -3064,153 +3117,176 @@ namespace FreeImageAPI
 			bool reorderPalette = ((conversion & FREE_IMAGE_COLOR_DEPTH.FICD_REORDER_PALETTE) > 0);
 			bool forceGreyscale = ((conversion & FREE_IMAGE_COLOR_DEPTH.FICD_FORCE_GREYSCALE) > 0);
 
-			switch (conversion & (FREE_IMAGE_COLOR_DEPTH)0xFF)
+			if (GetImageType(dib) == FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
-				case FREE_IMAGE_COLOR_DEPTH.FICD_01_BPP_THRESHOLD:
+				switch (conversion & (FREE_IMAGE_COLOR_DEPTH)0xFF)
+				{
+					case FREE_IMAGE_COLOR_DEPTH.FICD_01_BPP_THRESHOLD:
 
-					if (bpp != 1)
-					{
-						result = Threshold(dib, threshold);
-					}
-					else
-					{
-						bool isGreyscale = IsGreyscaleImage(dib);
-						if ((forceGreyscale && (!isGreyscale)) ||
-						(reorderPalette && isGreyscale))
+						if (bpp != 1)
 						{
-							result = Threshold(dib, threshold);
+							if (forceGreyscale)
+							{
+								result = Threshold(dib, threshold);
+							}
+							else
+							{
+								dibTemp = ConvertTo24Bits(dib);
+								result = ColorQuantizeEx(dibTemp, quantizationMethod, 2, null, 1);
+								Unload(dibTemp);
+							}
 						}
-					}
-					break;
-
-				case FREE_IMAGE_COLOR_DEPTH.FICD_01_BPP_DITHER:
-
-					if (bpp != 1)
-					{
-						result = Dither(dib, ditherMethod);
-					}
-					else
-					{
-						bool isGreyscale = IsGreyscaleImage(dib);
-						if ((forceGreyscale && (!isGreyscale)) ||
-						(reorderPalette && isGreyscale))
-						{
-							result = Dither(dib, ditherMethod);
-						}
-					}
-					break;
-
-				case FREE_IMAGE_COLOR_DEPTH.FICD_04_BPP:
-
-					if (bpp != 4)
-					{
-						// Special case when 1bpp and FIC_PALETTE
-						if (forceGreyscale && (bpp == 1) && (GetColorType(dib) == FREE_IMAGE_COLOR_TYPE.FIC_PALETTE))
-						{
-							dibTemp = ConvertToGreyscale(dib);
-							result = ConvertTo4Bits(dibTemp);
-							Unload(dibTemp);
-						}
-						// All other cases are converted directly
 						else
 						{
-							result = ConvertTo4Bits(dib);
-						}
-					}
-					else
-					{
-						bool isGreyscale = IsGreyscaleImage(dib);
-						if ((forceGreyscale && (!isGreyscale)) ||
+							bool isGreyscale = IsGreyscaleImage(dib);
+							if ((forceGreyscale && (!isGreyscale)) ||
 							(reorderPalette && isGreyscale))
-						{
-							dibTemp = ConvertToGreyscale(dib);
-							result = ConvertTo4Bits(dibTemp);
-							Unload(dibTemp);
+							{
+								result = Threshold(dib, threshold);
+							}
 						}
-					}
+						break;
 
-					break;
+					case FREE_IMAGE_COLOR_DEPTH.FICD_01_BPP_DITHER:
 
-				case FREE_IMAGE_COLOR_DEPTH.FICD_08_BPP:
+						if (bpp != 1)
+						{
+							if (forceGreyscale)
+							{
+								result = Dither(dib, ditherMethod);
+							}
+							else
+							{
+								dibTemp = ConvertTo24Bits(dib);
+								result = ColorQuantizeEx(dibTemp, quantizationMethod, 2, null, 1);
+								Unload(dibTemp);
+							}
+						}
+						else
+						{
+							bool isGreyscale = IsGreyscaleImage(dib);
+							if ((forceGreyscale && (!isGreyscale)) ||
+							(reorderPalette && isGreyscale))
+							{
+								result = Dither(dib, ditherMethod);
+							}
+						}
+						break;
 
-					if (bpp != 8)
-					{
+					case FREE_IMAGE_COLOR_DEPTH.FICD_04_BPP:
+
+						if (bpp != 4)
+						{
+							// Special case when 1bpp and FIC_PALETTE
+							if (forceGreyscale ||
+								((bpp == 1) && (GetColorType(dib) == FREE_IMAGE_COLOR_TYPE.FIC_PALETTE)))
+							{
+								dibTemp = ConvertToGreyscale(dib);
+								result = ConvertTo4Bits(dibTemp);
+								Unload(dibTemp);
+							}
+							else
+							{
+								dibTemp = ConvertTo24Bits(dib);
+								result = ColorQuantizeEx(dibTemp, quantizationMethod, 16, null, 4);
+								Unload(dibTemp);
+							}
+						}
+						else
+						{
+							bool isGreyscale = IsGreyscaleImage(dib);
+							if ((forceGreyscale && (!isGreyscale)) ||
+								(reorderPalette && isGreyscale))
+							{
+								dibTemp = ConvertToGreyscale(dib);
+								result = ConvertTo4Bits(dibTemp);
+								Unload(dibTemp);
+							}
+						}
+
+						break;
+
+					case FREE_IMAGE_COLOR_DEPTH.FICD_08_BPP:
+
+						if (bpp != 8)
+						{
+							if (forceGreyscale)
+							{
+								result = ConvertToGreyscale(dib);
+							}
+							else
+							{
+								dibTemp = ConvertTo24Bits(dib);
+								result = ColorQuantize(dibTemp, quantizationMethod);
+								Unload(dibTemp);
+							}
+						}
+						else
+						{
+							bool isGreyscale = IsGreyscaleImage(dib);
+							if ((forceGreyscale && (!isGreyscale)) || (reorderPalette && isGreyscale))
+							{
+								result = ConvertToGreyscale(dib);
+							}
+						}
+						break;
+
+					case FREE_IMAGE_COLOR_DEPTH.FICD_16_BPP_555:
+
 						if (forceGreyscale)
 						{
-							result = ConvertToGreyscale(dib);
-						}
-						else
-						{
-							dibTemp = ConvertTo24Bits(dib);
-							result = ColorQuantize(dibTemp, quantizationMethod);
+							dibTemp = ConvertToGreyscale(dib);
+							result = ConvertTo16Bits555(dibTemp);
 							Unload(dibTemp);
 						}
-					}
-					else
-					{
-						bool isGreyscale = IsGreyscaleImage(dib);
-						if ((forceGreyscale && (!isGreyscale)) || (reorderPalette && isGreyscale))
+						else if (bpp != 16 || GetRedMask(dib) != FI16_555_RED_MASK || GetGreenMask(dib) != FI16_555_GREEN_MASK || GetBlueMask(dib) != FI16_555_BLUE_MASK)
 						{
-							result = ConvertToGreyscale(dib);
+							result = ConvertTo16Bits555(dib);
 						}
-					}
-					break;
+						break;
 
-				case FREE_IMAGE_COLOR_DEPTH.FICD_16_BPP_555:
+					case FREE_IMAGE_COLOR_DEPTH.FICD_16_BPP:
 
-					if (forceGreyscale)
-					{
-						dibTemp = ConvertToGreyscale(dib);
-						result = ConvertTo16Bits555(dibTemp);
-						Unload(dibTemp);
-					}
-					else if (bpp != 16 || GetRedMask(dib) != FI16_555_RED_MASK || GetGreenMask(dib) != FI16_555_GREEN_MASK || GetBlueMask(dib) != FI16_555_BLUE_MASK)
-					{
-						result = ConvertTo16Bits555(dib);
-					}
-					break;
+						if (forceGreyscale)
+						{
+							dibTemp = ConvertToGreyscale(dib);
+							result = ConvertTo16Bits565(dibTemp);
+							Unload(dibTemp);
+						}
+						else if (bpp != 16 || GetRedMask(dib) != FI16_565_RED_MASK || GetGreenMask(dib) != FI16_565_GREEN_MASK || GetBlueMask(dib) != FI16_565_BLUE_MASK)
+						{
+							result = ConvertTo16Bits565(dib);
+						}
+						break;
 
-				case FREE_IMAGE_COLOR_DEPTH.FICD_16_BPP:
+					case FREE_IMAGE_COLOR_DEPTH.FICD_24_BPP:
 
-					if (forceGreyscale)
-					{
-						dibTemp = ConvertToGreyscale(dib);
-						result = ConvertTo16Bits565(dibTemp);
-						Unload(dibTemp);
-					}
-					else if (bpp != 16 || GetRedMask(dib) != FI16_565_RED_MASK || GetGreenMask(dib) != FI16_565_GREEN_MASK || GetBlueMask(dib) != FI16_565_BLUE_MASK)
-					{
-						result = ConvertTo16Bits565(dib);
-					}
-					break;
+						if (forceGreyscale)
+						{
+							dibTemp = ConvertToGreyscale(dib);
+							result = ConvertTo24Bits(dibTemp);
+							Unload(dibTemp);
+						}
+						else if (bpp != 24)
+						{
+							result = ConvertTo24Bits(dib);
+						}
+						break;
 
-				case FREE_IMAGE_COLOR_DEPTH.FICD_24_BPP:
+					case FREE_IMAGE_COLOR_DEPTH.FICD_32_BPP:
 
-					if (forceGreyscale)
-					{
-						dibTemp = ConvertToGreyscale(dib);
-						result = ConvertTo24Bits(dibTemp);
-						Unload(dibTemp);
-					}
-					else if (bpp != 24)
-					{
-						result = ConvertTo24Bits(dib);
-					}
-					break;
-
-				case FREE_IMAGE_COLOR_DEPTH.FICD_32_BPP:
-
-					if (forceGreyscale)
-					{
-						dibTemp = ConvertToGreyscale(dib);
-						result = ConvertTo32Bits(dibTemp);
-						Unload(dibTemp);
-					}
-					else if (bpp != 32)
-					{
-						result = ConvertTo32Bits(dib);
-					}
-					break;
+						if (forceGreyscale)
+						{
+							dibTemp = ConvertToGreyscale(dib);
+							result = ConvertTo32Bits(dibTemp);
+							Unload(dibTemp);
+						}
+						else if (bpp != 32)
+						{
+							result = ConvertTo32Bits(dib);
+						}
+						break;
+				}
 			}
 
 			if (result.IsNull)
@@ -3223,6 +3299,112 @@ namespace FreeImageAPI
 			}
 
 			return result;
+		}
+
+		/// <summary>
+		/// ColorQuantizeEx is an extension to the <see cref="ColorQuantize(FIBITMAP, FREE_IMAGE_QUANTIZE)"/>
+		/// method that provides additional options used to quantize a 24-bit image to any
+		/// number of colors (up to 256), as well as quantize a 24-bit image using a
+		/// provided palette.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="quantize">Specifies the color reduction algorithm to be used.</param>
+		/// <param name="PaletteSize">Size of the desired output palette.</param>
+		/// <param name="ReservePalette">The provided palette.</param>
+		/// <param name="minColorDepth"><b>true</b> to create a bitmap with the smallest possible
+		/// color depth for the specified <paramref name="PaletteSize"/>.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		public static FIBITMAP ColorQuantizeEx(FIBITMAP dib, FREE_IMAGE_QUANTIZE quantize, int PaletteSize, RGBQUAD[] ReservePalette, bool minColorDepth)
+		{
+			FIBITMAP result;
+			if (minColorDepth)
+			{
+				int bpp;
+				if (PaletteSize >= 256)
+					bpp = 8;
+				else if (PaletteSize > 2)
+					bpp = 4;
+				else
+					bpp = 1;
+				result = ColorQuantizeEx(dib, quantize, PaletteSize, ReservePalette, bpp);
+			}
+			else
+			{
+				result = ColorQuantizeEx(dib, quantize, PaletteSize, ReservePalette, 8);
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// ColorQuantizeEx is an extension to the <see cref="ColorQuantize(FIBITMAP, FREE_IMAGE_QUANTIZE)"/>
+		/// method that provides additional options used to quantize a 24-bit image to any
+		/// number of colors (up to 256), as well as quantize a 24-bit image using a
+		/// partial or full provided palette.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="quantize">Specifies the color reduction algorithm to be used.</param>
+		/// <param name="PaletteSize">Size of the desired output palette.</param>
+		/// <param name="ReservePalette">The provided palette.</param>
+		/// <param name="bpp">The desired color depth of the created image.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		public static FIBITMAP ColorQuantizeEx(FIBITMAP dib, FREE_IMAGE_QUANTIZE quantize, int PaletteSize, RGBQUAD[] ReservePalette, int bpp)
+		{
+			unsafe
+			{
+				FIBITMAP result = FIBITMAP.Zero;
+				FIBITMAP temp = FIBITMAP.Zero;
+				int reservedSize = (ReservePalette == null) ? 0 : ReservePalette.Length;
+
+				if (bpp == 8)
+				{
+					result = ColorQuantizeEx(dib, quantize, PaletteSize, reservedSize, ReservePalette);
+				}
+				else if (bpp == 4)
+				{
+					temp = ColorQuantizeEx(dib, quantize, Math.Min(16, PaletteSize), reservedSize, ReservePalette);
+					if (!temp.IsNull)
+					{
+						result = Allocate((int)GetWidth(temp), (int)GetHeight(temp), 4, 0, 0, 0);
+						CloneMetadata(result, temp);
+						CopyMemory(GetPalette(result), GetPalette(temp), sizeof(RGBQUAD) * 16);
+
+						for (int y = (int)GetHeight(temp) - 1; y >= 0; y--)
+						{
+							Scanline<byte> srcScanline = new Scanline<byte>(temp, y);
+							Scanline<FI4BIT> dstScanline = new Scanline<FI4BIT>(result, y);
+
+							for (int x = (int)GetWidth(temp) - 1; x >= 0; x--)
+							{
+								dstScanline[x] = srcScanline[x];
+							}
+						}
+					}
+				}
+				else if (bpp == 1)
+				{
+					temp = ColorQuantizeEx(dib, quantize, 2, reservedSize, ReservePalette);
+					if (!temp.IsNull)
+					{
+						result = Allocate((int)GetWidth(temp), (int)GetHeight(temp), 1, 0, 0, 0);
+						CloneMetadata(result, temp);
+						CopyMemory(GetPalette(result), GetPalette(temp), sizeof(RGBQUAD) * 2);
+
+						for (int y = (int)GetHeight(temp) - 1; y >= 0; y--)
+						{
+							Scanline<byte> srcScanline = new Scanline<byte>(temp, y);
+							Scanline<FI1BIT> dstScanline = new Scanline<FI1BIT>(result, y);
+
+							for (int x = (int)GetWidth(temp) - 1; x >= 0; x--)
+							{
+								dstScanline[x] = srcScanline[x];
+							}
+						}
+					}
+				}
+
+				UnloadEx(ref temp);
+				return result;
+			}
 		}
 
 		#endregion
@@ -3737,51 +3919,55 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// Changes a bitmaps color depth.
-		/// Used by SaveEx and SaveToStream
+		/// Used by SaveEx and SaveToStream.
 		/// </summary>
 		private static FIBITMAP PrepareBitmapColorDepth(FIBITMAP dibToSave, FREE_IMAGE_FORMAT format, FREE_IMAGE_COLOR_DEPTH colorDepth)
 		{
-			int bpp = (int)GetBPP(dibToSave);
-			int targetBpp = (int)(colorDepth & FREE_IMAGE_COLOR_DEPTH.FICD_COLOR_MASK);
-
-			if (colorDepth != FREE_IMAGE_COLOR_DEPTH.FICD_AUTO)
+			FREE_IMAGE_TYPE type = GetImageType(dibToSave);
+			if (type == FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
-				// A fix colordepth was chosen
-				if (FIFSupportsExportBPP(format, targetBpp))
+				int bpp = (int)GetBPP(dibToSave);
+				int targetBpp = (int)(colorDepth & FREE_IMAGE_COLOR_DEPTH.FICD_COLOR_MASK);
+
+				if (colorDepth != FREE_IMAGE_COLOR_DEPTH.FICD_AUTO)
 				{
-					dibToSave = ConvertColorDepth(dibToSave, colorDepth, false);
+					// A fix colordepth was chosen
+					if (FIFSupportsExportBPP(format, targetBpp))
+					{
+						dibToSave = ConvertColorDepth(dibToSave, colorDepth, false);
+					}
+					else
+					{
+						throw new ArgumentException("FreeImage\n\nFreeImage Library plugin " +
+							GetFormatFromFIF(format) + " is unable to write images with a color depth of " +
+							targetBpp + " bpp.");
+					}
 				}
 				else
 				{
-					throw new ArgumentException("FreeImage\n\nFreeImage Library plugin " +
-						GetFormatFromFIF(format) + " is unable to write images with a color depth of " +
-						targetBpp + " bpp.");
-				}
-			}
-			else
-			{
-				// Auto selection was chosen
-				if (!FIFSupportsExportBPP(format, bpp))
-				{
-					// The color depth is not supported
-					int bppUpper = bpp;
-					int bppLower = bpp;
-					// Check from the bitmaps current color depth in both directions
-					do
+					// Auto selection was chosen
+					if (!FIFSupportsExportBPP(format, bpp))
 					{
-						bppUpper = GetNextColorDepth(bppUpper);
-						if (FIFSupportsExportBPP(format, bppUpper))
+						// The color depth is not supported
+						int bppUpper = bpp;
+						int bppLower = bpp;
+						// Check from the bitmaps current color depth in both directions
+						do
 						{
-							dibToSave = ConvertColorDepth(dibToSave, (FREE_IMAGE_COLOR_DEPTH)bppUpper, false);
-							break;
-						}
-						bppLower = GetPrevousColorDepth(bppLower);
-						if (FIFSupportsExportBPP(format, bppLower))
-						{
-							dibToSave = ConvertColorDepth(dibToSave, (FREE_IMAGE_COLOR_DEPTH)bppLower, false);
-							break;
-						}
-					} while (!((bppLower == 0) && (bppUpper == 0)));
+							bppUpper = GetNextColorDepth(bppUpper);
+							if (FIFSupportsExportBPP(format, bppUpper))
+							{
+								dibToSave = ConvertColorDepth(dibToSave, (FREE_IMAGE_COLOR_DEPTH)bppUpper, false);
+								break;
+							}
+							bppLower = GetPrevousColorDepth(bppLower);
+							if (FIFSupportsExportBPP(format, bppLower))
+							{
+								dibToSave = ConvertColorDepth(dibToSave, (FREE_IMAGE_COLOR_DEPTH)bppLower, false);
+								break;
+							}
+						} while (!((bppLower == 0) && (bppUpper == 0)));
+					}
 				}
 			}
 			return dibToSave;
