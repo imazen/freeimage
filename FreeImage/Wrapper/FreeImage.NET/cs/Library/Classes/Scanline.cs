@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace FreeImageAPI
 {
 	/// <summary>
-	/// Provides mathods for working with generic bitmap scanlines.
+	/// Provides methods for working with generic bitmap scanlines.
 	/// </summary>
 	/// <typeparam name="T">Type of the bitmaps' scanlines.</typeparam>
 	public sealed class Scanline<T> : MemoryArray<T> where T : struct
