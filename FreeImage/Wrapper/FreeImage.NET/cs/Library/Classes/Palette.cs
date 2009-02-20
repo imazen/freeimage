@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 using System.IO;
+using FreeImageAPI.Metadata;
+using System.Runtime.InteropServices;
 
 namespace FreeImageAPI
 {
@@ -11,16 +13,23 @@ namespace FreeImageAPI
 	/// </summary>
 	public sealed class Palette : MemoryArray<RGBQUAD>
 	{
+		private GCHandle paletteHandle;
+		private RGBQUAD[] array;
+
 		/// <summary>
 		/// Initializes a new instance for the given FreeImage bitmap.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="dib"/> is null.</exception>
+		/// <exception cref="ArgumentException"><paramref name="dib"/> is not
+		/// <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/><para/>-or-<para/>
+		/// <paramref name="dib"/> has more than 8bpp.</exception>
 		public Palette(FIBITMAP dib)
 			: base(FreeImage.GetPalette(dib), (int)FreeImage.GetColorsUsed(dib))
 		{
 			if (dib.IsNull)
 			{
-				throw new ArgumentNullException();
+				throw new ArgumentNullException("dib");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP)
 			{
@@ -30,6 +39,89 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentException("dib");
 			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance for the given FITAG that contains
+		/// a palette.
+		/// </summary>
+		/// <param name="tag">The tag containing the palette.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="tag"/> is null.</exception>
+		/// <exception cref="ArgumentException"><paramref name="tag"/> is not
+		/// <see cref="FREE_IMAGE_MDTYPE.FIDT_PALETTE"/>.</exception>
+		public Palette(FITAG tag)
+			: base(FreeImage.GetTagValue(tag), (int)FreeImage.GetTagCount(tag))
+		{
+			if (FreeImage.GetTagType(tag) != FREE_IMAGE_MDTYPE.FIDT_PALETTE)
+			{
+				throw new ArgumentException("tag");
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance for the given MetadataTag that contains
+		/// a palette.
+		/// </summary>
+		/// <param name="tag">The tag containing the palette.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="dib"/> is null.</exception>
+		/// <exception cref="ArgumentException"><paramref name="tag"/> is not
+		/// <see cref="FREE_IMAGE_MDTYPE.FIDT_PALETTE"/>.</exception>
+		public Palette(MetadataTag tag)
+			: base(FreeImage.GetTagValue(tag.tag), (int)tag.Count)
+		{
+			if (FreeImage.GetTagType(tag) != FREE_IMAGE_MDTYPE.FIDT_PALETTE)
+			{
+				throw new ArgumentException("tag");
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance for the given array of <see cref="RGBQUAD"/> that contains
+		/// a palette.
+		/// </summary>
+		/// <param name="palette">A RGBQUAD array containing the palette data to initialize this instance.</param>
+		public Palette(RGBQUAD[] palette)
+		{
+			unsafe
+			{
+				this.array = (RGBQUAD[])palette.Clone();
+				this.paletteHandle = GCHandle.Alloc(array, GCHandleType.Pinned);
+
+				base.baseAddress = (byte*)this.paletteHandle.AddrOfPinnedObject();
+				base.length = (int)this.array.Length;
+
+				// Create an array containing a single element.
+				// Due to the fact, that it's not possible to create pointers
+				// of generic types, an array is used to obtain the memory
+				// address of an element of T.
+				base.buffer = new RGBQUAD[1];
+				// The array is pinned immediately to prevent the GC from
+				// moving it to a different position in memory.
+				base.handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+				// The array and its content have beed pinned, so that its address
+				// can be safely requested and stored for the whole lifetime
+				// of the instace.
+				base.ptr = (byte*)base.handle.AddrOfPinnedObject();
+			}
+		}
+
+		/// <summary>
+		/// Initializes a new instance for the given array of <see cref="Color"/> that contains
+		/// a palette.
+		/// </summary>
+		/// <param name="palette">A Color array containing the palette data to initialize this instance.</param>
+		public Palette(Color[] palette)
+			: this(RGBQUAD.ToRGBQUAD(palette))
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance with the specified size.
+		/// </summary>
+		/// <param name="size">The size of the palette.</param>
+		public Palette(int size)
+			: this(new RGBQUAD[size])
+		{
 		}
 
 		/// <summary>
@@ -55,6 +147,7 @@ namespace FreeImageAPI
 		{
 			get
 			{
+				EnsureNotDisposed();
 				Color[] data = new Color[length];
 				for (int i = 0; i < length; i++)
 				{
@@ -110,6 +203,7 @@ namespace FreeImageAPI
 		/// </remarks>
 		public void Colorize(Color color, int splitSize)
 		{
+			EnsureNotDisposed();
 			if (splitSize < 1 || splitSize >= length)
 			{
 				throw new ArgumentOutOfRangeException("splitSize");
@@ -150,6 +244,89 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
+		/// Creates a linear grayscale palette.
+		/// </summary>
+		public void CreateGrayscalePalette()
+		{
+			Colorize(Color.White, length - 1);
+		}
+
+		/// <summary>
+		/// Creates a linear grayscale palette.
+		/// </summary>
+		/// <param name="inverse"><b>true</b> to create an inverse grayscale palette.</param>
+		public void CreateGrayscalePalette(bool inverse)
+		{
+			Colorize(Color.White, inverse ? 0 : length - 1);
+		}
+
+		/// <summary>
+		/// Creates a linear palette with the specified <see cref="Color"/>.
+		/// </summary>
+		/// <remarks>
+		/// A linear grayscale palette contains all shades of colors from
+		/// black to white. This method creates a similar palette with the white
+		/// color being replaced by the specified color.
+		/// </remarks>
+		/// <param name="color">The <see cref="Color"/> used to create the palette.</param>
+		/// <param name="inverse"><b>true</b> to create an inverse palette.</param>
+		public void CreateGrayscalePalette(Color color, bool inverse)
+		{
+			Colorize(color, inverse ? 0 : length - 1);
+		}
+
+		/// <summary>
+		/// Reverses the palette.
+		/// </summary>
+		public void Reverse()
+		{
+			EnsureNotDisposed();
+			if (array != null)
+			{
+				Array.Reverse(array);
+			}
+			else
+			{
+				RGBQUAD[] localArray = Data;
+				Array.Reverse(localArray);
+				Data = localArray;
+			}
+		}
+
+		/// <summary>
+		/// Copies the values from the specified <see cref="Palette"/> to this instance.
+		/// </summary>
+		/// <param name="palette">The palette to copy from.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="palette"/> is a null reference.</exception>
+		public void CopyFrom(Palette palette)
+		{
+			EnsureNotDisposed();
+			if (palette == null)
+			{
+				throw new ArgumentNullException("palette");
+			}
+			CopyFrom(palette.Data, 0, 0, Math.Min(palette.Length, this.Length));
+		}
+
+		/// <summary>
+		/// Copies the values from the specified <see cref="Palette"/> to this instance,
+		/// starting at the specified <paramref name="offset"/>.
+		/// </summary>
+		/// <param name="palette">The palette to copy from.</param>
+		/// <param name="offset">The position in this instance where the values
+		/// will be copied to.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="palette"/> is a null reference.</exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="offset"/> is outside the range of valid indexes.</exception>
+		public void CopyFrom(Palette palette, int offset)
+		{
+			EnsureNotDisposed();
+			CopyFrom(palette.Data, 0, offset, Math.Min(palette.Length, this.Length - offset));
+		}
+
+		/// <summary>
 		/// Saves this <see cref="Palette"/> to the specified file.
 		/// </summary>
 		/// <param name="filename">
@@ -182,6 +359,7 @@ namespace FreeImageAPI
 		/// </param>
 		public void Save(BinaryWriter writer)
 		{
+			EnsureNotDisposed();
 			writer.Write(ToByteArray());
 		}
 
@@ -210,14 +388,31 @@ namespace FreeImageAPI
 		/// Loads a palette from the reader.
 		/// </summary>
 		/// <param name="reader">The reader to load the palette from.</param>
-		public unsafe void Load(BinaryReader reader)
+		public void Load(BinaryReader reader)
 		{
-			int size = length * sizeof(RGBQUAD);
-			byte[] data = reader.ReadBytes(size);
-			fixed(byte* src = data)
+			EnsureNotDisposed();
+			unsafe
 			{
-				CopyMemory(baseAddress, src, data.Length);
+				int size = length * sizeof(RGBQUAD);
+				byte[] data = reader.ReadBytes(size);
+				fixed (byte* src = data)
+				{
+					CopyMemory(baseAddress, src, data.Length);
+				}
 			}
+		}
+
+		/// <summary>
+		/// Releases allocated handles associated with this instance.
+		/// </summary>
+		/// <param name="disposing"><b>true</b> to release managed resources.</param>
+		protected override void Dispose(bool disposing)
+		{
+			if (paletteHandle.IsAllocated)
+				paletteHandle.Free();
+			array = null;
+
+			base.Dispose(disposing);
 		}
 	}
 }
