@@ -210,7 +210,7 @@ namespace FreeImageAPI
 			}
 			if (!(obj is FIRGBA16))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((FIRGBA16)obj);
 		}

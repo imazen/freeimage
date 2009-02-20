@@ -156,7 +156,7 @@ namespace FreeImageAPI
 			}
 			if (!(obj is FIBITMAP))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((FIBITMAP)obj);
 		}

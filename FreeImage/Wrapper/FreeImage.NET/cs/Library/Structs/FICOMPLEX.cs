@@ -95,7 +95,7 @@ namespace FreeImageAPI
 			}
 			if (!(obj is FICOMPLEX))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((FICOMPLEX)obj);
 		}

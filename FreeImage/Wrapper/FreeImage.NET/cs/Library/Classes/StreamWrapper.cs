@@ -213,7 +213,7 @@ namespace FreeImageAPI.IO
 					newPosition = memoryStream.Length + offset;
 					break;
 				default:
-					throw new ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException("origin");
 			}
 			// in case the new position is beyond the memory-streams end
 			// and the original streams end hasn't been reached

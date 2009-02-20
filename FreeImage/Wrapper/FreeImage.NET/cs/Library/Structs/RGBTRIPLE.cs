@@ -233,7 +233,7 @@ namespace FreeImageAPI
 			}
 			if (!(obj is RGBTRIPLE))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((RGBTRIPLE)obj);
 		}

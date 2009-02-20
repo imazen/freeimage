@@ -151,7 +151,7 @@ namespace FreeImageAPI
 			}
 			if (!(obj is FIMULTIBITMAP))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((FIMULTIBITMAP)obj);
 		}

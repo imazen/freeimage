@@ -216,7 +216,7 @@ namespace FreeImageAPI.IO
 			}
 			if (!(obj is fi_handle))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((fi_handle)obj);
 		}

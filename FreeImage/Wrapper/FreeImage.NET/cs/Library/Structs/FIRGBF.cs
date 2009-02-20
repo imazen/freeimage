@@ -210,7 +210,7 @@ namespace FreeImageAPI
 			}
 			if (!(obj is FIRGBF))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((FIRGBF)obj);
 		}

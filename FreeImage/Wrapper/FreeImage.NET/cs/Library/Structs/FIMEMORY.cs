@@ -151,7 +151,7 @@ namespace FreeImageAPI
 			}
 			if (!(obj is FIMEMORY))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((FIMEMORY)obj);
 		}

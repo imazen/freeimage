@@ -151,7 +151,7 @@ namespace FreeImageAPI
 			}
 			if (!(obj is FITAG))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((FITAG)obj);
 		}
