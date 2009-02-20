@@ -167,8 +167,8 @@ namespace FreeImageAPI.Metadata
 			typeList.Add(typeof(FIURational[]), FREE_IMAGE_MDTYPE.FIDT_RATIONAL);
 			typeList.Add(typeof(sbyte), FREE_IMAGE_MDTYPE.FIDT_SBYTE);
 			typeList.Add(typeof(sbyte[]), FREE_IMAGE_MDTYPE.FIDT_SBYTE);
-			typeList.Add(typeof(byte), FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
-			typeList.Add(typeof(byte[]), FREE_IMAGE_MDTYPE.FIDT_UNDEFINED);
+			typeList.Add(typeof(byte), FREE_IMAGE_MDTYPE.FIDT_BYTE);
+			typeList.Add(typeof(byte[]), FREE_IMAGE_MDTYPE.FIDT_BYTE);
 			typeList.Add(typeof(short), FREE_IMAGE_MDTYPE.FIDT_SSHORT);
 			typeList.Add(typeof(short[]), FREE_IMAGE_MDTYPE.FIDT_SSHORT);
 			typeList.Add(typeof(int), FREE_IMAGE_MDTYPE.FIDT_SLONG);
@@ -336,7 +336,7 @@ namespace FreeImageAPI.Metadata
 		public FREE_IMAGE_MDTYPE Type
 		{
 			get { CheckDisposed(); return FreeImage.GetTagType(tag); }
-			private set { FreeImage.SetTagType(tag, value); }
+			internal set { FreeImage.SetTagType(tag, value); }
 		}
 
 		/// <summary>
@@ -371,8 +371,6 @@ namespace FreeImageAPI.Metadata
 
 		/// <summary>
 		/// Gets or sets the value of the metadata.
-		/// <para> In case value is of byte or byte[], <see cref="FREE_IMAGE_MDTYPE.FIDT_UNDEFINED"/> is assumed.</para>
-		/// <para> In case value is of uint or uint[], <see cref="FREE_IMAGE_MDTYPE.FIDT_LONG"/> is assumed.</para>
 		/// </summary>
 		public unsafe object Value
 		{
@@ -423,7 +421,7 @@ namespace FreeImageAPI.Metadata
 			Type type = value.GetType();
 			if (!typeList.ContainsKey(type))
 			{
-				throw new NotSupportedException();
+				throw new NotSupportedException("The type of value is not supported");
 			}
 			return SetValue(value, typeList[type]);
 		}
@@ -498,7 +496,7 @@ namespace FreeImageAPI.Metadata
 			}
 			else if (type == FREE_IMAGE_MDTYPE.FIDT_NOTYPE)
 			{
-				throw new NotSupportedException();
+				throw new NotSupportedException("type is not supported.");
 			}
 			else
 			{
@@ -507,6 +505,11 @@ namespace FreeImageAPI.Metadata
 				{
 					throw new ArgumentException("value");
 				}
+
+				if (array.Length != 0)
+					if (!CheckType(array.GetValue(0).GetType(), type))
+						throw new ArgumentException("The type of value is incorrect.");
+
 				Type = type;
 				Count = (uint)array.Length;
 				Length = (uint)(array.Length * Marshal.SizeOf(idList[type]));
@@ -515,6 +518,45 @@ namespace FreeImageAPI.Metadata
 			}
 
 			return FreeImage.SetTagValue(tag, data);
+		}
+
+		private static bool CheckType(Type dataType, FREE_IMAGE_MDTYPE type)
+		{
+			if (dataType != null)
+				switch (type)
+				{
+					case FREE_IMAGE_MDTYPE.FIDT_ASCII:
+						return dataType == typeof(string);
+					case FREE_IMAGE_MDTYPE.FIDT_BYTE:
+						return dataType == typeof(byte);
+					case FREE_IMAGE_MDTYPE.FIDT_DOUBLE:
+						return dataType == typeof(double);
+					case FREE_IMAGE_MDTYPE.FIDT_FLOAT:
+						return dataType == typeof(float);
+					case FREE_IMAGE_MDTYPE.FIDT_IFD:
+						return dataType == typeof(uint);
+					case FREE_IMAGE_MDTYPE.FIDT_LONG:
+						return dataType == typeof(uint);
+					case FREE_IMAGE_MDTYPE.FIDT_NOTYPE:
+						return false;
+					case FREE_IMAGE_MDTYPE.FIDT_PALETTE:
+						return dataType == typeof(RGBQUAD);
+					case FREE_IMAGE_MDTYPE.FIDT_RATIONAL:
+						return dataType == typeof(FIURational);
+					case FREE_IMAGE_MDTYPE.FIDT_SBYTE:
+						return dataType == typeof(sbyte);
+					case FREE_IMAGE_MDTYPE.FIDT_SHORT:
+						return dataType == typeof(ushort);
+					case FREE_IMAGE_MDTYPE.FIDT_SLONG:
+						return dataType == typeof(int);
+					case FREE_IMAGE_MDTYPE.FIDT_SRATIONAL:
+						return dataType == typeof(FIRational);
+					case FREE_IMAGE_MDTYPE.FIDT_SSHORT:
+						return dataType == typeof(short);
+					case FREE_IMAGE_MDTYPE.FIDT_UNDEFINED:
+						return dataType == typeof(byte);
+				}
+			return false;
 		}
 
 		/// <summary>
@@ -538,7 +580,7 @@ namespace FreeImageAPI.Metadata
 				tag = FreeImage.CloneTag(tag);
 				if (tag.IsNull)
 				{
-					throw new Exception();
+					throw new Exception("FreeImage.CloneTag() failed.");
 				}
 				selfCreated = true;
 			}
@@ -647,7 +689,7 @@ namespace FreeImageAPI.Metadata
 			}
 			if (!(obj is MetadataTag))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((MetadataTag)obj);
 		}
@@ -675,6 +717,7 @@ namespace FreeImageAPI.Metadata
 				if (selfCreated)
 				{
 					FreeImage.DeleteTag(tag);
+					tag = FITAG.Zero;
 				}
 			}
 		}
