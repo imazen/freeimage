@@ -3461,7 +3461,7 @@ namespace FreeImageNETUnitTest
 			Assert.IsTrue(FreeImage.IsExtensionValidForFIF(FREE_IMAGE_FORMAT.FIF_PCX, "pcx", StringComparison.CurrentCultureIgnoreCase));
 			Assert.IsTrue(FreeImage.IsExtensionValidForFIF(FREE_IMAGE_FORMAT.FIF_TIFF, "tif", StringComparison.CurrentCultureIgnoreCase));
 			Assert.IsTrue(FreeImage.IsExtensionValidForFIF(FREE_IMAGE_FORMAT.FIF_TIFF, "TIFF", StringComparison.CurrentCultureIgnoreCase));
-			Assert.IsFalse(FreeImage.IsExtensionValidForFIF(FREE_IMAGE_FORMAT.FIF_ICO, "ICO"));
+			Assert.IsFalse(FreeImage.IsExtensionValidForFIF(FREE_IMAGE_FORMAT.FIF_ICO, "ICO", StringComparison.CurrentCulture));
 		}
 
 		[Test]
@@ -3471,7 +3471,7 @@ namespace FreeImageNETUnitTest
 			Assert.IsTrue(FreeImage.IsFilenameValidForFIF(FREE_IMAGE_FORMAT.FIF_JPEG, "file.jpeg"));
 			Assert.IsFalse(FreeImage.IsFilenameValidForFIF(FREE_IMAGE_FORMAT.FIF_JPEG, "file.bmp"));
 			Assert.IsTrue(FreeImage.IsFilenameValidForFIF(FREE_IMAGE_FORMAT.FIF_GIF, "file.gif"));
-			Assert.IsFalse(FreeImage.IsFilenameValidForFIF(FREE_IMAGE_FORMAT.FIF_GIF, "file.GIF"));
+			Assert.IsTrue(FreeImage.IsFilenameValidForFIF(FREE_IMAGE_FORMAT.FIF_GIF, "file.GIF"));
 			Assert.IsTrue(FreeImage.IsFilenameValidForFIF(FREE_IMAGE_FORMAT.FIF_GIF, "file.GIF", StringComparison.CurrentCultureIgnoreCase));
 			Assert.IsFalse(FreeImage.IsFilenameValidForFIF(FREE_IMAGE_FORMAT.FIF_GIF, "file.txt"));
 			Assert.IsFalse(FreeImage.IsFilenameValidForFIF(FREE_IMAGE_FORMAT.FIF_UNKNOWN, "file.jpg"));
@@ -3997,6 +3997,26 @@ namespace FreeImageNETUnitTest
 			dib = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
 			Assert.IsFalse(dib.IsNull);
 			dib2 = iManager.GetBitmap(ImageType.Metadata, ImageColorType.Type_01_Dither);
+			Assert.IsFalse(dib2.IsNull);
+
+			Assert.IsTrue(FreeImage.Compare(dib, dib2, FREE_IMAGE_COMPARE_FLAGS.COMPLETE));
+
+			FreeImage.UnloadEx(ref dib);
+			FreeImage.UnloadEx(ref dib2);
+
+			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_16_555);
+			Assert.IsFalse(dib.IsNull);
+			dib2 = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_16_555);
+			Assert.IsFalse(dib2.IsNull);
+
+			Assert.IsTrue(FreeImage.Compare(dib, dib2, FREE_IMAGE_COMPARE_FLAGS.COMPLETE));
+
+			FreeImage.UnloadEx(ref dib);
+			FreeImage.UnloadEx(ref dib2);
+
+			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_16_565);
+			Assert.IsFalse(dib.IsNull);
+			dib2 = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_16_565);
 			Assert.IsFalse(dib2.IsNull);
 
 			Assert.IsTrue(FreeImage.Compare(dib, dib2, FREE_IMAGE_COMPARE_FLAGS.COMPLETE));
@@ -4935,11 +4955,6 @@ namespace FreeImageNETUnitTest
 			GC.Collect(2, GCCollectionMode.Forced);
 			GC.WaitForPendingFinalizers();
 
-			fib = new FreeImageBitmap(filename);
-			flags = (ImageFlags)fib.Flags;
-			Assert.That((flags & ImageFlags.HasRealDpi) == ImageFlags.HasRealDpi);
-			fib.Dispose();
-
 			fib = new FreeImageBitmap(iManager.GetBitmapPath(ImageType.Metadata, ImageColorType.Type_01_Dither));
 			int[] propList = fib.PropertyIdList;
 			Assert.IsNotNull(propList);
@@ -4988,6 +5003,7 @@ namespace FreeImageNETUnitTest
 				PropertyItem item = fib.GetPropertyItem(list[i]);
 				Assert.IsNotNull(item);
 			}
+			fib.Dispose();
 		}
 
 		[Test]
