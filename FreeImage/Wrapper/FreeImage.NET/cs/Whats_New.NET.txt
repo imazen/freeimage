@@ -5,6 +5,26 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+February 20, 2009 - 1.07
+* [Jean-Philippe Goerke] Fixed a bug in FreeImage.IsFilenameValidForFIF and FreeImage.IsExtensionValidForFIF.
+* [Jean-Philippe Goerke] Fixed a bug in FreeImage.SaveEx that could prevent saving supported non-bitmap types.
+* [Jean-Philippe Goerke] Fixed a small bug in FreeImage.CompareData.
++ [Jean-Philippe Goerke] Added two overloads of ColorQuantizeEx() in class FreeImage to return images with a color depth smaller than 8.
+! [Jean-Philippe Goerke] Updated FreeImage.ConvertColorDepth to support 1- and 4-bpp color conversions (FreeImage_ConvertTo4Bits only creates grayscale results).
+* [headkaze] Fixed a bug in FreeImage.GetBitmap, which now adds any transparency information to palletized .NET Bitmaps.
+* [headkaze] Fixed a bug in FreeImage.GetBitmap and FreeImage.CreateFromBitmap to support palettes with sizes different from 2, 16 and 256 entries.
+! [Jean-Philippe Goerke] Improved handling of multipage bitmaps in FreeImageBitmap class.
++ [Jean-Philippe Goerke] Added new overloads for FreeImageBitmap.SaveAdd() to allow inserting frames at a specified page index.
++ [Jean-Philippe Goerke] Added new class GifInformation which provides access to GIF format specific metadata (GlobalPalette, Animation, etc.).
++ [Jean-Philippe Goerke] Added enumeration DisposalMethodType.
+! [Jean-Philippe Goerke] Updated class MemoryArray<T>, which now is Disposable and has a new static constructor.
+! [Jean-Philippe Goerke] Removed code using reflection from class ImageMetadata.
++ [Jean-Philippe Goerke] Added new ctor(FITAG) and ctor(MetadataTag) to class Palette to support palettes stored in metadata tags.
++ [Jean-Philippe Goerke] Added new ctor(RGBQUAD[]), ctor(Color[]) and ctor(int) to create new stand-alone palettes to class Palette.
++ [Jean-Philippe Goerke] Added overloaded CreateGrayscalePalette(), Reverse() and CopyFrom() to class Palette.
+! [Jean-Philippe Goerke] Changed the behavior of MetadataTag.Value. byte and byte[] are now stored as FREE_IMAGE_MDTYPE.FIDT_BYTE instead of FREE_IMAGE_MDTYPE.FIDT_UNDEFINED.
++ [Jean-Philippe Goerke] Added a type check to MetadataTag.SetValue(object), MetadataTag.SetValue(object, FREE_IMAGE_MDTYPE) and the setter of MetadataTag.Value.
+
 November 18, 2008 - 1.06
 * [Jean-Philippe Goerke] Fixed a bug in FreeImage.SaveEx.
 ! [Jean-Philippe Goerke] Improved method FreeImage.IsFilenameValidForFIF.
