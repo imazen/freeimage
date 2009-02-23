@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 namespace FreeImageAPI.Plugins
 {
@@ -7,6 +8,7 @@ namespace FreeImageAPI.Plugins
 	/// </summary>
 	public sealed class FreeImagePlugin
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly FREE_IMAGE_FORMAT fif;
 
 		/// <summary>

@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace FreeImageAPI
 {
@@ -20,47 +21,56 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Baseaddress of the wrapped memory.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected byte* baseAddress;
 
 		/// <summary>
 		/// Number of elements being wrapped.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected int length;
 
 		/// <summary>
 		/// Size, in bytes, of each element.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static readonly int size;
 
 		/// <summary>
 		/// Array of <b>T</b> containing a single element.
 		/// The array is used as a workaround, because there are no pointer for generic types.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected T[] buffer;
 
 		/// <summary>
 		/// Pointer to the element of <b>buffer</b>.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected byte* ptr;
 
 		/// <summary>
 		/// Handle for pinning <b>buffer</b>.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected GCHandle handle;
 
 		/// <summary>
 		/// Indicates whether the wrapped memory is handled like a bitfield.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected readonly bool isOneBit;
 
 		/// <summary>
 		/// Indicates whther the wrapped memory is handles like 4-bit blocks.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected readonly bool isFourBit;
 
 		/// <summary>
 		/// An object that can be used to synchronize access to the <see cref="MemoryArray&lt;T&gt;"/>.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected object syncRoot = null;
 
 		static MemoryArray()

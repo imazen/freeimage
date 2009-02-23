@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using FreeImageAPI.Metadata;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace FreeImageAPI
 {
@@ -13,7 +14,10 @@ namespace FreeImageAPI
 	/// </summary>
 	public sealed class Palette : MemoryArray<RGBQUAD>
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private GCHandle paletteHandle;
+
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private RGBQUAD[] array;
 
 		/// <summary>

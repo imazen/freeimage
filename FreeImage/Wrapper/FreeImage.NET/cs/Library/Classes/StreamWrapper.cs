@@ -35,6 +35,7 @@
 
 using System;
 using System.IO;
+using System.Diagnostics;
 
 namespace FreeImageAPI.IO
 {
@@ -57,22 +58,31 @@ namespace FreeImageAPI.IO
 		/// <summary>
 		/// The stream to wrap
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly Stream stream;
+
 		/// <summary>
 		/// The caching stream
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private MemoryStream memoryStream = new MemoryStream();
+
 		/// <summary>
 		/// Indicates if the wrapped stream reached its end
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool eos = false;
+
 		/// <summary>
 		/// Tells the wrapper to block readings or not
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool blocking = false;
+
 		/// <summary>
 		/// Indicates if the wrapped stream is disposed or not
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool disposed = false;
 
 		/// <summary>

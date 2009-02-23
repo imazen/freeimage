@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace FreeImageAPI.Plugins
 {
@@ -9,7 +10,10 @@ namespace FreeImageAPI.Plugins
 	/// </summary>
 	public static class PluginRepository
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static readonly List<FreeImagePlugin> plugins = null;
+		
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static readonly List<FreeImagePlugin> localPlugins = null;
 
 		static PluginRepository()

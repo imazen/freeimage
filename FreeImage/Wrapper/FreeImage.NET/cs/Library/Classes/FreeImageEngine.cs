@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace FreeImageAPI
 {
@@ -11,8 +12,10 @@ namespace FreeImageAPI
 		#region Callback
 
 		// Callback delegate
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static OutputMessageFunction outputMessageFunction;
 		// Handle to pin the functions address
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle outputMessageHandle;
 
 		static FreeImageEngine()

@@ -36,6 +36,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace FreeImageAPI.IO
 {
@@ -59,9 +60,13 @@ namespace FreeImageAPI.IO
 	/// </remarks>
 	internal static class FreeImageStreamIO
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle readHandle;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle writeHandle;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle seekHandle;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle tellHandle;
 
 		/// <summary>

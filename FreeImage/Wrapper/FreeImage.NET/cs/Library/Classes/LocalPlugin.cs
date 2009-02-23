@@ -37,6 +37,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using FreeImageAPI.IO;
+using System.Diagnostics;
 
 namespace FreeImageAPI.Plugins
 {
@@ -85,26 +86,37 @@ namespace FreeImageAPI.Plugins
 		/// <summary>
 		/// Struct containing function pointers.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private Plugin plugin;
+
 		/// <summary>
 		/// Delegate for register callback by FreeImage.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private InitProc initProc;
+
 		/// <summary>
 		/// GCHandles to prevent the garbage collector from chaning function addresses.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private GCHandle[] handles = new GCHandle[16];
+
 		/// <summary>
 		/// The format id assiged to the plugin.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+
 		/// <summary>
 		/// When true the plugin was registered successfully else false.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected readonly bool registered = false;
+
 		/// <summary>
 		/// A copy of the functions used to register.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected readonly MethodFlags implementedMethods;
 
 		/// <summary>

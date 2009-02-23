@@ -37,6 +37,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace FreeImageAPI.Metadata
 {
@@ -45,8 +46,11 @@ namespace FreeImageAPI.Metadata
 	/// </summary>
 	public class ImageMetadata : IEnumerable, IComparable, IComparable<ImageMetadata>
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly List<MetadataModel> data;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly FIBITMAP dib;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool hideEmptyModels;
 
 		/// <summary>

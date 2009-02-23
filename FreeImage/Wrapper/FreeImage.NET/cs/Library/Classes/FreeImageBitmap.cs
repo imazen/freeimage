@@ -43,6 +43,7 @@ using System.Runtime.Serialization;
 using System.Collections;
 using System.Collections.Generic;
 using FreeImageAPI.Metadata;
+using System.Diagnostics;
 
 namespace FreeImageAPI
 {
@@ -57,21 +58,25 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Indicates whether this instance is disposed.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool disposed;
 
 		/// <summary>
 		/// Tab object.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private object tag;
 
 		/// <summary>
 		/// Object used to syncronize lock methods.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private object lockObject = new object();
 
 		/// <summary>
 		/// Holds information used by SaveAdd() methods.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private SaveInformation saveInformation = new SaveInformation();
 
 		/// <summary>
@@ -79,28 +84,33 @@ namespace FreeImageAPI
 		/// null if it wasn't loaded from a file, has been
 		/// cloned or deserialized.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private FileStream file;
 
 		/// <summary>
 		/// The number of frames contained by a mutlipage bitmap.
 		/// Default value is 1 and only changed if needed.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private int frameCount = 1;
 
 		/// <summary>
 		/// The index of the loaded frame.
 		/// Default value is 0 and only changed if needed.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private int frameIndex = 0;
 
 		/// <summary>
 		/// Format of the sourceimage.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private FREE_IMAGE_FORMAT originalFormat = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 
 		/// <summary>
 		/// Handle to the encapsulated FreeImage-bitmap.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private FIBITMAP dib;
 
 		private const string ErrorLoadingBitmap = "Unable to load bitmap.";
@@ -1123,7 +1133,7 @@ namespace FreeImageAPI
 				{
 					return new Palette(dib);
 				}
-				throw new InvalidOperationException("This bitmap does not conatin a palette.");
+				throw new InvalidOperationException("This bitmap does not have a palette.");
 			}
 		}
 
