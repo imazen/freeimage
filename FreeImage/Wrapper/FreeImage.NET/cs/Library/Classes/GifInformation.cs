@@ -445,5 +445,82 @@ namespace FreeImageAPI.Metadata
 				}
 			}
 		}
+
+		/// <summary>
+		/// Creates a global palette for the GIF image, intialized with all entries of the
+		/// current local palette.
+		/// The property <see cref="UseGlobalPalette"/> will be set to <b>true</b> when
+		/// invoking this method. This effectively enables the newly created global palette.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">
+		/// The image does not have a palette.
+		/// </exception>
+		public void CreateGlobalPalette()
+		{
+			CreateGlobalPalette(bitmap.Palette);
+		}
+
+		/// <summary>
+		/// Creates a global palette for the GIF image with the specified size, intialized
+		/// with the first <paramref name="size"/> entries of the current local palette.
+		/// The property <see cref="UseGlobalPalette"/> will be set to <b>true</b> when
+		/// invoking this method. This effectively enables the newly created global palette.
+		/// </summary>
+		/// <param name="size">The size of the newly created global palette.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="palette"/> is a null reference.</exception>
+		public void CreateGlobalPalette(int size)
+		{
+			CreateGlobalPalette(bitmap.Palette, size);
+		}
+
+		/// <summary>
+		/// Creates a global palette for the GIF image, intialized with the entries
+		/// of the specified palette.
+		/// The property <see cref="UseGlobalPalette"/> will be set to <b>true</b> when
+		/// invoking this method. This effectively enables the newly created global palette.
+		/// </summary>
+		/// <param name="palette">The palette that contains the initial values for
+		/// the newly created global palette.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="palette"/> is a null reference.</exception>
+		public void CreateGlobalPalette(Palette palette)
+		{
+			if (palette == null)
+			{
+				throw new ArgumentNullException("palette");
+			}
+
+			GlobalPalette = palette;
+			UseGlobalPalette = true;
+		}
+
+		/// <summary>
+		/// Creates a global palette for the GIF image with the specified size, intialized
+		/// with the first <paramref name="size"/> entries of the specified palette.
+		/// The property <see cref="UseGlobalPalette"/> will be set to <b>true</b> when
+		/// invoking this method. This effectively enables the newly created global palette.
+		/// </summary>
+		/// <param name="palette">The palette that contains the initial values for
+		/// the newly created global palette.</param>
+		/// <param name="size">The size of the newly created global palette.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="palette"/> is a null reference.</exception>
+		public void CreateGlobalPalette(Palette palette, int size)
+		{
+			if (palette == null)
+			{
+				throw new ArgumentNullException("palette");
+			}
+			if (size <= 0)
+			{
+				throw new ArgumentOutOfRangeException("size");
+			}
+
+			Palette pal = new Palette(size);
+			pal.CopyFrom(palette);
+			GlobalPalette = palette;
+			UseGlobalPalette = true;
+		}
 	}
 }
