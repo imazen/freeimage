@@ -1073,7 +1073,7 @@ namespace FreeImageAPI
 		/// <param name="table">Pointer to the bitmap's new transparency table.</param>
 		/// <param name="count">The number of transparent colors in the new transparency table.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetTransparencyTable")]
-		internal static extern void SetTransparencyTable_(FIBITMAP dib, byte[] table, int count);
+		internal static extern void SetTransparencyTable(FIBITMAP dib, byte[] table, int count);
 
 		/// <summary>
 		/// Returns whether the transparency table is enabled.
