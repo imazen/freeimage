@@ -353,9 +353,17 @@ namespace FreeImageAPI
 				Color[] colors = bitmap.Palette.Entries;
 				// Only copy available palette entries
 				int entriesToCopy = Math.Min(palette.Length, colors.Length);
+				byte[] transTable = new byte[entriesToCopy];
 				for (int i = 0; i < entriesToCopy; i++)
 				{
-					palette[i] = (RGBQUAD)colors[i];
+					RGBQUAD color = (RGBQUAD)colors[i];
+					color.rgbReserved = 0x00;
+					palette[i] = color;
+					transTable[i] = colors[i].A;
+				}
+				if ((bitmap.Flags & (int)ImageFlags.HasAlpha) != 0)
+				{
+					FreeImage.SetTransparencyTable(result, transTable);
 				}
 			}
 			// Handle meta data
@@ -2624,7 +2632,7 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentNullException("table");
 			}
-			SetTransparencyTable_(dib, table, table.Length);
+			SetTransparencyTable(dib, table, table.Length);
 		}
 
 		/// <summary>
