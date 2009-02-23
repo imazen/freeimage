@@ -5144,7 +5144,7 @@ namespace FreeImageAPI
 		/// <param name="table">Pointer to the bitmap's new transparency table.</param>
 		/// <param name="count">The number of transparent colors in the new transparency table.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetTransparencyTable")]
-		internal static extern void SetTransparencyTable_(FIBITMAP dib, byte[] table, int count);
+		internal static extern void SetTransparencyTable(FIBITMAP dib, byte[] table, int count);
 
 		/// <summary>
 		/// Returns whether the transparency table is enabled.
@@ -9182,21 +9182,25 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Indicates whether this instance is disposed.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool disposed;
 
 		/// <summary>
 		/// Tab object.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private object tag;
 
 		/// <summary>
 		/// Object used to syncronize lock methods.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private object lockObject = new object();
 
 		/// <summary>
 		/// Holds information used by SaveAdd() methods.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private SaveInformation saveInformation = new SaveInformation();
 
 		/// <summary>
@@ -9204,28 +9208,33 @@ namespace FreeImageAPI
 		/// null if it wasn't loaded from a file, has been
 		/// cloned or deserialized.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private FileStream file;
 
 		/// <summary>
 		/// The number of frames contained by a mutlipage bitmap.
 		/// Default value is 1 and only changed if needed.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private int frameCount = 1;
 
 		/// <summary>
 		/// The index of the loaded frame.
 		/// Default value is 0 and only changed if needed.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private int frameIndex = 0;
 
 		/// <summary>
 		/// Format of the sourceimage.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private FREE_IMAGE_FORMAT originalFormat = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 
 		/// <summary>
 		/// Handle to the encapsulated FreeImage-bitmap.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private FIBITMAP dib;
 
 		private const string ErrorLoadingBitmap = "Unable to load bitmap.";
@@ -10248,7 +10257,7 @@ namespace FreeImageAPI
 				{
 					return new Palette(dib);
 				}
-				throw new InvalidOperationException("This bitmap does not conatin a palette.");
+				throw new InvalidOperationException("This bitmap does not have a palette.");
 			}
 		}
 
@@ -13281,8 +13290,10 @@ namespace FreeImageAPI
 		#region Callback
 
 		// Callback delegate
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static OutputMessageFunction outputMessageFunction;
 		// Handle to pin the functions address
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle outputMessageHandle;
 
 		static FreeImageEngine()
@@ -13373,6 +13384,7 @@ namespace FreeImageAPI.Plugins
 	/// </summary>
 	public sealed class FreeImagePlugin
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly FREE_IMAGE_FORMAT fif;
 
 		/// <summary>
@@ -13587,9 +13599,13 @@ namespace FreeImageAPI.IO
 	/// </remarks>
 	internal static class FreeImageStreamIO
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle readHandle;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle writeHandle;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle seekHandle;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle tellHandle;
 
 		/// <summary>
@@ -14149,6 +14165,83 @@ namespace FreeImageAPI.Metadata
 				}
 			}
 		}
+
+		/// <summary>
+		/// Creates a global palette for the GIF image, intialized with all entries of the
+		/// current local palette.
+		/// The property <see cref="UseGlobalPalette"/> will be set to <b>true</b> when
+		/// invoking this method. This effectively enables the newly created global palette.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">
+		/// The image does not have a palette.
+		/// </exception>
+		public void CreateGlobalPalette()
+		{
+			CreateGlobalPalette(bitmap.Palette);
+		}
+
+		/// <summary>
+		/// Creates a global palette for the GIF image with the specified size, intialized
+		/// with the first <paramref name="size"/> entries of the current local palette.
+		/// The property <see cref="UseGlobalPalette"/> will be set to <b>true</b> when
+		/// invoking this method. This effectively enables the newly created global palette.
+		/// </summary>
+		/// <param name="size">The size of the newly created global palette.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="palette"/> is a null reference.</exception>
+		public void CreateGlobalPalette(int size)
+		{
+			CreateGlobalPalette(bitmap.Palette, size);
+		}
+
+		/// <summary>
+		/// Creates a global palette for the GIF image, intialized with the entries
+		/// of the specified palette.
+		/// The property <see cref="UseGlobalPalette"/> will be set to <b>true</b> when
+		/// invoking this method. This effectively enables the newly created global palette.
+		/// </summary>
+		/// <param name="palette">The palette that contains the initial values for
+		/// the newly created global palette.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="palette"/> is a null reference.</exception>
+		public void CreateGlobalPalette(Palette palette)
+		{
+			if (palette == null)
+			{
+				throw new ArgumentNullException("palette");
+			}
+
+			GlobalPalette = palette;
+			UseGlobalPalette = true;
+		}
+
+		/// <summary>
+		/// Creates a global palette for the GIF image with the specified size, intialized
+		/// with the first <paramref name="size"/> entries of the specified palette.
+		/// The property <see cref="UseGlobalPalette"/> will be set to <b>true</b> when
+		/// invoking this method. This effectively enables the newly created global palette.
+		/// </summary>
+		/// <param name="palette">The palette that contains the initial values for
+		/// the newly created global palette.</param>
+		/// <param name="size">The size of the newly created global palette.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <paramref name="palette"/> is a null reference.</exception>
+		public void CreateGlobalPalette(Palette palette, int size)
+		{
+			if (palette == null)
+			{
+				throw new ArgumentNullException("palette");
+			}
+			if (size <= 0)
+			{
+				throw new ArgumentOutOfRangeException("size");
+			}
+
+			Palette pal = new Palette(size);
+			pal.CopyFrom(palette);
+			GlobalPalette = palette;
+			UseGlobalPalette = true;
+		}
 	}
 }
 
@@ -14159,8 +14252,11 @@ namespace FreeImageAPI.Metadata
 	/// </summary>
 	public class ImageMetadata : IEnumerable, IComparable, IComparable<ImageMetadata>
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly List<MetadataModel> data;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly FIBITMAP dib;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool hideEmptyModels;
 
 		/// <summary>
@@ -14442,26 +14538,37 @@ namespace FreeImageAPI.Plugins
 		/// <summary>
 		/// Struct containing function pointers.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private Plugin plugin;
+
 		/// <summary>
 		/// Delegate for register callback by FreeImage.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private InitProc initProc;
+
 		/// <summary>
 		/// GCHandles to prevent the garbage collector from chaning function addresses.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private GCHandle[] handles = new GCHandle[16];
+
 		/// <summary>
 		/// The format id assiged to the plugin.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+
 		/// <summary>
 		/// When true the plugin was registered successfully else false.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected readonly bool registered = false;
+
 		/// <summary>
 		/// A copy of the functions used to register.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected readonly MethodFlags implementedMethods;
 
 		/// <summary>
@@ -14869,47 +14976,56 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Baseaddress of the wrapped memory.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected byte* baseAddress;
 
 		/// <summary>
 		/// Number of elements being wrapped.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected int length;
 
 		/// <summary>
 		/// Size, in bytes, of each element.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static readonly int size;
 
 		/// <summary>
 		/// Array of <b>T</b> containing a single element.
 		/// The array is used as a workaround, because there are no pointer for generic types.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected T[] buffer;
 
 		/// <summary>
 		/// Pointer to the element of <b>buffer</b>.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected byte* ptr;
 
 		/// <summary>
 		/// Handle for pinning <b>buffer</b>.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected GCHandle handle;
 
 		/// <summary>
 		/// Indicates whether the wrapped memory is handled like a bitfield.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected readonly bool isOneBit;
 
 		/// <summary>
 		/// Indicates whther the wrapped memory is handles like 4-bit blocks.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected readonly bool isFourBit;
 
 		/// <summary>
 		/// An object that can be used to synchronize access to the <see cref="MemoryArray&lt;T&gt;"/>.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		protected object syncRoot = null;
 
 		static MemoryArray()
@@ -15680,6 +15796,7 @@ namespace FreeImageAPI.Metadata
 		/// <summary>
 		/// Handle to a FreeImage-bitmap.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly FIBITMAP dib;
 
 		/// <summary>
@@ -16229,27 +16346,38 @@ namespace FreeImageAPI.Metadata
 		/// <summary>
 		/// The encapsulated FreeImage-tag.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		internal FITAG tag;
+
 		/// <summary>
 		/// The metadata model of <see cref="tag"/>.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private FREE_IMAGE_MDMODEL model;
+
 		/// <summary>
 		/// Indicates whether this instance has already been disposed.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool disposed = false;
+
 		/// <summary>
 		/// Indicates whether this instance was created by FreeImage or
 		/// by the user.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool selfCreated;
+
 		/// <summary>
 		/// List linking metadata-model and Type.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
+
 		/// <summary>
 		/// List linking Type and metadata-model.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
 
 		/// <summary>
@@ -16932,7 +17060,10 @@ namespace FreeImageAPI
 	/// </summary>
 	public sealed class Palette : MemoryArray<RGBQUAD>
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private GCHandle paletteHandle;
+
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private RGBQUAD[] array;
 
 		/// <summary>
@@ -17343,7 +17474,10 @@ namespace FreeImageAPI.Plugins
 	/// </summary>
 	public static class PluginRepository
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static readonly List<FreeImagePlugin> plugins = null;
+		
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static readonly List<FreeImagePlugin> localPlugins = null;
 
 		static PluginRepository()
@@ -17830,22 +17964,31 @@ namespace FreeImageAPI.IO
 		/// <summary>
 		/// The stream to wrap
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly Stream stream;
+
 		/// <summary>
 		/// The caching stream
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private MemoryStream memoryStream = new MemoryStream();
+
 		/// <summary>
 		/// Indicates if the wrapped stream reached its end
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool eos = false;
+
 		/// <summary>
 		/// Tells the wrapper to block readings or not
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool blocking = false;
+
 		/// <summary>
 		/// Indicates if the wrapped stream is disposed or not
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool disposed = false;
 
 		/// <summary>
@@ -18536,9 +18679,17 @@ namespace FreeImageAPI
 				Color[] colors = bitmap.Palette.Entries;
 				// Only copy available palette entries
 				int entriesToCopy = Math.Min(palette.Length, colors.Length);
+				byte[] transTable = new byte[entriesToCopy];
 				for (int i = 0; i < entriesToCopy; i++)
 				{
-					palette[i] = (RGBQUAD)colors[i];
+					RGBQUAD color = (RGBQUAD)colors[i];
+					color.rgbReserved = 0x00;
+					palette[i] = color;
+					transTable[i] = colors[i].A;
+				}
+				if ((bitmap.Flags & (int)ImageFlags.HasAlpha) != 0)
+				{
+					FreeImage.SetTransparencyTable(result, transTable);
 				}
 			}
 			// Handle meta data
@@ -20807,7 +20958,7 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentNullException("table");
 			}
-			SetTransparencyTable_(dib, table, table.Length);
+			SetTransparencyTable(dib, table, table.Length);
 		}
 
 		/// <summary>
