@@ -5,6 +5,14 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+February 23, 2009 - 1.08
+! [Jean-Philippe Goerke] FreeImage.NET now uses Sandcastle Help File Builder 1.8.0.1
++ [Jean-Philippe Goerke] Added new Sandcastle Help File Builder project file FreeImage.NET.shfbproj.
+* [headkaze] Fixed a bug in FreeImage.CreateFromBitmap, which now incorporates any transparency information from palletized .NET Bitmaps.
++ [Jean-Philippe Goerke] Added new overloaded method CreateGlobalPalette() to class GifInformation to create global palettes from local palettes.
+! [Jean-Philippe Goerke] Renamed internal method FreeImage.SetTransparencyTable_ to FreeImage.SetTransparencyTable.
++ [Jean-Philippe Goerke] Added attribute DebuggerBrowsable(DebuggerBrowsableState.Never) to many protected and private fields.
+
 February 20, 2009 - 1.07
 * [Jean-Philippe Goerke] Fixed a bug in FreeImage.IsFilenameValidForFIF and FreeImage.IsExtensionValidForFIF.
 * [Jean-Philippe Goerke] Fixed a bug in FreeImage.SaveEx that could prevent saving supported non-bitmap types.
