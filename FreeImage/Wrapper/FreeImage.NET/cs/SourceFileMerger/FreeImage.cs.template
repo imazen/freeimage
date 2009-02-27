@@ -46,6 +46,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 using FreeImageAPI;
 using FreeImageAPI.IO;
 using FreeImageAPI.Metadata;
