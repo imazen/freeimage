@@ -36,6 +36,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace FreeImageAPI
 {
@@ -56,7 +57,10 @@ namespace FreeImageAPI
 	[Serializable, StructLayout(LayoutKind.Sequential), ComVisible(true)]
 	public struct FIRational : IConvertible, IComparable, IFormattable, IComparable<FIRational>, IEquatable<FIRational>
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private int numerator;
+
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private int denominator;
 
 		/// <summary>
@@ -147,17 +151,6 @@ namespace FreeImageAPI
 			{
 				throw new OverflowException("Unable to calculate fraction.", ex);
 			}
-		}
-
-		/// <summary>
-		/// Initializes a new instance based on the specified parameters.
-		/// </summary>
-		/// <param name="r">The structure to clone from.</param>
-		public FIRational(FIRational r)
-		{
-			numerator = r.numerator;
-			denominator = r.denominator;
-			Normalize();
 		}
 
 		/// <summary>
