@@ -80,7 +80,7 @@ namespace FreeImageAPI.Metadata
 			data.Add(new MDM_EXIF_EXIF(dib));
 			data.Add(new MDM_EXIF_GPS(dib));
 			data.Add(new MDM_INTEROP(dib));
-			data.Add(new MDM_MAIN(dib));
+			data.Add(new MDM_EXIF_MAIN(dib));
 			data.Add(new MDM_MAKERNOTE(dib));
 			data.Add(new MDM_GEOTIFF(dib));
 			data.Add(new MDM_IPTC(dib));
