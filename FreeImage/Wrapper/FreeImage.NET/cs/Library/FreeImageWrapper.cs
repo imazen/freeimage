@@ -4340,6 +4340,58 @@ namespace FreeImageAPI
 				new object[] { color.Name, color.A, color.R, color.G, color.B });
 		}
 
+		internal static void Resize(ref string str, int length)
+		{
+			if ((str != null) && (length >= 0) && (str.Length != length))
+			{
+				char[] chars = str.ToCharArray();
+				Array.Resize(ref chars, length);
+				str = new string(chars);
+			}
+		}
+
+		internal static void Resize(ref string str, int min, int max)
+		{
+			if ((str != null) && (min >= 0) && (max >= 0) && (min <= max))
+			{
+				if (str.Length < min)
+				{
+					char[] chars = str.ToCharArray();
+					Array.Resize(ref chars, min);
+					str = new string(chars);
+				}
+				else if (str.Length > max)
+				{
+					char[] chars = str.ToCharArray();
+					Array.Resize(ref chars, max);
+					str = new string(chars);
+				}
+			}
+		}
+
+		internal static void Resize<T>(ref T[] array, int length)
+		{
+			if ((array != null) && (length >= 0) && (array.Length != length))
+			{
+				Array.Resize(ref array, length);
+			}
+		}
+
+		internal static void Resize<T>(ref T[] array, int min, int max)
+		{
+			if ((array != null) && (min >= 0) && (max >= 0) && (min <= max))
+			{
+				if (array.Length < min)
+				{
+					Array.Resize(ref array, min);
+				}
+				else if (array.Length > max)
+				{
+					Array.Resize(ref array, max);
+				}
+			}
+		}
+
 		#endregion
 
 		#region Dll-Imports
