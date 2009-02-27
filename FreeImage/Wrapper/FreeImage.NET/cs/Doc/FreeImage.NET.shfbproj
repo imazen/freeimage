@@ -16,7 +16,7 @@
     <!-- SHFB properties -->
     <OutputPath>.\Out\</OutputPath>
     <HtmlHelpName>FreeImage.NET</HtmlHelpName>
-    <HelpFileFormat>Help1xAndWebsite</HelpFileFormat>
+    <HelpFileFormat>HtmlHelp1x</HelpFileFormat>
     <KeepLogFile>False</KeepLogFile>
     <FooterText>FreeImage - The productivity booster. FreeImage is licensed under the GNU General Public License %28GPL%29 and the FreeImage Public License %28FIPL%29.</FooterText>
     <HelpTitle>FreeImage .NET Documentation</HelpTitle>
@@ -29,6 +29,14 @@
       <DocumentationSource sourceFile="..\Bin\FreeImageNET.xml" />
     </DocumentationSources>
     <PlugInConfigurations>
+      <PlugInConfig id="Version Builder" enabled="True">
+        <configuration>
+          <currentProject label="FreeImage.NET" version="3.12.0" />
+          <versions>
+            <version label="FreeImage.NET" version="3.11.0" helpFileProject="3.11.0\FreeImage.NET.shfbproj" />
+          </versions>
+        </configuration>
+      </PlugInConfig>
     </PlugInConfigurations>
   </PropertyGroup>
   <!-- There are no properties for these two groups but they need to appear in
