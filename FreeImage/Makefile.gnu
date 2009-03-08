@@ -4,23 +4,26 @@
 include Makefile.srcs
 
 # General configuration variables:
-CC = gcc
-CXX = g++
-AR = ar
-
-INCDIR = /usr/include
-INSTALLDIR = /usr/lib
+DESTDIR ?= /
+INCDIR ?= $(DESTDIR)/usr/include
+INSTALLDIR ?= $(DESTDIR)/usr/lib
 
 # Converts cr/lf to just lf
 DOS2UNIX = dos2unix
 
-COMPILERFLAGS = -O3 -fPIC -fexceptions -fvisibility=hidden
 LIBRARIES = -lstdc++
 
 MODULES = $(SRCS:.c=.o)
 MODULES := $(MODULES:.cpp=.o)
-CFLAGS = $(COMPILERFLAGS) $(INCLUDE)
-CXXFLAGS = $(COMPILERFLAGS)  -Wno-ctor-dtor-privacy $(INCLUDE)
+CFLAGS ?= -O3 -fPIC -fexceptions -fvisibility=hidden
+CFLAGS += $(INCLUDE)
+CXXFLAGS ?= -O3 -fPIC -fexceptions -fvisibility=hidden -Wno-ctor-dtor-privacy
+CXXFLAGS += $(INCLUDE)
+
+ifeq ($(shell sh -c 'uname -m 2>/dev/null || echo not'),x86_64)
+	CFLAGS += -fPIC
+	CXXFLAGS += -fPIC
+endif
 
 TARGET  = freeimage
 STATICLIB = lib$(TARGET).a
@@ -55,15 +58,13 @@ $(STATICLIB): $(MODULES)
 	$(AR) r $@ $(MODULES)
 
 $(SHAREDLIB): $(MODULES)
-	$(CC) -s -shared -Wl,-soname,$(VERLIBNAME) -o $@ $(MODULES) $(LIBRARIES)
+	$(CC) -shared -Wl,-soname,$(VERLIBNAME) $(LDFLAGS) -o $@ $(MODULES) $(LIBRARIES)
 
 install:
+	install -d $(INCDIR) $(INSTALLDIR)
 	install -m 644 -o root -g root $(HEADER) $(INCDIR)
 	install -m 644 -o root -g root $(STATICLIB) $(INSTALLDIR)
 	install -m 755 -o root -g root $(SHAREDLIB) $(INSTALLDIR)
-	ln -sf $(SHAREDLIB) $(INSTALLDIR)/$(VERLIBNAME)
-	ln -sf $(VERLIBNAME) $(INSTALLDIR)/$(LIBNAME)	
-	ldconfig
 
 clean:
 	rm -f core Dist/*.* u2dtmp* $(MODULES) $(STATICLIB) $(SHAREDLIB) $(LIBNAME)
