@@ -195,18 +195,71 @@ ReplaceExtension(char *result, const char *filename, const char *extension) {
 //   Big Endian / Little Endian utility functions
 // ==========================================================
 
+inline WORD 
+__SwapUInt16(WORD arg) { 
+#if defined(MSC_VER) && MSC_VER >= 1310 
+	return _byteswap_ushort(arg); 
+#elif defined(__i386__) && defined(__GNUC__) 
+	__asm__("xchgb %b0, %h0" : "+q" (arg)); 
+	return arg; 
+#elif defined(__ppc__) && defined(__GNUC__) 
+	WORD result; 
+	__asm__("lhbrx %0,0,%1" : "=r" (result) : "r" (&arg), "m" (arg)); 
+	return result; 
+#else 
+	// swap bytes 
+	WORD result;
+	result = ((arg << 8) & 0xFF00) | ((arg >> 8) & 0x00FF); 
+	return result; 
+#endif 
+} 
+ 
+inline DWORD 
+__SwapUInt32(DWORD arg) { 
+#if defined(MSC_VER) && MSC_VER >= 1310 
+	return _byteswap_ulong(arg); 
+#elif defined(__i386__) && defined(__GNUC__) 
+	__asm__("bswap %0" : "+r" (arg)); 
+	return arg; 
+#elif defined(__ppc__) && defined(__GNUC__) 
+	DWORD result; 
+	__asm__("lwbrx %0,0,%1" : "=r" (result) : "r" (&arg), "m" (arg)); 
+	return result; 
+#else 
+	// swap words then bytes
+	DWORD result; 
+	result = ((arg & 0x000000FF) << 24) | ((arg & 0x0000FF00) << 8) | ((arg >> 8) & 0x0000FF00) | ((arg >> 24) & 0x000000FF); 
+	return result; 
+#endif 
+} 
+ 
+/**
+for later use ...
+inline uint64_t 
+SwapInt64(uint64_t arg) { 
+#if defined(MSC_VER) && MSC_VER >= 1310 
+	return _byteswap_uint64(arg); 
+#else 
+	union Swap { 
+		uint64_t sv; 
+		uint32_t ul[2]; 
+	} tmp, result; 
+	tmp.sv = arg; 
+	result.ul[0] = SwapInt32(tmp.ul[1]);  
+	result.ul[1] = SwapInt32(tmp.ul[0]); 
+	return result.sv; 
+#endif 
+} 
+*/
+
 inline void
 SwapShort(WORD *sp) {
-	// swap bytes 
-	*sp = ( ((*sp & 0x00ff) << 8) | ((*sp & 0xff00) >> 8) ); 
+	*sp = __SwapUInt16(*sp);
 }
 
 inline void
 SwapLong(DWORD *lp) {
-	// swap words 
-	*lp = ( ((*lp & 0x0000ffff) << 16) | ((*lp & 0xffff0000) >> 16) ); 
-	// swap bytes 
-	*lp = ( ((*lp & 0x000000ff) << 8) | ((*lp & 0x0000ff00) >> 8) | ((*lp & 0x00ff0000) << 8) | ((*lp & 0xff000000) >> 8) ); 
+	*lp = __SwapUInt32(*lp);
 }
 
 // ==========================================================
