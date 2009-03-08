@@ -935,7 +935,10 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 
 	// get the metadata model
 	METADATAMAP *metadata = ((FREEIMAGEHEADER *)dib->data)->metadata;
-	tagmap = (*metadata)[model];
+	METADATAMAP::iterator model_iterator = metadata->find(model);
+	if (model_iterator != metadata->end()) {
+		tagmap = model_iterator->second;
+	}
 
 	if(key != NULL) {
 
@@ -1005,7 +1008,7 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 			}
 
 			delete tagmap;
-			(*metadata)[model] = NULL;
+			metadata->erase(model_iterator);
 		}
 	}
 
@@ -1014,7 +1017,7 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 
 BOOL DLL_CALLCONV 
 FreeImage_GetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, FITAG **tag) {
-	if(!dib || !key) 
+	if(!dib || !key || !tag) 
 		return FALSE;
 
 	TAGMAP *tagmap = NULL;
@@ -1023,15 +1026,18 @@ FreeImage_GetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 	// get the metadata model
 	METADATAMAP *metadata = ((FREEIMAGEHEADER *)dib->data)->metadata;
 	if(!(*metadata).empty()) {
-		tagmap = (*metadata)[model];
-		if(!tagmap) {
-			// this model, doesn't exist: return
-			return FALSE;
+		METADATAMAP::iterator model_iterator = metadata->find(model);
+		if (model_iterator != metadata->end() ) {
+			// this model exists : try to get the requested tag
+			tagmap = model_iterator->second;
+			TAGMAP::iterator tag_iterator = tagmap->find(key);
+			if (tag_iterator != tagmap->end() ) {
+				// get the requested tag
+				*tag = tag_iterator->second;
+			} 
 		}
-
-		// get the requested tag
-		*tag = (*tagmap)[key];
 	}
+
 	return (*tag != NULL) ? TRUE : FALSE;
 }
 
