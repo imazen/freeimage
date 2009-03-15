@@ -197,7 +197,7 @@ ReplaceExtension(char *result, const char *filename, const char *extension) {
 
 inline WORD 
 __SwapUInt16(WORD arg) { 
-#if defined(MSC_VER) && MSC_VER >= 1310 
+#if defined(_MSC_VER) && _MSC_VER >= 1310 
 	return _byteswap_ushort(arg); 
 #elif defined(__i386__) && defined(__GNUC__) 
 	__asm__("xchgb %b0, %h0" : "+q" (arg)); 
@@ -216,7 +216,7 @@ __SwapUInt16(WORD arg) {
  
 inline DWORD 
 __SwapUInt32(DWORD arg) { 
-#if defined(MSC_VER) && MSC_VER >= 1310 
+#if defined(_MSC_VER) && _MSC_VER >= 1310 
 	return _byteswap_ulong(arg); 
 #elif defined(__i386__) && defined(__GNUC__) 
 	__asm__("bswap %0" : "+r" (arg)); 
@@ -237,7 +237,7 @@ __SwapUInt32(DWORD arg) {
 for later use ...
 inline uint64_t 
 SwapInt64(uint64_t arg) { 
-#if defined(MSC_VER) && MSC_VER >= 1310 
+#if defined(_MSC_VER) && _MSC_VER >= 1310 
 	return _byteswap_uint64(arg); 
 #else 
 	union Swap { 
