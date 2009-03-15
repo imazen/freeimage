@@ -6,7 +6,9 @@ What's New for FreeImage
 + : added
 
 Month day, 2008 - 3.12.0
-! FreeImage now uses libPNG 1.2.34
+! FreeImage now uses libPNG 1.2.35
+! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2009-02-12)
+! FreeImage now uses OpenJPEG 1.3.0 (SVN patch 2008-08-21)
 ! [Herve Drolon] FreeImage_CloneMetadata no longer clone the FIMD_ANIMATION metadata (this was causing problems when saving to GIF format)
 + [Herve Drolon] added full support for the PFM format
 + [Herve Drolon] added JPEG_EXIFROTATE load flag to the JPEG plugin
@@ -24,6 +26,7 @@ Month day, 2008 - 3.12.0
 * [Eugene Golushkov] improved big endian / little endian swapping functions
 * [Carsten Klein/Jean-Philippe Goerke] improved FreeImage_SetMetadata / FreeImage_GetMetadata accessors
 * [Christian Ruppert] improved Linux Makefiles
+* [Eugene Golushkov] fixed PluginBMP alignment bug while saving 16 or 24bit BMP on big endian or Apple machines
 
 July 28th, 2008 - 3.11.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2008-05-24)
