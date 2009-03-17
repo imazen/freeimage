@@ -359,6 +359,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\FreeImage\PluginPFM.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\FreeImage\PluginPNG.cpp"
 					>
 				</File>
