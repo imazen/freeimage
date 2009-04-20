@@ -48,7 +48,7 @@
 
 #define FREEIMAGE_MAJOR_VERSION   3
 #define FREEIMAGE_MINOR_VERSION   12
-#define FREEIMAGE_RELEASE_SERIAL  0
+#define FREEIMAGE_RELEASE_SERIAL  1
 
 // Compiler options ---------------------------------------------------------
 
@@ -610,10 +610,10 @@ FI_STRUCT (FIMEMORY) { void *data; };
 #ifndef PLUGINS
 #define PLUGINS
 
-typedef const char *(DLL_CALLCONV *FI_FormatProc) ();
-typedef const char *(DLL_CALLCONV *FI_DescriptionProc) ();
-typedef const char *(DLL_CALLCONV *FI_ExtensionListProc) ();
-typedef const char *(DLL_CALLCONV *FI_RegExprProc) ();
+typedef const char *(DLL_CALLCONV *FI_FormatProc)(void);
+typedef const char *(DLL_CALLCONV *FI_DescriptionProc)(void);
+typedef const char *(DLL_CALLCONV *FI_ExtensionListProc)(void);
+typedef const char *(DLL_CALLCONV *FI_RegExprProc)(void);
 typedef void *(DLL_CALLCONV *FI_OpenProc)(FreeImageIO *io, fi_handle handle, BOOL read);
 typedef void (DLL_CALLCONV *FI_CloseProc)(FreeImageIO *io, fi_handle handle, void *data);
 typedef int (DLL_CALLCONV *FI_PageCountProc)(FreeImageIO *io, fi_handle handle, void *data);
@@ -621,10 +621,10 @@ typedef int (DLL_CALLCONV *FI_PageCapabilityProc)(FreeImageIO *io, fi_handle han
 typedef FIBITMAP *(DLL_CALLCONV *FI_LoadProc)(FreeImageIO *io, fi_handle handle, int page, int flags, void *data);
 typedef BOOL (DLL_CALLCONV *FI_SaveProc)(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data);
 typedef BOOL (DLL_CALLCONV *FI_ValidateProc)(FreeImageIO *io, fi_handle handle);
-typedef const char *(DLL_CALLCONV *FI_MimeProc) ();
+typedef const char *(DLL_CALLCONV *FI_MimeProc)(void);
 typedef BOOL (DLL_CALLCONV *FI_SupportsExportBPPProc)(int bpp);
 typedef BOOL (DLL_CALLCONV *FI_SupportsExportTypeProc)(FREE_IMAGE_TYPE type);
-typedef BOOL (DLL_CALLCONV *FI_SupportsICCProfilesProc)();
+typedef BOOL (DLL_CALLCONV *FI_SupportsICCProfilesProc)(void);
 
 FI_STRUCT (Plugin) {
 	FI_FormatProc format_proc;
@@ -965,7 +965,7 @@ DLL_API DWORD DLL_CALLCONV FreeImage_ZLibCRC32(DWORD crc, BYTE *source, DWORD so
 // --------------------------------------------------------------------------
 
 // tag creation / destruction
-DLL_API FITAG *DLL_CALLCONV FreeImage_CreateTag();
+DLL_API FITAG *DLL_CALLCONV FreeImage_CreateTag(void);
 DLL_API void DLL_CALLCONV FreeImage_DeleteTag(FITAG *tag);
 DLL_API FITAG *DLL_CALLCONV FreeImage_CloneTag(FITAG *tag);
 
