@@ -5,6 +5,9 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+April 20, 2009 - 1.10
+! [Jean-Philippe Goerke] Updated wrapper-version to 1.10 including some minor changes.
+
 February 27, 2009 - 1.09
 + [Jean-Philippe Goerke] Help file creation now uses the Version Builder plugin of Sandcastle Help File Builder to generate an MSDN-like Version Information paragraph in the help file.
 + [Jean-Philippe Goerke] Added new metadata model class MDM_EXIF_MAIN to replace MDM_MAIN. Class MDM_MAIN still exists but is marked obsolete and will be removed in a future release.
