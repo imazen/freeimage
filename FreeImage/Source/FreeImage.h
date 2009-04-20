@@ -98,7 +98,7 @@
 // This really only affects 24 and 32 bit formats, the rest are always RGB order.
 #define FREEIMAGE_COLORORDER_BGR	0
 #define FREEIMAGE_COLORORDER_RGB	1
-#if defined(__APPLE__) || defined(FREEIMAGE_BIGENDIAN)
+#if defined(FREEIMAGE_BIGENDIAN)
 #define FREEIMAGE_COLORORDER FREEIMAGE_COLORORDER_RGB
 #else
 #define FREEIMAGE_COLORORDER FREEIMAGE_COLORORDER_BGR
