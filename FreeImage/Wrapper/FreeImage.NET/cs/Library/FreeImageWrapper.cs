@@ -108,7 +108,7 @@ namespace FreeImageAPI
 		/// <returns>The internal version of this FreeImage 3 .NET wrapper.</returns>
 		public static Version GetWrapperVersion()
 		{
-			return new Version(1, 0, 5, 0);
+			return new Version(1, 0, 10, 0);
 		}
 
 		/// <summary>
