@@ -704,14 +704,13 @@ FreeImage_RotateClassic(FIBITMAP *dib, double angle) {
 				RGBQUAD *dst_pal = FreeImage_GetPalette(dst);
 				memcpy(&dst_pal[0], &src_pal[0], 256 * sizeof(RGBQUAD));
 
-				// clone IsTransparent member 
-				FreeImage_SetTransparent(dst, FreeImage_IsTransparent(dib)); 
 				// copy transparency table 
-				memcpy(FreeImage_GetTransparencyTable(dst), FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib) * sizeof(BYTE)); 
-				// clone background color 
-				RGBQUAD *bkcolor = NULL; 
-				if( FreeImage_GetBackgroundColor(dib, bkcolor) ) {
-					FreeImage_SetBackgroundColor(dst, bkcolor); 
+				FreeImage_SetTransparencyTable(dst, FreeImage_GetTransparencyTable(dib), FreeImage_GetTransparencyCount(dib));
+
+				// copy background color 
+				RGBQUAD bkcolor; 
+				if( FreeImage_GetBackgroundColor(dib, &bkcolor) ) {
+					FreeImage_SetBackgroundColor(dst, &bkcolor); 
 				}
 
 			}
