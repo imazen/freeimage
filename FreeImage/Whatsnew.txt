@@ -9,6 +9,7 @@ Month day, 2009 - 3.12.1
 * [Christian Heimes] fixed function prototypes to use a void argument when no argument exist
 * [Herve Drolon] fixed RGB color ordering on Intel macs
 * [Herve Drolon] FreeImage_RotateClassic now keep transparency when applied to 8-bit images
+* [Herve Drolon] fixed handling of transparency info in FreeImage_Copy
 
 April 14th, 2009 - 3.12.0
 ! FreeImage now uses libPNG 1.2.35
