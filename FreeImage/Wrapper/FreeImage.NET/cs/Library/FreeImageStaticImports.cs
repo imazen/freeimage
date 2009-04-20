@@ -56,7 +56,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Minor version of the library.
 		/// </summary>
-		public const int FREEIMAGE_MINOR_VERSION = 11;
+		public const int FREEIMAGE_MINOR_VERSION = 12;
 		/// <summary>
 		/// Release version of the library.
 		/// </summary>
