@@ -1328,8 +1328,10 @@ namespace FreeImageNETUnitTest
 		{
 			dib = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_32);
 			Assert.That(!dib.IsNull);
-			FIBITMAP dib8 = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08);
+			FIBITMAP dib8 = iManager.GetBitmap(ImageType.Even, ImageColorType.Type_08_Greyscale_MinIsBlack);
 			Assert.AreNotEqual(0, dib8);
+            Assert.AreEqual(FreeImage.GetWidth(dib), FreeImage.GetWidth(dib8));
+            Assert.AreEqual(FreeImage.GetHeight(dib), FreeImage.GetHeight(dib8));
 
 			Assert.IsTrue(FreeImage.SetChannel(dib, dib8, FREE_IMAGE_COLOR_CHANNEL.FICC_BLUE));
 
