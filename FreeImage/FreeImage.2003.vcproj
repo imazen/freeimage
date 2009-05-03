@@ -277,6 +277,9 @@ copy Source\FreeImage.h Dist
 					RelativePath="Source\FreeImage\PluginXPM.cpp">
 				</File>
 				<File
+					RelativePath=".\Source\FreeImage\PSDParser.cpp">
+				</File>
+				<File
 					RelativePath=".\Source\FreeImage\TIFFLogLuv.cpp">
 				</File>
 			</Filter>
@@ -414,6 +417,9 @@ copy Source\FreeImage.h Dist
 			</File>
 			<File
 				RelativePath="Source\Plugin.h">
+			</File>
+			<File
+				RelativePath=".\Source\FreeImage\PSDParser.h">
 			</File>
 			<File
 				RelativePath="Source\Quantizers.h">

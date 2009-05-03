@@ -343,6 +343,14 @@
 				<File
 					RelativePath="Source\FreeImage\PluginPSD.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							WarningLevel="3"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="Source\FreeImage\PluginRAS.cpp"
@@ -370,6 +378,10 @@
 				</File>
 				<File
 					RelativePath="Source\FreeImage\PluginXPM.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\FreeImage\PSDParser.cpp"
 					>
 				</File>
 				<File
@@ -548,6 +560,10 @@
 			</File>
 			<File
 				RelativePath="Source\Plugin.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\FreeImage\PSDParser.h"
 				>
 			</File>
 			<File

@@ -6,6 +6,7 @@ What's New for FreeImage
 + : added
 
 Month day, 2009 - 3.12.1
++ [Herve Drolon] added support for all Photoshop supported color modes to PSD plugin (with the exception of 32-bit float RGB)
 * [Christian Heimes] fixed function prototypes to use a void argument when no argument exist
 * [Herve Drolon] fixed RGB color ordering on Intel macs
 * [Herve Drolon] FreeImage_RotateClassic now keep transparency when applied to 8-bit images

@@ -403,6 +403,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\FreeImage\PSDParser.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\FreeImage\TIFFLogLuv.cpp"
 					>
 				</File>
@@ -494,6 +498,10 @@
 			</File>
 			<File
 				RelativePath="..\Plugin.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FreeImage\PSDParser.h"
 				>
 			</File>
 			<File
