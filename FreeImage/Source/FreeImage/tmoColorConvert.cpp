@@ -243,7 +243,7 @@ LuminanceFromYxy(FIBITMAP *Yxy, float *maxLum, float *minLum, float *worldLum) {
 		for(unsigned x = 0; x < width; x++) {
 			const float Y = pixel[x].red;
 			max_lum = (max_lum < Y) ? Y : max_lum;	// max Luminance in the scene
-			min_lum = (min_lum < Y) ? min_lum : Y;	// max Luminance in the scene
+			min_lum = (min_lum < Y) ? min_lum : Y;	// min Luminance in the scene
 			sum += log(2.3e-5 + Y);					// contrast constant in Tumblin paper
 		}
 		// next line
