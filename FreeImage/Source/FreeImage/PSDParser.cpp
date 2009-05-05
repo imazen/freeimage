@@ -45,8 +45,8 @@
 #define PSD_COMPRESSION_RLE		1	// RLE compression (same as TIFF packed bits)
 
 #define SAFE_DELETE_ARRAY(_p_) { if (NULL != (_p_)) { delete [] (_p_); (_p_) = NULL; } }
-//#define elxFIXME { assert(false); }
 
+// --------------------------------------------------------------------------
 
 static inline int 
 psdGetValue(const BYTE * iprBuffer, const int iBytes) {
@@ -128,20 +128,6 @@ bool psdColourModeData::Read(FreeImageIO *io, fi_handle handle) {
 		io->read_proc(_plColourData, _Length, 1, handle);
 	}
 
-	return true;
-}
-	
-bool psdColourModeData::IsGrey() const {
-	BYTE r, g, b;
-	for (int i = 0; i < 256; i++) {
-		r = _plColourData[i + 0*256];
-		g = _plColourData[i + 1*256];
-		b = _plColourData[i + 2*256];
-		if ((r!=g) || (r!=b) || (g!=b)) {
-			return false;
-		}
-	}
-	
 	return true;
 }
 	
@@ -326,7 +312,7 @@ psdThumbnail::~psdThumbnail() {
 	SAFE_DELETE_ARRAY(_plData); 
 }
 
-int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool ibBGR) {
+int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool isBGR) {
 	BYTE c[1], ShortValue[2], IntValue[4];
 	int nBytes=0, n;
 	
@@ -364,7 +350,7 @@ int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool i
 
 	_plData = new BYTE[iTotalData];
 	  
-	if (ibBGR) {
+	if (isBGR) {
 		// In BGR format
 		for (int i=0; i<iTotalData; i+=3 ) {
 			n = (int)io->read_proc(&c, sizeof(BYTE), 1, handle);
@@ -973,10 +959,8 @@ FIBITMAP* psdParser::ProcessBuffer(BYTE * iprData) {
 				}
 			}
 			// 32-bit / channel => undocumented HDR 
-			// (don't know how to handle it ...)
 			// --------------------------------------------------------------
 			else if (32 == _headerInfo._BitsPerPixel) {
-				/*
 				if (3 == nChannels) {
 					// RGBF 32-bit
 					FIBITMAP *dib = FreeImage_AllocateT(FIT_RGBF, nWidth, nHeight);
@@ -994,7 +978,6 @@ FIBITMAP* psdParser::ProcessBuffer(BYTE * iprData) {
 						Bitmap = dib;
 					}
 				}
-				*/
 			}
 		}
 		break;
@@ -1289,10 +1272,13 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 								n = (int)io->read_proc(plPixel, bytes, 1, handle);
 								if(n == 0) {
 									break;
-								}
-								// swap for uint16
-								if (2 == bytes) { 
-									BYTE a = plPixel[0], b = plPixel[1]; plPixel[0] = b; plPixel[1] = a; 
+								}								
+								if(2 == bytes) { 
+									// swap for uint16
+									SwapShort((WORD*)&plPixel[0]);
+								} else if(4 == bytes) {
+									// swap for float
+									SwapLong((DWORD*)&plPixel[0]);
 								}
 								memcpy( plData + nPixelCounter, plPixel, bytes );
 								nBytes += n * bytes;

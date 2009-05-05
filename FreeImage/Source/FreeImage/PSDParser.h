@@ -85,7 +85,6 @@ public:
 	@return Returns the number of bytes read
 	*/
 	bool Read(FreeImageIO *io, fi_handle handle);
-	bool IsGrey() const;
 	bool FillPalette(FIBITMAP *dib);
 };
 
@@ -203,7 +202,7 @@ public:
 	/**
 	@return Returns the number of bytes read
 	*/
-	int Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool ibBGR);
+	int Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool isBGR);
 };
 
 class psdICCProfile {
