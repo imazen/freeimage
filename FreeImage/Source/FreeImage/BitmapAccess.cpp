@@ -756,7 +756,7 @@ FreeImage_GetPalette(FIBITMAP *dib) {
 
 unsigned DLL_CALLCONV
 FreeImage_GetDotsPerMeterX(FIBITMAP *dib) {
-	return FreeImage_GetInfoHeader(dib)->biXPelsPerMeter;
+	return (dib) ? FreeImage_GetInfoHeader(dib)->biXPelsPerMeter : 0;
 }
 
 unsigned DLL_CALLCONV
