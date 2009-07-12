@@ -5,6 +5,9 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+July 10th, 2009
++ [Herve Drolon] added fipImage::adjustBrightnessContrastGamma(double brightness, double contrast, double gamma)
+
 October 27th, 2008
 + [Herve Drolon] added FIF static identification functions to fipImage
 

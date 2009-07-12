@@ -789,6 +789,15 @@ BOOL fipImage::adjustContrast(double percentage) {
 	return FALSE;
 }
 
+BOOL fipImage::adjustBrightnessContrastGamma(double brightness, double contrast, double gamma) {
+	if(_dib) {
+		_bHasChanged = TRUE;
+
+		return FreeImage_AdjustColors(_dib, brightness, contrast, gamma, FALSE);
+	}
+	return FALSE;
+}
+
 BOOL fipImage::getHistogram(DWORD *histo, FREE_IMAGE_COLOR_CHANNEL channel) const {
 	if(_dib) {
 		return FreeImage_GetHistogram(_dib, histo, channel);

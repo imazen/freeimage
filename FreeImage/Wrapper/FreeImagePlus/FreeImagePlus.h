@@ -799,6 +799,18 @@ public:
 	*/
 	BOOL adjustContrast(double percentage);
 
+	/**
+	Adjusts an image's brightness, contrast and gamma within a single operation. 
+	If more than one of these image display properties need to be adjusted, 
+	using this function should be preferred over calling each adjustment function separately. 
+	That's particularly true for huge images or if performance is an issue. 
+	@see adjustBrightness
+	@see adjustContrast
+	@see adjustGamma
+	@see FreeImage_AdjustColors
+	*/
+	BOOL adjustBrightnessContrastGamma(double brightness, double contrast, double gamma);
+
 	/** @brief Computes image histogram
 	
 	For 24-bit and 32-bit images, histogram can be computed from red, green, blue and 
