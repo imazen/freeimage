@@ -35,14 +35,10 @@ static const BYTE RLE_ENDOFLINE   = 0;
 static const BYTE RLE_ENDOFBITMAP = 1;
 static const BYTE RLE_DELTA       = 2;
 
-#ifndef __MINGW32__		// prevents a bug in mingw32
-
 static const BYTE BI_RGB          = 0;
 static const BYTE BI_RLE8         = 1;
 static const BYTE BI_RLE4         = 2;
 static const BYTE BI_BITFIELDS    = 3;
-
-#endif // __MINGW32__
 
 // ----------------------------------------------------------
 
