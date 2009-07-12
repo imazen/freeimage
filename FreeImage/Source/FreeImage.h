@@ -47,8 +47,8 @@
 // Version information ------------------------------------------------------
 
 #define FREEIMAGE_MAJOR_VERSION   3
-#define FREEIMAGE_MINOR_VERSION   12
-#define FREEIMAGE_RELEASE_SERIAL  1
+#define FREEIMAGE_MINOR_VERSION   13
+#define FREEIMAGE_RELEASE_SERIAL  0
 
 // Compiler options ---------------------------------------------------------
 
@@ -411,7 +411,9 @@ FI_ENUM(FREE_IMAGE_FORMAT) {
 	FIF_EXR		= 29,
 	FIF_J2K		= 30,
 	FIF_JP2		= 31,
-	FIF_PFM		= 32
+	FIF_PFM		= 32,
+	FIF_PICT	= 33,
+	FIF_RAW		= 34
 };
 
 /** Image type used in FreeImage.
@@ -697,6 +699,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define PCD_BASEDIV16       3		// load the bitmap sized 192 x 128
 #define PCX_DEFAULT         0
 #define PFM_DEFAULT         0
+#define PICT_DEFAULT        0
 #define PNG_DEFAULT         0
 #define PNG_IGNOREGAMMA		1		// loading: avoid gamma correction
 #define PNG_Z_BEST_SPEED			0x0001	// save using ZLib level 1 compression flag (default value is 6)
@@ -709,6 +712,9 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define PNM_SAVE_ASCII      1       // If set the writer saves in ASCII format (i.e. P1, P2 or P3)
 #define PSD_DEFAULT         0
 #define RAS_DEFAULT         0
+#define RAW_DEFAULT         0		// load the file as linear RGB 48-bit
+#define RAW_PREVIEW			1		// try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit
+#define RAW_DISPLAY			2		// load the file as RGB 24-bit
 #define SGI_DEFAULT			0
 #define TARGA_DEFAULT       0
 #define TARGA_LOAD_RGB888   1       // If set the loader converts RGB555 and ARGB8888 -> RGB888.

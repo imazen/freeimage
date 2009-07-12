@@ -27,15 +27,15 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="TRUE"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile=".\Debug/FreeImageLib.pch"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=""
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0"/>
+				CompileAs="2"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -96,7 +96,7 @@ copy ..\FreeImage.h ..\..\Dist
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0"/>
+				CompileAs="2"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -275,6 +275,9 @@ copy ..\FreeImage.h ..\..\Dist
 					RelativePath="..\FreeImage\PluginPFM.cpp">
 				</File>
 				<File
+					RelativePath="..\FreeImage\PluginPICT.cpp">
+				</File>
+				<File
 					RelativePath="..\FreeImage\PluginPNG.cpp">
 				</File>
 				<File
@@ -285,6 +288,9 @@ copy ..\FreeImage.h ..\..\Dist
 				</File>
 				<File
 					RelativePath="..\FreeImage\PluginRAS.cpp">
+				</File>
+				<File
+					RelativePath="..\FreeImage\PluginRAW.cpp">
 				</File>
 				<File
 					RelativePath="..\FreeImage\PluginSGI.cpp">

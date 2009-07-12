@@ -20,6 +20,8 @@ rd Source\OpenEXR\Debug /s /q
 rd Source\OpenEXR\Release /s /q
 rd Source\LibOpenJPEG\Debug /s /q
 rd Source\LibOpenJPEG\Release /s /q
+rd Source\LibRawLite\Debug /s /q
+rd Source\LibRawLite\Release /s /q
 rd TestAPI\Debug /s /q
 rd TestAPI\Release /s /q
 del TestAPI\blob.png

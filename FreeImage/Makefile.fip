@@ -15,9 +15,9 @@ LIBRARIES = -lstdc++
 
 MODULES = $(SRCS:.c=.o)
 MODULES := $(MODULES:.cpp=.o)
-CFLAGS ?= -O3 -fexceptions -fvisibility=hidden
+CFLAGS ?= -O3 -fPIC -fexceptions -fvisibility=hidden -DNO_LCMS
 CFLAGS += $(INCLUDE)
-CXXFLAGS ?= -O3 -fexceptions -fvisibility=hidden -Wno-ctor-dtor-privacy
+CXXFLAGS ?= -O3 -fPIC -fexceptions -fvisibility=hidden -Wno-ctor-dtor-privacy
 CXXFLAGS += $(INCLUDE)
 
 ifeq ($(shell sh -c 'uname -m 2>/dev/null || echo not'),x86_64)

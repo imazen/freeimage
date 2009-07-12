@@ -28,7 +28,7 @@
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="3"
 				AdditionalIncludeDirectories="Source;Source\ZLib;Source\DeprecationManager;Source\OpenEXR\Half;Source\OpenEXR\Iex;Source\OpenEXR\IlmImf;Source\OpenEXR\Imath;Source\OpenEXR\IlmThread"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OPJ_STATIC;FREEIMAGE_EXPORTS;_SECURE_NO_DEPRECATE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;OPJ_STATIC;LIBRAW_NODLL;FREEIMAGE_EXPORTS;_SECURE_NO_DEPRECATE"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="FALSE"
@@ -39,7 +39,7 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				CompileAs="0"/>
+				CompileAs="2"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -95,19 +95,19 @@ copy Source\FreeImage.h Dist
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="Source;Source\ZLib;Source\DeprecationManager;Source\OpenEXR\Half;Source\OpenEXR\Iex;Source\OpenEXR\IlmImf;Source\OpenEXR\Imath;Source\OpenEXR\IlmThread"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OPJ_STATIC;FREEIMAGE_EXPORTS;_SECURE_NO_DEPRECATE"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;OPJ_STATIC;FREEIMAGE_EXPORTS;_SECURE_NO_DEPRECATE;LIBRAW_NODLL"
 				StringPooling="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="TRUE"
-				PrecompiledHeaderFile=".\Debug/FreeImage.pch"
+				PrecompiledHeaderFile=""
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0"/>
+				CompileAs="2"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -247,6 +247,9 @@ copy Source\FreeImage.h Dist
 					RelativePath=".\Source\FreeImage\PluginPFM.cpp">
 				</File>
 				<File
+					RelativePath=".\Source\FreeImage\PluginPICT.cpp">
+				</File>
+				<File
 					RelativePath="Source\FreeImage\PluginPNG.cpp">
 				</File>
 				<File
@@ -257,6 +260,9 @@ copy Source\FreeImage.h Dist
 				</File>
 				<File
 					RelativePath="Source\FreeImage\PluginRAS.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\FreeImage\PluginRAW.cpp">
 				</File>
 				<File
 					RelativePath="Source\FreeImage\PluginSGI.cpp">

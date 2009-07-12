@@ -363,6 +363,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\FreeImage\PluginPICT.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\FreeImage\PluginPNG.cpp"
 					>
 				</File>
