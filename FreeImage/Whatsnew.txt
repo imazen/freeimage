@@ -11,6 +11,7 @@ Month day, 2009 - 3.13.0
 + [Herve Drolon] added support for 32-bit to JNG/MNG plugin
 + [Amir Ebrahimi] added loading support for the PICT format
 + [Herve Drolon] added loading support for camera RAW formats (using LibRawLite wrapper for dcraw)
++ [Mihail Naydenov] added UNICODE functions FreeImage_JPEGTransformU and FreeImage_JPEGCropU
 * [Christian Heimes] fixed function prototypes to use a void argument when no argument exist
 * [Herve Drolon] fixed RGB color ordering on Intel macs
 * [Herve Drolon] FreeImage_RotateClassic now keep transparency when applied to 8-bit images
