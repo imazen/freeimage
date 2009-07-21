@@ -14,12 +14,14 @@ Month day, 2009 - 3.13.0
 + [Amir Ebrahimi] added loading support for the PICT format
 + [Herve Drolon] added loading support for camera RAW formats (using LibRawLite wrapper for dcraw)
 + [Mihail Naydenov] added UNICODE functions FreeImage_JPEGTransformU and FreeImage_JPEGCropU
++ [Carsten Klein] added FreeImage_OpenMultiBitmapFromHandle
 * [Christian Heimes] fixed function prototypes to use a void argument when no argument exist
 * [Herve Drolon] fixed RGB color ordering on Intel macs
 * [Herve Drolon] FreeImage_RotateClassic now keep transparency when applied to 8-bit images
 * [Herve Drolon] fixed handling of transparency info in FreeImage_Copy
 * [Herve Drolon] fixed a normalization error in FreeImage_GetAdjustColorsLookupTable
 * [Herve Drolon] fixed invalid Exif rotation in PluginJPEG for orientation cases 2 and 4
+* [Mihail Naydenov / Carsten Klein] fixed compilation issues with MinGW32
 
 April 14th, 2009 - 3.12.0
 ! FreeImage now uses libPNG 1.2.35
