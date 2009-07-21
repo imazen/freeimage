@@ -164,10 +164,6 @@
 				Name="internal"
 				>
 				<File
-					RelativePath=".\dcraw\dcraw.c"
-					>
-				</File>
-				<File
 					RelativePath=".\internal\dcraw_common.cpp"
 					>
 				</File>

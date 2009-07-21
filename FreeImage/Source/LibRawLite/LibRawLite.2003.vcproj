@@ -121,15 +121,6 @@
 				Name="internal"
 				Filter="">
 				<File
-					RelativePath=".\dcraw\dcraw.c">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							CompileAs="0"/>
-					</FileConfiguration>
-				</File>
-				<File
 					RelativePath=".\internal\dcraw_common.cpp">
 				</File>
 				<File
