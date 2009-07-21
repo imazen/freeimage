@@ -13,7 +13,7 @@ INSTALLDIR = /usr
 # Converts cr/lf to just lf
 DOS2UNIX = dos2unix
 
-COMPILERFLAGS = -O3
+COMPILERFLAGS = -O3 -DNO_LCMS
 LIBRARIES = -lstdc++
 
 MODULES = $(SRCS:.c=.o)
