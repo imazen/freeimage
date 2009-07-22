@@ -396,7 +396,7 @@ FreeImage_OpenMultiBitmapFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_h
 							header->m_filename = NULL;
 							header->node = node;
 							header->fif = fif;
-							header->io = io;
+							*header->io = *io;
 							header->handle = handle;						
 							header->changed = FALSE;						
 							header->read_only = TRUE;
