@@ -22,6 +22,7 @@ Month day, 2009 - 3.13.0
 * [Herve Drolon] fixed a normalization error in FreeImage_GetAdjustColorsLookupTable
 * [Herve Drolon] fixed invalid Exif rotation in PluginJPEG for orientation cases 2 and 4
 * [Mihail Naydenov / Carsten Klein] fixed compilation issues with MinGW32
+* [Mihail Naydenov] improved the loading speed of all targa images
 
 April 14th, 2009 - 3.12.0
 ! FreeImage now uses libPNG 1.2.35
