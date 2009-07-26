@@ -15,6 +15,8 @@ Month day, 2009 - 3.13.0
 + [Herve Drolon] added loading support for camera RAW formats (using LibRawLite wrapper for dcraw)
 + [Mihail Naydenov] added UNICODE functions FreeImage_JPEGTransformU and FreeImage_JPEGCropU
 + [Carsten Klein] added FreeImage_OpenMultiBitmapFromHandle
++ [Carsten Klein] added FreeImage_FillBackground
++ [Carsten Klein] added FreeImage_EnlargeCanvas
 * [Christian Heimes] fixed function prototypes to use a void argument when no argument exist
 * [Herve Drolon] fixed RGB color ordering on Intel macs
 * [Herve Drolon] FreeImage_RotateClassic now keep transparency when applied to 8-bit images
