@@ -441,6 +441,9 @@ copy Source\FreeImage.h Dist
 			Name="Toolkit Files"
 			Filter="">
 			<File
+				RelativePath=".\Source\FreeImageToolkit\Background.cpp">
+			</File>
+			<File
 				RelativePath="Source\FreeImageToolkit\BSplineRotate.cpp">
 			</File>
 			<File

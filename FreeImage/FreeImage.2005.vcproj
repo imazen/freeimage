@@ -591,6 +591,10 @@
 			Name="Toolkit Files"
 			>
 			<File
+				RelativePath=".\Source\FreeImageToolkit\Background.cpp"
+				>
+			</File>
+			<File
 				RelativePath="Source\FreeImageToolkit\BSplineRotate.cpp"
 				>
 			</File>

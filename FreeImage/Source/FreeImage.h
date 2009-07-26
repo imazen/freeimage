@@ -736,6 +736,15 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define XBM_DEFAULT			0
 #define XPM_DEFAULT			0
 
+// Background filling options ---------------------------------------------------------
+// Constants used in FreeImage_FillBackground and FreeImage_EnlargeCanvas
+
+#define FI_COLOR_IS_RGB_COLOR			0x00	// RGBQUAD color is a RGB color (contains no valid alpha channel)
+#define FI_COLOR_IS_RGBA_COLOR			0x01	// RGBQUAD color is a RGBA color (contains a valid alpha channel)
+#define FI_COLOR_FIND_EQUAL_COLOR		0x02	// For palettized images: lookup equal RGB color from palette
+#define FI_COLOR_ALPHA_IS_INDEX			0x04	// The color's rgbReserved member (alpha) contains the palette index to be used
+#define FI_COLOR_PALETTE_SEARCH_MASK	(FI_COLOR_FIND_EQUAL_COLOR | FI_COLOR_ALPHA_IS_INDEX)	// No color lookup is performed
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -1055,6 +1064,10 @@ DLL_API FIBITMAP *DLL_CALLCONV FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg
 DLL_API BOOL DLL_CALLCONV FreeImage_JPEGCrop(const char *src_file, const char *dst_file, int left, int top, int right, int bottom);
 DLL_API BOOL DLL_CALLCONV FreeImage_JPEGCropU(const wchar_t *src_file, const wchar_t *dst_file, int left, int top, int right, int bottom);
 DLL_API BOOL DLL_CALLCONV FreeImage_PreMultiplyWithAlpha(FIBITMAP *dib);
+
+// background filling routines
+DLL_API BOOL DLL_CALLCONV FreeImage_FillBackground(FIBITMAP *dib, const void *color, int options);
+DLL_API FIBITMAP *DLL_CALLCONV FreeImage_EnlargeCanvas(FIBITMAP *src, int left, int top, int right, int bottom, void *color, int options);
 
 // miscellaneous algorithms
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_MultigridPoissonSolver(FIBITMAP *Laplacian, int ncycle FI_DEFAULT(3));
