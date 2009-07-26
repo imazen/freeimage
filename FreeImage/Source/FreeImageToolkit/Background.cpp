@@ -370,7 +370,7 @@ FreeImage_FillBackground(FIBITMAP *dib, const void *color, int options) {
 // that the fill color is present in the palette. 
 
 FIBITMAP * DLL_CALLCONV
-FreeImage_AllocateExT(FREE_IMAGE_TYPE type, int width, int height, int bpp, void *color, int options, RGBQUAD *palette, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
+FreeImage_AllocateExT(FREE_IMAGE_TYPE type, int width, int height, int bpp, const void *color, int options, const RGBQUAD *palette, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
 
 	if (!color) {
 		return NULL;
@@ -507,14 +507,14 @@ FreeImage_AllocateExT(FREE_IMAGE_TYPE type, int width, int height, int bpp, void
 }
 
 FIBITMAP * DLL_CALLCONV
-FreeImage_AllocateEx(int width, int height, int bpp, RGBQUAD *color, int options, RGBQUAD *palette, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
+FreeImage_AllocateEx(int width, int height, int bpp, const RGBQUAD *color, int options, const RGBQUAD *palette, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
 	return FreeImage_AllocateExT(FIT_BITMAP, width, height, bpp, ((void *)color), options, palette, red_mask, green_mask, blue_mask);
 }
 
 // --------------------------------------------------------------------------
 
 FIBITMAP * DLL_CALLCONV
-FreeImage_EnlargeCanvas(FIBITMAP *src, int left, int top, int right, int bottom, void *color, int options) {
+FreeImage_EnlargeCanvas(FIBITMAP *src, int left, int top, int right, int bottom, const void *color, int options) {
 
 	if ((!src) || (!color)) {
 		return NULL;
