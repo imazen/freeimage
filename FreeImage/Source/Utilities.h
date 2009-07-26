@@ -332,7 +332,12 @@ MAXMIN(const T* L, long n, T& max, T& min) {
 //   Generic error messages
 // ==========================================================
 
-static const char *FI_MSG_ERROR_MEMORY = "Not enough memory";
+static const char *FI_MSG_ERROR_MEMORY = "Memory allocation failed";
+static const char *FI_MSG_ERROR_DIB_MEMORY = "DIB allocation failed";
+static const char *FI_MSG_ERROR_PARSING = "Parsing error";
+static const char *FI_MSG_ERROR_MAGIC_NUMBER = "Invalid magic number";
+static const char *FI_MSG_ERROR_UNSUPPORTED_FORMAT = "Unsupported format";
+static const char *FI_MSG_ERROR_UNSUPPORTED_COMPRESSION = "Unsupported compression type";
 
 
 #endif // UTILITIES_H

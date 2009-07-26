@@ -538,7 +538,7 @@ Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 		try {
 			//Header
 			if( !Validate(io, handle) ) {
-				throw "Not a GIF file";
+				throw FI_MSG_ERROR_MAGIC_NUMBER;
 			}
 			io->seek_proc(handle, 6, SEEK_CUR);
 
@@ -706,7 +706,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			//allocate entire logical area
 			dib = FreeImage_Allocate(logicalwidth, logicalheight, 32);
 			if( dib == NULL ) {
-				throw "DIB allocated failed";
+				throw FI_MSG_ERROR_DIB_MEMORY;
 			}
 
 			//fill with background color to start
@@ -858,7 +858,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		}
 		dib = FreeImage_Allocate(width, height, bpp);
 		if( dib == NULL ) {
-			throw "DIB allocated failed";
+			throw FI_MSG_ERROR_DIB_MEMORY;
 		}
 
 		FreeImage_SetMetadataEx(FIMD_ANIMATION, dib, "FrameLeft", ANIMTAG_FRAMELEFT, FIDT_SHORT, 1, 2, &left);

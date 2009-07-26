@@ -135,7 +135,7 @@ libraw_ConvertToDib(libraw_processed_image_t *image) {
 			// allocate output dib
 			dib = FreeImage_AllocateT(FIT_RGB16, width, height);
 			if(!dib) {
-				throw "DIB memory allocation failed";
+				throw FI_MSG_ERROR_DIB_MEMORY;
 			}
 			// write data
 			unsigned short *raw_data = (unsigned short*)image->data;
@@ -152,7 +152,7 @@ libraw_ConvertToDib(libraw_processed_image_t *image) {
 			// allocate output dib
 			dib = FreeImage_AllocateT(FIT_BITMAP, width, height, 24);
 			if(!dib) {
-				throw "DIB memory allocation failed";
+				throw FI_MSG_ERROR_DIB_MEMORY;
 			}
 			// write data
 			BYTE *raw_data = (BYTE*)image->data;

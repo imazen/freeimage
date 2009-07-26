@@ -25,6 +25,12 @@
 #include "../LibMNG/libmng.h"
 #include "../LibMNG/libmng_data.h"
 
+// ==========================================================
+// Plugin Interface
+// ==========================================================
+
+static int s_format_id;
+
 // ----------------------------------------------------------
 //   Constants + headers
 // ----------------------------------------------------------
@@ -147,15 +153,9 @@ mymngerror(mng_handle mng, mng_int32 code, mng_int8 severity, mng_chunkid chunkt
 	} else {
 		sprintf(msg, "Error %d reported by libmng", code);
 	}
-	throw (const char *)msg;
-	//return MNG_TRUE; // not really neccessary but keeps VC5 happy
+	FreeImage_OutputMessageProc(s_format_id, msg);
+	return MNG_FALSE;
 }
-
-// ==========================================================
-// Plugin Interface
-// ==========================================================
-
-static int s_format_id;
 
 // ==========================================================
 // Plugin Implementation

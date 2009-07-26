@@ -356,7 +356,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					dib = FreeImage_Allocate(header.is_width, header.is_height, 8);
 
 					if (dib == NULL) {
-						throw "DIB allocation failed";
+						throw FI_MSG_ERROR_DIB_MEMORY;
 					}
 
 					// read the palette
@@ -553,7 +553,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 
 					if (dib == NULL) {
-						throw "DIB allocation failed";
+						throw FI_MSG_ERROR_DIB_MEMORY;
 					}
 
 					int line = CalculateLine(header.is_width, pixel_bits);
@@ -723,8 +723,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				{
 					dib = FreeImage_Allocate(header.is_width, header.is_height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
-					if (dib == 0) {
-						throw "DIB allocation failed";
+					if (dib == NULL) {
+						throw FI_MSG_ERROR_DIB_MEMORY;
 					}
 
 					// read in the bitmap bits
@@ -872,8 +872,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					// Allocate the DIB
 					dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 
-					if (dib == 0) {
-						throw "DIB allocation failed";
+					if (dib == NULL) {
+						throw FI_MSG_ERROR_DIB_MEMORY;
 					}
 
 					// read in the bitmap bits
