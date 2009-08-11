@@ -5,6 +5,9 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+August 11th, 2009
+* [Mihail Naydenov] fixed fipImage::operator=(FIBITMAP *dib) for cases where dib == _dib
+
 July 10th, 2009
 + [Herve Drolon] added fipImage::adjustBrightnessContrastGamma(double brightness, double contrast, double gamma)
 
