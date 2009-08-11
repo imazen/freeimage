@@ -17,6 +17,7 @@ Month day, 2009 - 3.13.0
 + [Carsten Klein] added FreeImage_OpenMultiBitmapFromHandle
 + [Carsten Klein] added FreeImage_FillBackground
 + [Carsten Klein] added FreeImage_EnlargeCanvas
++ [Carsten Klein] added FreeImage_AllocateEx / FreeImage_AllocateExT
 * [Christian Heimes] fixed function prototypes to use a void argument when no argument exist
 * [Herve Drolon] fixed RGB color ordering on Intel macs
 * [Herve Drolon] FreeImage_RotateClassic now keep transparency when applied to 8-bit images
@@ -25,6 +26,7 @@ Month day, 2009 - 3.13.0
 * [Herve Drolon] fixed invalid Exif rotation in PluginJPEG for orientation cases 2 and 4
 * [Mihail Naydenov / Carsten Klein] fixed compilation issues with MinGW32
 * [Mihail Naydenov] improved the loading speed of all targa images
+* [Herve Drolon] FreeImage_TagToString now handles the Exif UserComment tag
 
 April 14th, 2009 - 3.12.0
 ! FreeImage now uses libPNG 1.2.35
