@@ -1024,6 +1024,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					scale_denom = 2;
 				}
 			}
+			cinfo.scale_num = 1;
 			cinfo.scale_denom = scale_denom;
 
 			if ((flags & JPEG_ACCURATE) != JPEG_ACCURATE) {
