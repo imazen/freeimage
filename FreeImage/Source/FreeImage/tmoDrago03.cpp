@@ -63,7 +63,6 @@ Log mapping operator
 @param biasParam Bias parameter (a zero value default to 0.85)
 @param exposure Exposure parameter (default to 0)
 @return Returns TRUE if successful, returns FALSE otherwise
-@see calculateLuminance
 */
 static BOOL 
 ToneMappingDrago03(FIBITMAP *dib, const float maxLum, const float avgLum, float biasParam, const float exposure) {
