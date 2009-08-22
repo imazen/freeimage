@@ -19,6 +19,7 @@ Month day, 2009 - 3.13.0
 + [Carsten Klein] added FreeImage_FillBackground
 + [Carsten Klein] added FreeImage_EnlargeCanvas
 + [Carsten Klein] added FreeImage_AllocateEx / FreeImage_AllocateExT
++ [Mihail Naydenov/Herve Drolon] added FreeImage_TmoReinhard05Ex
 * [Christian Heimes] fixed function prototypes to use a void argument when no argument exist
 * [Herve Drolon] fixed RGB color ordering on Intel macs
 * [Herve Drolon] FreeImage_RotateClassic now keep transparency when applied to 8-bit images
