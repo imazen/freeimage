@@ -846,7 +846,6 @@ ConvertExifTag(FITAG *tag) {
 			// first 8 bytes are used to define an ID code
 			// we assume this is an ASCII string
 			const BYTE *userComment = (BYTE*)FreeImage_GetTagValue(tag);
-			DWORD tag_length = FreeImage_GetTagLength(tag);
 			for(DWORD i = 8; i < FreeImage_GetTagLength(tag); i++) {
 				buffer += userComment[i];
 			}
