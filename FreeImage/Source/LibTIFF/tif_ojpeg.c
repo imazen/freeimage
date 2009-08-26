@@ -189,8 +189,8 @@ static const TIFFFieldInfo ojpeg_field_info[] = {
 #include <setjmp.h>
 #endif
 
-#include "jpeglib.h"
-#include "jerror.h"
+#include "../LibJPEG/jpeglib.h"
+#include "../LibJPEG/jerror.h"
 
 typedef struct jpeg_error_mgr jpeg_error_mgr;
 typedef struct jpeg_common_struct jpeg_common_struct;
@@ -2382,8 +2382,8 @@ OJPEGLibjpegJpegSourceMgrFillInputBuffer(jpeg_decompress_struct* cinfo)
 {
 	TIFF* tif=(TIFF*)cinfo->client_data;
 	OJPEGState* sp=(OJPEGState*)tif->tif_data;
-	void* mem;
-	uint32 len;
+	void* mem=0;
+	uint32 len=0;
 	if (OJPEGWriteStream(tif,&mem,&len)==0)
 	{
 		TIFFErrorExt(tif->tif_clientdata,"LibJpeg","Premature end of JPEG data");
