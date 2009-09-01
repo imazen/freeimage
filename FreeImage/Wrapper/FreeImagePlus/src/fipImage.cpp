@@ -605,11 +605,20 @@ BOOL fipImage::convertToRGBF() {
 
 }
 
-
-BOOL fipImage::toneMapping(FREE_IMAGE_TMO tmo, double first_param, double second_param) {
+BOOL fipImage::toneMapping(FREE_IMAGE_TMO tmo, double first_param, double second_param, double third_param, double fourth_param) {
 	if(_dib) {
-		FIBITMAP *dib = FreeImage_ToneMapping(_dib, tmo, first_param, second_param);
-		return replace(dib);
+		FIBITMAP *dst = NULL;
+		// Apply a tone mapping algorithm and convert to 24-bit 
+		switch(tmo) {
+			case FITMO_REINHARD05:
+				dst = FreeImage_TmoReinhard05Ex(_dib, first_param, second_param, third_param, fourth_param);
+				break;
+			default:
+				dst = FreeImage_ToneMapping(_dib, tmo, first_param, second_param);
+				break;
+		}
+
+		return replace(dst);
 	}
 	return FALSE;
 }
@@ -710,17 +719,36 @@ BOOL fipImage::rotateEx(double angle, double x_shift, double y_shift, double x_o
 	return FALSE;
 }
 
-BOOL fipImage::rotate(double angle) {
+BOOL fipImage::rotate(double angle, const void *bkcolor) {
 	if(_dib) {
-		switch(FreeImage_GetBPP(_dib)) {
-			case 1:
-			case 8:
-			case 24:
-			case 32:
-				FIBITMAP *rotated = FreeImage_RotateClassic(_dib, angle);
-				return replace(rotated);
+		switch(FreeImage_GetImageType(_dib)) {
+			case FIT_BITMAP:
+				switch(FreeImage_GetBPP(_dib)) {
+					case 1:
+					case 8:
+					case 24:
+					case 32:
+						break;
+					default:
+						return FALSE;
+				}
+				break;
+
+			case FIT_UINT16:
+			case FIT_RGB16:
+			case FIT_RGBA16:
+			case FIT_FLOAT:
+			case FIT_RGBF:
+			case FIT_RGBAF:
+				break;
+			default:
+				return FALSE;
 				break;
 		}
+
+		FIBITMAP *rotated = FreeImage_Rotate(_dib, angle, bkcolor);
+		return replace(rotated);
+
 	}
 	return FALSE;
 }

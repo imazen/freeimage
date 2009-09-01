@@ -611,10 +611,12 @@ public:
 	@param tmo Tone mapping operator
 	@param first_param First tone mapping algorithm parameter (algorithm dependant)
 	@param second_param Second tone mapping algorithm parameter (algorithm dependant)
+	@param third_param Third tone mapping algorithm parameter (algorithm dependant)
+	@param fourth_param Fourth tone mapping algorithm parameter (algorithm dependant)
 	@return Returns TRUE if successfull, FALSE otherwise. 
-	@see FreeImage_ToneMapping
+	@see FreeImage_ToneMapping, FreeImage_TmoReinhard05Ex
 	*/
-	BOOL toneMapping(FREE_IMAGE_TMO tmo, double first_param = 0, double second_param = 0);
+	BOOL toneMapping(FREE_IMAGE_TMO tmo, double first_param = 0, double second_param = 0, double third_param = 1, double fourth_param = 0);
 
 	//@}
 
@@ -731,10 +733,11 @@ public:
 	/** 
 	Image rotation by means of three shears.
 	@param angle Image rotation angle, in degree
+	@param bkcolor Background color (image type dependent), default to black background
 	@return Returns rotated dib if successful, returns NULL otherwise
-	@see FreeImage_RotateClassic
+	@see FreeImage_Rotate
 	*/
-	BOOL rotate(double angle);
+	BOOL rotate(double angle, const void *bkcolor = NULL);
 
 	/**
 	Flip the image horizontally along the vertical axis
@@ -1061,18 +1064,22 @@ public:
 	@param tmo Tone mapping operator
 	@param first_param First tone mapping algorithm parameter
 	@param second_param Second tone mapping algorithm parameter
+	@param third_param Third tone mapping algorithm parameter
+	@param fourth_param Fourth tone mapping algorithm parameter
 	@see FreeImage_ToneMapping
 	*/
-	void setToneMappingOperator(FREE_IMAGE_TMO tmo, double first_param = 0, double second_param = 0);
+	void setToneMappingOperator(FREE_IMAGE_TMO tmo, double first_param = 0, double second_param = 0, double third_param = 1, double fourth_param = 0);
 
 	/**
 	Get the tone mapping algorithm used for drawing, with its parameters.
 	@param tmo Tone mapping operator
 	@param first_param First tone mapping algorithm parameter
 	@param second_param Second tone mapping algorithm parameter
+	@param third_param Third tone mapping algorithm parameter
+	@param fourth_param Fourth tone mapping algorithm parameter
 	@see FreeImage_ToneMapping
 	*/
-	void getToneMappingOperator(FREE_IMAGE_TMO *tmo, double *first_param, double *second_param) const;
+	void getToneMappingOperator(FREE_IMAGE_TMO *tmo, double *first_param, double *second_param, double *third_param, double *fourth_param) const;
 
 	//@}
 
@@ -1087,6 +1094,10 @@ protected:
 	double _tmo_param_1;
 	/// second tone mapping algorithm parameter
 	double _tmo_param_2;
+	/// third tone mapping algorithm parameter
+	double _tmo_param_3;
+	/// fourth tone mapping algorithm parameter
+	double _tmo_param_4;
 };
 
 #endif // _WIN32

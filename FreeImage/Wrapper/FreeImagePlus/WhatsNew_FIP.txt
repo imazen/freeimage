@@ -5,6 +5,12 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+September 1rd, 2009
+! [Herve Drolon] changed prototypes for fipWinImage::setToneMappingOperator and fipWinImage::getToneMappingOperator
+! [Herve Drolon] changed prototype for fipImage::toneMapping
+! [Herve Drolon] changed prototype for fipImage::rotate (now support optional supplied background color)
++ [Herve Drolon] added FreeImage_TmoReinhard05Ex capability to fipImage & fipWinImage
+
 August 11th, 2009
 * [Mihail Naydenov] fixed fipImage::operator=(FIBITMAP *dib) for cases where dib == _dib
 
