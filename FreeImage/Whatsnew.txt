@@ -10,6 +10,7 @@ Month day, 2009 - 3.13.0
 ! FreeImage now uses LibRaw-Lite 0.7.2
 ! FreeImage now uses libPNG 1.2.39
 ! FreeImage now uses libTIFF 3.9.0
+! FreeImage_RotateClassic is deprecated (use FreeImage_Rotate instead)
 + [Herve Drolon] added support for all Photoshop supported color modes to PSD plugin
 + [Herve Drolon] added support for 32-bit to JNG/MNG plugin
 + [Amir Ebrahimi] added loading support for the PICT format
@@ -20,6 +21,8 @@ Month day, 2009 - 3.13.0
 + [Carsten Klein] added FreeImage_EnlargeCanvas
 + [Carsten Klein] added FreeImage_AllocateEx / FreeImage_AllocateExT
 + [Mihail Naydenov/Herve Drolon] added FreeImage_TmoReinhard05Ex
++ [Herve Drolon] added FIT_RGBA16 to FIT_RGBF conversion to FreeImage_ConvertToRGBF  
++ [Herve Drolon] added FreeImage_Rotate (support for most image types, support background color) 
 * [Christian Heimes] fixed function prototypes to use a void argument when no argument exist
 * [Herve Drolon] fixed RGB color ordering on Intel macs
 * [Herve Drolon] FreeImage_RotateClassic now keep transparency when applied to 8-bit images
