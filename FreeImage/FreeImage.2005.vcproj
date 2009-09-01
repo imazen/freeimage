@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="FreeImage"
 	ProjectGUID="{B39ED2B3-D53A-4077-B957-930979A3577D}"
 	RootNamespace="FreeImage"
@@ -468,6 +468,10 @@
 			<Filter
 				Name="DeprecationMgr"
 				>
+				<File
+					RelativePath=".\Source\DeprecationManager\Deprecated.cpp"
+					>
+				</File>
 				<File
 					RelativePath="Source\DeprecationManager\DeprecationMgr.cpp"
 					>

@@ -321,6 +321,9 @@ copy ..\FreeImage.h ..\..\Dist
 				Name="DeprecationMgr"
 				Filter="">
 				<File
+					RelativePath="..\DeprecationManager\Deprecated.cpp">
+				</File>
+				<File
 					RelativePath="..\DeprecationManager\DeprecationMgr.cpp">
 				</File>
 			</Filter>
