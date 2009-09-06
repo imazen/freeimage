@@ -1,3 +1,32 @@
+2009-08-28  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff 3.9.1 released.
+
+2009-08-28  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* libtiff/tif_dirwrite.c: Back out changes from 2007-11-22 that
+	resulted in the final strip not being written in some circumstances.
+	http://bugzilla.maptools.org/show_bug.cgi?id=2088
+
+2009-08-27  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_write.c (TIFFAppendToStrip): Remove cast which
+	caused libtiff to output a wrong last strip with byte-count and
+	strip-offset of zero.  This cast was added on the day of the 3.9.0
+	release.
+
+	* libtiff/tif_config.vc.h: tiffiop.h needs the TIFF_INT64_T and
+	TIFF_UINT64_T defines in order to compile.  Copy existing
+	definitions from tiffconf.vc.h.
+
+2009-08-21  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* test/Makefile.am (AUTOMAKE_OPTIONS): Colorized tests was not
+	actually activated since it needed to be enabled in this
+	Makefile.am.  Also activated parallel-tests mode since it offers
+	useful features such as per-test .log files and a summary test
+	report .log file.
+
 2009-08-20  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
 
 	* libtiff 3.9.0 released.
