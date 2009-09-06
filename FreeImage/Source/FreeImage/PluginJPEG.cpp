@@ -873,7 +873,7 @@ rotate_exif(FIBITMAP **dib) {
 						FreeImage_FlipHorizontal(*dib);
 						break;
 					case 3:		// "bottom, right side"; => -180°
-						rotated = FreeImage_RotateClassic(*dib, 180);
+						rotated = FreeImage_Rotate(*dib, 180);
 						FreeImage_Unload(*dib);
 						*dib = rotated;
 						break;
@@ -881,24 +881,24 @@ rotate_exif(FIBITMAP **dib) {
 						FreeImage_FlipVertical(*dib);
 						break;
 					case 5:		// "left side, top" => +90° + flip up-down
-						rotated = FreeImage_RotateClassic(*dib, 90);
+						rotated = FreeImage_Rotate(*dib, 90);
 						FreeImage_Unload(*dib);
 						*dib = rotated;
 						FreeImage_FlipVertical(*dib);
 						break;
 					case 6:		// "right side, top" => -90°
-						rotated = FreeImage_RotateClassic(*dib, -90);
+						rotated = FreeImage_Rotate(*dib, -90);
 						FreeImage_Unload(*dib);
 						*dib = rotated;
 						break;
 					case 7:		// "right side, bottom" => -90° + flip up-down
-						rotated = FreeImage_RotateClassic(*dib, -90);
+						rotated = FreeImage_Rotate(*dib, -90);
 						FreeImage_Unload(*dib);
 						*dib = rotated;
 						FreeImage_FlipVertical(*dib);
 						break;
 					case 8:		// "left side, bottom" => +90°
-						rotated = FreeImage_RotateClassic(*dib, 90);
+						rotated = FreeImage_Rotate(*dib, 90);
 						FreeImage_Unload(*dib);
 						*dib = rotated;
 						break;
