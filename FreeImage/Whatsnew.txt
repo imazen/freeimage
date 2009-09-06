@@ -9,7 +9,7 @@ Month day, 2009 - 3.13.0
 ! FreeImage now uses LibJPEG 7
 ! FreeImage now uses LibRaw-Lite 0.7.2
 ! FreeImage now uses libPNG 1.2.39
-! FreeImage now uses libTIFF 3.9.0
+! FreeImage now uses libTIFF 3.9.1
 ! FreeImage_RotateClassic is deprecated (use FreeImage_Rotate instead)
 + [Herve Drolon] added support for all Photoshop supported color modes to PSD plugin
 + [Herve Drolon] added support for 32-bit to JNG/MNG plugin
