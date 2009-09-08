@@ -5,6 +5,30 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+September 08, 2009 - 2.5
+! [Carsten Klein] changed constant FREEIMAGE_MINOR_VERSION: set to 13 to match current version 3.13.0
++ [Carsten Klein] added load flag constant JPEG_EXIFROTATE and new member FILO_JPEG_EXIFROTATE to enumeration FREE_IMAGE_LOAD_OPTIONS.
++ [Carsten Klein] added support for the PFM image format.
++ [Carsten Klein] added support for the PICT and RAW image formats.
++ [Carsten Klein] added UNICODE functions FreeImage_JPEGTransformU and FreeImage_JPEGCropU.
++ [Carsten Klein] added enumeration FREE_IMAGE_COLOR_OPTIONS, which contains options to specify colors, used with FreeImage_FillBackground and FreeImage_EnlargeCanvas.
++ [Carsten Klein] added function FreeImage_FillBackground: although this returns BOOL in C/C++, the VB version only returns a Long.
++ [Carsten Klein] added wrapper functions FreeImage_FillBackgroundEx and FreeImage_FillBackgroundByLong, taking an RGBQUAD and a Long 'Color' argument respectively and return a true VB Boolean.
++ [Carsten Klein] added function FreeImage_EnlargeCanvas.
++ [Carsten Klein] added functions FreeImage_AllocateEx and FreeImage_AllocateExT.
++ [Carsten Klein] added function FreeImage_TmoReinhard05Ex.
++ [Carsten Klein] added function FreeImage_Rotate.
++ [Carsten Klein] added wrapper function FreeImage_RotateIOP.
+
+! now FreeImage version 3.13.0
+
+March 18, 2009 - 2.4.2
++ [Carsten Klein] added enumeration FREE_IMAGE_FRAME_DISPOSAL_METHODS, which provides the frame disposal options needed to create animated GIF files.
+
+July 29, 2008 - 2.4.1
+* [Carsten Klein] minor documentation updates
+! [Carsten Klein] renamed member FICF_PALETTISED_8BPP of enumeration FREE_IMAGE_CONVERSION_FLAGS into FICF_PALLETISED_8BPP.
+
 June 30, 2008 - 2.4
 * [Carsten Klein] fixed some minor issues in FreeImage_PaintTransparent()
 

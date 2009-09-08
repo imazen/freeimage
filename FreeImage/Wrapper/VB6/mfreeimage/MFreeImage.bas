@@ -152,6 +152,30 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'September 08, 2009 - 2.5
+'! [Carsten Klein] changed constant FREEIMAGE_MINOR_VERSION: set to 13 to match current version 3.13.0
+'+ [Carsten Klein] added load flag constant JPEG_EXIFROTATE and new member FILO_JPEG_EXIFROTATE to enumeration FREE_IMAGE_LOAD_OPTIONS.
+'+ [Carsten Klein] added support for the PFM image format.
+'+ [Carsten Klein] added support for the PICT and RAW image formats.
+'+ [Carsten Klein] added UNICODE functions FreeImage_JPEGTransformU and FreeImage_JPEGCropU.
+'+ [Carsten Klein] added enumeration FREE_IMAGE_COLOR_OPTIONS, which contains options to specify colors, used with FreeImage_FillBackground and FreeImage_EnlargeCanvas.
+'+ [Carsten Klein] added function FreeImage_FillBackground: although this returns BOOL in C/C++, the VB version only returns a Long.
+'+ [Carsten Klein] added wrapper functions FreeImage_FillBackgroundEx and FreeImage_FillBackgroundByLong, taking an RGBQUAD and a Long 'Color' argument respectively and return a true VB Boolean.
+'+ [Carsten Klein] added function FreeImage_EnlargeCanvas.
+'+ [Carsten Klein] added functions FreeImage_AllocateEx and FreeImage_AllocateExT.
+'+ [Carsten Klein] added function FreeImage_TmoReinhard05Ex.
+'+ [Carsten Klein] added function FreeImage_Rotate.
+'+ [Carsten Klein] added wrapper function FreeImage_RotateIOP.
+'
+'! now FreeImage version 3.13.0
+'
+'March 18, 2009 - 2.4.2
+'+ [Carsten Klein] added enumeration FREE_IMAGE_FRAME_DISPOSAL_METHODS, which provides the frame disposal options needed to create animated GIF files.
+'
+'July 29, 2008 - 2.4.1
+'* [Carsten Klein] minor documentation updates
+'! [Carsten Klein] renamed member FICF_PALETTISED_8BPP of enumeration FREE_IMAGE_CONVERSION_FLAGS into FICF_PALLETISED_8BPP.
+'
 'June 30, 2008 - 2.4
 '* [Carsten Klein] fixed some minor issues in FreeImage_PaintTransparent()
 '
@@ -364,7 +388,7 @@ Option Explicit
 '! [Carsten Klein] changed function signature of FreeImage_FindNextMetadataEx(): optional parameter 'Model' is now present; see the function's inline documentation
 '
 'June 30, 2006 - 1.5.4
-'* [Carsten Klein] fixed bug in functions creating a FreeImage DIB from a windows hBitmap: workaround for palettized bitmaps is now implemented
+'* [Carsten Klein] fixed bug in functions creating a FreeImage DIB from a windows hBitmap: workaround for palletized bitmaps is now implemented
 '*                 fixed function FreeImage_CreateFromOLEPicture()
 '*                 fixed function FreeImage_CreateFromDC()
 '
@@ -1029,7 +1053,7 @@ End Enum
 
 ' Version information
 Public Const FREEIMAGE_MAJOR_VERSION As Long = 3
-Public Const FREEIMAGE_MINOR_VERSION As Long = 11
+Public Const FREEIMAGE_MINOR_VERSION As Long = 13
 Public Const FREEIMAGE_RELEASE_SERIAL As Long = 0
 
 ' Memory stream pointer operation flags
@@ -1104,6 +1128,7 @@ Public Const JPEG_DEFAULT As Long = 0                ' loading (see JPEG_FAST); 
 Public Const JPEG_FAST As Long = &H1                 ' load the file as fast as possible, sacrificing some quality
 Public Const JPEG_ACCURATE As Long = &H2             ' load the file with the best quality, sacrificing some speed
 Public Const JPEG_CMYK As Long = &H4                 ' load separated CMYK "as is" (use 'OR' to combine with other flags)
+Public Const JPEG_EXIFROTATE As Long = &H8           ' load and rotate according to Exif 'Orientation' tag if available
 Public Const JPEG_QUALITYSUPERB As Long = &H80       ' save with superb quality (100:1)
 Public Const JPEG_QUALITYGOOD As Long = &H100        ' save with good quality (75:1)
 Public Const JPEG_QUALITYNORMAL As Long = &H200      ' save with normal quality (50:1)
@@ -1122,6 +1147,8 @@ Public Const PCD_BASE As Long = 1                    ' load the bitmap sized 768
 Public Const PCD_BASEDIV4 As Long = 2                ' load the bitmap sized 384 x 256
 Public Const PCD_BASEDIV16 As Long = 3               ' load the bitmap sized 192 x 128
 Public Const PCX_DEFAULT As Long = 0
+Public Const PFM_DEFAULT As Long = 0
+Public Const PICT_DEFAULT As Long = 0
 Public Const PNG_DEFAULT As Long = 0
 Public Const PNG_IGNOREGAMMA As Long = 1             ' avoid gamma correction
 Public Const PNG_Z_BEST_SPEED As Long = &H1          ' save using ZLib level 1 compression flag (default value is 6)
@@ -1134,6 +1161,9 @@ Public Const PNM_SAVE_RAW As Long = 0                ' if set the writer saves i
 Public Const PNM_SAVE_ASCII As Long = 1              ' if set the writer saves in ASCII format (i.e. P1, P2 or P3)
 Public Const PSD_DEFAULT As Long = 0
 Public Const RAS_DEFAULT As Long = 0
+Public Const RAW_DEFAULT As Long = 0                 ' load the file as linear RGB 48-bit
+Public Const RAW_PREVIEW = 1                         ' try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit
+Public Const RAW_DISPLAY = 2                         ' load the file as RGB 24-bit
 Public Const SGI_DEFAULT As Long = 0
 Public Const TARGA_DEFAULT As Long = 0
 Public Const TARGA_LOAD_RGB888 As Long = 1           ' if set the loader converts RGB555 and ARGB8888 -> RGB888
@@ -1186,6 +1216,9 @@ Public Enum FREE_IMAGE_FORMAT
    FIF_EXR = 29
    FIF_J2K = 30
    FIF_JP2 = 31
+   FIF_PFM = 32
+   FIF_PICT = 33
+   FIF_RAW = 34
 End Enum
 #If False Then
    Const FIF_UNKNOWN = -1
@@ -1222,6 +1255,9 @@ End Enum
    Const FIF_EXR = 29
    Const FIF_J2K = 30
    Const FIF_JP2 = 31
+   Const FIF_PFM = 32
+   Const FIF_PICT = 33
+   Const FIF_RAW = 34
 #End If
 
 Public Enum FREE_IMAGE_LOAD_OPTIONS
@@ -1235,12 +1271,16 @@ Public Enum FREE_IMAGE_LOAD_OPTIONS
    FILO_JPEG_FAST = JPEG_FAST                     ' load the file as fast as possible, sacrificing some quality
    FILO_JPEG_ACCURATE = JPEG_ACCURATE             ' load the file with the best quality, sacrificing some speed
    FILO_JPEG_CMYK = JPEG_CMYK                     ' load separated CMYK "as is" (use 'OR' to combine with other load flags)
+   FILO_JPEG_EXIFROTATE = JPEG_EXIFROTATE         ' load and rotate according to Exif 'Orientation' tag if available
    FILO_PCD_DEFAULT = PCD_DEFAULT
    FILO_PCD_BASE = PCD_BASE                       ' load the bitmap sized 768 x 512
    FILO_PCD_BASEDIV4 = PCD_BASEDIV4               ' load the bitmap sized 384 x 256
    FILO_PCD_BASEDIV16 = PCD_BASEDIV16             ' load the bitmap sized 192 x 128
    FILO_PNG_DEFAULT = PNG_DEFAULT
    FILO_PNG_IGNOREGAMMA = PNG_IGNOREGAMMA         ' avoid gamma correction
+   FILO_RAW_DEFAULT = RAW_DEFAULT                 ' load the file as linear RGB 48-bit
+   FILO_RAW_PREVIEW = RAW_PREVIEW                 ' try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit
+   FILO_RAW_DISPLAY = RAW_DISPLAY                 ' load the file as RGB 24-bit
    FILO_TARGA_DEFAULT = TARGA_LOAD_RGB888
    FILO_TARGA_LOAD_RGB888 = TARGA_LOAD_RGB888     ' if set the loader converts RGB555 and ARGB8888 -> RGB888
    FISO_TIFF_DEFAULT = TIFF_DEFAULT
@@ -1257,6 +1297,7 @@ End Enum
    Const FILO_JPEG_FAST = JPEG_FAST
    Const FILO_JPEG_ACCURATE = JPEG_ACCURATE
    Const FILO_JPEG_CMYK = JPEG_CMYK
+   Const FILO_JPEG_EXIFROTATE = JPEG_EXIFROTATE
    Const FILO_PCD_DEFAULT = PCD_DEFAULT
    Const FILO_PCD_BASE = PCD_BASE
    Const FILO_PCD_BASEDIV4 = PCD_BASEDIV4
@@ -1555,6 +1596,24 @@ End Enum
    FIMD_CUSTOM = 10
 #End If
 
+' These are the GIF_DISPOSAL metadata constants
+Public Enum FREE_IMAGE_FRAME_DISPOSAL_METHODS
+   FIFD_GIF_DISPOSAL_UNSPECIFIED = 0
+   FIFD_GIF_DISPOSAL_LEAVE = 1
+   FIFD_GIF_DISPOSAL_BACKGROUND = 2
+   FIFD_GIF_DISPOSAL_PREVIOUS = 3
+End Enum
+
+' Constants used in FreeImage_FillBackground and FreeImage_EnlargeCanvas
+Public Enum FREE_IMAGE_COLOR_OPTIONS
+   FI_COLOR_IS_RGB_COLOR = &H0          ' RGBQUAD color is a RGB color (contains no valid alpha channel)
+   FI_COLOR_IS_RGBA_COLOR = &H1         ' RGBQUAD color is a RGBA color (contains a valid alpha channel)
+   FI_COLOR_FIND_EQUAL_COLOR = &H2      ' For palettized images: lookup equal RGB color from palette
+   FI_COLOR_ALPHA_IS_INDEX = &H4        ' The color's rgbReserved member (alpha) contains the palette index to be used
+End Enum
+Public Const FI_COLOR_PALETTE_SEARCH_MASK = _
+      (FI_COLOR_FIND_EQUAL_COLOR Or FI_COLOR_ALPHA_IS_INDEX)     ' Flag to test, if any color lookup is performed
+
 ' the next enums are only used by derived functions of the
 ' FreeImage 3 VB wrapper
 Public Enum FREE_IMAGE_CONVERSION_FLAGS
@@ -1562,8 +1621,8 @@ Public Enum FREE_IMAGE_CONVERSION_FLAGS
    FICF_MONOCHROME_THRESHOLD = FICF_MONOCHROME
    FICF_MONOCHROME_DITHER = &H3
    FICF_GREYSCALE_4BPP = &H4
-   FICF_PALETTISED_8BPP = &H8
-   FICF_GREYSCALE_8BPP = FICF_PALETTISED_8BPP Or FICF_MONOCHROME
+   FICF_PALLETISED_8BPP = &H8
+   FICF_GREYSCALE_8BPP = FICF_PALLETISED_8BPP Or FICF_MONOCHROME
    FICF_GREYSCALE = FICF_GREYSCALE_8BPP
    FICF_RGB_15BPP = &HF
    FICF_RGB_16BPP = &H10
@@ -1578,8 +1637,8 @@ End Enum
    Const FICF_MONOCHROME_THRESHOLD = FICF_MONOCHROME
    Const FICF_MONOCHROME_DITHER = &H3
    Const FICF_GREYSCALE_4BPP = &H4
-   Const FICF_PALETTISED_8BPP = &H8
-   Const FICF_GREYSCALE_8BPP = FICF_PALETTISED_8BPP Or FICF_MONOCHROME
+   Const FICF_PALLETISED_8BPP = &H8
+   Const FICF_GREYSCALE_8BPP = FICF_PALLETISED_8BPP Or FICF_MONOCHROME
    Const FICF_GREYSCALE = FICF_GREYSCALE_8BPP
    Const FICF_RGB_15BPP = &HF
    Const FICF_RGB_16BPP = &H10
@@ -2228,6 +2287,13 @@ Public Declare Function FreeImage_TmoReinhard05 Lib "FreeImage.dll" Alias "_Free
   Optional ByVal intensity As Double = 0, _
   Optional ByVal Contrast As Double = 0) As Long
 
+Public Declare Function FreeImage_TmoReinhard05Ex Lib "FreeImage.dll" Alias "_FreeImage_TmoReinhard05Ex@36" ( _
+           ByVal src As Long, _
+  Optional ByVal intensity As Double = 0, _
+  Optional ByVal Contrast As Double = 0, _
+  Optional adaptation As Double = 1, _
+  Optional color_correction As Double = 0) As Long
+
 Public Declare Function FreeImage_TmoFattal02 Lib "FreeImage.dll" Alias "_FreeImage_TmoFattal02@20" ( _
            ByVal src As Long, _
   Optional ByVal color_saturation As Double = 0.5, _
@@ -2541,6 +2607,11 @@ Public Declare Function FreeImage_RotateClassic Lib "FreeImage.dll" Alias "_Free
            ByVal dib As Long, _
            ByVal angle As Double) As Long
 
+Public Declare Function FreeImage_Rotate Lib "FreeImage.dll" Alias "_FreeImage_Rotate@16" ( _
+           ByVal dib As Long, _
+           ByVal angle As Double, _
+  Optional ByRef Color As Any) As Long
+
 Public Declare Function FreeImage_RotateEx Lib "FreeImage.dll" Alias "_FreeImage_RotateEx@48" ( _
            ByVal dib As Long, _
            ByVal angle As Double, _
@@ -2559,6 +2630,12 @@ Private Declare Function FreeImage_FlipVerticalInt Lib "FreeImage.dll" Alias "_F
 Private Declare Function FreeImage_JPEGTransformInt Lib "FreeImage.dll" Alias "_FreeImage_JPEGTransform@16" ( _
            ByVal src_file As String, _
            ByVal dst_file As String, _
+           ByVal operation As FREE_IMAGE_JPEG_OPERATION, _
+  Optional ByVal prefect As Long = 0) As Long
+
+Private Declare Function FreeImage_JPEGTransformUInt Lib "FreeImage.dll" Alias "_FreeImage_JPEGTransformU@16" ( _
+           ByVal src_file As Long, _
+           ByVal dst_file As Long, _
            ByVal operation As FREE_IMAGE_JPEG_OPERATION, _
   Optional ByVal prefect As Long = 0) As Long
 
@@ -2702,11 +2779,55 @@ Private Declare Function FreeImage_JPEGCropInt Lib "FreeImage.dll" Alias "_FreeI
            ByVal Top As Long, _
            ByVal Right As Long, _
            ByVal Bottom As Long) As Long
-           
+
+Private Declare Function FreeImage_JPEGCropUInt Lib "FreeImage.dll" Alias "_FreeImage_JPEGCropU@24" ( _
+           ByVal src_file As Long, _
+           ByVal dst_file As Long, _
+           ByVal Left As Long, _
+           ByVal Top As Long, _
+           ByVal Right As Long, _
+           ByVal Bottom As Long) As Long
+
 Private Declare Function FreeImage_PreMultiplyWithAlphaInt Lib "FreeImage.dll" Alias "_FreeImage_PreMultiplyWithAlpha@4" ( _
            ByVal dib As Long) As Long
            
+Public Declare Function FreeImage_FillBackground Lib "FreeImage.dll" Alias "_FreeImage_FillBackground@12" ( _
+           ByVal dib As Long, _
+           ByRef Color As Any, _
+  Optional ByVal Options As FREE_IMAGE_COLOR_OPTIONS = FI_COLOR_IS_RGB_COLOR) As Long
+
+Public Declare Function FreeImage_EnlargeCanvas Lib "FreeImage.dll" Alias "_FreeImage_EnlargeCanvas@28" ( _
+           ByVal dib As Long, _
+           ByVal Left As Long, _
+           ByVal Top As Long, _
+           ByVal Right As Long, _
+           ByVal Bottom As Long, _
+           ByRef Color As Any, _
+  Optional ByVal Options As FREE_IMAGE_COLOR_OPTIONS = FI_COLOR_IS_RGB_COLOR) As Long
+
+Public Declare Function FreeImage_AllocateEx Lib "FreeImage.dll" Alias "_FreeImage_AllocateEx@36" ( _
+           ByVal Width As Long, _
+           ByVal Height As Long, _
+  Optional ByVal bpp As Long = 8, _
+  Optional ByRef Color As Any, _
+  Optional ByVal Options As FREE_IMAGE_COLOR_OPTIONS, _
+  Optional ByVal lpPalette As Long = 0, _
+  Optional ByVal red_mask As Long = 0, _
+  Optional ByVal green_mask As Long = 0, _
+  Optional ByVal blue_mask As Long = 0) As Long
            
+Public Declare Function FreeImage_AllocateExT Lib "FreeImage.dll" Alias "_FreeImage_AllocateExT@36" ( _
+           ByVal type_ As FREE_IMAGE_TYPE, _
+           ByVal Width As Long, _
+           ByVal Height As Long, _
+  Optional ByVal bpp As Long = 8, _
+  Optional ByRef Color As Any, _
+  Optional ByVal Options As FREE_IMAGE_COLOR_OPTIONS, _
+  Optional ByVal lpPalette As Long = 0, _
+  Optional ByVal red_mask As Long = 0, _
+  Optional ByVal green_mask As Long = 0, _
+  Optional ByVal blue_mask As Long = 0) As Long
+
 ' miscellaneous algorithms (p. 85 to 85)
 Public Declare Function FreeImage_MultigridPoissonSolver Lib "FreeImage.dll" Alias "_FreeImage_MultigridPoissonSolver@8" ( _
            ByVal Laplacian As Long, _
@@ -2922,7 +3043,7 @@ Public Declare Sub FreeImage_ConvertLine24To32 Lib "FreeImage.dll" Alias "_FreeI
           
 
 '--------------------------------------------------------------------------------
-' Initialisation functions
+' Initialization functions
 '--------------------------------------------------------------------------------
 
 Public Function FreeImage_IsAvailable(Optional ByRef Version As String) As Boolean
@@ -3122,6 +3243,38 @@ Public Function FreeImage_GetFIFFromFilenameU(ByVal Filename As String) As FREE_
 
    FreeImage_GetFIFFromFilenameU = FreeImage_GetFIFFromFilenameUInt(StrPtr(Filename))
 
+End Function
+
+Public Function FreeImage_JPEGTransformU(ByVal src_file As String, _
+                                         ByVal dst_file As String, _
+                                         ByVal operation As FREE_IMAGE_JPEG_OPERATION, _
+                                Optional ByVal prefect As Long = 0) As Boolean
+                               
+   ' This function is just a thin wrapper to ease the call to an
+   ' UNICODE function. Since VB's BSTR strings are actually UNICODE
+   ' strings, we just need to pass the pointer to the string data
+   ' returned by the (undocumented) function StrPtr().
+
+   FreeImage_JPEGTransformU = (FreeImage_JPEGTransformInt(StrPtr(src_file), StrPtr(dst_file), _
+                                 operation, prefect) = 1)
+
+End Function
+
+Public Function FreeImage_JPEGCropU(ByVal src_file As String, _
+                                    ByVal dst_file As String, _
+                                    ByVal Left As Long, _
+                                    ByVal Top As Long, _
+                                    ByVal Right As Long, _
+                                    ByVal Bottom As Long) As Boolean
+                                   
+   ' This function is just a thin wrapper to ease the call to an
+   ' UNICODE function. Since VB's BSTR strings are actually UNICODE
+   ' strings, we just need to pass the pointer to the string data
+   ' returned by the (undocumented) function StrPtr().
+   
+   FreeImage_JPEGCropU = (FreeImage_JPEGCropInt(StrPtr(src_file), StrPtr(dst_file), Left, Top, Right, _
+                              Bottom) = 1)
+                                   
 End Function
 
 
@@ -3683,6 +3836,27 @@ Public Function FreeImage_JPEGCrop(ByVal src_file As String, _
    FreeImage_JPEGCrop = (FreeImage_JPEGCropInt(src_file, dst_file, Left, Top, Right, Bottom) = 1)
                                    
 End Function
+
+Public Function FreeImage_FillBackgroundEx(ByVal dib As Long, _
+                                           ByRef Color As RGBQUAD, _
+                                  Optional ByVal Options As FREE_IMAGE_COLOR_OPTIONS = FI_COLOR_IS_RGB_COLOR) As Long
+
+   ' Thin wrapper function returning a real VB Boolean value
+   
+   FreeImage_FillBackgroundEx = (FreeImage_FillBackground(dib, Color, Options) = 1)
+
+End Function
+                                
+Public Function FreeImage_FillBackgroundByLong(ByVal dib As Long, _
+                                               ByRef Color As Long, _
+                                      Optional ByVal Options As FREE_IMAGE_COLOR_OPTIONS = FI_COLOR_IS_RGB_COLOR) As Long
+
+   ' Thin wrapper function returning a real VB Boolean value
+   
+   FreeImage_FillBackgroundByLong = (FreeImage_FillBackground(dib, Color, Options) = 1)
+
+End Function
+
 
 
 '--------------------------------------------------------------------------------
@@ -5366,7 +5540,7 @@ Public Function FreeImage_CloneMetadataEx(ByVal SrcDIB As Long, _
    ' This function will most likely be used in a end user application and should
    ' be invoked through a menu command called: "Set/Apply Metadata From Source Image..."
    
-   ' This function returns the number of tags copied or zero when there are no tags
+   ' This function returns the number of tags copied or zero if there are no tags
    ' in the source image or an error occured.
                                             
    If ((SrcDIB <> 0) And (DstDIB <> 0)) Then
@@ -5614,7 +5788,7 @@ Dim i As Long
    ' greyscale images. However, a DIB needs to have a ordered greyscale palette
    ' (linear ramp or inverse linear ramp) to be judged as FIC_MINISWHITE or
    ' FIC_MINISBLACK. DIB's with an unordered palette that are actually (visually)
-   ' greyscale, are said to be (color-)palettized. That's also true for any 4 bpp
+   ' greyscale, are said to be (color-)palletized. That's also true for any 4 bpp
    ' image, since it will never have a palette that satifies the tests done
    ' in the 'FreeImage_GetColorType' function.
    
@@ -5846,7 +6020,7 @@ Dim bAdjustReservePaletteSize As Boolean
             hDIBNew = FreeImage_ConvertToGreyscale(hDIB)
          End If
          
-      Case FICF_PALETTISED_8BPP
+      Case FICF_PALLETISED_8BPP
          ' note, that the FreeImage library only quantizes 24 bit images
          ' do not convert any 8 bit images
          If (lBPP <> 8) Then
@@ -6021,7 +6195,8 @@ Dim hDIBNew As Long
    ' Result Size       |  75x120 |  85x130 | 200x230 | 120x100 |40000x40000 |
    ' Remarks           | percent |  factor |  direct |         |maybe not   |
    '                                                           |what you    |
-   '                                                           |wanted, or? |
+   '                                                           |wanted,     |
+   '                                                           |right?      |
    
    ' The optional 'bUnloadSource' parameter is for unloading the original image, so
    ' you can "change" an image with this function rather than getting a new DIB
@@ -7564,7 +7739,7 @@ Dim lpInfo As Long
             If (hDIB) Then
                ' The GetDIBits function clears the biClrUsed and biClrImportant BITMAPINFO
                ' members (dont't know why). So we save these infos below.
-               ' This is needed for palettized images only.
+               ' This is needed for palletized images only.
                nColors = FreeImage_GetColorsUsed(hDIB)
             
                hDC = GetDC(0)
@@ -7637,7 +7812,7 @@ Dim lpInfo As Long
       If (hDIB) Then
          ' The GetDIBits function clears the biClrUsed and biClrImportant BITMAPINFO
          ' members (dont't know why). So we save these infos below.
-         ' This is needed for palettized images only.
+         ' This is needed for palletized images only.
          nColors = FreeImage_GetColorsUsed(hDIB)
          
          lResult = GetDIBits(hDC, hBmp, 0, _
@@ -7673,15 +7848,11 @@ Public Function FreeImage_CreateFromImageContainer(ByRef Container As Object, _
    ' FreeImage_Load() or 'FreeImage_CreateFromOlePicture()' when working with
    ' image hosting controls like Forms or PictureBoxes.
    
-   ' The 'IncludeDrawings' parameter controls, whether drawings, drawn with VB
+   ' The 'IncludeDrawings' parameter controls whether drawings, drawn with VB
    ' methods like 'Container.Print()', 'Container.Line(x1, y1)-(x2, y2)' or
    ' 'Container.Circle(x, y), radius' as the controls 'BackColor' should be included
    ' into the newly created DIB. However, this only works, with control's that
    ' have their 'AutoRedraw' property set to 'True'.
-   ' parameter 'hBmp' may specify a handle to a memory bitmap. When 'hBmp' is
-   ' omitted, the bitmap currently selected into the given DC is used to create
-   ' the DIB. When 'IncludeDrawings' is 'True' and the control's 'AutoRedraw'
-   ' property is 'False', a runtime error (5) is generated.
    
    ' To get the control's picture as well as it's BackColor and custom drawings,
    ' this function uses the control's 'Image' property instead of the 'Picture'
@@ -7853,7 +8024,7 @@ Dim i As Long
             
             ElseIf (eMaskColorDstFormat And FICFF_COLOR_PALETTE_INDEX) Then
                ' if mask color is specified as palette index, check, whether the
-               ' source image is a palettized image
+               ' source image is a palletized image
                Select Case lBitDepthSrc
                
                Case 1
@@ -7875,7 +8046,7 @@ Dim i As Long
             
             ElseIf (eUnmaskColorDstFormat And FICFF_COLOR_PALETTE_INDEX) Then
                ' if unmask color is specified as palette index, check, whether the
-               ' source image is a palettized image
+               ' source image is a palletized image
                Select Case lBitDepthSrc
                
                Case 1
@@ -9108,7 +9279,9 @@ Dim strExtension As String
    ' The parameters 'Width', 'Height', 'InPercent' and 'Filter' make it possible
    ' to save the image in a resized version. 'Width', 'Height' specify the desired
    ' width and height, 'Filter' determines, what image filter should be used
-   ' on the resizing process.
+   ' on the resizing process. Since FreeImage_SaveEx relies on FreeImage_RescaleEx,
+   ' please refer to the documentation of FreeImage_RescaleEx to learn more
+   ' about these four parameters.
    
    ' The optional 'bUnloadSource' parameter is for unloading the saved image, so
    ' you can save and unload an image with this function in one operation.
@@ -9446,6 +9619,38 @@ Dim hDIBNew As Long
       Case 1, 8, 24, 32
          hDIBNew = FreeImage_RotateClassic(hDIB, angle)
          Set FreeImage_RotateClassicIOP = FreeImage_GetOlePicture(hDIBNew, , True)
+         
+      End Select
+      Call FreeImage_Unload(hDIB)
+   End If
+
+End Function
+
+Public Function FreeImage_RotateIOP(ByRef IOlePicture As IPicture, _
+                                    ByVal angle As Double, _
+                           Optional ByVal ColorPtr As Long) As IPicture
+
+Dim hDIB As Long
+Dim hDIBNew As Long
+
+   ' IOlePicture based wrapper for FreeImage function FreeImage_Rotate()
+   
+   ' The optional ColorPtr parameter takes a pointer to (e.g. the address of) an
+   ' RGB color value. So, all these assignments are valid for ColorPtr:
+   '
+   ' Dim tColor As RGBQUAD
+   '
+   ' VarPtr(tColor)
+   ' VarPtr(&H33FF80)
+   ' VarPtr(vbWhite) ' However, the VB color constants are in BGR format!
+
+   hDIB = FreeImage_CreateFromOlePicture(IOlePicture)
+   If (hDIB) Then
+      Select Case FreeImage_GetBPP(hDIB)
+      
+      Case 1, 8, 24, 32
+         hDIBNew = FreeImage_Rotate(hDIB, angle, ByVal ColorPtr)
+         Set FreeImage_RotateIOP = FreeImage_GetOlePicture(hDIBNew, , True)
          
       End Select
       Call FreeImage_Unload(hDIB)
