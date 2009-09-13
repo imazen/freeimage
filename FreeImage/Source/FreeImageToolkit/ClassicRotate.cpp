@@ -126,7 +126,7 @@ HorizontalSkewT(FIBITMAP *src, FIBITMAP *dst, int row, int iOffset, double weigh
 	// go to rightmost point of skew
 	iXPos = src_width + iOffset; 
 
-	if(iXPos < (int)dst_width) {
+	if((iXPos >= 0) && (iXPos < (int)dst_width)) {
 		dst_bits = FreeImage_GetScanLine(dst, row) + iXPos * bytespp;
 
 		// If still in image bounds, put leftovers there
@@ -264,7 +264,7 @@ VerticalSkewT(FIBITMAP *src, FIBITMAP *dst, int col, int iOffset, double weight,
 	// go to bottom point of skew
 	iYPos = src_height + iOffset;
 
-	if(iYPos < (int)dst_height) {
+	if((iYPos >= 0) && (iYPos < (int)dst_height)) {
 		dst_bits = FreeImage_GetScanLine(dst, iYPos) + index;
 
 		// if still in image bounds, put leftovers there				
@@ -707,11 +707,11 @@ Rotate45(FIBITMAP *src, double dAngle, const void *bkcolor) {
 
 		if(dTan >= 0)	{
 			// Positive angle
-			dShear = (double(u) + 0.5) * dTan;
+			dShear = (u + 0.5) * dTan;
 		}
 		else {
 			// Negative angle
-			dShear = (double(int(u) - height_1) + 0.5) * dTan;
+			dShear = (double(u) - height_1 + 0.5) * dTan;
 		}
 		int iShear = int(floor(dShear));
 		HorizontalSkew(src, dst1, u, iShear, dShear - double(iShear), bkcolor);
@@ -734,11 +734,11 @@ Rotate45(FIBITMAP *src, double dAngle, const void *bkcolor) {
 	double dOffset;     // Variable skew offset
 	if(dSinE > 0)	{   
 		// Positive angle
-		dOffset = double(src_width - 1) * dSinE;
+		dOffset = (src_width - 1.0) * dSinE;
 	}
 	else {
 		// Negative angle
-		dOffset = -dSinE * double (src_width - width_2);
+		dOffset = -dSinE * (double(src_width) - width_2);
 	}
 
 	for(u = 0; u < width_2; u++, dOffset -= dSinE) {
@@ -765,11 +765,11 @@ Rotate45(FIBITMAP *src, double dAngle, const void *bkcolor) {
 
 	if(dSinE >= 0) {
 		// Positive angle
-		dOffset = double(src_width - 1) * dSinE * -dTan;
+		dOffset = (src_width - 1.0) * dSinE * -dTan;
 	}
 	else {
 		// Negative angle
-		dOffset = dTan * (double(src_width - 1) * -dSinE + double(1 - height_3));
+		dOffset = dTan * ( (src_width - 1.0) * -dSinE + (1.0 - height_3) );
 	}
 	for(u = 0; u < height_3; u++, dOffset += dTan) {
 		int iShear = int(floor(dOffset));
