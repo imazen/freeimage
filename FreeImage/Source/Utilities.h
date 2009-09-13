@@ -36,6 +36,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <assert.h>
+#include <limits.h>
 
 #include <string>
 #include <list>

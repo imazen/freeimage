@@ -13,6 +13,9 @@ endif
 ifeq ($(OS), Solaris)
     MAKEFILE = solaris
 endif
+ifeq ($(OS), windows32)
+    MAKEFILE = mingw
+endif
 
 default:
 	$(MAKE) -f Makefile.$(MAKEFILE) 
