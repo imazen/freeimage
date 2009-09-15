@@ -60,6 +60,17 @@ namespace FreeImageAPI
 		public static readonly FREE_IMAGE_MDMODEL[] FREE_IMAGE_MDMODELS =
 			(FREE_IMAGE_MDMODEL[])Enum.GetValues(typeof(FREE_IMAGE_MDMODEL));
 
+		/// <summary>
+		/// Stores handles used to read from streams.
+		/// </summary>
+		private static Dictionary<FIMULTIBITMAP, fi_handle> streamHandles =
+			new Dictionary<FIMULTIBITMAP, fi_handle>();
+
+		/// <summary>
+		/// Version of the wrapper library.
+		/// </summary>
+		private static Version WrapperVersion;
+
 		private const int DIB_RGB_COLORS = 0;
 		private const int DIB_PAL_COLORS = 1;
 		private const int CBM_INIT = 0x4;
@@ -103,26 +114,74 @@ namespace FreeImageAPI
 		#region General functions
 
 		/// <summary>
-		/// Returns the internal version of this FreeImage 3 .NET wrapper.
+		/// Returns the internal version of this FreeImage .NET wrapper.
 		/// </summary>
-		/// <returns>The internal version of this FreeImage 3 .NET wrapper.</returns>
+		/// <returns>The internal version of this FreeImage .NET wrapper.</returns>
 		public static Version GetWrapperVersion()
 		{
-			return new Version(1, 0, 10, 0);
+			if (WrapperVersion == null)
+			{
+				try
+				{
+					object[] attributes = Assembly.GetAssembly(typeof(FreeImage))
+					.GetCustomAttributes(typeof(AssemblyFileVersionAttribute), false);
+					if ((attributes != null) && (attributes.Length != 0))
+					{
+						AssemblyFileVersionAttribute attribute =
+						attributes[0] as AssemblyFileVersionAttribute;
+						if ((attribute != null) && (attribute.Version != null))
+						{
+							return (WrapperVersion = new Version(attribute.Version));
+						}
+					}
+				}
+				catch
+				{
+
+				}
+
+				WrapperVersion = new Version();
+			}
+
+			return WrapperVersion;
 		}
 
 		/// <summary>
-		/// Returns a value indicating if the FreeImage DLL is available or not.
+		/// Returns the version of the native FreeImage library.
 		/// </summary>
-		/// <returns>True, if the FreeImage DLL is available, false otherwise.</returns>
+		/// <returns>The version of the native FreeImage library.</returns>
+		public static Version GetNativeVersion()
+		{
+			return new Version(GetVersion());
+		}
+
+		/// <summary>
+		/// Returns a value indicating if the FreeImage library is available or not.
+		/// See remarks for further details.
+		/// </summary>
+		/// <returns><c>false</c> if the file is not available or out of date;
+		/// <c>true</c>, otherwise.</returns>
+		/// <remarks>
+		/// The FreeImage.NET library is a wrapper for the native C++ library
+		/// (FreeImage.dll ... dont mix ist up with this library FreeImageNet.dll).
+		/// The native library <b>must</b> be either in the same folder as the program's
+		/// executable or in a folder contained in the envirent variable <i>PATH</i>
+		/// (for example %WINDIR%\System32).<para/>
+		/// Further more must both libraries, including the program itself,
+		/// be the same architecture (x86 or x64).
+		/// </remarks>
 		public static bool IsAvailable()
 		{
 			try
 			{
 				// Call a static fast executing function
-				GetVersion();
-				// No exception thrown, the dll seems to be present
-				return true;
+				Version nativeVersion = new Version(GetVersion());
+				Version wrapperVersion = GetWrapperVersion();
+				// No exception thrown, the library seems to be present
+				return
+				(nativeVersion.Major >= wrapperVersion.Major) &&
+				(nativeVersion.Minor >= wrapperVersion.Minor) &&
+				(nativeVersion.Build >= wrapperVersion.Build);
 			}
 			catch (DllNotFoundException)
 			{
@@ -132,11 +191,349 @@ namespace FreeImageAPI
 			{
 				return false;
 			}
+			catch (BadImageFormatException)
+			{
+				return false;
+			}
 		}
 
 		#endregion
 
 		#region Bitmap management functions
+
+		/// <summary>
+		/// Creates a new bitmap in memory.
+		/// </summary>
+		/// <param name="width">Width of the new bitmap.</param>
+		/// <param name="height">Height of the new bitmap.</param>
+		/// <param name="bpp">Bit depth of the new Bitmap.
+		/// Supported pixel depth: 1-, 4-, 8-, 16-, 24-, 32-bit per pixel for standard bitmap</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		public static FIBITMAP Allocate(int width, int height, int bpp)
+		{
+			return Allocate(width, height, bpp, 0, 0, 0);
+		}
+
+		/// <summary>
+		/// Creates a new bitmap in memory.
+		/// </summary>
+		/// <param name="type">Type of the image.</param>
+		/// <param name="width">Width of the new bitmap.</param>
+		/// <param name="height">Height of the new bitmap.</param>
+		/// <param name="bpp">Bit depth of the new Bitmap.
+		/// Supported pixel depth: 1-, 4-, 8-, 16-, 24-, 32-bit per pixel for standard bitmap</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		public static FIBITMAP AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp)
+		{
+			return AllocateT(type, width, height, bpp, 0, 0, 0);
+		}
+
+		/// <summary>
+		/// Allocates a new image of the specified width, height and bit depth and optionally
+		/// fills it with the specified color. See remarks for further details.
+		/// </summary>
+		/// <param name="width">Width of the new bitmap.</param>
+		/// <param name="height">Height of the new bitmap.</param>
+		/// <param name="bpp">Bit depth of the new bitmap.
+		/// Supported pixel depth: 1-, 4-, 8-, 16-, 24-, 32-bit per pixel for standard bitmaps.</param>
+		/// <param name="color">The color to fill the bitmap with or <c>null</c>.</param>
+		/// <param name="options">Options to enable or disable function-features.</param>
+		/// <param name="palette">The palette of the bitmap or <c>null</c>.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		/// <remarks>
+		/// This function is an extension to <see cref="Allocate"/>, which additionally supports
+		/// specifying a palette to be set for the newly create image, as well as specifying a
+		/// background color, the newly created image should initially be filled with.
+		/// <para/>
+		/// Basically, this function internally relies on function <see cref="Allocate"/>, followed by a
+		/// call to <see cref="FillBackground&lt;T&gt;"/>. This is why both parameters
+		/// <paramref name="color"/> and <paramref name="options"/> behave the same as it is
+		/// documented for function <see cref="FillBackground&lt;T&gt;"/>.
+		/// So, please refer to the documentation of <see cref="FillBackground&lt;T&gt;"/> to
+		/// learn more about parameters <paramref name="color"/> and <paramref name="options"/>.
+		/// <para/>
+		/// The palette specified through parameter <paramref name="palette"/> is only copied to the
+		/// newly created image, if the desired bit depth is smaller than or equal to 8 bits per pixel.
+		/// In other words, the <paramref name="palette"/> parameter is only taken into account for
+		/// palletized images. So, for an 8-bit image, the length is 256, for an 4-bit image it is 16
+		/// and it is 2 for a 1-bit image. In other words, this function does not support partial palettes.
+		/// <para/>
+		/// However, specifying a palette is not necesarily needed, even for palletized images. This
+		/// function is capable of implicitly creating a palette. If the specified background color is
+		/// a greyscale value (red = green = blue), a greyscale palette is created. For a 1-bit image,
+		/// only if the specified background color is either black or white, a monochrome palette,
+		/// consisting of black and white only is created. In any case, the darker colors are stored at
+		/// the smaller palette indices.
+		/// <para/>
+		/// If the specified background color is not a greyscale value, or is neither black nor white
+		/// for a 1-bit image, solely this specified color is injected into the otherwise black-initialized
+		/// palette. For this operation, option <see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_ALPHA_IS_INDEX"/>
+		/// is implicit, so the specified <paramref name="color"/> is applied to the palette entry,
+		/// specified by the background color's <see cref="RGBQUAD.rgbReserved"/> field.
+		/// The image is then filled with this palette index.
+		/// <para/>
+		/// This function returns a newly created image as function <see cref="Allocate"/> does, if both
+		/// parameters <paramref name="color"/> and <paramref name="palette"/> are <c>null</c>.
+		/// If only <paramref name="color"/> is <c>null</c>, the palette pointed to by
+		/// parameter <paramref name="palette"/> is initially set for the new image, if a palletized
+		/// image of type <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/> is created.
+		/// However, in the latter case, this function returns an image, whose
+		/// pixels are all initialized with zeros so, the image will be filled with the color of the
+		/// first palette entry.
+		/// </remarks>
+		public static FIBITMAP AllocateEx(int width, int height, int bpp,
+			RGBQUAD? color, FREE_IMAGE_COLOR_OPTIONS options, RGBQUAD[] palette)
+		{
+			return AllocateEx(width, height, bpp, color, options, palette, 0, 0, 0);
+		}
+
+		/// <summary>
+		/// Allocates a new image of the specified width, height and bit depth and optionally
+		/// fills it with the specified color. See remarks for further details.
+		/// </summary>
+		/// <param name="width">Width of the new bitmap.</param>
+		/// <param name="height">Height of the new bitmap.</param>
+		/// <param name="bpp">Bit depth of the new bitmap.
+		/// Supported pixel depth: 1-, 4-, 8-, 16-, 24-, 32-bit per pixel for standard bitmaps.</param>
+		/// <param name="color">The color to fill the bitmap with or <c>null</c>.</param>
+		/// <param name="options">Options to enable or disable function-features.</param>
+		/// <param name="palette">The palette of the bitmap or <c>null</c>.</param>
+		/// <param name="red_mask">Red part of the color layout.
+		/// eg: 0xFF0000</param>
+		/// <param name="green_mask">Green part of the color layout.
+		/// eg: 0x00FF00</param>
+		/// <param name="blue_mask">Blue part of the color layout.
+		/// eg: 0x0000FF</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		/// <remarks>
+		/// This function is an extension to <see cref="Allocate"/>, which additionally supports
+		/// specifying a palette to be set for the newly create image, as well as specifying a
+		/// background color, the newly created image should initially be filled with.
+		/// <para/>
+		/// Basically, this function internally relies on function <see cref="Allocate"/>, followed by a
+		/// call to <see cref="FillBackground&lt;T&gt;"/>. This is why both parameters
+		/// <paramref name="color"/> and <paramref name="options"/> behave the same as it is
+		/// documented for function <see cref="FillBackground&lt;T&gt;"/>.
+		/// So, please refer to the documentation of <see cref="FillBackground&lt;T&gt;"/> to
+		/// learn more about parameters <paramref name="color"/> and <paramref name="options"/>.
+		/// <para/>
+		/// The palette specified through parameter <paramref name="palette"/> is only copied to the
+		/// newly created image, if the desired bit depth is smaller than or equal to 8 bits per pixel.
+		/// In other words, the <paramref name="palette"/> parameter is only taken into account for
+		/// palletized images. So, for an 8-bit image, the length is 256, for an 4-bit image it is 16
+		/// and it is 2 for a 1-bit image. In other words, this function does not support partial palettes.
+		/// <para/>
+		/// However, specifying a palette is not necesarily needed, even for palletized images. This
+		/// function is capable of implicitly creating a palette. If the specified background color is
+		/// a greyscale value (red = green = blue), a greyscale palette is created. For a 1-bit image,
+		/// only if the specified background color is either black or white, a monochrome palette,
+		/// consisting of black and white only is created. In any case, the darker colors are stored at
+		/// the smaller palette indices.
+		/// <para/>
+		/// If the specified background color is not a greyscale value, or is neither black nor white
+		/// for a 1-bit image, solely this specified color is injected into the otherwise black-initialized
+		/// palette. For this operation, option <see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_ALPHA_IS_INDEX"/>
+		/// is implicit, so the specified <paramref name="color"/> is applied to the palette entry,
+		/// specified by the background color's <see cref="RGBQUAD.rgbReserved"/> field.
+		/// The image is then filled with this palette index.
+		/// <para/>
+		/// This function returns a newly created image as function <see cref="Allocate"/> does, if both
+		/// parameters <paramref name="color"/> and <paramref name="palette"/> are <c>null</c>.
+		/// If only <paramref name="color"/> is <c>null</c>, the palette pointed to by
+		/// parameter <paramref name="palette"/> is initially set for the new image, if a palletized
+		/// image of type <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/> is created.
+		/// However, in the latter case, this function returns an image, whose
+		/// pixels are all initialized with zeros so, the image will be filled with the color of the
+		/// first palette entry.
+		/// </remarks>
+		public static FIBITMAP AllocateEx(int width, int height, int bpp,
+			RGBQUAD? color, FREE_IMAGE_COLOR_OPTIONS options, RGBQUAD[] palette,
+			uint red_mask, uint green_mask, uint blue_mask)
+		{
+			if ((palette != null) && (bpp <= 8) && (palette.Length < (1 << bpp)))
+				return FIBITMAP.Zero;
+
+			if (color.HasValue)
+			{
+				GCHandle handle = new GCHandle();
+				try
+				{
+					RGBQUAD[] buffer = new RGBQUAD[] { color.Value };
+					handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+					return AllocateEx(width, height, bpp, handle.AddrOfPinnedObject(),
+						options, palette, red_mask, green_mask, blue_mask);
+				}
+				finally
+				{
+					if (handle.IsAllocated)
+						handle.Free();
+				}
+			}
+			else
+			{
+				return AllocateEx(width, height, bpp, IntPtr.Zero,
+					options, palette, red_mask, green_mask, blue_mask);
+			}
+		}
+
+		/// <summary>
+		/// Allocates a new image of the specified type, width, height and bit depth and optionally
+		/// fills it with the specified color. See remarks for further details.
+		/// </summary>
+		/// <typeparam name="T">The type of the specified color.</typeparam>
+		/// <param name="type">Type of the image.</param>
+		/// <param name="width">Width of the new bitmap.</param>
+		/// <param name="height">Height of the new bitmap.</param>
+		/// <param name="bpp">Bit depth of the new bitmap.
+		/// Supported pixel depth: 1-, 4-, 8-, 16-, 24-, 32-bit per pixel for standard bitmap</param>
+		/// <param name="color">The color to fill the bitmap with or <c>null</c>.</param>
+		/// <param name="options">Options to enable or disable function-features.</param>
+		/// <param name="palette">The palette of the bitmap or <c>null</c>.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		/// <remarks>
+		/// This function is an extension to <see cref="AllocateT"/>, which additionally supports
+		/// specifying a palette to be set for the newly create image, as well as specifying a
+		/// background color, the newly created image should initially be filled with.
+		/// <para/>
+		/// Basically, this function internally relies on function <see cref="AllocateT"/>, followed by a
+		/// call to <see cref="FillBackground&lt;T&gt;"/>. This is why both parameters 
+		/// <paramref name="color"/> and <paramref name="options"/> behave the same as it is
+		/// documented for function <see cref="FillBackground&lt;T&gt;"/>. So, please refer to the
+		/// documentation of <see cref="FillBackground&lt;T&gt;"/> to learn more about parameters color and options.
+		/// <para/>
+		/// The palette specified through parameter palette is only copied to the newly created
+		/// image, if its image type is <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/> and the desired bit
+		/// depth is smaller than or equal to 8 bits per pixel. In other words, the <paramref name="palette"/>
+		/// palette is only taken into account for palletized images. However, if the preceding conditions
+		/// match and if <paramref name="palette"/> is not <c>null</c>, the palette is assumed to be at
+		/// least as large as the size of a fully populated palette for the desired bit depth.
+		/// So, for an 8-bit image, this length is 256, for an 4-bit image it is 16 and it is
+		/// 2 for a 1-bit image. In other words, this function does not support partial palettes.
+		/// <para/>
+		/// However, specifying a palette is not necesarily needed, even for palletized images. This
+		/// function is capable of implicitly creating a palette. If the specified background color is
+		/// a greyscale value (red = green = blue), a greyscale palette is created. For a 1-bit image,
+		/// only if the specified background color is either black or white, a monochrome palette,
+		/// consisting of black and white only is created. In any case, the darker colors are stored at
+		/// the smaller palette indices.
+		/// <para/>
+		/// If the specified background color is not a greyscale value, or is neither black nor white
+		/// for a 1-bit image, solely this specified color is injected into the otherwise black-initialized
+		/// palette. For this operation, option <see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_ALPHA_IS_INDEX"/>
+		/// is implicit, so the specified color is applied to the palette entry, specified by the
+		/// background color's <see cref="RGBQUAD.rgbReserved"/> field. The image is then filled with
+		/// this palette index.
+		/// <para/>
+		/// This function returns a newly created image as function <see cref="AllocateT"/> does, if both
+		/// parameters <paramref name="color"/> and <paramref name="palette"/> are <c>null</c>.
+		/// If only <paramref name="color"/> is <c>null</c>, the palette pointed to by
+		/// parameter <paramref name="palette"/> is initially set for the new image, if a palletized
+		/// image of type <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/> is created.
+		/// However, in the latter case, this function returns an image, whose
+		/// pixels are all initialized with zeros so, the image will be filled with the color of the
+		/// first palette entry.
+		/// </remarks>
+		public static FIBITMAP AllocateExT<T>(FREE_IMAGE_TYPE type, int width, int height, int bpp,
+			T? color, FREE_IMAGE_COLOR_OPTIONS options, RGBQUAD[] palette) where T : struct
+		{
+			return AllocateExT(type, width, height, bpp, color, options, palette, 0, 0, 0);
+		}
+
+		/// <summary>
+		/// Allocates a new image of the specified type, width, height and bit depth and optionally
+		/// fills it with the specified color. See remarks for further details.
+		/// </summary>
+		/// <typeparam name="T">The type of the specified color.</typeparam>
+		/// <param name="type">Type of the image.</param>
+		/// <param name="width">Width of the new bitmap.</param>
+		/// <param name="height">Height of the new bitmap.</param>
+		/// <param name="bpp">Bit depth of the new bitmap.
+		/// Supported pixel depth: 1-, 4-, 8-, 16-, 24-, 32-bit per pixel for standard bitmap</param>
+		/// <param name="color">The color to fill the bitmap with or <c>null</c>.</param>
+		/// <param name="options">Options to enable or disable function-features.</param>
+		/// <param name="palette">The palette of the bitmap or <c>null</c>.</param>
+		/// <param name="red_mask">Red part of the color layout.
+		/// eg: 0xFF0000</param>
+		/// <param name="green_mask">Green part of the color layout.
+		/// eg: 0x00FF00</param>
+		/// <param name="blue_mask">Blue part of the color layout.
+		/// eg: 0x0000FF</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		/// <remarks>
+		/// This function is an extension to <see cref="AllocateT"/>, which additionally supports
+		/// specifying a palette to be set for the newly create image, as well as specifying a
+		/// background color, the newly created image should initially be filled with.
+		/// <para/>
+		/// Basically, this function internally relies on function <see cref="AllocateT"/>, followed by a
+		/// call to <see cref="FillBackground&lt;T&gt;"/>. This is why both parameters 
+		/// <paramref name="color"/> and <paramref name="options"/> behave the same as it is
+		/// documented for function <see cref="FillBackground&lt;T&gt;"/>. So, please refer to the
+		/// documentation of <see cref="FillBackground&lt;T&gt;"/> to learn more about parameters color and options.
+		/// <para/>
+		/// The palette specified through parameter palette is only copied to the newly created
+		/// image, if its image type is <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/> and the desired bit
+		/// depth is smaller than or equal to 8 bits per pixel. In other words, the <paramref name="palette"/>
+		/// palette is only taken into account for palletized images. However, if the preceding conditions
+		/// match and if <paramref name="palette"/> is not <c>null</c>, the palette is assumed to be at
+		/// least as large as the size of a fully populated palette for the desired bit depth.
+		/// So, for an 8-bit image, this length is 256, for an 4-bit image it is 16 and it is
+		/// 2 for a 1-bit image. In other words, this function does not support partial palettes.
+		/// <para/>
+		/// However, specifying a palette is not necesarily needed, even for palletized images. This
+		/// function is capable of implicitly creating a palette. If the specified background color is
+		/// a greyscale value (red = green = blue), a greyscale palette is created. For a 1-bit image,
+		/// only if the specified background color is either black or white, a monochrome palette,
+		/// consisting of black and white only is created. In any case, the darker colors are stored at
+		/// the smaller palette indices.
+		/// <para/>
+		/// If the specified background color is not a greyscale value, or is neither black nor white
+		/// for a 1-bit image, solely this specified color is injected into the otherwise black-initialized
+		/// palette. For this operation, option <see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_ALPHA_IS_INDEX"/>
+		/// is implicit, so the specified color is applied to the palette entry, specified by the
+		/// background color's <see cref="RGBQUAD.rgbReserved"/> field. The image is then filled with
+		/// this palette index.
+		/// <para/>
+		/// This function returns a newly created image as function <see cref="AllocateT"/> does, if both
+		/// parameters <paramref name="color"/> and <paramref name="palette"/> are <c>null</c>.
+		/// If only <paramref name="color"/> is <c>null</c>, the palette pointed to by
+		/// parameter <paramref name="palette"/> is initially set for the new image, if a palletized
+		/// image of type <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/> is created.
+		/// However, in the latter case, this function returns an image, whose
+		/// pixels are all initialized with zeros so, the image will be filled with the color of the
+		/// first palette entry.
+		/// </remarks>
+		public static FIBITMAP AllocateExT<T>(FREE_IMAGE_TYPE type, int width, int height, int bpp,
+			T? color, FREE_IMAGE_COLOR_OPTIONS options, RGBQUAD[] palette,
+			uint red_mask, uint green_mask, uint blue_mask) where T : struct
+		{
+			if ((palette != null) && (bpp <= 8) && (palette.Length < (1 << bpp)))
+				return FIBITMAP.Zero;
+
+			if (!CheckColorType(type, color))
+				return FIBITMAP.Zero;
+
+			if (color.HasValue)
+			{
+				GCHandle handle = new GCHandle();
+				try
+				{
+					T[] buffer = new T[] { color.Value };
+					handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+					return AllocateExT(type, width, height, bpp, handle.AddrOfPinnedObject(),
+						options, palette, red_mask, green_mask, blue_mask);
+				}
+				finally
+				{
+					if (handle.IsAllocated)
+						handle.Free();
+				}
+			}
+			else
+			{
+				return AllocateExT(type, width, height, bpp, IntPtr.Zero,
+					options, palette, red_mask, green_mask, blue_mask);
+			}
+		}
 
 		/// <summary>
 		/// Converts a FreeImage bitmap to a .NET <see cref="System.Drawing.Bitmap"/>.
@@ -330,21 +727,19 @@ namespace FreeImageAPI
 
 			// Locking the complete bitmap in readonly mode
 			BitmapData data = bitmap.LockBits(
-				new Rectangle(0, 0, bitmap.Width, bitmap.Height),
-				ImageLockMode.ReadOnly, bitmap.PixelFormat);
+				new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
 			// Copying the bitmap data directly from the .NET bitmap
-			FIBITMAP result =
-				ConvertFromRawBits(
-					data.Scan0,
-					type,
-					data.Width,
-					data.Height,
-					data.Stride,
-					bpp,
-					red_mask,
-					green_mask,
-					blue_mask,
-					true);
+			FIBITMAP result = ConvertFromRawBits(
+				data.Scan0,
+				type,
+				data.Width,
+				data.Height,
+				data.Stride,
+				bpp,
+				red_mask,
+				green_mask,
+				blue_mask,
+				true);
 			bitmap.UnlockBits(data);
 			// Handle palette
 			if (GetPalette(result) != IntPtr.Zero)
@@ -500,9 +895,7 @@ namespace FreeImageAPI
 		/// <paramref name="bitmap"/> or <paramref name="filename"/> is null.</exception>
 		/// <exception cref="ArgumentException">
 		/// The bitmaps pixelformat is invalid.</exception>
-		public static bool SaveBitmap(
-			Bitmap bitmap,
-			string filename)
+		public static bool SaveBitmap(Bitmap bitmap, string filename)
 		{
 			return SaveBitmap(
 				bitmap,
@@ -522,10 +915,7 @@ namespace FreeImageAPI
 		/// <paramref name="bitmap"/> or <paramref name="filename"/> is null.</exception>
 		/// <exception cref="ArgumentException">
 		/// The bitmaps pixelformat is invalid.</exception>
-		public static bool SaveBitmap(
-			Bitmap bitmap,
-			string filename,
-			FREE_IMAGE_SAVE_FLAGS flags)
+		public static bool SaveBitmap(Bitmap bitmap, string filename, FREE_IMAGE_SAVE_FLAGS flags)
 		{
 			return SaveBitmap(
 				bitmap,
@@ -689,9 +1079,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		/// <exception cref="ArgumentNullException">
 		/// <paramref name="dib"/> or <paramref name="filename"/> is null.</exception>
-		public static bool SaveEx(
-			FIBITMAP dib,
-			string filename)
+		public static bool SaveEx(FIBITMAP dib, string filename)
 		{
 			return SaveEx(
 				ref dib,
@@ -978,8 +1366,7 @@ namespace FreeImageAPI
 		/// <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
 		/// <paramref name="stream"/> is not capable of reading.</exception>
-		public static FIBITMAP LoadFromStream(
-			Stream stream)
+		public static FIBITMAP LoadFromStream(Stream stream)
 		{
 			FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 			return LoadFromStream(stream, FREE_IMAGE_LOAD_FLAGS.DEFAULT, ref format);
@@ -996,9 +1383,7 @@ namespace FreeImageAPI
 		/// <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
 		/// <paramref name="stream"/> is not capable of reading.</exception>
-		public static FIBITMAP LoadFromStream(
-			Stream stream,
-			FREE_IMAGE_LOAD_FLAGS flags)
+		public static FIBITMAP LoadFromStream(Stream stream, FREE_IMAGE_LOAD_FLAGS flags)
 		{
 			FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 			return LoadFromStream(stream, flags, ref format);
@@ -1019,9 +1404,7 @@ namespace FreeImageAPI
 		/// <paramref name="stream"/> is null.</exception>
 		/// <exception cref="ArgumentException">
 		/// <paramref name="stream"/> is not capable of reading.</exception>
-		public static FIBITMAP LoadFromStream(
-			Stream stream,
-			ref FREE_IMAGE_FORMAT format)
+		public static FIBITMAP LoadFromStream(Stream stream, ref FREE_IMAGE_FORMAT format)
 		{
 			return LoadFromStream(stream, FREE_IMAGE_LOAD_FLAGS.DEFAULT, ref format);
 		}
@@ -1057,14 +1440,14 @@ namespace FreeImageAPI
 			}
 			// Wrap the source stream if it is unable to seek (which is required by FreeImage)
 			stream = (stream.CanSeek) ? stream : new StreamWrapper(stream, true);
-			// Save the streams position
+
+			stream.Position = 0L;
 			if (format == FREE_IMAGE_FORMAT.FIF_UNKNOWN)
 			{
-				long position = stream.Position;
 				// Get the format of the bitmap
 				format = GetFileTypeFromStream(stream);
 				// Restore the streams position
-				stream.Position = position;
+				stream.Position = 0L;
 			}
 			if (!FIFSupportsReading(format))
 			{
@@ -1424,8 +1807,7 @@ namespace FreeImageAPI
 		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
 		/// <paramref name="filename"/> does not exists while opening.</exception>
-		public static FIMULTIBITMAP OpenMultiBitmapEx(
-			string filename)
+		public static FIMULTIBITMAP OpenMultiBitmapEx(string filename)
 		{
 			FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 			return OpenMultiBitmapEx(
@@ -1445,9 +1827,7 @@ namespace FreeImageAPI
 		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		/// <exception cref="FileNotFoundException">
 		/// <paramref name="filename"/> does not exists while opening.</exception>
-		public static FIMULTIBITMAP OpenMultiBitmapEx(
-			string filename,
-			bool keep_cache_in_memory)
+		public static FIMULTIBITMAP OpenMultiBitmapEx(string filename, bool keep_cache_in_memory)
 		{
 			FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
 			return OpenMultiBitmapEx(
@@ -1585,15 +1965,91 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
-		/// Closes a previously opened multi-page bitmap and, when the bitmap was not opened read-only,
-		/// applies any changes made to it.
-		/// On success the handle will be reset to null.
+		/// Loads a FreeImage multi-paged bitmap.
 		/// </summary>
-		/// <param name="dib">Handle to a FreeImage multi-paged bitmap.</param>
-		/// <returns>Returns true on success, false on failure.</returns>
-		public static bool CloseMultiBitmapEx(ref FIMULTIBITMAP dib)
+		/// <param name="stream">The stream to load the bitmap from.</param>
+		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
+		public static FIMULTIBITMAP OpenMultiBitmapFromStream(Stream stream)
 		{
-			return CloseMultiBitmapEx(ref dib, FREE_IMAGE_SAVE_FLAGS.DEFAULT);
+			FREE_IMAGE_FORMAT format = FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+			return OpenMultiBitmapFromStream(stream, ref format, FREE_IMAGE_LOAD_FLAGS.DEFAULT);
+		}
+
+		/// <summary>
+		/// Loads a FreeImage multi-paged bitmap.
+		/// In case the loading format is <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> the files
+		/// real format is being analysed. If no plugin can read the file, format remains
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/> and 0 is returned.
+		/// Load flags can be provided by the flags parameter.
+		/// </summary>
+		/// <param name="stream">The stream to load the bitmap from.</param>
+		/// <param name="format">Format of the image. If the format is unknown use 
+		/// <see cref="FREE_IMAGE_FORMAT.FIF_UNKNOWN"/></param>.
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
+		public static FIMULTIBITMAP OpenMultiBitmapFromStream(Stream stream, ref FREE_IMAGE_FORMAT format, FREE_IMAGE_LOAD_FLAGS flags)
+		{
+			if (stream == null)
+				return FIMULTIBITMAP.Zero;
+
+			if (!stream.CanSeek)
+				stream = new StreamWrapper(stream, true);
+
+			FIMULTIBITMAP mdib = FIMULTIBITMAP.Zero;
+			FreeImageIO io = FreeImageStreamIO.io;
+			fi_handle handle = new fi_handle(stream);
+
+			try
+			{
+				if (format == FREE_IMAGE_FORMAT.FIF_UNKNOWN)
+				{
+					format = GetFileTypeFromHandle(ref io, handle, checked((int)stream.Length));
+				}
+
+				mdib = OpenMultiBitmapFromHandle(format, ref io, handle, flags);
+
+				if (mdib.IsNull)
+				{
+					handle.Dispose();
+				}
+				else
+				{
+					streamHandles.Add(mdib, handle);
+				}
+
+				return mdib;
+			}
+			catch
+			{
+				if (!mdib.IsNull)
+					CloseMultiBitmap(mdib, FREE_IMAGE_SAVE_FLAGS.DEFAULT);
+
+				if (handle != null)
+					handle.Dispose();
+
+				throw;
+			}
+		}
+
+		/// <summary>
+		/// Closes a previously opened multi-page bitmap and, when the bitmap was not opened read-only, applies any changes made to it.
+		/// </summary>
+		/// <param name="bitmap">Handle to a FreeImage multi-paged bitmap.</param>
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public static bool CloseMultiBitmap(FIMULTIBITMAP bitmap, FREE_IMAGE_SAVE_FLAGS flags)
+		{
+			if (CloseMultiBitmap_(bitmap, flags))
+			{
+				fi_handle handle;
+				if (streamHandles.TryGetValue(bitmap, out handle))
+				{
+					streamHandles.Remove(bitmap);
+					handle.Dispose();
+				}
+				return true;
+			}
+			return false;
 		}
 
 		/// <summary>
@@ -1601,17 +2057,29 @@ namespace FreeImageAPI
 		/// applies any changes made to it.
 		/// On success the handle will be reset to null.
 		/// </summary>
-		/// <param name="dib">Handle to a FreeImage multi-paged bitmap.</param>
+		/// <param name="bitmap">Handle to a FreeImage multi-paged bitmap.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public static bool CloseMultiBitmapEx(ref FIMULTIBITMAP bitmap)
+		{
+			return CloseMultiBitmapEx(ref bitmap, FREE_IMAGE_SAVE_FLAGS.DEFAULT);
+		}
+
+		/// <summary>
+		/// Closes a previously opened multi-page bitmap and, when the bitmap was not opened read-only,
+		/// applies any changes made to it.
+		/// On success the handle will be reset to null.
+		/// </summary>
+		/// <param name="bitmap">Handle to a FreeImage multi-paged bitmap.</param>
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
-		public static bool CloseMultiBitmapEx(ref FIMULTIBITMAP dib, FREE_IMAGE_SAVE_FLAGS flags)
+		public static bool CloseMultiBitmapEx(ref FIMULTIBITMAP bitmap, FREE_IMAGE_SAVE_FLAGS flags)
 		{
 			bool result = false;
-			if (!dib.IsNull)
+			if (!bitmap.IsNull)
 			{
-				if (CloseMultiBitmap(dib, flags))
+				if (CloseMultiBitmap(bitmap, flags))
 				{
-					dib.SetNull();
+					bitmap.SetNull();
 					result = true;
 				}
 			}
@@ -1788,10 +2256,7 @@ namespace FreeImageAPI
 				if (hBitmap != IntPtr.Zero && ppvBits != IntPtr.Zero)
 				{
 					// Copy the data into the dc
-					CopyMemory(
-						ppvBits,
-						GetBits(dib),
-						(GetHeight(dib) * GetPitch(dib)));
+					CopyMemory(ppvBits, GetBits(dib), (GetHeight(dib) * GetPitch(dib)));
 					// Success: we unload the bitmap
 					if (unload)
 					{
@@ -1886,13 +2351,13 @@ namespace FreeImageAPI
 						hdc = GetDC(IntPtr.Zero);
 					}
 					if (GetDIBits(
-							hdc,
-							hbitmap,
-							0,
-							(uint)bm.bmHeight,
-							GetBits(dib),
-							GetInfo(dib),
-							DIB_RGB_COLORS) != 0)
+						hdc,
+						hbitmap,
+						0,
+						(uint)bm.bmHeight,
+						GetBits(dib),
+						GetInfo(dib),
+						DIB_RGB_COLORS) != 0)
 					{
 						if (colors != 0)
 						{
@@ -2251,6 +2716,34 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
+		/// Returns the <see cref="FREE_IMAGE_FORMAT"/> for the specified
+		/// <see cref="ImageFormat"/>.
+		/// </summary>
+		/// <param name="imageFormat">The <see cref="ImageFormat"/>
+		/// for which to return the corresponding <see cref="FREE_IMAGE_FORMAT"/>.</param>
+		/// <returns>The <see cref="FREE_IMAGE_FORMAT"/> for the specified
+		/// <see cref="ImageFormat"/></returns>
+		public static FREE_IMAGE_FORMAT GetFormat(ImageFormat imageFormat)
+		{
+			if (imageFormat != null)
+			{
+				if (imageFormat.Equals(ImageFormat.Bmp))
+					return FREE_IMAGE_FORMAT.FIF_BMP;
+				if (imageFormat.Equals(ImageFormat.Gif))
+					return FREE_IMAGE_FORMAT.FIF_GIF;
+				if (imageFormat.Equals(ImageFormat.Icon))
+					return FREE_IMAGE_FORMAT.FIF_ICO;
+				if (imageFormat.Equals(ImageFormat.Jpeg))
+					return FREE_IMAGE_FORMAT.FIF_JPEG;
+				if (imageFormat.Equals(ImageFormat.Png))
+					return FREE_IMAGE_FORMAT.FIF_PNG;
+				if (imageFormat.Equals(ImageFormat.Tiff))
+					return FREE_IMAGE_FORMAT.FIF_TIFF;
+			}
+			return FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+		}
+
+		/// <summary>
 		/// Retrieves all parameters needed to create a new FreeImage bitmap from
 		/// raw bits <see cref="System.Drawing.Image"/>.
 		/// </summary>
@@ -2577,8 +3070,7 @@ namespace FreeImageAPI
 				}
 				do
 				{
-					if ((!GetMetadata(metadataModel, dib2, tag1.Key, out tag2)) ||
-						(tag1 != tag2))
+					if ((!GetMetadata(metadataModel, dib2, tag1.Key, out tag2)) || (tag1 != tag2))
 					{
 						FindCloseMetadata(mdHandle);
 						return false;
@@ -2838,8 +3330,8 @@ namespace FreeImageAPI
 		public static bool IsRGB555(FIBITMAP dib)
 		{
 			return ((GetRedMask(dib) == FI16_555_RED_MASK) &&
-					(GetGreenMask(dib) == FI16_555_GREEN_MASK) &&
-					(GetBlueMask(dib) == FI16_555_BLUE_MASK));
+				(GetGreenMask(dib) == FI16_555_GREEN_MASK) &&
+				(GetBlueMask(dib) == FI16_555_BLUE_MASK));
 		}
 
 		/// <summary>
@@ -2850,8 +3342,8 @@ namespace FreeImageAPI
 		public static bool IsRGB565(FIBITMAP dib)
 		{
 			return ((GetRedMask(dib) == FI16_565_RED_MASK) &&
-					(GetGreenMask(dib) == FI16_565_GREEN_MASK) &&
-					(GetBlueMask(dib) == FI16_565_BLUE_MASK));
+				(GetGreenMask(dib) == FI16_565_GREEN_MASK) &&
+				(GetBlueMask(dib) == FI16_565_BLUE_MASK));
 		}
 
 		#endregion
@@ -3148,7 +3640,7 @@ namespace FreeImageAPI
 						{
 							bool isGreyscale = IsGreyscaleImage(dib);
 							if ((forceGreyscale && (!isGreyscale)) ||
-							(reorderPalette && isGreyscale))
+								(reorderPalette && isGreyscale))
 							{
 								result = Threshold(dib, threshold);
 							}
@@ -3174,7 +3666,7 @@ namespace FreeImageAPI
 						{
 							bool isGreyscale = IsGreyscaleImage(dib);
 							if ((forceGreyscale && (!isGreyscale)) ||
-							(reorderPalette && isGreyscale))
+								(reorderPalette && isGreyscale))
 							{
 								result = Dither(dib, ditherMethod);
 							}
@@ -3677,6 +4169,52 @@ namespace FreeImageAPI
 		#region Rotation and Flipping
 
 		/// <summary>
+		/// This function rotates a 1-, 8-bit greyscale or a 24-, 32-bit color image by means of 3 shears.
+		/// 1-bit images rotation is limited to integer multiple of 90°.
+		/// <c>null</c> is returned for other values.
+		/// </summary>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="angle">The angle of rotation.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		public static FIBITMAP Rotate(FIBITMAP dib, double angle)
+		{
+			return Rotate(dib, angle, IntPtr.Zero);
+		}
+
+		/// <summary>
+		/// This function rotates a 1-, 8-bit greyscale or a 24-, 32-bit color image by means of 3 shears.
+		/// 1-bit images rotation is limited to integer multiple of 90°.
+		/// <c>null</c> is returned for other values.
+		/// </summary>
+		/// <typeparam name="T">The type of the color to use as background.</typeparam>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="angle">The angle of rotation.</param>
+		/// <param name="backgroundColor">The color used used to fill the bitmap's background.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		public static FIBITMAP Rotate<T>(FIBITMAP dib, double angle, T? backgroundColor) where T : struct
+		{
+			if (backgroundColor.HasValue)
+			{
+				GCHandle handle = new GCHandle();
+				try
+				{
+					T[] buffer = new T[] { backgroundColor.Value };
+					handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+					return Rotate(dib, angle, handle.AddrOfPinnedObject());
+				}
+				finally
+				{
+					if (handle.IsAllocated)
+						handle.Free();
+				}
+			}
+			else
+			{
+				return Rotate(dib, angle, IntPtr.Zero);
+			}
+		}
+
+		/// <summary>
 		/// Rotates a 4-bit color FreeImage bitmap.
 		/// Allowed values for <paramref name="angle"/> are 90, 180 and 270.
 		/// In case <paramref name="angle"/> is 0 or 360 a clone is returned.
@@ -3780,6 +4318,210 @@ namespace FreeImageAPI
 				}
 			}
 			return result;
+		}
+
+		#endregion
+
+		#region Upsampling / downsampling
+
+		/// <summary>
+		/// Enlarges or shrinks the FreeImage bitmap selectively per side and fills newly added areas
+		/// with the specified background color. See remarks for further details.
+		/// </summary>
+		/// <typeparam name="T">The type of the specified color.</typeparam>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="left">The number of pixels, the image should be enlarged on its left side.
+		/// Negative values shrink the image on its left side.</param>
+		/// <param name="top">The number of pixels, the image should be enlarged on its top side.
+		/// Negative values shrink the image on its top side.</param>
+		/// <param name="right">The number of pixels, the image should be enlarged on its right side.
+		/// Negative values shrink the image on its right side.</param>
+		/// <param name="bottom">The number of pixels, the image should be enlarged on its bottom side.
+		/// Negative values shrink the image on its bottom side.</param>
+		/// <param name="color">The color, the enlarged sides of the image should be filled with.</param>
+		/// <param name="options">Options that affect the color search process for palletized images.</param>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
+		/// <remarks>
+		/// This function enlarges or shrinks an image selectively per side.
+		/// The main purpose of this function is to add borders to an image.
+		/// To add a border to any of the image's sides, a positive integer value must be passed in
+		/// any of the parameters <paramref name="left"/>, <paramref name="top"/>, <paramref name="right"/>
+		/// or <paramref name="bottom"/>. This value represents the border's
+		/// width in pixels. Newly created parts of the image (the border areas) are filled with the
+		/// specified <paramref name="color"/>.
+		/// Specifying a negative integer value for a certain side, will shrink or crop the image on
+		/// this side. Consequently, specifying zero for a certain side will not change the image's
+		/// extension on that side.
+		/// <para/>
+		/// So, calling this function with all parameters <paramref name="left"/>, <paramref name="top"/>,
+		/// <paramref name="right"/> and <paramref name="bottom"/> set to zero, is
+		/// effectively the same as calling function <see cref="Clone"/>; setting all parameters
+		/// <paramref name="left"/>, <paramref name="top"/>, <paramref name="right"/> and
+		/// <paramref name="bottom"/> to value equal to or smaller than zero, my easily be substituted
+		/// by a call to function <see cref="Copy"/>. Both these cases produce a new image, which is
+		/// guaranteed not to be larger than the input image. Thus, since the specified
+		/// <paramref name="color"/> is not needed in these cases, <paramref name="color"/>
+		/// may be <c>null</c>.
+		/// <para/>
+		/// Both parameters <paramref name="color"/> and <paramref name="options"/> work according to
+		/// function <see cref="FillBackground&lt;T&gt;"/>. So, please refer to the documentation of
+		/// <see cref="FillBackground&lt;T&gt;"/> to learn more about parameters <paramref name="color"/>
+		/// and <paramref name="options"/>. For palletized images, the palette of the input image is
+		/// transparently copied to the newly created enlarged or shrunken image, so any color look-ups
+		/// are performed on this palette.
+		/// </remarks>
+		/// <example>
+		/// // create a white color<br/>
+		/// RGBQUAD c;<br/>
+		/// c.rgbRed = 0xFF;<br/>
+		/// c.rgbGreen = 0xFF;<br/>
+		/// c.rgbBlue = 0xFF;<br/>
+		/// c.rgbReserved = 0x00;<br/>
+		/// <br/>
+		/// // add a white, symmetric 10 pixel wide border to the image<br/>
+		/// dib2 = FreeImage_EnlargeCanvas(dib, 10, 10, 10, 10, c, FREE_IMAGE_COLOR_OPTIONS.FICO_RGB);<br/>
+		/// <br/>
+		/// // add white, 20 pixel wide stripes to the top and bottom side of the image<br/>
+		/// dib3 = FreeImage_EnlargeCanvas(dib, 0, 20, 0, 20, c, FREE_IMAGE_COLOR_OPTIONS.FICO_RGB);<br/>
+		/// <br/>
+		/// // add white, 30 pixel wide stripes to the right side of the image and<br/>
+		/// // cut off the 40 leftmost pixel columns<br/>
+		/// dib3 = FreeImage_EnlargeCanvas(dib, -40, 0, 30, 0, c, FREE_IMAGE_COLOR_OPTIONS.FICO_RGB);<br/>
+		/// </example>
+		public static FIBITMAP EnlargeCanvas<T>(FIBITMAP dib, int left, int top, int right, int bottom,
+			T? color, FREE_IMAGE_COLOR_OPTIONS options) where T : struct
+		{
+			if (dib.IsNull)
+				return FIBITMAP.Zero;
+
+			if (!CheckColorType(GetImageType(dib), color))
+				return FIBITMAP.Zero;
+
+			if (color.HasValue)
+			{
+				GCHandle handle = new GCHandle();
+				try
+				{
+					T[] buffer = new T[] { color.Value };
+					handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+					return EnlargeCanvas(dib, left, top, right, bottom, handle.AddrOfPinnedObject(), options);
+				}
+				finally
+				{
+					if (handle.IsAllocated)
+						handle.Free();
+				}
+			}
+			else
+			{
+				return EnlargeCanvas(dib, left, top, right, bottom, IntPtr.Zero, options);
+			}
+		}
+
+		#endregion
+
+		#region Color
+
+		/// <summary>
+		/// Sets all pixels of the specified image to the color provided through the
+		/// <paramref name="color"/> parameter. See remarks for further details.
+		/// </summary>
+		/// <typeparam name="T">The type of the specified color.</typeparam>
+		/// <param name="dib">Handle to a FreeImage bitmap.</param>
+		/// <param name="color">The color to fill the bitmap with. See remarks for further details.</param>
+		/// <param name="options">Options that affect the color search process for palletized images.</param>
+		/// <returns><c>true</c> on success, <c>false</c> on failure.</returns>
+		/// <remarks>
+		/// This function sets all pixels of an image to the color provided through
+		/// the <paramref name="color"/> parameter. <see cref="RGBQUAD"/> is used for standard type images.
+		/// For non standard type images the underlaying structure is used.
+		/// <para/>
+		/// So, <paramref name="color"/> must be of type <see cref="Double"/>, if the image to be filled is of type
+		/// <see cref="FREE_IMAGE_TYPE.FIT_DOUBLE"/> and must be a <see cref="FIRGBF"/> structure if the
+		/// image is of type <see cref="FREE_IMAGE_TYPE.FIT_RGBF"/> and so on.
+		/// <para/>
+		/// However, the fill color is always specified through a <see cref="RGBQUAD"/> structure
+		/// for all images of type <see cref="FREE_IMAGE_TYPE.FIT_BITMAP"/>.
+		/// So, for 32- and 24-bit images, the red, green and blue members of the <see cref="RGBQUAD"/>
+		/// structure are directly used for the image's red, green and blue channel respectively.
+		/// Although alpha transparent <see cref="RGBQUAD"/> colors are
+		/// supported, the alpha channel of a 32-bit image never gets modified by this function.
+		/// A fill color with an alpha value smaller than 255 gets blended with the image's actual
+		/// background color, which is determined from the image's bottom-left pixel.
+		/// So, currently using alpha enabled colors, assumes the image to be unicolor before the
+		/// fill operation. However, the <see cref="RGBQUAD.rgbReserved"/> field is only taken into account,
+		/// if option <see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_RGBA"/> has been specified.
+		/// <para/>
+		/// For 16-bit images, the red-, green- and blue components of the specified color are
+		/// transparently translated into either the 16-bit 555 or 565 representation. This depends
+		/// on the image's actual red- green- and blue masks.
+		/// <para/>
+		/// Special attention must be payed for palletized images. Generally, the RGB color specified
+		/// is looked up in the image's palette. The found palette index is then used to fill the image.
+		/// There are some option flags, that affect this lookup process:
+		/// <list type="table">
+		/// <listheader>
+		/// <term>Value</term>
+		/// <description>Meaning</description>
+		/// </listheader>
+		/// <item>
+		/// <term><see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_DEFAULT"/></term>
+		/// <description>
+		/// Uses the color, that is nearest to the specified color.
+		/// This is the default behavior and should always find a
+		/// color in the palette. However, the visual result may
+		/// far from what was expected and mainly depends on the
+		/// image's palette.
+		/// </description>
+		/// </item>
+		/// <item>
+		/// <term><see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_EQUAL_COLOR"/></term>
+		/// <description>
+		/// Searches the image's palette for the specified color
+		/// but only uses the returned palette index, if the specified
+		/// color exactly matches the palette entry. Of course,
+		/// depending on the image's actual palette entries, this
+		/// operation may fail. In this case, the function falls back
+		/// to option <see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_ALPHA_IS_INDEX"/>
+		/// and uses the RGBQUAD's rgbReserved member (or its low nibble for 4-bit images
+		/// or its least significant bit (LSB) for 1-bit images) as
+		/// the palette index used for the fill operation.
+		/// </description>
+		/// </item>
+		/// <item>
+		/// <term><see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_ALPHA_IS_INDEX"/></term>
+		/// <description>
+		/// Does not perform any color lookup from the palette, but
+		/// uses the RGBQUAD's alpha channel member rgbReserved as
+		/// the palette index to be used for the fill operation.
+		/// However, for 4-bit images, only the low nibble of the
+		/// rgbReserved member are used and for 1-bit images, only
+		/// the least significant bit (LSB) is used.
+		/// </description>
+		/// </item>
+		/// </list>
+		/// </remarks>
+		public static bool FillBackground<T>(FIBITMAP dib, T color, FREE_IMAGE_COLOR_OPTIONS options)
+			where T : struct
+		{
+			if (dib.IsNull)
+				return false;
+
+			if (!CheckColorType(GetImageType(dib), color))
+				return false;
+
+			GCHandle handle = new GCHandle();
+			try
+			{
+				T[] buffer = new T[] { color };
+				handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+				return FillBackground(dib, handle.AddrOfPinnedObject(), options);
+			}
+			finally
+			{
+				if (handle.IsAllocated)
+					handle.Free();
+			}
 		}
 
 		#endregion
@@ -4390,6 +5132,42 @@ namespace FreeImageAPI
 					Array.Resize(ref array, max);
 				}
 			}
+		}
+
+		internal static bool CheckColorType<T>(FREE_IMAGE_TYPE imageType, T color)
+		{
+			Type type = typeof(T);
+			bool result;
+			switch (imageType)
+			{
+				case FREE_IMAGE_TYPE.FIT_BITMAP:
+					result = (type == typeof(RGBQUAD)); break;
+				case FREE_IMAGE_TYPE.FIT_COMPLEX:
+					result = (type == typeof(FICOMPLEX)); break;
+				case FREE_IMAGE_TYPE.FIT_DOUBLE:
+					result = (type == typeof(double)); break;
+				case FREE_IMAGE_TYPE.FIT_FLOAT:
+					result = (type == typeof(float)); break;
+				case FREE_IMAGE_TYPE.FIT_INT16:
+					result = (type == typeof(Int16)); break;
+				case FREE_IMAGE_TYPE.FIT_INT32:
+					result = (type == typeof(Int32)); break;
+				case FREE_IMAGE_TYPE.FIT_RGB16:
+					result = (type == typeof(FIRGB16)); break;
+				case FREE_IMAGE_TYPE.FIT_RGBA16:
+					result = (type == typeof(FIRGBA16)); break;
+				case FREE_IMAGE_TYPE.FIT_RGBAF:
+					result = (type == typeof(FIRGBAF)); break;
+				case FREE_IMAGE_TYPE.FIT_RGBF:
+					result = (type == typeof(FIRGBF)); break;
+				case FREE_IMAGE_TYPE.FIT_UINT16:
+					result = (type == typeof(UInt16)); break;
+				case FREE_IMAGE_TYPE.FIT_UINT32:
+					result = (type == typeof(UInt32)); break;
+				default:
+					result = false; break;
+			}
+			return result;
 		}
 
 		#endregion
