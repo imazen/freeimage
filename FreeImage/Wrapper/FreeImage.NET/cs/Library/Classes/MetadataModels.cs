@@ -5731,11 +5731,11 @@ namespace FreeImageAPI.Metadata
         {
             get
             {
-                return GetTagText("ByLine");
+                return GetTagText("By-line");
             }
             set
             {
-                SetTagValue("ByLine", value);
+                SetTagValue("By-line", value);
             }
         }
 
@@ -5756,11 +5756,11 @@ namespace FreeImageAPI.Metadata
         {
             get
             {
-                return GetTagText("ByLineTitle");
+                return GetTagText("By-lineTitle");
             }
             set
             {
-                SetTagValue("ByLineTitle", value);
+                SetTagValue("By-lineTitle", value);
             }
         }
 
@@ -5852,11 +5852,11 @@ namespace FreeImageAPI.Metadata
         {
             get
             {
-                return GetTagText("CountryPrimaryLocationCode");
+                return GetTagText("Country-PrimaryLocationCode");
             }
             set
             {
-                SetTagValue("CountryPrimaryLocationCode", value);
+                SetTagValue("Country-PrimaryLocationCode", value);
             }
         }
 
@@ -5876,11 +5876,11 @@ namespace FreeImageAPI.Metadata
         {
             get
             {
-                return GetTagText("CountryPrimaryLocationName");
+                return GetTagText("Country-PrimaryLocationName");
             }
             set
             {
-                SetTagValue("CountryPrimaryLocationName", value);
+                SetTagValue("Country-PrimaryLocationName", value);
             }
         }
 
