@@ -80,12 +80,18 @@ namespace FreeImageAPI
 		private SaveInformation saveInformation = new SaveInformation();
 
 		/// <summary>
-		/// The file that this instance was loaded from or
-		/// null if it wasn't loaded from a file, has been
-		/// cloned or deserialized.
+		/// The stream that this instance was loaded from or
+		/// null if it has been cloned or deserialized.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private FileStream file;
+		private Stream stream;
+
+		/// <summary>
+		/// True if the stream must be disposed with this
+		/// instance.
+		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private bool disposeStream;
 
 		/// <summary>
 		/// The number of frames contained by a mutlipage bitmap.
@@ -163,6 +169,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception(ErrorLoadingBitmap);
 			}
+			originalFormat = original.originalFormat;
 			AddMemoryPressure();
 		}
 
@@ -214,6 +221,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception(ErrorLoadingBitmap);
 			}
+			originalFormat = original.originalFormat;
 			AddMemoryPressure();
 		}
 
@@ -311,6 +319,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception(ErrorLoadingBitmap);
 			}
+			originalFormat = FreeImage.GetFormat(original.RawFormat);
 			AddMemoryPressure();
 		}
 
@@ -383,6 +392,7 @@ namespace FreeImageAPI
 			{
 				throw new Exception(ErrorLoadingBitmap);
 			}
+			originalFormat = FreeImage.GetFormat(original.RawFormat);
 			AddMemoryPressure();
 		}
 
@@ -394,6 +404,9 @@ namespace FreeImageAPI
 		/// <param name="useIcm">Ignored.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is a null reference.</exception>
+		/// <remarks>
+		/// You must keep the stream open for the lifetime of the <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		public FreeImageBitmap(Stream stream, bool useIcm)
 			: this(stream)
 		{
@@ -406,6 +419,9 @@ namespace FreeImageAPI
 		/// <param name="stream">Stream to read from.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is a null reference.</exception>
+		/// <remarks>
+		/// You must keep the stream open for the lifetime of the <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		public FreeImageBitmap(Stream stream)
 			: this(stream, FREE_IMAGE_FORMAT.FIF_UNKNOWN, FREE_IMAGE_LOAD_FLAGS.DEFAULT)
 		{
@@ -419,6 +435,9 @@ namespace FreeImageAPI
 		/// <param name="format">Format of the image.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is a null reference.</exception>
+		/// <remarks>
+		/// You must keep the stream open for the lifetime of the <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		public FreeImageBitmap(Stream stream, FREE_IMAGE_FORMAT format)
 			: this(stream, format, FREE_IMAGE_LOAD_FLAGS.DEFAULT)
 		{
@@ -432,6 +451,9 @@ namespace FreeImageAPI
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is a null reference.</exception>
+		/// <remarks>
+		/// You must keep the stream open for the lifetime of the <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		public FreeImageBitmap(Stream stream, FREE_IMAGE_LOAD_FLAGS flags)
 			: this(stream, FREE_IMAGE_FORMAT.FIF_UNKNOWN, flags)
 		{
@@ -447,23 +469,18 @@ namespace FreeImageAPI
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <exception cref="Exception">The operation failed.</exception>
 		/// <exception cref="ArgumentNullException"><paramref name="stream"/> is a null reference.</exception>
+		/// <remarks>
+		/// You must keep the stream open for the lifetime of the <see cref="FreeImageBitmap"/>.
+		/// </remarks>
 		public FreeImageBitmap(Stream stream, FREE_IMAGE_FORMAT format, FREE_IMAGE_LOAD_FLAGS flags)
 		{
 			if (stream == null)
 			{
 				throw new ArgumentNullException("stream");
 			}
-			saveInformation.loadFlags = flags;
-
-			dib = FreeImage.LoadFromStream(stream, flags, ref format);
-
-			if (dib.IsNull)
-			{
-				throw new Exception(ErrorLoadingBitmap);
-			}
-
-			originalFormat = format;
-			AddMemoryPressure();
+			this.stream = stream;
+			disposeStream = false;
+			LoadFromStream(stream, format, flags);
 		}
 
 		/// <summary>
@@ -539,29 +556,11 @@ namespace FreeImageAPI
 			{
 				throw new FileNotFoundException("filename");
 			}
-			// Loading from files locks the source file to ensure multipaged bitmaps are not
-			// altered in the lifetime of the instance.
-			file = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
 
-			FIMULTIBITMAP mdib = FreeImage.OpenMultiBitmapEx(filename, false, true, true);
-			if (mdib.IsNull)
-				throw new Exception(ErrorLoadingBitmap);
-			try
-			{
-				frameCount = FreeImage.GetPageCount(mdib);
-			}
-			finally
-			{
-				if (!FreeImage.CloseMultiBitmapEx(ref mdib))
-					throw new Exception(ErrorUnloadBitmap);
-			}
-
-			dib = FreeImage.LoadEx(filename, flags, ref format);
-			if (dib.IsNull)
-				throw new Exception(ErrorLoadingBitmap);
-
-			saveInformation.loadFlags = flags;
-			AddMemoryPressure();
+			saveInformation.filename = filename;
+			stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+			disposeStream = true;
+			LoadFromStream(stream, format, flags);
 		}
 
 		/// <summary>
@@ -2138,24 +2137,24 @@ namespace FreeImageAPI
 
 				case RotateFlipType.Rotate90FlipNone:
 
-					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.RotateClassic(dib, 90d);
+					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.Rotate(dib, 90d);
 					break;
 
 				case RotateFlipType.Rotate90FlipX:
 
-					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.RotateClassic(dib, 90d);
+					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.Rotate(dib, 90d);
 					FreeImage.FlipHorizontal(newDib);
 					break;
 
 				case RotateFlipType.Rotate90FlipY:
 
-					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.RotateClassic(dib, 90d);
+					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.Rotate(dib, 90d);
 					FreeImage.FlipVertical(newDib);
 					break;
 
 				case RotateFlipType.Rotate90FlipXY:
 
-					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.RotateClassic(dib, 90d);
+					newDib = (bpp == 4u) ? FreeImage.Rotate4bit(dib, 90d) : FreeImage.Rotate(dib, 90d);
 					FreeImage.FlipHorizontal(newDib);
 					FreeImage.FlipVertical(newDib);
 					break;
@@ -2457,55 +2456,64 @@ namespace FreeImageAPI
 		/// <exception cref="ArgumentOutOfRangeException">
 		/// <paramref name="frameIndex"/> is out of range.</exception>
 		/// <exception cref="Exception">The operation failed.</exception>
-		/// <exception cref="InvalidOperationException">The loaded bitmap is not multipaged.</exception>
+		/// <exception cref="InvalidOperationException">The source of the bitmap is not available.
+		/// </exception>
 		public void SelectActiveFrame(int frameIndex)
 		{
 			EnsureNotDisposed();
-			if (frameIndex < 0)
-			{
-				throw new ArgumentOutOfRangeException("frameIndex");
-			}
-			if (file == null)
-			{
-				throw new InvalidOperationException("No multipaged bitmap loaded.");
-			}
-			if (frameIndex >= frameCount)
+			if ((frameIndex < 0) || (frameIndex >= frameCount))
 			{
 				throw new ArgumentOutOfRangeException("frameIndex");
 			}
 
 			if (frameIndex != this.frameIndex)
 			{
-				FIMULTIBITMAP mdib = FreeImage.OpenMultiBitmapEx(file.Name, false, true, true);
+				if (stream == null)
+				{
+					throw new InvalidOperationException("No source available.");
+				}
+
+				FREE_IMAGE_FORMAT format = originalFormat;
+				FIMULTIBITMAP mdib = FreeImage.OpenMultiBitmapFromStream(stream, ref format, saveInformation.loadFlags);
 				if (mdib.IsNull)
 					throw new Exception(ErrorLoadingBitmap);
 
 				try
 				{
 					if (frameIndex >= FreeImage.GetPageCount(mdib))
+					{
 						throw new ArgumentOutOfRangeException("frameIndex");
+					}
 
 					FIBITMAP newDib = FreeImage.LockPage(mdib, frameIndex);
 					if (newDib.IsNull)
+					{
 						throw new Exception(ErrorLoadingFrame);
+					}
 
 					try
 					{
 						FIBITMAP clone = FreeImage.Clone(newDib);
 						if (clone.IsNull)
+						{
 							throw new Exception(ErrorCreatingBitmap);
+						}
 						ReplaceDib(clone);
 					}
 					finally
 					{
 						if (!newDib.IsNull)
+						{
 							FreeImage.UnlockPage(mdib, newDib, false);
+						}
 					}
 				}
 				finally
 				{
-					if (!FreeImage.CloseMultiBitmapEx(ref mdib, FREE_IMAGE_SAVE_FLAGS.DEFAULT))
+					if (!FreeImage.CloseMultiBitmapEx(ref mdib))
+					{
 						throw new Exception(ErrorUnloadBitmap);
+					}
 				}
 
 				this.frameIndex = frameIndex;
@@ -2856,6 +2864,103 @@ namespace FreeImageAPI
 		}
 
 		/// <summary>
+		/// Enlarges or shrinks this <see cref="FreeImageBitmap"/> selectively per side and fills
+		/// newly added areas with the specified background color.
+		/// See <see cref="FreeImage.EnlargeCanvas&lt;T&gt;"/> for further details.
+		/// </summary>
+		/// <typeparam name="T">The type of the specified color.</typeparam>
+		/// <param name="left">The number of pixels, the image should be enlarged on its left side.
+		/// Negative values shrink the image on its left side.</param>
+		/// <param name="top">The number of pixels, the image should be enlarged on its top side.
+		/// Negative values shrink the image on its top side.</param>
+		/// <param name="right">The number of pixels, the image should be enlarged on its right side.
+		/// Negative values shrink the image on its right side.</param>
+		/// <param name="bottom">The number of pixels, the image should be enlarged on its bottom side.
+		/// Negative values shrink the image on its bottom side.</param>
+		/// <param name="color">The color, the enlarged sides of the image should be filled with.</param>
+		/// <returns><c>true</c> on success, <c>false</c> on failure.</returns>
+		public bool EnlargeCanvas<T>(int left, int top, int right, int bottom, T? color) where T : struct
+		{
+			return EnlargeCanvas(left, top, right, bottom, color, FREE_IMAGE_COLOR_OPTIONS.FICO_DEFAULT);
+		}
+
+		/// <summary>
+		/// Enlarges or shrinks this <see cref="FreeImageBitmap"/> selectively per side and fills
+		/// newly added areas with the specified background color.
+		/// See <see cref="FreeImage.EnlargeCanvas&lt;T&gt;"/> for further details.
+		/// </summary>
+		/// <typeparam name="T">The type of the specified color.</typeparam>
+		/// <param name="left">The number of pixels, the image should be enlarged on its left side.
+		/// Negative values shrink the image on its left side.</param>
+		/// <param name="top">The number of pixels, the image should be enlarged on its top side.
+		/// Negative values shrink the image on its top side.</param>
+		/// <param name="right">The number of pixels, the image should be enlarged on its right side.
+		/// Negative values shrink the image on its right side.</param>
+		/// <param name="bottom">The number of pixels, the image should be enlarged on its bottom side.
+		/// Negative values shrink the image on its bottom side.</param>
+		/// <param name="color">The color, the enlarged sides of the image should be filled with.</param>
+		/// <param name="options">Options that affect the color search process for palletized images.</param>
+		/// <returns><c>true</c> on success, <c>false</c> on failure.</returns>
+		public bool EnlargeCanvas<T>(int left, int top, int right, int bottom,
+			T? color, FREE_IMAGE_COLOR_OPTIONS options) where T : struct
+		{
+			EnsureNotDisposed();
+			return ReplaceDib(FreeImage.EnlargeCanvas(dib, left, top, right, bottom, color, options));
+		}
+
+		/// <summary>
+		/// Enlarges or shrinks this <see cref="FreeImageBitmap"/> selectively per side and fills
+		/// newly added areas with the specified background color returning a new instance.
+		/// See <see cref="FreeImage.EnlargeCanvas&lt;T&gt;"/> for further details.
+		/// </summary>
+		/// <typeparam name="T">The type of the specified color.</typeparam>
+		/// <param name="left">The number of pixels, the image should be enlarged on its left side.
+		/// Negative values shrink the image on its left side.</param>
+		/// <param name="top">The number of pixels, the image should be enlarged on its top side.
+		/// Negative values shrink the image on its top side.</param>
+		/// <param name="right">The number of pixels, the image should be enlarged on its right side.
+		/// Negative values shrink the image on its right side.</param>
+		/// <param name="bottom">The number of pixels, the image should be enlarged on its bottom side.
+		/// Negative values shrink the image on its bottom side.</param>
+		/// <param name="color">The color, the enlarged sides of the image should be filled with.</param>
+		/// <returns>The enlarged instance.</returns>
+		public FreeImageBitmap GetEnlargedInstance<T>(int left, int top, int right, int bottom,
+			T? color) where T : struct
+		{
+			return GetEnlargedInstance(left, top, right, bottom, color, FREE_IMAGE_COLOR_OPTIONS.FICO_DEFAULT);
+		}
+
+		/// <summary>
+		/// Enlarges or shrinks this <see cref="FreeImageBitmap"/> selectively per side and fills
+		/// newly added areas with the specified background color returning a new instance.
+		/// See <see cref="FreeImage.EnlargeCanvas&lt;T&gt;"/> for further details.
+		/// </summary>
+		/// <typeparam name="T">The type of the specified color.</typeparam>
+		/// <param name="left">The number of pixels, the image should be enlarged on its left side.
+		/// Negative values shrink the image on its left side.</param>
+		/// <param name="top">The number of pixels, the image should be enlarged on its top side.
+		/// Negative values shrink the image on its top side.</param>
+		/// <param name="right">The number of pixels, the image should be enlarged on its right side.
+		/// Negative values shrink the image on its right side.</param>
+		/// <param name="bottom">The number of pixels, the image should be enlarged on its bottom side.
+		/// Negative values shrink the image on its bottom side.</param>
+		/// <param name="color">The color, the enlarged sides of the image should be filled with.</param>
+		/// <param name="options">Options that affect the color search process for palletized images.</param>
+		/// <returns>The enlarged instance.</returns>
+		public FreeImageBitmap GetEnlargedInstance<T>(int left, int top, int right, int bottom,
+			T? color, FREE_IMAGE_COLOR_OPTIONS options) where T : struct
+		{
+			EnsureNotDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib = FreeImage.EnlargeCanvas(dib, left, top, right, bottom, color, options);
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap(newDib);
+			}
+			return result;
+		}
+
+		/// <summary>
 		/// Quantizes this <see cref="FreeImageBitmap"/> from 24 bit to 8bit creating a new
 		/// palette with the specified <paramref name="paletteSize"/> using the specified
 		/// <paramref name="algorithm"/>.
@@ -3042,7 +3147,60 @@ namespace FreeImageAPI
 			}
 			else
 			{
-				result = ReplaceDib(FreeImage.RotateClassic(dib, angle));
+				result = ReplaceDib(FreeImage.Rotate(dib, angle));
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// This method rotates a 1-, 4-, 8-bit greyscale or a 24-, 32-bit color image by means of 3 shears.
+		/// For 1- and 4-bit images, rotation is limited to angles whose value is an integer
+		/// multiple of 90.
+		/// </summary>
+		/// <typeparam name="T">The type of the color to use as background.</typeparam>
+		/// <param name="angle">The angle of rotation.</param>
+		/// <param name="backgroundColor">The color used used to fill the bitmap's background.</param>
+		/// <returns>Returns true on success, false on failure.</returns>
+		public bool Rotate<T>(double angle, T? backgroundColor) where T : struct
+		{
+			EnsureNotDisposed();
+			bool result = false;
+			if (ColorDepth == 4)
+			{
+				result = ReplaceDib(FreeImage.Rotate4bit(dib, angle));
+			}
+			else
+			{
+				result = ReplaceDib(FreeImage.Rotate(dib, angle, backgroundColor));
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Rotates this <see cref="FreeImageBitmap"/> by the specified angle initializing a new instance.
+		/// For 1- and 4-bit images, rotation is limited to angles whose value is an integer
+		/// multiple of 90.
+		/// </summary>
+		/// <typeparam name="T">The type of the color to use as background.</typeparam>
+		/// <param name="angle">The angle of rotation.</param>
+		/// <param name="backgroundColor">The color used used to fill the bitmap's background.</param>
+		/// <returns>The rotated instance.</returns>
+		public FreeImageBitmap GetRotatedInstance<T>(double angle, T? backgroundColor) where T : struct
+		{
+			EnsureNotDisposed();
+			FreeImageBitmap result = null;
+			FIBITMAP newDib;
+			if (ColorDepth == 4)
+			{
+				newDib = FreeImage.Rotate4bit(dib, angle);
+			}
+			else
+			{
+				newDib = FreeImage.Rotate(dib, angle, backgroundColor);
+			}
+			if (!newDib.IsNull)
+			{
+				result = new FreeImageBitmap(newDib);
 			}
 			return result;
 		}
@@ -3065,7 +3223,7 @@ namespace FreeImageAPI
 			}
 			else
 			{
-				newDib = FreeImage.RotateClassic(dib, angle);
+				newDib = FreeImage.Rotate(dib, angle);
 			}
 			if (!newDib.IsNull)
 			{
@@ -3484,6 +3642,32 @@ namespace FreeImageAPI
 		{
 			EnsureNotDisposed();
 			return FreeImage.SwapPaletteIndices(dib, ref index_a, ref index_b);
+		}
+
+		/// <summary>
+		/// Sets all pixels of this <see cref="FreeImageBitmap"/> to the specified color.
+		/// See <see cref="FreeImage.FillBackground&lt;T&gt;"/> for further details.
+		/// </summary>
+		/// <typeparam name="T">The type of the specified color.</typeparam>
+		/// <param name="color">The color to fill this <see cref="FreeImageBitmap"/> with.</param>
+		/// <returns><c>true</c> on success, <c>false</c> on failure.</returns>
+		public bool FillBackground<T>(T color) where T : struct
+		{
+			return FillBackground(color, FREE_IMAGE_COLOR_OPTIONS.FICO_DEFAULT);
+		}
+
+		/// <summary>
+		/// Sets all pixels of this <see cref="FreeImageBitmap"/> to the specified color.
+		/// See <see cref="FreeImage.FillBackground&lt;T&gt;"/> for further details.
+		/// </summary>
+		/// <typeparam name="T">The type of the specified color.</typeparam>
+		/// <param name="color">The color to fill this <see cref="FreeImageBitmap"/> with.</param>
+		/// <param name="options">Options that affect the color search process for palletized images.</param>
+		/// <returns><c>true</c> on success, <c>false</c> on failure.</returns>
+		public bool FillBackground<T>(T color, FREE_IMAGE_COLOR_OPTIONS options) where T : struct
+		{
+			EnsureNotDisposed();
+			return FreeImage.FillBackground(dib, color, options);
 		}
 
 		/// <summary>
@@ -4045,6 +4229,40 @@ namespace FreeImageAPI
 				GC.AddMemoryPressure(dataSize);
 		}
 
+		/// <summary>
+		/// Opens the stream and reads the number of available pages.
+		/// Then loads the first page to this instance.
+		/// </summary>
+		private void LoadFromStream(Stream stream, FREE_IMAGE_FORMAT format, FREE_IMAGE_LOAD_FLAGS flags)
+		{
+			FIMULTIBITMAP mdib = FreeImage.OpenMultiBitmapFromStream(stream, ref format, flags);
+			if (mdib.IsNull)
+			{
+				throw new Exception(ErrorLoadingBitmap);
+			}
+			try
+			{
+				frameCount = FreeImage.GetPageCount(mdib);
+			}
+			finally
+			{
+				if (!FreeImage.CloseMultiBitmapEx(ref mdib))
+				{
+					throw new Exception(ErrorUnloadBitmap);
+				}
+			}
+
+			dib = FreeImage.LoadFromStream(stream, flags, ref format);
+			if (dib.IsNull)
+			{
+				throw new Exception(ErrorLoadingBitmap);
+			}
+
+			saveInformation.loadFlags = flags;
+			originalFormat = format;
+			AddMemoryPressure();
+		}
+
 		#endregion
 
 		#region Interfaces
@@ -4114,14 +4332,17 @@ namespace FreeImageAPI
 			// Clean up managed resources
 			if (disposing)
 			{
-				if (file != null)
+				if (stream != null)
 				{
-					file.Dispose();
+					if (disposeStream)
+					{
+						stream.Dispose();
+					}
+					stream = null;
 				}
 			}
 
 			tag = null;
-			file = null;
 			saveInformation = null;
 
 			// Clean up unmanaged resources
