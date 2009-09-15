@@ -96,12 +96,6 @@ namespace FreeImageAPI.Plugins
 		private InitProc initProc;
 
 		/// <summary>
-		/// GCHandles to prevent the garbage collector from chaning function addresses.
-		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private GCHandle[] handles = new GCHandle[16];
-
-		/// <summary>
 		/// The format id assiged to the plugin.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -285,87 +279,70 @@ namespace FreeImageAPI.Plugins
 		/// </summary>
 		public LocalPlugin()
 		{
-			int i = 0;
 			implementedMethods = GetImplementedMethods();
 
 			if ((implementedMethods & MethodFlags.DescriptionProc) != 0)
 			{
 				plugin.descriptionProc = new DescriptionProc(DescriptionProc);
-				handles[i++] = GetHandle(plugin.descriptionProc);
 			}
 			if ((implementedMethods & MethodFlags.ExtensionListProc) != 0)
 			{
 				plugin.extensionListProc = new ExtensionListProc(ExtensionListProc);
-				handles[i++] = GetHandle(plugin.extensionListProc);
 			}
 			if ((implementedMethods & MethodFlags.RegExprProc) != 0)
 			{
 				plugin.regExprProc = new RegExprProc(RegExprProc);
-				handles[i++] = GetHandle(plugin.regExprProc);
 			}
 			if ((implementedMethods & MethodFlags.OpenProc) != 0)
 			{
 				plugin.openProc = new OpenProc(OpenProc);
-				handles[i++] = GetHandle(plugin.openProc);
 			}
 			if ((implementedMethods & MethodFlags.CloseProc) != 0)
 			{
 				plugin.closeProc = new CloseProc(CloseProc);
-				handles[i++] = GetHandle(plugin.closeProc);
 			}
 			if ((implementedMethods & MethodFlags.PageCountProc) != 0)
 			{
 				plugin.pageCountProc = new PageCountProc(PageCountProc);
-				handles[i++] = GetHandle(plugin.pageCountProc);
 			}
 			if ((implementedMethods & MethodFlags.PageCapabilityProc) != 0)
 			{
 				plugin.pageCapabilityProc = new PageCapabilityProc(PageCapabilityProc);
-				handles[i++] = GetHandle(plugin.pageCapabilityProc);
 			}
 			if ((implementedMethods & MethodFlags.LoadProc) != 0)
 			{
 				plugin.loadProc = new LoadProc(LoadProc);
-				handles[i++] = GetHandle(plugin.loadProc);
 			}
 			if ((implementedMethods & MethodFlags.SaveProc) != 0)
 			{
 				plugin.saveProc = new SaveProc(SaveProc);
-				handles[i++] = GetHandle(plugin.saveProc);
 			}
 			if ((implementedMethods & MethodFlags.ValidateProc) != 0)
 			{
 				plugin.validateProc = new ValidateProc(ValidateProc);
-				handles[i++] = GetHandle(plugin.validateProc);
 			}
 			if ((implementedMethods & MethodFlags.MimeProc) != 0)
 			{
 				plugin.mimeProc = new MimeProc(MimeProc);
-				handles[i++] = GetHandle(plugin.mimeProc);
 			}
 			if ((implementedMethods & MethodFlags.SupportsExportBPPProc) != 0)
 			{
 				plugin.supportsExportBPPProc = new SupportsExportBPPProc(SupportsExportBPPProc);
-				handles[i++] = GetHandle(plugin.supportsExportBPPProc);
 			}
 			if ((implementedMethods & MethodFlags.SupportsExportTypeProc) != 0)
 			{
 				plugin.supportsExportTypeProc = new SupportsExportTypeProc(SupportsExportTypeProc);
-				handles[i++] = GetHandle(plugin.supportsExportTypeProc);
 			}
 			if ((implementedMethods & MethodFlags.SupportsICCProfilesProc) != 0)
 			{
 				plugin.supportsICCProfilesProc = new SupportsICCProfilesProc(SupportsICCProfilesProc);
-				handles[i++] = GetHandle(plugin.supportsICCProfilesProc);
 			}
 
 			// FormatProc is always implemented
 			plugin.formatProc = new FormatProc(FormatProc);
-			handles[i++] = GetHandle(plugin.formatProc);
 
 			// InitProc is the register call back.
 			initProc = new InitProc(RegisterProc);
-			handles[i++] = GetHandle(initProc);
 
 			// Register the plugin. The result will be saved and can be accessed later.
 			registered = FreeImage.RegisterLocalPlugin(initProc, null, null, null, null) != FREE_IMAGE_FORMAT.FIF_UNKNOWN;
@@ -373,25 +350,6 @@ namespace FreeImageAPI.Plugins
 			{
 				PluginRepository.RegisterLocalPlugin(this);
 			}
-		}
-
-		/// <summary>
-		/// Releases all resources used by the instance.
-		/// </summary>
-		~LocalPlugin()
-		{
-			for (int i = 0; i < handles.Length; i++)
-			{
-				if (handles[i].IsAllocated)
-				{
-					handles[i].Free();
-				}
-			}
-		}
-
-		private GCHandle GetHandle(Delegate d)
-		{
-			return GCHandle.Alloc(d, GCHandleType.Normal);
 		}
 
 		private void RegisterProc(ref Plugin plugin, int format_id)

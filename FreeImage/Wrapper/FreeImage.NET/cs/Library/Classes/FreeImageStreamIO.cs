@@ -52,28 +52,15 @@ namespace FreeImageAPI.IO
 	/// the loading and saving from and to streams. It implements the funtions FreeImage needs
 	/// to load data from an an arbitrary source.
 	/// <para/>
-	/// FreeImage requests a <see cref="FreeImageAPI.IO.FreeImageIO"/> structure containing pointers (delegates) to these
-	/// functions. <b>FreeImageStreamIO</b> implements the function creates the structure and
-	/// prevents the garbage collector from moving these functions in memory.
-	/// <para/>
 	/// The class is for internal use only.
 	/// </remarks>
 	internal static class FreeImageStreamIO
 	{
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private static GCHandle readHandle;
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private static GCHandle writeHandle;
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private static GCHandle seekHandle;
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private static GCHandle tellHandle;
-
 		/// <summary>
 		/// <see cref="FreeImageAPI.IO.FreeImageIO"/> structure that can be used to read from streams via
 		/// <see cref="FreeImageAPI.FreeImage.LoadFromHandle(FREE_IMAGE_FORMAT, ref FreeImageIO, fi_handle, FREE_IMAGE_LOAD_FLAGS)"/>.
 		/// </summary>
-		public static FreeImageIO io;
+		public static readonly FreeImageIO io;
 
 		/// <summary>
 		/// Initializes a new instances which can be used to
@@ -85,10 +72,6 @@ namespace FreeImageAPI.IO
 			io.writeProc = new WriteProc(streamWrite);
 			io.seekProc = new SeekProc(streamSeek);
 			io.tellProc = new TellProc(streamTell);
-			readHandle = GCHandle.Alloc(io.readProc, GCHandleType.Normal);
-			writeHandle = GCHandle.Alloc(io.writeProc, GCHandleType.Normal);
-			seekHandle = GCHandle.Alloc(io.seekProc, GCHandleType.Normal);
-			tellHandle = GCHandle.Alloc(io.tellProc, GCHandleType.Normal);
 		}
 
 		/// <summary>
