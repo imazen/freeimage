@@ -24,8 +24,7 @@
     <BaseAddress>4194304</BaseAddress>
     <FileAlignment>512</FileAlignment>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <NoWarn>
-    </NoWarn>
+    <NoWarn>419</NoWarn>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <DocumentationFile>bin\Debug\FreeImageNET.XML</DocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -42,8 +41,7 @@
     <BaseAddress>4194304</BaseAddress>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <NoWarn>
-    </NoWarn>
+    <NoWarn>419</NoWarn>
     <DocumentationFile>bin\Release\FreeImageNET.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -126,6 +124,7 @@
     <Compile Include="Classes\StreamWrapper.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="Enumerations\DisposalMethodType.cs" />
+    <Compile Include="Enumerations\FREE_IMAGE_COLOR_OPTIONS.cs" />
     <Compile Include="Enumerations\FREE_IMAGE_DITHER.cs" />
     <Compile Include="Enumerations\FREE_IMAGE_FORMAT.cs" />
     <Compile Include="Enumerations\FREE_IMAGE_TMO.cs" />
