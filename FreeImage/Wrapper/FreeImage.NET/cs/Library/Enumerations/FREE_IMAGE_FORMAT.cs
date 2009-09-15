@@ -175,6 +175,18 @@ namespace FreeImageAPI
 		/// <summary>
 		/// JPEG-2000 format (*.JP2)
 		/// </summary>
-		FIF_JP2 = 31
+		FIF_JP2 = 31,
+		/// <summary>
+		/// Portable FloatMap (*.PFM)
+		/// </summary>
+		FIF_PFM = 32,
+		/// <summary>
+		/// Macintosh PICT (*.PICT)
+		/// </summary>
+		FIF_PICT = 33,
+		/// <summary>
+		/// RAW camera image (*.*)
+		/// </summary>
+		FIF_RAW = 34,
 	}
 }
