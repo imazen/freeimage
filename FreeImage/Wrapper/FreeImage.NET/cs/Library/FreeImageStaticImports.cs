@@ -50,66 +50,65 @@ namespace FreeImageAPI
 		private const string FreeImageLibrary = "FreeImage";
 
 		/// <summary>
-		/// Major version of the library.
+		/// Number of bytes to shift left within a 4 byte block.
 		/// </summary>
-		public const int FREEIMAGE_MAJOR_VERSION = 3;
-		/// <summary>
-		/// Minor version of the library.
-		/// </summary>
-		public const int FREEIMAGE_MINOR_VERSION = 12;
-		/// <summary>
-		/// Release version of the library.
-		/// </summary>
-		public const int FREEIMAGE_RELEASE_SERIAL = 0;
+		public const int FI_RGBA_RED = 2;
 
 		/// <summary>
 		/// Number of bytes to shift left within a 4 byte block.
 		/// </summary>
-		public const int FI_RGBA_RED = 2;
-		/// <summary>
-		/// Number of bytes to shift left within a 4 byte block.
-		/// </summary>
 		public const int FI_RGBA_GREEN = 1;
+
 		/// <summary>
 		/// Number of bytes to shift left within a 4 byte block.
 		/// </summary>
 		public const int FI_RGBA_BLUE = 0;
+
 		/// <summary>
 		/// Number of bytes to shift left within a 4 byte block.
 		/// </summary>
 		public const int FI_RGBA_ALPHA = 3;
+
 		/// <summary>
 		/// Mask indicating the position of the given color.
 		/// </summary>
 		public const uint FI_RGBA_RED_MASK = 0x00FF0000;
+
 		/// <summary>
 		/// Mask indicating the position of the given color.
 		/// </summary>
 		public const uint FI_RGBA_GREEN_MASK = 0x0000FF00;
+
 		/// <summary>
 		/// Mask indicating the position of the given color.
 		/// </summary>
 		public const uint FI_RGBA_BLUE_MASK = 0x000000FF;
+
 		/// <summary>
 		/// Mask indicating the position of the given color.
 		/// </summary>
 		public const uint FI_RGBA_ALPHA_MASK = 0xFF000000;
+
 		/// <summary>
 		/// Number of bits to shift left within a 32 bit block.
 		/// </summary>
 		public const int FI_RGBA_RED_SHIFT = 16;
+
 		/// <summary>
 		/// Number of bits to shift left within a 32 bit block.
 		/// </summary>
 		public const int FI_RGBA_GREEN_SHIFT = 8;
+
 		/// <summary>
 		/// Number of bits to shift left within a 32 bit block.
 		/// </summary>
 		public const int FI_RGBA_BLUE_SHIFT = 0;
+
 		/// <summary>
 		/// Number of bits to shift left within a 32 bit block.
 		/// </summary>
 		public const int FI_RGBA_ALPHA_SHIFT = 24;
+
 		/// <summary>
 		/// Mask indicating the position of color components of a 32 bit color.
 		/// </summary>
@@ -119,46 +118,57 @@ namespace FreeImageAPI
 		/// Mask indicating the position of the given color.
 		/// </summary>
 		public const int FI16_555_RED_MASK = 0x7C00;
+
 		/// <summary>
 		/// Mask indicating the position of the given color.
 		/// </summary>
 		public const int FI16_555_GREEN_MASK = 0x03E0;
+
 		/// <summary>
 		/// Mask indicating the position of the given color.
 		/// </summary>
 		public const int FI16_555_BLUE_MASK = 0x001F;
+
 		/// <summary>
 		/// Number of bits to shift left within a 16 bit block.
 		/// </summary>
 		public const int FI16_555_RED_SHIFT = 10;
+
 		/// <summary>
 		/// Number of bits to shift left within a 16 bit block.
 		/// </summary>
 		public const int FI16_555_GREEN_SHIFT = 5;
+
 		/// <summary>
 		/// Number of bits to shift left within a 16 bit block.
 		/// </summary>
 		public const int FI16_555_BLUE_SHIFT = 0;
+
 		/// <summary>
 		/// Mask indicating the position of the given color.
 		/// </summary>
 		public const int FI16_565_RED_MASK = 0xF800;
+
 		/// <summary>
 		/// Mask indicating the position of the given color.
 		/// </summary>
 		public const int FI16_565_GREEN_MASK = 0x07E0;
+
 		/// <summary>
 		/// Mask indicating the position of the given color.
 		/// </summary>
 		public const int FI16_565_BLUE_MASK = 0x001F;
+
 		/// <summary>
 		/// Number of bits to shift left within a 16 bit block.
 		/// </summary>
 		public const int FI16_565_RED_SHIFT = 11;
+
 		/// <summary>
 		/// Number of bits to shift left within a 16 bit block.
 		/// </summary>
 		public const int FI16_565_GREEN_SHIFT = 5;
+
 		/// <summary>
 		/// Number of bits to shift left within a 16 bit block.
 		/// </summary>
@@ -239,7 +249,7 @@ namespace FreeImageAPI
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_Allocate")]
 		public static extern FIBITMAP Allocate(int width, int height, int bpp,
-				uint red_mask, uint green_mask, uint blue_mask);
+			uint red_mask, uint green_mask, uint blue_mask);
 
 		/// <summary>
 		/// Creates a new bitmap in memory.
@@ -258,7 +268,17 @@ namespace FreeImageAPI
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_AllocateT")]
 		public static extern FIBITMAP AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp,
-				uint red_mask, uint green_mask, uint blue_mask);
+			uint red_mask, uint green_mask, uint blue_mask);
+
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_AllocateEx")]
+		internal static extern FIBITMAP AllocateEx(int width, int height, int bpp,
+			IntPtr color, FREE_IMAGE_COLOR_OPTIONS options, RGBQUAD[] palette,
+			uint red_mask, uint green_mask, uint blue_mask);
+
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_AllocateExT")]
+		internal static extern FIBITMAP AllocateExT(FREE_IMAGE_TYPE type, int width, int height, int bpp,
+			IntPtr color, FREE_IMAGE_COLOR_OPTIONS options, RGBQUAD[] palette,
+			uint red_mask, uint green_mask, uint blue_mask);
 
 		/// <summary>
 		/// Makes an exact reproduction of an existing bitmap, including metadata and attached profile if any.
@@ -341,7 +361,7 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SaveToHandle")]
 		public static extern bool SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP dib, ref FreeImageIO io, fi_handle handle,
-				FREE_IMAGE_SAVE_FLAGS flags);
+			FREE_IMAGE_SAVE_FLAGS flags);
 
 		#endregion
 
@@ -648,7 +668,21 @@ namespace FreeImageAPI
 		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_OpenMultiBitmap")]
 		public static extern FIMULTIBITMAP OpenMultiBitmap(FREE_IMAGE_FORMAT fif, string filename, bool create_new,
-				bool read_only, bool keep_cache_in_memory, FREE_IMAGE_LOAD_FLAGS flags);
+			bool read_only, bool keep_cache_in_memory, FREE_IMAGE_LOAD_FLAGS flags);
+
+		/// <summary>
+		/// Loads a FreeImage multi-pages bitmap from the specified handle
+		/// using the specified functions.
+		/// Load flags can be provided by the flags parameter.
+		/// </summary>
+		/// <param name="fif">Format of the image.</param>
+		/// <param name="io">IO functions used to read from the specified handle.</param>
+		/// <param name="handle">The handle to load the bitmap from.</param>
+		/// <param name="flags">Flags to enable or disable plugin-features.</param>
+		/// <returns>Handle to a FreeImage multi-paged bitmap.</returns>
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_OpenMultiBitmapFromHandle")]
+		public static extern FIMULTIBITMAP OpenMultiBitmapFromHandle(FREE_IMAGE_FORMAT fif, ref FreeImageIO io,
+			fi_handle handle, FREE_IMAGE_LOAD_FLAGS flags);
 
 		/// <summary>
 		/// Closes a previously opened multi-page bitmap and, when the bitmap was not opened read-only, applies any changes made to it.
@@ -657,7 +691,7 @@ namespace FreeImageAPI
 		/// <param name="flags">Flags to enable or disable plugin-features.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_CloseMultiBitmap")]
-		public static extern bool CloseMultiBitmap(FIMULTIBITMAP bitmap, FREE_IMAGE_SAVE_FLAGS flags);
+		private static extern bool CloseMultiBitmap_(FIMULTIBITMAP bitmap, FREE_IMAGE_SAVE_FLAGS flags);
 
 		/// <summary>
 		/// Returns the number of pages currently available in the multi-paged bitmap.
@@ -1207,121 +1241,6 @@ namespace FreeImageAPI
 
 		#endregion
 
-		#region Internal Functions
-
-		/*
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine1To4")]
-		public static extern void ConvertLine1To4(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine8To4")]
-		public static extern void ConvertLine8To4(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine16To4_555")]
-		public static extern void ConvertLine16To4_555(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine16To4_565")]
-		public static extern void ConvertLine16To4_565(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine24To4")]
-		public static extern void ConvertLine24To4(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine32To4")]
-		public static extern void ConvertLine32To4(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine1To8")]
-		public static extern void ConvertLine1To8(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine4To8")]
-		public static extern void ConvertLine4To8(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine16To8_555")]
-		public static extern void ConvertLine16To8_555(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine16To8_565")]
-		public static extern void ConvertLine16To8_565(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImage_ConvertLine24To8")]
-		public static extern void ConvertLine24To8(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine32To8")]
-		public static extern void ConvertLine32To8(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine1To16_555")]
-		public static extern void ConvertLine1To16_555(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine4To16_555")]
-		public static extern void ConvertLine4To16_555(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine8To16_555")]
-		public static extern void ConvertLine8To16_555(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine16_565_To16_555")]
-		public static extern void ConvertLine16_565_To16_555(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine24To16_555")]
-		public static extern void ConvertLine24To16_555(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine32To16_555")]
-		public static extern void ConvertLine32To16_555(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine1To16_565")]
-		public static extern void ConvertLine1To16_565(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine4To16_565")]
-		public static extern void ConvertLine4To16_565(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine8To16_565")]
-		public static extern void ConvertLine8To16_565(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine16_555_To16_565")]
-		public static extern void ConvertLine16_555_To16_565(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine24To16_565")]
-		public static extern void ConvertLine24To16_565(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine32To16_565")]
-		public static extern void ConvertLine32To16_565(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine1To24")]
-		public static extern void ConvertLine1To24(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine4To24")]
-		public static extern void ConvertLine4To24(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine8To24")]
-		public static extern void ConvertLine8To24(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine16To24_555")]
-		public static extern void ConvertLine16To24_555(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine16To24_565")]
-		public static extern void ConvertLine16To24_565(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine32To24")]
-		public static extern void ConvertLine32To24(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine1To32")]
-		public static extern void ConvertLine1To32(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine4To32")]
-		public static extern void ConvertLine4To32(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine8To32")]
-		public static extern void ConvertLine8To32(ref byte target, ref byte source, int width_in_pixels, ref RGBQUAD palette);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine16To32_555")]
-		public static extern void ConvertLine16To32_555(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine16To32_565")]
-		public static extern void ConvertLine16To32_565(ref byte target, ref byte source, int width_in_pixels);
-
-		[DllImport(dllName, EntryPoint = "FreeImageonvertLine24To32")]
-		public static extern void ConvertLine24To32(ref byte target, ref byte source, int width_in_pixels);
-
-		*/
-
-		#endregion
-
 		#region Conversion functions
 
 		/// <summary>
@@ -1453,7 +1372,7 @@ namespace FreeImageAPI
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ConvertFromRawBits")]
 		public static extern FIBITMAP ConvertFromRawBits(IntPtr bits, int width, int height, int pitch,
-				uint bpp, uint red_mask, uint green_mask, uint blue_mask, bool topdown);
+			uint bpp, uint red_mask, uint green_mask, uint blue_mask, bool topdown);
 
 		/// <summary>
 		/// Converts a raw bitmap to a FreeImage bitmap.
@@ -1475,7 +1394,7 @@ namespace FreeImageAPI
 		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ConvertFromRawBits")]
 		public static extern FIBITMAP ConvertFromRawBits(byte[] bits, int width, int height, int pitch,
-				uint bpp, uint red_mask, uint green_mask, uint blue_mask, bool topdown);
+			uint bpp, uint red_mask, uint green_mask, uint blue_mask, bool topdown);
 
 		/// <summary>
 		/// Converts a FreeImage bitmap to a raw bitmap, that is a raw piece of memory.
@@ -1495,7 +1414,7 @@ namespace FreeImageAPI
 		/// and in bottom-up order (bottom-left pixel first) otherwise.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ConvertToRawBits")]
 		public static extern void ConvertToRawBits(IntPtr bits, FIBITMAP dib, int pitch, uint bpp,
-				uint red_mask, uint green_mask, uint blue_mask, bool topdown);
+			uint red_mask, uint green_mask, uint blue_mask, bool topdown);
 
 		/// <summary>
 		/// Converts a FreeImage bitmap to a raw bitmap, that is a raw piece of memory.
@@ -1515,7 +1434,7 @@ namespace FreeImageAPI
 		/// and in bottom-up order (bottom-left pixel first) otherwise.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ConvertToRawBits")]
 		public static extern void ConvertToRawBits(byte[] bits, FIBITMAP dib, int pitch, uint bpp,
-				uint red_mask, uint green_mask, uint blue_mask, bool topdown);
+			uint red_mask, uint green_mask, uint blue_mask, bool topdown);
 
 		/// <summary>
 		/// Converts a 24- or 32-bit RGB(A) standard image or a 48-bit RGB image to a FIT_RGBF type image.
@@ -1817,7 +1736,6 @@ namespace FreeImageAPI
 		/// <returns>Returns true on success, false on failure.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetTagValue")]
 		public static extern bool SetTagValue(FITAG tag, byte[] value);
-		//public static extern bool SetTagValue(FITAG tag, IntPtr value);
 
 		#endregion
 
@@ -1917,14 +1835,18 @@ namespace FreeImageAPI
 
 		/// <summary>
 		/// This function rotates a 1-, 8-bit greyscale or a 24-, 32-bit color image by means of 3 shears.
+		/// 1-bit images rotation is limited to integer multiple of 90°.
+		/// <c>null</c> is returned for other values.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="angle">The angle of rotation.</param>
-		/// <returns>Handle to a FreeImage bitmap.
-		/// 1-bit images rotation is limited to integer multiple of 90°.
-		/// Null is returned for other values.</returns>
+		/// <returns>Handle to a FreeImage bitmap.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_RotateClassic")]
+		[Obsolete("RotateClassic is deprecated (use Rotate instead).")]
 		public static extern FIBITMAP RotateClassic(FIBITMAP dib, double angle);
+
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_Rotate")]
+		internal static extern FIBITMAP Rotate(FIBITMAP dib, double angle, IntPtr backgroundColor);
 
 		/// <summary>
 		/// This function performs a rotation and / or translation of an 8-bit greyscale,
@@ -1967,7 +1889,7 @@ namespace FreeImageAPI
 		/// <param name="operation">The operation to apply.</param>
 		/// <param name="perfect">To avoid lossy transformation, you can set the perfect parameter to true.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
-		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_JPEGTransform")]
+		[DllImport(FreeImageLibrary, CharSet = CharSet.Unicode, EntryPoint = "FreeImage_JPEGTransformU")]
 		public static extern bool JPEGTransform(string src_file, string dst_file,
 			FREE_IMAGE_JPEG_OPERATION operation, bool perfect);
 
@@ -1997,6 +1919,10 @@ namespace FreeImageAPI
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_MakeThumbnail")]
 		public static extern FIBITMAP MakeThumbnail(FIBITMAP dib, int max_pixel_size, bool convert);
 
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_EnlargeCanvas")]
+		internal static extern FIBITMAP EnlargeCanvas(FIBITMAP dib,
+			int left, int top, int right, int bottom, IntPtr color, FREE_IMAGE_COLOR_OPTIONS options);
+
 		#endregion
 
 		#region Color manipulation
@@ -2005,12 +1931,12 @@ namespace FreeImageAPI
 		/// Perfoms an histogram transformation on a 8-, 24- or 32-bit image.
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
-		/// <param name="LUT">The lookup table (LUT).
+		/// <param name="lookUpTable">The lookup table.
 		/// It's size is assumed to be 256 in length.</param>
 		/// <param name="channel">The color channel to be transformed.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_AdjustCurve")]
-		public static extern bool AdjustCurve(FIBITMAP dib, byte[] LUT, FREE_IMAGE_COLOR_CHANNEL channel);
+		public static extern bool AdjustCurve(FIBITMAP dib, byte[] lookUpTable, FREE_IMAGE_COLOR_CHANNEL channel);
 
 		/// <summary>
 		/// Performs gamma correction on a 8-, 24- or 32-bit image.
@@ -2172,7 +2098,7 @@ namespace FreeImageAPI
 		/// <param name="right">Specifies the right position of the cropped rectangle.</param>
 		/// <param name="bottom">Specifies the bottom position of the cropped rectangle.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
-		[DllImport(FreeImageLibrary, CharSet = CharSet.Ansi, EntryPoint = "FreeImage_JPEGCrop")]
+		[DllImport(FreeImageLibrary, CharSet = CharSet.Unicode, EntryPoint = "FreeImage_JPEGCropU")]
 		public static extern bool JPEGCrop(string src_file, string dst_file, int left, int top, int right, int bottom);
 
 		/// <summary>
@@ -2203,12 +2129,11 @@ namespace FreeImageAPI
 		#region Colors
 
 		/// <summary>
-		/// Creates a lookup table to be used with FreeImage_AdjustCurve() which
-		/// may adjusts brightness and contrast, correct gamma and invert the image with a
-		/// single call to FreeImage_AdjustCurve().
+		/// Creates a lookup table to be used with <see cref="AdjustCurve"/> which may adjusts brightness and
+		/// contrast, correct gamma and invert the image with a single call to <see cref="AdjustCurve"/>.
 		/// </summary>
-		/// <param name="LUT">Output lookup table to be used with FreeImage_AdjustCurve().
-		/// The size of 'LUT' is assumed to be 256.</param>
+		/// <param name="lookUpTable">Output lookup table to be used with <see cref="AdjustCurve"/>.
+		/// The size of 'lookUpTable' is assumed to be 256.</param>
 		/// <param name="brightness">Percentage brightness value where -100 &lt;= brightness &lt;= 100.
 		/// <para>A value of 0 means no change, less than 0 will make the image darker and greater
 		/// than 0 will make the image brighter.</para></param>
@@ -2221,8 +2146,46 @@ namespace FreeImageAPI
 		/// <param name="invert">If set to true, the image will be inverted.</param>
 		/// <returns>The number of adjustments applied to the resulting lookup table
 		/// compared to a blind lookup table.</returns>
+		/// <remarks>
+		/// This function creates a lookup table to be used with <see cref="AdjustCurve"/> which may adjust
+		/// brightness and contrast, correct gamma and invert the image with a single call to
+		/// <see cref="AdjustCurve"/>. If more than one of these image display properties need to be adjusted,
+		/// using a combined lookup table should be preferred over calling each adjustment function
+		/// separately. That's particularly true for huge images or if performance is an issue. Then,
+		/// the expensive process of iterating over all pixels of an image is performed only once and
+		/// not up to four times.
+		/// <para/>
+		/// Furthermore, the lookup table created does not depend on the order, in which each single
+		/// adjustment operation is performed. Due to rounding and byte casting issues, it actually
+		/// matters in which order individual adjustment operations are performed. Both of the following
+		/// snippets most likely produce different results:
+		/// <para/>
+		/// <code>
+		/// // snippet 1: contrast, brightness
+		/// AdjustContrast(dib, 15.0);
+		/// AdjustBrightness(dib, 50.0); 
+		/// </code>
+		/// <para/>
+		/// <code>
+		/// // snippet 2: brightness, contrast
+		/// AdjustBrightness(dib, 50.0);
+		/// AdjustContrast(dib, 15.0);
+		/// </code>
+		/// <para/>
+		/// Better and even faster would be snippet 3:
+		/// <para/>
+		/// <code>
+		/// // snippet 3:
+		/// byte[] lut = new byte[256];
+		/// GetAdjustColorsLookupTable(lut, 50.0, 15.0, 1.0, false);
+		/// AdjustCurve(dib, lut, FREE_IMAGE_COLOR_CHANNEL.FICC_RGB);
+		/// </code>
+		/// <para/>
+		/// This function is also used internally by <see cref="AdjustColors"/>, which does not return the
+		/// lookup table, but uses it to call <see cref="AdjustCurve"/> on the passed image.
+		/// </remarks>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_GetAdjustColorsLookupTable")]
-		public static extern int GetAdjustColorsLookupTable(byte[] LUT, double brightness, double contrast, double gamma, bool invert);
+		public static extern int GetAdjustColorsLookupTable(byte[] lookUpTable, double brightness, double contrast, double gamma, bool invert);
 
 		/// <summary>
 		/// Adjusts an image's brightness, contrast and gamma as well as it may
@@ -2242,6 +2205,41 @@ namespace FreeImageAPI
 		/// If so, it will be ignored and no gamma correction will be performed on the image.</param>
 		/// <param name="invert">If set to true, the image will be inverted.</param>
 		/// <returns>Returns true on success, false on failure.</returns>
+		/// <remarks>
+		/// This function adjusts an image's brightness, contrast and gamma as well as it
+		/// may optionally invert the image within a single operation. If more than one of
+		/// these image display properties need to be adjusted, using this function should
+		/// be preferred over calling each adjustment function separately. That's particularly
+		/// true for huge images or if performance is an issue.
+		/// <para/>
+		/// This function relies on <see cref="GetAdjustColorsLookupTable"/>,
+		/// which creates a single lookup table, that combines all adjustment operations requested.
+		/// <para/>
+		/// Furthermore, the lookup table created by <see cref="GetAdjustColorsLookupTable"/> does
+		/// not depend on the order, in which each single adjustment operation is performed.
+		/// Due to rounding and byte casting issues, it actually matters in which order individual
+		/// adjustment operations are performed. Both of the following snippets most likely produce
+		/// different results:
+		/// <para/>
+		/// <code>
+		/// // snippet 1: contrast, brightness
+		/// AdjustContrast(dib, 15.0);
+		/// AdjustBrightness(dib, 50.0);
+		/// </code>
+		/// <para/>
+		/// <code>
+		/// // snippet 2: brightness, contrast
+		/// AdjustBrightness(dib, 50.0);
+		/// AdjustContrast(dib, 15.0);
+		/// </code>
+		/// <para/>
+		/// Better and even faster would be snippet 3:
+		/// <para/>
+		/// <code>
+		/// // snippet 3:
+		/// AdjustColors(dib, 50.0, 15.0, 1.0, false);
+		/// </code>
+		/// </remarks>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_AdjustColors")]
 		public static extern bool AdjustColors(FIBITMAP dib, double brightness, double contrast, double gamma, bool invert);
 
@@ -2258,6 +2256,27 @@ namespace FreeImageAPI
 		/// <param name="swap">If true, source and destination colors are swapped, that is,
 		/// each destination color is also mapped to the corresponding source color.</param>
 		/// <returns>The total number of pixels changed.</returns>
+		/// <remarks>
+		/// This function maps up to <paramref name="count"/> colors specified in
+		/// <paramref name="srccolors"/> to these specified in <paramref name="dstcolors"/>.
+		/// Thereby, color <i>srccolors[N]</i>, if found in the image, will be replaced by color
+		/// <i>dstcolors[N]</i>. If <paramref name="swap"/> is <b>true</b>, additionally all colors
+		/// specified in <paramref name="dstcolors"/> are also mapped to these specified
+		/// in <paramref name="srccolors"/>. For high color images, the actual image data will be
+		/// modified whereas, for palletized images only the palette will be changed.
+		/// <para/>
+		/// The function returns the number of pixels changed or zero, if no pixels were changed. 
+		/// <para/>
+		/// Both arrays <paramref name="srccolors"/> and <paramref name="dstcolors"/> are assumed
+		/// not to hold less than <paramref name="count"/> colors.
+		/// <para/>
+		/// For 16-bit images, all colors specified are transparently converted to their 
+		/// proper 16-bit representation (either in RGB555 or RGB565 format, which is determined
+		/// by the image's red- green- and blue-mask).
+		/// <para/>
+		/// <b>Note, that this behaviour is different from what <see cref="ApplyPaletteIndexMapping"/> does,
+		/// which modifies the actual image data on palletized images.</b>
+		/// </remarks>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ApplyColorMapping")]
 		public static extern uint ApplyColorMapping(FIBITMAP dib, RGBQUAD[] srccolors, RGBQUAD[] dstcolors, uint count, bool ignore_alpha, bool swap);
 
@@ -2270,6 +2289,21 @@ namespace FreeImageAPI
 		/// <param name="color_b">The other of the two colors to be swapped.</param>
 		/// <param name="ignore_alpha">If true, 32-bit images and colors are treated as 24-bit.</param>
 		/// <returns>The total number of pixels changed.</returns>
+		/// <remarks>
+		/// This function swaps the two specified colors <paramref name="color_a"/> and
+		/// <paramref name="color_b"/> on a palletized or high color image.
+		/// For high color images, the actual image data will be modified whereas, for palletized
+		/// images only the palette will be changed.
+		/// <para/>
+		/// <b>Note, that this behaviour is different from what <see cref="SwapPaletteIndices"/> does,
+		/// which modifies the actual image data on palletized images.</b>
+		/// <para/>
+		/// This is just a thin wrapper for <see cref="ApplyColorMapping"/> and resolves to:
+		/// <para/>
+		/// <code>
+		/// return ApplyColorMapping(dib, color_a, color_b, 1, ignore_alpha, true);
+		/// </code>
+		/// </remarks>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SwapColors")]
 		public static extern uint SwapColors(FIBITMAP dib, ref RGBQUAD color_a, ref RGBQUAD color_b, bool ignore_alpha);
 
@@ -2285,6 +2319,21 @@ namespace FreeImageAPI
 		/// <param name="swap">If true, source and destination palette indices are swapped, that is,
 		/// each destination index is also mapped to the corresponding source index.</param>
 		/// <returns>The total number of pixels changed.</returns>
+		/// <remarks>
+		/// This function maps up to <paramref name="count"/> palette indices specified in
+		/// <paramref name="srcindices"/> to these specified in <paramref name="dstindices"/>.
+		/// Thereby, index <i>srcindices[N]</i>, if present in the image, will be replaced by index
+		/// <i>dstindices[N]</i>. If <paramref name="swap"/> is <b>true</b>, additionally all indices
+		/// specified in <paramref name="dstindices"/> are also mapped to these specified in 
+		/// <paramref name="srcindices"/>.
+		/// <para/>
+		/// The function returns the number of pixels changed or zero, if no pixels were changed.
+		/// Both arrays <paramref name="srcindices"/> and <paramref name="dstindices"/> are assumed not to
+		/// hold less than <paramref name="count"/> indices.
+		/// <para/>
+		/// <b>Note, that this behaviour is different from what <see cref="ApplyColorMapping"/> does, which
+		/// modifies the actual image data on palletized images.</b>
+		/// </remarks>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_ApplyPaletteIndexMapping")]
 		public static extern uint ApplyPaletteIndexMapping(FIBITMAP dib, byte[] srcindices, byte[] dstindices, uint count, bool swap);
 
@@ -2295,8 +2344,25 @@ namespace FreeImageAPI
 		/// <param name="index_a">One of the two palette indices to be swapped.</param>
 		/// <param name="index_b">The other of the two palette indices to be swapped.</param>
 		/// <returns>The total number of pixels changed.</returns>
+		/// <remarks>
+		/// This function swaps the two specified palette indices <i>index_a</i> and
+		/// <i>index_b</i> on a palletized image. Therefore, not the palette, but the
+		/// actual image data will be modified.
+		/// <para/>
+		/// <b>Note, that this behaviour is different from what <see cref="SwapColors"/> does on palletized images,
+		/// which only swaps the colors in the palette.</b>
+		/// <para/>
+		/// This is just a thin wrapper for <see cref="ApplyColorMapping"/> and resolves to:
+		/// <para/>
+		/// <code>
+		/// return ApplyPaletteIndexMapping(dib, index_a, index_b, 1, true);
+		/// </code>
+		/// </remarks>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SwapPaletteIndices")]
 		public static extern uint SwapPaletteIndices(FIBITMAP dib, ref byte index_a, ref byte index_b);
+
+		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_FillBackground")]
+		internal static extern bool FillBackground(FIBITMAP dib, IntPtr color, FREE_IMAGE_COLOR_OPTIONS options);
 
 		#endregion
 	}
