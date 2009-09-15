@@ -13,10 +13,7 @@ namespace FreeImageAPI
 
 		// Callback delegate
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private static OutputMessageFunction outputMessageFunction;
-		// Handle to pin the functions address
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private static GCHandle outputMessageHandle;
+		private static readonly OutputMessageFunction outputMessageFunction;
 
 		static FreeImageEngine()
 		{
@@ -27,8 +24,6 @@ namespace FreeImageAPI
 			}
 			// Create a delegate (function pointer) to 'OnMessage'
 			outputMessageFunction = new OutputMessageFunction(OnMessage);
-			// Pin the object so the garbage collector does not move it around in memory
-			outputMessageHandle = GCHandle.Alloc(outputMessageFunction, GCHandleType.Normal);
 			// Set the callback
 			FreeImage.SetOutputMessage(outputMessageFunction);
 		}
@@ -38,10 +33,16 @@ namespace FreeImageAPI
 		/// </summary>
 		private static void OnMessage(FREE_IMAGE_FORMAT fif, string message)
 		{
-			// Invoke the message
-			if (Message != null)
+			// Get a local copy of the multicast-delegate
+			OutputMessageFunction m = Message;
+
+			// Check the local copy instead of the static instance
+			// to prevent a second thread from setting the delegate
+			// to null, which would cause a nullreference exception
+			if (m != null)
 			{
-				Message.Invoke(fif, message);
+				// Invoke the multicast-delegate
+				m.Invoke(fif, message);
 			}
 		}
 
