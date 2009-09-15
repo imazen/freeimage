@@ -153,7 +153,7 @@ namespace Sample06
 			Random rand = new Random();
 
 			// Rotate the bitmap
-			dib = FreeImage.RotateClassic(temp, rand.NextDouble() * 360d);
+			dib = FreeImage.Rotate(temp, rand.NextDouble() * 360d);
 
 			// Unload bitmap
 			FreeImage.UnloadEx(ref temp);
