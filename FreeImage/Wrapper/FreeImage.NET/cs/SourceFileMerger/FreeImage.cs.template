@@ -106,6 +106,8 @@ using FreeImageAPI.Plugins;
 
 #include "Enumerations\FREE_IMAGE_TYPE.cs"
 
+#include "Enumerations\FREE_IMAGE_COLOR_OPTIONS.cs"
+
 #include "Enumerations\FREE_IMAGE_COLOR_TYPE.cs"
 
 #include "Enumerations\FREE_IMAGE_QUANTIZE.cs"
