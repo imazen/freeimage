@@ -278,6 +278,15 @@ SwapLong(DWORD *lp) {
 #define FORMAT_RGB565(dib) ((FreeImage_GetRedMask(dib) == FI16_565_RED_MASK) &&(FreeImage_GetGreenMask(dib) == FI16_565_GREEN_MASK) &&(FreeImage_GetBlueMask(dib) == FI16_565_BLUE_MASK))
 #define RGBQUAD_TO_WORD(dib, color) (FORMAT_RGB565(dib) ? RGB565((color)->rgbBlue, (color)->rgbGreen, (color)->rgbRed) : RGB555((color)->rgbBlue, (color)->rgbGreen, (color)->rgbRed))
 
+#define CREATE_GREYSCALE_PALETTE(palette, entries) \
+	for (unsigned i = 0, v = 0; i < entries; i++, v += 0x00FFFFFF / (entries - 1)) { \
+		((unsigned *)palette)[i] = v; \
+	}
+
+#define CREATE_GREYSCALE_PALETTE_REVERSE(palette, entries) \
+	for (unsigned i = 0, v = 0x00FFFFFF; i < entries; i++, v -= (0x00FFFFFF / (entries - 1))) { \
+		((unsigned *)palette)[i] = v; \
+	}
 
 // ==========================================================
 //   Template utility functions
