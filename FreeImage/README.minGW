@@ -38,7 +38,7 @@ tested using the following free tools:
 
 * Sed is only needed to create a GCC-native import library from
   the MSVC import library FreeImage.lib. However, since MinGW now
-  supportslinking against MSVC lib files, this process seems to
+  supports linking against MSVC lib files, this process seems to
   be obsolete. See section 1.
 
 Basically, no version dependent capabilities are used so, this
@@ -151,7 +151,7 @@ source file after switching from dynamic to static and vice versa.
 So, a 'make clean' is required each time, the library type is
 changed.
 
-The type of library to build is specified by a variable names
+The type of library to build is specified by a variable named
 FREEIMAGE_LIBRARY_TYPE, which may either be set directly in the
 Makefile.mingw near line 18 or may be specified as an environment
 variable. This variable may either take SHARED or STATIC to build
@@ -231,6 +231,6 @@ Microsoft Visual Studio.
      http://www.gnu.org/software/binutils/
      http://sourceware.org/binutils/docs-2.19/
 
-- The GNU Make homepage and onlone documentation:
+- The GNU Make homepage and online documentation:
      http://www.gnu.org/software/make/
      http://www.gnu.org/software/make/manual/make.html
