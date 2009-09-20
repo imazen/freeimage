@@ -30,7 +30,7 @@
 
 // ==========================================================
 
-#if defined(_MSC_VER)
+#if !defined(_M_X64) && defined(_MSC_VER)
 	#define DEPRECATE(a,b) \
 	{ \
 		void *fptr;	\
