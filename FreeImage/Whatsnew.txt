@@ -5,7 +5,7 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month day, 2009 - 3.13.0
+September 28th, 2009 - 3.13.0
 ! FreeImage now uses LibJPEG 7
 ! FreeImage now uses LibRaw-Lite 0.7.2
 ! FreeImage now uses libPNG 1.2.40
