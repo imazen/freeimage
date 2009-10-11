@@ -1256,7 +1256,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				// read the image in one chunk into an RGBA array
 
-				if (!TIFFReadRGBAImage(tif, width, height, raster, 0)) {
+				if (!TIFFReadRGBAImage(tif, width, height, raster, 1)) {
 					_TIFFfree(raster);
 					throw FI_MSG_ERROR_UNSUPPORTED_FORMAT;
 				}
