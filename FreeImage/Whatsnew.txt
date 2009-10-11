@@ -5,6 +5,11 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month day, 2009 - 3.13.1
++ [Berend Engelbrecht] added loading of Exif orientation tag in TIFF plugin
+* [Herve Drolon] fixed TIF plugin crashing on a malformed TIFF-JPEG compressed image
+* [Herve Drolon] fixed MNG plugin crashing on some old mng images
+
 September 28th, 2009 - 3.13.0
 ! FreeImage now uses LibJPEG 7
 ! FreeImage now uses LibRaw-Lite 0.7.2
