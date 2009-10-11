@@ -5,6 +5,7 @@
 // Design and implementation by
 // - Hervé Drolon (drolon@infonie.fr)
 // - Thorsten Radde (support@IdealSoftware.com)
+// - Berend Engelbrecht (softwarecave@users.sourceforge.net)
 //
 // Based on the LibTIFF xtiffio sample and on LibGeoTIFF
 //
@@ -196,209 +197,229 @@ tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib) {
 //   EXIF tag reading 
 // ----------------------------------------------------------
 
-BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
-    int  i;
-    short count;
+/**
+Read a single exif tag
+*/
+BOOL tiff_read_exif_tag(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib, TagLib& tagLib, TIFFDirectory *td, ttag_t tag) {
+  const TIFFFieldInfo *fip;
+  uint32 value_count;
+  int mem_alloc = 0;
+  void *raw_data = NULL;
 
-	TagLib& tagLib = TagLib::instance();
+  if(tag == TIFFTAG_EXIFIFD) return TRUE; 
 
-	TIFFDirectory *td = &tif->tif_dir;
-    
-	count = (short) TIFFGetTagListCount(tif);
-    for(i = 0; i < count; i++) {
-        ttag_t tag = TIFFGetTagListEntry(tif, i);
-        const TIFFFieldInfo *fip;
-        uint32 value_count;
-        int mem_alloc = 0;
-        void *raw_data;
+  // get the tag key - use NULL to avoid reading GeoTIFF tags
+  const char *key = tagLib.getTagFieldName(md_model, (WORD)tag, NULL);
+  if(key == NULL) return TRUE;
 
-		if(tag == TIFFTAG_EXIFIFD) continue;
+  fip = TIFFFieldWithTag(tif, tag);
+  if(fip == NULL) return TRUE;
 
-		// get the tag key - use NULL to avoid reading GeoTIFF tags
-		const char *key = tagLib.getTagFieldName(md_model, (WORD)tag, NULL);
-		if(key == NULL) continue;
-        
-		fip = TIFFFieldWithTag(tif, tag);
-        if(fip == NULL) continue;
-		
-		if(fip->field_passcount) {
-			if (fip->field_readcount != TIFF_VARIABLE2) {
-				// assume TIFF_VARIABLE
-				uint16 value_count16;
-				if(TIFFGetField(tif, tag, &value_count16, &raw_data) != 1) continue;
-				value_count = value_count16;
-			} else {
-				if(TIFFGetField(tif, tag, &value_count, &raw_data) != 1) continue;
-			}
-		} else {
-			if (fip->field_readcount == TIFF_VARIABLE || fip->field_readcount == TIFF_VARIABLE2) {
-				value_count = 1;
-			} else if (fip->field_readcount == TIFF_SPP) {
-				value_count = td->td_samplesperpixel;
-			} else {
-				value_count = fip->field_readcount;
-			}
-			if (fip->field_type == TIFF_ASCII 
-				|| fip->field_readcount == TIFF_VARIABLE
-				|| fip->field_readcount == TIFF_VARIABLE2
-				|| fip->field_readcount == TIFF_SPP
-				|| value_count > 1) {
-				if(TIFFGetField(tif, tag, &raw_data) != 1) continue;
-			} else {
-				raw_data = _TIFFmalloc(_TIFFDataSize(fip->field_type) * value_count);
-				mem_alloc = 1;
-				if(TIFFGetField(tif, tag, raw_data) != 1) {
-					_TIFFfree(raw_data);
-					continue;
-				}
-			}
-		}
-		
-		// create a tag
-		FITAG *fitag = FreeImage_CreateTag();
-		if(!fitag) {
-			if(mem_alloc)
-				_TIFFfree(raw_data);
-			return FALSE;
-		}
-
-		FreeImage_SetTagID(fitag, (WORD)tag);
-		FreeImage_SetTagKey(fitag, key);
-
-		switch(fip->field_type) {
-			case TIFF_BYTE:
-				FreeImage_SetTagType(fitag, FIDT_BYTE);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, raw_data);
-				break;
-
-			case TIFF_UNDEFINED:
-				FreeImage_SetTagType(fitag, FIDT_UNDEFINED);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, raw_data);
-				break;
-
-			case TIFF_SBYTE:
-				FreeImage_SetTagType(fitag, FIDT_SBYTE);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, raw_data);
-				break;
-
-			case TIFF_SHORT:
-				FreeImage_SetTagType(fitag, FIDT_SHORT);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, raw_data);
-				break;
-
-			case TIFF_SSHORT:
-				FreeImage_SetTagType(fitag, FIDT_SSHORT);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, raw_data);
-				break;
-
-			case TIFF_LONG:
-				FreeImage_SetTagType(fitag, FIDT_LONG);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, raw_data);
-				break;
-
-			case TIFF_IFD:
-				FreeImage_SetTagType(fitag, FIDT_IFD);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, raw_data);
-				break;
-
-			case TIFF_SLONG:
-				FreeImage_SetTagType(fitag, FIDT_SLONG);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, raw_data);
-				break;
-
-			case TIFF_RATIONAL:
-			{
-				// LibTIFF converts rational to floats : reconvert floats to rationals
-				DWORD *rvalue = (DWORD*)malloc(2 * value_count * sizeof(DWORD));
-				for(uint32 i = 0; i < value_count; i++) {
-					float *fv = (float*)raw_data;
-					FIRational rational(fv[i]);
-					rvalue[2*i] = rational.getNumerator();
-					rvalue[2*i+1] = rational.getDenominator();
-				}
-				FreeImage_SetTagType(fitag, FIDT_RATIONAL);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, rvalue);
-				free(rvalue);
-			}
-			break;
-
-			case TIFF_SRATIONAL:
-			{
-				// LibTIFF converts rational to floats : reconvert floats to rationals
-				LONG *rvalue = (LONG*)malloc(2 * value_count * sizeof(LONG));
-				for(uint32 i = 0; i < value_count; i++) {
-					float *fv = (float*)raw_data;
-					FIRational rational(fv[i]);
-					rvalue[2*i] = rational.getNumerator();
-					rvalue[2*i+1] = rational.getDenominator();
-				}
-				FreeImage_SetTagType(fitag, FIDT_RATIONAL);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, rvalue);
-				free(rvalue);
-			}
-			break;
-
-			case TIFF_FLOAT:
-				FreeImage_SetTagType(fitag, FIDT_FLOAT);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, raw_data);
-				break;
-
-			case TIFF_DOUBLE:
-				FreeImage_SetTagType(fitag, FIDT_DOUBLE);
-				FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
-				FreeImage_SetTagCount(fitag, value_count);
-				FreeImage_SetTagValue(fitag, raw_data);
-				break;
-
-			default:
-			{
-				size_t length = strlen((char*)raw_data) + 1;
-				FreeImage_SetTagType(fitag, FIDT_ASCII);
-				FreeImage_SetTagLength(fitag, (DWORD)length);
-				FreeImage_SetTagCount(fitag, (DWORD)length);
-				FreeImage_SetTagValue(fitag, raw_data);
-			}
-			break;
-		}
-
-		const char *description = tagLib.getTagDescription(md_model, (WORD)tag);
-		if(description) {
-			FreeImage_SetTagDescription(fitag, description);
-		}
-		// store the tag
-		FreeImage_SetMetadata(tagLib.getFreeImageModel(md_model), dib, FreeImage_GetTagKey(fitag), fitag);
-
-		// destroy the tag
-		FreeImage_DeleteTag(fitag);
-	
-		if(mem_alloc)
-			_TIFFfree(raw_data);
+  if(fip->field_passcount) {
+    if (fip->field_readcount != TIFF_VARIABLE2) {
+      // assume TIFF_VARIABLE
+      uint16 value_count16;
+      if(TIFFGetField(tif, tag, &value_count16, &raw_data) != 1) return TRUE;
+      value_count = value_count16;
+    } else {
+      if(TIFFGetField(tif, tag, &value_count, &raw_data) != 1) return TRUE;
     }
+  } else {
+    if (fip->field_readcount == TIFF_VARIABLE || fip->field_readcount == TIFF_VARIABLE2) {
+      value_count = 1;
+    } else if (fip->field_readcount == TIFF_SPP) {
+      value_count = td->td_samplesperpixel;
+    } else {
+      value_count = fip->field_readcount;
+    }
+    if (fip->field_type == TIFF_ASCII 
+      || fip->field_readcount == TIFF_VARIABLE
+      || fip->field_readcount == TIFF_VARIABLE2
+      || fip->field_readcount == TIFF_SPP
+      || value_count > 1) {
+        if(TIFFGetField(tif, tag, &raw_data) != 1) return TRUE;
+    } else {
+      raw_data = _TIFFmalloc(_TIFFDataSize(fip->field_type) * value_count);
+      mem_alloc = 1;
+      if(TIFFGetField(tif, tag, raw_data) != 1) { 
+        _TIFFfree(raw_data);
+        return TRUE;
+      }
+    }
+  }
 
-	return TRUE;
+  // create a tag
+  FITAG *fitag = FreeImage_CreateTag();
+  if(!fitag) {
+    if(mem_alloc)
+      _TIFFfree(raw_data);
+    return FALSE;
+  }
+
+  FreeImage_SetTagID(fitag, (WORD)tag);
+  FreeImage_SetTagKey(fitag, key);
+
+  switch(fip->field_type) {
+      case TIFF_BYTE:
+        FreeImage_SetTagType(fitag, FIDT_BYTE);
+        FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+        FreeImage_SetTagCount(fitag, value_count);
+        FreeImage_SetTagValue(fitag, raw_data);
+        break;
+
+      case TIFF_UNDEFINED:
+        FreeImage_SetTagType(fitag, FIDT_UNDEFINED);
+        FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+        FreeImage_SetTagCount(fitag, value_count);
+        FreeImage_SetTagValue(fitag, raw_data);
+        break;
+
+      case TIFF_SBYTE:
+        FreeImage_SetTagType(fitag, FIDT_SBYTE);
+        FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+        FreeImage_SetTagCount(fitag, value_count);
+        FreeImage_SetTagValue(fitag, raw_data);
+        break;
+
+      case TIFF_SHORT:
+        FreeImage_SetTagType(fitag, FIDT_SHORT);
+        FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+        FreeImage_SetTagCount(fitag, value_count);
+        FreeImage_SetTagValue(fitag, raw_data);
+        break;
+
+      case TIFF_SSHORT:
+        FreeImage_SetTagType(fitag, FIDT_SSHORT);
+        FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+        FreeImage_SetTagCount(fitag, value_count);
+        FreeImage_SetTagValue(fitag, raw_data);
+        break;
+
+      case TIFF_LONG:
+        FreeImage_SetTagType(fitag, FIDT_LONG);
+        FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+        FreeImage_SetTagCount(fitag, value_count);
+        FreeImage_SetTagValue(fitag, raw_data);
+        break;
+
+      case TIFF_IFD:
+        FreeImage_SetTagType(fitag, FIDT_IFD);
+        FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+        FreeImage_SetTagCount(fitag, value_count);
+        FreeImage_SetTagValue(fitag, raw_data);
+        break;
+
+      case TIFF_SLONG:
+        FreeImage_SetTagType(fitag, FIDT_SLONG);
+        FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+        FreeImage_SetTagCount(fitag, value_count);
+        FreeImage_SetTagValue(fitag, raw_data);
+        break;
+
+      case TIFF_RATIONAL:
+        {
+          // LibTIFF converts rational to floats : reconvert floats to rationals
+          DWORD *rvalue = (DWORD*)malloc(2 * value_count * sizeof(DWORD));
+          for(uint32 i = 0; i < value_count; i++) {
+            float *fv = (float*)raw_data;
+            FIRational rational(fv[i]);
+            rvalue[2*i] = rational.getNumerator();
+            rvalue[2*i+1] = rational.getDenominator();
+          }
+          FreeImage_SetTagType(fitag, FIDT_RATIONAL);
+          FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+          FreeImage_SetTagCount(fitag, value_count);
+          FreeImage_SetTagValue(fitag, rvalue);
+          free(rvalue);
+        }
+        break;
+
+      case TIFF_SRATIONAL:
+        {
+          // LibTIFF converts rational to floats : reconvert floats to rationals
+          LONG *rvalue = (LONG*)malloc(2 * value_count * sizeof(LONG));
+          for(uint32 i = 0; i < value_count; i++) {
+            float *fv = (float*)raw_data;
+            FIRational rational(fv[i]);
+            rvalue[2*i] = rational.getNumerator();
+            rvalue[2*i+1] = rational.getDenominator();
+          }
+          FreeImage_SetTagType(fitag, FIDT_RATIONAL);
+          FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+          FreeImage_SetTagCount(fitag, value_count);
+          FreeImage_SetTagValue(fitag, rvalue);
+          free(rvalue);
+        }
+        break;
+
+      case TIFF_FLOAT:
+        FreeImage_SetTagType(fitag, FIDT_FLOAT);
+        FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+        FreeImage_SetTagCount(fitag, value_count);
+        FreeImage_SetTagValue(fitag, raw_data);
+        break;
+
+      case TIFF_DOUBLE:
+        FreeImage_SetTagType(fitag, FIDT_DOUBLE);
+        FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+        FreeImage_SetTagCount(fitag, value_count);
+        FreeImage_SetTagValue(fitag, raw_data);
+        break;
+
+      default:
+        {
+          size_t length = strlen((char*)raw_data) + 1;
+          FreeImage_SetTagType(fitag, FIDT_ASCII);
+          FreeImage_SetTagLength(fitag, (DWORD)length);
+          FreeImage_SetTagCount(fitag, (DWORD)length);
+          FreeImage_SetTagValue(fitag, raw_data);
+        }
+        break;
+  }
+
+  const char *description = tagLib.getTagDescription(md_model, (WORD)tag);
+  if(description) {
+    FreeImage_SetTagDescription(fitag, description);
+  }
+  // store the tag
+  FreeImage_SetMetadata(tagLib.getFreeImageModel(md_model), dib, FreeImage_GetTagKey(fitag), fitag);
+
+  // destroy the tag
+  FreeImage_DeleteTag(fitag);
+
+  if(mem_alloc)
+    _TIFFfree(raw_data);
+  return TRUE;
+}
+
+/** 
+Read all known exif tags
+*/
+BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
+  int  i;
+  short count;
+
+  TagLib& tagLib = TagLib::instance();
+
+  TIFFDirectory *td = &tif->tif_dir;
+
+  count = (short) TIFFGetTagListCount(tif);
+  for(i = 0; i < count; i++) {
+    ttag_t tag = TIFFGetTagListEntry(tif, i);
+    // read the tag
+    if (!tiff_read_exif_tag(tif, md_model, dib, tagLib, td, tag))
+      return FALSE;
+  }
+
+  // we want to know values of standard tags too!!
+  if(md_model == FIMD_EXIF_MAIN) {
+	  if (!tiff_read_exif_tag(tif, md_model, dib, tagLib, td, TIFFTAG_ORIENTATION))
+		  return FALSE;
+  }
+
+  return TRUE;
 
 }
+
 
 
