@@ -247,6 +247,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		// set encoding parameters to default values
 		opj_set_default_encoder_parameters(&parameters);
 
+		parameters.tcp_numlayers = 0;
 		// if no rate entered, apply a 16:1 rate by default
 		if(flags == J2K_DEFAULT) {
 			parameters.tcp_rates[0] = (float)16;
