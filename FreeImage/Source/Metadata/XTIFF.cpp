@@ -413,7 +413,7 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 
   // we want to know values of standard tags too!!
   if(md_model == FIMD_EXIF_MAIN) {
-	  if (!tiff_read_exif_tag(tif, md_model, dib, tagLib, td, TIFFTAG_ORIENTATION))
+	  if(td->td_orientation && !tiff_read_exif_tag(tif, md_model, dib, tagLib, td, TIFFTAG_ORIENTATION))
 		  return FALSE;
   }
 
