@@ -40,7 +40,7 @@ GET_FREEIMAGE_MARKER(BITMAPINFOHEADER *bmih) {
 ///////////////////////////////////////////////////////////////////
 // Construction / Destruction
 
-fipWinImage::fipWinImage(FREE_IMAGE_TYPE image_type, WORD width, WORD height, WORD bpp) : fipImage(image_type, width, height, bpp) {
+fipWinImage::fipWinImage(FREE_IMAGE_TYPE image_type, unsigned width, unsigned height, unsigned bpp) : fipImage(image_type, width, height, bpp) {
 	_display_dib = NULL;
 	_bDeleteMe = FALSE;
 	// default tone mapping operator

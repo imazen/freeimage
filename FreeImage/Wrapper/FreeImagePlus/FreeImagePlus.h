@@ -121,14 +121,14 @@ public:
 	Constructor
 	@see FreeImage_AllocateT
 	*/
-	fipImage(FREE_IMAGE_TYPE image_type = FIT_BITMAP, WORD width = 0, WORD height = 0, WORD bpp = 0);
+	fipImage(FREE_IMAGE_TYPE image_type = FIT_BITMAP, unsigned width = 0, unsigned height = 0, unsigned bpp = 0);
 	/// Destructor
 	virtual ~fipImage();
 	/**
 	Image allocator
 	@see FreeImage_AllocateT
 	*/
-	BOOL setSize(FREE_IMAGE_TYPE image_type, WORD width, WORD height, WORD bpp, unsigned red_mask = 0, unsigned green_mask = 0, unsigned blue_mask = 0);
+	BOOL setSize(FREE_IMAGE_TYPE image_type, unsigned width, unsigned height, unsigned bpp, unsigned red_mask = 0, unsigned green_mask = 0, unsigned blue_mask = 0);
 	/// Destroy image data
 	virtual void clear();
 	//@}
@@ -324,19 +324,19 @@ public:
 	Returns the image width in pixels
 	@see FreeImage_GetWidth
 	*/
-	WORD getWidth() const;
+	unsigned getWidth() const;
 	
 	/**
 	Returns the image height in pixels
 	@see FreeImage_GetHeight
 	*/
-	WORD getHeight() const;
+	unsigned getHeight() const;
 	
 	/**
 	Returns the width of the bitmap in bytes rounded to the nearest DWORD.
 	@see FreeImage_GetPitch
 	*/
-	WORD getScanWidth() const;
+	unsigned getScanWidth() const;
 
 	/**
 	Returns a pointer to the FIBITMAP data. Used for direct access from FREEIMAGE functions 
@@ -381,14 +381,14 @@ public:
 	When the image type is FIT_BITMAP, valid bitdepth can be 1, 4, 8, 16, 24 or 32.
 	@see FreeImage_GetBPP, getImageType
 	*/
-	WORD getBitsPerPixel() const;
+	unsigned getBitsPerPixel() const;
 
 	/**
 	Returns the width of the bitmap in bytes.<br>
 	<b>This is not the size of the scanline</b>.
 	@see FreeImage_GetLine, getScanWidth
 	*/
-	WORD getLine() const;
+	unsigned getLine() const;
 
 	/**
 	Returns the bitmap resolution along the X axis, in pixels / cm
@@ -428,13 +428,13 @@ public:
 	Returns the palette size in <b>bytes</b>.
 	@see FreeImage_GetColorsUsed
 	*/
-	WORD getPaletteSize() const;
+	unsigned getPaletteSize() const;
 
 	/**
 	Retrieves the number of colours used in the bitmap. If the bitmap is non-palletised, 0 is returned. 
 	@see FreeImage_GetColorsUsed
 	*/
-	WORD getColorsUsed() const;
+	unsigned getColorsUsed() const;
 
 	/** 
 	Investigates the colour type of the bitmap.
@@ -467,7 +467,7 @@ public:
 		Use this function with getScanWidth to iterates through the pixels. 
 		@see FreeImage_GetScanLine, FreeImage documentation
 	*/
-	BYTE* getScanLine(WORD scanline) const;
+	BYTE* getScanLine(unsigned scanline) const;
 
 	/** 
 	Get the pixel index of a 1-, 4- or 8-bit palettized image at position (x, y), including range check (slow access). 
@@ -838,7 +838,7 @@ public:
 	@return Returns TRUE if the operation was successful, FALSE otherwise
 	@see FreeImage_Rescale, FREE_IMAGE_FILTER
 	*/
-	BOOL rescale(WORD new_width, WORD new_height, FREE_IMAGE_FILTER filter);
+	BOOL rescale(unsigned new_width, unsigned new_height, FREE_IMAGE_FILTER filter);
 
 	/** @brief Creates a thumbnail image keeping aspect ratio
 
@@ -847,7 +847,7 @@ public:
 	@return Returns TRUE if the operation was successful, FALSE otherwise
 	@see FreeImage_MakeThumbnail
 	*/
-	BOOL makeThumbnail(WORD max_size, BOOL convert = TRUE);
+	BOOL makeThumbnail(unsigned max_size, BOOL convert = TRUE);
 	//@}
 
 	/**@name Image status */
@@ -942,7 +942,7 @@ public:
 	/**@name Creation & Destruction */
 	//@{	
 	/// Constructor
-	fipWinImage(FREE_IMAGE_TYPE image_type = FIT_BITMAP, WORD width = 0, WORD height = 0, WORD bpp = 0);
+	fipWinImage(FREE_IMAGE_TYPE image_type = FIT_BITMAP, unsigned width = 0, unsigned height = 0, unsigned bpp = 0);
 
 	/// Destructor
 	virtual ~fipWinImage();

@@ -5,6 +5,9 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+October 24th, 2009
+! [Herve Drolon] fixed the '65535' width/height/pitch size limitation (need recompilation as several prototypes changed)
+
 September 1rd, 2009
 ! [Herve Drolon] changed prototypes for fipWinImage::setToneMappingOperator and fipWinImage::getToneMappingOperator
 ! [Herve Drolon] changed prototype for fipImage::toneMapping

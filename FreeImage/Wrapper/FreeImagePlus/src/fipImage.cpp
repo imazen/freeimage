@@ -37,7 +37,7 @@ BOOL fipImage::replace(FIBITMAP *new_dib) {
 ///////////////////////////////////////////////////////////////////
 // Creation & Destruction
 
-fipImage::fipImage(FREE_IMAGE_TYPE image_type, WORD width, WORD height, WORD bpp) {
+fipImage::fipImage(FREE_IMAGE_TYPE image_type, unsigned width, unsigned height, unsigned bpp) {
 	_dib = NULL;
 	_bHasChanged = FALSE;
 	if(width && height && bpp)
@@ -51,7 +51,7 @@ fipImage::~fipImage() {
 	}
 }
 
-BOOL fipImage::setSize(FREE_IMAGE_TYPE image_type, WORD width, WORD height, WORD bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
+BOOL fipImage::setSize(FREE_IMAGE_TYPE image_type, unsigned width, unsigned height, unsigned bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
 	if(_dib) {
 		FreeImage_Unload(_dib);
 	}
@@ -145,15 +145,15 @@ FREE_IMAGE_TYPE fipImage::getImageType() const {
 	return FreeImage_GetImageType(_dib);
 }
 
-WORD fipImage::getWidth() const {
+unsigned fipImage::getWidth() const {
 	return FreeImage_GetWidth(_dib); 
 }
 
-WORD fipImage::getHeight() const {
+unsigned fipImage::getHeight() const {
 	return FreeImage_GetHeight(_dib); 
 }
 
-WORD fipImage::getScanWidth() const {
+unsigned fipImage::getScanWidth() const {
 	return FreeImage_GetPitch(_dib);
 }
 
@@ -173,11 +173,11 @@ LONG fipImage::getImageSize() const {
 	return FreeImage_GetDIBSize(_dib);
 }
 
-WORD fipImage::getBitsPerPixel() const {
+unsigned fipImage::getBitsPerPixel() const {
 	return FreeImage_GetBPP(_dib);
 }
 
-WORD fipImage::getLine() const {
+unsigned fipImage::getLine() const {
 	return FreeImage_GetLine(_dib);
 }
 
@@ -205,11 +205,11 @@ RGBQUAD* fipImage::getPalette() const {
 	return FreeImage_GetPalette(_dib);
 }
 
-WORD fipImage::getPaletteSize() const {
+unsigned fipImage::getPaletteSize() const {
 	return FreeImage_GetColorsUsed(_dib) * sizeof(RGBQUAD);
 }
 
-WORD fipImage::getColorsUsed() const {
+unsigned fipImage::getColorsUsed() const {
 	return FreeImage_GetColorsUsed(_dib);
 }
 
@@ -228,7 +228,7 @@ BYTE* fipImage::accessPixels() const {
 	return FreeImage_GetBits(_dib); 
 }
 
-BYTE* fipImage::getScanLine(WORD scanline) const {
+BYTE* fipImage::getScanLine(unsigned scanline) const {
 	if(scanline < FreeImage_GetHeight(_dib)) {
 		return FreeImage_GetScanLine(_dib, scanline);
 	}
@@ -838,7 +838,7 @@ BOOL fipImage::getHistogram(DWORD *histo, FREE_IMAGE_COLOR_CHANNEL channel) cons
 ///////////////////////////////////////////////////////////////////
 // Upsampling / downsampling routine
 
-BOOL fipImage::rescale(WORD new_width, WORD new_height, FREE_IMAGE_FILTER filter) {
+BOOL fipImage::rescale(unsigned new_width, unsigned new_height, FREE_IMAGE_FILTER filter) {
 	if(_dib) {
 		switch(FreeImage_GetImageType(_dib)) {
 			case FIT_BITMAP:
@@ -861,7 +861,7 @@ BOOL fipImage::rescale(WORD new_width, WORD new_height, FREE_IMAGE_FILTER filter
 	return FALSE;
 }
 
-BOOL fipImage::makeThumbnail(WORD max_size, BOOL convert) {
+BOOL fipImage::makeThumbnail(unsigned max_size, BOOL convert) {
 	if(_dib) {
 		switch(FreeImage_GetImageType(_dib)) {
 			case FIT_BITMAP:
