@@ -11,6 +11,7 @@ Month day, 2009 - 3.13.1
 * [Herve Drolon] fixed MNG plugin crashing on some old mng images
 * [Herve Drolon] fixed handling of 2-bit grayscale transparent PNG
 * [Herve Drolon] fixed a bug with the compression rate of JP2 and J2K encoders
+* [zestony] fixed TIF plugin with the '65535 bytes' pitch size limitation on saving
 
 September 28th, 2009 - 3.13.0
 ! FreeImage now uses LibJPEG 7
