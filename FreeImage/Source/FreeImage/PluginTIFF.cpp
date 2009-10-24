@@ -1920,7 +1920,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		uint16 bitspersample;
 		uint16 samplesperpixel;
 		uint16 photometric;
-		uint16 pitch;
+		uint32 pitch;
 		int32 x, y;
 
 		FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
@@ -2068,7 +2068,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		// and save them in the TIF
 		// -------------------------------------
 		
-		pitch = (uint16)FreeImage_GetPitch(dib);
+		pitch = FreeImage_GetPitch(dib);
 
 		if(image_type == FIT_BITMAP) {
 			// standard bitmap type
