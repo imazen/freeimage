@@ -32,7 +32,7 @@ typedef struct psdHeader {
 	BYTE Signature[4];	//! Always equal 8BPS, do not try to read the file if the signature does not match this value.
 	BYTE Version[2];	//! Always equal 1, do not read file if the version does not match this value.
 	char Reserved[6];	//! Must be zero.
-	BYTE Channels[2];	//! Numer of channels including any alpha channels, supported range is 1 to 24.
+	BYTE Channels[2];	//! Number of channels including any alpha channels, supported range is 1 to 24.
 	BYTE Rows[4];		//! The height of the image in pixels. Supported range is 1 to 30,000.
 	BYTE Columns[4];	//! The width of the image in pixels. Supported range is 1 to 30,000.
 	BYTE Depth[2];		//! The number of bits per channel. Supported values are 1, 8, and 16.

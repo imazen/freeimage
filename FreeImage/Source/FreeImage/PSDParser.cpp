@@ -66,7 +66,6 @@ psdHeaderInfo::~psdHeaderInfo() {
 }
 	
 bool psdHeaderInfo::Read(FreeImageIO *io, fi_handle handle) {
-	bool bSuccess = false;
 	psdHeader header;
 
 	const int n = (int)io->read_proc(&header, sizeof(header), 1, handle);
@@ -81,28 +80,22 @@ bool psdHeaderInfo::Read(FreeImageIO *io, fi_handle handle) {
 		int nVersion = psdGetValue( header.Version, sizeof(header.Version) );
 		if (1 == nVersion) {
 			// header.Reserved must be zero
-			unsigned i = 0;
-			bool bOK = true;
-			while ( (i < 6) && bOK ) {
-				if ( '\0' != header.Reserved[i] ) {
-					bOK = false;
-					break;
-				}
-				i++;
+			BYTE psd_reserved[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+			if(memcmp(header.Reserved, psd_reserved, 6) != 0) {
+				FreeImage_OutputMessageProc(FIF_PSD, "Warning: file header reserved member is not equal to zero");
 			}
-			bSuccess = bOK;
-			if (bSuccess) {
-				// read the header
-				_Channels = (short)psdGetValue( header.Channels, sizeof(header.Channels) );
-				_Height = psdGetValue( header.Rows, sizeof(header.Rows) );
-				_Width = psdGetValue( header.Columns, sizeof(header.Columns) );
-				_BitsPerPixel = (short)psdGetValue( header.Depth, sizeof(header.Depth) );
-				_ColourMode = (short)psdGetValue( header.Mode, sizeof(header.Mode) );
-			}
+			// read the header
+			_Channels = (short)psdGetValue( header.Channels, sizeof(header.Channels) );
+			_Height = psdGetValue( header.Rows, sizeof(header.Rows) );
+			_Width = psdGetValue( header.Columns, sizeof(header.Columns) );
+			_BitsPerPixel = (short)psdGetValue( header.Depth, sizeof(header.Depth) );
+			_ColourMode = (short)psdGetValue( header.Mode, sizeof(header.Mode) );
+
+			return true;
 		}
 	}
 
-	return bSuccess;
+	return false;
 }
 
 // --------------------------------------------------------------------------
