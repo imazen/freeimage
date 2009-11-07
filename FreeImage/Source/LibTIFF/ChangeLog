@@ -1,3 +1,58 @@
+2009-11-04  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff 3.9.2 released.
+
+2009-11-03  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* tools/tiffcrop.c: Updated tiffcrop from Richard Nolde.  This
+	version has undergone substantial testing with arbitrary sample
+	bit depths.  Also eliminates GCC compilation warnings.
+
+2009-11-02  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* port/libport.h: Added header file for porting prototypes and
+	extern declarations.
+
+2009-10-31  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_dirwrite.c (TIFFWriteAnyArray): Add missing break
+	statement so writing an array of TIFF_DOUBLE works.
+
+2009-10-29  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_dirread.c: Eliminate GCC "dereferencing type-punned
+	pointer" warnings.
+
+2009-10-28  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* html/tools.html: Add manual page links, and a summary
+	description of tiffcrop.
+
+2009-10-07  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* configure.ac: x86_64 should use the same fill order as i386.
+
+2009-09-24  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* tools/tiffcrop.c, man/tiffcrop.1: New tiffcrop from Richard
+	Nolde.  Major updates to add significant functionality for reading
+	and writing tile based images with bit depths not a multiple of 8
+	which cannot be handled by tiffcp.
+
+2009-09-03  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_ojpeg.c (OJPEGWriteHeaderInfo): IJG JPEG 7 needs
+	do_fancy_upsampling=FALSE in order to read raw data.  Resolves
+	"Bug 2090 - OJPEG crash with libjpeg v7".
+	http://bugzilla.maptools.org/show_bug.cgi?id=2090
+
+2009-08-30  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* contrib/iptcutil/iptcutil.c,
+	libtiff/tif_getimage.c,libtiff/tif_jpeg.c,libtiff/tif_ojpeg.c,tools/tiffcrop.c,tools/tiffgt.c:
+	Applied patch from Oden Eriksson to allow building with GCC using
+	the "-Wformat -Werror=format-security" flags.
+
 2009-08-28  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
 
 	* libtiff 3.9.1 released.
