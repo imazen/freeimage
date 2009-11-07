@@ -5,6 +5,21 @@ What's New for OpenJPEG
 ! : changed
 + : added
 
+November 5, 2009
+* [antonin] fixed MCT check bug in t1_getwmsedec. See http://groups.google.com/group/openjpeg/browse_thread/thread/d9d96dd4ec3e7443 for info.
+
+November 5, 2009
+* [antonin] fixed "tiffio" header inclusion to use user version on Win32 system only (otherwise assume its existence in system headers).
+
+September 10, 2009
+* [antonin] fixed minor bugs which were triggering warnings at compilation (different signedness, wrong pointer type, etc)
+
+September 8, 2009
+* [antonin] openjpeg.c : fixed initialization of parameters->cp_disto_alloc/fixed_quality/fixed_alloc/tcp_numlayers because they were preventing to use the -q and -f options.
+
+August 31, 2009
+* [antonin] JavaOpenJpegDecoder.c : fixed a signed/unsigned behaviour when returning form C to JAVA
+
 August 21, 2008
 * [antonin] found a bug in tcd.c that was preventing to find the correct threshold in tcd_rateallocate.c for high-precision images. Applied a temporary patch but a better solution should be found.
 
