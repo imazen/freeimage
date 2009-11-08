@@ -187,6 +187,9 @@
 				RelativePath="tif_next.c">
 			</File>
 			<File
+				RelativePath=".\tif_ojpeg.c">
+			</File>
+			<File
 				RelativePath="tif_open.c">
 			</File>
 			<File

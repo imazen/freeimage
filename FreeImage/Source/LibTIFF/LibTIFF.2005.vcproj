@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="LibTIFF"
 	ProjectGUID="{431E3F3F-7C4D-430A-B8F1-4F165DB64EDC}"
 	RootNamespace="LibTIFF"
@@ -253,6 +253,10 @@
 			</File>
 			<File
 				RelativePath="tif_next.c"
+				>
+			</File>
+			<File
+				RelativePath=".\tif_ojpeg.c"
 				>
 			</File>
 			<File

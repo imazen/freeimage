@@ -1213,9 +1213,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// check for unsupported formats
 			// ---------------------------------------------------------------------------------
 
-			if (compression == COMPRESSION_OJPEG)
-				throw "6.0 JPEG encoding is not supported";
-
 			if((photometric == PHOTOMETRIC_SEPARATED) && (bitspersample == 16))
 				throw "Unable to handle 16-bit CMYK TIFF";
 
