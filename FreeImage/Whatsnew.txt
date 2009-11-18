@@ -10,6 +10,7 @@ Month day, 2009 - 3.13.1
 ! FreeImage now uses OpenJPEG 1.3.0 (SVN patch 2009-11-05)
 + [Berend Engelbrecht] added loading of Exif orientation tag in TIFF plugin
 + [Herve Drolon] added decoding support for the old and outdated JPEG-in-TIFF 6.0 format in TIFF plugin
++ [Herve Drolon] added new 'non standard' Exif tags
 * [Herve Drolon] fixed TIF plugin crashing on a malformed TIFF-JPEG compressed image
 * [Herve Drolon] fixed MNG plugin crashing on some old mng images
 * [Herve Drolon] fixed handling of 2-bit grayscale transparent PNG

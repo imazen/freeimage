@@ -150,6 +150,10 @@ static TagInfo
     {  0xA40B, (char *) "DeviceSettingDescription", (char *) "Device settings description"},
     {  0xA40C, (char *) "SubjectDistanceRange", (char *) "Subject distance range"},
     {  0xA420, (char *) "ImageUniqueID", (char *) "Unique image ID"},
+	// These tags are not part of the Exiv v2.2 specifications but are often loaded by applications as Exif data
+	{  0x013C, (char *) "HostComputer", (char *) "Host computer used to generate the image"},
+	{  0x4746, (char *) "Rating", (char *) "Rating tag used by Windows"},
+	{  0x4749, (char *) "RatingPercent", (char *) "Rating tag used by Windows, value in percent"},
     {  0x0000, (char *) NULL, (char *) NULL}
   };
 
