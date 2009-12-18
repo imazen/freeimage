@@ -152,6 +152,9 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'December 18, 2009 - 2.6
+'- [Carsten Klein] removed usage of constants vbPicTypeBitmap and vbPicTypeIcon: these are not available in VBA environments like Excel, Access or Outlook.
+'
 'September 08, 2009 - 2.5
 '! [Carsten Klein] changed constant FREEIMAGE_MINOR_VERSION: set to 13 to match current version 3.13.0
 '+ [Carsten Klein] added load flag constant JPEG_EXIFROTATE and new member FILO_JPEG_EXIFROTATE to enumeration FREE_IMAGE_LOAD_OPTIONS.
@@ -7633,7 +7636,8 @@ Dim cPictureDisp As IPictureDisp
          ' fill tPictDesc structure with necessary parts
          With tPicDesc
             .cbSizeofStruct = Len(tPicDesc)
-            .picType = vbPicTypeBitmap
+            ' the vbPicTypeBitmap constant is not available in VBA environemnts
+            .picType = 1  'vbPicTypeBitmap
             .hImage = hBmp
          End With
    
@@ -7671,7 +7675,8 @@ Dim cPictureDisp As IPictureDisp
       ' fill tPictDesc structure with necessary parts
       With tPicDesc
          .cbSizeofStruct = 12
-         .picType = vbPicTypeIcon
+         ' the vbPicTypeIcon constant is not available in VBA environemnts
+         .picType = 3  'vbPicTypeIcon
          .hImage = hIcon
       End With
 
