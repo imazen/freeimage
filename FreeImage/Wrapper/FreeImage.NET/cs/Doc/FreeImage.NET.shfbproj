@@ -31,10 +31,11 @@
     <PlugInConfigurations>
       <PlugInConfig id="Version Builder" enabled="True">
         <configuration>
-          <currentProject label="FreeImage.NET" version="3.13.0" />
+          <currentProject label="FreeImage.NET" version="3.13.1" />
           <versions>
             <version label="FreeImage.NET" version="3.11.0" helpFileProject="3.11.0\FreeImage.NET.shfbproj" />
             <version label="FreeImage.NET" version="3.12.0" helpFileProject="3.12.0\FreeImage.NET.shfbproj" />
+            <version label="FreeImage.NET" version="3.13.0" helpFileProject="3.13.0\FreeImage.NET.shfbproj" />
           </versions>
         </configuration>
       </PlugInConfig>
