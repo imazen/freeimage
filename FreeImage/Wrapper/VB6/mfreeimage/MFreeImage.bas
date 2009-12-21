@@ -152,6 +152,11 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'December 21, 2009 - 2.7
+'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.10.1
+'
+'! now FreeImage version 3.13.1
+'
 'December 18, 2009 - 2.6
 '- [Carsten Klein] removed usage of constants vbPicTypeBitmap and vbPicTypeIcon: these are not available in VBA environments like Excel, Access or Outlook.
 '
@@ -1057,7 +1062,7 @@ End Enum
 ' Version information
 Public Const FREEIMAGE_MAJOR_VERSION As Long = 3
 Public Const FREEIMAGE_MINOR_VERSION As Long = 13
-Public Const FREEIMAGE_RELEASE_SERIAL As Long = 0
+Public Const FREEIMAGE_RELEASE_SERIAL As Long = 1
 
 ' Memory stream pointer operation flags
 Public Const SEEK_SET As Long = 0

@@ -4,6 +4,10 @@ What's New for FreeImage VB Wrapper
 - : removed
 ! : changed
 + : added
+December 21, 2009 - 2.7
+! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.10.1
+
+! now FreeImage version 3.13.1
 
 December 18, 2009 - 2.6
 - [Carsten Klein] removed usage of constants vbPicTypeBitmap and vbPicTypeIcon: these are not available in VBA environments like Excel, Access or Outlook.
