@@ -27277,7 +27277,10 @@ namespace FreeImageAPI
 				}
 				else
 				{
-					streamHandles.Add(mdib, handle);
+					lock (streamHandles)
+					{
+						streamHandles.Add(mdib, handle);
+					}
 				}
 
 				return mdib;
@@ -27305,10 +27308,13 @@ namespace FreeImageAPI
 			if (CloseMultiBitmap_(bitmap, flags))
 			{
 				fi_handle handle;
-				if (streamHandles.TryGetValue(bitmap, out handle))
+				lock (streamHandles)
 				{
-					streamHandles.Remove(bitmap);
-					handle.Dispose();
+					if (streamHandles.TryGetValue(bitmap, out handle))
+					{
+						streamHandles.Remove(bitmap);
+						handle.Dispose();
+					}
 				}
 				return true;
 			}
