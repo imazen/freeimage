@@ -127,65 +127,62 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="png.c">
+				RelativePath=".\png.c">
 			</File>
 			<File
-				RelativePath="pngerror.c">
+				RelativePath=".\pngerror.c">
 			</File>
 			<File
-				RelativePath="pnggccrd.c">
+				RelativePath=".\pngget.c">
 			</File>
 			<File
-				RelativePath="pngget.c">
+				RelativePath=".\pngmem.c">
 			</File>
 			<File
-				RelativePath="pngmem.c">
+				RelativePath=".\pngpread.c">
 			</File>
 			<File
-				RelativePath="pngpread.c">
+				RelativePath=".\pngread.c">
 			</File>
 			<File
-				RelativePath="pngread.c">
+				RelativePath=".\pngrio.c">
 			</File>
 			<File
-				RelativePath="pngrio.c">
+				RelativePath=".\pngrtran.c">
 			</File>
 			<File
-				RelativePath="pngrtran.c">
+				RelativePath=".\pngrutil.c">
 			</File>
 			<File
-				RelativePath="pngrutil.c">
+				RelativePath=".\pngset.c">
 			</File>
 			<File
-				RelativePath="pngset.c">
+				RelativePath=".\pngtrans.c">
 			</File>
 			<File
-				RelativePath="pngtrans.c">
+				RelativePath=".\pngwio.c">
 			</File>
 			<File
-				RelativePath="pngvcrd.c">
+				RelativePath=".\pngwrite.c">
 			</File>
 			<File
-				RelativePath="pngwio.c">
+				RelativePath=".\pngwtran.c">
 			</File>
 			<File
-				RelativePath="pngwrite.c">
-			</File>
-			<File
-				RelativePath="pngwtran.c">
-			</File>
-			<File
-				RelativePath="pngwutil.c">
+				RelativePath=".\pngwutil.c">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
-				RelativePath="png.h">
+				RelativePath=".\png.h">
 			</File>
 			<File
-				RelativePath="pngconf.h">
+				RelativePath=".\pngconf.h">
+			</File>
+			<File
+				RelativePath=".\pngpriv.h">
 			</File>
 		</Filter>
 	</Files>
