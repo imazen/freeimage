@@ -4,13 +4,13 @@ DIRLIST=". Source Source/Metadata Source/FreeImageToolkit Source/LibJPEG Source/
 
 
 echo "VER_MAJOR = 3" > fipMakefile.srcs
-echo "VER_MINOR = 13.1" >> fipMakefile.srcs
+echo "VER_MINOR = 14.0" >> fipMakefile.srcs
 
 echo -n "SRCS = " >> fipMakefile.srcs
 for DIR in $DIRLIST; do
-	VCPRJS=`echo $DIR/*.2003.vcproj`
-	if [ "$VCPRJS" != "$DIR/*.2003.vcproj" ]; then
-		egrep 'RelativePath=.*\.(c|cpp)' $DIR/*.2003.vcproj | cut -d'"' -f2 | tr '\\' '/' | awk '{print "'$DIR'/"$0}' | tr '\r\n' '  ' | tr -s ' ' >> fipMakefile.srcs
+	VCPRJS=`echo $DIR/*.2005.vcproj`
+	if [ "$VCPRJS" != "$DIR/*.2005.vcproj" ]; then
+		egrep 'RelativePath=.*\.(c|cpp)' $DIR/*.2005.vcproj | cut -d'"' -f2 | tr '\\' '/' | awk '{print "'$DIR'/"$0}' | tr '\r\n' '  ' | tr -s ' ' >> fipMakefile.srcs
 	fi
 done
 echo >> fipMakefile.srcs
