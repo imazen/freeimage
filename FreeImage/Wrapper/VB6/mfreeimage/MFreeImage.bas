@@ -152,8 +152,15 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'February 8, 2010 - 2.8
+'* [Mike Weir] fixed a bug in function FreeImage_ApplyColorMappingEx: now properly includes all specified mapping entries
+'* [Carsten Klein] fixed a bug in function FreeImage_ApplyIndexMappingEx: now properly includes all specified mapping entries
+'* [Mike Weir] fixed a bug in function FreeImage_RescaleEx: now also rescales the image, if either the new width or height matches the image's current size
+'* [WinAnd / Carsten Klein] fixed a bug in function FreeImage_GetTransparencyTableExClone: returns an uninitialized array if there is no transparency table
+'* [WinAnd / Carsten Klein] fixed a bug in function FreeImage_SearchPalette: no longer crashes if there is no transparency table
+'
 'December 21, 2009 - 2.7
-'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.10.1
+'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.13.1
 '
 '! now FreeImage version 3.13.1
 '
@@ -4222,9 +4229,11 @@ Dim lEntries As Long
    lpTransparencyTable = FreeImage_GetTransparencyTable(dib)
    If (lpTransparencyTable) Then
       lEntries = FreeImage_GetTransparencyCount(dib)
-      ReDim abBuffer(lEntries - 1)
-      Call CopyMemory(abBuffer(0), ByVal lpTransparencyTable, lEntries)
-      Call swap(ByVal VarPtrArray(abBuffer), ByVal VarPtrArray(FreeImage_GetTransparencyTableExClone))
+      If (lEntries > 0) Then
+         ReDim abBuffer(lEntries - 1)
+         Call CopyMemory(abBuffer(0), ByVal lpTransparencyTable, lEntries)
+         Call swap(ByVal VarPtrArray(abBuffer), ByVal VarPtrArray(FreeImage_GetTransparencyTableExClone))
+      End If
    End If
 
 End Function
@@ -4321,8 +4330,8 @@ Dim ndst As Long
    
    ' All other parameters work according to the FreeImage 3 API documentation.
    
-   nsrc = UBound(srccolors)
-   ndst = UBound(dstcolors)
+   nsrc = UBound(srccolors) + 1
+   ndst = UBound(dstcolors) + 1
    If (Count = -1) Then
       If (nsrc < ndst) Then
          Count = nsrc
@@ -4362,8 +4371,8 @@ Dim ndst As Long
    
    ' All other parameters work according to the FreeImage 3 API documentation.
    
-   nsrc = UBound(srcindices)
-   ndst = UBound(srcindices)
+   nsrc = UBound(srcindices) + 1
+   ndst = UBound(dstindices) + 1
    If (Count = -1) Then
       If (nsrc < ndst) Then
          Count = nsrc
@@ -6256,10 +6265,10 @@ Dim hDIBNew As Long
       If (bForceCloneCreation) Then
          hDIBNew = FreeImage_Rescale(hDIB, lNewWidth, lNewHeight, eFilter)
       
-      ElseIf (lNewWidth <> FreeImage_GetWidth(hDIB)) Then
-         If (lNewHeight <> FreeImage_GetHeight(hDIB)) Then
-            hDIBNew = FreeImage_Rescale(hDIB, lNewWidth, lNewHeight, eFilter)
-         End If
+      ElseIf ((lNewWidth <> FreeImage_GetWidth(hDIB)) Or _
+              (lNewHeight <> FreeImage_GetHeight(hDIB))) Then
+         hDIBNew = FreeImage_Rescale(hDIB, lNewWidth, lNewHeight, eFilter)
+      
       End If
        
    ElseIf (lNewWidth > 0) Then
@@ -8803,6 +8812,10 @@ Dim abTransparencyTable() As Byte
    
    ' A search tolerance may be specified in the 'lTolerance' parameter.
    
+   ' If no transparency tabe was found for the specified image, transparency information will
+   ' be ignored during the search. Then, the function behaves as if FITSF_IGNORE_TRANSPARENCY
+   ' was specified for parameter eTransparencyState.
+   
    ' Use the 'eTransparencyState' parameter to control, how the transparency state of
    ' the found palette entry affects the result. These values may be used:
    
@@ -8833,7 +8846,11 @@ Dim abTransparencyTable() As Byte
       Case FIC_PALETTE, FIC_MINISBLACK, FIC_MINISWHITE
          FreeImage_SearchPalette = -1
          alPalette = FreeImage_GetPaletteExLong(dib)
-         abTransparencyTable = FreeImage_GetTransparencyTableExClone(dib)
+         If (FreeImage_GetTransparencyCount(dib) > UBound(alPalette)) Then
+            abTransparencyTable = FreeImage_GetTransparencyTableExClone(dib)
+         End If
+            eTransparencyState = FITSF_IGNORE_TRANSPARENCY
+         End If
          For i = 0 To UBound(alPalette)
             If (FreeImage_CompareColorsLongLong(lcColor, alPalette(i), _
                                                 lTolerance, _
@@ -9094,7 +9111,7 @@ Const vbObjectOrWithBlockVariableNotSet As Long = 91
    ' One reason for resizing a usually fixed size logo or background image
    ' may be the following scenario:
    
-   ' When running on a Windos machine using smaller or bigger fonts (what can
+   ' When running on a Windows machine using smaller or bigger fonts (what can
    ' be configured in the control panel by using different dpi fonts), the
    ' operation system automatically adjusts the sizes of Forms, Labels,
    ' TextBoxes, Frames and even PictureBoxes. So, the hole VB application is

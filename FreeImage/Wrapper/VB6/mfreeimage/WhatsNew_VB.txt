@@ -4,8 +4,16 @@ What's New for FreeImage VB Wrapper
 - : removed
 ! : changed
 + : added
+
+February 8, 2010 - 2.8
+* [Mike Weir] fixed a bug in function FreeImage_ApplyColorMappingEx: now properly includes all specified mapping entries
+* [Carsten Klein] fixed a bug in function FreeImage_ApplyIndexMappingEx: now properly includes all specified mapping entries
+* [Mike Weir] fixed a bug in function FreeImage_RescaleEx: now also rescales the image, if either the new width or height matches the image's current size
+* [WinAnd / Carsten Klein] fixed a bug in function FreeImage_GetTransparencyTableExClone: returns an uninitialized array if there is no transparency table
+* [WinAnd / Carsten Klein] fixed a bug in function FreeImage_SearchPalette: no longer crashes if there is no transparency table
+
 December 21, 2009 - 2.7
-! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.10.1
+! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.13.1
 
 ! now FreeImage version 3.13.1
 
