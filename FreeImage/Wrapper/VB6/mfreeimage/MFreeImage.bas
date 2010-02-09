@@ -152,6 +152,9 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'February 9, 2010 - 2.8
+'* [Carsten Klein] fixed a syntax typo
+'
 'February 8, 2010 - 2.8
 '* [Mike Weir] fixed a bug in function FreeImage_ApplyColorMappingEx: now properly includes all specified mapping entries
 '* [Carsten Klein] fixed a bug in function FreeImage_ApplyIndexMappingEx: now properly includes all specified mapping entries
@@ -8848,7 +8851,7 @@ Dim abTransparencyTable() As Byte
          alPalette = FreeImage_GetPaletteExLong(dib)
          If (FreeImage_GetTransparencyCount(dib) > UBound(alPalette)) Then
             abTransparencyTable = FreeImage_GetTransparencyTableExClone(dib)
-         End If
+         Else
             eTransparencyState = FITSF_IGNORE_TRANSPARENCY
          End If
          For i = 0 To UBound(alPalette)

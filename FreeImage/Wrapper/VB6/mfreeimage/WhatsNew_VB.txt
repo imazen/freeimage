@@ -5,6 +5,9 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+February 9, 2010 - 2.8
+* [Carsten Klein] fixed a syntax typo
+
 February 8, 2010 - 2.8
 * [Mike Weir] fixed a bug in function FreeImage_ApplyColorMappingEx: now properly includes all specified mapping entries
 * [Carsten Klein] fixed a bug in function FreeImage_ApplyIndexMappingEx: now properly includes all specified mapping entries
