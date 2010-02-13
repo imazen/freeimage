@@ -9,6 +9,7 @@ Month day, 2010 - 3.14.0
 ! FreeImage now uses libPNG 1.4.0
 ! FreeImage now uses LibJPEG 8
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
+* [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
 
 December 22, 2009 - 3.13.1
 ! FreeImage now uses libTIFF 3.9.2
