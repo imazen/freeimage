@@ -51,6 +51,10 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 			// allow conversion from 48-bit
 			src = dib;
 			break;
+		case FIT_FLOAT:
+			// allow conversion from 32-bit float
+			src = dib;
+			break;
 		case FIT_RGBAF:
 			// allow conversion from 128-bit
 			src = dib;
@@ -141,6 +145,27 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 					dst_pixel[x].red   = (float)(src_pixel[x].red)   / 65535;
 					dst_pixel[x].green = (float)(src_pixel[x].green) / 65535;
 					dst_pixel[x].blue  = (float)(src_pixel[x].blue)  / 65535;
+				}
+				src_bits += src_pitch;
+				dst_bits += dst_pitch;
+			}
+		}
+		break;
+
+		case FIT_FLOAT:
+		{
+			const BYTE *src_bits = (BYTE*)FreeImage_GetBits(src);
+			BYTE *dst_bits = (BYTE*)FreeImage_GetBits(dst);
+
+			for(unsigned y = 0; y < height; y++) {
+				const float *src_pixel = (float*) src_bits;
+				FIRGBF  *dst_pixel = (FIRGBF*)  dst_bits;
+
+				for(unsigned x = 0; x < width; x++) {
+					// convert by copying greyscale channel to each R, G, B channels
+					dst_pixel[x].red   = src_pixel[x];
+					dst_pixel[x].green = src_pixel[x];
+					dst_pixel[x].blue  = src_pixel[x];
 				}
 				src_bits += src_pitch;
 				dst_bits += dst_pitch;

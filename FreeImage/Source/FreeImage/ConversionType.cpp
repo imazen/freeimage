@@ -506,6 +506,7 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_RGBA16:
 					break;
 				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
 					break;
 				case FIT_RGBAF:
 					break;
