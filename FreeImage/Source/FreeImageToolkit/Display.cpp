@@ -219,9 +219,9 @@ FreeImage_PreMultiplyWithAlpha(FIBITMAP *dib) {
 				// color * 0xFF / 0xFF = color
 				continue;
 			} else {
-				bits[FI_RGBA_BLUE] = (BYTE)((alpha * (WORD)bits[FI_RGBA_BLUE]) / 255);
-				bits[FI_RGBA_GREEN] = (BYTE)((alpha * (WORD)bits[FI_RGBA_GREEN]) / 255);
-				bits[FI_RGBA_RED] = (BYTE)((alpha * (WORD)bits[FI_RGBA_RED]) / 255);
+				bits[FI_RGBA_BLUE] = (BYTE)( (alpha * (WORD)bits[FI_RGBA_BLUE] + 127) / 255 );
+				bits[FI_RGBA_GREEN] = (BYTE)( (alpha * (WORD)bits[FI_RGBA_GREEN] + 127) / 255 );
+				bits[FI_RGBA_RED] = (BYTE)( (alpha * (WORD)bits[FI_RGBA_RED] + 127) / 255 );
 			}
 		}
 	}
