@@ -6,13 +6,15 @@ What's New for FreeImage
 + : added
 
 Month day, 2010 - 3.14.0
-! FreeImage now uses libPNG 1.4.0
-! FreeImage now uses LibJPEG 8
+! FreeImage now uses libPNG 1.4.1
+! FreeImage now uses LibJPEG 8a
 ! FreeImage now uses libTIFF 3.9.2 (CVS patch 2010-02-22)
++ [Herve Drolon] added FIT_FLOAT to FIT_RGBF conversion to FreeImage_ConvertToRGBF & FreeImage_ConvertToType
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
 * [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
 * [Mihail Naydenov] fixed loading of TGA with a corrupted rle count
-+ [Herve Drolon] added FIT_FLOAT to FIT_RGBF conversion to FreeImage_ConvertToRGBF & FreeImage_ConvertToType
+* [Herve Drolon] fixed conversion formula in FreeImage_PreMultiplyWithAlpha
+* [Christoph Brill] removed the use of libmng_data.h private API in MNG Plugin
 
 December 22, 2009 - 3.13.1
 ! FreeImage now uses libTIFF 3.9.2
