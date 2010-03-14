@@ -16,6 +16,7 @@ Month day, 2010 - 3.14.0
 * [Mihail Naydenov] fixed loading of TGA with a corrupted rle count
 * [Herve Drolon] fixed conversion formula in FreeImage_PreMultiplyWithAlpha
 * [Christoph Brill] removed the use of libmng_data.h private API in MNG Plugin
+* [phe02sf] fixed handling of bad Exif-GPS data in a Nikon D5000 image
 
 December 22, 2009 - 3.13.1
 ! FreeImage now uses libTIFF 3.9.2
