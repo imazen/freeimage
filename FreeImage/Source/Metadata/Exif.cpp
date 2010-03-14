@@ -577,7 +577,7 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned long offset, unsig
 					continue;
 				}
 				// now check if offset + tag length exceeds buffer
-				if(offset_value > length - FreeImage_GetTagLength(tag)) {
+				if((int)offset_value > (int)length - (int)FreeImage_GetTagLength(tag)) {
 					// a problem occured : delete the tag (not free'd after)
 					FreeImage_DeleteTag(tag);
 					// jump to next entry
