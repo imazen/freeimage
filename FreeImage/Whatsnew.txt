@@ -10,6 +10,7 @@ Month day, 2010 - 3.14.0
 ! FreeImage now uses LibJPEG 8a
 ! FreeImage now uses libTIFF 3.9.2 (CVS patch 2010-02-22)
 + [Herve Drolon] added FIT_FLOAT to FIT_RGBF conversion to FreeImage_ConvertToRGBF & FreeImage_ConvertToType
++ [Herve Drolon] added VS 2008 project files
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
 * [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
 * [Mihail Naydenov] fixed loading of TGA with a corrupted rle count
