@@ -67,7 +67,7 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				CompileAs="0"
 			/>
 			<Tool
@@ -259,7 +259,7 @@
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 				CompileAs="0"
 			/>
@@ -613,6 +613,10 @@
 				</File>
 				<File
 					RelativePath="Source\FreeImage\Conversion8.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\FreeImage\ConversionFloat.cpp"
 					>
 				</File>
 				<File

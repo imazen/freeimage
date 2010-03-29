@@ -251,6 +251,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\FreeImage\ConversionFloat.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\FreeImage\ConversionRGBF.cpp"
 					>
 				</File>

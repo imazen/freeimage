@@ -96,6 +96,84 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="..\;..\ZLib;..\DeprecationManager;..\OpenEXR\Half;..\OpenEXR\Iex;..\OpenEXR\IlmImf;..\OpenEXR\Imath;..\OpenEXR\IlmThread"
+				PreprocessorDefinitions="WIN32;_DEBUG;OPJ_STATIC;FREEIMAGE_LIB;_CRT_SECURE_NO_DEPRECATE;LIBRAW_NODLL"
+				StringPooling="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=".\Debug/FreeImageLib.pch"
+				AssemblerListingLocation=".\Debug/"
+				ObjectFile=".\Debug/"
+				ProgramDataBaseFileName=".\Debug/"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1043"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				LinkLibraryDependencies="true"
+				OutputFile="Debug\FreeImaged.lib"
+				SuppressStartupBanner="true"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="copy Debug\FreeImaged.lib ..\..\Dist&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist&#x0D;&#x0A;"
+			/>
+		</Configuration>
+		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\Release"
 			IntermediateDirectory=".\Release"
@@ -173,84 +251,6 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				CommandLine="copy Release\FreeImage.lib ..\..\Dist&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist&#x0D;&#x0A;"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="..\;..\ZLib;..\DeprecationManager;..\OpenEXR\Half;..\OpenEXR\Iex;..\OpenEXR\IlmImf;..\OpenEXR\Imath;..\OpenEXR\IlmThread"
-				PreprocessorDefinitions="WIN32;_DEBUG;OPJ_STATIC;FREEIMAGE_LIB;_CRT_SECURE_NO_DEPRECATE;LIBRAW_NODLL"
-				StringPooling="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\Debug/FreeImageLib.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="3"
-				CompileAs="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1043"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				LinkLibraryDependencies="true"
-				OutputFile="Debug\FreeImaged.lib"
-				SuppressStartupBanner="true"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy Debug\FreeImaged.lib ..\..\Dist&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -411,6 +411,10 @@
 				</File>
 				<File
 					RelativePath="..\FreeImage\Conversion8.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FreeImage\ConversionFloat.cpp"
 					>
 				</File>
 				<File

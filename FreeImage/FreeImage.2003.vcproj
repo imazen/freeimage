@@ -314,6 +314,9 @@ copy Source\FreeImage.h Dist
 					RelativePath="Source\FreeImage\Conversion8.cpp">
 				</File>
 				<File
+					RelativePath=".\Source\FreeImage\ConversionFloat.cpp">
+				</File>
+				<File
 					RelativePath="Source\FreeImage\ConversionRGBF.cpp">
 				</File>
 				<File
