@@ -7,7 +7,7 @@
 // - Martin Weber (martweb@gmx.net)
 // - Machiel ten Brinke (brinkem@uni-one.nl)
 // - Peter Lemmens (peter.lemmens@planetinternet.be)
-// - HervÃ© Drolon (drolon@infonie.fr)
+// - Hervé Drolon (drolon@infonie.fr)
 // - Mihail Naydenov (mnaydenov@users.sourceforge.net)
 //
 // This file is part of FreeImage 3
@@ -238,6 +238,7 @@ Validate(FreeImageIO *io, fi_handle handle) {
 		io->read_proc(&signature, 1, 18, handle);
 		return (memcmp(tga_signature, signature, 18) == 0);
 	}
+
 	return FALSE;
 }
 
@@ -260,13 +261,16 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 /**
 Used for all 32 and 24 bit loading of uncompressed images
 */
-static
-void loadTrueColor(FIBITMAP* dib, int width, int height, int file_pixel_size, FreeImageIO* io, fi_handle handle, bool as24bit) {
+static void 
+loadTrueColor(FIBITMAP* dib, int width, int height, int file_pixel_size, FreeImageIO* io, fi_handle handle, bool as24bit) {
 	const int pixel_size = as24bit ? 3 : file_pixel_size;
-	
+
 	// input line cache
 	BYTE* file_line = (BYTE*)malloc( width * file_pixel_size);
-	if(!file_line) throw FI_MSG_ERROR_MEMORY;
+
+	if(!file_line) {
+		throw FI_MSG_ERROR_MEMORY;
+	}
 
 	for(int y = 0; y < height; ++y) {
 		BYTE *bits = FreeImage_GetScanLine(dib, y);
@@ -292,27 +296,25 @@ For the generic RLE loader we need to abstract away the pixel format.
 We use a specific overload based on bits-per-pixel for each type of pixel
 */
 
-template <int nBITS>
-inline static
-void assignPixel(BYTE* bits, BYTE* val, bool as24bit) {
+template <int nBITS> inline static void 
+assignPixel(BYTE* bits, BYTE* val, bool as24bit = false) {
 	// static assert should go here
 	assert(false);
 }
 
-template <>
-inline
-void assignPixel<8>(BYTE* bits, BYTE* val, bool as24bit) {
+template <> inline void 
+assignPixel<8>(BYTE* bits, BYTE* val, bool as24bit) {
 	*bits = *val;
 }
-template <>
-inline
-void assignPixel<16>(BYTE* bits, BYTE* val, bool as24bit) {
+
+template <> inline void 
+assignPixel<16>(BYTE* bits, BYTE* val, bool as24bit) {
 	WORD value(*reinterpret_cast<WORD*>(val));
-	
+
 #ifdef FREEIMAGE_BIGENDIAN
 	SwapShort(value);
 #endif
-	
+
 	if(as24bit) {
 		bits[FI_RGBA_BLUE]  = (BYTE)((((value & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F);
 		bits[FI_RGBA_GREEN] = (BYTE)((((value & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F);
@@ -322,17 +324,15 @@ void assignPixel<16>(BYTE* bits, BYTE* val, bool as24bit) {
 	}
 }
 
-template <>
-inline
-void assignPixel<24>(BYTE* bits, BYTE* val, bool as24bit) {
+template <> inline void 
+assignPixel<24>(BYTE* bits, BYTE* val, bool as24bit) {
 	bits[FI_RGBA_BLUE]	= val[0];
 	bits[FI_RGBA_GREEN] = val[1];
 	bits[FI_RGBA_RED]	= val[2];
 }
 
-template <>
-inline
-void assignPixel<32>(BYTE* bits, BYTE* val, bool as24bit) {
+template <> inline void 
+assignPixel<32>(BYTE* bits, BYTE* val, bool as24bit) {
 	if(as24bit) {
 		assignPixel<24>(bits, val, true);
 	} else {
@@ -350,15 +350,14 @@ void assignPixel<32>(BYTE* bits, BYTE* val, bool as24bit) {
 /**
 Generic RLE loader
 */
-template<int bPP>
-static
-void loadRLE(FIBITMAP* dib, int width, int height, FreeImageIO* io, fi_handle handle, long eof, bool as24bit) {
+template<int bPP> static void 
+loadRLE(FIBITMAP* dib, int width, int height, FreeImageIO* io, fi_handle handle, long eof, bool as24bit) {
 	const int file_pixel_size = bPP/8;
-	const int pixel_size = as24bit ? 3 : file_pixel_size;	
-	
+	const int pixel_size = as24bit ? 3 : file_pixel_size;
+
 	const BYTE bpp = as24bit ? 24 : bPP;
 	const int line_size = CalculateLine(width, bpp);
-	
+
 	// Note, many of the params can be computed inside the function.
 	// However, because this is a template function, it will lead to redundant code duplication.
 
@@ -389,10 +388,10 @@ void loadRLE(FIBITMAP* dib, int width, int height, FreeImageIO* io, fi_handle ha
 
 		BYTE packet_count = rle + 1;
 
-		//packet_count might be corrupt, test if we are not about to write beyond the last image bit
+		// packet_count might be corrupt, test if we are not about to write beyond the last image bit
 		if((line_bits+x) + packet_count*pixel_size > dib_end) {
 			cacheIO_free(&cache);
-			FreeImage_OutputMessageProc(s_format_id, FI_MSG_ERROR_CORRUPTED);			
+			FreeImage_OutputMessageProc(s_format_id, FI_MSG_ERROR_CORRUPTED);
 			return;
 		}
 
@@ -407,10 +406,11 @@ void loadRLE(FIBITMAP* dib, int width, int height, FreeImageIO* io, fi_handle ha
 				x += pixel_size;
 				if(x >= line_size) {
 					x = 0;
-					y++;			
+					y++;
 					line_bits = FreeImage_GetScanLine(dib, y);
 				}
 			}
+
 		} else {
 			// no rle commpresion
 
@@ -464,7 +464,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		const int pitch = CalculatePitch(line);
 		const int pixel_bits = header.is_pixel_depth;
 		const int pixel_size = pixel_bits/8;
-		
+
 		int alphabits = header.is_image_descriptor & 0x0f;// It seems this is ALWAYS: 8 for 32bit, 1 for 16bit, 0 for 24bit
 		int fliphoriz = (header.is_image_descriptor & 0x10) ? 1 : 0;
 		int flipvert = (header.is_image_descriptor & 0x20) ? 1 : 0;
@@ -472,18 +472,18 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// skip comment
 		io->seek_proc(handle, header.id_length, SEEK_CUR);
 
-		switch(header.is_pixel_depth) {
-			case 8 : 
-			{
+		switch (header.is_pixel_depth) {
+			case 8 : {
 				dib = FreeImage_Allocate(header.is_width, header.is_height, 8);
+
 				if(dib == NULL) {
 					throw FI_MSG_ERROR_DIB_MEMORY;
 				}
-				
+
 				// read the palette
 
 				RGBQUAD *palette = FreeImage_GetPalette(dib);
-				
+
 				if(header.color_map_type == 0) {
 					// no color-map data is included with this image ...
 					// build a greyscale palette
@@ -492,6 +492,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						palette[i].rgbGreen = (BYTE)i;
 						palette[i].rgbBlue	= (BYTE)i;
 					}
+
 				} else {
 					unsigned count, csize;
 
@@ -500,12 +501,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					BYTE *cmap = (BYTE*)malloc(csize * sizeof(BYTE));
 
 					io->read_proc(cmap, sizeof(BYTE), csize, handle);
-					
+
 					// build the palette
-					switch(header.cm_size) {
-						case 16: 
-						{
+
+					switch (header.cm_size) {
+						case 16: {
 							WORD *rgb555 = (WORD*)&cmap[0];
+
 							for(count = header.cm_first_entry; count < header.cm_length; count++) {
 								palette[count].rgbRed   = (BYTE)((((*rgb555 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F);
 								palette[count].rgbGreen = (BYTE)((((*rgb555 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F);
@@ -514,10 +516,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							}
 						}
 						break;
-						
-						case 24: 
-						{
+
+						case 24: {
 							FILE_BGR *bgr = (FILE_BGR*)&cmap[0];
+
 							for(count = header.cm_first_entry; count < header.cm_length; count++) {
 								palette[count].rgbBlue  = bgr->b;
 								palette[count].rgbGreen = bgr->g;
@@ -526,15 +528,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							}
 						}
 						break;
-						
-						case 32: 
-						{
+
+						case 32: {
 							BYTE trns[256];
-							
+
 							// clear the transparency table
 							memset(trns, 0xFF, 256);
 
 							FILE_BGRA *bgra = (FILE_BGRA*)&cmap[0];
+
 							for(count = header.cm_first_entry; count < header.cm_length; count++) {
 								palette[count].rgbBlue  = bgra->b;
 								palette[count].rgbGreen = bgra->g;
@@ -543,34 +545,34 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								trns[count] = bgra->a;
 								bgra++;
 							}
-							
+
 							// set the tranparency table
 							FreeImage_SetTransparencyTable(dib, trns, 256);
 						}
 						break;
-						
+
 					} // switch(header.cm_size)
-					
+
 					free(cmap);
 				}
-				
+
 				// read in the bitmap bits
-				
-				switch(header.image_type) {
+
+				switch (header.image_type) {
 					case TGA_CMAP:
-					case TGA_MONO: 
-					{
+					case TGA_MONO: {
 						BYTE *bits = NULL;
+
 						for(unsigned count = 0; count < header.is_height; count++) {
 							bits = FreeImage_GetScanLine(dib, count);
 							io->read_proc(bits, sizeof(BYTE), line, handle);
 						}
 					}
+
 					break;
-					
+
 					case TGA_RLECMAP:
-					case TGA_RLEMONO: //(8 bit)
-					{ 
+					case TGA_RLEMONO: { //(8 bit)
 						loadRLE<8>(dib, header.is_width, header.is_height, io, handle, eof, false);
 					}
 					break;
@@ -580,11 +582,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						return NULL;
 				}
 			}
+
 			break;
 
 			case 15 :
-			case 16 : 
-			{
+
+			case 16 : {
 				int pixel_bits = 16;
 
 				// allocate the dib
@@ -592,6 +595,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if(TARGA_LOAD_RGB888 & flags) {
 					pixel_bits = 24;
 					dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+
 				} else {
 					dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FI16_555_RED_MASK, FI16_555_GREEN_MASK, FI16_555_BLUE_MASK);
 				}
@@ -621,26 +625,27 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				// read in the bitmap bits
 
-				switch(header.image_type) {
-					case TGA_RGB: //(16 bit)
-					{ 
+				switch (header.image_type) {
+					case TGA_RGB: { //(16 bit)
 						// input line cache
 						BYTE *in_line = (BYTE*)malloc(header.is_width * sizeof(WORD));
-						if(!in_line) throw FI_MSG_ERROR_MEMORY;
+
+						if(!in_line) {
+							throw FI_MSG_ERROR_MEMORY;
+						}
 
 						const int h = header.is_height;
+
 						for(int y = 0; y < h; y++) {
-							BYTE *bits;
-
-							bits = FreeImage_GetScanLine(dib, y);
-
+							
+							BYTE *bits = FreeImage_GetScanLine(dib, y);
 							io->read_proc(in_line, src_pixel_size, header.is_width, handle);
-
+							
 							BYTE *val = in_line;
 							for(int x = 0; x < line; x += pixel_size) {
 
 								assignPixel<16>(bits+x, val, TARGA_LOAD_RGB888 & flags);
-								
+
 								val += src_pixel_size;
 							}
 						}
@@ -649,8 +654,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 					break;
 
-					case TGA_RLERGB: //(16 bit)
-					{ 
+					case TGA_RLERGB: { //(16 bit)
 						loadRLE<16>(dib, header.is_width, header.is_height, io, handle, eof, TARGA_LOAD_RGB888 & flags);
 					}
 					break;
@@ -660,28 +664,27 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						return NULL;
 				}
 			}
+
 			break;
 
-			case 24 : 
-			{
+			case 24 : {
 
 				dib = FreeImage_Allocate(header.is_width, header.is_height, pixel_bits, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+
 				if(dib == NULL) {
 					throw FI_MSG_ERROR_DIB_MEMORY;
 				}
 
 				// read in the bitmap bits
 
-				switch(header.image_type) {
-					case TGA_RGB: //(24 bit)
-					{ 
-						//uncompressed
+				switch (header.image_type) {
+					case TGA_RGB: { //(24 bit)
+						// uncompressed
 						loadTrueColor(dib, header.is_width, header.is_height, pixel_size,io, handle, true);
 					}
 					break;
 
-					case TGA_RLERGB: //(24 bit)
-					{
+					case TGA_RLERGB: { //(24 bit)
 						loadRLE<24>(dib, header.is_width, header.is_height, io, handle, eof, true);
 					}
 					break;
@@ -691,10 +694,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						return NULL;
 				}
 			}
+
 			break;
 
-			case 32 : 
-			{
+			case 32 : {
 				int pixel_bits = 32;
 
 				if(TARGA_LOAD_RGB888 & flags) {
@@ -710,16 +713,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				// read in the bitmap bits
 
-				switch(header.image_type) {
-					case TGA_RGB: //(32 bit)
-					{
+				switch (header.image_type) {
+					case TGA_RGB: { //(32 bit)
 						// uncompressed
 						loadTrueColor(dib, header.is_width, header.is_height, 4 /*file_pixel_size*/, io, handle, TARGA_LOAD_RGB888 & flags);
 					}
 					break;
-					
-					case TGA_RLERGB: //(32 bit)
-					{
+
+					case TGA_RLERGB: { //(32 bit)
 						loadRLE<32>(dib, header.is_width, header.is_height, io, handle, eof, TARGA_LOAD_RGB888 & flags);
 					}
 					break;
@@ -730,11 +731,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 			}
 			break;
+
 		} // switch(header.is_pixel_depth)
-		
+
 		if(flipvert) {
 			FreeImage_FlipVertical(dib);
 		}
+
 		if(fliphoriz) {
 			FreeImage_FlipHorizontal(dib);
 		}
@@ -745,162 +748,401 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		if(dib) {
 			FreeImage_Unload(dib);
 		}
+
 		FreeImage_OutputMessageProc(s_format_id, message);
+
 		return NULL;
 	}
 }
 
+
+static inline void 
+flushPacket(BYTE*& dest, BYTE pixel_size, BYTE* packet_begin, BYTE*& packet, BYTE& packet_count, bool& has_rle, FreeImageIO* io, fi_handle handle) {
+	if(packet_count) {
+		const BYTE type_bit = has_rle ? 0x80 : 0x0;
+		const BYTE write_count = has_rle ? 1 : packet_count;
+
+		// build packet header: zero based count + type bit
+		assert(packet_count >= 1);
+		BYTE rle = packet_count - 1;
+		rle |= type_bit;
+
+		// write packet header
+		*dest = rle;
+		++dest;
+
+		// write packet data
+		memcpy(dest, packet_begin, write_count * pixel_size);
+		dest += write_count * pixel_size;
+
+		// reset state
+		packet_count = 0;
+		packet = packet_begin;
+		has_rle = false;
+
+	}
+}
+
+static inline void 
+assignPixel(BYTE* dest, BYTE* src, BYTE pixel_size) {
+	// fast generic assign (faster than for loop) and no code bloat (template)
+	switch (pixel_size) {
+		case 1:
+			*dest = *src;
+
+			break;
+		case 2: {
+			WORD val(*(WORD*)src);
+	#ifdef FREEIMAGE_BIGENDIAN
+			SwapShort(&val);
+	#endif
+			*(WORD*)dest = val;
+		}
+
+		break;
+		case 3: {
+			// Write 24bit as 16+8 - it does make a speed difference
+
+			WORD val(*(WORD*)src);
+	#ifdef FREEIMAGE_BIGENDIAN //Not sure if this is needed :(
+			SwapShort(&val);
+	#endif
+			*(WORD*)dest = val;
+			dest[2] = src[2];
+		}
+
+		break;
+		case 4:
+			*(unsigned*)dest = *(unsigned*)src;
+
+			break;
+		default:
+			assert(false);
+	}
+}
+
+static inline bool 
+isEqualPixel(BYTE* lhs, BYTE* rhs, BYTE pixel_size) {
+	switch (pixel_size) {
+		case 1:
+			return *lhs == *rhs;
+
+		case 2:
+			return *(WORD*)lhs == *(WORD*)rhs;
+
+		case 3:
+			return *(WORD*)lhs == *(WORD*)rhs && lhs[2] == rhs[2];
+
+		case 4:
+			return *(unsigned*)lhs == *(unsigned*)rhs;
+
+		default:
+			assert(false);
+			return false;
+	}
+}
+
+static void 
+saveRLE(FIBITMAP* dib, unsigned width, unsigned height, BYTE bpp, BYTE pixel_size, FreeImageIO* io, fi_handle handle) {
+	const unsigned line_size = FreeImage_GetLine(dib);
+
+	const BYTE max_packet_size = 128;
+	BYTE packet_count = 0;
+	bool has_rle = false;
+
+	// packet (compressed or not) to be written to line
+
+	BYTE* const packet_begin = (BYTE*)malloc(max_packet_size * pixel_size);
+	BYTE* packet = packet_begin;
+
+	// line to be written to disk
+	// Note: we need some extra bytes for anti-commpressed lines. The worst case is:
+	// 8 bit images were every 3th pixel is different.
+	// Rle packet becomes two pixels, but nothing is compressed: two byte pixels are transformed into byte header and byte pixel value
+	// After every rle packet there is a non-rle packet of one pixel: an extra byte for the header will be added for it
+	// In the end we gain no bytes from compression, but also must insert a byte at every 3th pixel
+
+	// add extra space for anti-commpressed lines
+	size_t extra_space = (size_t)( width * pixel_size + ceil(width / 3.0) );
+	BYTE* const line_begin = (BYTE*)malloc(extra_space);
+	BYTE* line = line_begin;
+
+	BYTE *current = (BYTE*)malloc(pixel_size);
+	BYTE *next    = (BYTE*)malloc(pixel_size);
+
+	for(unsigned y = 0; y < height; y++) {
+		BYTE *bits = FreeImage_GetScanLine(dib, y);
+
+		// rewind line pointer
+		line = line_begin;
+
+		for(unsigned x = 0; x < line_size; x += pixel_size) {
+
+			assignPixel(current, (bits + x), pixel_size);
+
+			// read next pixel from dib
+
+			if( x + 1*pixel_size < line_size) {
+				assignPixel(next, (bits + x + 1*pixel_size), pixel_size);
+
+			} else {
+				// last pixel in line
+
+				// include current pixel and flush
+				if(!has_rle) {
+					// write to packet
+					assignPixel(packet, current, pixel_size);
+					packet += pixel_size;
+
+				}
+
+				assert(packet_count < max_packet_size);
+
+				++packet_count;
+
+				flushPacket(line, pixel_size, packet_begin, packet, packet_count, has_rle, io, handle);
+
+				// start anew on next line
+				break;
+			}
+
+			if(isEqualPixel(current, next, pixel_size)) {
+
+				// has rle
+
+				if(!has_rle) {
+					// flush non rle packet
+
+					flushPacket(line, pixel_size, packet_begin, packet, packet_count, has_rle, io, handle);
+
+					// start a rle packet
+
+					has_rle = true;
+
+					// write to packet
+					assignPixel(packet, current, pixel_size);
+					packet += pixel_size;
+				}
+
+				// otherwise do nothing. We will just increase the count at the end
+
+			} else {
+
+				// no rle
+
+				if(has_rle) {
+					// flush rle packet
+
+					// include current pixel first
+					assert(packet_count < max_packet_size);
+					++packet_count;
+
+					flushPacket(line, pixel_size, packet_begin, packet, packet_count, has_rle, io, handle);
+
+					// start anew on the next pixel
+					continue;
+
+				} else {
+
+					// write to packet
+					assignPixel(packet, current, pixel_size);
+					packet += pixel_size;
+				}
+
+			}
+
+			// increase counter on every pixel
+
+			++packet_count;
+
+			if(packet_count == max_packet_size) {
+				flushPacket(line, pixel_size, packet_begin, packet, packet_count, has_rle, io, handle);
+			}
+
+		}//for width
+
+		// write line to disk
+		io->write_proc(line_begin, 1, (unsigned)(line - line_begin), handle);
+
+	}//for height
+
+	free(line_begin);
+	free(packet_begin);
+	free(current);
+	free(next);
+}
+
 static BOOL DLL_CALLCONV
 Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data) {
-	if((dib != NULL) && (handle != NULL)) {
-		RGBQUAD *palette = FreeImage_GetPalette(dib);
-		int bpp = FreeImage_GetBPP(dib);
+	if((dib == NULL) || (handle == NULL)) {
+		return FALSE;
+	}
 
-		// write the file header
+	RGBQUAD *palette = FreeImage_GetPalette(dib);
+	const BYTE bpp = FreeImage_GetBPP(dib);
+	const BYTE pixel_size = bpp/8;
 
-		TGAHEADER header;
-		header.id_length = 0;
-		header.cm_first_entry = 0;
-		header.is_xorigin = 0;
-		header.is_yorigin = 0;
-		header.is_width = (WORD)FreeImage_GetWidth(dib);
-		header.is_height = (WORD)FreeImage_GetHeight(dib);
-		header.is_pixel_depth = (BYTE)bpp;
-		header.is_image_descriptor = 0;
+	// write the file header
 
-		if(palette) {
-			header.color_map_type = 1;
-			header.image_type = TGA_CMAP;
-			header.cm_length = (WORD)(1 << bpp);
-			if(FreeImage_IsTransparent(dib)) {
-				header.cm_size = 32;
-			} else {
-				header.cm_size = 24;
-			}
+	TGAHEADER header;
+
+	header.id_length = 0;
+	header.cm_first_entry = 0;
+	header.is_xorigin = 0;
+	header.is_yorigin = 0;
+	header.is_width = (WORD)FreeImage_GetWidth(dib);
+	header.is_height = (WORD)FreeImage_GetHeight(dib);
+	header.is_pixel_depth = (BYTE)bpp;
+	header.is_image_descriptor = 0;
+
+	if(palette) {
+		header.color_map_type = 1;
+		header.image_type = (TARGA_SAVE_RLE & flags) ? TGA_RLECMAP : TGA_CMAP;
+		header.cm_length = (WORD)(1 << bpp);
+
+		if(FreeImage_IsTransparent(dib)) {
+			header.cm_size = 32;
 		} else {
-			header.color_map_type = 0;
-			header.image_type = TGA_RGB;
-			header.cm_length = 0;
-			header.cm_size = 0;
+			header.cm_size = 24;
 		}
 
-		// write the header
+	} else {
+		header.color_map_type = 0;
+		header.image_type = (TARGA_SAVE_RLE & flags) ? TGA_RLERGB : TGA_RGB;
+		header.cm_length = 0;
+		header.cm_size = 0;
+	}
+
+	// write the header
 
 #ifdef FREEIMAGE_BIGENDIAN
-		SwapHeader(&header);
+	SwapHeader(&header);
 #endif
-		io->write_proc(&header, sizeof(header), 1, handle);
+	io->write_proc(&header, sizeof(header), 1, handle);
 #ifdef FREEIMAGE_BIGENDIAN
-		SwapHeader(&header);
+	SwapHeader(&header);
 #endif
 
-		// write the palette
+	// write the palette
 
-		if(palette) {
-			if(FreeImage_IsTransparent(dib)) {
-				FILE_BGRA *bgra_pal = (FILE_BGRA*)malloc(header.cm_length * sizeof(FILE_BGRA));
+	if(palette) {
+		if(FreeImage_IsTransparent(dib)) {
+			FILE_BGRA *bgra_pal = (FILE_BGRA*)malloc(header.cm_length * sizeof(FILE_BGRA));
 
-				// get the transparency table
-				BYTE *trns = FreeImage_GetTransparencyTable(dib);
+			// get the transparency table
+			BYTE *trns = FreeImage_GetTransparencyTable(dib);
 
-				for(unsigned i = 0; i < header.cm_length; i++) {
-					bgra_pal[i].b = palette[i].rgbBlue;
-					bgra_pal[i].g = palette[i].rgbGreen;
-					bgra_pal[i].r = palette[i].rgbRed;
-					bgra_pal[i].a = trns[i];
-				}
-
-				io->write_proc(bgra_pal, sizeof(FILE_BGRA), header.cm_length, handle);
-
-				free(bgra_pal);
-
-			} else {
-				FILE_BGR *bgr_pal = (FILE_BGR*)malloc(header.cm_length * sizeof(FILE_BGR));
-
-				for(unsigned i = 0; i < header.cm_length; i++) {
-					bgr_pal[i].b = palette[i].rgbBlue;
-					bgr_pal[i].g = palette[i].rgbGreen;
-					bgr_pal[i].r = palette[i].rgbRed;
-				}
-
-				io->write_proc(bgr_pal, sizeof(FILE_BGR), header.cm_length, handle);
-
-				free(bgr_pal);
+			for(unsigned i = 0; i < header.cm_length; i++) {
+				bgra_pal[i].b = palette[i].rgbBlue;
+				bgra_pal[i].g = palette[i].rgbGreen;
+				bgra_pal[i].r = palette[i].rgbRed;
+				bgra_pal[i].a = trns[i];
 			}
+
+			io->write_proc(bgra_pal, sizeof(FILE_BGRA), header.cm_length, handle);
+
+			free(bgra_pal);
+
+		} else {
+			FILE_BGR *bgr_pal = (FILE_BGR*)malloc(header.cm_length * sizeof(FILE_BGR));
+
+			for(unsigned i = 0; i < header.cm_length; i++) {
+				bgr_pal[i].b = palette[i].rgbBlue;
+				bgr_pal[i].g = palette[i].rgbGreen;
+				bgr_pal[i].r = palette[i].rgbRed;
+			}
+
+			io->write_proc(bgr_pal, sizeof(FILE_BGR), header.cm_length, handle);
+
+			free(bgr_pal);
 		}
+	}
 
-		// write the data bits
+	// write the data bits
 
-		for(unsigned y = 0; y < header.is_height; y++) {
+	const unsigned width = header.is_width;
+	const unsigned height = header.is_height;
+
+	if(TARGA_SAVE_RLE & flags) {
+		// Note, image is compressed line by line, this is, 
+		// packets don't span multiple lines (TGA2.0 recommendation)
+		saveRLE(dib, width, height, bpp, pixel_size, io, handle);
+	} else {
+		// no rle compression
+		BYTE *line, *const line_begin = (BYTE*)malloc(width * pixel_size);
+		BYTE *line_source = line_begin;
+
+		for(unsigned y = 0; y < height; y++) {
 			BYTE *bits = FreeImage_GetScanLine(dib, y);
 
-			switch(bpp) {
-				case 8: 
-				{
-					io->write_proc(bits, header.is_width, 1, handle);
+			//rewind the line pointer
+			line = line_begin;
+
+			switch (bpp) {
+				case 8: {
+					//don't copy line, read straight from dib
+					line_source = bits;
 				}
+
 				break;
-				
-				case 16: 
-				{
-					WORD pixel;
-					for(unsigned x = 0; x < header.is_width; x++) {
-						pixel = *(((WORD *)bits) + x);
+				case 16: {
+					for(unsigned x = 0; x < width; x++) {
+						WORD pixel = *(((WORD *)bits) + x);
 #ifdef FREEIMAGE_BIGENDIAN
 						SwapShort(&pixel);
 #endif
-						io->write_proc(&pixel, sizeof(WORD), 1, handle);
+						*(WORD*)line = pixel;
+						line += pixel_size;
 					}
 				}
+
 				break;
-				
-				case 24: 
-				{
-					FILE_BGR bgr;
-					RGBTRIPLE *trip;
-					for(unsigned x = 0; x < header.is_width; x++) {
-						trip = ((RGBTRIPLE *)bits) + x;
-						bgr.b = trip->rgbtBlue;
-						bgr.g = trip->rgbtGreen;
-						bgr.r = trip->rgbtRed;
-						io->write_proc(&bgr, sizeof(FILE_BGR), 1, handle);
+				case 24: {
+					for(unsigned x = 0; x < width; x++) {
+						RGBTRIPLE* trip = ((RGBTRIPLE *)bits) + x;
+						line[0] = trip->rgbtBlue;
+						line[1] = trip->rgbtGreen;
+						line[2] = trip->rgbtRed;
+						line += pixel_size;
 					}
 				}
+
 				break;
-				
-				case 32: 
-				{
-					FILE_BGRA bgra;
-					RGBQUAD *quad;
-					for(unsigned x = 0; x < header.is_width; x++) {
-						quad = ((RGBQUAD *)bits) + x;
-						bgra.b = quad->rgbBlue;
-						bgra.g = quad->rgbGreen;
-						bgra.r = quad->rgbRed;
-						bgra.a = quad->rgbReserved;
-						io->write_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
+				case 32: {
+					for(unsigned x = 0; x < width; x++) {
+						*(unsigned*)line = *((unsigned*)bits + x);
+						line += pixel_size;
 					}
+
 				}
+
 				break;
-			}
-		}
+			}//switch(bpp)
 
-		// write the TARGA signature
+			// write line to disk
 
-		TGAFOOTER footer;
-		footer.developer_offset = 0;
-		footer.extension_offset = 0;
-		strcpy(footer.signature, "TRUEVISION-XFILE.");
+			io->write_proc(line_source, pixel_size, width, handle);
 
-#ifdef FREEIMAGE_BIGENDIAN
-		SwapFooter(&footer);
-#endif
-		io->write_proc(&footer, sizeof(footer), 1, handle);
+		}//for height
 
-		return TRUE;
+		free(line_begin);
 	}
 
-	return FALSE;
+
+	// write the footer
+
+	TGAFOOTER footer;
+	footer.developer_offset = 0;
+	footer.extension_offset = 0;
+	strcpy(footer.signature, "TRUEVISION-XFILE.");
+
+#ifdef FREEIMAGE_BIGENDIAN
+	SwapFooter(&footer);
+#endif
+
+	io->write_proc(&footer, sizeof(footer), 1, handle);
+
+	return TRUE;
 }
 
 // ==========================================================
