@@ -278,6 +278,16 @@ FreeImage_AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp, unsign
 			bih->biXPelsPerMeter	= 2835;	// 72 dpi
 			bih->biYPelsPerMeter	= 2835;	// 72 dpi
 
+			if(bpp == 8) {
+				// build a default greyscale palette (very useful for image processing)
+				RGBQUAD *pal = FreeImage_GetPalette(bitmap);
+				for(int i = 0; i < 256; i++) {
+					pal[i].rgbRed	= (BYTE)i;
+					pal[i].rgbGreen = (BYTE)i;
+					pal[i].rgbBlue	= (BYTE)i;
+				}
+			}
+
 			return bitmap;
 		}
 
