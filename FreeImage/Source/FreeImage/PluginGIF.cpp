@@ -1348,7 +1348,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			b = (BYTE)(w - (sizeof(buf) - size));
 			if( b > 0 ) {
 				io->write_proc(&b, 1, 1, handle);
-				io->write_proc(last, b, 1, handle);
+				io->write_proc(last + w - b, b, 1, handle);
 			}
 		} else {
 			//last sub-block less than full size
