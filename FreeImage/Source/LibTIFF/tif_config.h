@@ -207,7 +207,11 @@
 #define SIZEOF_INT 4
 
 /* The size of a `long', as computed by sizeof. */
-#define SIZEOF_LONG 4
+#if defined(__SIZEOF_LONG__) && __SIZEOF_LONG__ == 8
+#  define SIZEOF_LONG 8
+#else
+#  define SIZEOF_LONG 4
+#endif
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -225,10 +229,6 @@
 
 /* Define to 1 if the X Window System is missing or not being used. */
 /* #undef X_DISPLAY_MISSING */
-
-
-/* Number of bits in a file offset, on hosts where this is settable. */
-#define _FILE_OFFSET_BITS 64
 
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
