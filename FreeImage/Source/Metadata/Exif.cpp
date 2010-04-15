@@ -101,15 +101,15 @@ ReadInt16(BOOL msb_order, void *buffer) {
 	return value;
 }
 
-static long 
+static LONG 
 ReadInt32(BOOL msb_order, void *buffer) {
-	long value;
+	LONG value;
 
 	if(msb_order) {
-		value = (long)((((BYTE*) buffer)[0] << 24) | (((BYTE*) buffer)[1] << 16) | (((BYTE*) buffer)[2] << 8) | (((BYTE*) buffer)[3]));
+		value = (LONG)((((BYTE*) buffer)[0] << 24) | (((BYTE*) buffer)[1] << 16) | (((BYTE*) buffer)[2] << 8) | (((BYTE*) buffer)[3]));
 		return value;
     }
-	value = (long)((((BYTE*) buffer)[3] << 24) | (((BYTE*) buffer)[2] << 16) | (((BYTE*) buffer)[1] << 8 ) | (((BYTE*) buffer)[0]));
+	value = (LONG)((((BYTE*) buffer)[3] << 24) | (((BYTE*) buffer)[2] << 16) | (((BYTE*) buffer)[1] << 8 ) | (((BYTE*) buffer)[0]));
 	return value;
 }
 
@@ -125,9 +125,9 @@ ReadUint16(BOOL msb_order, void *buffer) {
 	return value;
 }
 
-static unsigned long 
+static DWORD 
 ReadUint32(BOOL msb_order, void *buffer) {
-	return ((unsigned long) ReadInt32(msb_order, buffer) & 0xFFFFFFFF);
+	return ((DWORD) ReadInt32(msb_order, buffer) & 0xFFFFFFFF);
 }
 
 // ----------------------------------------------------------

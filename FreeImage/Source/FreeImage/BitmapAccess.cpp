@@ -195,10 +195,10 @@ FreeImage_AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp, unsign
 				bpp = 8 * sizeof(short);
 				break;
 			case FIT_UINT32:
-				bpp = 8 * sizeof(unsigned long);
+				bpp = 8 * sizeof(DWORD);
 				break;
 			case FIT_INT32:
-				bpp = 8 * sizeof(long);
+				bpp = 8 * sizeof(LONG);
 				break;
 			case FIT_FLOAT:
 				bpp = 8 * sizeof(float);
