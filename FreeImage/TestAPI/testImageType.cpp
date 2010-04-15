@@ -105,7 +105,7 @@ BOOL testAllocateCloneUnloadType(FREE_IMAGE_TYPE image_type, unsigned width, uns
 				break;
 			case FIT_UINT32:
 				for(y = 0; y < FreeImage_GetHeight(image); y++) {
-					unsigned long *bits = (unsigned long *)FreeImage_GetScanLine(image, y);
+					DWORD *bits = (DWORD *)FreeImage_GetScanLine(image, y);
 					for(x = 0; x < FreeImage_GetWidth(image); x++) {
 						bits[x] = 128;
 					}
@@ -113,7 +113,7 @@ BOOL testAllocateCloneUnloadType(FREE_IMAGE_TYPE image_type, unsigned width, uns
 				break;
 			case FIT_INT32:
 				for(y = 0; y < FreeImage_GetHeight(image); y++) {
-					long *bits = (long *)FreeImage_GetScanLine(image, y);
+					LONG *bits = (LONG *)FreeImage_GetScanLine(image, y);
 					for(x = 0; x < FreeImage_GetWidth(image); x++) {
 						bits[x] = 128;
 					}
@@ -227,7 +227,7 @@ BOOL testAllocateCloneUnloadType(FREE_IMAGE_TYPE image_type, unsigned width, uns
 				break;
 			case FIT_UINT32:
 				for(y = 0; y < FreeImage_GetHeight(clone); y++) {
-					unsigned long *bits = (unsigned long *)FreeImage_GetScanLine(clone, y);
+					DWORD *bits = (DWORD *)FreeImage_GetScanLine(clone, y);
 					for(x = 0; x < FreeImage_GetWidth(clone); x++) {
 						if(bits[x] != 128)
 							throw(1);
@@ -236,7 +236,7 @@ BOOL testAllocateCloneUnloadType(FREE_IMAGE_TYPE image_type, unsigned width, uns
 				break;
 			case FIT_INT32:
 				for(y = 0; y < FreeImage_GetHeight(clone); y++) {
-					long *bits = (long *)FreeImage_GetScanLine(clone, y);
+					LONG *bits = (LONG *)FreeImage_GetScanLine(clone, y);
 					for(x = 0; x < FreeImage_GetWidth(clone); x++) {
 						if(bits[x] != 128)
 							throw(1);
