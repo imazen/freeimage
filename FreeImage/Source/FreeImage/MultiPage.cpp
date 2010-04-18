@@ -9,6 +9,7 @@
 // - Hervé Drolon (drolon@infonie.fr)
 // - Vadim Alexandrov (vadimalexandrov@users.sourceforge.net
 // - Martin Dyring-Andersen (mda@spamfighter.com)
+// - Volodymyr Goncharov (volodymyr.goncharov@gmail.com)
 //
 // This file is part of FreeImage 3
 //
@@ -213,71 +214,12 @@ FreeImage_InternalGetPageCount(FIMULTIBITMAP *bitmap) {
 // =====================================================================
 
 FIMULTIBITMAP * DLL_CALLCONV
-FreeImage_LoadMultiBitmapFromMemory(FREE_IMAGE_FORMAT fif, FIMEMORY *stream, int flags) {
-	// retrieve the plugin list to find the node belonging to this plugin
-
-	PluginList *list = FreeImage_GetPluginList();
-
-	if (list) {
-		PluginNode *node = list->FindNodeFromFIF(fif);
-
-		if (node) {
-			FreeImageIO *io = new FreeImageIO;
-
-			if (io) {
-				SetMemoryIO(io);
-
-				FIMULTIBITMAP *bitmap = new FIMULTIBITMAP;
-
-				if (bitmap) {
-					MULTIBITMAPHEADER *header = new MULTIBITMAPHEADER;
-
-					header->m_filename = NULL;
-					header->node = node;
-					header->fif = fif;
-					header->io = io;
-					header->handle = (fi_handle)stream;						
-					header->changed = FALSE;						
-					header->read_only = TRUE;
-					header->m_cachefile = NULL;
-					header->cache_fif = fif;
-					header->load_flags = flags;
-
-					if (header) {
-						// store the MULTIBITMAPHEADER in the surrounding FIMULTIBITMAP structure
-
-						bitmap->data = header;
-
-						// cache the page count
-
-						header->page_count = FreeImage_InternalGetPageCount(bitmap);
-
-						// allocate a continueus block to describe the bitmap
-
-						header->m_blocks.push_back((BlockTypeS *)new BlockContinueus(0, header->page_count - 1));
-
-						// set up the cache
-
-						return bitmap;
-					}
-					
-					return NULL;
-				}
-			}
-
-			delete io;
-		}
-	}
-
-	return NULL;
-}
-
-FIMULTIBITMAP * DLL_CALLCONV
 FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL create_new, BOOL read_only, BOOL keep_cache_in_memory, int flags) {
 	// sanity check on the parameters
 
-	if (create_new)
+	if (create_new) {
 		read_only = FALSE;
+	}
 
 	// retrieve the plugin list to find the node belonging to this plugin
 
@@ -292,24 +234,22 @@ FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL crea
 			if (io) {
 				SetDefaultIO(io);
 
-				BOOL cont = TRUE;
-
 				FILE *handle = NULL;
 
 				if (!create_new) {
 					handle = fopen(filename, "rb");
-
 					if (handle == NULL) {
-						cont = FALSE;
+						delete io;
+						return NULL;
 					}
 				}
 
-				if (cont) {
-					FIMULTIBITMAP *bitmap = new FIMULTIBITMAP;
+				FIMULTIBITMAP *bitmap = new FIMULTIBITMAP;
 
-					if (bitmap) {
-						MULTIBITMAPHEADER *header = new MULTIBITMAPHEADER;
+				if (bitmap) {
+					MULTIBITMAPHEADER *header = new MULTIBITMAPHEADER;
 
+					if (header) {
 						header->m_filename = new char[strlen(filename) + 1];
 						strcpy(header->m_filename, filename);
 						header->node = node;
@@ -322,49 +262,52 @@ FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL crea
 						header->cache_fif = fif;
 						header->load_flags = flags;
 
-						if (header) {
-							// store the MULTIBITMAPHEADER in the surrounding FIMULTIBITMAP structure
+						// store the MULTIBITMAPHEADER in the surrounding FIMULTIBITMAP structure
 
-							bitmap->data = header;
+						bitmap->data = header;
 
-							// cache the page count
+						// cache the page count
 
-							header->page_count = FreeImage_InternalGetPageCount(bitmap);
+						header->page_count = FreeImage_InternalGetPageCount(bitmap);
 
-							// allocate a continueus block to describe the bitmap
+						// allocate a continueus block to describe the bitmap
 
-							if (!create_new)
-								header->m_blocks.push_back((BlockTypeS *)new BlockContinueus(0, header->page_count - 1));
+						if (!create_new) {
+							header->m_blocks.push_back((BlockTypeS *)new BlockContinueus(0, header->page_count - 1));
+						}
 
-							// set up the cache
+						// set up the cache
 
-							if (!read_only) {
-								char cache_name[256];
-								ReplaceExtension(cache_name, filename, "ficache");
+						if (!read_only) {
+							char cache_name[256];
+							ReplaceExtension(cache_name, filename, "ficache");
 
-								CacheFile *cache_file = new CacheFile(cache_name, keep_cache_in_memory);
+							CacheFile *cache_file = new CacheFile(cache_name, keep_cache_in_memory);
 
-								if (cache_file->open()) {
-									header->m_cachefile = cache_file;
+							if (cache_file->open()) {
+								header->m_cachefile = cache_file;
 
-									// return the multibitmap
+								// return the multibitmap
+								return bitmap;
 
-									return bitmap;
-								}
-
+							} else {
+								// an error occured ...
 								delete cache_file;
 								delete header;
+								delete bitmap;
+								delete io;
+								return NULL;
 							}
-
-							return bitmap;
 						}
-						
-						return NULL;
-					}
-				}
-			}
 
-			delete io;
+						return bitmap;
+					}
+					
+					delete bitmap;
+				}
+				
+				delete io;
+			}
 		}
 	}
 
@@ -373,7 +316,8 @@ FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL crea
 
 FIMULTIBITMAP * DLL_CALLCONV
 FreeImage_OpenMultiBitmapFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags) {
-	
+	BOOL read_only = FALSE;	// modifications (if any) will be stored into the memory cache
+
 	if (io && handle) {
 		
 		// retrieve the plugin list to find the node belonging to this plugin
@@ -399,7 +343,7 @@ FreeImage_OpenMultiBitmapFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_h
 							*header->io = *io;
 							header->handle = handle;						
 							header->changed = FALSE;						
-							header->read_only = TRUE;
+							header->read_only = read_only;	
 							header->m_cachefile = NULL;
 							header->cache_fif = fif;
 							header->load_flags = flags;
@@ -416,6 +360,15 @@ FreeImage_OpenMultiBitmapFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_h
 
 							header->m_blocks.push_back((BlockTypeS *)new BlockContinueus(0, header->page_count - 1));
 
+							if (!read_only) {
+								// set up the cache
+								CacheFile *cache_file = new CacheFile(NULL, TRUE);
+								
+								if (cache_file->open()) {
+									header->m_cachefile = cache_file;
+								}
+							}
+
 							return bitmap;
 						}
 						delete header;
@@ -430,14 +383,118 @@ FreeImage_OpenMultiBitmapFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_h
 }
 
 BOOL DLL_CALLCONV
+FreeImage_SaveMultiBitmapToHandle(FREE_IMAGE_FORMAT fif, FIMULTIBITMAP *bitmap, FreeImageIO *io, fi_handle handle, int flags) {
+	if(!bitmap || !bitmap->data || !io || !handle) {
+		return FALSE;
+	}
+
+	BOOL success = TRUE;
+
+	// retrieve the plugin list to find the node belonging to this plugin
+	PluginList *list = FreeImage_GetPluginList();
+	
+	if (list) {
+		PluginNode *node = list->FindNodeFromFIF(fif);
+
+		if(node) {
+			MULTIBITMAPHEADER *header = FreeImage_GetMultiBitmapHeader(bitmap);
+			
+			// dst data
+			void *data = FreeImage_Open(node, io, handle, FALSE);
+			// src data
+			void *data_read = NULL;
+			
+			if(header->handle) {
+				// open src
+				header->io->seek_proc(header->handle, 0, SEEK_SET);
+				data_read = FreeImage_Open(header->node, header->io, header->handle, TRUE);
+			}
+			
+			// write all the pages to the file using handle and io
+			
+			int count = 0;
+			
+			for (BlockListIterator i = header->m_blocks.begin(); i != header->m_blocks.end(); i++) {
+				if (success) {
+					switch((*i)->m_type) {
+						case BLOCK_CONTINUEUS:
+						{
+							BlockContinueus *block = (BlockContinueus *)(*i);
+							
+							for (int j = block->m_start; j <= block->m_end; j++) {
+
+								// load the original source data
+								FIBITMAP *dib = header->node->m_plugin->load_proc(header->io, header->handle, j, header->load_flags, data_read);
+								
+								// save the data
+								success = node->m_plugin->save_proc(io, dib, handle, count, flags, data);
+								count++;
+								
+								FreeImage_Unload(dib);
+							}
+							
+							break;
+						}
+						
+						case BLOCK_REFERENCE:
+						{
+							BlockReference *ref = (BlockReference *)(*i);
+							
+							// read the compressed data
+							
+							BYTE *compressed_data = (BYTE*)malloc(ref->m_size * sizeof(BYTE));
+							
+							header->m_cachefile->readFile((BYTE *)compressed_data, ref->m_reference, ref->m_size);
+							
+							// uncompress the data
+							
+							FIMEMORY *hmem = FreeImage_OpenMemory(compressed_data, ref->m_size);
+							FIBITMAP *dib = FreeImage_LoadFromMemory(header->cache_fif, hmem, 0);
+							FreeImage_CloseMemory(hmem);
+							
+							// get rid of the buffer
+							free(compressed_data);
+							
+							// save the data
+							
+							success = node->m_plugin->save_proc(io, dib, handle, count, flags, data);
+							count++;
+							
+							// unload the dib
+
+							FreeImage_Unload(dib);
+
+							break;
+						}
+					}
+				} else {
+					break;
+				}
+			}
+			
+			// close the files
+			
+			FreeImage_Close(header->node, header->io, header->handle, data_read);
+
+			FreeImage_Close(node, io, handle, data); 
+			
+			return success;
+		}
+	}
+
+	return FALSE;
+}
+
+BOOL DLL_CALLCONV
 FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 	if (bitmap) {
 		BOOL success = TRUE;
-
+		
 		if (bitmap->data) {
 			MULTIBITMAPHEADER *header = FreeImage_GetMultiBitmapHeader(bitmap);			
-
-			if (header->changed) {
+			
+			// saves changes only of images loaded directly from a file
+			if (header->changed && header->m_filename) {
 				// open a temp file
 
 				char spool_name[256];
@@ -445,96 +502,30 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 				ReplaceExtension(spool_name, header->m_filename, "fispool");
 
 				// open the spool file and the source file
-
+        
 				FILE *f = fopen(spool_name, "w+b");
-
-				void *data = FreeImage_Open(header->node, header->io, (fi_handle)f, FALSE);
-				void *data_read = NULL;
-
-				if (header->handle) {
-					header->io->seek_proc(header->handle, 0, SEEK_SET);
-
-			   		data_read = FreeImage_Open(header->node, header->io, header->handle, TRUE);
-				}
-
-				// write all the pages to the temp file
-
-				int count = 0;				
-
-				for (BlockListIterator i = header->m_blocks.begin(); i != header->m_blocks.end(); i++) {
-					if (success) {
-						switch((*i)->m_type) {
-							case BLOCK_CONTINUEUS :
-							{
-								BlockContinueus *block = (BlockContinueus *)(*i);
-
-								for (int j = block->m_start; j <= block->m_end; j++) {
-									FIBITMAP *dib = header->node->m_plugin->load_proc(header->io, header->handle, j, header->load_flags, data_read);
-
-									success = header->node->m_plugin->save_proc(header->io, dib, (fi_handle)f, count, flags, data);
-									count++;
-
-									FreeImage_Unload(dib);
-								}
-
-								break;
-							}
-
-							case BLOCK_REFERENCE :
-							{
-								BlockReference *ref = (BlockReference *)(*i);
-
-								// read the compressed data
-
-								BYTE *compressed_data = (BYTE*)malloc(ref->m_size * sizeof(BYTE));
-
-								header->m_cachefile->readFile((BYTE *)compressed_data, ref->m_reference, ref->m_size);
-
-								// uncompress the data
-
-								FIMEMORY *hmem = FreeImage_OpenMemory(compressed_data, ref->m_size);
-								FIBITMAP *dib = FreeImage_LoadFromMemory(header->cache_fif, hmem, 0);
-								FreeImage_CloseMemory(hmem);
-
-								// get rid of the buffer
-								free(compressed_data);
-
-								// save the data
-
-								success = header->node->m_plugin->save_proc(header->io, dib, (fi_handle)f, count, flags, data);
-								count++;
-
-								// unload the dib
-
-								FreeImage_Unload(dib);
-
-								break;
-							}
-						}
-					} else {
-						break;
-					}
-				}
+				
+				// saves changes
+				
+				success = FreeImage_SaveMultiBitmapToHandle(header->fif, bitmap, header->io, (fi_handle)f, flags);
 
 				// close the files
-
-				FreeImage_Close(header->node, header->io, (fi_handle)f, data); 
 
 				fclose(f);
 
 				if (header->handle) {
-					FreeImage_Close(header->node, header->io, header->handle, data_read);
-
 					fclose((FILE *)header->handle);
-				}	
+				}
+				
+				// applies changes to the destination file
 
 				if (success) {
 					remove(header->m_filename);
-
 					rename(spool_name, header->m_filename);
 				} else {
 					remove(spool_name);
 				}
+
 			} else {
 				if (header->handle && header->m_filename) {
 					fclose((FILE *)header->handle);
@@ -543,14 +534,14 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 			// clear the blocks list
 
-			for (BlockListIterator i = header->m_blocks.begin(); i != header->m_blocks.end(); ++i)
+			for (BlockListIterator i = header->m_blocks.begin(); i != header->m_blocks.end(); ++i) {
 				delete *i;
+			}
 
 			// flush and dispose the cache
 
 			if (header->m_cachefile) {
 				header->m_cachefile->close();
-
 				delete header->m_cachefile;
 			}
 
@@ -568,8 +559,9 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 			// delete the filename
 
-			if(header->m_filename)
+			if(header->m_filename) {
 				delete[] header->m_filename;
+			}
 
 			// delete the FIMULTIBITMAPHEADER
 
@@ -708,11 +700,13 @@ FreeImage_DeletePage(FIMULTIBITMAP *bitmap, int page) {
 				if (i != header->m_blocks.end()) {
 					switch((*i)->m_type) {
 						case BLOCK_CONTINUEUS :
+							delete *i;
 							header->m_blocks.erase(i);
 							break;
 
 						case BLOCK_REFERENCE :
 							header->m_cachefile->deleteFile(((BlockReference *)(*i))->m_reference);
+							delete *i;
 							header->m_blocks.erase(i);
 							break;
 					}
@@ -886,6 +880,91 @@ FreeImage_GetLockedPageNumbers(FIMULTIBITMAP *bitmap, int *pages, int *count) {
 		}
 
 		return TRUE;
+	}
+
+	return FALSE;
+}
+
+// =====================================================================
+// Memory IO Multipage functions
+// =====================================================================
+
+FIMULTIBITMAP * DLL_CALLCONV
+FreeImage_LoadMultiBitmapFromMemory(FREE_IMAGE_FORMAT fif, FIMEMORY *stream, int flags) {
+	BOOL read_only = FALSE;	// modifications (if any) will be stored into the memory cache
+
+	// retrieve the plugin list to find the node belonging to this plugin
+
+	PluginList *list = FreeImage_GetPluginList();
+
+	if (list) {
+		PluginNode *node = list->FindNodeFromFIF(fif);
+
+		if (node) {
+			FreeImageIO *io = new FreeImageIO;
+
+			if (io) {
+				SetMemoryIO(io);
+
+				FIMULTIBITMAP *bitmap = new FIMULTIBITMAP;
+
+				if (bitmap) {
+					MULTIBITMAPHEADER *header = new MULTIBITMAPHEADER;
+
+					if (header) {
+						header->m_filename = NULL;
+						header->node = node;
+						header->fif = fif;
+						header->io = io;
+						header->handle = (fi_handle)stream;						
+						header->changed = FALSE;						
+						header->read_only = read_only;
+						header->m_cachefile = NULL;
+						header->cache_fif = fif;
+						header->load_flags = flags;
+
+						// store the MULTIBITMAPHEADER in the surrounding FIMULTIBITMAP structure
+
+						bitmap->data = header;
+
+						// cache the page count
+
+						header->page_count = FreeImage_InternalGetPageCount(bitmap);
+
+						// allocate a continueus block to describe the bitmap
+
+						header->m_blocks.push_back((BlockTypeS *)new BlockContinueus(0, header->page_count - 1));
+						
+						if (!read_only) {
+							// set up the cache
+							CacheFile *cache_file = new CacheFile(NULL, TRUE);
+							
+							if (cache_file->open()) {
+								header->m_cachefile = cache_file;
+							}
+						}
+
+						return bitmap;
+					}
+					
+					delete bitmap;
+				}
+				
+				delete io;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+BOOL DLL_CALLCONV
+FreeImage_SaveMultiBitmapToMemory(FREE_IMAGE_FORMAT fif, FIMULTIBITMAP *bitmap, FIMEMORY *stream, int flags) {
+	if (stream && stream->data) {
+		FreeImageIO io;
+		SetMemoryIO(&io);
+
+		return FreeImage_SaveMultiBitmapToHandle(fif, bitmap, &io, (fi_handle)stream, flags);
 	}
 
 	return FALSE;

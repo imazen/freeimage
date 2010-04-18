@@ -114,9 +114,7 @@ void testRGBAChannels(FREE_IMAGE_TYPE image_type, unsigned width, unsigned heigh
 
 void testImageChannels(unsigned width, unsigned height) {
 
-	BOOL bResult = FALSE;
-
-	printf("testImageChannels ...");
+	printf("testImageChannels ...\n");
 
 	test24BitsChannels(width, height);
 	test32BitsChannels(width, height);
@@ -126,6 +124,4 @@ void testImageChannels(unsigned width, unsigned height) {
 
 	testRGBAChannels(FIT_RGBF, width, height, FALSE);
 	testRGBAChannels(FIT_RGBAF, width, height, TRUE);
-
-	printf("\tOK\n");
 }

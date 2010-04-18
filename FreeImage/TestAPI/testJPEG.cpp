@@ -79,12 +79,10 @@ void testJPEGCrop(const char *src_file) {
 void testJPEG() {
 	const char *src_file = "exif.jpg";
 
-	printf("testJPEG (should throw exceptions) ...");
+	printf("testJPEG (should throw exceptions) ...\n");
 
 	// lossless transform - both perfect/non perfect
 	testJPEGTransform(src_file);
 	// cropping - both perfect/non perfect
 	testJPEGCrop(src_file);
-
-	printf("\tOK\n");
 }

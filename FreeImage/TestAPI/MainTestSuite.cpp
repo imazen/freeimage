@@ -71,23 +71,24 @@ int main(int argc, char *argv[]) {
 	// test loading / saving / converting image types using the TIFF plugin
 	testImageTypeTIFF(width, height);
 
-	// test multipage creation
-	testBuildMPage("sample.png", "sample.ico", FIF_ICO, 24);
-	testBuildMPage("sample.png", "sample.tif", FIF_TIFF, 24);
-	//testBuildMPage("sample.png", "sample.gif", FIF_GIF, 8);
-
-	// test multipage cache
-	testMPageCache("sample.png");
-
 	// test memory IO
 	testMemIO("sample.png");
+
+	// test multipage functions
+	testMultiPage("sample.png");
+
+	// test multipage streaming
+	testStreamMultiPage("sample.tif");
+	
+	// test multipage streaming with memory IO
+	testMultiPageMemory("sample.tif");
 
 	// test JPEG lossless transform & cropping
 	testJPEG();
 
 	// test get/set channel
 	testImageChannels(width, height);
-	
+
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)
 	FreeImage_DeInitialise();
 #endif

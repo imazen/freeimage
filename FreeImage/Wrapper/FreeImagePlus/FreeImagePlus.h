@@ -1134,6 +1134,12 @@ public :
 	*/
 	virtual ~fipMemoryIO();
 
+	/** Destructor.
+	Free any allocated memory and invalidate the stream
+	@see FreeImage_CloseMemory
+	*/
+	void close();
+
 	/** Returns TRUE if the internal memory buffer is a valid buffer, returns FALSE otherwise
 	*/
 	BOOL isValid() const;
@@ -1162,6 +1168,14 @@ public :
 	*/
 	FIBITMAP* load(FREE_IMAGE_FORMAT fif, int flags = 0) const;
 	/**
+	Loads a multi-page bitmap from a memory stream
+	@param fif Format identifier (FreeImage format)
+	@param flags The signification of this flag depends on the multi-page to be loaded.
+	@return Returns the loaded multi-page if successful, returns NULL otherwise
+	@see FreeImage_LoadMultiBitmapFromMemory
+	*/
+	FIMULTIBITMAP* loadMultiPage(FREE_IMAGE_FORMAT fif, int flags = 0) const;
+	/**
 	Saves a dib to a memory stream
 	@param fif Format identifier (FreeImage format)
 	@param dib Image to be saved
@@ -1170,6 +1184,15 @@ public :
 	@see FreeImage_SaveToMemory
 	*/
 	BOOL save(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, int flags = 0);
+	/**
+	Saves a multi-page bitmap to a memory stream
+	@param fif Format identifier (FreeImage format)
+	@param bitmap Multi-page image to be saved
+	@param flags The signification of this flag depends on the image to be saved.
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_SaveMultiBitmapToMemory
+	*/
+	BOOL saveMultiPage(FREE_IMAGE_FORMAT fif, FIMULTIBITMAP *bitmap, int flags = 0);
 	/**
 	Reads data from a memory stream
 	@param buffer Storage location for data
@@ -1247,7 +1270,15 @@ public:
 	BOOL isValid() const;
 
 	/**
-	Open a file stream
+	Returns a pointer to the FIMULTIBITMAP data. Used for direct access from FREEIMAGE functions 
+	or from your own low level C functions.
+	*/
+	operator FIMULTIBITMAP*() { 
+		return _mpage; 
+	}
+
+	/**
+	Open a multi-page file stream
 	@param lpszPathName Name of the multi-page bitmap file
 	@param create_new When TRUE, it means that a new bitmap will be created rather than an existing one being opened
 	@param read_only When TRUE the bitmap is opened read-only
@@ -1258,7 +1289,7 @@ public:
 	BOOL open(const char* lpszPathName, BOOL create_new, BOOL read_only, int flags = 0);
 
 	/**
-	Open a multi-page memory stream as read only. 
+	Open a multi-page memory stream as read/write. 
 	@param memIO Memory stream. The memory stream MUST BE a wrapped user buffer. 
 	@param flags Load flags. The signification of this flag depends on the image to be loaded.
 	@return Returns TRUE if successful, returns FALSE otherwise
@@ -1267,12 +1298,43 @@ public:
 	BOOL open(fipMemoryIO& memIO, int flags = 0);
 
 	/**
+	Open a multi-page image as read/write, using the specified FreeImageIO struct and fi_handle, and an optional flag.
+	@param io FreeImageIO structure
+	@param handle FreeImage fi_handle
+	@param flag The signification of this flag depends on the image to be read.
+	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_OpenMultiBitmapFromHandle
+	*/
+	BOOL open(FreeImageIO *io, fi_handle handle, int flags = 0);
+
+	/**
 	Close a file stream
 	@param flags Save flags. The signification of this flag depends on the image to be saved.
 	@return Returns TRUE if successful, returns FALSE otherwise
 	@see FreeImage_CloseMultiBitmap
 	*/
 	BOOL close(int flags = 0);
+
+	/**
+	Saves a multi-page image using the specified FreeImageIO struct and fi_handle, and an optional flag.
+	@param fif Format identifier (FreeImage format)
+	@param io FreeImageIO structure
+	@param handle FreeImage fi_handle
+	@param flag The signification of this flag depends on the multi-page image to be saved.
+	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_SaveMultiBitmapToHandle, FreeImage documentation
+	*/
+	BOOL saveToHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags = 0) const;
+
+	/**
+	Saves a multi-page image using the specified memory stream and an optional flag.
+	@param fif Format identifier (FreeImage format)
+	@param memIO FreeImage memory stream
+	@param flag The signification of this flag depends on the image to be saved.
+	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_SaveMultiBitmapToMemory, FreeImage documentation
+	*/
+	BOOL saveToMemory(FREE_IMAGE_FORMAT fif, fipMemoryIO& memIO, int flags = 0) const;
 
 	/**
 	Returns the number of pages currently available in the multi-paged bitmap

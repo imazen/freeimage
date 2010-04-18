@@ -139,6 +139,7 @@ void testAcquireMemIO(const char *lpszPathName) {
 }
 
 void testMemIO(const char *lpszPathName) {
+	printf("testMemIO ...\n");
 	testSaveMemIO(lpszPathName);
 	testLoadMemIO(lpszPathName);
 	testAcquireMemIO(lpszPathName);

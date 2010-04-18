@@ -60,8 +60,9 @@ void testMemIO(const char *lpszPathName);
 // Multipage test suite
 // ==========================================================
 
-void testBuildMPage(char *src_filename, char *dst_filename, FREE_IMAGE_FORMAT dst_fif, unsigned bpp);
-void testMPageCache(char *src_filename);
+void testMultiPage(const char *lpszPathName);
+void testStreamMultiPage(const char *lpszPathName);
+void testMultiPageMemory(const char *lpszPathName);
 
 // JPEG test suite
 // ==========================================================

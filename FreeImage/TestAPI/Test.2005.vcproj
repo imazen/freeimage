@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="Test"
 	ProjectGUID="{47EC92F9-8B13-4A52-B80E-9EEC1BFFED99}"
 	RootNamespace="Test"
@@ -225,6 +225,14 @@
 		</File>
 		<File
 			RelativePath="testMPage.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\testMPageMemory.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\testMPageStream.cpp"
 			>
 		</File>
 		<File

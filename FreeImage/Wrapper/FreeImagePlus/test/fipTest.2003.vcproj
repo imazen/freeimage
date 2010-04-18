@@ -189,6 +189,12 @@
 					PreprocessorDefinitions=""/>
 			</FileConfiguration>
 		</File>
+		<File
+			RelativePath=".\fipTestMPageMemory.cpp">
+		</File>
+		<File
+			RelativePath=".\fipTestMPageStream.cpp">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

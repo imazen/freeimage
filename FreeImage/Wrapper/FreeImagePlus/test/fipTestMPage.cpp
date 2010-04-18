@@ -22,6 +22,8 @@
 
 #include "fipTest.h"
 
+using namespace std;
+
 // --------------------------------------------------------------------------
 // Multipage test scripts
 
@@ -69,7 +71,11 @@ BOOL testCloneMultiPage(const char *input, const char *output, int output_flag) 
 	return FALSE;
 }
 
+// ----------------------------------------------------------
+
 void testMultiPage(const char *lpszMultiPage) {
+	cout << "testMultiPage ...\n";
+
 	testCloneMultiPage(lpszMultiPage, "clone.tif", 0);
 }
 

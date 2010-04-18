@@ -22,6 +22,8 @@
 
 #include "fipTest.h"
 
+using namespace std;
+
 // --------------------------------------------------------------------------
 // Memory IO test scripts
 
@@ -149,14 +151,18 @@ void testImageMemIO(const char *lpszPathName) {
 	if(bSuccess) {
 		// save the file to a memory stream
 		bSuccess = image.saveToMemory(FIF_PNG, memIO, PNG_DEFAULT);
+		assert(bSuccess);
 		
 		// load the file from the memory stream
 		memIO.seek(0L, SEEK_SET);
 		bSuccess = image.loadFromMemory(memIO, 0);
+		assert(bSuccess);
 	}
 }
 
 void testMemIO(const char *lpszPathName) {
+	cout << "testMemIO ...\n";
+
 	testSaveMemIO(lpszPathName);
 	testLoadMemIO(lpszPathName);
 	testAcquireMemIO(lpszPathName);

@@ -22,6 +22,8 @@
 
 #include "fipTest.h"
 
+using namespace std;
+
 // ----------------------------------------------------------
 
 /**
@@ -30,10 +32,12 @@
 	@param message Error message
 */
 void FreeImageErrorHandler(FREE_IMAGE_FORMAT fif, const char *message) {
-	printf("\n*** "); 
-	printf("%s Format\n", FreeImage_GetFormatFromFIF(fif));
-	printf(message);
-	printf(" ***\n");
+	cout << "\n*** ";
+	if(fif != FIF_UNKNOWN) {
+		cout << FreeImage_GetFormatFromFIF(fif) << " Format\n";
+	}
+	cout << message;
+	cout << " ***\n";
 }
 
 // ----------------------------------------------------------
@@ -55,6 +59,12 @@ int main(int argc, char *argv[]) {
 
 	// test multipage IO
 	testMultiPage(lpszMultiPage);
+
+	// test multipage memory IO
+	testMultiPageMemory(lpszMultiPage);
+
+	// test multipage stream IO
+	testStreamMultiPage(lpszMultiPage);
 
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)
 	FreeImage_DeInitialise();

@@ -142,6 +142,9 @@
 			RelativePath="MainTestSuite.cpp">
 		</File>
 		<File
+			RelativePath=".\testChannels.cpp">
+		</File>
+		<File
 			RelativePath="testImageType.cpp">
 		</File>
 		<File
@@ -152,6 +155,12 @@
 		</File>
 		<File
 			RelativePath="testMPage.cpp">
+		</File>
+		<File
+			RelativePath=".\testMPageMemory.cpp">
+		</File>
+		<File
+			RelativePath=".\testMPageStream.cpp">
 		</File>
 		<File
 			RelativePath="testPlugins.cpp">

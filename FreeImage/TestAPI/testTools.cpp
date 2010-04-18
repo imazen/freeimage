@@ -55,9 +55,9 @@ FIBITMAP* createZonePlateImage(unsigned width, unsigned height, int scale) {
 	// build a greyscale palette
 	RGBQUAD *pal = FreeImage_GetPalette(dst);
 	for(i = 0; i < 256; i++) {
-		pal[i].rgbRed = i;
-		pal[i].rgbGreen = i;
-		pal[i].rgbBlue = i;
+		pal[i].rgbRed	= (BYTE)i;
+		pal[i].rgbGreen = (BYTE)i;
+		pal[i].rgbBlue	= (BYTE)i;
 	}
 
 	// build the sinus table
