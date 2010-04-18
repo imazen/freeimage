@@ -22,17 +22,6 @@
 #include "FreeImage.h"
 #include "Utilities.h"
 
-/**
-Extract the luminance channel L from a RGBF image. 
-Luminance is calculated from the sRGB model using a D65 white point, using the Rec.709 formula : 
-L = ( 0.2126 * r ) + ( 0.7152 * g ) + ( 0.0722 * b )
-Reference : 
-A Standard Default Color Space for the Internet - sRGB. 
-[online] http://www.w3.org/Graphics/Color/sRGB
-*/
-#define LUMA_REC709(r, g, b)	(0.2126F * r + 0.7152F * g + 0.0722F * b)
-
-
 // ----------------------------------------------------------
 //   smart convert X to Float
 // ----------------------------------------------------------
