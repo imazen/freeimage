@@ -379,27 +379,20 @@ MimeType() {
 static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {
 	LibRaw RawProcessor;
+	BOOL bSuccess = TRUE;
 	
-	try {
-		// wrap the input datastream
-		LibRaw_freeimage_datastream datastream(io, handle);
+	// wrap the input datastream
+	LibRaw_freeimage_datastream datastream(io, handle);
 
-		// open the datastream
-		if(RawProcessor.open_datastream(&datastream) != LIBRAW_SUCCESS) {
-			throw(1);	// LibRaw : failed to open input stream (unknown format)
-		}
-
-		// clean-up internal memory allocations
-		RawProcessor.recycle();
-
-		return TRUE;
-
-	} catch(int) {
-		// clean-up and return
-		RawProcessor.recycle();
+	// open the datastream
+	if(RawProcessor.open_datastream(&datastream) != LIBRAW_SUCCESS) {
+		bSuccess = FALSE;	// LibRaw : failed to open input stream (unknown format)
 	}
 
-	return FALSE;
+	// clean-up internal memory allocations
+	RawProcessor.recycle();
+
+	return bSuccess;
 }
 
 static BOOL DLL_CALLCONV
