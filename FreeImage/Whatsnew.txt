@@ -10,11 +10,16 @@ Month day, 2010 - 3.14.0
 ! FreeImage now uses libPNG 1.4.1
 ! FreeImage now uses LibJPEG 8a
 ! FreeImage now uses libTIFF 3.9.2 (CVS patch 2010-02-22)
-! FreeImage_AllocateT now builds a default greyscale palette for 8-bit images
+! [Herve Drolon] FreeImage_AllocateT now builds a default greyscale palette for 8-bit images
+! [Volodymyr Goncharov] FreeImage_LoadMultiBitmapFromMemory now supports read/write operations
+! [Herve Drolon] FreeImage_OpenMultiBitmapFromHandle now supports read/write operations
+! [Herve Drolon] greyscale conversions now use the Rec. 709 formula
 + [Herve Drolon] added FIT_FLOAT to FIT_RGBF conversion to FreeImage_ConvertToRGBF & FreeImage_ConvertToType
 + [Herve Drolon] added VS 2008 project files
 + [Herve Drolon] added FreeImage_ConvertToFloat
 + [Mihail Naydenov] added RLE saving to the Targa plugin (see flag TARGA_SAVE_RLE)
++ [Volodymyr Goncharov] added FreeImage_SaveMultiBitmapToHandle
++ [Herve Drolon] added FreeImage_SaveMultiBitmapToMemory
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
 * [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
 * [Mihail Naydenov] fixed loading of TGA with a corrupted rle count
@@ -24,6 +29,7 @@ Month day, 2010 - 3.14.0
 * [Atsuhiro Igarashi] fixed handling of last data block in PluginGIF::Save (sometimes it saves corrupted images)
 * [Christian Heimes] fixed saving of G3 & G4 compressed TIFF with 1bpp on 64bit Linux
 * [Herve Drolon] fixed long data type being 64-bit on Unix/Linux platforms (use LONG/DWORD instead of long/unsigned long)
+* [Herve Drolon] fixed a memory leak in FreeImage_DeletePage
 
 December 22, 2009 - 3.13.1
 ! FreeImage now uses libTIFF 3.9.2
