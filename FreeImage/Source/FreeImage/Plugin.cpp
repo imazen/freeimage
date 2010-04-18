@@ -341,13 +341,13 @@ FreeImage_Open(PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_fo
        return node->m_plugin->open_proc(io, handle, open_for_reading);
 
 	return NULL;
-};
+}
 
 void DLL_CALLCONV
 FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data) {
 	if (node->m_plugin->close_proc != NULL)
 		node->m_plugin->close_proc(io, handle, data);
-};
+}
 
 // =====================================================================
 // Plugin System Load/Save Functions
