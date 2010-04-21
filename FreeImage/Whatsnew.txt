@@ -6,7 +6,7 @@ What's New for FreeImage
 + : added
 
 Month day, 2010 - 3.14.0
-! FreeImage now uses ZLib 1.2.4
+! FreeImage now uses ZLib 1.2.5
 ! FreeImage now uses libPNG 1.4.1
 ! FreeImage now uses LibJPEG 8a
 ! FreeImage now uses libTIFF 3.9.2 (CVS patch 2010-02-22)
