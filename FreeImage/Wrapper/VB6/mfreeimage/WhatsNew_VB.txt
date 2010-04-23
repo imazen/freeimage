@@ -5,7 +5,50 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
-February 9, 2010 - 2.8
+April 20, 2010 - 2.10
++ [Carsten Klein] added new save flag TARGA_SAVE_RLE.
+! [Carsten Klein] changed constants FREEIMAGE_MINOR_VERSION and FREEIMAGE_RELEASE_SERIAL: set to 14 and 0 respectively to match current version 3.14.0
++ [Carsten Klein] added function FreeImage_ConvertToFloat.
++ [Carsten Klein] added function FreeImage_SaveMultiBitmapToMemory.
++ [Carsten Klein] added wrapper functions FreeImage_SaveMultiBitmapToMemoryEx and FreeImage_SaveMultiBitmapToMemoryEx2.
++ [Carsten Klein] added wrapper function FreeImage_OpenMultiBitmapEx, which only opens existing files, but has support for automatic image format detection.
++ [Carsten Klein] added wrapper function FreeImage_CreateMultiBitmapEx, which only creates new (empty) multi-page bitmaps with support for automatic image format detection.
+* [Carsten Klein] fixed a bug in FreeImage_LoadEx: now uses the file specified for format detection rather than the filename extension.
++ [Carsten Klein] improved error messages in function FreeImage_LoadEx.
+* [Carsten Klein] fixed a bug in FreeImage_AcquireMemoryEx: no more crashes when passing an uninitialized array.
++ [Carsten Klein] added thin wrapper functions, enabling proper handling of Boolean parameters:
++                 added wrapper function FreeImage_OpenMultiBitmap
++                 added wrapper function FreeImage_UnlockPage
++                 added wrapper function FreeImage_RotateEx
++                 added wrapper function FreeImage_MakeThumbnail
++                 added wrapper function FreeImage_GetAdjustColorsLookupTable
++                 added wrapper function FreeImage_ApplyColorMapping
++                 added wrapper function FreeImage_SwapColors
++                 added wrapper function FreeImage_SwapColorsByLong
++                 added wrapper function FreeImage_ApplyIndexMapping
++                 added wrapper function FreeImage_SetTransparent
++                 added wrapper function FreeImage_ConvertFromRawBits
++                 added wrapper function FreeImage_ConvertToRawBits
++                 added wrapper function FreeImage_ConvertToStandardType
++                 added wrapper function FreeImage_ConvertToType
+! [Carsten Klein] changed the parameter names of most functions.
+! [Carsten Klein] changed signature of functions FreeImage_ConvertFromRawBits and FreeImage_ConvertToRawBits: 'ByRef Bits As Long' is now 'ByVal BitsPtr As Long'.
++ [Carsten Klein] added wrapper functions FreeImage_ConvertFromRawBitsEx and FreeImage_ConvertToRawBitsEx.
+* [Carsten Klein] fixed a bug in declaration of function FreeImage_TmoReinhard05Ex: parameters 'Adaption' and 'ColorCorrection' are now passed by value.
+- [Carsten Klein] removed half-implemented function FreeImage_SetChannelEx.
++ [Carsten Klein] added wrapper function FreeImage_SetChannelIOP.
+- [Carsten Klein] removed needless default values of optional parameters.
+- [Carsten Klein] removed function declaration FreeImage_CompositeByLong: replaced by declaration FreeImage_Composite.
+! [Carsten Klein] changed function declaration FreeImage_Composite: application back color is now passed as ByRef ... As Any and so takes both RGBQUAD and Long valus.
++ [Carsten Klein] added wrapper function FreeImage_UnloadEx, which additionally sets the ByRef-passed Bitmap handle to zero after unloading.
++ [Carsten Klein] added wrapper functions ConvertColor and ConvertOleColor to convert VB-style BGR colors into RGB color values.
+
+! now FreeImage version 3.14.0
+
+February 9, 2010 - 2.9.1
+* [Carsten Klein] fixed a bug in FreeImage_GetBackgroundColorAsLong: parameter 'bkcolor' is now properly passed ByRef.
+
+February 9, 2010 - 2.9
 * [Carsten Klein] fixed a syntax typo
 
 February 8, 2010 - 2.8
