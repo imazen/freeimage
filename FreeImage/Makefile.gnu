@@ -65,6 +65,9 @@ install:
 	install -m 644 -o root -g root $(HEADER) $(INCDIR)
 	install -m 644 -o root -g root $(STATICLIB) $(INSTALLDIR)
 	install -m 755 -o root -g root $(SHAREDLIB) $(INSTALLDIR)
+	ln -sf $(SHAREDLIB) $(INSTALLDIR)/$(VERLIBNAME)
+	ln -sf $(VERLIBNAME) $(INSTALLDIR)/$(LIBNAME)	
+	ldconfig
 
 clean:
 	rm -f core Dist/*.* u2dtmp* $(MODULES) $(STATICLIB) $(SHAREDLIB) $(LIBNAME)
