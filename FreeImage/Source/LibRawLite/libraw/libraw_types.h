@@ -1,33 +1,40 @@
 /* -*- C++ -*-
  * File: libraw_types.h
- * Copyright 2008-2009 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2010 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8 , 2008
  *
- * LibRaw (Lite)  data structures
+ * LibRaw C data structures
  *
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
 
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
+LibRaw is free software; you can redistribute it and/or modify
+it under the terms of the one of three licenses as you choose:
 
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+1. GNU LESSER GENERAL PUBLIC LICENSE version 2.1
+   (See file LICENSE.LGPL provided in LibRaw distribution archive for details).
+
+2. COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
+   (See file LICENSE.CDDL provided in LibRaw distribution archive for details).
+
+3. LibRaw Software License 27032010
+   (See file LICENSE.LibRaw.pdf provided in LibRaw distribution archive for details).
+
  */
 
 #ifndef _LIBRAW_TYPES_H
 #define _LIBRAW_TYPES_H
 
+#include <sys/types.h>
 #ifndef WIN32
 #include <sys/time.h>
 #endif
 #include <stdio.h>
-#include <time.h>
+#ifdef _OPENMP
+#ifdef _MSC_VER
+//#error OpenMP is not supported under MS Visual Studio
+#endif
+#include <omp.h>
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,8 +47,14 @@ extern "C" {
 #include "libraw_const.h"
 #include "libraw_version.h"
 
+#ifdef WIN32
+typedef __int64 INT64;
+typedef unsigned __int64 UINT64;
+#else
 typedef long long INT64;
 typedef unsigned long long UINT64;
+#endif
+
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 
@@ -90,8 +103,12 @@ typedef struct
     ushort      height,
                 width,
                 colors,
-                bits,
-                gamma_corrected;
+                bits;
+#ifdef LIBRAW_LIBRARY_BUILD
+#ifdef _OPENMP
+#pragma omp firstprivate(colors,height,width)
+#endif
+#endif
     unsigned int  data_size; 
     unsigned char data[1]; 
 }libraw_processed_image_t;
@@ -121,6 +138,11 @@ typedef struct
                 left_margin;
     ushort      iheight,
                 iwidth;
+#ifdef LIBRAW_LIBRARY_BUILD
+#ifdef _OPENMP
+#pragma omp firstprivate(iheight,iwidth)
+#endif
+#endif
     double      pixel_aspect;
     int         flip;
 
@@ -147,15 +169,17 @@ typedef struct
 
 typedef struct
 {
+    color_data_state_t   color_flags;
     ushort      white[8][8];  
     float       cam_mul[4]; 
     float       pre_mul[4]; 
     float       cmatrix[3][4]; 
     float       rgb_cam[3][4]; 
     float       cam_xyz[4][3]; 
-    ushort      curve[0x4001]; 
+    ushort      curve[0x10000]; 
     unsigned    black;
     unsigned    maximum;
+    unsigned    channel_maximum[4];
     struct ph1_t       phase_one_data;
     float       flash_used; 
     float       canon_ev; 
@@ -192,11 +216,16 @@ typedef struct
 {
     unsigned    greybox[4];     /* -A  x1 y1 x2 y2 */
     double      aber[4];        /* -C */
-    double      gamm[5];        /* -g */
+    double      gamm[6];        /* -g */
     float       user_mul[4];    /* -r mul0 mul1 mul2 mul3 */
     unsigned    shot_select;    /* -s */
     float       bright;         /* -b */
     float       threshold;      /*  -n */
+#ifdef LIBRAW_LIBRARY_BUILD
+#ifdef _OPENMP
+#pragma omp firstprivate(threshold)
+#endif
+#endif
     int         half_size;      /* -h */
     int         four_color_rgb; /* -f */
     int         document_mode;  /* -d/-D */
@@ -210,7 +239,6 @@ typedef struct
     char        *bad_pixels;    /* -P */
     char        *dark_frame;    /* -K */
     int         output_bps;     /* -4 */
-    int         gamma_16bit;    /* -1 */
     int         output_tiff;    /* -T */
     int         user_flip;      /* -t */
     int         user_qual;      /* -q */
@@ -219,10 +247,25 @@ typedef struct
 
     int         med_passes;     /* -m */
     float       auto_bright_thr; 
+    float       adjust_maximum_thr;
     int         no_auto_bright; /* -W */
     int         use_fuji_rotate;/* -j */
+    enum LibRaw_filtering    filtering_mode; 
 }libraw_output_params_t;
 
+typedef struct
+{
+    ushort  *buffer; 
+    ushort  *tl;     
+    ushort  *top;    
+    ushort  *tr;    
+    ushort  *left;  
+    ushort  *right; 
+    ushort  *bl;     
+    ushort  *bottom; 
+    ushort  *br;     
+    ushort  (*ph1_black)[2]; 
+}libraw_masked_t;
 
 typedef struct
 {
@@ -233,7 +276,13 @@ typedef struct
     libraw_colordata_t          color;
     libraw_imgother_t           other;
     libraw_thumbnail_t          thumbnail;
+    libraw_masked_t             masked_pixels;
     ushort                      (*image)[4] ;
+#ifdef LIBRAW_LIBRARY_BUILD
+#ifdef _OPENMP
+#pragma omp shared(image)
+#endif
+#endif
     libraw_output_params_t     params;
     void                *parent_class;      
 } libraw_data_t;

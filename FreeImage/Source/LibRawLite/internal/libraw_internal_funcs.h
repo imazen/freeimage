@@ -3,22 +3,22 @@
  * Copyright 2008-2009 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  14, 2008
  *
- * LibRaw-Lite internal data structures (not visible outside)
+ * LibRaw internal data structures (not visible outside)
  *
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
-
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
  */
 
 #ifndef _LIBRAW_INTERNAL_FUNCS_H
@@ -43,32 +43,33 @@
     void        canon_600_coeff();
     void        canon_600_load_raw();
     int         canon_s2is();
-    void        canon_a5_load_raw();
     void        parse_ciff (int offset, int length);
     void        ciff_block_1030();
 
 // LJPEG decoder
-    unsigned    getbits (int nbits);
-    void        init_decoder();
-    uchar *     make_decoder (const uchar *source, int level);
+    unsigned    getbithuff (int nbits, ushort *huff);
+    ushort*     make_decoder_ref (const uchar **source);
+    ushort*     make_decoder (const uchar *source);
     int         ljpeg_start (struct jhead *jh, int info_only);
-    int         ljpeg_diff (struct decode *dindex);
+    void        ljpeg_end(struct jhead *jh);
+    int         ljpeg_diff (ushort *huff);
     ushort *    ljpeg_row (int jrow, struct jhead *jh);
+    unsigned    ph1_bithuff (int nbits, ushort *huff);
 
 // Canon DSLRs
-    void        crw_init_tables (unsigned table);
+void        crw_init_tables (unsigned table, ushort *huff[2]);
     int         canon_has_lowbits();
     void        canon_compressed_load_raw();
     void        lossless_jpeg_load_raw();
     void        canon_sraw_load_raw();
-    void        canon_black(double *);
+void        canon_black(double *, int nblack);
 // Adobe DNG
     void        adobe_copy_pixel (int row, int col, ushort **rp);
     void        adobe_dng_load_raw_lj();
     void        adobe_dng_load_raw_nc();
 
 // Pentax
-    void        pentax_k10_load_raw();
+    void        pentax_load_raw();
     void        pentax_tree();
 
 // Nikon (and Minolta Z2)
@@ -79,7 +80,6 @@
     int         nikon_e2100();
     void        nikon_3700();
     int         minolta_z2();
-    void        nikon_e900_load_raw();
     void        nikon_e2100_load_raw();
 
 // Fuji
@@ -104,7 +104,8 @@
     void        leaf_hdr_load_raw();
     void        sinar_4shot_load_raw();
     void        imacon_full_load_raw();
-    void        packed_12_load_raw();
+    void        packed_load_raw();
+    float	find_green(int,int,int,int);
     void        unpacked_load_raw();
     void        parse_sinar_ia();
     void        parse_phase_one (int base);
@@ -113,11 +114,9 @@
     void        nokia_load_raw();
     unsigned    pana_bits (int nbits);
     void        panasonic_load_raw();
-    void        olympus_e300_load_raw();
-    void        olympus_e410_load_raw();
+    void        olympus_load_raw();
     void        olympus_cseries_load_raw();
     void        minolta_rd175_load_raw();
-    void        casio_qv5700_load_raw();
     void        quicktake_100_load_raw();
     const int*  make_decoder_int (const int *source, int level);
     int         radc_token (int tree);
@@ -148,20 +147,6 @@
     void        sony_arw_load_raw();
     void        sony_arw2_load_raw();
     void        parse_minolta (int base);
-
-// Foveon/Sigma
-    void        foveon_load_camf();
-    void        foveon_load_raw();
-    const char* foveon_camf_param (const char *block, const char *param);
-    void *      foveon_camf_matrix (unsigned dim[3], const char *name);
-    int         foveon_fixed (void *ptr, int size, const char *name);
-    float       foveon_avg (short *pix, int range[2], float cfilt);
-    short *     foveon_make_curve (double max, double mul, double filt);
-    void        foveon_make_curves(short **curvep, float dq[3], float div[3], float filt);
-    int         foveon_apply_curve (short *curve, int i);
-    void        foveon_interpolate();
-    char *      foveon_gets (int offset, char *str, int len);
-    void        parse_foveon();
 
 // CAM/RGB
     void        pseudoinverse (double (*in)[3], double (*out)[3], int size);

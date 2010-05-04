@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="LibRawLite"
+	Name="LibRaw"
 	ProjectGUID="{07F662C1-1323-42AB-B6AF-FBFD34A7437A}"
 	RootNamespace="LibRawLite"
 	Keyword="Win32Proj"
@@ -45,7 +45,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="./"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;LIBRAW_LIBRARY_BUILD;NO_LCMS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;_OPENMP"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -53,6 +53,73 @@
 				WarningLevel="0"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile=".\Debug\LibRawLite.lib"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="4"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="./"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;_OPENMP"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				UsePrecompiledHeader="0"
+				WarningLevel="0"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
 				CompileAs="0"
 			/>
 			<Tool
@@ -116,7 +183,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="./"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;NO_LCMS;LIBRAW_LIBRARY_BUILD"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;_OPENMP"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
@@ -156,73 +223,6 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="./"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;LIBRAW_LIBRARY_BUILD;NO_LCMS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				UsePrecompiledHeader="0"
-				WarningLevel="0"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				CompileAs="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				OutputFile=".\Debug\LibRawLite.lib"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
@@ -254,7 +254,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="./"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;NO_LCMS;LIBRAW_LIBRARY_BUILD"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;LIBRAW_NODLL;_OPENMP"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"

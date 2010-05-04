@@ -1,36 +1,36 @@
 /* 
    GENERATED FILE, DO NOT EDIT
-   Generated from dcraw/dcraw.c at Mon May  4 22:14:58 2009
+   Generated from dcraw/dcraw.c at Wed Apr 21 09:55:26 2010
    Look into original file (probably http://cybercom.net/~dcoffin/dcraw/dcraw.c)
    for copyright information.
 */
 
-#line 3621 "dcraw/dcraw.c"
+#line 3976 "dcraw/dcraw.c"
 #define CLASS LibRaw::
 #include "libraw/libraw_types.h"
 #define LIBRAW_LIBRARY_BUILD
 #include "libraw/libraw.h"
 #include "internal/defines.h"
 #include "internal/var_defines.h"
-#line 3631 "dcraw/dcraw.c"
+#line 3986 "dcraw/dcraw.c"
 
 /*
    Seach from the current directory up to the root looking for
    a ".badpixels" file, and fix those pixels now.
  */
-void CLASS bad_pixels (char *fname)
+void CLASS bad_pixels (const char *cfname)
 {
   FILE *fp=0;
-  char *cp, line[128];
+  char *fname, *cp, line[128];
   int len, time, row, col, r, c, rad, tot, n, fixed=0;
 
   if (!filters) return;
 #ifdef LIBRAW_LIBRARY_BUILD
   RUN_CALLBACK(LIBRAW_PROGRESS_BAD_PIXELS,0,2);
 #endif
-  if (fname)
-    fp = fopen (fname, "r");
-#line 3674 "dcraw/dcraw.c"
+  if (cfname)
+    fp = fopen (cfname, "r");
+#line 4029 "dcraw/dcraw.c"
   if (!fp) 
       {
 #ifdef LIBRAW_LIBRARY_BUILD
@@ -70,7 +70,7 @@ void CLASS bad_pixels (char *fname)
 #endif
 }
 
-void CLASS subtract (char *fname)
+void CLASS subtract (const char *fname)
 {
   FILE *fp;
   int dim[3]={0,0,0}, comment=0, number=0, error=0, nd=0, c, row, col;
@@ -126,10 +126,10 @@ void CLASS subtract (char *fname)
   RUN_CALLBACK(LIBRAW_PROGRESS_DARK_FRAME,1,2);
 #endif
 }
-#line 8283 "dcraw/dcraw.c"
+#line 9550 "dcraw/dcraw.c"
 
 #ifndef NO_LCMS
-void CLASS apply_profile (char *input, char *output)
+void CLASS apply_profile (const char *input, const char *output)
 {
   char *prof;
   cmsHPROFILE hInProfile=0, hOutProfile=0;

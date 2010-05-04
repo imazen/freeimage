@@ -1,23 +1,22 @@
 /* -*- C -*-
  * File: libraw_datastream.h
- * Copyright 2008-2009 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2010 LibRaw LLC (info@libraw.org)
  * Created: Sun Jan 18 13:07:35 2009
  *
- * LibRaw (Lite) Data stream interface
- *
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
+ * LibRaw Data stream interface
 
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
+LibRaw is free software; you can redistribute it and/or modify
+it under the terms of the one of three licenses as you choose:
 
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+1. GNU LESSER GENERAL PUBLIC LICENSE version 2.1
+   (See file LICENSE.LGPL provided in LibRaw distribution archive for details).
+
+2. COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
+   (See file LICENSE.CDDL provided in LibRaw distribution archive for details).
+
+3. LibRaw Software License 27032010
+   (See file LICENSE.LibRaw.pdf provided in LibRaw distribution archive for details).
+
  */
 
 #ifndef __LIBRAW_DATASTREAM_H
@@ -35,6 +34,7 @@ struct LibRaw_abstract_datastream;
 #else /* __cplusplus */
 
 #include "libraw_const.h"
+#include "libraw_types.h"
 
 class LibRaw_buffer_datastream;
 
@@ -45,8 +45,8 @@ class LibRaw_abstract_datastream
     virtual             ~LibRaw_abstract_datastream(void){if(substream) delete substream;}
     virtual int         valid(){return 0;}
     virtual int         read(void *,size_t, size_t ){ return -1;}
-    virtual int         seek(off_t o, int whence){return -1;}
-    virtual int         tell(){return -1;}
+    virtual int         seek(INT64 , int ){return -1;}
+    virtual INT64       tell(){return -1;}
     virtual int         get_char(){return -1;}
     virtual char*       gets(char *, int){ return NULL;}
     virtual int         scanf_one(const char *, void *){return -1;}
@@ -94,15 +94,31 @@ class LibRaw_file_datastream : public LibRaw_abstract_datastream
         CHK(); 
         return substream?substream->eof():feof(f);
     }
-    virtual int seek(off_t o, int whence) 
+    virtual int seek(INT64 o, int whence) 
     { 
         CHK(); 
-        return substream?substream->seek(o,whence):fseek(f,o,whence);
+#if defined (WIN32) 
+#if __MSVCRT_VERSION__ >= 0x800
+        return substream?substream->seek(o,whence):_fseeki64(f,o,whence);
+#else
+        return substream?substream->seek(o,whence):fseek(f,(size_t)o,whence);
+#endif
+#else
+        return substream?substream->seek(o,whence):fseeko(f,o,whence);
+#endif
     }
-    virtual int tell() 
+    virtual INT64 tell() 
     { 
         CHK(); 
+#if defined (WIN32)
+#if __MSVCRT_VERSION__ >= 0x800
+        return substream?substream->tell():_ftelli64(f);
+#else
         return substream?substream->tell():ftell(f);
+#endif
+#else
+        return substream?substream->tell():ftello(f);
+#endif
     }
     virtual int get_char() 
     { 
@@ -178,7 +194,7 @@ class LibRaw_buffer_datastream : public LibRaw_abstract_datastream
         return streampos >= streamsize;
     }
 
-    virtual int seek(off_t o, int whence) 
+    virtual int seek(INT64 o, int whence) 
     { 
         if(substream) return substream->seek(o,whence);
         switch(whence)
@@ -197,14 +213,14 @@ class LibRaw_buffer_datastream : public LibRaw_abstract_datastream
                         if(size_t(-o) >= streampos)
                             streampos = 0;
                         else
-                            streampos += o;
+                            streampos += (size_t)o;
                     }
                 else if (o>0)
                     {
                         if(o+streampos> streamsize)
                             streampos = streamsize;
                         else
-                            streampos += o;
+                            streampos += (size_t)o;
                     }
                 return 0;
             case SEEK_END:
@@ -213,17 +229,17 @@ class LibRaw_buffer_datastream : public LibRaw_abstract_datastream
                 else if ( size_t(-o) > streamsize)
                     streampos = 0;
                 else
-                    streampos = streamsize+o;
+                    streampos = streamsize+(size_t)o;
                 return 0;
             default:
                 return 0;
             }
     }
     
-    virtual int tell() 
+    virtual INT64 tell() 
     { 
         if(substream) return substream->tell();
-        return int(streampos);
+        return INT64(streampos);
     }
 
     virtual int get_char() 

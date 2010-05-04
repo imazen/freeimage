@@ -1,23 +1,24 @@
 /* -*- C++ -*-
  * File: libraw_c_api.cpp
- * Copyright 2008-2009 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2010 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8 , 2008
  *
- * LibRaw (Lite) C interface implementation
+ * LibRaw C interface 
 
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
 
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
+LibRaw is free software; you can redistribute it and/or modify
+it under the terms of the one of three licenses as you choose:
 
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+1. GNU LESSER GENERAL PUBLIC LICENSE version 2.1
+   (See file LICENSE.LGPL provided in LibRaw distribution archive for details).
+
+2. COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
+   (See file LICENSE.CDDL provided in LibRaw distribution archive for details).
+
+3. LibRaw Software License 27032010
+   (See file LICENSE.LibRaw.pdf provided in LibRaw distribution archive for details).
+
+
 
  */
 #include <errno.h>
@@ -44,6 +45,19 @@ extern "C"
         if(!lr) return "NULL parameter passed";
         LibRaw *ip = (LibRaw*) lr->parent_class;
         return ip->unpack_function_name();
+    }
+    int libraw_rotate_fuji_raw(libraw_data_t* lr)
+    {
+        if(!lr) return EINVAL;
+        LibRaw *ip = (LibRaw*) lr->parent_class;
+        return ip->rotate_fuji_raw();
+    }
+
+    int libraw_add_masked_borders_to_bitmap(libraw_data_t* lr)
+    {
+        if(!lr) return EINVAL;
+        LibRaw *ip = (LibRaw*) lr->parent_class;
+        return ip->add_masked_borders_to_bitmap();
     }
 
     int libraw_open_file(libraw_data_t* lr, const char *file)
@@ -112,7 +126,6 @@ extern "C"
         LibRaw *ip = (LibRaw*) lr->parent_class;
         return ip->adjust_sizes_info_only();
     }
-
     int  libraw_dcraw_document_mode_processing(libraw_data_t* lr)
     {
         if(!lr) return EINVAL;
@@ -138,6 +151,18 @@ extern "C"
         if(!lr) return EINVAL;
         LibRaw *ip = (LibRaw*) lr->parent_class;
         return ip->dcraw_process();
+    }
+    libraw_processed_image_t *libraw_dcraw_make_mem_image(libraw_data_t* lr,int *errc)
+    {
+        if(!lr) { if(errc) *errc=EINVAL; return NULL;}
+        LibRaw *ip = (LibRaw*) lr->parent_class;
+        return ip->dcraw_make_mem_image(errc);
+    }
+    libraw_processed_image_t *libraw_dcraw_make_mem_thumb(libraw_data_t* lr,int *errc)
+    {
+        if(!lr) { if(errc) *errc=EINVAL; return NULL;}
+        LibRaw *ip = (LibRaw*) lr->parent_class;
+        return ip->dcraw_make_mem_thumb(errc);
     }
 
 #ifdef __cplusplus

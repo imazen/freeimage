@@ -65,11 +65,11 @@ public:
         if(substream) return substream->eof();
         return (_io->tell_proc(_handle) >= _eof);
     }
-    virtual int seek(off_t offset, int origin) { 
+    virtual int seek(INT64 offset, int origin) { 
         if(substream) return substream->seek(offset, origin);
-		return _io->seek_proc(_handle, offset, origin);
+		return _io->seek_proc(_handle, (long)offset, origin);
 	} 
-    virtual int tell() { 
+    virtual INT64 tell() { 
 		if(substream) return substream->tell();
         return _io->tell_proc(_handle);
     }
@@ -248,11 +248,21 @@ libraw_LoadRawData(LibRaw& RawProcessor, int bitspersample) {
 		// set decoding parameters
 		// -----------------------
 		
-		// (-4) Linear 16-bit or 8-bit
+		// (-6) 16-bit or 8-bit
 		RawProcessor.imgdata.params.output_bps = bitspersample;
-		// (-w) Use camera white balance, if possible
+		// (-g power toe_slope)
+		if(bitspersample == 16) {
+			// set -g 1 1 for linear curve
+			RawProcessor.imgdata.params.gamm[0] = 1;
+			RawProcessor.imgdata.params.gamm[1] = 1;
+		} else if(bitspersample == 8) {
+			// by default settings for rec. BT.709 are used: power 2.222 (i.e. gamm[0]=1/2.222) and slope 4.5
+			RawProcessor.imgdata.params.gamm[0] = 1/2.222;
+			RawProcessor.imgdata.params.gamm[1] = 4.5;
+		}
+		// (-w) Use camera white balance, if possible (otherwise, fallback to auto_wb)
 		RawProcessor.imgdata.params.use_camera_wb = 1;
-		// (-a) Average the whole image for white balance
+		// (-a) Use automatic white balance obtained after averaging over the entire image
 		RawProcessor.imgdata.params.use_auto_wb = 1;
 		// (-q 3) Adaptive homogeneity-directed demosaicing algorithm (AHD)
 		RawProcessor.imgdata.params.user_qual = 3;
