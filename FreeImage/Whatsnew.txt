@@ -9,7 +9,7 @@ Month day, 2010 - 3.14.0
 ! FreeImage now uses ZLib 1.2.5
 ! FreeImage now uses libPNG 1.4.1
 ! FreeImage now uses LibJPEG 8a
-! FreeImage now uses libTIFF 3.9.2 (CVS patch 2010-02-22)
+! FreeImage now uses libTIFF 3.9.2 (CVS patch 2010-05-07)
 ! FreeImage now uses LibRaw 0.9.0
 ! [Herve Drolon] FreeImage_AllocateT now builds a default greyscale palette for 8-bit images
 ! [Volodymyr Goncharov] FreeImage_LoadMultiBitmapFromMemory now supports read/write operations
@@ -21,6 +21,7 @@ Month day, 2010 - 3.14.0
 + [Mihail Naydenov] added RLE saving to the Targa plugin (see flag TARGA_SAVE_RLE)
 + [Volodymyr Goncharov] added FreeImage_SaveMultiBitmapToHandle
 + [Herve Drolon] added FreeImage_SaveMultiBitmapToMemory
++ [Herve Drolon] added new Exif maker note tags
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
 * [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
 * [Mihail Naydenov] fixed loading of TGA with a corrupted rle count
