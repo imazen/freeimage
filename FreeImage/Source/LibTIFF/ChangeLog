@@ -1,3 +1,26 @@
+2010-05-07  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* libtiff/tif_jpeg.c: Ensure that quality is always set in 
+	JPEGPreEncode(), not just when we want to output local tables.  
+	Otherwise the quality used during compression may not be right and
+	might not match the tables in the tables tag.   This bug only occurs
+	when seeking between directories in the midst of writing blocks.
+	http://trac.osgeo.org/gdal/ticket/3539
+	
+2010-05-05  Olivier Paquet  <olivier.paquet@gmail.com>
+
+	* libtiff/tif_print.c: Have TIFFTAG_REFERENCEBLACKWHITE always print 6
+	floats instead of 2*SamplesPerPixel.
+	http://bugzilla.maptools.org/show_bug.cgi?id=2186
+	* man/TIFFGetField.3tiff, man/TIFFSetField.3tiff: Fixed doc to reflect the
+	fact that libtiff considers TIFFTAG_REFERENCEBLACKWHITE to be 6 floats.
+
+2010-04-10  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* tools/ppm2tiff.c (main): While case for parsing comment line
+	requires extra parenthesis to work as expected.  Reported by
+	Thomas Sinclair.
+
 2010-02-22  Lee Howard  <faxguy@howardsilvan.com>
 
 	* libtiff/tif_jpeg.c: Do not generate a JPEGTables tag when creating
