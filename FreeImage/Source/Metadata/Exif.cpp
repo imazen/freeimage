@@ -298,7 +298,7 @@ processCanonMakerNoteTag(FIBITMAP *dib, FITAG *tag) {
 			startIndex = 1;
 			break;
 		case TAG_CANON_CAMERA_STATE_0x12:
-			subTagTypeBase = 0xC120;
+			subTagTypeBase = 0x1200;
 			startIndex = 0;
 			break;
 		case TAG_CANON_CAMERA_STATE_0xA0:
