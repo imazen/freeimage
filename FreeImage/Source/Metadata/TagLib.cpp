@@ -720,6 +720,9 @@ static TagInfo
     {  0x0000, (char *) NULL, (char *) NULL}
   };
 
+/**
+Nikon type 2 maker note
+*/
 static TagInfo
   exif_nikon_type2_tag_table[] =
   {
@@ -756,105 +759,6 @@ see http://www.timelesswanderings.net/equipment/D100/NEF.html
 */
 static TagInfo
   exif_nikon_type3_tag_table[] =
-  {
-    {  0x0001, (char *) "MakerNoteVersion", (char *) NULL},
-    {  0x0002, (char *) "ISO", (char *) NULL},
-    {  0x0003, (char *) "ColorMode", (char *) NULL},
-    {  0x0004, (char *) "Quality", (char *) NULL},
-    {  0x0005, (char *) "WhiteBalance", (char *) NULL},
-    {  0x0006, (char *) "Sharpness", (char *) NULL},
-    {  0x0007, (char *) "FocusMode", (char *) NULL},
-    {  0x0008, (char *) "FlashSetting", (char *) NULL},
-    {  0x0009, (char *) "FlashType", (char *) NULL},
-    {  0x000B, (char *) "WhiteBalanceFineTune", (char *) NULL},
-    {  0x000C, (char *) "WB_RBLevels", (char *) NULL},
-    {  0x000D, (char *) "ProgramShift", (char *) NULL},
-    {  0x000E, (char *) "ExposureDifference", (char *) NULL},
-    {  0x000F, (char *) "ISOSelection", (char *) NULL},
-	{  0x0010, (char *) "DataDump", (char *) NULL},
-    {  0x0011, (char *) "PreviewIFD", (char *) NULL},
-    {  0x0012, (char *) "FlashExposureComp", (char *) NULL},
-    {  0x0013, (char *) "ISOSetting", (char *) NULL},
-	{  0x0014, (char *) "ColorBalanceA", (char *) NULL},
-    {  0x0016, (char *) "ImageBoundary", (char *) NULL},
-	{  0x0017, (char *) "FlashExposureComp", (char *) NULL},
-    {  0x0018, (char *) "FlashExposureBracketValue", (char *) NULL},
-    {  0x0019, (char *) "ExposureBracketValue", (char *) NULL},
-    {  0x001A, (char *) "ImageProcessing", (char *) NULL},
-    {  0x001B, (char *) "CropHiSpeed", (char *) NULL},
-	{  0x001C, (char *) "ExposureTuning", (char *) NULL},
-    {  0x001D, (char *) "SerialNumber", (char *) NULL},
-    {  0x001E, (char *) "ColorSpace", (char *) NULL},
-	{  0x001F, (char *) "VRInfo", (char *) NULL},
-	{  0x0020, (char *) "ImageAuthentication", (char *) NULL},
-	{  0x0022, (char *) "ActiveD-Lighting", (char *) NULL},
-	{  0x0023, (char *) "PictureControl", (char *) NULL},
-	{  0x0024, (char *) "WorldTime", (char *) NULL},
-	{  0x0025, (char *) "ISOInfo", (char *) NULL},
-	{  0x002A, (char *) "VignetteControl", (char *) NULL},
-	{  0x002B, (char *) "DistortInfo", (char *) NULL},
-	{  0x0080, (char *) "ImageAdjustment", (char *) NULL},
-	{  0x0081, (char *) "ToneComp", (char *) NULL},
-	{  0x0082, (char *) "AuxiliaryLens", (char *) NULL},
-	{  0x0083, (char *) "LensType", (char *) NULL},
-    {  0x0084, (char *) "Lens", (char *) NULL},
-    {  0x0085, (char *) "ManualFocusDistance", (char *) NULL},
-    {  0x0086, (char *) "DigitalZoom", (char *) NULL},
-    {  0x0087, (char *) "FlashMode", (char *) NULL},
-    {  0x0088, (char *) "AFInfo", (char *) NULL},
-    {  0x0089, (char *) "ShootingMode", (char *) NULL},
-    {  0x008B, (char *) "LensFStops", (char *) NULL},
-    {  0x008C, (char *) "ContrastCurve", (char *) NULL},
-    {  0x008D, (char *) "ColorHue", (char *) NULL},
-    {  0x008F, (char *) "SceneMode", (char *) NULL},
-    {  0x0090, (char *) "LightSource", (char *) NULL},
-	{  0x0091, (char *) "ShotInfo", (char *) NULL},
-    {  0x0092, (char *) "HueAdjustment", (char *) NULL},
-	{  0x0093, (char *) "NEFCompression", (char *) NULL},
-    {  0x0094, (char *) "Saturation", (char *) NULL},
-    {  0x0095, (char *) "NoiseReduction", (char *) NULL},
-    {  0x0096, (char *) "LinearizationTable", (char *) NULL},
-	{  0x0097, (char *) "ColorBalance", (char *) NULL},
-	{  0x0098, (char *) "LensData", (char *) NULL},
-    {  0x0099, (char *) "RawImageCenter", (char *) NULL},
-    {  0x009A, (char *) "SensorPixelSize", (char *) NULL},
-    {  0x009C, (char *) "SceneAssist", (char *) NULL},
-    {  0x009E, (char *) "RetouchHistory", (char *) NULL},
-    {  0x00A0, (char *) "SerialNumber", (char *) NULL},
-    {  0x00A2, (char *) "ImageDataSize", (char *) NULL},
-    {  0x00A5, (char *) "ImageCount", (char *) NULL},
-    {  0x00A6, (char *) "DeletedImageCount", (char *) NULL},
-    {  0x00A7, (char *) "ShutterCount", (char *) NULL},
-	{  0x00A8, (char *) "FlashInfo", (char *) NULL},
-    {  0x00A9, (char *) "ImageOptimization", (char *) NULL},
-    {  0x00AA, (char *) "Saturation", (char *) NULL},
-    {  0x00AB, (char *) "VariProgram", (char *) NULL},
-    {  0x00AC, (char *) "ImageStabilization", (char *) NULL},
-    {  0x00AD, (char *) "AFResponse", (char *) NULL},
-    {  0x00B0, (char *) "MultiExposure", (char *) NULL},
-    {  0x00B1, (char *) "HighISONoiseReduction", (char *) NULL},
-    {  0x00B3, (char *) "ToningEffect", (char *) NULL},
-    {  0x00B6, (char *) "PowerUpTime", (char *) NULL},
-    {  0x00B7, (char *) "AFInfo2", (char *) NULL},
-    {  0x00B8, (char *) "FileInfo", (char *) NULL},
-    {  0x00B9, (char *) "AFTune", (char *) NULL},
-    {  0x00BD, (char *) "PictureControl", (char *) NULL},
-    {  0x0E00, (char *) "PrintIM", (char *) NULL},
-    {  0x0E01, (char *) "NikonCaptureData", (char *) NULL},
-    {  0x0E09, (char *) "NikonCaptureVersion", (char *) NULL},
-    {  0x0E0E, (char *) "NikonCaptureOffsets", (char *) NULL},
-    {  0x0E10, (char *) "NikonScanIFD", (char *) NULL},
-    {  0x0E1D, (char *) "NikonICCProfile", (char *) NULL},
-    {  0x0E1E, (char *) "NikonCaptureOutput", (char *) NULL},
-	{  0x0E22, (char *) "NEFBitDepth", (char *) NULL},
-    {  0x0000, (char *) NULL, (char *) NULL}
-  };
-
-/**
-Nikon maker note
-*/
-static TagInfo
-  exif_nikon_tag_table[] =
   {
     {  0x0001, (char *) "MakerNoteVersion", (char *) NULL},
     {  0x0002, (char *) "ISO", (char *) NULL},
