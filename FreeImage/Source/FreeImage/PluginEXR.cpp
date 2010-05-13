@@ -217,6 +217,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 				}
 			}
+
 			if(bMixedComponents) {
 				bool bHandled = false;
 				// we may have a RGBZ or RGBAZ image ... 
@@ -238,6 +239,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					THROW (Iex::InputExc, "Unable to handle mixed component types (color model = " << exr_color_model << ")");
 				} 
 			}
+
 			switch(pixel_type) {
 				case Imf::UINT:
 					THROW (Iex::InputExc, "Unsupported format: UINT");
@@ -247,16 +249,21 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				default:
 					break;
 			}
+
 			// check for supported image color models
+			// --------------------------------------------------------------
+
 			if((components == 1) || (components == 2)) {				
 				// if the image is gray-alpha (YA), ignore the alpha channel
-				if(channels.findChannel("Y")) {
+				if((components == 1) && channels.findChannel("Y")) {
 					image_type = FIT_FLOAT;
 					components = 1;
-				} else if(components == 1) {
+				} else {
 					std::string msg = "Warning: loading color model " + exr_color_model + " as Y color model";
 					FreeImage_OutputMessageProc(s_format_id, msg.c_str());
 					image_type = FIT_FLOAT;
+					// ignore the other channel
+					components = 1;
 				}
 			} else if(components == 3) {
 				if(channels.findChannel("R") && channels.findChannel("G") && channels.findChannel("B")) {
@@ -266,13 +273,27 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					image_type = FIT_RGBF;
 					bUseRgbaInterface = true;
 				}
-			} else if(components >= 4) {				
-				if(channels.findChannel("R") && channels.findChannel("G") && channels.findChannel("B") && channels.findChannel("A")) {
-					image_type = FIT_RGBAF;
-					// ignore other layers if there is more than one alpha layer
-					components = 4;
+			} else if(components >= 4) {
+				if(channels.findChannel("R") && channels.findChannel("G") && channels.findChannel("B")) {
+					if(channels.findChannel("A")) {
+						if(components > 4) {
+							std::string msg = "Warning: converting color model " + exr_color_model + " to RGBA color model";
+							FreeImage_OutputMessageProc(s_format_id, msg.c_str());
+						}
+						image_type = FIT_RGBAF;
+						// ignore other layers if there is more than one alpha layer
+						components = 4;
+					} else {
+						std::string msg = "Warning: converting color model " + exr_color_model + " to RGB color model";
+						FreeImage_OutputMessageProc(s_format_id, msg.c_str());
+
+						image_type = FIT_RGBF;
+						// ignore other channels
+						components = 3;					
+					}
 				}
 			}
+
 			if(image_type == FIT_UNKNOWN) {
 				THROW (Iex::InputExc, "Unsupported color model: " << exr_color_model);
 			}
