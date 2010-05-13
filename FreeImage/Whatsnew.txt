@@ -32,6 +32,7 @@ Month day, 2010 - 3.14.0
 * [Christian Heimes] fixed saving of G3 & G4 compressed TIFF with 1bpp on 64bit Linux
 * [Herve Drolon] fixed long data type being 64-bit on Unix/Linux platforms (use LONG/DWORD instead of long/unsigned long)
 * [Herve Drolon] fixed a memory leak in FreeImage_DeletePage
+* [Herve Drolon] fixed the loading of RGBZ images in OpenEXR plugin
 
 December 22, 2009 - 3.13.1
 ! FreeImage now uses libTIFF 3.9.2
