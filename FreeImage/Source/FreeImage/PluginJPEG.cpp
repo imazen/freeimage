@@ -118,8 +118,8 @@ jpeg_error_exit (j_common_ptr cinfo) {
 	// always display the message
 	(*cinfo->err->output_message)(cinfo);
 
-	// allow JPEG with a premature end of file
-	if((cinfo)->err->msg_parm.i[0] != 13) {
+	// allow JPEG with unknown markers
+	if((cinfo)->err->msg_code != JERR_UNKNOWN_MARKER) {
 	
 		// let the memory manager delete any temp files before we die
 		jpeg_destroy(cinfo);
