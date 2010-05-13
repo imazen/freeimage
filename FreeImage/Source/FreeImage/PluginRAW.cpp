@@ -398,6 +398,10 @@ Validate(FreeImageIO *io, fi_handle handle) {
 	if(RawProcessor.open_datastream(&datastream) != LIBRAW_SUCCESS) {
 		bSuccess = FALSE;	// LibRaw : failed to open input stream (unknown format)
 	}
+	// check for specific 'false positive'
+	if(!strcmp("MOTOROLA", RawProcessor.imgdata.idata.make) && !strcmp("PIXL", RawProcessor.imgdata.idata.model)) {
+		bSuccess = FALSE;
+	}
 
 	// clean-up internal memory allocations
 	RawProcessor.recycle();
