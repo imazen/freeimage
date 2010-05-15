@@ -1,6 +1,6 @@
 /* 
    GENERATED FILE, DO NOT EDIT
-   Generated from dcraw/dcraw.c at Wed Apr 21 09:55:20 2010
+   Generated from dcraw/dcraw.c at Sat May 15 11:10:07 2010
    Look into original file (probably http://cybercom.net/~dcoffin/dcraw/dcraw.c)
    for copyright information.
 */
@@ -2434,9 +2434,9 @@ void CLASS eight_bit_load_raw()
           {
               if ((unsigned) (col-left_margin) < width)
                   {
-                      ushort color=FC(row,col);
+                      ushort color=FC(row-top_margin,col-left_margin);
                       if(channel_maximum[color] < val) channel_maximum[color] = val;
-                      BAYER(row,col-left_margin) = val;
+                      BAYER(row-top_margin,col-left_margin) = val;
                   }
               else
                   {
