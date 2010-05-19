@@ -65,7 +65,7 @@ Most compilers implement their own version of this keyword ...
 */
 #ifndef INLINE
 	#if defined(_MSC_VER)
-		#define INLINE __inline
+		#define INLINE __forceinline
 	#elif defined(__GNUC__)
 		#define INLINE __inline__
 	#elif defined(__MWERKS__)
@@ -86,21 +86,23 @@ Most compilers implement their own version of this keyword ...
 	#endif
 #endif
 
-/* MSVC does not have lrintf */
-#ifdef _MSC_VER
+/* MSVC and Borland C do not have lrintf */
+#if defined(_MSC_VER) || defined(__BORLANDC__)
 static INLINE long lrintf(float f){
 #ifdef _M_X64
     return (long)((f > 0.0f) ? (f + 0.5f) : (f - 0.5f));
 #else 
 	int i;
+
 	_asm{
 		fld f
 		fistp i
 	};
+
 	return i;
 #endif // _M_X64
 }
-#endif // _MSC_VER
+#endif // _MSC_VER | __BORLANDC__
 
 #include "j2k_lib.h"
 #include "opj_malloc.h"
