@@ -587,7 +587,7 @@ Validate(FreeImageIO *io, fi_handle handle) {
 
 static BOOL DLL_CALLCONV
 SupportsExportDepth(int depth) {
-	return (depth == 96);
+	return FALSE;
 }
 
 static BOOL DLL_CALLCONV 
