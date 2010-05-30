@@ -23,6 +23,7 @@ Month day, 2010 - 3.14.0
 + [Volodymyr Goncharov] added FreeImage_SaveMultiBitmapToHandle
 + [Herve Drolon] added FreeImage_SaveMultiBitmapToMemory
 + [Herve Drolon] added new Exif maker note tags
++ [Lucian Sabo] added JPEG_OPTIMIZE to PluginJPEG:Save
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
 * [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
 * [Mihail Naydenov] fixed loading of TGA with a corrupted rle count
@@ -34,6 +35,7 @@ Month day, 2010 - 3.14.0
 * [Herve Drolon] fixed long data type being 64-bit on Unix/Linux platforms (use LONG/DWORD instead of long/unsigned long)
 * [Herve Drolon] fixed a memory leak in FreeImage_DeletePage
 * [Herve Drolon] fixed the loading of RGBZ images in OpenEXR plugin
+* [Lucian Sabo] improved conversion from 1-, 4-, 8-bpp transparent images to 32-bpp
 
 December 22, 2009 - 3.13.1
 ! FreeImage now uses libTIFF 3.9.2
