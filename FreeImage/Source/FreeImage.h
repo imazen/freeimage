@@ -676,6 +676,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define JPEG_SUBSAMPLING_420 0x4000		// save with medium 2x2 medium chroma subsampling (4:2:0) - default value
 #define JPEG_SUBSAMPLING_422 0x8000		// save with low 2x1 chroma subsampling (4:2:2) 
 #define JPEG_SUBSAMPLING_444 0x10000	// save with no chroma subsampling (4:4:4)
+#define JPEG_OPTIMIZE		0x20000		// on saving, compute optimal Huffman coding tables (can reduce a few percent of file size)
 #define KOALA_DEFAULT       0
 #define LBM_DEFAULT         0
 #define MNG_DEFAULT         0

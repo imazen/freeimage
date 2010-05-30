@@ -1230,6 +1230,11 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			if((flags & JPEG_PROGRESSIVE) == JPEG_PROGRESSIVE) {
 				jpeg_simple_progression(&cinfo);
 			}
+			
+			// compute optimal Huffman coding tables for the image
+			if((flags & JPEG_OPTIMIZE) == JPEG_OPTIMIZE) {
+				cinfo.optimize_coding = TRUE;
+			}
 
 			// Set JFIF density parameters from the DIB data
 
