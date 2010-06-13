@@ -1,3 +1,30 @@
+2010-06-06 Alex Tutubalin <lexa@lexa.ru>
+           * dcraw 9.01 (1.434) imported:
+             + Separate black levels for each color channel.
+             + New cameras: Canon 550D, Casio EX-Z1050, Fuji HS10/HS11,
+               Kodak Z981, Panasonic G2 and G10, Phase One P65, 
+               Samsung NX-10 and WB550, Sony NEX-3 and NEX-5.
+             + Fixed file descriptor leak in dark frame subtraction processing
+
+           * Fixed dcraw 9.01's bug in DNG black level processing
+
+           * Preliminary support for Sony A450 camera.
+
+           * New command-line switch -h in mem_image sample (half_size support)
+
+           * Some patches by Johannes Hanika (darktable author):
+              + OpenMP speedup  for PPG-interpolation
+              + green_matching  - suppress of 'color maze' on cameras with
+              different green channel sensitivity. This option is turns on
+              by  filed with same name in imgdata.params
+            
+           * all client code should be recompiled due to structures size 
+             change
+
+           * LibRaw::free() is now public instead of private.
+
+           * LibRaw 0.10.0-Beta1.
+
 2010-05-15 Alex Tutubalin <lexa@lexa.ru>
            * Fixed bug in 8-bit RAW processing code
            * LibRaw 0.9.1-Release

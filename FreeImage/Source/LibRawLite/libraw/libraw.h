@@ -133,6 +133,7 @@ class DllDef LibRaw
     const char *unpack_function_name();
     int         rotate_fuji_raw();
 
+    void        free(void *p);
   private:
 
     int FCF(int row,int col) { 
@@ -149,7 +150,6 @@ class DllDef LibRaw
 
     void*        malloc(size_t t);
     void*        calloc(size_t n,size_t t);
-    void        free(void *p);
     void        merror (void *ptr, const char *where);
     void        derror();
 
@@ -161,10 +161,10 @@ class DllDef LibRaw
     libraw_callbacks_t callbacks;
 
     LibRaw_constants rgb_constants;
-    void		(LibRaw:: *write_thumb)();
+    void        (LibRaw:: *write_thumb)();
 	void		(LibRaw:: *write_fun)();
     void        (LibRaw:: *load_raw)();
-    void		(LibRaw:: *thumb_load_raw)();
+	void		(LibRaw:: *thumb_load_raw)();
 
     void        kodak_thumb_loader();
     void        write_thumb_ppm_tiff(FILE *); 
@@ -174,7 +174,7 @@ class DllDef LibRaw
     
     int         own_filtering_supported(){ return 0;}
     void        identify();
-    void        identify2(unsigned, char*);
+    void        identify2(unsigned, unsigned, char*);
     void        write_ppm_tiff ();
     void        convert_to_rgb();
     void        kodak_ycbcr_load_raw();
@@ -197,6 +197,7 @@ class DllDef LibRaw
     void        median_filter ();
     void        blend_highlights();
     void        recover_highlights();
+    void        green_matching();
 
     void        fuji_rotate();
     void        stretch();
