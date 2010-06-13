@@ -493,10 +493,26 @@ Fax3SetupState(TIFF* tif)
 	    td->td_compression == COMPRESSION_CCITTFAX4
 	);
 
-	nruns = needsRefLine ? 2*TIFFroundup(rowpixels,32) : rowpixels;
-	nruns += 3;
-	dsp->runs = (uint32*) _TIFFCheckMalloc(tif, 2*nruns, sizeof (uint32),
-					  "for Group 3/4 run arrays");
+	/*
+	  Assure that allocation computations do not overflow.
+  
+	  TIFFroundup and TIFFSafeMultiply return zero on integer overflow
+	*/
+	dsp->runs=(uint32*) NULL;
+	nruns = TIFFroundup(rowpixels,32);
+	if (needsRefLine) {
+		nruns = TIFFSafeMultiply(uint32,nruns,2);
+	}
+	if ((nruns == 0) || (TIFFSafeMultiply(uint32,nruns,2) == 0)) {
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+			     "Row pixels integer overflow (rowpixels %u)",
+			     rowpixels);
+		return (0);
+	}
+	dsp->runs = (uint32*) _TIFFCheckMalloc(tif,
+					       TIFFSafeMultiply(uint32,nruns,2),
+					       sizeof (uint32),
+					       "for Group 3/4 run arrays");
 	if (dsp->runs == NULL)
 		return (0);
 	dsp->curruns = dsp->runs;
@@ -1601,3 +1617,10 @@ TIFFInitCCITTRLEW(TIFF* tif, int scheme)
 #endif /* CCITT_SUPPORT */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */

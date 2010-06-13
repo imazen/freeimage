@@ -1,3 +1,94 @@
+2010-06-11  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* tools/tiff2rgba.c: Applied portion of patch (from Tom Lane)
+	which was left out in order to fully resolve "CVE-2009-2347
+	libtiff: integer overflows in various inter-color space conversion
+	tools". http://bugzilla.maptools.org/show_bug.cgi?id=2079
+
+	* libtiff/tiffiop.h (TIFFSafeMultiply): Need more castings to
+	avoid compiler warnings if parameter types are not sign
+	consistent.
+
+	* tools/tiffcrop.c: Applied patch from Richard Nolde: Corrected
+	European page size dimensions.  Added an option to allow the user
+	to specify a custom page size on the command line.  Fix the case
+	where a page size specified with a fractional part was being
+	coerced to an integer by retyping the variables that define the
+	paper size.
+
+	* libtiff 3.9.3 released.
+
+	* tools/tiffcp.c (tiffcp): Applied Tom Lane's patch to reject
+	YCbCr subsampled data since tiffcp currently doesn't support it.
+	http://bugzilla.maptools.org/show_bug.cgi?id=2097
+
+	* Update libtool to version 2.2.10.
+
+2010-06-10  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tiffiop.h (TIFFSafeMultiply): Work properly if
+	multiplier is zero.
+
+2010-06-09  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_dir.h: Restore ReferenceBlackWhite as a non-custom
+	field.  This avoids a multi-thread reentrancy problem as well as
+	fixing output of wrong tag value due to redundant definitions for
+	the same tag in the tiffFieldInfo[] array.  Resolves
+	http://bugzilla.maptools.org/show_bug.cgi?id=2185
+
+	* libtiff/tif_fax3.c (Fax3SetupState): Yesterday's fix for
+	CVE-2010-1411 was not complete.
+
+	* libtiff/tiffiop.h (TIFFSafeMultiply): New macro to safely
+	multiply two integers.  Returns zero if there is an integer
+	overflow.
+
+	* tools/tiffcp.c (main): Fix more TIFF handle leaks.
+
+	* libtiff/tif_read.c (TIFFReadBufferSetup): Skip allocating
+	tif_rawdata if tif_rawdatasize becomes zero.
+
+2010-06-08  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* tools/tiffcrop.c: Removed duplicated macros such as
+	TIFFhowmany().
+
+	* Update libtool to version 2.2.8.
+
+	* libtiff/tif_fax3.c (Fax3SetupState): Avoid under-allocation of
+	buffer due to integer overflow in TIFFroundup() and several other
+	potential overflows.  In conjunction with the fix to TIFFhowmany(),
+	fixes CVE-2010-1411.
+
+	* libtiff/tiffiop.h (TIFFhowmany): Return zero if parameters would
+	result in an integer overflow. This causes TIFFroundup() to also
+	return zero if there would be an integer overflow.
+
+	* libtiff/tif_read.c (TIFFReadBufferSetup): Return an error if
+	tif_rawdatasize becomes zero due to an initial raw size of zero or
+	an overflow reported by TIFFroundup().
+
+	* libtiff/tif_ojpeg.c (OJPEGReadBufferFill): Report an error and
+	avoid a crash if the input file is so broken that the strip
+	offsets are not defined.
+
+	* tools/tiffcp.c (main): tiffcp should not leak memory if an error
+	is reported when reading the input file.
+
+	* libtiff/tif_aux.c (_TIFFCheckRealloc): Produce a fully detailed
+	error message string.
+
+	* Add an emacs formatting mode footer to all source files so that
+	emacs can be effectively used.
+
+2010-06-03  Oliver Chen Feng <scip8183@gmail.com>
+
+        * libtiff/tools/tiffcp.c: add a new option -x to force merged tiff
+	file PAGENUMBER value in sequence for users who care the page
+	sequence, this will also prevent tiff2pdf from creating pdf file from
+	the merged tiff file with wrong page sequence.
+
 2010-05-07  Frank Warmerdam  <warmerdam@pobox.com>
 
 	* libtiff/tif_jpeg.c: Ensure that quality is always set in 
