@@ -9,7 +9,7 @@ Month day, 2010 - 3.14.0
 ! FreeImage now uses ZLib 1.2.5
 ! FreeImage now uses libPNG 1.4.2
 ! FreeImage now uses LibJPEG 8b
-! FreeImage now uses libTIFF 3.9.3
+! FreeImage now uses libTIFF 3.9.4
 ! FreeImage now uses LibRaw 0.10-Beta1
 ! FreeImage now uses OpenJPEG 1.4.0 (SVN patch 2010-04-16)
 ! [Herve Drolon] FreeImage_AllocateT now builds a default greyscale palette for 8-bit images
