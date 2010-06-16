@@ -267,6 +267,9 @@ libraw_LoadRawData(LibRaw& RawProcessor, int bitspersample) {
 		// (-q 3) Adaptive homogeneity-directed demosaicing algorithm (AHD)
 		RawProcessor.imgdata.params.user_qual = 3;
 
+		// RAW data filtration mode during data unpacking and postprocessing
+		RawProcessor.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
+
 		// -----------------------
 
 		// unpack data
