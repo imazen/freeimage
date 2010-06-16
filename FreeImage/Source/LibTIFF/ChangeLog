@@ -1,3 +1,31 @@
+2010-06-15  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* tools/tiffcrop.c: Patch from Richard Nolde. Reject YCbCr
+	subsampled data since tiffcrop currently doesn't support it.  Fix
+	JPEG support.
+
+2010-06-15  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff 3.9.4 released.
+
+2010-06-13  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* libtiff/tif_jpeg.c: avoid re-preparing jpeg tables unnecessarily
+	(gdal #3633, libtiff #2135).
+
+	* libtiff/tif_dirread.c: Fixed bad handling of out of order tags
+	definated late by a codec (#2210)
+
+	* libtiff/tif_dirread.c: Fixed inadequate validation of the 
+	SubjectDistance field (#2212).
+
+	* tiff2pdf.c: Fix assorted bugs in tiff2pdf: missing "return" 
+	in t2p_read_tiff_size() causes t2p->tiff_datasize to be set entirely 
+	wrong for COMPRESSION_JPEG case, resulting in memory stomp if actual 
+	size is larger.  Also, there are a bunch of places that try to 
+	memset() a malloc'd buffer before checking for malloc failure, which 
+	would result in core dump if there actually were a failure. (#2211)
+
 2010-06-11  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
 
 	* tools/tiff2rgba.c: Applied portion of patch (from Tom Lane)
