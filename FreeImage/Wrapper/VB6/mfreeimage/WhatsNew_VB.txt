@@ -5,8 +5,11 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+June 20, 2010 - 2.11
++ [Carsten Klein] added new save flag JPEG_OPTIMIZE (also added FISO_JPEG_OPTIMIZE to enumeration FREE_IMAGE_SAVE_OPTIONS).
+
 April 20, 2010 - 2.10
-+ [Carsten Klein] added new save flag TARGA_SAVE_RLE.
++ [Carsten Klein] added new save flag TARGA_SAVE_RLE (also added FISO_TARGA_SAVE_RLE to enumeration FREE_IMAGE_SAVE_OPTIONS).
 ! [Carsten Klein] changed constants FREEIMAGE_MINOR_VERSION and FREEIMAGE_RELEASE_SERIAL: set to 14 and 0 respectively to match current version 3.14.0
 + [Carsten Klein] added function FreeImage_ConvertToFloat.
 + [Carsten Klein] added function FreeImage_SaveMultiBitmapToMemory.
