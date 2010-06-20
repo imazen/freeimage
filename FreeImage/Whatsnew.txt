@@ -36,6 +36,7 @@ Month day, 2010 - 3.14.0
 * [Herve Drolon] fixed a memory leak in FreeImage_DeletePage
 * [Herve Drolon] fixed the loading of RGBZ images in OpenEXR plugin
 * [Lucian Sabo] improved conversion from 1-, 4-, 8-bpp transparent images to 32-bpp
+* [Roy F.] fixed a bug in FreeImage_EnlargeCanvas (unable to crop an image on the right)
 
 December 22, 2009 - 3.13.1
 ! FreeImage now uses libTIFF 3.9.2

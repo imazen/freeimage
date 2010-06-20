@@ -793,7 +793,7 @@ FreeImage_EnlargeCanvas(FIBITMAP *src, int left, int top, int right, int bottom,
 	// bottom are smaller than or equal zero. The color pointer may be
 	// NULL in this case.
 	if ((left <= 0) && (right <= 0) && (top <= 0) && (bottom <= 0)) {
-		return FreeImage_Copy(src, -left, -top,	width - 1 + top, height - 1 + bottom);
+		return FreeImage_Copy(src, -left, -top,	width - 1 + right, height - 1 + bottom);
 	}
 
 	// From here, we need a valid color, since the image will be enlarged on
