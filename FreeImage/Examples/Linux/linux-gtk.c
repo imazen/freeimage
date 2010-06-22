@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
-#include "FreeImage.h"
+#include <FreeImage.h>
+#include <string.h>
 
 void destroy(GtkWidget * widget, gpointer data) {
 	gtk_main_quit();
@@ -14,7 +15,7 @@ int main(int argc, char *argv[])
 	int y;
 
 	// initialize the FreeImage library
-	FreeImage_Initialise();
+	FreeImage_Initialise(TRUE);
 
 	dib = FreeImage_Load(FIF_PNG, "freeimage.png", PNG_DEFAULT);
 
@@ -82,7 +83,7 @@ int main(int argc, char *argv[])
 
 	FreeImage_Unload(dib);
 
-	imagebox = gtk_image_new(image, NULL);
+	imagebox = gtk_image_new_from_image(image, NULL);
 	gtk_container_add(GTK_CONTAINER(window), imagebox);
 
 	gtk_widget_show(imagebox);
@@ -95,3 +96,5 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+ 	  	 

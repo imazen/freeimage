@@ -1,20 +1,19 @@
 CC = gcc
 CPP = g++
 COMPILERFLAGS = -O3
-INCLUDE = -I../../Dist -I/usr/include/asm
+INCLUDE = -I../../Dist
 VGALIBRARIES = -lfreeimage -lvga
-GTKLIBRARIES = -lfreeimage -lgtk -lgdk
-GTKINCLUDE = -I/usr/lib/glib/include
+VGAINCLUDE = -I/usr/include/asm
+GTKLIBRARIES = -lfreeimage `pkg-config --libs gtk+-2.0`
+GTKINCLUDE = `pkg-config --cflags gtk+-2.0`
 CFLAGS = $(COMPILERFLAGS) $(INCLUDE)
-
-
 
 all: default
 
 default: linux-svgalib linux-gtk
 
 linux-svgalib: linux-svgalib.c
-	$(CC) $(CFLAGS) $< -o $@ $(VGALIBRARIES)
+	$(CC) $(CFLAGS) $< -o $@ $(VGALIBRARIES) $(VGAINCLUDE)
 	strip $@
 
 linux-gtk: linux-gtk.c
