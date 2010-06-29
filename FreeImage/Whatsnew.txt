@@ -24,6 +24,8 @@ Month day, 2010 - 3.14.0
 + [Herve Drolon] added FreeImage_SaveMultiBitmapToMemory
 + [Herve Drolon] added new Exif maker note tags
 + [Lucian Sabo] added JPEG_OPTIMIZE to PluginJPEG:Save
++ [Mihail Naydenov] improved support for Exif tag reading in TIFF plugin
++ [Mihail Naydenov] allowed dataWindow with minimal bounds different from zero in OpenEXR plugin
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
 * [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
 * [Mihail Naydenov] fixed loading of TGA with a corrupted rle count
