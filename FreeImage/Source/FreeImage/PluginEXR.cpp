@@ -3,6 +3,7 @@
 //
 // Design and implementation by 
 // - Hervé Drolon (drolon@infonie.fr)
+// - Mihail Naydenov (mnaydenov@users.sourceforge.net)
 //
 // This file is part of FreeImage 3
 //
@@ -189,11 +190,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			//const Imf::Compression &compression = file.header().compression();
 
-			if((dataWindow.min.x > 0) || (dataWindow.min.x < 0) || (dataWindow.min.y > 0) || (dataWindow.min.y < 0)) {
-				THROW (Iex::InputExc, "Invalid data window " << 
-					"[" << dataWindow.min.x << "," << dataWindow.min.y << "," << dataWindow.max.x << "," << dataWindow.max.y << "]");
-			}
-            			
 			const Imf::ChannelList &channels = file.header().channels();
 
 			// check the number of components and check for a coherent format
@@ -350,10 +346,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// build a frame buffer (i.e. what we want on output)
 				Imf::FrameBuffer frameBuffer;
 
+				// allow dataWindow with minimal bounds different form zero
+				size_t offset = - dataWindow.min.x * bytespp - dataWindow.min.y * pitch;
+
 				if(components == 1) {
 					frameBuffer.insert ("Y",	// name
 						Imf::Slice (pixelType,	// type
-						(char*)(bits),			// base
+						(char*)(bits + offset), // base
 						bytespp,				// xStride
 						pitch,					// yStride
 						1, 1,					// x/y sampling
@@ -365,7 +364,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						frameBuffer.insert (
 							channel_name[c],					// name
 							Imf::Slice (pixelType,				// type
-							(char*)(bits + c * sizeof(float)),	// base
+							(char*)(bits + c * sizeof(float) + offset), // base
 							bytespp,							// xStride
 							pitch,								// yStride
 							1, 1,								// x/y sampling
