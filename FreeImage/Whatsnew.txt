@@ -6,6 +6,7 @@ What's New for FreeImage
 + : added
 
 Month day, 2010 - 3.14.0
+
 ! FreeImage now uses ZLib 1.2.5
 ! FreeImage now uses LibPNG 1.4.3
 ! FreeImage now uses LibJPEG 8b
@@ -26,6 +27,12 @@ Month day, 2010 - 3.14.0
 + [Lucian Sabo] added JPEG_OPTIMIZE to PluginJPEG:Save
 + [Mihail Naydenov] improved support for Exif tag reading in TIFF plugin
 + [Mihail Naydenov] allowed dataWindow with minimal bounds different from zero in OpenEXR plugin
++ [Herve Drolon] added FIMD_EXIF_RAW metadata model
++ [Herve Drolon] JPEG plugin can load & save raw Exif data (see FIMD_EXIF_RAW)
++ [Herve Drolon] added FIF_LOAD_NOPIXELS load flag constant - used to load header & metadata only
++ [Herve Drolon] added FreeImage_HasPixels
++ [Herve Drolon] added FreeImage_FIFSupportsNoPixels
++ [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to JPEG plugin
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
 * [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
 * [Mihail Naydenov] fixed loading of TGA with a corrupted rle count
