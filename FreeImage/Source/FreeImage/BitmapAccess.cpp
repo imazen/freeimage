@@ -75,6 +75,8 @@ FI_STRUCT (FREEIMAGEHEADER) {
 
 	METADATAMAP *metadata;		 // contains a list of metadata models attached to the bitmap
 
+	BOOL has_pixels;			 // FALSE if the FIBITMAP only contains the header and no pixel data
+
 	//BYTE filler[1];			 // fill to 32-bit alignment
 };
 
@@ -144,9 +146,15 @@ void FreeImage_Aligned_Free(void* mem) {
 /**
 Calculate the size of a FreeImage image. 
 Align the palette and the pixels on a FIBITMAP_ALIGNMENT bytes alignment boundary.
+
+@param header_only If TRUE, calculate a 'header only' FIBITMAP size, otherwise calculate a full FIBITMAP size
+@param width
+@param height
+@param bpp
+@see FreeImage_AllocateHeaderT
 */
 static unsigned 
-FreeImage_GetImageSize(int width, int height, int bpp) {
+FreeImage_GetImageSizeHeader(BOOL header_only, int width, int height, int bpp) {
 	unsigned dib_size = sizeof(FREEIMAGEHEADER); 
 	dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);  
 	dib_size += FIBITMAP_ALIGNMENT - sizeof(BITMAPINFOHEADER) % FIBITMAP_ALIGNMENT; 
@@ -154,22 +162,20 @@ FreeImage_GetImageSize(int width, int height, int bpp) {
 	// palette is aligned on a 16 bytes boundary
 	dib_size += sizeof(RGBQUAD) * CalculateUsedPaletteEntries(bpp);  
 	dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);  
-	// pixels are aligned on a 16 bytes boundary
-	dib_size += CalculatePitch(CalculateLine(width, bpp)) * height; 
+	if(!header_only) {
+		// pixels are aligned on a 16 bytes boundary
+		dib_size += CalculatePitch(CalculateLine(width, bpp)) * height; 
+	}
 
 	return dib_size;
 }
 
 FIBITMAP * DLL_CALLCONV
-FreeImage_Allocate(int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
-	return FreeImage_AllocateT(FIT_BITMAP, width, height, bpp, red_mask, green_mask, blue_mask);
-}
-
-FIBITMAP * DLL_CALLCONV
-FreeImage_AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
+FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
 	FIBITMAP *bitmap = (FIBITMAP *)malloc(sizeof(FIBITMAP));
 
 	if (bitmap != NULL) {
+		width = abs(width);
 		height = abs(height);
 
 		// check pixel bit depth
@@ -231,7 +237,7 @@ FreeImage_AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp, unsign
 		// palette is aligned on a 16 bytes boundary
 		// pixels are aligned on a 16 bytes boundary
 
-		unsigned dib_size = FreeImage_GetImageSize(width, height, bpp); 
+		unsigned dib_size = FreeImage_GetImageSizeHeader(header_only, width, height, bpp); 
 
 		bitmap->data = (BYTE *)FreeImage_Aligned_Malloc(dib_size * sizeof(BYTE), FIBITMAP_ALIGNMENT);
 
@@ -252,6 +258,8 @@ FreeImage_AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp, unsign
 			fih->transparent        = FALSE;
 			fih->transparency_count = 0;
 			memset(fih->transparent_table, 0xff, 256);
+
+			fih->has_pixels = header_only ? FALSE : TRUE;
 
 			// initialize FIICCPROFILE link
 
@@ -297,6 +305,21 @@ FreeImage_AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp, unsign
 	return NULL;
 }
 
+FIBITMAP * DLL_CALLCONV
+FreeImage_AllocateHeader(BOOL header_only, int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
+	return FreeImage_AllocateHeaderT(header_only, FIT_BITMAP, width, height, bpp, red_mask, green_mask, blue_mask);
+}
+
+FIBITMAP * DLL_CALLCONV
+FreeImage_Allocate(int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
+	return FreeImage_AllocateHeaderT(FALSE, FIT_BITMAP, width, height, bpp, red_mask, green_mask, blue_mask);
+}
+
+FIBITMAP * DLL_CALLCONV
+FreeImage_AllocateT(FREE_IMAGE_TYPE type, int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
+	return FreeImage_AllocateHeaderT(FALSE, type, width, height, bpp, red_mask, green_mask, blue_mask);
+}
+
 void DLL_CALLCONV
 FreeImage_Unload(FIBITMAP *dib) {
 	if (NULL != dib) {	
@@ -340,8 +363,11 @@ FreeImage_Clone(FIBITMAP *dib) {
 	unsigned height = FreeImage_GetHeight(dib);
 	unsigned bpp    = FreeImage_GetBPP(dib);
 	
+	// check for pixel availability ...
+	BOOL header_only = FreeImage_HasPixels(dib) ? FALSE : TRUE;
+
 	// allocate a new dib
-	FIBITMAP *new_dib = FreeImage_AllocateT(FreeImage_GetImageType(dib), width, height, bpp, 
+	FIBITMAP *new_dib = FreeImage_AllocateHeaderT(header_only, FreeImage_GetImageType(dib), width, height, bpp, 
 			FreeImage_GetRedMask(dib), FreeImage_GetGreenMask(dib), FreeImage_GetBlueMask(dib));
 
 	if (new_dib) {
@@ -358,7 +384,7 @@ FreeImage_Clone(FIBITMAP *dib) {
 		// palette is aligned on a 16 bytes boundary
 		// pixels are aligned on a 16 bytes boundary
 
-		unsigned dib_size = FreeImage_GetImageSize(width, height, bpp); 
+		unsigned dib_size = FreeImage_GetImageSizeHeader(header_only, width, height, bpp); 
 
 		// copy the bitmap + internal pointers (remember to restore new_dib internal pointers later)
 		memcpy(new_dib->data, dib->data, dib_size);
@@ -503,6 +529,13 @@ FreeImage_GetColorType(FIBITMAP *dib) {
 FREE_IMAGE_TYPE DLL_CALLCONV 
 FreeImage_GetImageType(FIBITMAP *dib) {
 	return (dib != NULL) ? ((FREEIMAGEHEADER *)dib->data)->type : FIT_UNKNOWN;
+}
+
+// ----------------------------------------------------------
+
+BOOL DLL_CALLCONV 
+FreeImage_HasPixels(FIBITMAP *dib) {
+	return (dib != NULL) ? ((FREEIMAGEHEADER *)dib->data)->has_pixels : FALSE;
 }
 
 // ----------------------------------------------------------
@@ -977,7 +1010,7 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 				// set the tag key
 				FreeImage_SetTagKey(tag, key);
 			}
-			if(FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth((WORD)FreeImage_GetTagType(tag)) != FreeImage_GetTagLength(tag)) {
+			if(FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth(FreeImage_GetTagType(tag)) != FreeImage_GetTagLength(tag)) {
 				FreeImage_OutputMessageProc(FIF_UNKNOWN, "Invalid data count for tag '%s'", key);
 				return FALSE;
 			}

@@ -98,7 +98,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib FreeImaged.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib ../Dist/FreeImaged.lib"
 				OutputFile=".\Debug/Test.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -143,6 +143,9 @@
 		</File>
 		<File
 			RelativePath=".\testChannels.cpp">
+		</File>
+		<File
+			RelativePath=".\testHeaderOnly.cpp">
 		</File>
 		<File
 			RelativePath="testImageType.cpp">

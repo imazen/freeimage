@@ -33,6 +33,8 @@
 #include "Utilities.h"
 #include "FreeImageTag.h"
 
+#include "../LibJPEG/jpeglib.h"
+
 // ==========================================================
 // Exif JPEG routines
 // ==========================================================
@@ -561,7 +563,7 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned long offset, unsig
 			// get number of components
 			FreeImage_SetTagCount(tag, ReadUint32(msb_order, pde + 4));
 			// get the size of the tag value in bytes
-			FreeImage_SetTagLength(tag, FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth((WORD)FreeImage_GetTagType(tag)));
+			FreeImage_SetTagLength(tag, FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth(FreeImage_GetTagType(tag)));
 
 			if(FreeImage_GetTagLength(tag) <= 4) {
 				// 4 bytes or less and value is in the dir entry itself
@@ -657,7 +659,7 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned long offset, unsig
 }
 
 /**
-	Read JPEG_APP1 marker (Exif profile)
+	Read and decode JPEG_APP1 marker (Exif profile)
 	@param dib Input FIBITMAP
 	@param dataptr Pointer to the APP1 marker
 	@param datalen APP1 marker length

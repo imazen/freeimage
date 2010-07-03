@@ -59,6 +59,35 @@
 void* FreeImage_Aligned_Malloc(size_t amount, size_t alignment);
 void FreeImage_Aligned_Free(void* mem);
 
+/**
+Allocate a FIBITMAP with possibly no pixel data 
+(i.e. only header data and some or all metadata)
+@param header_only If TRUE, allocate a 'header only' FIBITMAP, otherwise allocate a full FIBITMAP
+@param type Image type
+@param width
+@param height
+@param bpp
+@param red_mask
+@param green_mask
+@param blue_mask
+@see FreeImage_AllocateT
+*/
+DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask);
+
+/**
+Allocate a FIBITMAP of type FIT_BITMAP, with possibly no pixel data 
+(i.e. only header data and some or all metadata)
+@param header_only If TRUE, allocate a 'header only' FIBITMAP, otherwise allocate a full FIBITMAP
+@param width
+@param height
+@param bpp
+@param red_mask
+@param green_mask
+@param blue_mask
+@see FreeImage_Allocate
+*/
+DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeader(BOOL header_only, int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask);
+
 // ==========================================================
 //   File I/O structs
 // ==========================================================

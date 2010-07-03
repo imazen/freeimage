@@ -34,6 +34,7 @@ del TestAPI\sample.tif
 del TestAPI\sample.gif
 del TestAPI\test.jpg
 del TestAPI\*.tif
+del TestAPI\raw_exif.jpg
 del Dist\FreeImage.h
 del *.pch /s /q
 del *.ncb /s /q

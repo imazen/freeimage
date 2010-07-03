@@ -609,6 +609,46 @@ jpeg_read_xmp_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) 
 }
 
 /**
+	Read JPEG_APP1 marker (Exif profile)
+	@param dib Input FIBITMAP
+	@param dataptr Pointer to the APP1 marker
+	@param datalen APP1 marker length
+	@return Returns TRUE if successful, FALSE otherwise
+*/
+BOOL  
+jpeg_read_exif_profile_raw(FIBITMAP *dib, const BYTE *profile, unsigned int length) {
+    // marker identifying string for Exif = "Exif\0\0"
+    BYTE exif_signature[6] = { 0x45, 0x78, 0x69, 0x66, 0x00, 0x00 };
+
+	// verify the identifying string
+	if(memcmp(exif_signature, profile, sizeof(exif_signature)) != 0) {
+		// not an Exif profile
+		return FALSE;
+	}
+
+	// create a tag
+	FITAG *tag = FreeImage_CreateTag();
+	if(tag) {
+		FreeImage_SetTagID(tag, EXIF_MARKER);	// (JPEG_APP0 + 1) => EXIF marker / Adobe XMP marker
+		FreeImage_SetTagKey(tag, g_TagLib_ExifRawFieldName);
+		FreeImage_SetTagLength(tag, (DWORD)length);
+		FreeImage_SetTagCount(tag, (DWORD)length);
+		FreeImage_SetTagType(tag, FIDT_BYTE);
+		FreeImage_SetTagValue(tag, profile);
+
+		// store the tag
+		FreeImage_SetMetadata(FIMD_EXIF_RAW, dib, FreeImage_GetTagKey(tag), tag);
+
+		// destroy the tag
+		FreeImage_DeleteTag(tag);
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+/**
 	Read JPEG special markers
 */
 static BOOL 
@@ -625,6 +665,7 @@ read_markers(j_decompress_ptr cinfo, FIBITMAP *dib) {
 				// Exif or Adobe XMP profile
 				jpeg_read_exif_profile(dib, marker->data, marker->data_length);
 				jpeg_read_xmp_profile(dib, marker->data, marker->data_length);
+				jpeg_read_exif_profile_raw(dib, marker->data, marker->data_length);
 				break;
 			case IPTC_MARKER:
 				// IPTC/NAA or Adobe Photoshop profile
@@ -797,6 +838,49 @@ jpeg_write_xmp_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 	return FALSE;
 }
 
+/** 
+	Write JPEG_APP1 marker (Exif profile)
+	@return Returns TRUE if successful, FALSE otherwise
+*/
+BOOL  
+jpeg_write_exif_profile_raw(j_compress_ptr cinfo, FIBITMAP *dib) {
+    // marker identifying string for Exif = "Exif\0\0"
+    BYTE exif_signature[6] = { 0x45, 0x78, 0x69, 0x66, 0x00, 0x00 };
+
+	FITAG *tag_exif = NULL;
+	FreeImage_GetMetadata(FIMD_EXIF_RAW, dib, g_TagLib_ExifRawFieldName, &tag_exif);
+
+	if(tag_exif) {
+		const BYTE *tag_value = (BYTE*)FreeImage_GetTagValue(tag_exif);
+		
+		// verify the identifying string
+		if(memcmp(exif_signature, tag_value, sizeof(exif_signature)) != 0) {
+			// not an Exif profile
+			return FALSE;
+		}
+
+		if(NULL != tag_value) {
+			DWORD tag_length = FreeImage_GetTagLength(tag_exif);
+
+			BYTE *profile = (BYTE*)malloc(tag_length * sizeof(BYTE));
+			if(profile == NULL) return FALSE;
+
+			for(DWORD i = 0; i < tag_length; i += 65504L) {
+				unsigned length = MIN((long)(tag_length - i), 65504L);
+				
+				memcpy(profile, tag_value + i, length);
+				jpeg_write_marker(cinfo, EXIF_MARKER, profile, length);
+			}
+
+			free(profile);
+
+			return TRUE;	
+		}
+	}
+
+	return FALSE;
+}
+
 /**
 	Write JPEG special markers
 */
@@ -814,6 +898,9 @@ write_markers(j_compress_ptr cinfo, FIBITMAP *dib) {
 
 	// write Adobe XMP profile
 	jpeg_write_xmp_profile(cinfo, dib);
+
+	// write Exif raw data
+	jpeg_write_exif_profile_raw(cinfo, dib);
 
 	return TRUE;
 }
@@ -968,8 +1055,10 @@ SupportsICCProfiles() {
 	return TRUE;
 }
 
-// ----------------------------------------------------------
-
+static BOOL DLL_CALLCONV
+SupportsNoPixels() {
+	return TRUE;
+}
 
 // ----------------------------------------------------------
 
@@ -977,6 +1066,8 @@ static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	if (handle) {
 		FIBITMAP *dib = NULL;
+
+		BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 		try {
 			// set up the jpeglib structures
@@ -1042,17 +1133,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// CMYK image
 				if((flags & JPEG_CMYK) == JPEG_CMYK) {
 					// load as CMYK
-					dib = FreeImage_Allocate(cinfo.output_width, cinfo.output_height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+					dib = FreeImage_AllocateHeader(header_only, cinfo.output_width, cinfo.output_height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 					if(!dib) return NULL;
 					FreeImage_GetICCProfile(dib)->flags |= FIICC_COLOR_IS_CMYK;
 				} else {
 					// load as CMYK and convert to RGB
-					dib = FreeImage_Allocate(cinfo.output_width, cinfo.output_height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+					dib = FreeImage_AllocateHeader(header_only, cinfo.output_width, cinfo.output_height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 					if(!dib) return NULL;
 				}
 			} else {
 				// RGB or greyscale image
-				dib = FreeImage_Allocate(cinfo.output_width, cinfo.output_height, 8 * cinfo.num_components, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+				dib = FreeImage_AllocateHeader(header_only, cinfo.output_width, cinfo.output_height, 8 * cinfo.num_components, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 				if(!dib) return NULL;
 
 				if (cinfo.num_components == 1) {
@@ -1082,8 +1173,19 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				FreeImage_SetDotsPerMeterX(dib, (unsigned) (cinfo.X_density * 100));
 				FreeImage_SetDotsPerMeterY(dib, (unsigned) (cinfo.Y_density * 100));
 			}
+			
+			// step 6: read special markers
+			
+			read_markers(&cinfo, dib);
 
-			// step 6a: while (scan lines remain to be read) jpeg_read_scanlines(...);
+			if (header_only) {
+				// release JPEG decompression object
+				jpeg_destroy_decompress(&cinfo);
+				// return header data
+				return dib;
+			}
+
+			// step 7a: while (scan lines remain to be read) jpeg_read_scanlines(...);
 
 			if((cinfo.out_color_space == JCS_CMYK) && ((flags & JPEG_CMYK) != JPEG_CMYK)) {
 				// convert from CMYK to RGB
@@ -1120,7 +1222,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					jpeg_read_scanlines(&cinfo, &dst, 1);
 				}
 
-				// step 6b: swap red and blue components (see LibJPEG/jmorecfg.h: #define RGB_RED, ...)
+				// step 7b: swap red and blue components (see LibJPEG/jmorecfg.h: #define RGB_RED, ...)
 				// The default behavior of the JPEG library is kept "as is" because LibTIFF uses 
 				// LibJPEG "as is".
 
@@ -1137,10 +1239,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 #endif
 			}
 
-			// step 7: read special markers
-
-			read_markers(&cinfo, dib);
-
 			// step 8: finish decompression
 
 			jpeg_finish_decompress(&cinfo);
@@ -1150,7 +1248,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			jpeg_destroy_decompress(&cinfo);
 
 			// check for automatic Exif rotation
-			if((flags & JPEG_EXIFROTATE) == JPEG_EXIFROTATE) {
+			if(!header_only && ((flags & JPEG_EXIFROTATE) == JPEG_EXIFROTATE)) {
 				rotate_exif(&dib);
 			}
 
@@ -1166,6 +1264,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 	return NULL;
 }
+
+// ----------------------------------------------------------
 
 static BOOL DLL_CALLCONV
 Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data) {
@@ -1450,4 +1550,5 @@ InitJPEG(Plugin *plugin, int format_id) {
 	plugin->supports_export_bpp_proc = SupportsExportDepth;
 	plugin->supports_export_type_proc = SupportsExportType;
 	plugin->supports_icc_profiles_proc = SupportsICCProfiles;
+	plugin->supports_no_pixels_proc = SupportsNoPixels;
 }

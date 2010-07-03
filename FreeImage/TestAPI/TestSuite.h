@@ -52,6 +52,10 @@ BOOL testAllocateCloneUnloadType(FREE_IMAGE_TYPE image_type, unsigned width, uns
 void testImageType(unsigned width, unsigned height);
 void testImageTypeTIFF(unsigned width, unsigned height);
 
+// Header loading test suite
+// ==========================================================
+void testHeaderOnly(const char *src_file);
+
 // IO test suite
 // ==========================================================
 

@@ -543,7 +543,8 @@ FI_ENUM(FREE_IMAGE_MDMODEL) {
 	FIMD_XMP			= 7,	// Abobe XMP metadata
 	FIMD_GEOTIFF		= 8,	// GeoTIFF metadata
 	FIMD_ANIMATION		= 9,	// Animation metadata
-	FIMD_CUSTOM			= 10	// Used to attach other metadata types to a dib
+	FIMD_CUSTOM			= 10,	// Used to attach other metadata types to a dib
+	FIMD_EXIF_RAW		= 11	// Exif metadata as a raw buffer
 };
 
 /**
@@ -613,6 +614,7 @@ typedef const char *(DLL_CALLCONV *FI_MimeProc)(void);
 typedef BOOL (DLL_CALLCONV *FI_SupportsExportBPPProc)(int bpp);
 typedef BOOL (DLL_CALLCONV *FI_SupportsExportTypeProc)(FREE_IMAGE_TYPE type);
 typedef BOOL (DLL_CALLCONV *FI_SupportsICCProfilesProc)(void);
+typedef BOOL (DLL_CALLCONV *FI_SupportsNoPixelsProc)(void);
 
 FI_STRUCT (Plugin) {
 	FI_FormatProc format_proc;
@@ -630,6 +632,7 @@ FI_STRUCT (Plugin) {
 	FI_SupportsExportBPPProc supports_export_bpp_proc;
 	FI_SupportsExportTypeProc supports_export_type_proc;
 	FI_SupportsICCProfilesProc supports_icc_profiles_proc;
+	FI_SupportsNoPixelsProc supports_no_pixels_proc;
 };
 
 typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
@@ -638,6 +641,8 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 
 
 // Load / Save flag constants -----------------------------------------------
+
+#define FIF_LOAD_NOPIXELS 0x8000 // loading: load the image header only (not supported by all plugins)
 
 #define BMP_DEFAULT         0
 #define BMP_SAVE_RLE        1
@@ -760,6 +765,9 @@ DLL_API FIBITMAP *DLL_CALLCONV FreeImage_AllocateT(FREE_IMAGE_TYPE type, int wid
 DLL_API FIBITMAP * DLL_CALLCONV FreeImage_Clone(FIBITMAP *dib);
 DLL_API void DLL_CALLCONV FreeImage_Unload(FIBITMAP *dib);
 
+// Header loading routines
+DLL_API BOOL DLL_CALLCONV FreeImage_HasPixels(FIBITMAP *dib);
+
 // Load / Save routines -----------------------------------------------------
 
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_Load(FREE_IMAGE_FORMAT fif, const char *filename, int flags FI_DEFAULT(0));
@@ -805,6 +813,7 @@ DLL_API BOOL DLL_CALLCONV FreeImage_FIFSupportsWriting(FREE_IMAGE_FORMAT fif);
 DLL_API BOOL DLL_CALLCONV FreeImage_FIFSupportsExportBPP(FREE_IMAGE_FORMAT fif, int bpp);
 DLL_API BOOL DLL_CALLCONV FreeImage_FIFSupportsExportType(FREE_IMAGE_FORMAT fif, FREE_IMAGE_TYPE type);
 DLL_API BOOL DLL_CALLCONV FreeImage_FIFSupportsICCProfiles(FREE_IMAGE_FORMAT fif);
+DLL_API BOOL DLL_CALLCONV FreeImage_FIFSupportsNoPixels(FREE_IMAGE_FORMAT fif);
 
 // Multipaging interface ----------------------------------------------------
 

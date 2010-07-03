@@ -420,6 +420,12 @@ FreeImage_LoadU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, int flags) {
 
 BOOL DLL_CALLCONV
 FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FreeImageIO *io, fi_handle handle, int flags) {
+	// cannot save "header only" formats
+	if(FreeImage_HasPixels(dib) == FALSE) {
+		FreeImage_OutputMessageProc((int)fif, "FreeImage_SaveToHandle: cannot save \"header only\" formats");
+		return FALSE;
+	}
+
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 		
@@ -685,6 +691,19 @@ FreeImage_FIFSupportsICCProfiles(FREE_IMAGE_FORMAT fif) {
 		return (node != NULL) ? 
 			(node->m_plugin->supports_icc_profiles_proc != NULL) ? 
 				node->m_plugin->supports_icc_profiles_proc() : FALSE : FALSE;
+	}
+
+	return FALSE;
+}
+
+BOOL DLL_CALLCONV
+FreeImage_FIFSupportsNoPixels(FREE_IMAGE_FORMAT fif) {
+	if (s_plugins != NULL) {
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
+
+		return (node != NULL) ? 
+			(node->m_plugin->supports_no_pixels_proc != NULL) ? 
+				node->m_plugin->supports_no_pixels_proc() : FALSE : FALSE;
 	}
 
 	return FALSE;

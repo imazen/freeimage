@@ -255,7 +255,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib FreeImaged.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib FreeImaged.lib vld-10\vldmt.lib"
 				OutputFile=".\Debug/Test.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -395,6 +395,10 @@
 		</File>
 		<File
 			RelativePath="testChannels.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\testHeaderOnly.cpp"
 			>
 		</File>
 		<File

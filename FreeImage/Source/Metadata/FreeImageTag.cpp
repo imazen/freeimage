@@ -232,7 +232,7 @@ FreeImage_SetTagValue(FITAG *tag, const void *value) {
 	if(tag) {
 		FITAGHEADER *tag_header = (FITAGHEADER *)tag->data;
 		// first, check the tag
-		if(tag_header->count * FreeImage_TagDataWidth(tag_header->type) != tag_header->length) {
+		if(tag_header->count * FreeImage_TagDataWidth((FREE_IMAGE_MDTYPE)tag_header->type) != tag_header->length) {
 			// invalid data count ?
 			return FALSE;
 		}
@@ -268,7 +268,7 @@ FreeImage_SetTagValue(FITAG *tag, const void *value) {
 // --------------------------------------------------------------------------
 
 int 
-FreeImage_TagDataWidth(WORD type) {
+FreeImage_TagDataWidth(FREE_IMAGE_MDTYPE type) {
 	static int format_bytes[] = { 0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 4, 4 };
 
 	return (type < 15) ? format_bytes[type] : 0;
