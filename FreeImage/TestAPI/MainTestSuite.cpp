@@ -90,7 +90,10 @@ int main(int argc, char *argv[]) {
 	testImageChannels(width, height);
 
 	// test loading header only
-	testHeaderOnly("exif.jpg");
+	testHeaderOnly();
+	
+	// test Exif raw metadata loading & saving
+	testExifRaw();
 
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)
 	FreeImage_DeInitialise();

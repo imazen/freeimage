@@ -54,7 +54,11 @@ void testImageTypeTIFF(unsigned width, unsigned height);
 
 // Header loading test suite
 // ==========================================================
-void testHeaderOnly(const char *src_file);
+void testHeaderOnly();
+
+// Exif raw metadata loading & saving test suite
+// ==========================================================
+void testExifRaw();
 
 // IO test suite
 // ==========================================================

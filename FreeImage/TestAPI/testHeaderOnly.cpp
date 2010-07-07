@@ -106,9 +106,9 @@ BOOL testHeaderData(const char *lpszPathName) {
 	FIBITMAP *dib = NULL;
 
 	try {
-		// load a JPEG file using the FIF_LOAD_NOPIXELS flag
+		// load a file using the FIF_LOAD_NOPIXELS flag
 		FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(lpszPathName);
-		assert(fif == FIF_JPEG);
+		assert(FreeImage_FIFSupportsNoPixels(fif) == TRUE);
 
 		dib = FreeImage_Load(fif, lpszPathName, flags); 
 		if(!dib) throw(1);
@@ -149,7 +149,8 @@ BOOL testHeaderData(const char *lpszPathName) {
 /**
 Test loading and saving of Exif raw data
 */
-BOOL testExifRaw(const char *lpszPathName, int load_flags, int save_flags) {
+static BOOL 
+testExifRawFile(const char *lpszPathName, int load_flags, int save_flags) {
 	const char *lpszDstPathName = "raw_exif.jpg";
 
 	FIBITMAP *dib = NULL, *dst = NULL;
@@ -211,23 +212,46 @@ BOOL testExifRaw(const char *lpszPathName, int load_flags, int save_flags) {
 // Main test functions
 // ----------------------------------------------------------
 
-void testHeaderOnly(const char *src_file) {
+void testHeaderOnly() {
+	const char *src_file_jpg = "exif.jpg";
+	const char *src_file_png = "sample.png";
+
 	BOOL bResult = TRUE;
 
 	printf("testHeaderOnly ...\n");
 
 	testSupportsNoPixels();
 	
-	bResult = testHeader(src_file);
+	// JPEG plugin
+	bResult = testHeader(src_file_jpg);
 	assert(bResult);
 
-	bResult = testHeaderData(src_file);
+	bResult = testHeaderData(src_file_jpg);
 	assert(bResult);
 
-	bResult = testExifRaw(src_file, FIF_LOAD_NOPIXELS, 0);
+	// PNG plugin
+	bResult = testHeader(src_file_png);
+	assert(bResult);
+
+	bResult = testHeaderData(src_file_png);
+	assert(bResult);
+
+	// you cannot save 'header only' FIBITMAP
+	bResult = testExifRawFile(src_file_jpg, FIF_LOAD_NOPIXELS, 0);
 	assert(bResult == FALSE);
+}
 
-	bResult = testExifRaw(src_file, 0, 0);
+void testExifRaw() {
+	const char *src_file_jpg = "exif.jpg";
+
+	BOOL bResult = TRUE;
+
+	printf("testExifRaw ...\n");
+
+	// Exif raw metadata loading & saving
+
+	// check Exif raw metadata loading & saving
+	bResult = testExifRawFile(src_file_jpg, 0, 0);
 	assert(bResult);
 
 }
