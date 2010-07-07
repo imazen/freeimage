@@ -253,6 +253,11 @@ SupportsICCProfiles() {
 	return TRUE;
 }
 
+static BOOL DLL_CALLCONV
+SupportsNoPixels() {
+	return TRUE;
+}
+
 // ----------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
@@ -274,6 +279,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	fio.s_io = io;
     
 	if (handle) {
+		BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
+
 		try {		
 			// check to see if the file is in fact a PNG file
 
@@ -436,22 +443,22 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					png_set_invert_alpha(png_ptr);
 
 					if(image_type == FIT_BITMAP) {
-						dib = FreeImage_Allocate(width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+						dib = FreeImage_AllocateHeader(header_only, width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 					} else {
-						dib = FreeImage_AllocateT(image_type, width, height, pixel_depth);
+						dib = FreeImage_AllocateHeaderT(header_only, image_type, width, height, pixel_depth);
 					}
 					break;
 
 				case PNG_COLOR_TYPE_RGB_ALPHA:
 					if(image_type == FIT_BITMAP) {
-						dib = FreeImage_Allocate(width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+						dib = FreeImage_AllocateHeader(header_only, width, height, 32, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 					} else {
-						dib = FreeImage_AllocateT(image_type, width, height, pixel_depth);
+						dib = FreeImage_AllocateHeaderT(header_only, image_type, width, height, pixel_depth);
 					}
 					break;
 
 				case PNG_COLOR_TYPE_PALETTE:
-					dib = FreeImage_Allocate(width, height, pixel_depth);
+					dib = FreeImage_AllocateHeader(header_only, width, height, pixel_depth);
 
 					png_get_PLTE(png_ptr,info_ptr, &png_palette,&palette_entries);
 
@@ -477,7 +484,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 				case PNG_COLOR_TYPE_GRAY:
-					dib = FreeImage_AllocateT(image_type, width, height, pixel_depth);
+					dib = FreeImage_AllocateHeaderT(header_only, image_type, width, height, pixel_depth);
 
 					if(pixel_depth <= 8) {
 						palette = FreeImage_GetPalette(dib);
@@ -544,22 +551,29 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				png_get_iCCP(png_ptr, info_ptr, &profile_name, &compression_type, &profile_data, &profile_length);
 
-				// copy ICC profile data (must be done after FreeImage_Allocate)
+				// copy ICC profile data (must be done after FreeImage_AllocateHeader)
 
 				FreeImage_CreateICCProfile(dib, profile_data, profile_length);
 			}
 
+			// --- header only mode => clean-up and return
+
+			if (header_only) {
+				// get possible metadata (it can be located both before and after the image data)
+				ReadMetadata(png_ptr, info_ptr, dib);
+				if (png_ptr) {
+					// clean up after the read, and free any memory allocated - REQUIRED
+					png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+				}
+				return dib;
+			}
 
 			// set the individual row_pointers to point at the correct offsets
 
 			row_pointers = (png_bytepp)malloc(height * sizeof(png_bytep));
 
 			if (!row_pointers) {
-				if (palette)
-					png_free(png_ptr, palette);				
-
 				png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-
 				FreeImage_Unload(dib);
 				return NULL;
 			}
@@ -913,4 +927,5 @@ InitPNG(Plugin *plugin, int format_id) {
 	plugin->supports_export_bpp_proc = SupportsExportDepth;
 	plugin->supports_export_type_proc = SupportsExportType;
 	plugin->supports_icc_profiles_proc = SupportsICCProfiles;
+	plugin->supports_no_pixels_proc = SupportsNoPixels;
 }

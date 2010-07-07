@@ -1178,6 +1178,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			
 			read_markers(&cinfo, dib);
 
+			// --- header only mode => clean-up and return
+
 			if (header_only) {
 				// release JPEG decompression object
 				jpeg_destroy_decompress(&cinfo);
