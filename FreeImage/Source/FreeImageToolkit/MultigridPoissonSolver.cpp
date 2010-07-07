@@ -464,7 +464,7 @@ where j is such that 2^j is the nearest larger dimension corresponding to MAX(im
 */
 FIBITMAP* DLL_CALLCONV 
 FreeImage_MultigridPoissonSolver(FIBITMAP *Laplacian, int ncycle) {
-	if(!Laplacian) return NULL;
+	if(!FreeImage_HasPixels(Laplacian)) return NULL;
 
 	int width = FreeImage_GetWidth(Laplacian);
 	int height = FreeImage_GetHeight(Laplacian);

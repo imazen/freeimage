@@ -186,7 +186,7 @@ FreeImage_ConvertLine8To32MapTransparency(BYTE *target, BYTE *source, int width_
 
 FIBITMAP * DLL_CALLCONV
 FreeImage_ConvertTo32Bits(FIBITMAP *dib) {
-	if(!dib) return NULL;
+	if(!FreeImage_HasPixels(dib)) return NULL;
 
 	const int bpp = FreeImage_GetBPP(dib);
 	const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);

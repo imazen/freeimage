@@ -31,6 +31,8 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 	FIBITMAP *src = NULL;
 	FIBITMAP *dst = NULL;
 
+	if(!FreeImage_HasPixels(dib)) return NULL;
+
 	const FREE_IMAGE_TYPE src_type = FreeImage_GetImageType(dib);
 
 	// check for allowed conversions 

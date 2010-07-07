@@ -617,6 +617,8 @@ FreeImage_TmoFattal02(FIBITMAP *dib, double color_saturation, double attenuation
 	FIBITMAP *Yout = NULL;
 	FIBITMAP *dst = NULL;
 
+	if(!FreeImage_HasPixels(dib)) return NULL;
+
 	try {
 		int x, y;
 

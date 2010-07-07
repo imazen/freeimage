@@ -101,7 +101,7 @@ FreeImage_ConvertLine32To8(BYTE *target, BYTE *source, int width_in_pixels) {
 
 FIBITMAP * DLL_CALLCONV
 FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
-	if(!dib) return NULL;
+	if(!FreeImage_HasPixels(dib)) return NULL;
 
 	const int bpp = FreeImage_GetBPP(dib);
 
@@ -250,7 +250,7 @@ FreeImage_ConvertTo8Bits(FIBITMAP *dib) {
 
 FIBITMAP * DLL_CALLCONV
 FreeImage_ConvertToGreyscale(FIBITMAP *dib) {
-	if(!dib) return NULL;
+	if(!FreeImage_HasPixels(dib)) return NULL;
 
 	const FREE_IMAGE_COLOR_TYPE color_type = FreeImage_GetColorType(dib);
 	const int bpp = FreeImage_GetBPP(dib);

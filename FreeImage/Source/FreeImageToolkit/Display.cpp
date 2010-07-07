@@ -40,7 +40,7 @@ For colour images, the computation is done separately for R, G, and B samples.
 */
 FIBITMAP * DLL_CALLCONV
 FreeImage_Composite(FIBITMAP *fg, BOOL useFileBkg, RGBQUAD *appBkColor, FIBITMAP *bg) {
-	if(!fg) return NULL;
+	if(!FreeImage_HasPixels(fg)) return NULL;
 
 	int width  = FreeImage_GetWidth(fg);
 	int height = FreeImage_GetHeight(fg);
@@ -194,7 +194,7 @@ channel(x, y) = channel(x, y) * alpha_channel(x, y) / 255
 */
 BOOL DLL_CALLCONV 
 FreeImage_PreMultiplyWithAlpha(FIBITMAP *dib) {
-	if (!dib) return FALSE;
+	if (!FreeImage_HasPixels(dib)) return FALSE;
 	
 	if ((FreeImage_GetBPP(dib) != 32) || (FreeImage_GetImageType(dib) != FIT_BITMAP)) {
 		return FALSE;

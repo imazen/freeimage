@@ -25,7 +25,7 @@ FIBITMAP * DLL_CALLCONV
 FreeImage_Rescale(FIBITMAP *src, int dst_width, int dst_height, FREE_IMAGE_FILTER filter) {
 	FIBITMAP *dst = NULL;
 
-	if (!src || (dst_width <= 0) || (dst_height <= 0) || (FreeImage_GetWidth(src) <= 0) || (FreeImage_GetHeight(src) <= 0)) {
+	if (!FreeImage_HasPixels(src) || (dst_width <= 0) || (dst_height <= 0) || (FreeImage_GetWidth(src) <= 0) || (FreeImage_GetHeight(src) <= 0)) {
 		return NULL;
 	}
 
@@ -133,7 +133,7 @@ FreeImage_MakeThumbnail(FIBITMAP *dib, int max_pixel_size, BOOL convert) {
 	FIBITMAP *thumbnail = NULL;
 	int new_width, new_height;
 
-	if(!dib || (max_pixel_size <= 0)) return NULL;
+	if(!FreeImage_HasPixels(dib) || (max_pixel_size <= 0)) return NULL;
 
 	int width	= FreeImage_GetWidth(dib);
 	int height = FreeImage_GetHeight(dib);

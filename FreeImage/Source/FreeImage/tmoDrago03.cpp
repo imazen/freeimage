@@ -258,7 +258,7 @@ FIBITMAP* DLL_CALLCONV
 FreeImage_TmoDrago03(FIBITMAP *src, double gamma, double exposure) {
 	float maxLum, minLum, avgLum;
 
-	if(!src) return NULL;
+	if(!FreeImage_HasPixels(src)) return NULL;
 
 	// working RGBF variable
 	FIBITMAP *dib = NULL;

@@ -306,7 +306,7 @@ FIBITMAP* DLL_CALLCONV
 FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_linear) {
 	FIBITMAP *dst = NULL;
 
-	if(!src) return NULL;
+	if(!FreeImage_HasPixels(src)) return NULL;
 
 	// convert from src_type to dst_type
 

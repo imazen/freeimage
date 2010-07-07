@@ -61,7 +61,7 @@ FreeImage_ColorQuantizeEx(FIBITMAP *dib, FREE_IMAGE_QUANTIZE quantize, int Palet
 	if( PaletteSize > 256 ) PaletteSize = 256;
 	if( ReserveSize < 0 ) ReserveSize = 0;
 	if( ReserveSize > PaletteSize ) ReserveSize = PaletteSize;
-	if (dib) {
+	if (FreeImage_HasPixels(dib)) {
 		if (FreeImage_GetBPP(dib) == 24) {
 			switch(quantize) {
 				case FIQ_WUQUANT :
@@ -124,7 +124,7 @@ FreeImage_ConvertFromRawBits(BYTE *bits, int width, int height, int pitch, unsig
 
 void DLL_CALLCONV
 FreeImage_ConvertToRawBits(BYTE *bits, FIBITMAP *dib, int pitch, unsigned bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask, BOOL topdown) {
-	if ((dib != NULL) && (bits != NULL)) {
+	if (FreeImage_HasPixels(dib) && (bits != NULL)) {
 		for (unsigned i = 0; i < FreeImage_GetHeight(dib); ++i) {
 			BYTE *scanline = FreeImage_GetScanLine(dib, topdown ? (FreeImage_GetHeight(dib) - i - 1) : i);
 
