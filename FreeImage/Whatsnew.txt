@@ -32,7 +32,7 @@ Month day, 2010 - 3.14.0
 + [Herve Drolon] added FIF_LOAD_NOPIXELS load flag constant - used to load header & metadata only
 + [Herve Drolon] added FreeImage_HasPixels
 + [Herve Drolon] added FreeImage_FIFSupportsNoPixels
-+ [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to JPEG plugin
++ [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to JPEG & PNG plugins
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
 * [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
 * [Mihail Naydenov] fixed loading of TGA with a corrupted rle count
