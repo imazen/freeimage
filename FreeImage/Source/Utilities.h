@@ -72,7 +72,7 @@ Allocate a FIBITMAP with possibly no pixel data
 @param blue_mask
 @see FreeImage_AllocateT
 */
-DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask);
+DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int height, int bpp, unsigned red_mask FI_DEFAULT(0), unsigned green_mask FI_DEFAULT(0), unsigned blue_mask FI_DEFAULT(0));
 
 /**
 Allocate a FIBITMAP of type FIT_BITMAP, with possibly no pixel data 
@@ -86,7 +86,7 @@ Allocate a FIBITMAP of type FIT_BITMAP, with possibly no pixel data
 @param blue_mask
 @see FreeImage_Allocate
 */
-DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeader(BOOL header_only, int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask);
+DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeader(BOOL header_only, int width, int height, int bpp, unsigned red_mask FI_DEFAULT(0), unsigned green_mask FI_DEFAULT(0), unsigned blue_mask FI_DEFAULT(0));
 
 // ==========================================================
 //   File I/O structs
