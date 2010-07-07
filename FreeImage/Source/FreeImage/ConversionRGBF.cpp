@@ -48,7 +48,11 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 			break;
 		}
 		case FIT_RGB16:
-			// allow conversion from 48-bit
+			// allow conversion from 48-bit RGB
+			src = dib;
+			break;
+		case FIT_RGBA16:
+			// allow conversion from 64-bit RGBA (ignore the alpha channel)
 			src = dib;
 			break;
 		case FIT_FLOAT:
@@ -56,7 +60,7 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 			src = dib;
 			break;
 		case FIT_RGBAF:
-			// allow conversion from 128-bit
+			// allow conversion from 128-bit RGBAF
 			src = dib;
 			break;
 		case FIT_RGBF:
