@@ -11,7 +11,7 @@ Month day, 2010 - 3.14.0
 ! FreeImage now uses LibPNG 1.4.3
 ! FreeImage now uses LibJPEG 8b
 ! FreeImage now uses LibTIFF 3.9.4
-! FreeImage now uses LibRaw 0.10-Beta1
+! FreeImage now uses LibRaw 0.10-Beta2
 ! FreeImage now uses OpenJPEG 1.4.0 (SVN patch 2010-04-16)
 ! [Herve Drolon] FreeImage_AllocateT now builds a default greyscale palette for 8-bit images
 ! [Volodymyr Goncharov] FreeImage_LoadMultiBitmapFromMemory now supports read/write operations
