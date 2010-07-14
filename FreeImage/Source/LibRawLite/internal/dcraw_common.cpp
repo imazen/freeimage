@@ -1,6 +1,6 @@
 /* 
    GENERATED FILE, DO NOT EDIT
-   Generated from dcraw/dcraw.c at Sun Jun  6 17:42:15 2010
+   Generated from dcraw/dcraw.c at Mon Jul  5 20:29:17 2010
    Look into original file (probably http://cybercom.net/~dcoffin/dcraw/dcraw.c)
    for copyright information.
 */
@@ -4845,7 +4845,7 @@ void CLASS parse_kodak_ifd (int base)
   unsigned entries, tag, type, len, save;
   int i, c, wbi=-2, wbtemp=6500;
   float mul[3]={1,1,1}, num;
-  static const int wbtag[]={ 0xfa25,0xfa28,0xfa27,0xfa29,-1,-1,0xfa2a };
+  static const int wbtag[] = { 64037,64040,64039,64041,-1,-1,64042 };
 
   entries = get2();
   if (entries > 1024) return;
@@ -4876,14 +4876,16 @@ void CLASS parse_kodak_ifd (int base)
         }
     if (tag == 2317) linear_table (len);
     if (tag == 6020) iso_speed = getint(type);
-    if (tag == 0xfa0d) wbi = fgetc(ifp);
+    if (tag == 64013) wbi = fgetc(ifp);
     if ((unsigned) wbi < 7 && tag == wbtag[wbi])
       FORC3 cam_mul[c] = get4();
+    if (tag == 64019) width = getint(type);
+    if (tag == 64020) height = (getint(type)+1) & -2;
     fseek (ifp, save, SEEK_SET);
   }
 }
 
-#line 6002 "dcraw/dcraw.c"
+#line 6004 "dcraw/dcraw.c"
 int CLASS parse_tiff_ifd (int base)
 {
   unsigned entries, tag, type, len, plen=16, save;
@@ -4978,10 +4980,12 @@ int CLASS parse_tiff_ifd (int base)
 	  fseek (ifp, tiff_ifd[ifd].offset, SEEK_SET);
 	  if (ljpeg_start (&jh, 1)) {
 	    tiff_ifd[ifd].comp    = 6;
-	    tiff_ifd[ifd].t_width   = jh.wide << (jh.clrs == 2);
+	    tiff_ifd[ifd].t_width   = jh.wide;
 	    tiff_ifd[ifd].t_height  = jh.high;
 	    tiff_ifd[ifd].bps     = jh.bits;
 	    tiff_ifd[ifd].samples = jh.clrs;
+	    if (!(jh.sraw || (jh.clrs & 1)))
+	      tiff_ifd[ifd].t_width *= jh.clrs;
 	  }
 	}
 	break;
@@ -5252,6 +5256,8 @@ guess_cfa_pc:
 	blrr = get2();
 	blrc = get2();
 	break;
+      case 61450:
+	blrr = blrc = 2;
       case 50714:			/* BlackLevel */
 	black = getreal(type);
 	if (!filters || !~filters) break;
@@ -5265,10 +5271,10 @@ guess_cfa_pc:
 	FORC4 cblack[filters >> (c << 1) & 3] = dblack[c];
 	black = 0;
 	break;
-     case 50715:   /* BlackLevelDeltaH */
-     case 50716:   /* BlackLevelDeltaV */
+      case 50715:			/* BlackLevelDeltaH */
+      case 50716:			/* BlackLevelDeltaV */
 	for (num=i=0; i < len; i++)
-	   num += getreal(type);
+	  num += getreal(type);
 	black += num/len + 0.5;
 	break;
       case 50717:			/* WhiteLevel */
@@ -6101,7 +6107,7 @@ void CLASS parse_cine()
   data_offset  = (INT64) get4() + 8;
   data_offset += (INT64) get4() << 32;
 }
-#line 7321 "dcraw/dcraw.c"
+#line 7327 "dcraw/dcraw.c"
 void CLASS adobe_coeff (const char *p_make, const char *p_model)
 {
   static const struct {
@@ -6292,8 +6298,8 @@ void CLASS adobe_coeff (const char *p_make, const char *p_model)
 	{ 21461,-10807,-1441,-2332,10599,1999,289,875,7703 } },
     { "FUJIFILM IS Pro", 0, 0,
 	{ 12300,-5110,-1304,-9117,17143,1998,-1947,2448,8100 } },
-    { "FUJIFILM FinePix HS10 HS11", 79, 0xf68, /* DJC */
-	{ 12123,-3090,-1806,-1486,10894,593,-683,2369,3114 } },
+    { "FUJIFILM FinePix HS10 HS11", 0, 0xf68, /* DJC */
+	{ 12164,-3169,-1662,-1020,10358,662,-224,2108,3106 } },
     { "Imacon Ixpress", 0, 0,		/* DJC */
 	{ 7025,-1415,-704,-5188,13765,1424,-1248,2742,6038 } },
     { "KODAK NC2000", 0, 0,
@@ -6488,9 +6494,13 @@ void CLASS adobe_coeff (const char *p_make, const char *p_model)
 	{ 8785,-2529,-1033,-7639,15624,2112,-1783,2300,7817 } },
     { "OLYMPUS E-520", 0, 0xfd2,
 	{ 8344,-2322,-1020,-7596,15635,2048,-1748,2269,7287 } },
-    { "OLYMPUS E-620", 0, 0xfb9,
+    { "OLYMPUS E-600", 0, 0xfaf,
+	{ 8453,-2198,-1092,-7609,15681,2008,-1725,2337,7824 } },
+    { "OLYMPUS E-620", 0, 0xfaf,
 	{ 8453,-2198,-1092,-7609,15681,2008,-1725,2337,7824 } },
     { "OLYMPUS E-P1", 0, 0xffd,
+	{ 8343,-2050,-1021,-7715,15705,2103,-1831,2380,8235 } },
+    { "OLYMPUS E-P2", 0, 0xffd,
 	{ 8343,-2050,-1021,-7715,15705,2103,-1831,2380,8235 } },
     { "OLYMPUS E-PL1", 0, 0,
 	{ 11408,-4289,-1215,-4286,12385,2118,-387,1467,7787 } },
@@ -6564,7 +6574,7 @@ void CLASS adobe_coeff (const char *p_make, const char *p_model)
 	{ 10113,-3400,-1114,-4765,12683,2317,-377,1437,6710 } },
     { "Panasonic DMC-G1", 15, 0xfff,
 	{ 8199,-2065,-1056,-8124,16156,2033,-2458,3022,7220 } },
-    { "Panasonic DMC-G2", 0, 0,
+    { "Panasonic DMC-G2", 15, 0xf3c,
 	{ 10113,-3400,-1114,-4765,12683,2317,-377,1437,6710 } },
     { "Panasonic DMC-GF1", 15, 0xf92,
 	{ 7888,-1902,-1011,-8106,16085,2099,-2353,2866,7330 } },
@@ -6682,7 +6692,7 @@ short CLASS guess_byte_order (int words)
   return sum[0] < sum[1] ? 0x4d4d : 0x4949;
 }
 
-#line 7905 "dcraw/dcraw.c"
+#line 7915 "dcraw/dcraw.c"
 
 float CLASS find_green (int bps, int bite, int off0, int off1)
 {
@@ -6762,6 +6772,7 @@ void CLASS identify()
     {  5298000, "Canon",    "PowerShot SD300" ,0 },
     {  7710960, "Canon",    "PowerShot S3 IS" ,0 },
     { 15467760, "Canon",    "PowerShot SX110 IS",0 },
+    { 18653760, "Canon",    "PowerShot SX20 IS",0 },
     {  5939200, "OLYMPUS",  "C770UZ"          ,0 },
     {  1581060, "NIKON",    "E900"            ,1 },  /* or E900s,E910 */
     {  2465792, "NIKON",    "E950"            ,1 },  /* or E800,E700 */
@@ -7158,6 +7169,16 @@ canon_a5:
     load_raw = &CLASS packed_load_raw;
     load_flags = 40;
     zero_is_bad = 1;
+  } else if (!strcmp(model,"PowerShot SX20 IS")) {
+    height = 3024;
+    width  = 4032;
+    raw_height = 3048;
+    raw_width  = 4080;
+    top_margin  = 12;
+    left_margin = 24;
+    load_raw = &CLASS packed_load_raw;
+    load_flags = 40;
+    zero_is_bad = 1;
   } else if (!strcmp(model,"PowerShot Pro90 IS")) {
     width  = 1896;
     colors = 4;
@@ -7266,34 +7287,29 @@ canon_a5:
     top_margin  = 10;
     left_margin = 12;
     filters = 0x49494949;
-  } else if (is_canon && raw_width == 1208) {
+  } else if (is_canon && raw_width == 4832) {
     top_margin = unique_id == 0x80000261 ? 51:26;
     left_margin = 62;
-    raw_width = width *= 4;
     if (unique_id == 0x80000252)
       adobe_coeff ("Canon","EOS 500D");
     goto canon_cr2;
-  } else if (is_canon && raw_width == 1280) {
+  } else if (is_canon && raw_width == 5120) {
     height -= top_margin = 45;
     left_margin = 142;
-    raw_width *= 4;
     width = 4916;
-  } else if (is_canon && raw_width == 1336) {
+  } else if (is_canon && raw_width == 5344) {
     top_margin = 51;
     left_margin = 142;
-    raw_width = width *= 4;
     if (unique_id == 0x80000270)
       adobe_coeff ("Canon","EOS 550D");
     goto canon_cr2;
-  } else if (is_canon && raw_width == 1340) {
+  } else if (is_canon && raw_width == 5360) {
     top_margin = 51;
     left_margin = 158;
-    raw_width = width *= 4;
     goto canon_cr2;
-  } else if (is_canon && raw_width == 1448) {
+  } else if (is_canon && raw_width == 5792) {
     top_margin  = 51;
     left_margin = 158;
-    raw_width = width *= 4;
     goto canon_cr2;
   } else if (is_canon && raw_width == 5108) {
     top_margin  = 13;
@@ -7576,6 +7592,16 @@ konica_400z:
   } else if (!strcmp(model,"NX10")) {
     height -= top_margin = 4;
     width -= 2 * (left_margin = 8);
+  } else if (!strcmp(model,"EX1")) {
+    order = 0x4949;
+    height = 2760;
+    top_margin = 2;
+    if ((width -= 6) > 3682) {
+      height = 2750;
+      width  = 3668;
+      top_margin = 8;
+    }
+    maximum = 0x3e00;
   } else if (fsize == 20487168) {
     height = 2808;
     width  = 3648;
@@ -7736,6 +7762,7 @@ wb550:
       load_raw = &CLASS unpacked_load_raw;
       load_flags = 4;
     }
+    zero_is_bad = 1;
     switch (width) {
       case 2568:
 	adobe_coeff ("Panasonic","DMC-LC1");  break;
@@ -7749,7 +7776,6 @@ wb550:
 	  top_margin = 13;
 	  filters = 0x49494949;
 	}
-	zero_is_bad = 1;
 	adobe_coeff ("Panasonic","DMC-FZ8");  break;
       case 3213:
 	width -= 27;
@@ -7757,11 +7783,9 @@ wb550:
 	width -= 10;
 	load_flags = 2;
 	filters = 0x49494949;
-	zero_is_bad = 1;
 	adobe_coeff ("Panasonic","DMC-L1");  break;
       case 3304:
 	width -= 17;
-	zero_is_bad = 1;
 	adobe_coeff ("Panasonic","DMC-FZ30");  break;
       case 3330:
 	width += 43;
@@ -7773,7 +7797,6 @@ wb550:
 	if (height > 2480)
 	    height = 2480 - (top_margin = 10);
 	filters = 0x49494949;
-	zero_is_bad = 1;
 	adobe_coeff ("Panasonic","DMC-FZ18");  break;
       case 3690:
 	height -= 2;
@@ -7785,7 +7808,6 @@ wb550:
 	  top_margin = 15;
 	else filters = 0x49494949;
 	left_margin += 17;
-	zero_is_bad = 1;
 	adobe_coeff ("Panasonic","DMC-FZ50");  break;
       case 3710:
 	width = 3682;
@@ -7804,7 +7826,6 @@ lx3:	filters = 0x16161616;
 	width -= 22;
 	left_margin = 6;
 	load_flags = 2;
-	zero_is_bad = 1;
 	adobe_coeff ("Panasonic","DMC-LX1");  break;
       case 4060:
 	width = 3982;
@@ -7816,9 +7837,7 @@ lx3:	filters = 0x16161616;
 	  adobe_coeff ("Panasonic","DMC-FZ35");  break;
 	}
 	filters = 0x49494949;
-	if (!strcmp(model,"DMC-GH1")) break;
-	zero_is_bad = 1;
-	adobe_coeff ("Panasonic","DMC-G1");  break;
+	break;
       case 4172:
       case 4396:
 	width -= 28;
@@ -7949,14 +7968,7 @@ c603:
   else
       identify2(fsize,flen,head); /* Avoid MS VS 2008 bug */
 #else
- else if (!strcmp(model,"EASYSHARE Z1015 IS")) {
-    height = 2742;
-    width  = 3664;
-    goto ezshare;
-  } else if (!strcmp(model,"EasyShare Z980")) {
-    height = 3006;
-    width  = 4016;
-ezshare:
+  } else if (!strncasecmp(model,"EasyShare",9)) {
     data_offset = 0x15000;
     load_raw = &CLASS packed_load_raw;
   } else if (!strcasecmp(make,"KODAK")) {
@@ -8227,14 +8239,7 @@ notraw:
 
 void CLASS identify2(unsigned fsize, unsigned flen, char *head)
 {
-    if (!strcmp(model,"EASYSHARE Z1015 IS")) {
-    height = 2742;
-    width  = 3664;
-    goto ezshare;
-  } else if (!strcmp(model,"EasyShare Z980")) {
-    height = 3006;
-    width  = 4016;
-ezshare:
+  if (!strncasecmp(model,"EasyShare",9)) {
     data_offset = 0x15000;
     load_raw = &CLASS packed_load_raw;
   } else if (!strcasecmp(make,"KODAK")) {
@@ -8460,7 +8465,7 @@ else if (!strcmp(model,"QV-2000UX")) {
   }
 }
 
-#line 9774 "dcraw/dcraw.c"
+#line 9779 "dcraw/dcraw.c"
 void CLASS convert_to_rgb()
 {
   int row, col, c, i, j, k;
@@ -8679,7 +8684,7 @@ int CLASS flip_index (int row, int col)
   return row * iwidth + col;
 }
 
-#line 10017 "dcraw/dcraw.c"
+#line 10022 "dcraw/dcraw.c"
 void CLASS tiff_set (ushort *ntag,
 	ushort tag, ushort type, int count, int val)
 {

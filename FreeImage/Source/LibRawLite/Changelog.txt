@@ -1,3 +1,11 @@
+2010-07-05 Alex Tutubalin <lexa@lexa.ru>
+           * dcraw 9.03 (1.437) imported:
+             + New cameras: Canon SX20, Nikon D3s, Olympus E-P2, Panasoni DMC-GF1,
+               Samsung EX1, Sony A450
+             + Color data changed for some cameras
+
+           * LibRaw 0.10.0-Beta2.
+
 2010-06-06 Alex Tutubalin <lexa@lexa.ru>
            * dcraw 9.01 (1.434) imported:
              + Separate black levels for each color channel.

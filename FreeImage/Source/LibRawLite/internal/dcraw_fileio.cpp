@@ -1,6 +1,6 @@
 /* 
    GENERATED FILE, DO NOT EDIT
-   Generated from dcraw/dcraw.c at Sun Jun  6 17:42:22 2010
+   Generated from dcraw/dcraw.c at Mon Jul  5 20:29:25 2010
    Look into original file (probably http://cybercom.net/~dcoffin/dcraw/dcraw.c)
    for copyright information.
 */
@@ -128,7 +128,7 @@ void CLASS subtract (const char *fname)
   RUN_CALLBACK(LIBRAW_PROGRESS_DARK_FRAME,1,2);
 #endif
 }
-#line 9685 "dcraw/dcraw.c"
+#line 9690 "dcraw/dcraw.c"
 
 #ifndef NO_LCMS
 void CLASS apply_profile (const char *input, const char *output)
