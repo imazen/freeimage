@@ -152,6 +152,12 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'July 5, 2010 - 2.12
+'+ [Carsten Klein] added support for the new EXIF_RAW metadata model by adding enum constant FIMD_EXIF_RAW.
+'+ [Carsten Klein] added the new FIF_LOAD_NOPIXELS flag as well as the enum constant FILO_LOAD_NOPIXELS.
+'+ [Carsten Klein] added function declaration FreeImage_HasPixelsInt and a real VB Boolean returning function FreeImage_HasPixels.
+'+ [Carsten Klein] added function declaration FreeImage_FIFSupportsNoPixelsInt and a real VB Boolean returning function FreeImage_FIFSupportsNoPixels.
+'
 'June 20, 2010 - 2.11
 '+ [Carsten Klein] added new save flag JPEG_OPTIMIZE (also added FISO_JPEG_OPTIMIZE to enumeration FREE_IMAGE_SAVE_OPTIONS).
 '
@@ -1172,6 +1178,8 @@ Public Enum FREE_IMAGE_ICC_COLOR_MODEL
 End Enum
 
 ' Load / Save flag constants
+Public Const FIF_LOAD_NOPIXELS = &H8000              ' load the image header only (not supported by all plugins)
+
 Public Const BMP_DEFAULT As Long = 0
 Public Const BMP_SAVE_RLE As Long = 1
 Public Const CUT_DEFAULT As Long = 0
@@ -1333,6 +1341,7 @@ End Enum
 #End If
 
 Public Enum FREE_IMAGE_LOAD_OPTIONS
+   FILO_LOAD_NOPIXELS = &H8000                    ' load the image header only (not supported by all plugins)
    FILO_LOAD_DEFAULT = 0
    FILO_GIF_DEFAULT = GIF_DEFAULT
    FILO_GIF_LOAD256 = GIF_LOAD256                 ' load the image as a 256 color image with ununsed palette entries, if it's 16 or 2 color
@@ -1359,6 +1368,7 @@ Public Enum FREE_IMAGE_LOAD_OPTIONS
    FISO_TIFF_CMYK = TIFF_CMYK                     ' reads tags for separated CMYK
 End Enum
 #If False Then
+   Const FILO_LOAD_NOPIXELS = &H8000
    Const FILO_LOAD_DEFAULT = 0
    Const FILO_GIF_DEFAULT = GIF_DEFAULT
    Const FILO_GIF_LOAD256 = GIF_LOAD256
@@ -1655,20 +1665,22 @@ Public Enum FREE_IMAGE_MDMODEL
    FIMD_GEOTIFF = 8          ' GeoTIFF metadata
    FIMD_ANIMATION = 9        ' Animation metadata
    FIMD_CUSTOM = 10          ' Used to attach other metadata types to a dib
+   FIMD_EXIF_RAW = 11        ' Exif metadata as a raw buffer
 End Enum
 #If False Then
-   FIMD_NODATA = -1
-   FIMD_COMMENTS = 0
-   FIMD_EXIF_MAIN = 1
-   FIMD_EXIF_EXIF = 2
-   FIMD_EXIF_GPS = 3
-   FIMD_EXIF_MAKERNOTE = 4
-   FIMD_EXIF_INTEROP = 5
-   FIMD_IPTC = 6
-   FIMD_XMP = 7
-   FIMD_GEOTIFF = 8
-   FIMD_ANIMATION = 9
-   FIMD_CUSTOM = 10
+   Const FIMD_NODATA = -1
+   Const FIMD_COMMENTS = 0
+   Const FIMD_EXIF_MAIN = 1
+   Const FIMD_EXIF_EXIF = 2
+   Const FIMD_EXIF_GPS = 3
+   Const FIMD_EXIF_MAKERNOTE = 4
+   Const FIMD_EXIF_INTEROP = 5
+   Const FIMD_IPTC = 6
+   Const FIMD_XMP = 7
+   Const FIMD_GEOTIFF = 8
+   Const FIMD_ANIMATION = 9
+   Const FIMD_CUSTOM = 10
+   Const FIMD_EXIF_RAW = 11
 #End If
 
 ' These are the GIF_DISPOSAL metadata constants
@@ -2057,6 +2069,9 @@ Public Declare Function FreeImage_AllocateT Lib "FreeImage.dll" Alias "_FreeImag
   Optional ByVal RedMask As Long, _
   Optional ByVal GreenMask As Long, _
   Optional ByVal BlueMask As Long) As Long
+  
+Public Declare Function FreeImage_HasPixelsInt Lib "FreeImage.dll" Alias "_FreeImage_HasPixels@4" ( _
+           ByVal Bitmap As Long) As Long
 
 Public Declare Function FreeImage_Load Lib "FreeImage.dll" Alias "_FreeImage_Load@12" ( _
            ByVal Format As FREE_IMAGE_FORMAT, _
@@ -2442,6 +2457,9 @@ Private Declare Function FreeImage_FIFSupportsExportBPPInt Lib "FreeImage.dll" A
            ByVal BitsPerPixel As Long) As Long
 
 Private Declare Function FreeImage_FIFSupportsICCProfilesInt Lib "FreeImage.dll" Alias "_FreeImage_FIFSupportsICCProfiles@4" ( _
+           ByVal Format As FREE_IMAGE_FORMAT) As Long
+           
+Private Declare Function FreeImage_FIFSupportsNoPixelsInt Lib "FreeImage.dll" Alias "_FreeImage_FIFSupportsNoPixels@4" ( _
            ByVal Format As FREE_IMAGE_FORMAT) As Long
 
 Public Declare Function FreeImage_RegisterLocalPlugin Lib "FreeImage.dll" Alias "_FreeImage_RegisterLocalPlugin@20" ( _
@@ -3365,6 +3383,14 @@ End Function
 ' BOOL/Boolean returning functions wrappers
 '--------------------------------------------------------------------------------
 
+Public Function FreeImage_HasPixels(ByVal Bitmap As Long) As Boolean
+
+   ' Thin wrapper function returning a real VB Boolean value
+
+   FreeImage_HasPixels = (FreeImage_HasPixelsInt(Bitmap) = 1)
+
+End Function
+
 Public Function FreeImage_Save(ByVal Format As FREE_IMAGE_FORMAT, _
                                ByVal Bitmap As Long, _
                                ByVal Filename As String, _
@@ -3649,6 +3675,14 @@ Public Function FreeImage_FIFSupportsICCProfiles(ByVal Format As FREE_IMAGE_FORM
    ' Thin wrapper function returning a real VB Boolean value
 
    FreeImage_FIFSupportsICCProfiles = (FreeImage_FIFSupportsICCProfilesInt(Format) = 1)
+
+End Function
+
+Public Function FreeImage_FIFSupportsNoPixels(ByVal Format As FREE_IMAGE_FORMAT) As Boolean
+
+   ' Thin wrapper function returning a real VB Boolean value
+
+   FreeImage_FIFSupportsNoPixels = (FreeImage_FIFSupportsNoPixelsInt(Format) = 1)
 
 End Function
 
@@ -3940,7 +3974,7 @@ End Function
 
 Public Function FreeImage_FillBackgroundEx(ByVal Bitmap As Long, _
                                            ByRef Color As RGBQUAD, _
-                                  Optional ByVal Options As FREE_IMAGE_COLOR_OPTIONS) As Long
+                                  Optional ByVal Options As FREE_IMAGE_COLOR_OPTIONS) As Boolean
 
    ' Thin wrapper function returning a real VB Boolean value
    
@@ -3950,7 +3984,7 @@ End Function
                                 
 Public Function FreeImage_FillBackgroundByLong(ByVal Bitmap As Long, _
                                                ByRef Color As Long, _
-                                      Optional ByVal Options As FREE_IMAGE_COLOR_OPTIONS) As Long
+                                      Optional ByVal Options As FREE_IMAGE_COLOR_OPTIONS) As Boolean
 
    ' Thin wrapper function returning a real VB Boolean value
    
@@ -4668,25 +4702,33 @@ Dim ndst As Long
    
    ' All other parameters work according to the FreeImage 3 API documentation.
    
-   nsrc = UBound(SourceColors) + 1
-   ndst = UBound(DestinationColors) + 1
-   If (Count = -1) Then
-      If (nsrc < ndst) Then
-         Count = nsrc
-      Else
-         Count = ndst
-      End If
-   Else
-      If (Count < nsrc) Then
-         Count = nsrc
-      End If
-      If (Count < ndst) Then
-         Count = ndst
-      End If
-   End If
+   If (Bitmap) Then
    
-   FreeImage_ApplyColorMappingEx = FreeImage_ApplyColorMapping(Bitmap, _
-         VarPtr(SourceColors(0)), VarPtr(DestinationColors(0)), Count, IgnoreAlpha, swap)
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to map colors on a 'header-only' bitmap.")
+      End If
+   
+      nsrc = UBound(SourceColors) + 1
+      ndst = UBound(DestinationColors) + 1
+      If (Count = -1) Then
+         If (nsrc < ndst) Then
+            Count = nsrc
+         Else
+            Count = ndst
+         End If
+      Else
+         If (Count < nsrc) Then
+            Count = nsrc
+         End If
+         If (Count < ndst) Then
+            Count = ndst
+         End If
+      End If
+      
+      FreeImage_ApplyColorMappingEx = FreeImage_ApplyColorMapping(Bitmap, _
+            VarPtr(SourceColors(0)), VarPtr(DestinationColors(0)), Count, IgnoreAlpha, swap)
+   End If
 
 End Function
 
@@ -4708,6 +4750,7 @@ Dim ndst As Long
    ' nature.
    
    ' All other parameters work according to the FreeImage 3 API documentation.
+   
    
    nsrc = UBound(SourceIndices) + 1
    ndst = UBound(DestinationIndices) + 1
@@ -4757,9 +4800,15 @@ Public Sub FreeImage_ConvertToRawBitsEx(ByRef Bits() As Byte, _
 
 Dim lHeight As Long
 
-   If (Pitch > 0) Then
-      lHeight = FreeImage_GetHeight(Bitmap)
-      If (lHeight > 0) Then
+   If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to convert a 'header-only' bitmap.")
+      End If
+   
+      If (Pitch > 0) Then
+         lHeight = FreeImage_GetHeight(Bitmap)
          ReDim Bits((Pitch * lHeight) - 1)
          Call FreeImage_ConvertToRawBits(VarPtr(Bits(0)), Bitmap, Pitch, _
                BitsPerPixel, RedMask, GreenMask, BlueMask, TopDown)
@@ -4780,11 +4829,20 @@ Dim alResult() As Long
    ' array wrapped around the actual pointer.
    
    ' All parameters work according to the FreeImage 3 API documentation.
+   
 
-   ReDim alResult(255)
-   Success = (FreeImage_GetHistogramInt(Bitmap, alResult(0), Channel) = 1)
-   If (Success) Then
-      Call pSwap(VarPtrArray(FreeImage_GetHistogramEx), VarPtrArray(alResult))
+   If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to get histogram of a 'header-only' bitmap.")
+      End If
+
+      ReDim alResult(255)
+      Success = (FreeImage_GetHistogramInt(Bitmap, alResult(0), Channel) = 1)
+      If (Success) Then
+         Call pSwap(VarPtrArray(FreeImage_GetHistogramEx), VarPtrArray(alResult))
+      End If
    End If
 
 End Function
@@ -4806,18 +4864,27 @@ Dim lSizeInBytes As Long
    ' array contains exactly 256 items. In case of providing an address of a
    ' memory block, the size of the memory block is assumed to be 256 bytes
    ' and it is up to the caller to ensure that it is large enough.
+   
+   
+   If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to adjust a 'header-only' bitmap.")
+      End If
 
-   If (IsArray(LookupTable)) Then
-      lpData = pGetMemoryBlockPtrFromVariant(LookupTable, lSizeInBytes)
-   
-   ElseIf (IsNumeric(LookupTable)) Then
-      lSizeInBytes = 256
-      lpData = CLng(LookupTable)
-   
-   End If
-   
-   If ((lpData <> 0) And (lSizeInBytes = 256)) Then
-      FreeImage_AdjustCurveEx = (FreeImage_AdjustCurveInt(Bitmap, lpData, Channel) = 1)
+      If (IsArray(LookupTable)) Then
+         lpData = pGetMemoryBlockPtrFromVariant(LookupTable, lSizeInBytes)
+      
+      ElseIf (IsNumeric(LookupTable)) Then
+         lSizeInBytes = 256
+         lpData = CLng(LookupTable)
+      
+      End If
+      
+      If ((lpData <> 0) And (lSizeInBytes = 256)) Then
+         FreeImage_AdjustCurveEx = (FreeImage_AdjustCurveInt(Bitmap, lpData, Channel) = 1)
+      End If
    End If
 
 End Function
@@ -4841,6 +4908,7 @@ Dim alResult() As Long
    ' greater than 0 after the function returns. If 'Count' is 0, there are no pages
    ' locked and the function returns an uninitialized array.
 
+   
    If (FreeImage_GetLockedPageNumbersInt(Bitmap, lpPages, Count) = 1) Then
       ReDim alResult(Count - 1)
       Call CopyMemory(alResult(0), ByVal lpPages, Count * 4)
@@ -4962,31 +5030,39 @@ Dim lSizeInBytes As Long
    ' The function returns True on success and False otherwise.
    
    
-   hStream = FreeImage_OpenMemory()
-   If (hStream) Then
-      FreeImage_SaveToMemoryEx = FreeImage_SaveToMemory(Format, Bitmap, hStream, Flags)
-      If (FreeImage_SaveToMemoryEx) Then
-         If (FreeImage_AcquireMemoryInt(hStream, lpData, lSizeInBytes)) Then
-            On Error Resume Next
-            ReDim Data(lSizeInBytes - 1)
-            If (Err.Number = ERROR_SUCCESS) Then
-               On Error GoTo 0
-               Call CopyMemory(Data(0), ByVal lpData, lSizeInBytes)
+   If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to save a 'header-only' bitmap.")
+      End If
+   
+      hStream = FreeImage_OpenMemory()
+      If (hStream) Then
+         FreeImage_SaveToMemoryEx = FreeImage_SaveToMemory(Format, Bitmap, hStream, Flags)
+         If (FreeImage_SaveToMemoryEx) Then
+            If (FreeImage_AcquireMemoryInt(hStream, lpData, lSizeInBytes)) Then
+               On Error Resume Next
+               ReDim Data(lSizeInBytes - 1)
+               If (Err.Number = ERROR_SUCCESS) Then
+                  On Error GoTo 0
+                  Call CopyMemory(Data(0), ByVal lpData, lSizeInBytes)
+               Else
+                  On Error GoTo 0
+                  FreeImage_SaveToMemoryEx = False
+               End If
             Else
-               On Error GoTo 0
                FreeImage_SaveToMemoryEx = False
             End If
-         Else
-            FreeImage_SaveToMemoryEx = False
          End If
+         Call FreeImage_CloseMemory(hStream)
+      Else
+         FreeImage_SaveToMemoryEx = False
       End If
-      Call FreeImage_CloseMemory(hStream)
-   Else
-      FreeImage_SaveToMemoryEx = False
-   End If
-   
-   If (UnloadSource) Then
-      Call FreeImage_Unload(Bitmap)
+      
+      If (UnloadSource) Then
+         Call FreeImage_Unload(Bitmap)
+      End If
    End If
 
 End Function
@@ -5030,25 +5106,33 @@ Public Function FreeImage_SaveToMemoryEx2(ByVal Format As FREE_IMAGE_FORMAT, _
    ' The function returns True on success and False otherwise.
 
    
-   If (Stream = 0) Then
-      Stream = FreeImage_OpenMemory()
-   End If
-   If (Stream) Then
-      FreeImage_SaveToMemoryEx2 = FreeImage_SaveToMemory(Format, Bitmap, Stream, Flags)
-      If (FreeImage_SaveToMemoryEx2) Then
-         FreeImage_SaveToMemoryEx2 = FreeImage_AcquireMemoryEx(Stream, Data)
+   If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to save a 'header-only' bitmap.")
+      End If
+   
+      If (Stream = 0) Then
+         Stream = FreeImage_OpenMemory()
+      End If
+      If (Stream) Then
+         FreeImage_SaveToMemoryEx2 = FreeImage_SaveToMemory(Format, Bitmap, Stream, Flags)
+         If (FreeImage_SaveToMemoryEx2) Then
+            FreeImage_SaveToMemoryEx2 = FreeImage_AcquireMemoryEx(Stream, Data)
+         End If
+         
+         ' do not close the memory stream, since the returned array data()
+         ' points to the stream's data
+         ' the caller must close the stream after he is done
+         ' with the array
+      Else
+         FreeImage_SaveToMemoryEx2 = False
       End If
       
-      ' do not close the memory stream, since the returned array data()
-      ' points to the stream's data
-      ' the caller must close the stream after he is done
-      ' with the array
-   Else
-      FreeImage_SaveToMemoryEx2 = False
-   End If
-   
-   If (UnloadSource) Then
-      Call FreeImage_Unload(Bitmap)
+      If (UnloadSource) Then
+         Call FreeImage_Unload(Bitmap)
+      End If
    End If
 
 End Function
@@ -5373,31 +5457,39 @@ Dim lSizeInBytes As Long
    ' The function returns True on success and False otherwise.
    
    
-   hStream = FreeImage_OpenMemory()
-   If (hStream) Then
-      FreeImage_SaveMultiBitmapToMemoryEx = FreeImage_SaveMultiBitmapToMemory(Format, Bitmap, hStream, Flags)
-      If (FreeImage_SaveMultiBitmapToMemoryEx) Then
-         If (FreeImage_AcquireMemoryInt(hStream, lpData, lSizeInBytes)) Then
-            On Error Resume Next
-            ReDim Data(lSizeInBytes - 1)
-            If (Err.Number = ERROR_SUCCESS) Then
-               On Error GoTo 0
-               Call CopyMemory(Data(0), ByVal lpData, lSizeInBytes)
+   If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to save a 'header-only' bitmap.")
+      End If
+   
+      hStream = FreeImage_OpenMemory()
+      If (hStream) Then
+         FreeImage_SaveMultiBitmapToMemoryEx = FreeImage_SaveMultiBitmapToMemory(Format, Bitmap, hStream, Flags)
+         If (FreeImage_SaveMultiBitmapToMemoryEx) Then
+            If (FreeImage_AcquireMemoryInt(hStream, lpData, lSizeInBytes)) Then
+               On Error Resume Next
+               ReDim Data(lSizeInBytes - 1)
+               If (Err.Number = ERROR_SUCCESS) Then
+                  On Error GoTo 0
+                  Call CopyMemory(Data(0), ByVal lpData, lSizeInBytes)
+               Else
+                  On Error GoTo 0
+                  FreeImage_SaveMultiBitmapToMemoryEx = False
+               End If
             Else
-               On Error GoTo 0
                FreeImage_SaveMultiBitmapToMemoryEx = False
             End If
-         Else
-            FreeImage_SaveMultiBitmapToMemoryEx = False
          End If
+         Call FreeImage_CloseMemory(hStream)
+      Else
+         FreeImage_SaveMultiBitmapToMemoryEx = False
       End If
-      Call FreeImage_CloseMemory(hStream)
-   Else
-      FreeImage_SaveMultiBitmapToMemoryEx = False
-   End If
-   
-   If (UnloadSource) Then
-      Call FreeImage_CloseMultiBitmapInt(Bitmap)
+      
+      If (UnloadSource) Then
+         Call FreeImage_CloseMultiBitmapInt(Bitmap)
+      End If
    End If
 
 End Function
@@ -5441,26 +5533,34 @@ Public Function FreeImage_SaveMultiBitmapToMemoryEx2(ByVal Format As FREE_IMAGE_
    ' The function returns True on success and False otherwise.
 
    
-   If (Stream = 0) Then
-      Stream = FreeImage_OpenMemory()
-   End If
-   If (Stream) Then
-      FreeImage_SaveMultiBitmapToMemoryEx2 = _
-            FreeImage_SaveMultiBitmapToMemory(Format, Bitmap, Stream, Flags)
-      If (FreeImage_SaveMultiBitmapToMemoryEx2) Then
-         FreeImage_SaveMultiBitmapToMemoryEx2 = FreeImage_AcquireMemoryEx(Stream, Data)
+   If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to save a 'header-only' bitmap.")
+      End If
+   
+      If (Stream = 0) Then
+         Stream = FreeImage_OpenMemory()
+      End If
+      If (Stream) Then
+         FreeImage_SaveMultiBitmapToMemoryEx2 = _
+               FreeImage_SaveMultiBitmapToMemory(Format, Bitmap, Stream, Flags)
+         If (FreeImage_SaveMultiBitmapToMemoryEx2) Then
+            FreeImage_SaveMultiBitmapToMemoryEx2 = FreeImage_AcquireMemoryEx(Stream, Data)
+         End If
+         
+         ' do not close the memory stream, since the returned array 'Data()'
+         ' points to the stream's data
+         ' the caller must close the stream after he is done
+         ' with the array
+      Else
+         FreeImage_SaveMultiBitmapToMemoryEx2 = False
       End If
       
-      ' do not close the memory stream, since the returned array 'Data()'
-      ' points to the stream's data
-      ' the caller must close the stream after he is done
-      ' with the array
-   Else
-      FreeImage_SaveMultiBitmapToMemoryEx2 = False
-   End If
-   
-   If (UnloadSource) Then
-      Call FreeImage_CloseMultiBitmapInt(Bitmap)
+      If (UnloadSource) Then
+         Call FreeImage_CloseMultiBitmapInt(Bitmap)
+      End If
    End If
 
 End Function
@@ -5809,8 +5909,8 @@ Public Function FreeImage_GetMetadataEx(ByVal Model As FREE_IMAGE_MDMODEL, _
    ' This function is a wrapper for FreeImage_GetMetadata() working with
    ' the VB friendly FREE_IMAGE_TAG structure. All parameters 'Bitmap', 'Tag',
    ' 'Key' and 'Model' as well as the function's return value work according
-   ' to theFreeImage API documentation expect that Tag is not a pointer to
-   ' a FITAGstructure but a FREE_IMAGE_TAG structure.
+   ' to the FreeImage API documentation expect that Tag is not a pointer to
+   ' a FITAG structure but to a FREE_IMAGE_TAG structure.
    
    ' Tags obtained from FreeImage_GetMetadataEx() must not be deleted with
    ' FreeImage_DeleteTagEx().
@@ -6442,6 +6542,11 @@ Dim bAdjustReservePaletteSize As Boolean
 
    If (Bitmap) Then
    
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to convert a 'header-only' bitmap.")
+      End If
+   
       Select Case (Conversion And (Not FICF_REORDER_GREYSCALE_PALETTE))
       
       Case FICF_MONOCHROME_THRESHOLD
@@ -6576,6 +6681,12 @@ Dim lElementSize As Long
    '       limitation of the FreeImage library (up to version 3.11.0).
 
    If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to quantize a 'header-only' bitmap.")
+      End If
+      
       If (FreeImage_GetBPP(Bitmap) <> 24) Then
          hTmp = Bitmap
          Bitmap = FreeImage_ConvertTo24Bits(Bitmap)
@@ -6676,70 +6787,78 @@ Dim hDIBNew As Long
    ' Since this diversity may be confusing to VB developers, this function is also
    ' callable through three different functions called 'FreeImage_RescaleByPixel',
    ' 'FreeImage_RescaleByPercent' and 'FreeImage_RescaleByFactor'.
-
-   If (Not IsMissing(Width)) Then
-      Select Case VarType(Width)
+   
+   If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to rescale a 'header-only' bitmap.")
+      End If
+   
+      If (Not IsMissing(Width)) Then
+         Select Case VarType(Width)
+         
+         Case vbDouble, vbSingle, vbDecimal, vbCurrency
+            lNewWidth = FreeImage_GetWidth(Bitmap) * Width
+            If (IsPercentValue) Then
+               lNewWidth = lNewWidth / 100
+            End If
+         
+         Case Else
+            lNewWidth = Width
+         
+         End Select
+      End If
       
-      Case vbDouble, vbSingle, vbDecimal, vbCurrency
-         lNewWidth = FreeImage_GetWidth(Bitmap) * Width
-         If (IsPercentValue) Then
-            lNewWidth = lNewWidth / 100
+      If (Not IsMissing(Height)) Then
+         Select Case VarType(Height)
+         
+         Case vbDouble, vbSingle, vbDecimal
+            lNewHeight = FreeImage_GetHeight(Bitmap) * Height
+            If (IsPercentValue) Then
+               lNewHeight = lNewHeight / 100
+            End If
+         
+         Case Else
+            lNewHeight = Height
+         
+         End Select
+      End If
+      
+      If ((lNewWidth > 0) And (lNewHeight > 0)) Then
+         If (ForceCloneCreation) Then
+            hDIBNew = FreeImage_Rescale(Bitmap, lNewWidth, lNewHeight, Filter)
+         
+         ElseIf ((lNewWidth <> FreeImage_GetWidth(Bitmap)) Or _
+                 (lNewHeight <> FreeImage_GetHeight(Bitmap))) Then
+            hDIBNew = FreeImage_Rescale(Bitmap, lNewWidth, lNewHeight, Filter)
+         
+         End If
+          
+      ElseIf (lNewWidth > 0) Then
+         If ((lNewWidth <> FreeImage_GetWidth(Bitmap)) Or _
+             (ForceCloneCreation)) Then
+            lNewHeight = lNewWidth / (FreeImage_GetWidth(Bitmap) / FreeImage_GetHeight(Bitmap))
+            hDIBNew = FreeImage_Rescale(Bitmap, lNewWidth, lNewHeight, Filter)
          End If
       
-      Case Else
-         lNewWidth = Width
-      
-      End Select
-   End If
-   
-   If (Not IsMissing(Height)) Then
-      Select Case VarType(Height)
-      
-      Case vbDouble, vbSingle, vbDecimal
-         lNewHeight = FreeImage_GetHeight(Bitmap) * Height
-         If (IsPercentValue) Then
-            lNewHeight = lNewHeight / 100
+      ElseIf (lNewHeight > 0) Then
+         If ((lNewHeight <> FreeImage_GetHeight(Bitmap)) Or _
+             (ForceCloneCreation)) Then
+            lNewWidth = lNewHeight * (FreeImage_GetWidth(Bitmap) / FreeImage_GetHeight(Bitmap))
+            hDIBNew = FreeImage_Rescale(Bitmap, lNewWidth, lNewHeight, Filter)
          End If
       
-      Case Else
-         lNewHeight = Height
+      End If
       
-      End Select
-   End If
-   
-   If ((lNewWidth > 0) And (lNewHeight > 0)) Then
-      If (ForceCloneCreation) Then
-         hDIBNew = FreeImage_Rescale(Bitmap, lNewWidth, lNewHeight, Filter)
-      
-      ElseIf ((lNewWidth <> FreeImage_GetWidth(Bitmap)) Or _
-              (lNewHeight <> FreeImage_GetHeight(Bitmap))) Then
-         hDIBNew = FreeImage_Rescale(Bitmap, lNewWidth, lNewHeight, Filter)
-      
+      If (hDIBNew) Then
+         FreeImage_RescaleEx = hDIBNew
+         If (UnloadSource) Then
+            Call FreeImage_Unload(Bitmap)
+         End If
+      Else
+         FreeImage_RescaleEx = Bitmap
       End If
-       
-   ElseIf (lNewWidth > 0) Then
-      If ((lNewWidth <> FreeImage_GetWidth(Bitmap)) Or _
-          (ForceCloneCreation)) Then
-         lNewHeight = lNewWidth / (FreeImage_GetWidth(Bitmap) / FreeImage_GetHeight(Bitmap))
-         hDIBNew = FreeImage_Rescale(Bitmap, lNewWidth, lNewHeight, Filter)
-      End If
-   
-   ElseIf (lNewHeight > 0) Then
-      If ((lNewHeight <> FreeImage_GetHeight(Bitmap)) Or _
-          (ForceCloneCreation)) Then
-         lNewWidth = lNewHeight * (FreeImage_GetWidth(Bitmap) / FreeImage_GetHeight(Bitmap))
-         hDIBNew = FreeImage_Rescale(Bitmap, lNewWidth, lNewHeight, Filter)
-      End If
-   
-   End If
-   
-   If (hDIBNew) Then
-      FreeImage_RescaleEx = hDIBNew
-      If (UnloadSource) Then
-         Call FreeImage_Unload(Bitmap)
-      End If
-   Else
-      FreeImage_RescaleEx = Bitmap
    End If
                      
 End Function
@@ -6814,6 +6933,11 @@ Public Function FreeImage_PaintDC(ByVal hDC As Long, _
    ' by the width or height of teh bitmap to be drawn, resprectively.
    
    If ((hDC <> 0) And (Bitmap <> 0)) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to paint a 'header-only' bitmap.")
+      End If
             
       If (Width = 0) Then
          Width = FreeImage_GetWidth(Bitmap)
@@ -6853,6 +6977,11 @@ Dim eLastStretchMode As STRETCH_MODE
    ' painted and so, is somewhat slower than 'FreeImage_PaintDC'.
    
    If ((hDC <> 0) And (Bitmap <> 0)) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to paint a 'header-only' bitmap.")
+      End If
       
       eLastStretchMode = GetStretchBltMode(hDC)
       Call SetStretchBltMode(hDC, StretchMode)
@@ -6945,6 +7074,11 @@ Dim bIsTransparent As Boolean
    ' portions of the image will be drawn.
                                   
    If ((hDC <> 0) And (Bitmap <> 0)) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to paint a 'header-only' bitmap.")
+      End If
    
       ' get image width if not specified
       If (WidthSrc = 0) Then
@@ -7988,6 +8122,12 @@ Dim ppvBits As Long
    ' specified.
 
    If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to create a bitmap from a 'header-only' bitmap.")
+      End If
+   
       If (hDC = 0) Then
          hDC = GetDC(0)
          bReleaseDC = True
@@ -8022,6 +8162,12 @@ Dim bReleaseDC As Boolean
    ' specified.
                               
    If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to create a bitmap from a 'header-only' bitmap.")
+      End If
+   
       If (hDC = 0) Then
          hDC = GetDC(0)
          bReleaseDC = True
@@ -8071,6 +8217,12 @@ Dim cPictureDisp As IPictureDisp
    ' at the caller's site.
    
    If (Bitmap) Then
+   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to create a picture from a 'header-only' bitmap.")
+      End If
+   
       hBitmap = FreeImage_GetBitmap(Bitmap, hDC, UnloadSource)
       If (hBitmap) Then
          ' fill tPictDesc structure with necessary parts
@@ -8149,11 +8301,19 @@ Dim hDIBThumbnail As Long
    ' FreeImage DIB to a VB Picture object. There is no need to clean up the DIB
    ' at the caller's site.
 
-   hDIBThumbnail = FreeImage_MakeThumbnail(Bitmap, MaxPixelSize)
-   Set FreeImage_GetOlePictureThumbnail = FreeImage_GetOlePicture(hDIBThumbnail, hDC, True)
-   
-   If (UnloadSource) Then
-      Call FreeImage_Unload(Bitmap)
+   If (Bitmap) Then
+      
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to create a thumbnail picture from a 'header-only' bitmap.")
+      End If
+      
+      hDIBThumbnail = FreeImage_MakeThumbnail(Bitmap, MaxPixelSize)
+      Set FreeImage_GetOlePictureThumbnail = FreeImage_GetOlePicture(hDIBThumbnail, hDC, True)
+      
+      If (UnloadSource) Then
+         Call FreeImage_Unload(Bitmap)
+      End If
    End If
                                                                  
 End Function
@@ -8446,6 +8606,11 @@ Dim i As Long
                    (lBitDepth = 8) Or _
                    (lBitDepth = 24) Or _
                    (lBitDepth = 32))) Then
+                   
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to create a mask image from a 'header-only' bitmap.")
+      End If
                    
       ' check for a proper bit depth of the source image
       lBitDepthSrc = FreeImage_GetBPP(hDIB)
@@ -9342,6 +9507,11 @@ Dim hBmp As Long
    
    If (hDIB) Then
    
+      If (Not FreeImage_HasPixels(hDIB)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to create an icon from a 'header-only' bitmap.")
+      End If
+   
       lBitDepth = FreeImage_GetBPP(hDIB)
    
       ' check whether the image supports transparency
@@ -9643,13 +9813,12 @@ Const vbInvalidPictureError As Long = 481
          End If
       Else
          Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
-                       "FreeImage Library plugin '" & _
-                       FreeImage_GetFormatFromFIF(Format) & "' " & _
-                       "does not support reading.")
+                        "FreeImage Library plugin '" & FreeImage_GetFormatFromFIF(Format) & "' " & _
+                        "does not support reading.")
       End If
    Else
       Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
-                       "The file specified has an unknown image format.")
+                     "The file specified has an unknown image format.")
    End If
 
 End Function
@@ -9671,10 +9840,15 @@ Dim hDIB As Long
    ' This function now is only a thin wrapper for the FreeImage_LoadEx() wrapper
    ' function (as compared to releases of this wrapper prior to version 1.8). So,
    ' have a look at this function's discussion of the parameters.
+   
+   ' However, we do mask out the FILO_LOAD_NOPIXELS load option, since this
+   ' function shall create a VB Picture object, which does not support
+   ' FreeImage's header-only loading option.
 
 
    If (Not IsMissing(Filename)) Then
-      hDIB = FreeImage_LoadEx(Filename, Options, Width, Height, InPercent, Filter, Format)
+      hDIB = FreeImage_LoadEx(Filename, (Options And (Not FILO_LOAD_NOPIXELS)), _
+            Width, Height, InPercent, Filter, Format)
       Set LoadPictureEx = FreeImage_GetOlePicture(hDIB, , True)
    End If
 
@@ -9747,6 +9921,11 @@ Dim strExtension As String
    
    If (Bitmap) Then
    
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to save 'header-only' bitmaps.")
+      End If
+   
       If ((Not IsMissing(Width)) Or _
           (Not IsMissing(Height))) Then
           
@@ -9776,11 +9955,8 @@ Dim strExtension As String
                ' what is correct again for dithered images.
                ColorDepth = (ColorDepth And (Not &H2))
                If (Not FreeImage_FIFSupportsExportBPP(Format, ColorDepth)) Then
-                  Call Err.Raise(5, _
-                                 "MFreeImage", _
-                                 Error$(5) & vbCrLf & vbCrLf & _
-                                 "FreeImage Library plugin '" & _
-                                      FreeImage_GetFormatFromFIF(Format) & "' " & _
+                  Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                                 "FreeImage Library plugin '" & FreeImage_GetFormatFromFIF(Format) & "' " & _
                                  "is unable to write images with a color depth " & _
                                  "of " & ColorDepth & " bpp.")
                
@@ -9827,18 +10003,13 @@ Dim strExtension As String
                Call FreeImage_Unload(Bitmap)
             End If
          Else
-            Call Err.Raise(5, _
-                           "MFreeImage", _
-                           Error$(5) & vbCrLf & vbCrLf & _
-                           "FreeImage Library plugin '" & _
-                                FreeImage_GetFormatFromFIF(Format) & "' " & _
+            Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                           "FreeImage Library plugin '" & FreeImage_GetFormatFromFIF(Format) & "' " & _
                            "is unable to write images of the image format requested.")
          End If
       Else
          ' unknown image format error
-         Call Err.Raise(5, _
-                        "MFreeImage", _
-                        Error$(5) & vbCrLf & vbCrLf & _
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
                         "Unknown image format. Neither an explicit image format " & _
                         "was specified nor any known image format was determined " & _
                         "from the filename specified.")
@@ -9930,13 +10101,12 @@ Public Function FreeImage_OpenMultiBitmapEx(ByVal Filename As String, _
       
       Case Else
          Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
-                       "FreeImage Library plugin '" & _
-                       FreeImage_GetFormatFromFIF(Format) & "' " & _
-                       "does not have any support for multi-page bitmaps.")
+                        "FreeImage Library plugin '" & FreeImage_GetFormatFromFIF(Format) & "' " & _
+                        "does not have any support for multi-page bitmaps.")
       End Select
    Else
       Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
-                       "The file specified has an unknown image format.")
+                     "The file specified has an unknown image format.")
    End If
    
 End Function
@@ -10501,8 +10671,15 @@ Public Function FreeImage_Colorize(ByVal Bitmap As Long, _
                                    ByVal Color As OLE_COLOR, _
                           Optional ByVal SplitValue As Variant = 0.5) As Long
                           
-   FreeImage_Colorize = FreeImage_ConvertToGreyscale(Bitmap)
-   Call FreeImage_SetPalette(FreeImage_Colorize, FreeImage_GetColorizedPalette(Color, SplitValue))
+   If (Bitmap) Then
+      If (Not FreeImage_HasPixels(Bitmap)) Then
+         Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
+                        "Unable to colorize a 'header-only' bitmap.")
+      End If
+      FreeImage_Colorize = FreeImage_ConvertToGreyscale(Bitmap)
+      Call FreeImage_SetPalette(FreeImage_Colorize, _
+            FreeImage_GetColorizedPalette(Color, SplitValue))
+   End If
 
 End Function
 
