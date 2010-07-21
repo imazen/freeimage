@@ -48,6 +48,8 @@ Month day, 2010 - 3.14.0
 * [Lucian Sabo] improved conversion from 1-, 4-, 8-bpp transparent images to 32-bpp
 * [Roy F.] fixed a bug in FreeImage_EnlargeCanvas (unable to crop an image on the right)
 * [Herve Drolon] fixed the loading of Exif with unusual IFD offset value
+* [Eberhard Mattes] fixed page numbering info when saving multipage TIFF
+* [Herve Drolon] fixed PluginPICT causing an infinite loop on a malformed PICT image
 
 December 22, 2009 - 3.13.1
 ! FreeImage now uses libTIFF 3.9.2
