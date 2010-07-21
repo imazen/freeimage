@@ -2023,7 +2023,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			sprintf(page_number, "Page %d", page);
 
 			TIFFSetField(out, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
-			TIFFSetField(out, TIFFTAG_PAGENUMBER, page);
+			TIFFSetField(out, TIFFTAG_PAGENUMBER, (uint16)page, (uint16)0);
 			TIFFSetField(out, TIFFTAG_PAGENAME, page_number);
 		} else {
 			TIFFSetField(out, TIFFTAG_SUBFILETYPE, 0);
