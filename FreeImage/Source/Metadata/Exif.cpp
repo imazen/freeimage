@@ -703,12 +703,16 @@ jpeg_read_exif_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen)
 		// this is the offset to the first IFD
 		unsigned long first_offset = ReadUint32(bMotorolaOrder, profile + 4);
 
+		/*
+		Note: as FreeImage 3.14.0, this test is no longer needed for images with similar suspicious offset
+		=> tested with Pentax Optio 230, FujiFilm SP-2500 and Canon EOS 300D
 		if (first_offset < 8 || first_offset > 16) {
 			// This is usually set to 8
 			// but PENTAX Optio 230 has it set differently, and uses it as offset. 
 			FreeImage_OutputMessageProc(FIF_JPEG, "Exif: Suspicious offset of first IFD value");
 			return FALSE;
 		}
+		*/
 
 		// process Exif directories
 		return jpeg_read_exif_dir(dib, profile, first_offset, length, bMotorolaOrder);
