@@ -1,3 +1,83 @@
+2010-07-13  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* tools/tiffcrop.c: Patch from Richard Nolde to avoid a
+	potentially unterminated buffer due to using an exceptionally long
+	file name.
+
+2010-07-08  Andrey Kiselev  <dron@ak4719.spb.edu>
+
+	* tools/tiff2pdf.c: Fixed ID buffer filling in
+	t2p_write_pdf_trailer(), thanks to Dmitry V. Levin.
+
+2010-07-07  Andrey Kiselev  <dron@ak4719.spb.edu>
+
+	* lintiff/tif_dirread.c: Really reset the tag count in CheckDirCount()
+	to expected value as the warning message suggests. As per bug
+	http://bugzilla.maptools.org/show_bug.cgi?id=1963
+
+	* tools/tiffdump.c: Avoid integer overflows computing the buffer size
+	for large directories. As per bug
+	http://bugzilla.maptools.org/show_bug.cgi?id=2218
+
+2010-07-06  Andrey Kiselev  <dron@ak4719.spb.edu>
+
+	* tools/tiffset.c: Properly handle TIFFTAG_PAGENUMBER,
+	TIFFTAG_HALFTONEHINTS, TIFFTAG_YCBCRSUBSAMPLING, TIFFTAG_DOTRANGE
+	which should be set by value.
+
+	* libtiff/tif_dirinfo.c: Don't use assertions in _TIFFFieldWithTag()
+	and _TIFFFieldWithName() if the tag is not found in the tag table.
+	This should be normal situation and returned NULL value should be
+	properly handled by the caller.
+
+	* libtiff/{tif_dirwrite.c, tif_print.c}: Properly handle "DotRange"
+	tag as it can be either byte or short size and should be set and read
+	by value, not as an array. As per bug
+	http://bugzilla.maptools.org/show_bug.cgi?id=2116
+
+2010-07-02  Andrey Kiselev  <dron@ak4719.spb.edu>
+
+	* libtiff/tif_getimage.c: Avoid wrong math du to the signed/unsigned
+	integer type conversions. As per bug
+	http://bugzilla.maptools.org/show_bug.cgi?id=2207
+
+	* tools/{tiff2bw.c, thumbnail.c, pal2rgb.c}: Fix the count for
+	WhitePoint tag as per bug
+	http://bugzilla.maptools.org/show_bug.cgi?id=2042
+
+	* tools/tiffdump.c: Use PrintData() function instead of
+	PrintByte/Short/Long(). Should fix an issue reported at
+	http://bugzilla.maptools.org/show_bug.cgi?id=2116
+
+	* libtiff/tif_getimage.c: Check the number of samples per pixel when
+	working with YCbCr image in PickContigCase(). As per bug
+	http://bugzilla.maptools.org/show_bug.cgi?id=2216
+
+	* libtiff/tif_dir.c: Set the bogus post-decoding hook when processing
+	TIFFTAG_BITSPERSAMPLE in _TIFFVSetField() for the case of 8 bit when
+	we don't need any post-processing. That helps to reset the hook if we
+	previously set this field to some other value and the hook was
+	initialized accordingly. As per bug
+	http://bugzilla.maptools.org/show_bug.cgi?id=2035
+
+2010-06-30  Andrey Kiselev  <dron@ak4719.spb.edu>
+
+	* tools/tiff2pdf.c: Better generation of ID field in
+	t2p_write_pdf_trailer(). Get rid of GCC aliasing warnings.
+
+	* tools/tiff2pdf.c: Fixed computation of the tile buffer size when
+	converting JPEG encoded tiles.
+
+	* tools/tiff2pdf.c: Better handling of string fields, use static
+	string buffers instead of dynamically allocated, use strncpy() instead
+	of strcpy(), control the string lengths.
+
+2010-06-25  Andrey Kiselev  <dron@ak4719.spb.edu>
+
+	* tools/tiffcp.c: Initialize buffer arrays with zero to avoid
+	referencing to uninitialized memory in some cases (e.g. when tile size
+	set bigger than the image size).
+
 2010-06-15  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
 
 	* tools/tiffcrop.c: Patch from Richard Nolde. Reject YCbCr
