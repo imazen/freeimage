@@ -270,7 +270,7 @@ FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int
 
 			// initialize metadata models list
 
-			fih->metadata = new METADATAMAP;
+			fih->metadata = new(std::nothrow) METADATAMAP;
 
 			// write out the BITMAPINFOHEADER
 
@@ -406,19 +406,21 @@ FreeImage_Clone(FIBITMAP *dib) {
 
 			if(src_tagmap) {
 				// create a metadata model
-				TAGMAP *dst_tagmap = new TAGMAP();
+				TAGMAP *dst_tagmap = new(std::nothrow) TAGMAP();
 
-				// fill the model
-				for(TAGMAP::iterator j = src_tagmap->begin(); j != src_tagmap->end(); j++) {
-					std::string dst_key = (*j).first;
-					FITAG *dst_tag = FreeImage_CloneTag( (*j).second );
+				if(dst_tagmap) {
+					// fill the model
+					for(TAGMAP::iterator j = src_tagmap->begin(); j != src_tagmap->end(); j++) {
+						std::string dst_key = (*j).first;
+						FITAG *dst_tag = FreeImage_CloneTag( (*j).second );
 
-					// assign key and tag value
-					(*dst_tagmap)[dst_key] = dst_tag;
+						// assign key and tag value
+						(*dst_tagmap)[dst_key] = dst_tag;
+					}
+
+					// assign model and tagmap
+					(*dst_metadata)[model] = dst_tagmap;
 				}
-
-				// assign model and tagmap
-				(*dst_metadata)[model] = dst_tagmap;
 			}
 		}
 
@@ -959,19 +961,21 @@ FreeImage_CloneMetadata(FIBITMAP *dst, FIBITMAP *src) {
 			}
 
 			// create a metadata model
-			TAGMAP *dst_tagmap = new TAGMAP();
+			TAGMAP *dst_tagmap = new(std::nothrow) TAGMAP();
 
-			// fill the model
-			for(TAGMAP::iterator j = src_tagmap->begin(); j != src_tagmap->end(); j++) {
-				std::string dst_key = (*j).first;
-				FITAG *dst_tag = FreeImage_CloneTag( (*j).second );
+			if(dst_tagmap) {
+				// fill the model
+				for(TAGMAP::iterator j = src_tagmap->begin(); j != src_tagmap->end(); j++) {
+					std::string dst_key = (*j).first;
+					FITAG *dst_tag = FreeImage_CloneTag( (*j).second );
 
-				// assign key and tag value
-				(*dst_tagmap)[dst_key] = dst_tag;
+					// assign key and tag value
+					(*dst_tagmap)[dst_key] = dst_tag;
+				}
+
+				// assign model and tagmap
+				(*dst_metadata)[model] = dst_tagmap;
 			}
-
-			// assign model and tagmap
-			(*dst_metadata)[model] = dst_tagmap;
 		}
 	}
 
@@ -998,7 +1002,7 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 
 		if(!tagmap) {
 			// this model, doesn't exist: create it 
-			tagmap = new TAGMAP();
+			tagmap = new(std::nothrow) TAGMAP();
 			(*metadata)[model] = tagmap;
 		}
 		

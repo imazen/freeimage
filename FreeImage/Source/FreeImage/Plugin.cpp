@@ -214,7 +214,7 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 
 		// internal plugin initialization
 
-		s_plugins = new PluginList;
+		s_plugins = new(std::nothrow) PluginList;
 
 		if (s_plugins) {
 			/* NOTE : 

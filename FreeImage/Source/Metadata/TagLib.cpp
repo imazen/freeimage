@@ -1226,11 +1226,12 @@ TagLib::TagLib() {
 
 BOOL TagLib::addMetadataModel(MDMODEL md_model, TagInfo *tag_table) {
 	// check that the model doesn't already exist
-	TAGINFO *info_map = (TAGINFO*)_table_map[md_model];
+	if((_table_map.find(md_model) == _table_map.end()) && (tag_table != NULL)) {
 
-	if((info_map == NULL) && (tag_table != NULL)) {
 		// add the tag description table
-		TAGINFO *info_map = new TAGINFO();
+		TAGINFO *info_map = new(std::nothrow) TAGINFO();
+		if(!info_map) return FALSE;
+
 		for(int i = 0; ; i++) {
 			if((tag_table[i].tag == 0) && (tag_table[i].fieldname == NULL))
 				break;

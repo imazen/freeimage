@@ -117,7 +117,7 @@ bool psdColourModeData::Read(FreeImageIO *io, fi_handle handle) {
 	
 	_Length = psdGetValue( Length, sizeof(_Length) );
 	if (0 < _Length) {
-		_plColourData = new BYTE[_Length];
+		_plColourData = new(std::nothrow) BYTE[_Length];
 		io->read_proc(_plColourData, _Length, 1, handle);
 	}
 
@@ -341,7 +341,7 @@ int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool i
 	nBytes += n * sizeof(ShortValue);
 	_Planes = (short)psdGetValue(ShortValue, sizeof(_Planes) );
 
-	_plData = new BYTE[iTotalData];
+	_plData = new(std::nothrow) BYTE[iTotalData];
 	  
 	if (isBGR) {
 		// In BGR format
@@ -383,7 +383,7 @@ int psdICCProfile::Read(FreeImageIO *io, fi_handle handle, int size) {
 	int nBytes = 0, n;
 	
 	SAFE_DELETE_ARRAY(_ProfileData);
-	_ProfileData = new BYTE[size];
+	_ProfileData = new(std::nothrow) BYTE[size];
 	if(NULL != _ProfileData) {
 		n = (int)io->read_proc(_ProfileData, 1, size, handle);
 		_ProfileSize = size;
@@ -608,7 +608,7 @@ bool psdParser::ReadImageResource(FreeImageIO *io, fi_handle handle) {
 			
 			int nSizeOfName = psdGetValue( &SizeOfName, sizeof(SizeOfName) );
 			if ( 0 < nSizeOfName ) {
-				oResource._plName = new BYTE[nSizeOfName];
+				oResource._plName = new(std::nothrow) BYTE[nSizeOfName];
 				n = (int)io->read_proc(oResource._plName, nSizeOfName, 1, handle);
 				nBytes += n * nSizeOfName;
 			}
@@ -1221,8 +1221,8 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 				switch (_headerInfo._ColourMode) {
 					case PSD_BITMAP:
 					{				
-						plData = new BYTE [nTotalBytes];
-						plPixel = new BYTE [bytes];
+						plData = new(std::nothrow) BYTE [nTotalBytes];
+						plPixel = new(std::nothrow) BYTE [bytes];
 						
 						while(nBytes < nTotalBytes) {
 							n = (int)io->read_proc(plPixel, bytes, 1, handle);
@@ -1238,8 +1238,8 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 						assert( (-1 != _ColourCount) && (0 < _ColourCount) );
 						assert( NULL != _colourModeData._plColourData );
 						
-						plData = new BYTE [nTotalBytes];
-						plPixel = new BYTE [bytes];
+						plData = new(std::nothrow) BYTE [nTotalBytes];
+						plPixel = new(std::nothrow) BYTE [bytes];
 						
 						while(nBytes < nTotalBytes) {
 							n = (int)io->read_proc(plPixel, bytes, 1, handle);
@@ -1254,8 +1254,8 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 					case PSD_DUOTONE: // Duotone
 					case PSD_RGB: // RGB
 					{
-						plData = new BYTE [nTotalBytes];
-						plPixel = new BYTE [bytes];
+						plData = new(std::nothrow) BYTE [nTotalBytes];
+						plPixel = new(std::nothrow) BYTE [bytes];
 						int nPixelCounter = 0;
 						int nChannels = _headerInfo._Channels;
 						
@@ -1285,8 +1285,8 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 					case PSD_CMYK: // CMYK
 					case PSD_MULTICHANNEL: // Multichannel
 					{
-						plPixel = new BYTE[bytes];
-						plData = new BYTE[nTotalBytes];
+						plPixel = new(std::nothrow) BYTE[bytes];
+						plData = new(std::nothrow) BYTE[nTotalBytes];
 						
 						int nPixelCounter = 0;
 						for (int c=0; c<_headerInfo._Channels; c++) {
@@ -1308,8 +1308,8 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 					
 					case PSD_LAB: // Lab
 					{
-						plPixel = new BYTE[bytes];
-						plData = new BYTE[nTotalBytes];
+						plPixel = new(std::nothrow) BYTE[bytes];
+						plData = new(std::nothrow) BYTE[nTotalBytes];
 						int nPixelCounter = 0;
 						for(int c = 0; c < 3; c++) {
 							nPixelCounter = c*bytes;
@@ -1368,7 +1368,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 					nTotalBytes = nWidth * nHeight;
 				}
 				
-				BYTE * plData = new BYTE[nTotalBytes];
+				BYTE * plData = new(std::nothrow) BYTE[nTotalBytes];
 				BYTE * p = plData;
 				int nValue = 0;
 				
@@ -1421,7 +1421,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 				}
 				
 				BYTE * prSource = plData;
-				BYTE * plDest = new BYTE[nTotalBytes];
+				BYTE * plDest = new(std::nothrow) BYTE[nTotalBytes];
 				memset(plDest, 254, nTotalBytes);
 				
 				int nPixelCounter = 0;

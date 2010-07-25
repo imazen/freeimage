@@ -1269,13 +1269,13 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 		unsigned bpp = FreeImage_GetBPP(dib);
 		if ((bpp == 8) && (flags & BMP_SAVE_RLE)) {
-			BYTE *buffer = new BYTE[FreeImage_GetPitch(dib) * 2];
+			BYTE *buffer = (BYTE*)malloc(FreeImage_GetPitch(dib) * 2 * sizeof(BYTE));
 
 			for (DWORD i = 0; i < FreeImage_GetHeight(dib); ++i) {
 				int size = RLEEncodeLine(buffer, FreeImage_GetScanLine(dib, i), FreeImage_GetLine(dib));
 
 				if (io->write_proc(buffer, size, 1, handle) != 1) {
-					delete [] buffer;
+					free(buffer);
 					return FALSE;
 				}
 			}
@@ -1284,11 +1284,11 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			buffer[1] = RLE_ENDOFBITMAP;
 
 			if (io->write_proc(buffer, 2, 1, handle) != 1) {
-				delete [] buffer;
+				free(buffer);
 				return FALSE;
 			}
 
-			delete [] buffer;
+			free(buffer);
 #ifdef FREEIMAGE_BIGENDIAN
 		} else if (bpp == 16) {
 			int padding = FreeImage_GetPitch(dib) - FreeImage_GetWidth(dib) * sizeof(WORD);
