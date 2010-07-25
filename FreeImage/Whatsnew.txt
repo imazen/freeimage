@@ -10,7 +10,7 @@ Month day, 2010 - 3.14.0
 ! FreeImage now uses ZLib 1.2.5
 ! FreeImage now uses LibPNG 1.4.3
 ! FreeImage now uses LibJPEG 8b
-! FreeImage now uses LibTIFF 3.9.4
+! FreeImage now uses LibTIFF 3.9.4 (CVS patch 2010-07-13)
 ! FreeImage now uses LibRaw 0.10-Beta2
 ! FreeImage now uses OpenJPEG 1.4.0 (SVN patch 2010-04-16)
 ! [Herve Drolon] FreeImage_AllocateT now builds a default greyscale palette for 8-bit images
@@ -32,7 +32,8 @@ Month day, 2010 - 3.14.0
 + [Herve Drolon] added FIF_LOAD_NOPIXELS load flag constant - used to load header & metadata only
 + [Herve Drolon] added FreeImage_HasPixels
 + [Herve Drolon] added FreeImage_FIFSupportsNoPixels
-+ [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to JPEG & PNG plugins
++ [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to JPEG, PNG, PCD, PCX plugins
++ [Mihail Naydenov] added support for FIF_LOAD_NOPIXELS flag to TGA plugin
 + [Mihail Naydenov] added support for 16-bit image types to FreeImage_Invert
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
 * [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
@@ -50,6 +51,7 @@ Month day, 2010 - 3.14.0
 * [Herve Drolon] fixed the loading of Exif with unusual IFD offset value
 * [Eberhard Mattes] fixed page numbering info when saving multipage TIFF
 * [Herve Drolon] fixed PluginPICT causing an infinite loop on a malformed PICT image
+* [Eberhard Mattes] improved memory allocation checking when using the new operator
 
 December 22, 2009 - 3.13.1
 ! FreeImage now uses libTIFF 3.9.2
