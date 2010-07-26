@@ -36,7 +36,6 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <assert.h>
-#include <limits.h>
 
 #include <string>
 #include <list>
@@ -46,6 +45,7 @@
 #include <stack>
 #include <sstream>
 #include <algorithm>
+#include <limits>
 
 // ==========================================================
 //   Bitmap palette and pixels alignment
@@ -203,22 +203,6 @@ CalculateUsedPaletteEntries(int bit_count) {
 inline unsigned char *
 CalculateScanLine(unsigned char *bits, unsigned pitch, int scanline) {
 	return (bits + (pitch * scanline));
-}
-
-inline void
-ReplaceExtension(char *result, const char *filename, const char *extension) {
-	for (size_t i = strlen(filename) - 1; i > 0; --i) {
-		if (filename[i] == '.') {
-			memcpy(result, filename, i);
-			result[i] = '.';
-			memcpy(result + i + 1, extension, strlen(extension) + 1);
-			return;
-		}
-	}
-
-	memcpy(result, filename, strlen(filename));
-	result[strlen(filename)] = '.';
-	memcpy(result + strlen(filename) + 1, extension, strlen(extension) + 1);
 }
 
 // ==========================================================

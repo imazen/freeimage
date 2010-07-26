@@ -94,6 +94,24 @@ FI_STRUCT (MULTIBITMAPHEADER) {
 };
 
 // =====================================================================
+// Helper functions
+// =====================================================================
+
+inline void
+ReplaceExtension(std::string& dst_filename, const std::string& src_filename, const std::string& dst_extension) {
+	size_t lastDot = src_filename.find_last_of('.');
+	if (lastDot == std::string::npos) {
+		dst_filename = src_filename;
+		dst_filename += ".";
+		dst_filename += dst_extension;
+	}
+	else {
+		dst_filename = src_filename.substr(0, lastDot + 1);
+		dst_filename += dst_extension;
+	}
+}
+
+// =====================================================================
 // Internal Multipage functions
 // =====================================================================
 
@@ -280,7 +298,7 @@ FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL crea
 						// set up the cache
 
 						if (!read_only) {
-							char cache_name[256];
+							std::string cache_name;
 							ReplaceExtension(cache_name, filename, "ficache");
 
 							CacheFile *cache_file = new(std::nothrow) CacheFile(cache_name, keep_cache_in_memory);
@@ -363,7 +381,7 @@ FreeImage_OpenMultiBitmapFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_h
 
 							if (!read_only) {
 								// set up the cache
-								CacheFile *cache_file = new(std::nothrow) CacheFile(NULL, TRUE);
+								CacheFile *cache_file = new(std::nothrow) CacheFile("", TRUE);
 								
 								if (cache_file && cache_file->open()) {
 									header->m_cachefile = cache_file;
@@ -486,6 +504,7 @@ FreeImage_SaveMultiBitmapToHandle(FREE_IMAGE_FORMAT fif, FIMULTIBITMAP *bitmap, 
 	return FALSE;
 }
 
+
 BOOL DLL_CALLCONV
 FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 	if (bitmap) {
@@ -498,13 +517,13 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 			if (header->changed && header->m_filename) {
 				// open a temp file
 
-				char spool_name[256];
+				std::string spool_name;
 
 				ReplaceExtension(spool_name, header->m_filename, "fispool");
 
 				// open the spool file and the source file
         
-				FILE *f = fopen(spool_name, "w+b");
+				FILE *f = fopen(spool_name.c_str(), "w+b");
 				
 				// saves changes
 				
@@ -512,7 +531,10 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 				// close the files
 
-				fclose(f);
+				success = (fclose(f) == 0) ? TRUE:FALSE;
+				if(!success) {
+					FreeImage_OutputMessageProc(header->fif, "Failed to save %s", spool_name.c_str());
+				}
 
 				if (header->handle) {
 					fclose((FILE *)header->handle);
@@ -522,9 +544,12 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 				if (success) {
 					remove(header->m_filename);
-					rename(spool_name, header->m_filename);
+					success = (rename(spool_name.c_str(), header->m_filename) == 0) ? TRUE:FALSE;
+					if(!success) {
+						FreeImage_OutputMessageProc(header->fif, "Failed to rename %s to %s", spool_name.c_str(), header->m_filename);
+					}
 				} else {
-					remove(spool_name);
+					remove(spool_name.c_str());
 				}
 
 			} else {
@@ -938,7 +963,7 @@ FreeImage_LoadMultiBitmapFromMemory(FREE_IMAGE_FORMAT fif, FIMEMORY *stream, int
 						
 						if (!read_only) {
 							// set up the cache
-							CacheFile *cache_file = new(std::nothrow) CacheFile(NULL, TRUE);
+							CacheFile *cache_file = new(std::nothrow) CacheFile("", TRUE);
 							
 							if (cache_file && cache_file->open()) {
 								header->m_cachefile = cache_file;
