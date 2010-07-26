@@ -703,6 +703,8 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define PNM_SAVE_RAW        0       // If set the writer saves in RAW format (i.e. P4, P5 or P6)
 #define PNM_SAVE_ASCII      1       // If set the writer saves in ASCII format (i.e. P1, P2 or P3)
 #define PSD_DEFAULT         0
+#define PSD_CMYK			1		// reads tags for separated CMYK (default is conversion to RGB)
+#define PSD_LAB				2		// reads tags for CIELab (default is conversion to RGB)
 #define RAS_DEFAULT         0
 #define RAW_DEFAULT         0		// load the file as linear RGB 48-bit
 #define RAW_PREVIEW			1		// try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit

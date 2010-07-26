@@ -2,7 +2,8 @@
 // Photoshop Loader
 //
 // Design and implementation by
-// - Hervé Drolon (drolon@infonie.fr)
+// - HervÃ© Drolon (drolon@infonie.fr)
+// - Mihail Naydenov (mnaydenov@users.sourceforge.net)
 //
 // Based on LGPL code created and published by http://sourceforge.net/projects/elynx/
 //
@@ -25,24 +26,30 @@
 #include "Utilities.h"
 #include "PSDParser.h"
 
+// --------------------------------------------------------------------------
+
+using std::numeric_limits;
+
+// --------------------------------------------------------------------------
+
 // PSD signature (= '8BPS')
 #define PSD_SIGNATURE	0x38425053
 // Image resource block signature (= '8BIM')
-#define PSD_RESOURCE	0x3842494D
+#define PSD_RESOURCE	0x3842494D 
 
 // PSD color modes
-#define PSD_BITMAP			0
-#define PSD_GRAYSCALE		1
-#define PSD_INDEXED			2
-#define PSD_RGB				3
-#define PSD_CMYK			4
-#define PSD_MULTICHANNEL	7
-#define PSD_DUOTONE			8
-#define PSD_LAB				9
+#define PSDP_BITMAP			0
+#define PSDP_GRAYSCALE		1
+#define PSDP_INDEXED		2
+#define PSDP_RGB			3
+#define PSDP_CMYK			4
+#define PSDP_MULTICHANNEL	7
+#define PSDP_DUOTONE		8
+#define PSDP_LAB			9
 
 // PSD compression schemes
-#define PSD_COMPRESSION_NONE	0	// Raw data
-#define PSD_COMPRESSION_RLE		1	// RLE compression (same as TIFF packed bits)
+#define PSDP_COMPRESSION_NONE	0	// Raw data
+#define PSDP_COMPRESSION_RLE	1	// RLE compression (same as TIFF packed bits)
 
 #define SAFE_DELETE_ARRAY(_p_) { if (NULL != (_p_)) { delete [] (_p_); (_p_) = NULL; } }
 
@@ -59,7 +66,7 @@ psdGetValue(const BYTE * iprBuffer, const int iBytes) {
 
 // --------------------------------------------------------------------------
 
-psdHeaderInfo::psdHeaderInfo() : _Channels(-1), _Height(-1), _Width(-1), _BitsPerPixel(-1), _ColourMode(-1) {
+psdHeaderInfo::psdHeaderInfo() : _Channels(-1), _Height(-1), _Width(-1), _BitsPerChannel(-1), _ColourMode(-1) {
 }
 
 psdHeaderInfo::~psdHeaderInfo() {
@@ -88,7 +95,7 @@ bool psdHeaderInfo::Read(FreeImageIO *io, fi_handle handle) {
 			_Channels = (short)psdGetValue( header.Channels, sizeof(header.Channels) );
 			_Height = psdGetValue( header.Rows, sizeof(header.Rows) );
 			_Width = psdGetValue( header.Columns, sizeof(header.Columns) );
-			_BitsPerPixel = (short)psdGetValue( header.Depth, sizeof(header.Depth) );
+			_BitsPerChannel = (short)psdGetValue( header.Depth, sizeof(header.Depth) );
 			_ColourMode = (short)psdGetValue( header.Mode, sizeof(header.Mode) );
 
 			return true;
@@ -117,7 +124,7 @@ bool psdColourModeData::Read(FreeImageIO *io, fi_handle handle) {
 	
 	_Length = psdGetValue( Length, sizeof(_Length) );
 	if (0 < _Length) {
-		_plColourData = new(std::nothrow) BYTE[_Length];
+		_plColourData = new BYTE[_Length];
 		io->read_proc(_plColourData, _Length, 1, handle);
 	}
 
@@ -341,7 +348,7 @@ int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool i
 	nBytes += n * sizeof(ShortValue);
 	_Planes = (short)psdGetValue(ShortValue, sizeof(_Planes) );
 
-	_plData = new(std::nothrow) BYTE[iTotalData];
+	_plData = new BYTE[iTotalData];
 	  
 	if (isBGR) {
 		// In BGR format
@@ -376,14 +383,17 @@ psdICCProfile::psdICCProfile() : _ProfileSize(0), _ProfileData(NULL) {
 }
 
 psdICCProfile::~psdICCProfile() {
-	SAFE_DELETE_ARRAY(_ProfileData);
+	clear();
 }
+
+void psdICCProfile::clear() { SAFE_DELETE_ARRAY(_ProfileData); _ProfileSize = 0;}
 
 int psdICCProfile::Read(FreeImageIO *io, fi_handle handle, int size) {
 	int nBytes = 0, n;
 	
-	SAFE_DELETE_ARRAY(_ProfileData);
-	_ProfileData = new(std::nothrow) BYTE[size];
+	clear();
+	
+	_ProfileData = new (std::nothrow) BYTE[size];
 	if(NULL != _ProfileData) {
 		n = (int)io->read_proc(_ProfileData, 1, size, handle);
 		_ProfileSize = size;
@@ -394,44 +404,6 @@ int psdICCProfile::Read(FreeImageIO *io, fi_handle handle, int size) {
 }
 
 //---------------------------------------------------------------------------
-
-static inline int d2i(double value) { 
-	return (int)floor(value + 0.5); 
-}
-
-/**
-CMYK to RGB 8-bit conversion
-*/
-static void CMYKToRGB8(float iC, float iM, float iY, float iK, RGBTRIPLE *rgb) {
-  int r = d2i( ( 1.f - (iC *(1.f - iK) + iK ) ) * 255.f );
-  int g = d2i( ( 1.f - (iM *(1.f - iK) + iK ) ) * 255.f );
-  int b = d2i( ( 1.f - (iY *(1.f - iK) + iK ) ) * 255.f );
-
-  if (r < 0) r = 0; else if (r > 255) r = 255;
-  if (g < 0) g = 0; else if (g > 255) g = 255;
-  if (b < 0) b = 0; else if (b > 255) b = 255;
-
-  rgb->rgbtRed   = (BYTE)r;
-  rgb->rgbtGreen = (BYTE)g;
-  rgb->rgbtBlue  = (BYTE)b;
-}
-
-/**
-CMYK to RGB 16-bit conversion
-*/
-static void CMYKToRGB16(float iC, float iM, float iY, float iK, FIRGB16 *rgb) {
-  int r = d2i( ( 1.f - (iC *(1.f - iK) + iK ) ) * 65535.f );
-  int g = d2i( ( 1.f - (iM *(1.f - iK) + iK ) ) * 65535.f );
-  int b = d2i( ( 1.f - (iY *(1.f - iK) + iK ) ) * 65535.f );
-
-  if (r < 0) r = 0; else if (r > 65535) r = 65535;
-  if (g < 0) g = 0; else if (g > 65535) g = 65535;
-  if (b < 0) b = 0; else if (b > 65535) b = 65535;
-
-  rgb->red   = (WORD)r;
-  rgb->green = (WORD)g;
-  rgb->blue  = (WORD)b;
-}
 
 #define PSD_CLAMP(v, min, max) ((v < min) ? min : (v > max) ? max : v)
 
@@ -470,7 +442,7 @@ static void CIELabToXYZ(float L, float a, float b, float *X, float *Y, float *Z)
 	static const float ref_Y = 100.000F;
 	static const float ref_Z = 108.883F;
 
-	*X = ref_X * var_X;	// ref_X = 95.047 (Observer= 2°, Illuminant= D65)
+	*X = ref_X * var_X;	// ref_X = 95.047 (Observer= 2Â°, Illuminant= D65)
 	*Y = ref_Y * var_Y;	// ref_Y = 100.000
 	*Z = ref_Z * var_Z;	// ref_Z = 108.883
 }
@@ -479,7 +451,7 @@ static void CIELabToXYZ(float L, float a, float b, float *X, float *Y, float *Z)
 XYZ -> RGB conversion from http://www.easyrgb.com/
 */
 static void XYZToRGB(float X, float Y, float Z, float *R, float *G, float *B) {
-	float var_X = X / 100;        //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
+	float var_X = X / 100;        //X from 0 to  95.047 (Observer = 2Â°, Illuminant = D65)
 	float var_Y = Y / 100;        //Y from 0 to 100.000
 	float var_Z = Z / 100;        //Z from 0 to 108.883
 
@@ -510,28 +482,275 @@ static void XYZToRGB(float X, float Y, float Z, float *R, float *G, float *B) {
 	*B = var_B;
 }
 
-static void CIELabToRGB16(float L, float a, float b, FIRGB16 *rgb) {
-	float X, Y, Z;
-	float R, G, B;
-	const float max_value = 65535.0F;
-
-	CIELabToXYZ(L, a, b, &X, &Y, &Z);
-	XYZToRGB(X, Y, Z, &R, &G, &B);
-	rgb->red   = (WORD)PSD_CLAMP(R * max_value, 0, max_value);
-	rgb->green = (WORD)PSD_CLAMP(G * max_value, 0, max_value);
-	rgb->blue  = (WORD)PSD_CLAMP(B * max_value, 0, max_value);	
+/**
+Red / Blue channel swapping
+@param bits Image bits
+@param height Image height
+@param pitch Image pitch
+@param Bpp Number of bytes per pixel (3 or 4)
+*/
+static 
+void _swapRandB(BYTE* bits, unsigned height, unsigned pitch, unsigned Bpp) {
+	if(Bpp > 4 || Bpp < 3)
+		return;
+	
+	BYTE* line_start = bits;
+	for(unsigned y = 0; y < height; ++y, line_start += pitch) {
+		for(BYTE *line = line_start; line < line_start + pitch; line += Bpp) {
+			INPLACESWAP(line[0], line[2]);
+		}
+	}
 }
 
-static void CIELabToRGB8(float L, float a, float b, RGBTRIPLE *rgb) {
+/**
+Red / Blue channel swapping
+@see _swapRandB
+*/
+static 
+void swapRandB(FIBITMAP* dib) {
+	_swapRandB(FreeImage_GetBits(dib), FreeImage_GetHeight(dib), FreeImage_GetPitch(dib), FreeImage_GetBPP(dib)/8);
+}
+
+inline
+void assignTri(WORD r, WORD g, WORD b, WORD* out) {
+	out[0]=	r;
+	out[1]=	g;
+	out[2]= b;
+}
+
+inline
+void assignTri(BYTE r, BYTE g, BYTE b, BYTE* out) {
+	out[FI_RGBA_RED]	= r;
+	out[FI_RGBA_GREEN]	= g;
+	out[FI_RGBA_BLUE]	= b;
+}
+
+template<class T>
+static 
+void CIELabToRGB(float L, float a, float b, T *rgb) {
 	float X, Y, Z;
 	float R, G, B;
-	const float max_value = 255.0F;
+	const float max_val = numeric_limits<T>::max();
 
 	CIELabToXYZ(L, a, b, &X, &Y, &Z);
 	XYZToRGB(X, Y, Z, &R, &G, &B);
-	rgb->rgbtRed   = (BYTE)PSD_CLAMP(R * max_value, 0, max_value);
-	rgb->rgbtGreen = (BYTE)PSD_CLAMP(G * max_value, 0, max_value);
-	rgb->rgbtBlue  = (BYTE)PSD_CLAMP(B * max_value, 0, max_value);	
+	
+	assignTri( (T)PSD_CLAMP(R * max_val, 0, max_val), (T)PSD_CLAMP(G * max_val, 0, max_val), (T)PSD_CLAMP(B * max_val, 0, max_val), rgb);
+}
+
+/**
+CMYK -> CMY -> RGB conversion from http://www.easyrgb.com/
+
+CMYK to CMY [0-1]: C,M,Y * (1 - K) + K
+CMY to RGB [0-1]: (1 - C,M,Y)
+
+=> R,G,B = (1 - C,M,Y) * (1 - K)
+mapped to [0-MAX_VAL]: 
+(MAX_VAL - C,M,Y) * (MAX_VAL - K) / MAX_VAL
+*/
+template<class T >
+static inline
+void CMYKToRGB(T C, T M, T Y, T K, T* out) {
+	const unsigned max_val = numeric_limits<T>::max();
+	
+	unsigned r = (max_val - C) * (max_val - K) / max_val;
+	unsigned g = (max_val - M) * (max_val - K) / max_val;
+	unsigned b = (max_val - Y) * (max_val - K) / max_val;
+	
+	assignTri((T)PSD_CLAMP(r, 0, max_val), (T)PSD_CLAMP(g, 0, max_val), (T)PSD_CLAMP(b, 0, max_val), out);
+}
+
+template<class T>
+static
+void _convertCMYKtoRGBA(int width, int height, BYTE* line_start, unsigned pitch, unsigned ch) {
+	const bool hasBlack = ch > 3;
+	const T MAX_VAL = numeric_limits<T>::max();
+		
+	T K = 0;
+	for(int y = 0; y < height; y++) {
+		T *line = (T*)line_start;
+
+		for(int x = 0; x < width; x++) {
+			if(hasBlack) {
+				K = line[FI_RGBA_ALPHA];
+				line[FI_RGBA_ALPHA] = MAX_VAL; // TODO write the first extra channel as alpha!
+			}
+			
+			
+			CMYKToRGB<T>( line[0], line[1], line[2], K, line);
+			
+			line += ch;
+		}
+		line_start += pitch;
+	}
+}
+
+/**
+Inplace convert CMYK to RGBA (8- and 16-bit).
+Alpha is filled with the first extra channel if any or white otherwise.
+(Can be useful as public/utility function) (Also need in Tiff loading)
+*/
+static
+void convertCMYKtoRGBA(FIBITMAP* dib) {
+	const FREE_IMAGE_TYPE type = FreeImage_GetImageType(dib);
+	const unsigned Bpp = FreeImage_GetBPP(dib)/8;
+	
+	BYTE chSize = 1;
+	if (type == FIT_RGBA16 || type == FIT_RGB16) {
+		chSize = sizeof(WORD);
+	} else if (!(type == FIT_BITMAP && (Bpp > 2))) {
+		return;
+	}
+				
+	const int width = FreeImage_GetWidth(dib);
+	const int height = FreeImage_GetHeight(dib);
+	BYTE *line_start = FreeImage_GetScanLine(dib, 0);
+	const unsigned pitch = FreeImage_GetPitch(dib);
+	
+	unsigned ch = FreeImage_GetLine(dib) / width / chSize;
+		
+	if(chSize == sizeof(WORD)) {
+		_convertCMYKtoRGBA<WORD>(width, height, line_start, pitch, ch);
+	}
+	else {
+		_convertCMYKtoRGBA<BYTE>(width, height, line_start, pitch, ch);
+	}
+}
+
+template<class T>
+static
+void _convertLABtoRGB(int width, int height, BYTE* line_start, unsigned pitch, unsigned ch) {
+	const unsigned max_val = numeric_limits<T>::max();
+	const float sL = 100.F / max_val;
+	const float sa = 256.F / max_val;
+	const float sb = 256.F / max_val;
+	
+	for(int y = 0; y < height; y++) {
+		T *line = (T*)line_start;
+
+		for(int x = 0; x < width; x++) {
+			CIELabToRGB(line[0]* sL, line[1]* sa - 128.F, line[2]* sb - 128.F, line);
+			
+			line += ch;
+		}
+		line_start += pitch;
+	}
+}
+
+/**
+Inplace convert CIELab to RGBA (8- and 16-bit).
+(Can be useful as public/utility function)
+*/
+static
+void convertLABtoRGB(FIBITMAP* dib) {
+	const FREE_IMAGE_TYPE type = FreeImage_GetImageType(dib);
+	const unsigned Bpp = FreeImage_GetBPP(dib)/8;
+	
+	BYTE chSize = 1;
+	if (type == FIT_RGBA16 || type == FIT_RGB16) {
+		chSize = sizeof(WORD);
+	} else if (!(type == FIT_BITMAP && (Bpp > 2))) {
+		return;
+	}
+				
+	const int width = FreeImage_GetWidth(dib);
+	const int height = FreeImage_GetHeight(dib);
+	BYTE *line_start = FreeImage_GetScanLine(dib, 0);
+	const unsigned pitch = FreeImage_GetPitch(dib);
+	
+	unsigned ch = FreeImage_GetLine(dib) / width / chSize;
+			
+	if(chSize == 1) {
+		_convertLABtoRGB<BYTE>(width, height, line_start, pitch, ch);
+	}
+	else {
+		_convertLABtoRGB<WORD>(width, height, line_start, pitch, ch);
+	}
+	
+}
+
+/**
+RGBA to RGB (8- and 16-bit, trivial to extend to float)
+(Can be useful as public/utility function)
+*/
+static
+FIBITMAP* stripAlpha(FIBITMAP* dib) {
+	const int width = FreeImage_GetWidth(dib);
+	const int height = FreeImage_GetHeight(dib);
+	BYTE *line_start = FreeImage_GetScanLine(dib, 0);
+	const unsigned pitch = FreeImage_GetPitch(dib);
+	const unsigned Bpp = FreeImage_GetBPP(dib)/8;
+	
+	FIBITMAP* dst_dib = NULL;
+	if (FreeImage_GetImageType(dib) == FIT_RGBA16) {
+		dst_dib = FreeImage_AllocateT(FIT_RGB16, width, height);
+	} else {
+		dst_dib = FreeImage_Allocate(width, height, 24);
+	}
+	if(!dst_dib)
+		return NULL;
+		
+	BYTE *dst_line_start = FreeImage_GetScanLine(dst_dib, 0);
+	const unsigned dstPitch = FreeImage_GetPitch(dst_dib);
+	const unsigned dstBpp = FreeImage_GetBPP(dst_dib)/8;
+
+	for(int y = 0; y < height; y++) {
+		BYTE *line = line_start;
+		BYTE *dst_line = dst_line_start;
+
+		for(int x = 0; x < width; x++) {
+			
+			for(BYTE b=0; b < dstBpp; ++b) {
+				dst_line[b] = line[b];
+			}
+				
+			line += Bpp;
+			dst_line += dstBpp;
+		}
+		line_start += pitch;
+		dst_line_start += dstPitch;
+	}
+	
+	// copy metadata from src to dst
+	FreeImage_CloneMetadata(dst_dib, dib);
+	
+	return dst_dib;
+}
+
+/**
+Invert only color components, skipping Alpha/Black
+(Can be useful as public/utility function)
+*/
+static
+BOOL invertColor(FIBITMAP* dib) {
+	FREE_IMAGE_TYPE type = FreeImage_GetImageType(dib);
+	const unsigned Bpp = FreeImage_GetBPP(dib)/8;
+	
+	if((type == FIT_BITMAP && Bpp == 4) || type == FIT_RGBA16) {
+		const unsigned width = FreeImage_GetWidth(dib);
+		const unsigned height = FreeImage_GetHeight(dib);
+		BYTE *line_start = FreeImage_GetScanLine(dib, 0);
+		const unsigned pitch = FreeImage_GetPitch(dib);
+		const unsigned triBpp = Bpp - (Bpp == 4 ? 1 : 2);
+				
+		for(unsigned y = 0; y < height; y++) {
+			BYTE *line = line_start;
+
+			for(unsigned x = 0; x < width; x++) {
+				for(unsigned b=0; b < triBpp; ++b) {
+					line[b] = ~line[b];
+				}
+					
+				line += Bpp;
+			}
+			line_start += pitch;
+		}
+		
+		return TRUE;
+	}
+	else {
+		return FreeImage_Invert(dib);
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -545,6 +764,8 @@ psdParser::psdParser() {
 	_GlobalAngle = 30;
 	_ColourCount = -1;
 	_TransparentIndex = -1;
+	_fi_flags = 0;
+	_fi_format_id = FIF_UNKNOWN;
 }
 
 psdParser::~psdParser() {
@@ -608,7 +829,7 @@ bool psdParser::ReadImageResource(FreeImageIO *io, fi_handle handle) {
 			
 			int nSizeOfName = psdGetValue( &SizeOfName, sizeof(SizeOfName) );
 			if ( 0 < nSizeOfName ) {
-				oResource._plName = new(std::nothrow) BYTE[nSizeOfName];
+				oResource._plName = new BYTE[nSizeOfName];
 				n = (int)io->read_proc(oResource._plName, nSizeOfName, 1, handle);
 				nBytes += n * nSizeOfName;
 			}
@@ -725,750 +946,352 @@ bool psdParser::ReadImageResource(FreeImageIO *io, fi_handle handle) {
   
 } 
 
-FIBITMAP* psdParser::ProcessBuffer(BYTE * iprData) {
-	assert(NULL != iprData);
-	
-	FIBITMAP *Bitmap = NULL;
-	int nHeight = _headerInfo._Height;
-	int nWidth  = _headerInfo._Width;
-	unsigned bytes = _headerInfo._BitsPerPixel / 8;
-	int nChannels = _headerInfo._Channels;
-	
-	switch (_headerInfo._ColourMode) {
-		case PSD_BITMAP: // Bitmap
-		{
-			// monochrome 1-bit
-			FIBITMAP *dib = FreeImage_Allocate(nWidth, nHeight, 1);
-			if (NULL != dib) {
-				// fill the palette
-				RGBQUAD *pal = FreeImage_GetPalette(dib);
-				if(pal) {
-					for (int i = 0; i < 2; i++) {
-						BYTE val = i ? 0x0 : 0xFF;
-						pal[i].rgbRed   = val;
-						pal[i].rgbGreen = val;
-						pal[i].rgbBlue  = val;
-					}
-				}
-				// copy buffer
-				BYTE *src_bits = (BYTE*)iprData;
-				BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-				unsigned src_pitch = (nWidth + 7) / 8;
-				unsigned dst_pitch = FreeImage_GetPitch(dib);
-				for(int y = 0; y < nHeight; y++) {
-					memcpy(dst_bits, src_bits, src_pitch);
-					src_bits += src_pitch;
-					dst_bits -= dst_pitch;
-				}
-			}
-			Bitmap = dib;
-		}
-		break;
-
-		case PSD_GRAYSCALE: // Grayscale
-		case PSD_DUOTONE: // Duotone
-		case PSD_RGB: // RGB
-		{
-			// 16-bit / channel
-			// --------------------------------------------------------------
-			if (16 == _headerInfo._BitsPerPixel) {
-				if (1 == nChannels) {
-					// L 16-bit
-					FIBITMAP *dib = FreeImage_AllocateT(FIT_UINT16, nWidth, nHeight);
-					if (NULL != dib) {
-						// just copy buffer
-						BYTE *src_bits = (BYTE*)iprData;
-						BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-						unsigned src_pitch = nChannels * nWidth * bytes;
-						unsigned dst_pitch = FreeImage_GetPitch(dib);
-						for(int y = 0; y < nHeight; y++) {
-							memcpy(dst_bits, src_bits, src_pitch);
-							src_bits += src_pitch;
-							dst_bits -= dst_pitch;
-						}
-						Bitmap = dib;
-					}
-				}
-				else if (2 == nChannels) {
-					// LA 16-bit : convert to RGBA 16-bit
-					FIBITMAP *dib = FreeImage_AllocateT(FIT_RGBA16, nWidth, nHeight);
-					if (NULL != dib) {
-						unsigned short *src_bits = (unsigned short*)iprData;
-						FIRGBA16 *dst_bits = (FIRGBA16*)FreeImage_GetScanLine(dib, nHeight-1);
-						unsigned pitch = FreeImage_GetPitch(dib) / sizeof(FIRGBA16);
-						for(int y = 0; y < nHeight; y++) {
-							for(int x = 0; x < nWidth; x++) {
-								dst_bits[x].red   = src_bits[0];
-								dst_bits[x].green = src_bits[0];
-								dst_bits[x].blue  = src_bits[0];
-								dst_bits[x].alpha = src_bits[1];
-								src_bits += nChannels;
-							}
-							dst_bits -= pitch;
-						}
-						Bitmap = dib;
-					}
-				}
-				else if (3 == nChannels) {
-					// RGB 16-bit
-					FIBITMAP *dib = FreeImage_AllocateT(FIT_RGB16, nWidth, nHeight);
-					if (NULL != dib) {
-						// just copy buffer
-						BYTE *src_bits = (BYTE*)iprData;
-						BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-						unsigned src_pitch = nChannels * nWidth * bytes;
-						unsigned dst_pitch = FreeImage_GetPitch(dib);
-						for(int y = 0; y < nHeight; y++) {
-							memcpy(dst_bits, src_bits, src_pitch);
-							src_bits += src_pitch;
-							dst_bits -= dst_pitch;
-						}
-						Bitmap = dib;
-					}
-				}
-				else if (4 == nChannels) {
-					// RGBA 16-bit
-					FIBITMAP *dib = FreeImage_AllocateT(FIT_RGBA16, nWidth, nHeight);
-					if (NULL != dib) {
-						// just copy buffer
-						BYTE *src_bits = (BYTE*)iprData;
-						BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-						unsigned src_pitch = nChannels * nWidth * bytes;
-						unsigned dst_pitch = FreeImage_GetPitch(dib);
-						for(int y = 0; y < nHeight; y++) {
-							memcpy(dst_bits, src_bits, src_pitch);
-							src_bits += src_pitch;
-							dst_bits -= dst_pitch;
-						}
-						Bitmap = dib;
-					}
-				}
-			}
-			// 8-bit / channel
-			// --------------------------------------------------------------
-			else if (8 == _headerInfo._BitsPerPixel) {
-				if (1 == nChannels) {
-					// L 8-bit
-					FIBITMAP *dib = FreeImage_Allocate(nWidth, nHeight, 8);
-					if (NULL != dib) {
-						// build a greyscale palette
-						RGBQUAD *pal = FreeImage_GetPalette(dib);
-						for (int i = 0; i < 256; i++) {
-							pal[i].rgbRed	= (BYTE)i;
-							pal[i].rgbGreen = (BYTE)i;
-							pal[i].rgbBlue	= (BYTE)i;
-						}
-						// just copy buffer
-						BYTE *src_bits = (BYTE*)iprData;
-						BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-						unsigned src_pitch = nChannels * nWidth * bytes;
-						unsigned dst_pitch = FreeImage_GetPitch(dib);
-						for(int y = 0; y < nHeight; y++) {
-							memcpy(dst_bits, src_bits, src_pitch);
-							src_bits += src_pitch;
-							dst_bits -= dst_pitch;
-						}
-						Bitmap = dib;
-					}
-				}
-				else if (2 == nChannels) {
-					// LA 8-bit : convert to RGBA 32-bit
-					FIBITMAP *dib = FreeImage_Allocate(nWidth, nHeight, 32);
-					if (NULL != dib) {
-						BYTE *src_bits = (BYTE*)iprData;
-						BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-						unsigned src_pitch = nChannels * nWidth * bytes;
-						unsigned dst_pitch = FreeImage_GetPitch(dib);
-						for(int y = 0; y < nHeight; y++) {
-							BYTE *p_src = src_bits;
-							BYTE *p_dst = dst_bits;
-							for(int x = 0; x < nWidth; x++) {
-								p_dst[FI_RGBA_RED]   = p_src[0];
-								p_dst[FI_RGBA_GREEN] = p_src[0];
-								p_dst[FI_RGBA_BLUE]  = p_src[0];
-								p_dst[FI_RGBA_ALPHA] = p_src[1];
-								p_src += nChannels;
-								p_dst += 4;
-							}
-							src_bits += src_pitch;
-							dst_bits -= dst_pitch;
-						}
-						Bitmap = dib;
-					}
-				}
-				else if (3 == nChannels) {
-					// RGB 8-bit
-					FIBITMAP *dib = FreeImage_Allocate(nWidth, nHeight, 24);
-					if (NULL != dib) {
-						// just copy buffer
-						BYTE *src_bits = (BYTE*)iprData;
-						BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-						unsigned src_pitch = nChannels * nWidth * bytes;
-						unsigned dst_pitch = FreeImage_GetPitch(dib);
-						for(int y = 0; y < nHeight; y++) {
-							BYTE *p_src = src_bits;
-							BYTE *p_dst = dst_bits;
-							for(int x = 0; x < nWidth; x++) {
-								p_dst[FI_RGBA_RED]   = p_src[0];
-								p_dst[FI_RGBA_GREEN] = p_src[1];
-								p_dst[FI_RGBA_BLUE]  = p_src[2];
-								p_src += nChannels;
-								p_dst += nChannels;
-							}
-							src_bits += src_pitch;
-							dst_bits -= dst_pitch;
-						}
-						Bitmap = dib;
-					}
-				}
-				else if (4 == nChannels) {
-					// RGBA 8-bit
-					FIBITMAP *dib = FreeImage_Allocate(nWidth, nHeight, 32);
-					if (NULL != dib) {
-						// just copy buffer
-						BYTE *src_bits = (BYTE*)iprData;
-						BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-						unsigned src_pitch = nChannels * nWidth * bytes;
-						unsigned dst_pitch = FreeImage_GetPitch(dib);
-						for(int y = 0; y < nHeight; y++) {
-							BYTE *p_src = src_bits;
-							BYTE *p_dst = dst_bits;
-							for(int x = 0; x < nWidth; x++) {
-								p_dst[FI_RGBA_RED]   = p_src[0];
-								p_dst[FI_RGBA_GREEN] = p_src[1];
-								p_dst[FI_RGBA_BLUE]  = p_src[2];
-								p_dst[FI_RGBA_ALPHA] = p_src[3];
-								p_src += nChannels;
-								p_dst += nChannels;
-							}
-							src_bits += src_pitch;
-							dst_bits -= dst_pitch;
-						}
-						Bitmap = dib;
-					}
-				}
-				else {
-					assert(false);// do nothing
-				}
-			}
-			// 32-bit / channel => undocumented HDR 
-			// --------------------------------------------------------------
-			else if (32 == _headerInfo._BitsPerPixel) {
-				if (3 == nChannels) {
-					// RGBF 32-bit
-					FIBITMAP *dib = FreeImage_AllocateT(FIT_RGBF, nWidth, nHeight);
-					if (NULL != dib) {
-						// just copy buffer
-						BYTE *src_bits = (BYTE*)iprData;
-						BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-						unsigned src_pitch = nChannels * nWidth * bytes;
-						unsigned dst_pitch = FreeImage_GetPitch(dib);
-						for(int y = 0; y < nHeight; y++) {
-							memcpy(dst_bits, src_bits, src_pitch);
-							src_bits += src_pitch;
-							dst_bits -= dst_pitch;
-						}
-						Bitmap = dib;
-					}
-				}
-			}
-		}
-		break;
-		
-		case PSD_INDEXED: // Indexed
-		{
-			// iprData holds the indices of loop through the palette 
-			assert(0 != _colourModeData._plColourData);
-			assert(768 == _colourModeData._Length);
-			assert(0 < _ColourCount);
-
-			// grey or palettised 8 bits
-			FIBITMAP *dib = FreeImage_Allocate(nWidth, nHeight, 8);
-			if (NULL != dib) {
-				// get the palette
-				if (_colourModeData.FillPalette(dib)) {
-					// copy buffer
-					BYTE *src_bits = (BYTE*)iprData;
-					BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-					unsigned src_pitch = nChannels * nWidth * bytes;
-					unsigned dst_pitch = FreeImage_GetPitch(dib);
-					for(int y = 0; y < nHeight; y++) {
-						memcpy(dst_bits, src_bits, src_pitch);
-						src_bits += src_pitch;
-						dst_bits -= dst_pitch;
-					}
-				}
-			}
-			Bitmap = dib;
-		}
-		break;
-		
-		case PSD_CMYK: // CMYK
-		{
-			float C, M, Y, K;
-			float s = 1.f / pow( 2.0f, _headerInfo._BitsPerPixel);
-			
-			if (16 == _headerInfo._BitsPerPixel) {
-				// CMYK 16-bit : convert to RGB 16-bit
-				FIBITMAP *dib = FreeImage_AllocateT(FIT_RGB16, nWidth, nHeight);
-				if (NULL != dib) {
-					BYTE *src_bits = (BYTE*)iprData;
-					BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-					unsigned src_pitch = nChannels * nWidth * bytes;
-					unsigned dst_pitch = FreeImage_GetPitch(dib);
-					for(int y = 0; y < nHeight; y++) {
-						unsigned short *src_line = (unsigned short*)src_bits;
-						FIRGB16 *dst_line = (FIRGB16*)dst_bits;
-						for(int x = 0; x < nWidth; x++) {
-							C = (1.f - (float)psdGetValue((BYTE*)&src_line[0], bytes ) * s );
-							M = (1.f - (float)psdGetValue((BYTE*)&src_line[1], bytes ) * s );
-							Y = (1.f - (float)psdGetValue((BYTE*)&src_line[2], bytes ) * s );
-							K = (1.f - (float)psdGetValue((BYTE*)&src_line[3], bytes ) * s );
-							CMYKToRGB16(C, M, Y, K, &dst_line[x]);
-							src_line += nChannels;
-						}
-						src_bits += src_pitch;
-						dst_bits -= dst_pitch;
-					}
-					Bitmap = dib;
-				}
-			}
-			else {
-				// CMYK 8-bit : convert to RGB 8-bit
-				FIBITMAP *dib = FreeImage_Allocate(nWidth, nHeight, 24);
-				if (NULL != dib) {
-					BYTE *src_bits = (BYTE*)iprData;
-					BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-					unsigned src_pitch = nChannels * nWidth * bytes;
-					unsigned dst_pitch = FreeImage_GetPitch(dib);
-					for(int y = 0; y < nHeight; y++) {
-						BYTE *src_line = (BYTE*)src_bits;
-						RGBTRIPLE *dst_line = (RGBTRIPLE*)dst_bits;
-						for(int x = 0; x < nWidth; x++) {
-							C = (1.f - (float)psdGetValue((BYTE*)&src_line[0], bytes ) * s );
-							M = (1.f - (float)psdGetValue((BYTE*)&src_line[1], bytes ) * s );
-							Y = (1.f - (float)psdGetValue((BYTE*)&src_line[2], bytes ) * s );
-							K = (1.f - (float)psdGetValue((BYTE*)&src_line[3], bytes ) * s );
-							CMYKToRGB8(C, M, Y, K, &dst_line[x]);
-							src_line += nChannels;
-						}
-						src_bits += src_pitch;
-						dst_bits -= dst_pitch;
-					}
-					Bitmap = dib;
-				}
-			}
-		}
-		break;
-		
-		case PSD_MULTICHANNEL: // Multichannel
-		{
-			// assume format is in either CMY or CMYK
-			assert(3 <= nChannels);
-			float C, M, Y, K;
-			float s = 1.f / pow( 2.0f, _headerInfo._BitsPerPixel);
-			
-			if (16 == _headerInfo._BitsPerPixel) {
-				// CMY(K) 16-bit : convert to RGB 16-bit
-				FIBITMAP *dib = FreeImage_AllocateT(FIT_RGB16, nWidth, nHeight);
-				if (NULL != dib) {
-					BYTE *src_bits = (BYTE*)iprData;
-					BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-					unsigned src_pitch = nChannels * nWidth * bytes;
-					unsigned dst_pitch = FreeImage_GetPitch(dib);
-					for(int y = 0; y < nHeight; y++) {
-						unsigned short *src_line = (unsigned short*)src_bits;
-						FIRGB16 *dst_line = (FIRGB16*)dst_bits;
-						for(int x = 0; x < nWidth; x++) {
-							C = (1.f - (float)psdGetValue((BYTE*)&src_line[0], bytes ) * s );
-							M = (1.f - (float)psdGetValue((BYTE*)&src_line[1], bytes ) * s );
-							Y = (1.f - (float)psdGetValue((BYTE*)&src_line[2], bytes ) * s );
-							K = (4 <= nChannels) ? (1.f - (float)psdGetValue((BYTE*)&src_line[nChannels], bytes )*s ) : 0;
-							CMYKToRGB16(C, M, Y, K, &dst_line[x]);
-							src_line += nChannels;
-						}
-						src_bits += src_pitch;
-						dst_bits -= dst_pitch;
-					}
-					Bitmap = dib;
-				}
-			}
-			else {
-				// CMY(K) 8-bit : convert to RGB 8-bit
-				FIBITMAP *dib = FreeImage_Allocate(nWidth, nHeight, 24);
-				if (NULL != dib) {
-					BYTE *src_bits = (BYTE*)iprData;
-					BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-					unsigned src_pitch = nChannels * nWidth * bytes;
-					unsigned dst_pitch = FreeImage_GetPitch(dib);
-					for(int y = 0; y < nHeight; y++) {
-						BYTE *src_line = (BYTE*)src_bits;
-						RGBTRIPLE *dst_line = (RGBTRIPLE*)dst_bits;
-						for(int x = 0; x < nWidth; x++) {
-							C = (1.f - (float)psdGetValue((BYTE*)&src_line[0], bytes ) * s );
-							M = (1.f - (float)psdGetValue((BYTE*)&src_line[1], bytes ) * s );
-							Y = (1.f - (float)psdGetValue((BYTE*)&src_line[2], bytes ) * s );
-							K = (4 <= nChannels) ? (1.f - (float)psdGetValue((BYTE*)&src_line[nChannels], bytes )*s ) : 0;
-							CMYKToRGB8(C, M, Y, K, &dst_line[x]);
-							src_line += nChannels;
-						}
-						src_bits += src_pitch;
-						dst_bits -= dst_pitch;
-					}
-					Bitmap = dib;
-				}
-			}
-		}
-		break;
-		
-		case PSD_LAB: // Lab
-		{
-			const unsigned dMaxColours = 1 << _headerInfo._BitsPerPixel;
-			const float sL = 100.F / dMaxColours;
-			const float sa = 256.F / dMaxColours;
-			const float sb = 256.F / dMaxColours;
-			float L, a, b;
-			
-			if (16 == _headerInfo._BitsPerPixel) {
-				// CIE Lab 16-bit : convert to RGB 16-bit
-				FIBITMAP *dib = FreeImage_AllocateT(FIT_RGB16, nWidth, nHeight);
-				if (NULL != dib) {
-					BYTE *src_bits = (BYTE*)iprData;
-					BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-					unsigned src_pitch = nChannels * nWidth * bytes;
-					unsigned dst_pitch = FreeImage_GetPitch(dib);
-					for(int y = 0; y < nHeight; y++) {
-						unsigned short *src_line = (unsigned short*)src_bits;
-						FIRGB16 *dst_line = (FIRGB16*)dst_bits;
-						for(int x = 0; x < nWidth; x++) {
-							L = (float)psdGetValue((BYTE*)&src_line[0], bytes ) * sL;
-							a = (float)psdGetValue((BYTE*)&src_line[1], bytes ) * sa - 128.F;
-							b = (float)psdGetValue((BYTE*)&src_line[2], bytes ) * sb - 128.F;
-							CIELabToRGB16(L, a, b, &dst_line[x]);
-							src_line += nChannels;
-						}
-						src_bits += src_pitch;
-						dst_bits -= dst_pitch;
-					}
-					Bitmap = dib;
-				}
-			} else {
-				// CIE Lab 8-bit : convert to RGB 8-bit
-				FIBITMAP *dib = FreeImage_Allocate(nWidth, nHeight, 24);
-				if (NULL != dib) {
-					BYTE *src_bits = (BYTE*)iprData;
-					BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, nHeight-1);
-					unsigned src_pitch = nChannels * nWidth * bytes;
-					unsigned dst_pitch = FreeImage_GetPitch(dib);
-					for(int y = 0; y < nHeight; y++) {
-						BYTE *src_line = (BYTE*)src_bits;
-						RGBTRIPLE *dst_line = (RGBTRIPLE*)dst_bits;
-						for(int x = 0; x < nWidth; x++) {
-							L = (float)psdGetValue((BYTE*)&src_line[0], bytes ) * sL;
-							a = (float)psdGetValue((BYTE*)&src_line[1], bytes ) * sa - 128.F;
-							b = (float)psdGetValue((BYTE*)&src_line[2], bytes ) * sb - 128.F;
-							CIELabToRGB8(L, a, b, &dst_line[x]);
-							src_line += nChannels;
-						}
-						src_bits += src_pitch;
-						dst_bits -= dst_pitch;
-					}
-					Bitmap = dib;
-				}
-			}
-		}
-		break;
-		
-		default:
-			break;
-  }
-
-  return Bitmap;
-} 
-
 FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
-	FIBITMAP *Bitmap = NULL;
-
-	if(handle != NULL) {
-		BYTE ShortValue[2];
-		int n = (int)io->read_proc(&ShortValue, sizeof(ShortValue), 1, handle);
-		short nCompression = (short)psdGetValue( ShortValue, sizeof(ShortValue) );
+	if(handle == NULL) 
+		return NULL;
+	
+	bool header_only = (_fi_flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
+	
+	assert(sizeof(WORD) == 2);
+	WORD nCompression = 0;
+	io->read_proc(&nCompression, sizeof(nCompression), 1, handle);
+	
+#ifndef FREEIMAGE_BIGENDIAN
+	SwapShort(&nCompression);
+#endif
+	
+	if((nCompression != PSDP_COMPRESSION_NONE && nCompression != PSDP_COMPRESSION_RLE))	{
+		FreeImage_OutputMessageProc(_fi_format_id, "Unsupported compression %d", nCompression);
+		return NULL;
+	}
+	
+	const unsigned nWidth = _headerInfo._Width;
+	const unsigned nHeight = _headerInfo._Height;
+	const unsigned nChannels = _headerInfo._Channels;
+	const unsigned depth = _headerInfo._BitsPerChannel;
+	const unsigned bytes = (depth == 1) ? 1 : depth / 8;
 		
-		switch ( nCompression ) {
-			case PSD_COMPRESSION_NONE: // raw data
-			{
-				int nWidth = _headerInfo._Width;
-				int nHeight = _headerInfo._Height;
-				int bytes = _headerInfo._BitsPerPixel / 8;
-
-				int nPixels = nWidth * nHeight;
-				int nTotalBytes = nPixels * bytes * _headerInfo._Channels;
-
-				if(_headerInfo._BitsPerPixel == 1) {
-					// special case for PSD_BITMAP mode
-					bytes = 1;
-					nWidth = (nWidth + 7) / 8;
-					nWidth = ( nWidth > 0 ) ? nWidth : 1;
-					nPixels = nWidth * nHeight;
-					nTotalBytes = nWidth * nHeight;
-				}
-				
-				BYTE * plData = 0;
-				BYTE * plPixel = 0;
-				
-				int nBytes = 0;
-
-				switch (_headerInfo._ColourMode) {
-					case PSD_BITMAP:
-					{				
-						plData = new(std::nothrow) BYTE [nTotalBytes];
-						plPixel = new(std::nothrow) BYTE [bytes];
-						
-						while(nBytes < nTotalBytes) {
-							n = (int)io->read_proc(plPixel, bytes, 1, handle);
-							memcpy(plData+nBytes, plPixel, bytes );
-							nBytes += n * bytes;
-						}
-						SAFE_DELETE_ARRAY(plPixel);
-					}
-					break;
-
-					case PSD_INDEXED: // Indexed
-					{
-						assert( (-1 != _ColourCount) && (0 < _ColourCount) );
-						assert( NULL != _colourModeData._plColourData );
-						
-						plData = new(std::nothrow) BYTE [nTotalBytes];
-						plPixel = new(std::nothrow) BYTE [bytes];
-						
-						while(nBytes < nTotalBytes) {
-							n = (int)io->read_proc(plPixel, bytes, 1, handle);
-							memcpy(plData+nBytes, plPixel, bytes );
-							nBytes += n * bytes;
-						}
-						SAFE_DELETE_ARRAY(plPixel);
-					}
-					break;
-					
-					case PSD_GRAYSCALE: // Grayscale
-					case PSD_DUOTONE: // Duotone
-					case PSD_RGB: // RGB
-					{
-						plData = new(std::nothrow) BYTE [nTotalBytes];
-						plPixel = new(std::nothrow) BYTE [bytes];
-						int nPixelCounter = 0;
-						int nChannels = _headerInfo._Channels;
-						
-						for(int c = 0; c < nChannels; c++) {
-							nPixelCounter = c * bytes;
-							for(int nPos = 0; nPos < nPixels; ++nPos) {
-								n = (int)io->read_proc(plPixel, bytes, 1, handle);
-								if(n == 0) {
-									break;
-								}								
-								if(2 == bytes) { 
-									// swap for uint16
-									SwapShort((WORD*)&plPixel[0]);
-								} else if(4 == bytes) {
-									// swap for float
-									SwapLong((DWORD*)&plPixel[0]);
-								}
-								memcpy( plData + nPixelCounter, plPixel, bytes );
-								nBytes += n * bytes;
-								nPixelCounter += nChannels*bytes;
-							}
-						}
-						SAFE_DELETE_ARRAY(plPixel);
-					}
-					break;
-					
-					case PSD_CMYK: // CMYK
-					case PSD_MULTICHANNEL: // Multichannel
-					{
-						plPixel = new(std::nothrow) BYTE[bytes];
-						plData = new(std::nothrow) BYTE[nTotalBytes];
-						
-						int nPixelCounter = 0;
-						for (int c=0; c<_headerInfo._Channels; c++) {
-							nPixelCounter = c*bytes;
-							for ( int nPos = 0; nPos < nPixels; ++nPos ) {
-								n = (int)io->read_proc(plPixel, bytes, 1, handle);
-								if(n == 0) {
-									break;
-								}
-								memcpy(plData + nPixelCounter, plPixel, bytes );
-								nBytes += n * bytes;
-								
-								nPixelCounter += _headerInfo._Channels*bytes;
-							}
-						}
-						SAFE_DELETE_ARRAY(plPixel);
-					}
-					break;
-					
-					case PSD_LAB: // Lab
-					{
-						plPixel = new(std::nothrow) BYTE[bytes];
-						plData = new(std::nothrow) BYTE[nTotalBytes];
-						int nPixelCounter = 0;
-						for(int c = 0; c < 3; c++) {
-							nPixelCounter = c*bytes;
-							for ( int nPos = 0; nPos < nPixels; ++nPos ) {
-								n = (int)io->read_proc(plPixel, bytes, 1, handle);
-								if(n == 0) {
-									break;
-								}
-								memcpy(plData + nPixelCounter, plPixel, bytes);
-								nBytes += n * bytes;
-								nPixelCounter += 3*bytes;
-							}
-						}
-						SAFE_DELETE_ARRAY(plPixel);
-					}
-					break;
-				}
-				
-				assert( nBytes == nTotalBytes );
-				if (nBytes == nTotalBytes) {
-					if (plData) {
-						switch (_headerInfo._BitsPerPixel) {
-							case 1: 						
-							case 8: 
-							case 16:
-							case 32:
-								Bitmap = ProcessBuffer(plData);
-								break;
-								
-							default: // Unsupported 
-								break;
-						}
-					}
-				}
-
-				SAFE_DELETE_ARRAY(plData);
+	// channel(plane) line (BYTE aligned)
+	const unsigned lineSize = (_headerInfo._BitsPerChannel == 1) ? (nWidth + 7) / 8 : nWidth * bytes;
+	
+	if(nCompression == PSDP_COMPRESSION_RLE && depth > 16) {
+		FreeImage_OutputMessageProc(_fi_format_id, "Unsupported RLE with depth %d", depth);
+		return NULL;
+	}
+	
+	// build output buffer
+	
+	FIBITMAP* bitmap = NULL;
+	unsigned dstCh = 0;
+	
+	short mode = _headerInfo._ColourMode;
+	
+	if(mode == PSDP_MULTICHANNEL && nChannels < 3) {
+		// CM 
+		mode = PSDP_GRAYSCALE; // C as gray, M as extra channel
+	}
+		
+	bool needPalette = false;
+	switch (mode) {
+		case PSDP_BITMAP:
+		case PSDP_DUOTONE:	
+		case PSDP_INDEXED:
+		case PSDP_GRAYSCALE:
+			dstCh = 1;
+			switch(depth) {
+				case 16:
+				bitmap = FreeImage_AllocateHeaderT(header_only, FIT_UINT16, nWidth, nHeight, depth*dstCh);
+				break;
+				case 32:
+				bitmap = FreeImage_AllocateHeaderT(header_only, FIT_FLOAT, nWidth, nHeight, depth*dstCh);
+				break;
+				default: // 1-, 8-
+				needPalette = true;
+				bitmap = FreeImage_AllocateHeader(header_only, nWidth, nHeight, depth*dstCh);
+				break;
 			}
 			break;
-			
-			
-			case PSD_COMPRESSION_RLE: // RLE compression
-			{
-				int nWidth = _headerInfo._Width;
-				int nHeight = _headerInfo._Height;
-				int bytes = _headerInfo._BitsPerPixel / 8;
-				
-				int nPixels = nWidth * nHeight;
-				int nTotalBytes = nPixels * bytes * _headerInfo._Channels;
+		case PSDP_RGB:	
+		case PSDP_LAB:		
+		case PSDP_CMYK	:
+		case PSDP_MULTICHANNEL	:
+			// force PSDP_MULTICHANNEL CMY as CMYK
+			dstCh = (mode == PSDP_MULTICHANNEL && !header_only) ? 4 : MIN<unsigned>(nChannels, 4);
+			assert(dstCh >= 3);
+			switch(depth) {
+				case 16:
+				bitmap = FreeImage_AllocateHeaderT(header_only, dstCh < 4 ? FIT_RGB16 : FIT_RGBA16, nWidth, nHeight, depth*dstCh);
+				break;
+				case 32:
+				bitmap = FreeImage_AllocateHeaderT(header_only, dstCh < 4 ? FIT_RGBF : FIT_RGBAF, nWidth, nHeight, depth*dstCh);
+				break;
+				default:
+				bitmap = FreeImage_AllocateHeader(header_only, nWidth, nHeight, depth*dstCh);
+				break;
+			}
+			break;
+		default:
+			assert(false);
+			break;
+	}
+	if(!bitmap) {
+		throw FI_MSG_ERROR_DIB_MEMORY;
+	}
+		
+	// @todo Add some metadata model
+		
+	if(header_only) {
+		return bitmap;
+	}
+	
+	// Load pixels data
 
-				if(_headerInfo._BitsPerPixel == 1) {
-					// special case for PSD_BITMAP mode
-					bytes = 1;
-					nWidth = (nWidth + 7) / 8;
-					nWidth = ( nWidth > 0 ) ? nWidth : 1;
-					nPixels = nWidth * nHeight;
-					nTotalBytes = nWidth * nHeight;
+	const unsigned dstChannels = dstCh;
+	
+	const unsigned dstBpp =  (depth == 1) ? 1 : FreeImage_GetBPP(bitmap)/8;
+	const unsigned dstLineSize = FreeImage_GetPitch(bitmap);	
+	BYTE* const dst_first_line = FreeImage_GetScanLine(bitmap, nHeight - 1);//<*** flipped
+	
+	BYTE* line_start = new BYTE[lineSize]; //< fileline cache
+
+	switch ( nCompression ) {
+		case PSDP_COMPRESSION_NONE: // raw data	
+		{			
+			for(unsigned c = 0; c < nChannels; c++) {
+				if(c >= dstChannels) {
+					// @todo write extra channels
+					break; 
 				}
+					
+				const unsigned channelOffset = c * bytes;
 				
-				BYTE * plData = new(std::nothrow) BYTE[nTotalBytes];
-				BYTE * p = plData;
-				int nValue = 0;
-				
-				BYTE ByteValue[1];
-				
-				int Count = 0;
-				
-				// The RLE-compressed data is preceeded by a 2-byte data count for each row in the data,
-				// which we're going to just skip.
-				io->seek_proc(handle, nHeight * _headerInfo._Channels * 2, SEEK_CUR);
-				
-				for (int channel = 0; channel < _headerInfo._Channels; channel++) {
-					// Read the RLE data.
-					Count = 0;
-					while (Count < nPixels) {
-						io->read_proc(&ByteValue, sizeof(ByteValue), 1, handle);
-						
-						int len = psdGetValue( ByteValue, sizeof(ByteValue) );
-						if ( 128 > len ) {
-							len++;
-							Count += len;
-							
-							while (len) {
-								io->read_proc(&ByteValue, sizeof(ByteValue), 1, handle);
-								nValue = psdGetValue( ByteValue, sizeof(ByteValue) );
-								*p = (BYTE)nValue;
-								p += sizeof(ByteValue);
-								len--;
-							}
+				BYTE* dst_line_start = dst_first_line;
+				for(unsigned h = 0; h < nHeight; ++h, dst_line_start -= dstLineSize) {//<*** flipped
+
+					io->read_proc(line_start, lineSize, 1, handle);
+					
+					for (BYTE *line = line_start, *dst_line = dst_line_start; line < line_start + lineSize; 
+						line += bytes, dst_line += dstBpp) {
+#ifdef FREEIMAGE_BIGENDIAN
+							memcpy(dst_line + channelOffset, line, bytes);
+#else
+						// reverse copy bytes
+						for (unsigned b = 0; b < bytes; ++b) {
+							dst_line[channelOffset + b] = line[(bytes-1) - b];
 						}
-						else if ( 128 < len ) {
-							// Next -len+1 bytes in the dest are replicated from next source byte.
-							// (Interpret len as a negative 8-bit int.)
-							len ^= 0x0FF;
-							len += 2;
-							io->read_proc(&ByteValue, sizeof(ByteValue), 1, handle);
+#endif // FREEIMAGE_BIGENDIAN
+					}
+				} //< h
+			}//< ch
+			
+			SAFE_DELETE_ARRAY(line_start);
+					
+		}
+		break;
+		
+		case PSDP_COMPRESSION_RLE: // RLE compression	
+		{			
+									
+			// The RLE-compressed data is preceeded by a 2-byte line size for each row in the data,
+			// store an array of these
+
+			// later use this array as WORD rleLineSizeList[nChannels][nHeight];
+			WORD *rleLineSizeList = new (std::nothrow) WORD[nChannels*nHeight];
+
+			if(!rleLineSizeList) {
+				FreeImage_Unload(bitmap);
+				SAFE_DELETE_ARRAY(line_start);
+				throw std::bad_alloc();
+			}	
+			
+			io->read_proc(rleLineSizeList, 2, nChannels * nHeight, handle);
+			
+			WORD largestRLELine = 0;
+			for(unsigned ch = 0; ch < nChannels; ++ch) {
+				for(unsigned h = 0; h < nHeight; ++h) {
+					const unsigned index = ch * nHeight + h;
+
+#ifndef FREEIMAGE_BIGENDIAN 
+					SwapShort(&rleLineSizeList[index]);
+#endif
+					if(largestRLELine < rleLineSizeList[index]) {
+						largestRLELine = rleLineSizeList[index];
+					}
+				}
+			}
+
+			BYTE* rle_line_start = new (std::nothrow) BYTE[largestRLELine];
+			if(!rle_line_start) {
+				FreeImage_Unload(bitmap);
+				SAFE_DELETE_ARRAY(line_start);
+				SAFE_DELETE_ARRAY(rleLineSizeList);
+				throw std::bad_alloc();
+			}
+			
+			// Read the RLE data (assume 8-bit)
+			
+			for (unsigned ch = 0; ch < nChannels; ch++) {
+				const unsigned channelOffset = ch * bytes;
+				
+				BYTE* dst_line_start = dst_first_line;
+				for(unsigned h = 0; h < nHeight; ++h, dst_line_start -= dstLineSize) {//<*** flipped
+					const unsigned index = ch * nHeight + h;
+					
+					// - read and uncompress line -
+					
+					const WORD rleLineSize = rleLineSizeList[index];
+					
+					io->read_proc(rle_line_start, rleLineSize, 1, handle);
+					
+					for (BYTE* rle_line = rle_line_start, *line = line_start; rle_line < rle_line_start + rleLineSize;) {
+						int len = *rle_line++;
+						
+						// NOTE len is signed byte in PackBits RLE
+						
+						if ( len < 128 ) { //<- MSB is not set
+							// uncompressed packet
 							
-							nValue = psdGetValue( ByteValue, sizeof(ByteValue) );
-							Count += len;
-							while (len) {
-								*p = (BYTE)nValue;
-								p += sizeof(ByteValue);
-								len--;
-							}
+							// (len + 1) bytes of data are copied
+							
+							++len;
+							
+							memcpy(line, rle_line, len);
+							line += len;
+							rle_line += len;
+						}
+						else if ( len > 128 ) { //< MSB is set
+						
+							// RLE compressed packet
+							
+							// One byte of data is repeated (â€“len + 1) times
+							
+							len ^= 0xFF; // same as (-len + 1) & 0xFF 
+							len += 2;    //
+
+							memset(line, *rle_line++, len);
+							line += len;
+
 						}
 						else if ( 128 == len ) {
 							// Do nothing
 						}
+					}//< rle_line
+					
+					// - write line to destination -
+					
+					if(ch >= dstChannels) {
+						// @todo write to extra channels
+						break; 
 					}
-				}
-				
-				BYTE * prSource = plData;
-				BYTE * plDest = new(std::nothrow) BYTE[nTotalBytes];
-				memset(plDest, 254, nTotalBytes);
-				
-				int nPixelCounter = 0;
-				for(int c=0; c<_headerInfo._Channels; c++) {
-					nPixelCounter = c*bytes;
-					for (int nPos = 0; nPos<nPixels; ++nPos) {
-						memcpy( plDest + nPixelCounter, prSource, bytes );
-						prSource++;
-						nPixelCounter += _headerInfo._Channels*bytes;
-					}
-				}
-				SAFE_DELETE_ARRAY(plData);
-				
-				if (plDest) {
-					switch (_headerInfo._BitsPerPixel) {
-						case 1: 	
-						case 8: 
-						case 16:
-							Bitmap = ProcessBuffer(plDest);
-							break;
-							
-						default: // Unsupported format
-							break;
-					}
-				}
-				SAFE_DELETE_ARRAY(plDest);
-			}
-			break;
+						
+					// byte by byte copy a single channel to pixel
+					for (BYTE *line = line_start, *dst_line = dst_line_start; line < line_start + lineSize; 
+						line += bytes, dst_line += dstBpp) {
 
-			case 2: // ZIP without prediction, no specification
-				break;
-				
-			case 3: // ZIP with prediction, no specification
-				break;
-				
-			default: // Unknown format
-				break;
+#ifdef FREEIMAGE_BIGENDIAN
+							memcpy(dst_line + channelOffset, line, bytes);
+#else
+							// reverse copy bytes
+							for (unsigned b = 0; b < bytes; ++b) {
+								dst_line[channelOffset + b] = line[(bytes-1) - b];							
+							}
+#endif // FREEIMAGE_BIGENDIAN
+					}	
+				}//< h
+			}//< ch
+			
+			SAFE_DELETE_ARRAY(line_start);
+			SAFE_DELETE_ARRAY(rleLineSizeList);
+			SAFE_DELETE_ARRAY(rle_line_start);
 		}
+		break;
+		
+		case 2: // ZIP without prediction, no specification
+			break;
+			
+		case 3: // ZIP with prediction, no specification
+			break;
+			
+		default: // Unknown format
+			break;
+		
 	}
 	
-	return Bitmap;
+	// --- Further process the bitmap ---
+	
+	if((mode == PSDP_CMYK || mode == PSDP_MULTICHANNEL)) {	
+		// CMYK values are "inverted", invert them back		
 
+		if(mode == PSDP_MULTICHANNEL) {
+			invertColor(bitmap);
+		} else {
+			FreeImage_Invert(bitmap);
+		}
+
+		if((_fi_flags & PSD_CMYK) == PSD_CMYK) {
+			// keep as CMYK
+
+			if(mode == PSDP_MULTICHANNEL) {
+				//### we force CMY to be CMYK, but CMY has no ICC. 
+				// Create empty profile and add the flag.
+				FreeImage_CreateICCProfile(bitmap, NULL, 0);
+				FreeImage_GetICCProfile(bitmap)->flags |= FIICC_COLOR_IS_CMYK;
+			}
+		}
+		else { 
+			// convert to RGB
+			
+			convertCMYKtoRGBA(bitmap);
+			
+			// The ICC Profile is no longer valid
+			_iccProfile.clear();
+			
+			// remove the pending A if not present in source 
+			if(nChannels == 4 || nChannels == 3 ) {
+				FIBITMAP* t = stripAlpha(bitmap);
+				if(t) {
+					FreeImage_Unload(bitmap);
+					bitmap = t;
+				} // else: silently fail
+			}
+		}
+	}
+	else if ( mode == PSDP_LAB && !((_fi_flags & PSD_LAB) == PSD_LAB)) {
+		convertLABtoRGB(bitmap);
+	}
+	else {
+		if (needPalette) {
+			assert(FreeImage_GetPalette(bitmap));
+			
+			if(mode == PSDP_BITMAP) {
+				CREATE_GREYSCALE_PALETTE_REVERSE(FreeImage_GetPalette(bitmap), 2);
+			}
+			else if(mode == PSDP_INDEXED) {
+				if(!_colourModeData._plColourData || _colourModeData._Length != 768 || _ColourCount < 0) {
+					FreeImage_OutputMessageProc(_fi_format_id, "Indexed image has no palette. Using the default grayscale one.");
+				} else {
+					_colourModeData.FillPalette(bitmap);
+				}
+			}
+			// GRAYSCALE, DUOTONE - use default grayscale palette
+		}
+		
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
+		if(FreeImage_GetImageType(bitmap) == FIT_BITMAP) {
+			swapRandB(bitmap);
+		}
+#endif
+	}
+	
+	return bitmap;
 } 
 
-FIBITMAP* psdParser::Load(FreeImageIO *io, fi_handle handle, int s_format_id) {
+FIBITMAP* psdParser::Load(FreeImageIO *io, fi_handle handle, int s_format_id, int flags) {
 	FIBITMAP *Bitmap = NULL;
-		
+	
+	_fi_flags = flags;
+	_fi_format_id = s_format_id;
+	
 	try {
 		if (NULL == handle) {
 			throw("Cannot open file");
@@ -1509,10 +1332,16 @@ FIBITMAP* psdParser::Load(FreeImageIO *io, fi_handle handle, int s_format_id) {
 		// set ICC profile
 		if(NULL != _iccProfile._ProfileData) {
 			FreeImage_CreateICCProfile(Bitmap, _iccProfile._ProfileData, _iccProfile._ProfileSize);
+			if ((flags & PSD_CMYK) == PSD_CMYK) {
+				FreeImage_GetICCProfile(Bitmap)->flags |= FIICC_COLOR_IS_CMYK;
+			}
 		}
 		
 	} catch(const char *text) {
 		FreeImage_OutputMessageProc(s_format_id, text);
+	}
+	catch(const std::exception& e) {
+		FreeImage_OutputMessageProc(s_format_id, "%s", e.what());
 	}
 
 	return Bitmap;
