@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="OpenEXR"
 	ProjectGUID="{17A4874B-0606-4687-90B6-F91F8CB3B8AF}"
 	RootNamespace="OpenEXR"
@@ -359,6 +359,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\IlmImf\ImfStringVectorAttribute.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\IlmImf\ImfTestFile.cpp"
 					>
 				</File>
@@ -540,6 +544,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\IlmImf\ImfCheckedArithmetic.h"
+					>
+				</File>
+				<File
 					RelativePath=".\IlmImf\ImfChromaticities.h"
 					>
 				</File>
@@ -713,6 +721,10 @@
 				</File>
 				<File
 					RelativePath=".\IlmImf\ImfStringAttribute.h"
+					>
+				</File>
+				<File
+					RelativePath=".\IlmImf\ImfStringVectorAttribute.h"
 					>
 				</File>
 				<File

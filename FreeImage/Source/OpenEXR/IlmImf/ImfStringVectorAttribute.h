@@ -1,7 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2004, Industrial Light & Magic, a division of Lucas
-// Digital Ltd. LLC
+// Copyright (c) 2007, Weta Digital Ltd
 // 
 // All rights reserved.
 // 
@@ -14,7 +13,7 @@
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
 // distribution.
-// *       Neither the name of Industrial Light & Magic nor the names of
+// *       Neither the name of Weta Digital nor the names of
 // its contributors may be used to endorse or promote products derived
 // from this software without specific prior written permission. 
 // 
@@ -33,83 +32,35 @@
 ///////////////////////////////////////////////////////////////////////////
 
 
-#ifndef INCLUDED_IMF_PIZ_COMPRESSOR_H
-#define INCLUDED_IMF_PIZ_COMPRESSOR_H
+
+#ifndef INCLUDED_IMF_STRINGVECTOR_ATTRIBUTE_H
+#define INCLUDED_IMF_STRINGVECTOR_ATTRIBUTE_H
 
 //-----------------------------------------------------------------------------
 //
-//	class PizCompressor -- uses Wavelet and Huffman encoding.
+//	class StringVectorAttribute
 //
 //-----------------------------------------------------------------------------
 
-#include <ImfCompressor.h>
+#include <ImfAttribute.h>
+#include <string>
+#include <vector>
+
 
 namespace Imf {
 
-class ChannelList;
-
-
-class PizCompressor: public Compressor
-{
-  public:
-
-    PizCompressor (const Header &hdr,
-                   size_t maxScanLineSize,
-                   size_t numScanLines);
-
-    virtual ~PizCompressor ();
-
-    virtual int		numScanLines () const;
-
-    virtual Format	format () const;
-
-    virtual int		compress (const char *inPtr,
-				  int inSize,
-				  int minY,
-				  const char *&outPtr);                  
-                  
-    virtual int		compressTile (const char *inPtr,
-				      int inSize,
-				      Imath::Box2i range,
-				      const char *&outPtr);
-
-    virtual int		uncompress (const char *inPtr,
-				    int inSize,
-				    int minY,
-				    const char *&outPtr);
-                    
-    virtual int		uncompressTile (const char *inPtr,
-					int inSize,
-					Imath::Box2i range,
-					const char *&outPtr);
-  private:
-
-    struct ChannelData;
-    
-    int			compress (const char *inPtr,
-				  int inSize,
-				  Imath::Box2i range,
-				  const char *&outPtr);
- 
-    int			uncompress (const char *inPtr,
-				    int inSize,
-				    Imath::Box2i range,
-				    const char *&outPtr);
-
-    int			_maxScanLineSize;
-    Format		_format;
-    int			_numScanLines;
-    unsigned short *	_tmpBuffer;
-    char *		_outBuffer;
-    int			_numChans;
-    const ChannelList &	_channels;
-    ChannelData *	_channelData;
-    int			_minX;
-    int			_maxX;
-    int			_maxY;
-};
+typedef std::vector<std::string> StringVector;
+typedef TypedAttribute<StringVector> StringVectorAttribute;
+template <> const char *StringVectorAttribute::staticTypeName ();
+template <> void StringVectorAttribute::writeValueTo (OStream &, int) const;
+template <> void StringVectorAttribute::readValueFrom (IStream &, int, int);
 
 
 } // namespace Imf
+
+// Metrowerks compiler wants the .cpp file inlined, too
+#ifdef __MWERKS__
+#include <ImfStringVectorAttribute.cpp>
+#endif
 
 #endif

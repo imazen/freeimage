@@ -267,6 +267,9 @@
 					RelativePath=".\IlmImf\ImfStringAttribute.cpp">
 				</File>
 				<File
+					RelativePath=".\IlmImf\ImfStringVectorAttribute.cpp">
+				</File>
+				<File
 					RelativePath=".\IlmImf\ImfTestFile.cpp">
 				</File>
 				<File
@@ -405,6 +408,9 @@
 					RelativePath=".\IlmImf\ImfChannelListAttribute.h">
 				</File>
 				<File
+					RelativePath=".\IlmImf\ImfCheckedArithmetic.h">
+				</File>
+				<File
 					RelativePath=".\IlmImf\ImfChromaticities.h">
 				</File>
 				<File
@@ -535,6 +541,9 @@
 				</File>
 				<File
 					RelativePath=".\IlmImf\ImfStringAttribute.h">
+				</File>
+				<File
+					RelativePath=".\IlmImf\ImfStringVectorAttribute.h">
 				</File>
 				<File
 					RelativePath=".\IlmImf\ImfTestFile.h">

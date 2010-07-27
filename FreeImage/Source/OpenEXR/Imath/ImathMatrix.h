@@ -39,7 +39,7 @@
 
 //----------------------------------------------------------------
 //
-//	2D (3x3) and 3D (4x4) transformation matrix templates.
+//      2D (3x3) and 3D (4x4) transformation matrix templates.
 //
 //----------------------------------------------------------------
 
@@ -60,6 +60,8 @@
 
 namespace Imath {
 
+enum Uninitialized {UNINITIALIZED};
+
 
 template <class T> class Matrix33
 {
@@ -69,36 +71,38 @@ template <class T> class Matrix33
     // Access to elements
     //-------------------
 
-    T		x[3][3];
+    T           x[3][3];
 
-    T *		operator [] (int i);
-    const T *	operator [] (int i) const;
+    T *         operator [] (int i);
+    const T *   operator [] (int i) const;
 
 
     //-------------
     // Constructors
     //-------------
 
+    Matrix33 (Uninitialized) {}
+
     Matrix33 ();
-				// 1 0 0
-				// 0 1 0
-				// 0 0 1
+                                // 1 0 0
+                                // 0 1 0
+                                // 0 0 1
 
     Matrix33 (T a);
-				// a a a
-				// a a a
-				// a a a
+                                // a a a
+                                // a a a
+                                // a a a
 
     Matrix33 (const T a[3][3]);
-				// a[0][0] a[0][1] a[0][2]
-				// a[1][0] a[1][1] a[1][2]
-				// a[2][0] a[2][1] a[2][2]
+                                // a[0][0] a[0][1] a[0][2]
+                                // a[1][0] a[1][1] a[1][2]
+                                // a[2][0] a[2][1] a[2][2]
 
     Matrix33 (T a, T b, T c, T d, T e, T f, T g, T h, T i);
 
-				// a b c
-				// d e f
-				// g h i
+                                // a b c
+                                // d e f
+                                // g h i
 
 
     //--------------------------------
@@ -106,25 +110,26 @@ template <class T> class Matrix33
     //--------------------------------
 
     Matrix33 (const Matrix33 &v);
+    template <class S> explicit Matrix33 (const Matrix33<S> &v);
 
-    const Matrix33 &	operator = (const Matrix33 &v);
-    const Matrix33 &	operator = (T a);
+    const Matrix33 &    operator = (const Matrix33 &v);
+    const Matrix33 &    operator = (T a);
 
 
     //----------------------
     // Compatibility with Sb
     //----------------------
     
-    T *			getValue ();
-    const T *		getValue () const;
+    T *                 getValue ();
+    const T *           getValue () const;
 
     template <class S>
-    void		getValue (Matrix33<S> &v) const;
+    void                getValue (Matrix33<S> &v) const;
     template <class S>
-    Matrix33 &		setValue (const Matrix33<S> &v);
+    Matrix33 &          setValue (const Matrix33<S> &v);
 
     template <class S>
-    Matrix33 &		setTheMatrix (const Matrix33<S> &v);
+    Matrix33 &          setTheMatrix (const Matrix33<S> &v);
 
 
     //---------
@@ -138,99 +143,106 @@ template <class T> class Matrix33
     // Equality
     //---------
 
-    bool		operator == (const Matrix33 &v) const;
-    bool		operator != (const Matrix33 &v) const;
+    bool                operator == (const Matrix33 &v) const;
+    bool                operator != (const Matrix33 &v) const;
 
     //-----------------------------------------------------------------------
     // Compare two matrices and test if they are "approximately equal":
     //
     // equalWithAbsError (m, e)
     //
-    //	    Returns true if the coefficients of this and m are the same with
-    //	    an absolute error of no more than e, i.e., for all i, j
+    //      Returns true if the coefficients of this and m are the same with
+    //      an absolute error of no more than e, i.e., for all i, j
     //
     //      abs (this[i][j] - m[i][j]) <= e
     //
     // equalWithRelError (m, e)
     //
-    //	    Returns true if the coefficients of this and m are the same with
-    //	    a relative error of no more than e, i.e., for all i, j
+    //      Returns true if the coefficients of this and m are the same with
+    //      a relative error of no more than e, i.e., for all i, j
     //
     //      abs (this[i] - v[i][j]) <= e * abs (this[i][j])
     //-----------------------------------------------------------------------
 
-    bool		equalWithAbsError (const Matrix33<T> &v, T e) const;
-    bool		equalWithRelError (const Matrix33<T> &v, T e) const;
+    bool                equalWithAbsError (const Matrix33<T> &v, T e) const;
+    bool                equalWithRelError (const Matrix33<T> &v, T e) const;
 
 
     //------------------------
     // Component-wise addition
     //------------------------
 
-    const Matrix33 &	operator += (const Matrix33 &v);
-    const Matrix33 &	operator += (T a);
-    Matrix33		operator + (const Matrix33 &v) const;
+    const Matrix33 &    operator += (const Matrix33 &v);
+    const Matrix33 &    operator += (T a);
+    Matrix33            operator + (const Matrix33 &v) const;
 
 
     //---------------------------
     // Component-wise subtraction
     //---------------------------
 
-    const Matrix33 &	operator -= (const Matrix33 &v);
-    const Matrix33 &	operator -= (T a);
-    Matrix33		operator - (const Matrix33 &v) const;
+    const Matrix33 &    operator -= (const Matrix33 &v);
+    const Matrix33 &    operator -= (T a);
+    Matrix33            operator - (const Matrix33 &v) const;
 
 
     //------------------------------------
     // Component-wise multiplication by -1
     //------------------------------------
 
-    Matrix33		operator - () const;
-    const Matrix33 &	negate ();
+    Matrix33            operator - () const;
+    const Matrix33 &    negate ();
 
 
     //------------------------------
     // Component-wise multiplication
     //------------------------------
 
-    const Matrix33 &	operator *= (T a);
-    Matrix33		operator * (T a) const;
+    const Matrix33 &    operator *= (T a);
+    Matrix33            operator * (T a) const;
 
 
     //-----------------------------------
     // Matrix-times-matrix multiplication
     //-----------------------------------
 
-    const Matrix33 &	operator *= (const Matrix33 &v);
-    Matrix33		operator * (const Matrix33 &v) const;
+    const Matrix33 &    operator *= (const Matrix33 &v);
+    Matrix33            operator * (const Matrix33 &v) const;
 
 
-    //---------------------------------------------
-    // Vector-times-matrix multiplication; see also
-    // the "operator *" functions defined below.
-    //---------------------------------------------
+    //-----------------------------------------------------------------
+    // Vector-times-matrix multiplication; see also the "operator *"
+    // functions defined below.
+    //
+    // m.multVecMatrix(src,dst) implements a homogeneous transformation
+    // by computing Vec3 (src.x, src.y, 1) * m and dividing by the
+    // result's third element.
+    //
+    // m.multDirMatrix(src,dst) multiplies src by the upper left 2x2
+    // submatrix, ignoring the rest of matrix m.
+    //-----------------------------------------------------------------
 
     template <class S>
-    void		multVecMatrix(const Vec2<S> &src, Vec2<S> &dst) const;
+    void                multVecMatrix(const Vec2<S> &src, Vec2<S> &dst) const;
 
     template <class S>
-    void		multDirMatrix(const Vec2<S> &src, Vec2<S> &dst) const;
+    void                multDirMatrix(const Vec2<S> &src, Vec2<S> &dst) const;
 
 
     //------------------------
     // Component-wise division
     //------------------------
 
-    const Matrix33 &	operator /= (T a);
-    Matrix33		operator / (T a) const;
+    const Matrix33 &    operator /= (T a);
+    Matrix33            operator / (T a) const;
 
 
     //------------------
     // Transposed matrix
     //------------------
 
-    const Matrix33 &	transpose ();
-    Matrix33		transposed () const;
+    const Matrix33 &    transpose ();
+    Matrix33            transposed () const;
 
 
     //------------------------------------------------------------
@@ -247,17 +259,17 @@ template <class T> class Matrix33
     // 
     //------------------------------------------------------------
 
-    const Matrix33 &	invert (bool singExc = false)
-			throw (Iex::MathExc);
+    const Matrix33 &    invert (bool singExc = false)
+                        throw (Iex::MathExc);
 
-    Matrix33<T>		inverse (bool singExc = false) const
-			throw (Iex::MathExc);
+    Matrix33<T>         inverse (bool singExc = false) const
+                        throw (Iex::MathExc);
 
-    const Matrix33 &	gjInvert (bool singExc = false)
-			throw (Iex::MathExc);
+    const Matrix33 &    gjInvert (bool singExc = false)
+                        throw (Iex::MathExc);
 
-    Matrix33<T>		gjInverse (bool singExc = false) const
-			throw (Iex::MathExc);
+    Matrix33<T>         gjInverse (bool singExc = false) const
+                        throw (Iex::MathExc);
 
 
     //-----------------------------------------
@@ -265,7 +277,7 @@ template <class T> class Matrix33
     //-----------------------------------------
 
     template <class S>
-    const Matrix33 &	setRotation (S r);
+    const Matrix33 &    setRotation (S r);
 
 
     //-----------------------------
@@ -273,14 +285,14 @@ template <class T> class Matrix33
     //-----------------------------
 
     template <class S>
-    const Matrix33 &	rotate (S r);
+    const Matrix33 &    rotate (S r);
 
 
     //--------------------------------------------
     // Set matrix to scale by given uniform factor
     //--------------------------------------------
 
-    const Matrix33 &	setScale (T s);
+    const Matrix33 &    setScale (T s);
 
 
     //------------------------------------
@@ -288,7 +300,7 @@ template <class T> class Matrix33
     //------------------------------------
 
     template <class S>
-    const Matrix33 &	setScale (const Vec2<S> &s);
+    const Matrix33 &    setScale (const Vec2<S> &s);
 
 
     //----------------------
@@ -296,7 +308,7 @@ template <class T> class Matrix33
     //----------------------
 
     template <class S>
-    const Matrix33 &	scale (const Vec2<S> &s);
+    const Matrix33 &    scale (const Vec2<S> &s);
 
 
     //------------------------------------------
@@ -304,14 +316,14 @@ template <class T> class Matrix33
     //------------------------------------------
 
     template <class S>
-    const Matrix33 &	setTranslation (const Vec2<S> &t);
+    const Matrix33 &    setTranslation (const Vec2<S> &t);
 
 
     //-----------------------------
     // Return translation component
     //-----------------------------
 
-    Vec2<T>		translation () const;
+    Vec2<T>             translation () const;
 
 
     //--------------------------
@@ -319,7 +331,7 @@ template <class T> class Matrix33
     //--------------------------
 
     template <class S>
-    const Matrix33 &	translate (const Vec2<S> &t);
+    const Matrix33 &    translate (const Vec2<S> &t);
 
 
     //-----------------------------------------------------------
@@ -327,7 +339,7 @@ template <class T> class Matrix33
     //-----------------------------------------------------------
 
     template <class S>
-    const Matrix33 &	setShear (const S &h);
+    const Matrix33 &    setShear (const S &h);
 
 
     //-------------------------------------------------------------
@@ -336,7 +348,7 @@ template <class T> class Matrix33
     //-------------------------------------------------------------
 
     template <class S>
-    const Matrix33 &	setShear (const Vec2<S> &h);
+    const Matrix33 &    setShear (const Vec2<S> &h);
 
 
     //-----------------------------------------------------------
@@ -344,7 +356,7 @@ template <class T> class Matrix33
     //-----------------------------------------------------------
 
     template <class S>
-    const Matrix33 &	shear (const S &xy);
+    const Matrix33 &    shear (const S &xy);
 
 
     //-----------------------------------------------------------
@@ -353,17 +365,31 @@ template <class T> class Matrix33
     //-----------------------------------------------------------
 
     template <class S>
-    const Matrix33 &	shear (const Vec2<S> &h);
+    const Matrix33 &    shear (const Vec2<S> &h);
 
 
     //-------------------------------------------------
     // Limitations of type T (see also class limits<T>)
     //-------------------------------------------------
 
-    static T		baseTypeMin()		{return limits<T>::min();}
-    static T		baseTypeMax()		{return limits<T>::max();}
-    static T		baseTypeSmallest()	{return limits<T>::smallest();}
-    static T		baseTypeEpsilon()	{return limits<T>::epsilon();}
+    static T            baseTypeMin()           {return limits<T>::min();}
+    static T            baseTypeMax()           {return limits<T>::max();}
+    static T            baseTypeSmallest()      {return limits<T>::smallest();}
+    static T            baseTypeEpsilon()       {return limits<T>::epsilon();}
+
+  private:
+
+    template <typename R, typename S>
+    struct isSameType
+    {
+        enum {value = 0};
+    };
+
+    template <typename R>
+    struct isSameType<R, R>
+    {
+        enum {value = 1};
+    };
 };
 
 
@@ -375,47 +401,49 @@ template <class T> class Matrix44
     // Access to elements
     //-------------------
 
-    T		x[4][4];
+    T           x[4][4];
 
-    T *		operator [] (int i);
-    const T *	operator [] (int i) const;
+    T *         operator [] (int i);
+    const T *   operator [] (int i) const;
 
 
     //-------------
     // Constructors
     //-------------
 
+    Matrix44 (Uninitialized) {}
+
     Matrix44 ();
-				// 1 0 0 0
-				// 0 1 0 0
-				// 0 0 1 0
-				// 0 0 0 1
+                                // 1 0 0 0
+                                // 0 1 0 0
+                                // 0 0 1 0
+                                // 0 0 0 1
 
     Matrix44 (T a);
-				// a a a a
-				// a a a a
-				// a a a a
-				// a a a a
+                                // a a a a
+                                // a a a a
+                                // a a a a
+                                // a a a a
 
     Matrix44 (const T a[4][4]) ;
-				// a[0][0] a[0][1] a[0][2] a[0][3]
-				// a[1][0] a[1][1] a[1][2] a[1][3]
-				// a[2][0] a[2][1] a[2][2] a[2][3]
-				// a[3][0] a[3][1] a[3][2] a[3][3]
+                                // a[0][0] a[0][1] a[0][2] a[0][3]
+                                // a[1][0] a[1][1] a[1][2] a[1][3]
+                                // a[2][0] a[2][1] a[2][2] a[2][3]
+                                // a[3][0] a[3][1] a[3][2] a[3][3]
 
     Matrix44 (T a, T b, T c, T d, T e, T f, T g, T h,
-	      T i, T j, T k, T l, T m, T n, T o, T p);
+              T i, T j, T k, T l, T m, T n, T o, T p);
 
-				// a b c d
-				// e f g h
-				// i j k l
-				// m n o p
+                                // a b c d
+                                // e f g h
+                                // i j k l
+                                // m n o p
 
     Matrix44 (Matrix33<T> r, Vec3<T> t);
-				// r r r 0
-				// r r r 0
-				// r r r 0
-				// t t t 1
+                                // r r r 0
+                                // r r r 0
+                                // r r r 0
+                                // t t t 1
 
 
     //--------------------------------
@@ -423,25 +451,26 @@ template <class T> class Matrix44
     //--------------------------------
 
     Matrix44 (const Matrix44 &v);
+    template <class S> explicit Matrix44 (const Matrix44<S> &v);
 
-    const Matrix44 &	operator = (const Matrix44 &v);
-    const Matrix44 &	operator = (T a);
+    const Matrix44 &    operator = (const Matrix44 &v);
+    const Matrix44 &    operator = (T a);
 
 
     //----------------------
     // Compatibility with Sb
     //----------------------
     
-    T *			getValue ();
-    const T *		getValue () const;
+    T *                 getValue ();
+    const T *           getValue () const;
 
     template <class S>
-    void		getValue (Matrix44<S> &v) const;
+    void                getValue (Matrix44<S> &v) const;
     template <class S>
-    Matrix44 &		setValue (const Matrix44<S> &v);
+    Matrix44 &          setValue (const Matrix44<S> &v);
 
     template <class S>
-    Matrix44 &		setTheMatrix (const Matrix44<S> &v);
+    Matrix44 &          setTheMatrix (const Matrix44<S> &v);
 
     //---------
     // Identity
@@ -454,103 +483,110 @@ template <class T> class Matrix44
     // Equality
     //---------
 
-    bool		operator == (const Matrix44 &v) const;
-    bool		operator != (const Matrix44 &v) const;
+    bool                operator == (const Matrix44 &v) const;
+    bool                operator != (const Matrix44 &v) const;
 
     //-----------------------------------------------------------------------
     // Compare two matrices and test if they are "approximately equal":
     //
     // equalWithAbsError (m, e)
     //
-    //	    Returns true if the coefficients of this and m are the same with
-    //	    an absolute error of no more than e, i.e., for all i, j
+    //      Returns true if the coefficients of this and m are the same with
+    //      an absolute error of no more than e, i.e., for all i, j
     //
     //      abs (this[i][j] - m[i][j]) <= e
     //
     // equalWithRelError (m, e)
     //
-    //	    Returns true if the coefficients of this and m are the same with
-    //	    a relative error of no more than e, i.e., for all i, j
+    //      Returns true if the coefficients of this and m are the same with
+    //      a relative error of no more than e, i.e., for all i, j
     //
     //      abs (this[i] - v[i][j]) <= e * abs (this[i][j])
     //-----------------------------------------------------------------------
 
-    bool		equalWithAbsError (const Matrix44<T> &v, T e) const;
-    bool		equalWithRelError (const Matrix44<T> &v, T e) const;
+    bool                equalWithAbsError (const Matrix44<T> &v, T e) const;
+    bool                equalWithRelError (const Matrix44<T> &v, T e) const;
 
 
     //------------------------
     // Component-wise addition
     //------------------------
 
-    const Matrix44 &	operator += (const Matrix44 &v);
-    const Matrix44 &	operator += (T a);
-    Matrix44		operator + (const Matrix44 &v) const;
+    const Matrix44 &    operator += (const Matrix44 &v);
+    const Matrix44 &    operator += (T a);
+    Matrix44            operator + (const Matrix44 &v) const;
 
 
     //---------------------------
     // Component-wise subtraction
     //---------------------------
 
-    const Matrix44 &	operator -= (const Matrix44 &v);
-    const Matrix44 &	operator -= (T a);
-    Matrix44		operator - (const Matrix44 &v) const;
+    const Matrix44 &    operator -= (const Matrix44 &v);
+    const Matrix44 &    operator -= (T a);
+    Matrix44            operator - (const Matrix44 &v) const;
 
 
     //------------------------------------
     // Component-wise multiplication by -1
     //------------------------------------
 
-    Matrix44		operator - () const;
-    const Matrix44 &	negate ();
+    Matrix44            operator - () const;
+    const Matrix44 &    negate ();
 
 
     //------------------------------
     // Component-wise multiplication
     //------------------------------
 
-    const Matrix44 &	operator *= (T a);
-    Matrix44		operator * (T a) const;
+    const Matrix44 &    operator *= (T a);
+    Matrix44            operator * (T a) const;
 
 
     //-----------------------------------
     // Matrix-times-matrix multiplication
     //-----------------------------------
 
-    const Matrix44 &	operator *= (const Matrix44 &v);
-    Matrix44		operator * (const Matrix44 &v) const;
+    const Matrix44 &    operator *= (const Matrix44 &v);
+    Matrix44            operator * (const Matrix44 &v) const;
 
-    static void		multiply (const Matrix44 &a,	// assumes that
-				  const Matrix44 &b,	// &a != &c and
-				  Matrix44 &c);		// &b != &c.
+    static void         multiply (const Matrix44 &a,    // assumes that
+                                  const Matrix44 &b,    // &a != &c and
+                                  Matrix44 &c);         // &b != &c.
 
 
-    //---------------------------------------------
-    // Vector-times-matrix multiplication; see also
-    // the "operator *" functions defined below.
-    //---------------------------------------------
+    //-----------------------------------------------------------------
+    // Vector-times-matrix multiplication; see also the "operator *"
+    // functions defined below.
+    //
+    // m.multVecMatrix(src,dst) implements a homogeneous transformation
+    // by computing Vec4 (src.x, src.y, src.z, 1) * m and dividing by
+    // the result's third element.
+    //
+    // m.multDirMatrix(src,dst) multiplies src by the upper left 3x3
+    // submatrix, ignoring the rest of matrix m.
+    //-----------------------------------------------------------------
 
     template <class S>
-    void		multVecMatrix(const Vec3<S> &src, Vec3<S> &dst) const;
+    void                multVecMatrix(const Vec3<S> &src, Vec3<S> &dst) const;
 
     template <class S>
-    void		multDirMatrix(const Vec3<S> &src, Vec3<S> &dst) const;
+    void                multDirMatrix(const Vec3<S> &src, Vec3<S> &dst) const;
 
 
     //------------------------
     // Component-wise division
     //------------------------
 
-    const Matrix44 &	operator /= (T a);
-    Matrix44		operator / (T a) const;
+    const Matrix44 &    operator /= (T a);
+    Matrix44            operator / (T a) const;
 
 
     //------------------
     // Transposed matrix
     //------------------
 
-    const Matrix44 &	transpose ();
-    Matrix44		transposed () const;
+    const Matrix44 &    transpose ();
+    Matrix44            transposed () const;
 
 
     //------------------------------------------------------------
@@ -567,17 +603,17 @@ template <class T> class Matrix44
     // 
     //------------------------------------------------------------
 
-    const Matrix44 &	invert (bool singExc = false)
-			throw (Iex::MathExc);
+    const Matrix44 &    invert (bool singExc = false)
+                        throw (Iex::MathExc);
 
-    Matrix44<T>		inverse (bool singExc = false) const
-			throw (Iex::MathExc);
+    Matrix44<T>         inverse (bool singExc = false) const
+                        throw (Iex::MathExc);
 
-    const Matrix44 &	gjInvert (bool singExc = false)
-			throw (Iex::MathExc);
+    const Matrix44 &    gjInvert (bool singExc = false)
+                        throw (Iex::MathExc);
 
-    Matrix44<T>		gjInverse (bool singExc = false) const
-			throw (Iex::MathExc);
+    Matrix44<T>         gjInverse (bool singExc = false) const
+                        throw (Iex::MathExc);
 
 
     //--------------------------------------------------------
@@ -585,7 +621,7 @@ template <class T> class Matrix44
     //--------------------------------------------------------
 
     template <class S>
-    const Matrix44 &	setEulerAngles (const Vec3<S>& r);
+    const Matrix44 &    setEulerAngles (const Vec3<S>& r);
 
 
     //--------------------------------------------------------
@@ -593,7 +629,7 @@ template <class T> class Matrix44
     //--------------------------------------------------------
 
     template <class S>
-    const Matrix44 &	setAxisAngle (const Vec3<S>& ax, S ang);
+    const Matrix44 &    setAxisAngle (const Vec3<S>& ax, S ang);
 
 
     //-------------------------------------------
@@ -601,14 +637,14 @@ template <class T> class Matrix44
     //-------------------------------------------
 
     template <class S>
-    const Matrix44 &	rotate (const Vec3<S> &r);
+    const Matrix44 &    rotate (const Vec3<S> &r);
 
 
     //--------------------------------------------
     // Set matrix to scale by given uniform factor
     //--------------------------------------------
 
-    const Matrix44 &	setScale (T s);
+    const Matrix44 &    setScale (T s);
 
 
     //------------------------------------
@@ -616,7 +652,7 @@ template <class T> class Matrix44
     //------------------------------------
 
     template <class S>
-    const Matrix44 &	setScale (const Vec3<S> &s);
+    const Matrix44 &    setScale (const Vec3<S> &s);
 
 
     //----------------------
@@ -624,7 +660,7 @@ template <class T> class Matrix44
     //----------------------
 
     template <class S>
-    const Matrix44 &	scale (const Vec3<S> &s);
+    const Matrix44 &    scale (const Vec3<S> &s);
 
 
     //------------------------------------------
@@ -632,14 +668,14 @@ template <class T> class Matrix44
     //------------------------------------------
 
     template <class S>
-    const Matrix44 &	setTranslation (const Vec3<S> &t);
+    const Matrix44 &    setTranslation (const Vec3<S> &t);
 
 
     //-----------------------------
     // Return translation component
     //-----------------------------
 
-    const Vec3<T>	translation () const;
+    const Vec3<T>       translation () const;
 
 
     //--------------------------
@@ -647,7 +683,7 @@ template <class T> class Matrix44
     //--------------------------
 
     template <class S>
-    const Matrix44 &	translate (const Vec3<S> &t);
+    const Matrix44 &    translate (const Vec3<S> &t);
 
 
     //-------------------------------------------------------------
@@ -658,7 +694,7 @@ template <class T> class Matrix44
     //-------------------------------------------------------------
 
     template <class S>
-    const Matrix44 &	setShear (const Vec3<S> &h);
+    const Matrix44 &    setShear (const Vec3<S> &h);
 
 
     //------------------------------------------------------------
@@ -672,7 +708,7 @@ template <class T> class Matrix44
     //------------------------------------------------------------
 
     template <class S>
-    const Matrix44 &	setShear (const Shear6<S> &h);
+    const Matrix44 &    setShear (const Shear6<S> &h);
 
 
     //--------------------------------------------------------
@@ -684,7 +720,7 @@ template <class T> class Matrix44
     //--------------------------------------------------------
 
     template <class S>
-    const Matrix44 &	shear (const Vec3<S> &h);
+    const Matrix44 &    shear (const Vec3<S> &h);
 
 
     //------------------------------------------------------------
@@ -699,17 +735,31 @@ template <class T> class Matrix44
     //------------------------------------------------------------
 
     template <class S>
-    const Matrix44 &	shear (const Shear6<S> &h);
+    const Matrix44 &    shear (const Shear6<S> &h);
 
 
     //-------------------------------------------------
     // Limitations of type T (see also class limits<T>)
     //-------------------------------------------------
 
-    static T		baseTypeMin()		{return limits<T>::min();}
-    static T		baseTypeMax()		{return limits<T>::max();}
-    static T		baseTypeSmallest()	{return limits<T>::smallest();}
-    static T		baseTypeEpsilon()	{return limits<T>::epsilon();}
+    static T            baseTypeMin()           {return limits<T>::min();}
+    static T            baseTypeMax()           {return limits<T>::max();}
+    static T            baseTypeSmallest()      {return limits<T>::smallest();}
+    static T            baseTypeEpsilon()       {return limits<T>::epsilon();}
+
+  private:
+
+    template <typename R, typename S>
+    struct isSameType
+    {
+        enum {value = 0};
+    };
+
+    template <typename R>
+    struct isSameType<R, R>
+    {
+        enum {value = 1};
+    };
 };
 
 
@@ -718,10 +768,10 @@ template <class T> class Matrix44
 //--------------
 
 template <class T>
-std::ostream &	operator << (std::ostream & s, const Matrix33<T> &m); 
+std::ostream &  operator << (std::ostream & s, const Matrix33<T> &m); 
 
 template <class T>
-std::ostream &	operator << (std::ostream & s, const Matrix44<T> &m); 
+std::ostream &  operator << (std::ostream & s, const Matrix44<T> &m); 
 
 
 //---------------------------------------------
@@ -729,23 +779,28 @@ std::ostream &	operator << (std::ostream & s, const Matrix44<T> &m);
 //---------------------------------------------
 
 template <class S, class T>
-const Vec2<S> &		   operator *= (Vec2<S> &v, const Matrix33<T> &m);
+const Vec2<S> &            operator *= (Vec2<S> &v, const Matrix33<T> &m);
 
 template <class S, class T>
-Vec2<S>			   operator * (const Vec2<S> &v, const Matrix33<T> &m);
+Vec2<S>                    operator * (const Vec2<S> &v, const Matrix33<T> &m);
 
 template <class S, class T>
-const Vec3<S> &		   operator *= (Vec3<S> &v, const Matrix33<T> &m);
+const Vec3<S> &            operator *= (Vec3<S> &v, const Matrix33<T> &m);
 
 template <class S, class T>
-Vec3<S>			   operator * (const Vec3<S> &v, const Matrix33<T> &m);
+Vec3<S>                    operator * (const Vec3<S> &v, const Matrix33<T> &m);
 
 template <class S, class T>
-const Vec3<S> &		   operator *= (Vec3<S> &v, const Matrix44<T> &m);
+const Vec3<S> &            operator *= (Vec3<S> &v, const Matrix44<T> &m);
 
 template <class S, class T>
-Vec3<S>			   operator * (const Vec3<S> &v, const Matrix44<T> &m);
+Vec3<S>                    operator * (const Vec3<S> &v, const Matrix44<T> &m);
 
+template <class S, class T>
+const Vec4<S> &            operator *= (Vec4<S> &v, const Matrix44<T> &m);
+
+template <class S, class T>
+Vec4<S>                    operator * (const Vec4<S> &v, const Matrix44<T> &m);
 
 //-------------------------
 // Typedefs for convenience
@@ -779,14 +834,9 @@ template <class T>
 inline
 Matrix33<T>::Matrix33 ()
 {
+    memset (x, 0, sizeof (x));
     x[0][0] = 1;
-    x[0][1] = 0;
-    x[0][2] = 0;
-    x[1][0] = 0;
     x[1][1] = 1;
-    x[1][2] = 0;
-    x[2][0] = 0;
-    x[2][1] = 0;
     x[2][2] = 1;
 }
 
@@ -809,15 +859,7 @@ template <class T>
 inline
 Matrix33<T>::Matrix33 (const T a[3][3]) 
 {
-    x[0][0] = a[0][0];
-    x[0][1] = a[0][1];
-    x[0][2] = a[0][2];
-    x[1][0] = a[1][0];
-    x[1][1] = a[1][1];
-    x[1][2] = a[1][2];
-    x[2][0] = a[2][0];
-    x[2][1] = a[2][1];
-    x[2][2] = a[2][2];
+    memcpy (x, a, sizeof (x));
 }
 
 template <class T>
@@ -839,30 +881,30 @@ template <class T>
 inline
 Matrix33<T>::Matrix33 (const Matrix33 &v)
 {
-    x[0][0] = v.x[0][0];
-    x[0][1] = v.x[0][1];
-    x[0][2] = v.x[0][2];
-    x[1][0] = v.x[1][0];
-    x[1][1] = v.x[1][1];
-    x[1][2] = v.x[1][2];
-    x[2][0] = v.x[2][0];
-    x[2][1] = v.x[2][1];
-    x[2][2] = v.x[2][2];
+    memcpy (x, v.x, sizeof (x));
+}
+
+template <class T>
+template <class S>
+inline
+Matrix33<T>::Matrix33 (const Matrix33<S> &v)
+{
+    x[0][0] = T (v.x[0][0]);
+    x[0][1] = T (v.x[0][1]);
+    x[0][2] = T (v.x[0][2]);
+    x[1][0] = T (v.x[1][0]);
+    x[1][1] = T (v.x[1][1]);
+    x[1][2] = T (v.x[1][2]);
+    x[2][0] = T (v.x[2][0]);
+    x[2][1] = T (v.x[2][1]);
+    x[2][2] = T (v.x[2][2]);
 }
 
 template <class T>
 inline const Matrix33<T> &
 Matrix33<T>::operator = (const Matrix33 &v)
 {
-    x[0][0] = v.x[0][0];
-    x[0][1] = v.x[0][1];
-    x[0][2] = v.x[0][2];
-    x[1][0] = v.x[1][0];
-    x[1][1] = v.x[1][1];
-    x[1][2] = v.x[1][2];
-    x[2][0] = v.x[2][0];
-    x[2][1] = v.x[2][1];
-    x[2][2] = v.x[2][2];
+    memcpy (x, v.x, sizeof (x));
     return *this;
 }
 
@@ -901,15 +943,22 @@ template <class S>
 inline void
 Matrix33<T>::getValue (Matrix33<S> &v) const
 {
-    v.x[0][0] = x[0][0];
-    v.x[0][1] = x[0][1];
-    v.x[0][2] = x[0][2];
-    v.x[1][0] = x[1][0];
-    v.x[1][1] = x[1][1];
-    v.x[1][2] = x[1][2];
-    v.x[2][0] = x[2][0];
-    v.x[2][1] = x[2][1];
-    v.x[2][2] = x[2][2];
+    if (isSameType<S,T>::value)
+    {
+        memcpy (v.x, x, sizeof (x));
+    }
+    else
+    {
+        v.x[0][0] = x[0][0];
+        v.x[0][1] = x[0][1];
+        v.x[0][2] = x[0][2];
+        v.x[1][0] = x[1][0];
+        v.x[1][1] = x[1][1];
+        v.x[1][2] = x[1][2];
+        v.x[2][0] = x[2][0];
+        v.x[2][1] = x[2][1];
+        v.x[2][2] = x[2][2];
+    }
 }
 
 template <class T>
@@ -917,15 +966,23 @@ template <class S>
 inline Matrix33<T> &
 Matrix33<T>::setValue (const Matrix33<S> &v)
 {
-    x[0][0] = v.x[0][0];
-    x[0][1] = v.x[0][1];
-    x[0][2] = v.x[0][2];
-    x[1][0] = v.x[1][0];
-    x[1][1] = v.x[1][1];
-    x[1][2] = v.x[1][2];
-    x[2][0] = v.x[2][0];
-    x[2][1] = v.x[2][1];
-    x[2][2] = v.x[2][2];
+    if (isSameType<S,T>::value)
+    {
+        memcpy (x, v.x, sizeof (x));
+    }
+    else
+    {
+        x[0][0] = v.x[0][0];
+        x[0][1] = v.x[0][1];
+        x[0][2] = v.x[0][2];
+        x[1][0] = v.x[1][0];
+        x[1][1] = v.x[1][1];
+        x[1][2] = v.x[1][2];
+        x[2][0] = v.x[2][0];
+        x[2][1] = v.x[2][1];
+        x[2][2] = v.x[2][2];
+    }
+
     return *this;
 }
 
@@ -934,15 +991,23 @@ template <class S>
 inline Matrix33<T> &
 Matrix33<T>::setTheMatrix (const Matrix33<S> &v)
 {
-    x[0][0] = v.x[0][0];
-    x[0][1] = v.x[0][1];
-    x[0][2] = v.x[0][2];
-    x[1][0] = v.x[1][0];
-    x[1][1] = v.x[1][1];
-    x[1][2] = v.x[1][2];
-    x[2][0] = v.x[2][0];
-    x[2][1] = v.x[2][1];
-    x[2][2] = v.x[2][2];
+    if (isSameType<S,T>::value)
+    {
+        memcpy (x, v.x, sizeof (x));
+    }
+    else
+    {
+        x[0][0] = v.x[0][0];
+        x[0][1] = v.x[0][1];
+        x[0][2] = v.x[0][2];
+        x[1][0] = v.x[1][0];
+        x[1][1] = v.x[1][1];
+        x[1][2] = v.x[1][2];
+        x[2][0] = v.x[2][0];
+        x[2][1] = v.x[2][1];
+        x[2][2] = v.x[2][2];
+    }
+
     return *this;
 }
 
@@ -950,14 +1015,9 @@ template <class T>
 inline void
 Matrix33<T>::makeIdentity()
 {
+    memset (x, 0, sizeof (x));
     x[0][0] = 1;
-    x[0][1] = 0;
-    x[0][2] = 0;
-    x[1][0] = 0;
     x[1][1] = 1;
-    x[1][2] = 0;
-    x[2][0] = 0;
-    x[2][1] = 0;
     x[2][2] = 1;
 }
 
@@ -966,14 +1026,14 @@ bool
 Matrix33<T>::operator == (const Matrix33 &v) const
 {
     return x[0][0] == v.x[0][0] &&
-	   x[0][1] == v.x[0][1] &&
-	   x[0][2] == v.x[0][2] &&
-	   x[1][0] == v.x[1][0] &&
-	   x[1][1] == v.x[1][1] &&
-	   x[1][2] == v.x[1][2] &&
-	   x[2][0] == v.x[2][0] &&
-	   x[2][1] == v.x[2][1] &&
-	   x[2][2] == v.x[2][2];
+           x[0][1] == v.x[0][1] &&
+           x[0][2] == v.x[0][2] &&
+           x[1][0] == v.x[1][0] &&
+           x[1][1] == v.x[1][1] &&
+           x[1][2] == v.x[1][2] &&
+           x[2][0] == v.x[2][0] &&
+           x[2][1] == v.x[2][1] &&
+           x[2][2] == v.x[2][2];
 }
 
 template <class T>
@@ -981,14 +1041,14 @@ bool
 Matrix33<T>::operator != (const Matrix33 &v) const
 {
     return x[0][0] != v.x[0][0] ||
-	   x[0][1] != v.x[0][1] ||
-	   x[0][2] != v.x[0][2] ||
-	   x[1][0] != v.x[1][0] ||
-	   x[1][1] != v.x[1][1] ||
-	   x[1][2] != v.x[1][2] ||
-	   x[2][0] != v.x[2][0] ||
-	   x[2][1] != v.x[2][1] ||
-	   x[2][2] != v.x[2][2];
+           x[0][1] != v.x[0][1] ||
+           x[0][2] != v.x[0][2] ||
+           x[1][0] != v.x[1][0] ||
+           x[1][1] != v.x[1][1] ||
+           x[1][2] != v.x[1][2] ||
+           x[2][0] != v.x[2][0] ||
+           x[2][1] != v.x[2][1] ||
+           x[2][2] != v.x[2][2];
 }
 
 template <class T>
@@ -996,9 +1056,9 @@ bool
 Matrix33<T>::equalWithAbsError (const Matrix33<T> &m, T e) const
 {
     for (int i = 0; i < 3; i++)
-	for (int j = 0; j < 3; j++)
-	    if (!Imath::equalWithAbsError ((*this)[i][j], m[i][j], e))
-		return false;
+        for (int j = 0; j < 3; j++)
+            if (!Imath::equalWithAbsError ((*this)[i][j], m[i][j], e))
+                return false;
 
     return true;
 }
@@ -1008,9 +1068,9 @@ bool
 Matrix33<T>::equalWithRelError (const Matrix33<T> &m, T e) const
 {
     for (int i = 0; i < 3; i++)
-	for (int j = 0; j < 3; j++)
-	    if (!Imath::equalWithRelError ((*this)[i][j], m[i][j], e))
-		return false;
+        for (int j = 0; j < 3; j++)
+            if (!Imath::equalWithRelError ((*this)[i][j], m[i][j], e))
+                return false;
 
     return true;
 }
@@ -1054,14 +1114,14 @@ Matrix33<T>
 Matrix33<T>::operator + (const Matrix33<T> &v) const
 {
     return Matrix33 (x[0][0] + v.x[0][0],
-		     x[0][1] + v.x[0][1],
-		     x[0][2] + v.x[0][2],
-		     x[1][0] + v.x[1][0],
-		     x[1][1] + v.x[1][1],
-		     x[1][2] + v.x[1][2],
-		     x[2][0] + v.x[2][0],
-		     x[2][1] + v.x[2][1],
-		     x[2][2] + v.x[2][2]);
+                     x[0][1] + v.x[0][1],
+                     x[0][2] + v.x[0][2],
+                     x[1][0] + v.x[1][0],
+                     x[1][1] + v.x[1][1],
+                     x[1][2] + v.x[1][2],
+                     x[2][0] + v.x[2][0],
+                     x[2][1] + v.x[2][1],
+                     x[2][2] + v.x[2][2]);
 }
 
 template <class T>
@@ -1103,14 +1163,14 @@ Matrix33<T>
 Matrix33<T>::operator - (const Matrix33<T> &v) const
 {
     return Matrix33 (x[0][0] - v.x[0][0],
-		     x[0][1] - v.x[0][1],
-		     x[0][2] - v.x[0][2],
-		     x[1][0] - v.x[1][0],
-		     x[1][1] - v.x[1][1],
-		     x[1][2] - v.x[1][2],
-		     x[2][0] - v.x[2][0],
-		     x[2][1] - v.x[2][1],
-		     x[2][2] - v.x[2][2]);
+                     x[0][1] - v.x[0][1],
+                     x[0][2] - v.x[0][2],
+                     x[1][0] - v.x[1][0],
+                     x[1][1] - v.x[1][1],
+                     x[1][2] - v.x[1][2],
+                     x[2][0] - v.x[2][0],
+                     x[2][1] - v.x[2][1],
+                     x[2][2] - v.x[2][2]);
 }
 
 template <class T>
@@ -1118,14 +1178,14 @@ Matrix33<T>
 Matrix33<T>::operator - () const
 {
     return Matrix33 (-x[0][0],
-		     -x[0][1],
-		     -x[0][2],
-		     -x[1][0],
-		     -x[1][1],
-		     -x[1][2],
-		     -x[2][0],
-		     -x[2][1],
-		     -x[2][2]);
+                     -x[0][1],
+                     -x[0][2],
+                     -x[1][0],
+                     -x[1][1],
+                     -x[1][2],
+                     -x[2][0],
+                     -x[2][1],
+                     -x[2][2]);
 }
 
 template <class T>
@@ -1167,14 +1227,14 @@ Matrix33<T>
 Matrix33<T>::operator * (T a) const
 {
     return Matrix33 (x[0][0] * a,
-		     x[0][1] * a,
-		     x[0][2] * a,
-		     x[1][0] * a,
-		     x[1][1] * a,
-		     x[1][2] * a,
-		     x[2][0] * a,
-		     x[2][1] * a,
-		     x[2][2] * a);
+                     x[0][1] * a,
+                     x[0][2] * a,
+                     x[1][0] * a,
+                     x[1][1] * a,
+                     x[1][2] * a,
+                     x[2][0] * a,
+                     x[2][1] * a,
+                     x[2][2] * a);
 }
 
 template <class T>
@@ -1191,9 +1251,9 @@ Matrix33<T>::operator *= (const Matrix33<T> &v)
     Matrix33 tmp (T (0));
 
     for (int i = 0; i < 3; i++)
-	for (int j = 0; j < 3; j++)
-	    for (int k = 0; k < 3; k++)
-		tmp.x[i][j] += x[i][k] * v.x[k][j];
+        for (int j = 0; j < 3; j++)
+            for (int k = 0; k < 3; k++)
+                tmp.x[i][j] += x[i][k] * v.x[k][j];
 
     *this = tmp;
     return *this;
@@ -1206,9 +1266,9 @@ Matrix33<T>::operator * (const Matrix33<T> &v) const
     Matrix33 tmp (T (0));
 
     for (int i = 0; i < 3; i++)
-	for (int j = 0; j < 3; j++)
-	    for (int k = 0; k < 3; k++)
-		tmp.x[i][j] += x[i][k] * v.x[k][j];
+        for (int j = 0; j < 3; j++)
+            for (int k = 0; k < 3; k++)
+                tmp.x[i][j] += x[i][k] * v.x[k][j];
 
     return tmp;
 }
@@ -1264,14 +1324,14 @@ Matrix33<T>
 Matrix33<T>::operator / (T a) const
 {
     return Matrix33 (x[0][0] / a,
-		     x[0][1] / a,
-		     x[0][2] / a,
-		     x[1][0] / a,
-		     x[1][1] / a,
-		     x[1][2] / a,
-		     x[2][0] / a,
-		     x[2][1] / a,
-		     x[2][2] / a);
+                     x[0][1] / a,
+                     x[0][2] / a,
+                     x[1][0] / a,
+                     x[1][1] / a,
+                     x[1][2] / a,
+                     x[2][0] / a,
+                     x[2][1] / a,
+                     x[2][2] / a);
 }
 
 template <class T>
@@ -1279,14 +1339,14 @@ const Matrix33<T> &
 Matrix33<T>::transpose ()
 {
     Matrix33 tmp (x[0][0],
-		  x[1][0],
-		  x[2][0],
-		  x[0][1],
-		  x[1][1],
-		  x[2][1],
-		  x[0][2],
-		  x[1][2],
-		  x[2][2]);
+                  x[1][0],
+                  x[2][0],
+                  x[0][1],
+                  x[1][1],
+                  x[2][1],
+                  x[0][2],
+                  x[1][2],
+                  x[2][2]);
     *this = tmp;
     return *this;
 }
@@ -1296,14 +1356,14 @@ Matrix33<T>
 Matrix33<T>::transposed () const
 {
     return Matrix33 (x[0][0],
-		     x[1][0],
-		     x[2][0],
-		     x[0][1],
-		     x[1][1],
-		     x[2][1],
-		     x[0][2],
-		     x[1][2],
-		     x[2][2]);
+                     x[1][0],
+                     x[2][0],
+                     x[0][1],
+                     x[1][1],
+                     x[2][1],
+                     x[0][2],
+                     x[1][2],
+                     x[2][2]);
 }
 
 template <class T>
@@ -1326,93 +1386,93 @@ Matrix33<T>::gjInverse (bool singExc) const throw (Iex::MathExc)
 
     for (i = 0; i < 2 ; i++)
     {
-	int pivot = i;
+        int pivot = i;
 
-	T pivotsize = t[i][i];
+        T pivotsize = t[i][i];
 
-	if (pivotsize < 0)
-	    pivotsize = -pivotsize;
+        if (pivotsize < 0)
+            pivotsize = -pivotsize;
 
-	for (j = i + 1; j < 3; j++)
-	{
-	    T tmp = t[j][i];
+        for (j = i + 1; j < 3; j++)
+        {
+            T tmp = t[j][i];
 
-	    if (tmp < 0)
-		tmp = -tmp;
+            if (tmp < 0)
+                tmp = -tmp;
 
-	    if (tmp > pivotsize)
-	    {
-		pivot = j;
-		pivotsize = tmp;
-	    }
-	}
+            if (tmp > pivotsize)
+            {
+                pivot = j;
+                pivotsize = tmp;
+            }
+        }
 
-	if (pivotsize == 0)
-	{
-	    if (singExc)
-		throw ::Imath::SingMatrixExc ("Cannot invert singular matrix.");
+        if (pivotsize == 0)
+        {
+            if (singExc)
+                throw ::Imath::SingMatrixExc ("Cannot invert singular matrix.");
 
-	    return Matrix33();
-	}
+            return Matrix33();
+        }
 
-	if (pivot != i)
-	{
-	    for (j = 0; j < 3; j++)
-	    {
-		T tmp;
+        if (pivot != i)
+        {
+            for (j = 0; j < 3; j++)
+            {
+                T tmp;
 
-		tmp = t[i][j];
-		t[i][j] = t[pivot][j];
-		t[pivot][j] = tmp;
+                tmp = t[i][j];
+                t[i][j] = t[pivot][j];
+                t[pivot][j] = tmp;
 
-		tmp = s[i][j];
-		s[i][j] = s[pivot][j];
-		s[pivot][j] = tmp;
-	    }
-	}
+                tmp = s[i][j];
+                s[i][j] = s[pivot][j];
+                s[pivot][j] = tmp;
+            }
+        }
 
-	for (j = i + 1; j < 3; j++)
-	{
-	    T f = t[j][i] / t[i][i];
+        for (j = i + 1; j < 3; j++)
+        {
+            T f = t[j][i] / t[i][i];
 
-	    for (k = 0; k < 3; k++)
-	    {
-		t[j][k] -= f * t[i][k];
-		s[j][k] -= f * s[i][k];
-	    }
-	}
+            for (k = 0; k < 3; k++)
+            {
+                t[j][k] -= f * t[i][k];
+                s[j][k] -= f * s[i][k];
+            }
+        }
     }
 
     // Backward substitution
 
     for (i = 2; i >= 0; --i)
     {
-	T f;
+        T f;
 
-	if ((f = t[i][i]) == 0)
-	{
-	    if (singExc)
-		throw ::Imath::SingMatrixExc ("Cannot invert singular matrix.");
+        if ((f = t[i][i]) == 0)
+        {
+            if (singExc)
+                throw ::Imath::SingMatrixExc ("Cannot invert singular matrix.");
 
-	    return Matrix33();
-	}
+            return Matrix33();
+        }
 
-	for (j = 0; j < 3; j++)
-	{
-	    t[i][j] /= f;
-	    s[i][j] /= f;
-	}
+        for (j = 0; j < 3; j++)
+        {
+            t[i][j] /= f;
+            s[i][j] /= f;
+        }
 
-	for (j = 0; j < i; j++)
-	{
-	    f = t[j][i];
+        for (j = 0; j < i; j++)
+        {
+            f = t[j][i];
 
-	    for (k = 0; k < 3; k++)
-	    {
-		t[j][k] -= f * t[i][k];
-		s[j][k] -= f * s[i][k];
-	    }
-	}
+            for (k = 0; k < 3; k++)
+            {
+                t[j][k] -= f * t[i][k];
+                s[j][k] -= f * s[i][k];
+            }
+        }
     }
 
     return s;
@@ -1432,108 +1492,108 @@ Matrix33<T>::inverse (bool singExc) const throw (Iex::MathExc)
 {
     if (x[0][2] != 0 || x[1][2] != 0 || x[2][2] != 1)
     {
-	Matrix33 s (x[1][1] * x[2][2] - x[2][1] * x[1][2],
-		    x[2][1] * x[0][2] - x[0][1] * x[2][2],
-		    x[0][1] * x[1][2] - x[1][1] * x[0][2],
+        Matrix33 s (x[1][1] * x[2][2] - x[2][1] * x[1][2],
+                    x[2][1] * x[0][2] - x[0][1] * x[2][2],
+                    x[0][1] * x[1][2] - x[1][1] * x[0][2],
 
-		    x[2][0] * x[1][2] - x[1][0] * x[2][2],
-		    x[0][0] * x[2][2] - x[2][0] * x[0][2],
-		    x[1][0] * x[0][2] - x[0][0] * x[1][2],
+                    x[2][0] * x[1][2] - x[1][0] * x[2][2],
+                    x[0][0] * x[2][2] - x[2][0] * x[0][2],
+                    x[1][0] * x[0][2] - x[0][0] * x[1][2],
 
-		    x[1][0] * x[2][1] - x[2][0] * x[1][1],
-		    x[2][0] * x[0][1] - x[0][0] * x[2][1],
-		    x[0][0] * x[1][1] - x[1][0] * x[0][1]);
+                    x[1][0] * x[2][1] - x[2][0] * x[1][1],
+                    x[2][0] * x[0][1] - x[0][0] * x[2][1],
+                    x[0][0] * x[1][1] - x[1][0] * x[0][1]);
 
-	T r = x[0][0] * s[0][0] + x[0][1] * s[1][0] + x[0][2] * s[2][0];
+        T r = x[0][0] * s[0][0] + x[0][1] * s[1][0] + x[0][2] * s[2][0];
 
-	if (Imath::abs (r) >= 1)
-	{
-	    for (int i = 0; i < 3; ++i)
-	    {
-		for (int j = 0; j < 3; ++j)
-		{
-		    s[i][j] /= r;
-		}
-	    }
-	}
-	else
-	{
-	    T mr = Imath::abs (r) / limits<T>::smallest();
+        if (Imath::abs (r) >= 1)
+        {
+            for (int i = 0; i < 3; ++i)
+            {
+                for (int j = 0; j < 3; ++j)
+                {
+                    s[i][j] /= r;
+                }
+            }
+        }
+        else
+        {
+            T mr = Imath::abs (r) / limits<T>::smallest();
 
-	    for (int i = 0; i < 3; ++i)
-	    {
-		for (int j = 0; j < 3; ++j)
-		{
-		    if (mr > Imath::abs (s[i][j]))
-		    {
-			s[i][j] /= r;
-		    }
-		    else
-		    {
-			if (singExc)
-			    throw SingMatrixExc ("Cannot invert "
-						 "singular matrix.");
-			return Matrix33();
-		    }
-		}
-	    }
-	}
+            for (int i = 0; i < 3; ++i)
+            {
+                for (int j = 0; j < 3; ++j)
+                {
+                    if (mr > Imath::abs (s[i][j]))
+                    {
+                        s[i][j] /= r;
+                    }
+                    else
+                    {
+                        if (singExc)
+                            throw SingMatrixExc ("Cannot invert "
+                                                 "singular matrix.");
+                        return Matrix33();
+                    }
+                }
+            }
+        }
 
-	return s;
+        return s;
     }
     else
     {
-	Matrix33 s ( x[1][1],
-		    -x[0][1],
-		     0, 
+        Matrix33 s ( x[1][1],
+                    -x[0][1],
+                     0, 
 
-		    -x[1][0],
-		     x[0][0],
-		     0,
+                    -x[1][0],
+                     x[0][0],
+                     0,
 
-		     0,
-		     0,
-		     1);
+                     0,
+                     0,
+                     1);
 
-	T r = x[0][0] * x[1][1] - x[1][0] * x[0][1];
+        T r = x[0][0] * x[1][1] - x[1][0] * x[0][1];
 
-	if (Imath::abs (r) >= 1)
-	{
-	    for (int i = 0; i < 2; ++i)
-	    {
-		for (int j = 0; j < 2; ++j)
-		{
-		    s[i][j] /= r;
-		}
-	    }
-	}
-	else
-	{
-	    T mr = Imath::abs (r) / limits<T>::smallest();
+        if (Imath::abs (r) >= 1)
+        {
+            for (int i = 0; i < 2; ++i)
+            {
+                for (int j = 0; j < 2; ++j)
+                {
+                    s[i][j] /= r;
+                }
+            }
+        }
+        else
+        {
+            T mr = Imath::abs (r) / limits<T>::smallest();
 
-	    for (int i = 0; i < 2; ++i)
-	    {
-		for (int j = 0; j < 2; ++j)
-		{
-		    if (mr > Imath::abs (s[i][j]))
-		    {
-			s[i][j] /= r;
-		    }
-		    else
-		    {
-			if (singExc)
-			    throw SingMatrixExc ("Cannot invert "
-						 "singular matrix.");
-			return Matrix33();
-		    }
-		}
-	    }
-	}
+            for (int i = 0; i < 2; ++i)
+            {
+                for (int j = 0; j < 2; ++j)
+                {
+                    if (mr > Imath::abs (s[i][j]))
+                    {
+                        s[i][j] /= r;
+                    }
+                    else
+                    {
+                        if (singExc)
+                            throw SingMatrixExc ("Cannot invert "
+                                                 "singular matrix.");
+                        return Matrix33();
+                    }
+                }
+            }
+        }
 
-	s[2][0] = -x[2][0] * s[0][0] - x[2][1] * s[1][0];
-	s[2][1] = -x[2][0] * s[0][1] - x[2][1] * s[1][1];
+        s[2][0] = -x[2][0] * s[0][0] - x[2][1] * s[1][0];
+        s[2][1] = -x[2][0] * s[0][1] - x[2][1] * s[1][1];
 
-	return s;
+        return s;
     }
 }
 
@@ -1575,16 +1635,9 @@ template <class T>
 const Matrix33<T> &
 Matrix33<T>::setScale (T s)
 {
+    memset (x, 0, sizeof (x));
     x[0][0] = s;
-    x[0][1] = 0;
-    x[0][2] = 0;
-
-    x[1][0] = 0;
     x[1][1] = s;
-    x[1][2] = 0;
-
-    x[2][0] = 0;
-    x[2][1] = 0;
     x[2][2] = 1;
 
     return *this;
@@ -1595,16 +1648,9 @@ template <class S>
 const Matrix33<T> &
 Matrix33<T>::setScale (const Vec2<S> &s)
 {
+    memset (x, 0, sizeof (x));
     x[0][0] = s[0];
-    x[0][1] = 0;
-    x[0][2] = 0;
-
-    x[1][0] = 0;
     x[1][1] = s[1];
-    x[1][2] = 0;
-
-    x[2][0] = 0;
-    x[2][1] = 0;
     x[2][2] = 1;
 
     return *this;
@@ -1764,21 +1810,10 @@ template <class T>
 inline
 Matrix44<T>::Matrix44 ()
 {
+    memset (x, 0, sizeof (x));
     x[0][0] = 1;
-    x[0][1] = 0;
-    x[0][2] = 0;
-    x[0][3] = 0;
-    x[1][0] = 0;
     x[1][1] = 1;
-    x[1][2] = 0;
-    x[1][3] = 0;
-    x[2][0] = 0;
-    x[2][1] = 0;
     x[2][2] = 1;
-    x[2][3] = 0;
-    x[3][0] = 0;
-    x[3][1] = 0;
-    x[3][2] = 0;
     x[3][3] = 1;
 }
 
@@ -1808,28 +1843,13 @@ template <class T>
 inline
 Matrix44<T>::Matrix44 (const T a[4][4]) 
 {
-    x[0][0] = a[0][0];
-    x[0][1] = a[0][1];
-    x[0][2] = a[0][2];
-    x[0][3] = a[0][3];
-    x[1][0] = a[1][0];
-    x[1][1] = a[1][1];
-    x[1][2] = a[1][2];
-    x[1][3] = a[1][3];
-    x[2][0] = a[2][0];
-    x[2][1] = a[2][1];
-    x[2][2] = a[2][2];
-    x[2][3] = a[2][3];
-    x[3][0] = a[3][0];
-    x[3][1] = a[3][1];
-    x[3][2] = a[3][2];
-    x[3][3] = a[3][3];
+    memcpy (x, a, sizeof (x));
 }
 
 template <class T>
 inline
 Matrix44<T>::Matrix44 (T a, T b, T c, T d, T e, T f, T g, T h,
-		       T i, T j, T k, T l, T m, T n, T o, T p)
+                       T i, T j, T k, T l, T m, T n, T o, T p)
 {
     x[0][0] = a;
     x[0][1] = b;
@@ -1892,6 +1912,29 @@ Matrix44<T>::Matrix44 (const Matrix44 &v)
     x[3][1] = v.x[3][1];
     x[3][2] = v.x[3][2];
     x[3][3] = v.x[3][3];
+}
+
+template <class T>
+template <class S>
+inline
+Matrix44<T>::Matrix44 (const Matrix44<S> &v)
+{
+    x[0][0] = T (v.x[0][0]);
+    x[0][1] = T (v.x[0][1]);
+    x[0][2] = T (v.x[0][2]);
+    x[0][3] = T (v.x[0][3]);
+    x[1][0] = T (v.x[1][0]);
+    x[1][1] = T (v.x[1][1]);
+    x[1][2] = T (v.x[1][2]);
+    x[1][3] = T (v.x[1][3]);
+    x[2][0] = T (v.x[2][0]);
+    x[2][1] = T (v.x[2][1]);
+    x[2][2] = T (v.x[2][2]);
+    x[2][3] = T (v.x[2][3]);
+    x[3][0] = T (v.x[3][0]);
+    x[3][1] = T (v.x[3][1]);
+    x[3][2] = T (v.x[3][2]);
+    x[3][3] = T (v.x[3][3]);
 }
 
 template <class T>
@@ -1959,22 +2002,29 @@ template <class S>
 inline void
 Matrix44<T>::getValue (Matrix44<S> &v) const
 {
-    v.x[0][0] = x[0][0];
-    v.x[0][1] = x[0][1];
-    v.x[0][2] = x[0][2];
-    v.x[0][3] = x[0][3];
-    v.x[1][0] = x[1][0];
-    v.x[1][1] = x[1][1];
-    v.x[1][2] = x[1][2];
-    v.x[1][3] = x[1][3];
-    v.x[2][0] = x[2][0];
-    v.x[2][1] = x[2][1];
-    v.x[2][2] = x[2][2];
-    v.x[2][3] = x[2][3];
-    v.x[3][0] = x[3][0];
-    v.x[3][1] = x[3][1];
-    v.x[3][2] = x[3][2];
-    v.x[3][3] = x[3][3];
+    if (isSameType<S,T>::value)
+    {
+        memcpy (v.x, x, sizeof (x));
+    }
+    else
+    {
+        v.x[0][0] = x[0][0];
+        v.x[0][1] = x[0][1];
+        v.x[0][2] = x[0][2];
+        v.x[0][3] = x[0][3];
+        v.x[1][0] = x[1][0];
+        v.x[1][1] = x[1][1];
+        v.x[1][2] = x[1][2];
+        v.x[1][3] = x[1][3];
+        v.x[2][0] = x[2][0];
+        v.x[2][1] = x[2][1];
+        v.x[2][2] = x[2][2];
+        v.x[2][3] = x[2][3];
+        v.x[3][0] = x[3][0];
+        v.x[3][1] = x[3][1];
+        v.x[3][2] = x[3][2];
+        v.x[3][3] = x[3][3];
+    }
 }
 
 template <class T>
@@ -1982,22 +2032,30 @@ template <class S>
 inline Matrix44<T> &
 Matrix44<T>::setValue (const Matrix44<S> &v)
 {
-    x[0][0] = v.x[0][0];
-    x[0][1] = v.x[0][1];
-    x[0][2] = v.x[0][2];
-    x[0][3] = v.x[0][3];
-    x[1][0] = v.x[1][0];
-    x[1][1] = v.x[1][1];
-    x[1][2] = v.x[1][2];
-    x[1][3] = v.x[1][3];
-    x[2][0] = v.x[2][0];
-    x[2][1] = v.x[2][1];
-    x[2][2] = v.x[2][2];
-    x[2][3] = v.x[2][3];
-    x[3][0] = v.x[3][0];
-    x[3][1] = v.x[3][1];
-    x[3][2] = v.x[3][2];
-    x[3][3] = v.x[3][3];
+    if (isSameType<S,T>::value)
+    {
+        memcpy (x, v.x, sizeof (x));
+    }
+    else
+    {
+        x[0][0] = v.x[0][0];
+        x[0][1] = v.x[0][1];
+        x[0][2] = v.x[0][2];
+        x[0][3] = v.x[0][3];
+        x[1][0] = v.x[1][0];
+        x[1][1] = v.x[1][1];
+        x[1][2] = v.x[1][2];
+        x[1][3] = v.x[1][3];
+        x[2][0] = v.x[2][0];
+        x[2][1] = v.x[2][1];
+        x[2][2] = v.x[2][2];
+        x[2][3] = v.x[2][3];
+        x[3][0] = v.x[3][0];
+        x[3][1] = v.x[3][1];
+        x[3][2] = v.x[3][2];
+        x[3][3] = v.x[3][3];
+    }
+
     return *this;
 }
 
@@ -2006,22 +2064,30 @@ template <class S>
 inline Matrix44<T> &
 Matrix44<T>::setTheMatrix (const Matrix44<S> &v)
 {
-    x[0][0] = v.x[0][0];
-    x[0][1] = v.x[0][1];
-    x[0][2] = v.x[0][2];
-    x[0][3] = v.x[0][3];
-    x[1][0] = v.x[1][0];
-    x[1][1] = v.x[1][1];
-    x[1][2] = v.x[1][2];
-    x[1][3] = v.x[1][3];
-    x[2][0] = v.x[2][0];
-    x[2][1] = v.x[2][1];
-    x[2][2] = v.x[2][2];
-    x[2][3] = v.x[2][3];
-    x[3][0] = v.x[3][0];
-    x[3][1] = v.x[3][1];
-    x[3][2] = v.x[3][2];
-    x[3][3] = v.x[3][3];
+    if (isSameType<S,T>::value)
+    {
+        memcpy (x, v.x, sizeof (x));
+    }
+    else
+    {
+        x[0][0] = v.x[0][0];
+        x[0][1] = v.x[0][1];
+        x[0][2] = v.x[0][2];
+        x[0][3] = v.x[0][3];
+        x[1][0] = v.x[1][0];
+        x[1][1] = v.x[1][1];
+        x[1][2] = v.x[1][2];
+        x[1][3] = v.x[1][3];
+        x[2][0] = v.x[2][0];
+        x[2][1] = v.x[2][1];
+        x[2][2] = v.x[2][2];
+        x[2][3] = v.x[2][3];
+        x[3][0] = v.x[3][0];
+        x[3][1] = v.x[3][1];
+        x[3][2] = v.x[3][2];
+        x[3][3] = v.x[3][3];
+    }
+
     return *this;
 }
 
@@ -2029,21 +2095,10 @@ template <class T>
 inline void
 Matrix44<T>::makeIdentity()
 {
+    memset (x, 0, sizeof (x));
     x[0][0] = 1;
-    x[0][1] = 0;
-    x[0][2] = 0;
-    x[0][3] = 0;
-    x[1][0] = 0;
     x[1][1] = 1;
-    x[1][2] = 0;
-    x[1][3] = 0;
-    x[2][0] = 0;
-    x[2][1] = 0;
     x[2][2] = 1;
-    x[2][3] = 0;
-    x[3][0] = 0;
-    x[3][1] = 0;
-    x[3][2] = 0;
     x[3][3] = 1;
 }
 
@@ -2052,21 +2107,21 @@ bool
 Matrix44<T>::operator == (const Matrix44 &v) const
 {
     return x[0][0] == v.x[0][0] &&
-	   x[0][1] == v.x[0][1] &&
-	   x[0][2] == v.x[0][2] &&
-	   x[0][3] == v.x[0][3] &&
-	   x[1][0] == v.x[1][0] &&
-	   x[1][1] == v.x[1][1] &&
-	   x[1][2] == v.x[1][2] &&
-	   x[1][3] == v.x[1][3] &&
-	   x[2][0] == v.x[2][0] &&
-	   x[2][1] == v.x[2][1] &&
-	   x[2][2] == v.x[2][2] &&
-	   x[2][3] == v.x[2][3] &&
-	   x[3][0] == v.x[3][0] &&
-	   x[3][1] == v.x[3][1] &&
-	   x[3][2] == v.x[3][2] &&
-	   x[3][3] == v.x[3][3];
+           x[0][1] == v.x[0][1] &&
+           x[0][2] == v.x[0][2] &&
+           x[0][3] == v.x[0][3] &&
+           x[1][0] == v.x[1][0] &&
+           x[1][1] == v.x[1][1] &&
+           x[1][2] == v.x[1][2] &&
+           x[1][3] == v.x[1][3] &&
+           x[2][0] == v.x[2][0] &&
+           x[2][1] == v.x[2][1] &&
+           x[2][2] == v.x[2][2] &&
+           x[2][3] == v.x[2][3] &&
+           x[3][0] == v.x[3][0] &&
+           x[3][1] == v.x[3][1] &&
+           x[3][2] == v.x[3][2] &&
+           x[3][3] == v.x[3][3];
 }
 
 template <class T>
@@ -2074,21 +2129,21 @@ bool
 Matrix44<T>::operator != (const Matrix44 &v) const
 {
     return x[0][0] != v.x[0][0] ||
-	   x[0][1] != v.x[0][1] ||
-	   x[0][2] != v.x[0][2] ||
-	   x[0][3] != v.x[0][3] ||
-	   x[1][0] != v.x[1][0] ||
-	   x[1][1] != v.x[1][1] ||
-	   x[1][2] != v.x[1][2] ||
-	   x[1][3] != v.x[1][3] ||
-	   x[2][0] != v.x[2][0] ||
-	   x[2][1] != v.x[2][1] ||
-	   x[2][2] != v.x[2][2] ||
-	   x[2][3] != v.x[2][3] ||
-	   x[3][0] != v.x[3][0] ||
-	   x[3][1] != v.x[3][1] ||
-	   x[3][2] != v.x[3][2] ||
-	   x[3][3] != v.x[3][3];
+           x[0][1] != v.x[0][1] ||
+           x[0][2] != v.x[0][2] ||
+           x[0][3] != v.x[0][3] ||
+           x[1][0] != v.x[1][0] ||
+           x[1][1] != v.x[1][1] ||
+           x[1][2] != v.x[1][2] ||
+           x[1][3] != v.x[1][3] ||
+           x[2][0] != v.x[2][0] ||
+           x[2][1] != v.x[2][1] ||
+           x[2][2] != v.x[2][2] ||
+           x[2][3] != v.x[2][3] ||
+           x[3][0] != v.x[3][0] ||
+           x[3][1] != v.x[3][1] ||
+           x[3][2] != v.x[3][2] ||
+           x[3][3] != v.x[3][3];
 }
 
 template <class T>
@@ -2096,9 +2151,9 @@ bool
 Matrix44<T>::equalWithAbsError (const Matrix44<T> &m, T e) const
 {
     for (int i = 0; i < 4; i++)
-	for (int j = 0; j < 4; j++)
-	    if (!Imath::equalWithAbsError ((*this)[i][j], m[i][j], e))
-		return false;
+        for (int j = 0; j < 4; j++)
+            if (!Imath::equalWithAbsError ((*this)[i][j], m[i][j], e))
+                return false;
 
     return true;
 }
@@ -2108,9 +2163,9 @@ bool
 Matrix44<T>::equalWithRelError (const Matrix44<T> &m, T e) const
 {
     for (int i = 0; i < 4; i++)
-	for (int j = 0; j < 4; j++)
-	    if (!Imath::equalWithRelError ((*this)[i][j], m[i][j], e))
-		return false;
+        for (int j = 0; j < 4; j++)
+            if (!Imath::equalWithRelError ((*this)[i][j], m[i][j], e))
+                return false;
 
     return true;
 }
@@ -2168,21 +2223,21 @@ Matrix44<T>
 Matrix44<T>::operator + (const Matrix44<T> &v) const
 {
     return Matrix44 (x[0][0] + v.x[0][0],
-		     x[0][1] + v.x[0][1],
-		     x[0][2] + v.x[0][2],
-		     x[0][3] + v.x[0][3],
-		     x[1][0] + v.x[1][0],
-		     x[1][1] + v.x[1][1],
-		     x[1][2] + v.x[1][2],
-		     x[1][3] + v.x[1][3],
-		     x[2][0] + v.x[2][0],
-		     x[2][1] + v.x[2][1],
-		     x[2][2] + v.x[2][2],
-		     x[2][3] + v.x[2][3],
-		     x[3][0] + v.x[3][0],
-		     x[3][1] + v.x[3][1],
-		     x[3][2] + v.x[3][2],
-		     x[3][3] + v.x[3][3]);
+                     x[0][1] + v.x[0][1],
+                     x[0][2] + v.x[0][2],
+                     x[0][3] + v.x[0][3],
+                     x[1][0] + v.x[1][0],
+                     x[1][1] + v.x[1][1],
+                     x[1][2] + v.x[1][2],
+                     x[1][3] + v.x[1][3],
+                     x[2][0] + v.x[2][0],
+                     x[2][1] + v.x[2][1],
+                     x[2][2] + v.x[2][2],
+                     x[2][3] + v.x[2][3],
+                     x[3][0] + v.x[3][0],
+                     x[3][1] + v.x[3][1],
+                     x[3][2] + v.x[3][2],
+                     x[3][3] + v.x[3][3]);
 }
 
 template <class T>
@@ -2238,21 +2293,21 @@ Matrix44<T>
 Matrix44<T>::operator - (const Matrix44<T> &v) const
 {
     return Matrix44 (x[0][0] - v.x[0][0],
-		     x[0][1] - v.x[0][1],
-		     x[0][2] - v.x[0][2],
-		     x[0][3] - v.x[0][3],
-		     x[1][0] - v.x[1][0],
-		     x[1][1] - v.x[1][1],
-		     x[1][2] - v.x[1][2],
-		     x[1][3] - v.x[1][3],
-		     x[2][0] - v.x[2][0],
-		     x[2][1] - v.x[2][1],
-		     x[2][2] - v.x[2][2],
-		     x[2][3] - v.x[2][3],
-		     x[3][0] - v.x[3][0],
-		     x[3][1] - v.x[3][1],
-		     x[3][2] - v.x[3][2],
-		     x[3][3] - v.x[3][3]);
+                     x[0][1] - v.x[0][1],
+                     x[0][2] - v.x[0][2],
+                     x[0][3] - v.x[0][3],
+                     x[1][0] - v.x[1][0],
+                     x[1][1] - v.x[1][1],
+                     x[1][2] - v.x[1][2],
+                     x[1][3] - v.x[1][3],
+                     x[2][0] - v.x[2][0],
+                     x[2][1] - v.x[2][1],
+                     x[2][2] - v.x[2][2],
+                     x[2][3] - v.x[2][3],
+                     x[3][0] - v.x[3][0],
+                     x[3][1] - v.x[3][1],
+                     x[3][2] - v.x[3][2],
+                     x[3][3] - v.x[3][3]);
 }
 
 template <class T>
@@ -2260,21 +2315,21 @@ Matrix44<T>
 Matrix44<T>::operator - () const
 {
     return Matrix44 (-x[0][0],
-		     -x[0][1],
-		     -x[0][2],
-		     -x[0][3],
-		     -x[1][0],
-		     -x[1][1],
-		     -x[1][2],
-		     -x[1][3],
-		     -x[2][0],
-		     -x[2][1],
-		     -x[2][2],
-		     -x[2][3],
-		     -x[3][0],
-		     -x[3][1],
-		     -x[3][2],
-		     -x[3][3]);
+                     -x[0][1],
+                     -x[0][2],
+                     -x[0][3],
+                     -x[1][0],
+                     -x[1][1],
+                     -x[1][2],
+                     -x[1][3],
+                     -x[2][0],
+                     -x[2][1],
+                     -x[2][2],
+                     -x[2][3],
+                     -x[3][0],
+                     -x[3][1],
+                     -x[3][2],
+                     -x[3][3]);
 }
 
 template <class T>
@@ -2330,21 +2385,21 @@ Matrix44<T>
 Matrix44<T>::operator * (T a) const
 {
     return Matrix44 (x[0][0] * a,
-		     x[0][1] * a,
-		     x[0][2] * a,
-		     x[0][3] * a,
-		     x[1][0] * a,
-		     x[1][1] * a,
-		     x[1][2] * a,
-		     x[1][3] * a,
-		     x[2][0] * a,
-		     x[2][1] * a,
-		     x[2][2] * a,
-		     x[2][3] * a,
-		     x[3][0] * a,
-		     x[3][1] * a,
-		     x[3][2] * a,
-		     x[3][3] * a);
+                     x[0][1] * a,
+                     x[0][2] * a,
+                     x[0][3] * a,
+                     x[1][0] * a,
+                     x[1][1] * a,
+                     x[1][2] * a,
+                     x[1][3] * a,
+                     x[2][0] * a,
+                     x[2][1] * a,
+                     x[2][2] * a,
+                     x[2][3] * a,
+                     x[3][0] * a,
+                     x[3][1] * a,
+                     x[3][2] * a,
+                     x[3][3] * a);
 }
 
 template <class T>
@@ -2378,12 +2433,12 @@ Matrix44<T>::operator * (const Matrix44<T> &v) const
 template <class T>
 void
 Matrix44<T>::multiply (const Matrix44<T> &a,
-		       const Matrix44<T> &b,
-		       Matrix44<T> &c)
+                       const Matrix44<T> &b,
+                       Matrix44<T> &c)
 {
-    register const T * restrict ap = &a.x[0][0];
-    register const T * restrict bp = &b.x[0][0];
-    register       T * restrict cp = &c.x[0][0];
+	register const T * IMATH_RESTRICT ap = &a.x[0][0];
+	register const T * IMATH_RESTRICT bp = &b.x[0][0];
+	register       T * IMATH_RESTRICT cp = &c.x[0][0];
 
     register T a0, a1, a2, a3;
 
@@ -2488,21 +2543,21 @@ Matrix44<T>
 Matrix44<T>::operator / (T a) const
 {
     return Matrix44 (x[0][0] / a,
-		     x[0][1] / a,
-		     x[0][2] / a,
-		     x[0][3] / a,
-		     x[1][0] / a,
-		     x[1][1] / a,
-		     x[1][2] / a,
-		     x[1][3] / a,
-		     x[2][0] / a,
-		     x[2][1] / a,
-		     x[2][2] / a,
-		     x[2][3] / a,
-		     x[3][0] / a,
-		     x[3][1] / a,
-		     x[3][2] / a,
-		     x[3][3] / a);
+                     x[0][1] / a,
+                     x[0][2] / a,
+                     x[0][3] / a,
+                     x[1][0] / a,
+                     x[1][1] / a,
+                     x[1][2] / a,
+                     x[1][3] / a,
+                     x[2][0] / a,
+                     x[2][1] / a,
+                     x[2][2] / a,
+                     x[2][3] / a,
+                     x[3][0] / a,
+                     x[3][1] / a,
+                     x[3][2] / a,
+                     x[3][3] / a);
 }
 
 template <class T>
@@ -2510,21 +2565,21 @@ const Matrix44<T> &
 Matrix44<T>::transpose ()
 {
     Matrix44 tmp (x[0][0],
-		  x[1][0],
-		  x[2][0],
-		  x[3][0],
-		  x[0][1],
-		  x[1][1],
-		  x[2][1],
-		  x[3][1],
-		  x[0][2],
-		  x[1][2],
-		  x[2][2],
-		  x[3][2],
-		  x[0][3],
-		  x[1][3],
-		  x[2][3],
-		  x[3][3]);
+                  x[1][0],
+                  x[2][0],
+                  x[3][0],
+                  x[0][1],
+                  x[1][1],
+                  x[2][1],
+                  x[3][1],
+                  x[0][2],
+                  x[1][2],
+                  x[2][2],
+                  x[3][2],
+                  x[0][3],
+                  x[1][3],
+                  x[2][3],
+                  x[3][3]);
     *this = tmp;
     return *this;
 }
@@ -2534,21 +2589,21 @@ Matrix44<T>
 Matrix44<T>::transposed () const
 {
     return Matrix44 (x[0][0],
-		     x[1][0],
-		     x[2][0],
-		     x[3][0],
-		     x[0][1],
-		     x[1][1],
-		     x[2][1],
-		     x[3][1],
-		     x[0][2],
-		     x[1][2],
-		     x[2][2],
-		     x[3][2],
-		     x[0][3],
-		     x[1][3],
-		     x[2][3],
-		     x[3][3]);
+                     x[1][0],
+                     x[2][0],
+                     x[3][0],
+                     x[0][1],
+                     x[1][1],
+                     x[2][1],
+                     x[3][1],
+                     x[0][2],
+                     x[1][2],
+                     x[2][2],
+                     x[3][2],
+                     x[0][3],
+                     x[1][3],
+                     x[2][3],
+                     x[3][3]);
 }
 
 template <class T>
@@ -2571,93 +2626,93 @@ Matrix44<T>::gjInverse (bool singExc) const throw (Iex::MathExc)
 
     for (i = 0; i < 3 ; i++)
     {
-	int pivot = i;
+        int pivot = i;
 
-	T pivotsize = t[i][i];
+        T pivotsize = t[i][i];
 
-	if (pivotsize < 0)
-	    pivotsize = -pivotsize;
+        if (pivotsize < 0)
+            pivotsize = -pivotsize;
 
-	for (j = i + 1; j < 4; j++)
-	{
-	    T tmp = t[j][i];
+        for (j = i + 1; j < 4; j++)
+        {
+            T tmp = t[j][i];
 
-	    if (tmp < 0)
-		tmp = -tmp;
+            if (tmp < 0)
+                tmp = -tmp;
 
-	    if (tmp > pivotsize)
-	    {
-		pivot = j;
-		pivotsize = tmp;
-	    }
-	}
+            if (tmp > pivotsize)
+            {
+                pivot = j;
+                pivotsize = tmp;
+            }
+        }
 
-	if (pivotsize == 0)
-	{
-	    if (singExc)
-		throw ::Imath::SingMatrixExc ("Cannot invert singular matrix.");
+        if (pivotsize == 0)
+        {
+            if (singExc)
+                throw ::Imath::SingMatrixExc ("Cannot invert singular matrix.");
 
-	    return Matrix44();
-	}
+            return Matrix44();
+        }
 
-	if (pivot != i)
-	{
-	    for (j = 0; j < 4; j++)
-	    {
-		T tmp;
+        if (pivot != i)
+        {
+            for (j = 0; j < 4; j++)
+            {
+                T tmp;
 
-		tmp = t[i][j];
-		t[i][j] = t[pivot][j];
-		t[pivot][j] = tmp;
+                tmp = t[i][j];
+                t[i][j] = t[pivot][j];
+                t[pivot][j] = tmp;
 
-		tmp = s[i][j];
-		s[i][j] = s[pivot][j];
-		s[pivot][j] = tmp;
-	    }
-	}
+                tmp = s[i][j];
+                s[i][j] = s[pivot][j];
+                s[pivot][j] = tmp;
+            }
+        }
 
-	for (j = i + 1; j < 4; j++)
-	{
-	    T f = t[j][i] / t[i][i];
+        for (j = i + 1; j < 4; j++)
+        {
+            T f = t[j][i] / t[i][i];
 
-	    for (k = 0; k < 4; k++)
-	    {
-		t[j][k] -= f * t[i][k];
-		s[j][k] -= f * s[i][k];
-	    }
-	}
+            for (k = 0; k < 4; k++)
+            {
+                t[j][k] -= f * t[i][k];
+                s[j][k] -= f * s[i][k];
+            }
+        }
     }
 
     // Backward substitution
 
     for (i = 3; i >= 0; --i)
     {
-	T f;
+        T f;
 
-	if ((f = t[i][i]) == 0)
-	{
-	    if (singExc)
-		throw ::Imath::SingMatrixExc ("Cannot invert singular matrix.");
+        if ((f = t[i][i]) == 0)
+        {
+            if (singExc)
+                throw ::Imath::SingMatrixExc ("Cannot invert singular matrix.");
 
-	    return Matrix44();
-	}
+            return Matrix44();
+        }
 
-	for (j = 0; j < 4; j++)
-	{
-	    t[i][j] /= f;
-	    s[i][j] /= f;
-	}
+        for (j = 0; j < 4; j++)
+        {
+            t[i][j] /= f;
+            s[i][j] /= f;
+        }
 
-	for (j = 0; j < i; j++)
-	{
-	    f = t[j][i];
+        for (j = 0; j < i; j++)
+        {
+            f = t[j][i];
 
-	    for (k = 0; k < 4; k++)
-	    {
-		t[j][k] -= f * t[i][k];
-		s[j][k] -= f * s[i][k];
-	    }
-	}
+            for (k = 0; k < 4; k++)
+            {
+                t[j][k] -= f * t[i][k];
+                s[j][k] -= f * s[i][k];
+            }
+        }
     }
 
     return s;
@@ -2676,61 +2731,61 @@ Matrix44<T>
 Matrix44<T>::inverse (bool singExc) const throw (Iex::MathExc)
 {
     if (x[0][3] != 0 || x[1][3] != 0 || x[2][3] != 0 || x[3][3] != 1)
-	return gjInverse(singExc);
+        return gjInverse(singExc);
 
     Matrix44 s (x[1][1] * x[2][2] - x[2][1] * x[1][2],
-		x[2][1] * x[0][2] - x[0][1] * x[2][2],
-		x[0][1] * x[1][2] - x[1][1] * x[0][2],
-		0,
+                x[2][1] * x[0][2] - x[0][1] * x[2][2],
+                x[0][1] * x[1][2] - x[1][1] * x[0][2],
+                0,
 
-		x[2][0] * x[1][2] - x[1][0] * x[2][2],
-		x[0][0] * x[2][2] - x[2][0] * x[0][2],
-		x[1][0] * x[0][2] - x[0][0] * x[1][2],
-		0,
+                x[2][0] * x[1][2] - x[1][0] * x[2][2],
+                x[0][0] * x[2][2] - x[2][0] * x[0][2],
+                x[1][0] * x[0][2] - x[0][0] * x[1][2],
+                0,
 
-		x[1][0] * x[2][1] - x[2][0] * x[1][1],
-		x[2][0] * x[0][1] - x[0][0] * x[2][1],
-		x[0][0] * x[1][1] - x[1][0] * x[0][1],
-		0,
+                x[1][0] * x[2][1] - x[2][0] * x[1][1],
+                x[2][0] * x[0][1] - x[0][0] * x[2][1],
+                x[0][0] * x[1][1] - x[1][0] * x[0][1],
+                0,
 
-		0,
-		0,
-		0,
-		1);
+                0,
+                0,
+                0,
+                1);
 
     T r = x[0][0] * s[0][0] + x[0][1] * s[1][0] + x[0][2] * s[2][0];
 
     if (Imath::abs (r) >= 1)
     {
-	for (int i = 0; i < 3; ++i)
-	{
-	    for (int j = 0; j < 3; ++j)
-	    {
-		s[i][j] /= r;
-	    }
-	}
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                s[i][j] /= r;
+            }
+        }
     }
     else
     {
-	T mr = Imath::abs (r) / limits<T>::smallest();
+        T mr = Imath::abs (r) / limits<T>::smallest();
 
-	for (int i = 0; i < 3; ++i)
-	{
-	    for (int j = 0; j < 3; ++j)
-	    {
-		if (mr > Imath::abs (s[i][j]))
-		{
-		    s[i][j] /= r;
-		}
-		else
-		{
-		    if (singExc)
-			throw SingMatrixExc ("Cannot invert singular matrix.");
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                if (mr > Imath::abs (s[i][j]))
+                {
+                    s[i][j] /= r;
+                }
+                else
+                {
+                    if (singExc)
+                        throw SingMatrixExc ("Cannot invert singular matrix.");
 
-		    return Matrix44();
-		}
-	    }
-	}
+                    return Matrix44();
+                }
+            }
+        }
     }
 
     s[3][0] = -x[3][0] * s[0][0] - x[3][1] * s[1][0] - x[3][2] * s[2][0];
@@ -2862,24 +2917,10 @@ template <class T>
 const Matrix44<T> &
 Matrix44<T>::setScale (T s)
 {
+    memset (x, 0, sizeof (x));
     x[0][0] = s;
-    x[0][1] = 0;
-    x[0][2] = 0;
-    x[0][3] = 0;
-
-    x[1][0] = 0;
     x[1][1] = s;
-    x[1][2] = 0;
-    x[1][3] = 0;
-
-    x[2][0] = 0;
-    x[2][1] = 0;
     x[2][2] = s;
-    x[2][3] = 0;
-
-    x[3][0] = 0;
-    x[3][1] = 0;
-    x[3][2] = 0;
     x[3][3] = 1;
 
     return *this;
@@ -2890,24 +2931,10 @@ template <class S>
 const Matrix44<T> &
 Matrix44<T>::setScale (const Vec3<S> &s)
 {
+    memset (x, 0, sizeof (x));
     x[0][0] = s[0];
-    x[0][1] = 0;
-    x[0][2] = 0;
-    x[0][3] = 0;
-
-    x[1][0] = 0;
     x[1][1] = s[1];
-    x[1][2] = 0;
-    x[1][3] = 0;
-
-    x[2][0] = 0;
-    x[2][1] = 0;
     x[2][2] = s[2];
-    x[2][3] = 0;
-
-    x[3][0] = 0;
-    x[3][1] = 0;
-    x[3][2] = 0;
     x[3][3] = 1;
 
     return *this;
@@ -3053,8 +3080,8 @@ Matrix44<T>::shear (const Vec3<S> &h)
 
     for (int i=0; i < 4; i++)
     {
-	x[2][i] += h[1] * x[0][i] + h[2] * x[1][i];
-	x[1][i] += h[0] * x[0][i];
+        x[2][i] += h[1] * x[0][i] + h[2] * x[1][i];
+        x[1][i] += h[0] * x[0][i];
     }
 
     return *this;
@@ -3069,9 +3096,9 @@ Matrix44<T>::shear (const Shear6<S> &h)
 
     for (int i=0; i < 4; i++)
     {
-	x[0][i] = P[0][i] + h.yx * P[1][i] + h.zx * P[2][i];
-	x[1][i] = h.xy * P[0][i] + P[1][i] + h.zy * P[2][i];
-	x[2][i] = h.xz * P[0][i] + h.yz * P[1][i] + P[2][i];
+        x[0][i] = P[0][i] + h.yx * P[1][i] + h.zx * P[2][i];
+        x[1][i] = h.xy * P[0][i] + P[1][i] + h.zy * P[2][i];
+        x[2][i] = h.xz * P[0][i] + h.yz * P[1][i] + P[2][i];
     }
 
     return *this;
@@ -3091,27 +3118,27 @@ operator << (std::ostream &s, const Matrix33<T> &m)
 
     if (s.flags() & std::ios_base::fixed)
     {
-	s.setf (std::ios_base::showpoint);
-	width = s.precision() + 5;
+        s.setf (std::ios_base::showpoint);
+        width = s.precision() + 5;
     }
     else
     {
-	s.setf (std::ios_base::scientific);
-	s.setf (std::ios_base::showpoint);
-	width = s.precision() + 8;
+        s.setf (std::ios_base::scientific);
+        s.setf (std::ios_base::showpoint);
+        width = s.precision() + 8;
     }
 
     s << "(" << std::setw (width) << m[0][0] <<
-	 " " << std::setw (width) << m[0][1] <<
-	 " " << std::setw (width) << m[0][2] << "\n" <<
+         " " << std::setw (width) << m[0][1] <<
+         " " << std::setw (width) << m[0][2] << "\n" <<
 
-	 " " << std::setw (width) << m[1][0] <<
-	 " " << std::setw (width) << m[1][1] <<
-	 " " << std::setw (width) << m[1][2] << "\n" <<
+         " " << std::setw (width) << m[1][0] <<
+         " " << std::setw (width) << m[1][1] <<
+         " " << std::setw (width) << m[1][2] << "\n" <<
 
-	 " " << std::setw (width) << m[2][0] <<
-	 " " << std::setw (width) << m[2][1] <<
-	 " " << std::setw (width) << m[2][2] << ")\n";
+         " " << std::setw (width) << m[2][0] <<
+         " " << std::setw (width) << m[2][1] <<
+         " " << std::setw (width) << m[2][2] << ")\n";
 
     s.flags (oldFlags);
     return s;
@@ -3126,35 +3153,35 @@ operator << (std::ostream &s, const Matrix44<T> &m)
 
     if (s.flags() & std::ios_base::fixed)
     {
-	s.setf (std::ios_base::showpoint);
-	width = s.precision() + 5;
+        s.setf (std::ios_base::showpoint);
+        width = s.precision() + 5;
     }
     else
     {
-	s.setf (std::ios_base::scientific);
-	s.setf (std::ios_base::showpoint);
-	width = s.precision() + 8;
+        s.setf (std::ios_base::scientific);
+        s.setf (std::ios_base::showpoint);
+        width = s.precision() + 8;
     }
 
     s << "(" << std::setw (width) << m[0][0] <<
-	 " " << std::setw (width) << m[0][1] <<
-	 " " << std::setw (width) << m[0][2] <<
-	 " " << std::setw (width) << m[0][3] << "\n" <<
+         " " << std::setw (width) << m[0][1] <<
+         " " << std::setw (width) << m[0][2] <<
+         " " << std::setw (width) << m[0][3] << "\n" <<
 
-	 " " << std::setw (width) << m[1][0] <<
-	 " " << std::setw (width) << m[1][1] <<
-	 " " << std::setw (width) << m[1][2] <<
-	 " " << std::setw (width) << m[1][3] << "\n" <<
+         " " << std::setw (width) << m[1][0] <<
+         " " << std::setw (width) << m[1][1] <<
+         " " << std::setw (width) << m[1][2] <<
+         " " << std::setw (width) << m[1][3] << "\n" <<
 
-	 " " << std::setw (width) << m[2][0] <<
-	 " " << std::setw (width) << m[2][1] <<
-	 " " << std::setw (width) << m[2][2] <<
-	 " " << std::setw (width) << m[2][3] << "\n" <<
+         " " << std::setw (width) << m[2][0] <<
+         " " << std::setw (width) << m[2][1] <<
+         " " << std::setw (width) << m[2][2] <<
+         " " << std::setw (width) << m[2][3] << "\n" <<
 
-	 " " << std::setw (width) << m[3][0] <<
-	 " " << std::setw (width) << m[3][1] <<
-	 " " << std::setw (width) << m[3][2] <<
-	 " " << std::setw (width) << m[3][3] << ")\n";
+         " " << std::setw (width) << m[3][0] <<
+         " " << std::setw (width) << m[3][1] <<
+         " " << std::setw (width) << m[3][2] <<
+         " " << std::setw (width) << m[3][3] << ")\n";
 
     s.flags (oldFlags);
     return s;
@@ -3206,7 +3233,6 @@ operator *= (Vec3<S> &v, const Matrix33<T> &m)
     return v;
 }
 
-
 template <class S, class T>
 inline Vec3<S>
 operator * (const Vec3<S> &v, const Matrix33<T> &m)
@@ -3245,6 +3271,36 @@ operator * (const Vec3<S> &v, const Matrix44<T> &m)
     S w = S(v.x * m[0][3] + v.y * m[1][3] + v.z * m[2][3] + m[3][3]);
 
     return Vec3<S> (x / w, y / w, z / w);
+}
+
+
+template <class S, class T>
+inline const Vec4<S> &
+operator *= (Vec4<S> &v, const Matrix44<T> &m)
+{
+    S x = S(v.x * m[0][0] + v.y * m[1][0] + v.z * m[2][0] + v.w * m[3][0]);
+    S y = S(v.x * m[0][1] + v.y * m[1][1] + v.z * m[2][1] + v.w * m[3][1]);
+    S z = S(v.x * m[0][2] + v.y * m[1][2] + v.z * m[2][2] + v.w * m[3][2]);
+    S w = S(v.x * m[0][3] + v.y * m[1][3] + v.z * m[2][3] + v.w * m[3][3]);
+
+    v.x = x;
+    v.y = y;
+    v.z = z;
+    v.w = w;
+
+    return v;
+}
+
+template <class S, class T>
+inline Vec4<S>
+operator * (const Vec4<S> &v, const Matrix44<T> &m)
+{
+    S x = S(v.x * m[0][0] + v.y * m[1][0] + v.z * m[2][0] + v.w * m[3][0]);
+    S y = S(v.x * m[0][1] + v.y * m[1][1] + v.z * m[2][1] + v.w * m[3][1]);
+    S z = S(v.x * m[0][2] + v.y * m[1][2] + v.z * m[2][2] + v.w * m[3][2]);
+    S w = S(v.x * m[0][3] + v.y * m[1][3] + v.z * m[2][3] + v.w * m[3][3]);
+
+    return Vec4<S> (x, y, z, w);
 }
 
 } // namespace Imath

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2004, Industrial Light & Magic, a division of Lucas
+// Copyright (c) 2007, Industrial Light & Magic, a division of Lucas
 // Digital Ltd. LLC
 // 
 // All rights reserved.
@@ -34,40 +34,76 @@
 
 
 
-#ifndef INCLUDED_IMF_RGBA_FILE_H
-#define INCLUDED_IMF_RGBA_FILE_H
+#ifndef INCLUDED_IMF_ACES_FILE_H
+#define INCLUDED_IMF_ACES_FILE_H
 
 
 //-----------------------------------------------------------------------------
 //
-//	Simplified RGBA image I/O
-//
-//	class RgbaOutputFile
-//	class RgbaInputFile
+//	ACES image file I/O.
+//	
+//	This header file declares two classes that directly support
+//	image file input and output according to the Academy Image
+//	Interchange Framework.
+//	
+//	The Academy Image Interchange file format is a subset of OpenEXR:
+//	
+//	    - Images are stored as scanlines.  Tiles are not allowed.
+//	
+//	    - Images contain three color channels, either
+//		    R, G, B (red, green, blue) or
+//		    Y, RY, BY (luminance, sub-sampled chroma)
+//	
+//	    - Images may optionally contain an alpha channel.
+//	
+//	    - Only three compression types are allowed:
+//		    - NO_COMPRESSION (file is not compressed)
+//		    - PIZ_COMPRESSION (lossless)
+//		    - B44A_COMPRESSION (lossy)
+//	
+//	    - The "chromaticities" header attribute must specify
+//	      the ACES RGB primaries and white point.
+//	
+//	class AcesOutputFile writes an OpenEXR file, enforcing the
+//	restrictions listed above.  Pixel data supplied by application
+//	software must already be in the ACES RGB space.
+//	
+//	class AcesInputFile reads an OpenEXR file.  Pixel data delivered
+//	to application software is guaranteed to be in the ACES RGB space.
+//	If the RGB space of the file is not the same as the ACES space,
+//	then the pixels are automatically converted: the pixels are
+//	converted to CIE XYZ, a color adaptation transform shifts the
+//	white point, and the result is converted to ACES RGB.
 //
 //-----------------------------------------------------------------------------
 
 #include <ImfHeader.h>
-#include <ImfFrameBuffer.h>
 #include <ImfRgba.h>
 #include "ImathVec.h"
 #include "ImathBox.h"
-#include "half.h"
 #include <ImfThreading.h>
 #include <string>
 
 namespace Imf {
 
 
-class OutputFile;
-class InputFile;
+class RgbaOutputFile;
+class RgbaInputFile;
 struct PreviewRgba;
+class Chromaticities;
 
 //
-// RGBA output file.
+// ACES red, green, blue and white-point chromaticities.
 //
 
-class RgbaOutputFile
+const Chromaticities &	acesChromaticities ();
+
+
+//
+// ACES output file.
+//
+
+class AcesOutputFile
 {
   public:
 
@@ -75,7 +111,7 @@ class RgbaOutputFile
     // Constructor -- header is constructed by the caller
     //---------------------------------------------------
 
-    RgbaOutputFile (const char name[],
+    AcesOutputFile (const std::string &name,
 		    const Header &header,
 		    RgbaChannels rgbaChannels = WRITE_RGBA,
                     int numThreads = globalThreadCount());
@@ -87,7 +123,7 @@ class RgbaOutputFile
     // automatically close the file.
     //----------------------------------------------------
 
-    RgbaOutputFile (OStream &os,
+    AcesOutputFile (OStream &os,
 		    const Header &header,
 		    RgbaChannels rgbaChannels = WRITE_RGBA,
                     int numThreads = globalThreadCount());
@@ -98,7 +134,7 @@ class RgbaOutputFile
     // call arguments (empty dataWindow means "same as displayWindow")
     //----------------------------------------------------------------
 
-    RgbaOutputFile (const char name[],
+    AcesOutputFile (const std::string &name,
 		    const Imath::Box2i &displayWindow,
 		    const Imath::Box2i &dataWindow = Imath::Box2i(),
 		    RgbaChannels rgbaChannels = WRITE_RGBA,
@@ -116,7 +152,7 @@ class RgbaOutputFile
     // Box2i (V2i (0, 0), V2i (width - 1, height -1))
     //-----------------------------------------------
 
-    RgbaOutputFile (const char name[],
+    AcesOutputFile (const std::string &name,
 		    int width,
 		    int height,
 		    RgbaChannels rgbaChannels = WRITE_RGBA,
@@ -132,7 +168,7 @@ class RgbaOutputFile
     // Destructor
     //-----------
 
-    virtual ~RgbaOutputFile ();
+    virtual ~AcesOutputFile ();
 
 
     //------------------------------------------------
@@ -148,9 +184,10 @@ class RgbaOutputFile
 						size_t yStride);
 
 
-    //---------------------------------------------
+    //-------------------------------------------------
     // Write pixel data (see class Imf::OutputFile)
-    //---------------------------------------------
+    // The pixels are assumed to contain ACES RGB data.
+    //-------------------------------------------------
 
     void			writePixels (int numScanLines = 1);
     int				currentScanLine () const;
@@ -161,7 +198,6 @@ class RgbaOutputFile
     //--------------------------
 
     const Header &		header () const;
-    const FrameBuffer &		frameBuffer () const;
     const Imath::Box2i &	displayWindow () const;
     const Imath::Box2i &	dataWindow () const;
     float			pixelAspectRatio () const;
@@ -179,55 +215,22 @@ class RgbaOutputFile
     void			updatePreviewImage (const PreviewRgba[]);
 
 
-    //-----------------------------------------------------------------------
-    // Rounding control for luminance/chroma images:
-    //
-    // If the output file contains luminance and chroma channels (WRITE_YC
-    // or WRITE_YCA), then the the significands of the luminance and
-    // chroma values are rounded to roundY and roundC bits respectively (see
-    // function half::round()).  Rounding improves compression with minimal
-    // image degradation, usually much less than the degradation caused by
-    // chroma subsampling.  By default, roundY is 7, and roundC is 5.
-    //
-    // If the output file contains RGB channels or a luminance channel,
-    // without chroma, then no rounding is performed.
-    //-----------------------------------------------------------------------
-
-    void			setYCRounding (unsigned int roundY,
-					       unsigned int roundC);
-
-
-    //----------------------------------------------------
-    // Break a scan line -- for testing and debugging only
-    // (see Imf::OutputFile::updatePreviewImage()
-    //
-    // Warning: Calling this function usually results in a
-    // broken image file.  The file or parts of it may not
-    // be readable, or the file may contain bad data.
-    //
-    //----------------------------------------------------
-
-    void			breakScanLine  (int y,
-						int offset,
-						int length,
-						char c);
   private:
 
-    RgbaOutputFile (const RgbaOutputFile &);		  // not implemented
-    RgbaOutputFile & operator = (const RgbaOutputFile &); // not implemented
+    AcesOutputFile (const AcesOutputFile &);		  // not implemented
+    AcesOutputFile & operator = (const AcesOutputFile &); // not implemented
 
-    class ToYca;
+    class Data;
 
-    OutputFile *		_outputFile;
-    ToYca *			_toYca;
+    Data *			_data;
 };
 
 
 //
-// RGBA input file
+// ACES input file
 //
 
-class RgbaInputFile
+class AcesInputFile
 {
   public:
 
@@ -236,31 +239,18 @@ class RgbaInputFile
     // destructor will automatically close the file.
     //-------------------------------------------------------
 
-    RgbaInputFile (const char name[], int numThreads = globalThreadCount());
+    AcesInputFile (const std::string &name,
+		   int numThreads = globalThreadCount());
 
 
     //-----------------------------------------------------------
-    // Constructor -- attaches the new RgbaInputFile object to a
+    // Constructor -- attaches the new AcesInputFile object to a
     // file that has already been opened by the caller.
-    // Destroying the RgbaInputFile object will not automatically
+    // Destroying the AcesInputFile object will not automatically
     // close the file.
     //-----------------------------------------------------------
 
-    RgbaInputFile (IStream &is, int numThreads = globalThreadCount());
-
-
-    //--------------------------------------------------------------
-    // Constructors -- the same as the previous two, but the names
-    // of the red, green, blue, alpha, luminance and chroma channels
-    // are expected to be layerName.R, layerName.G, etc.
-    //--------------------------------------------------------------
-
-    RgbaInputFile (const char name[],
-		   const std::string &layerName,
-		   int numThreads = globalThreadCount());
-
-    RgbaInputFile (IStream &is,
-		   const std::string &layerName,
+    AcesInputFile (IStream &is,
 		   int numThreads = globalThreadCount());
 
 
@@ -268,7 +258,7 @@ class RgbaInputFile
     // Destructor
     //-----------
 
-    virtual ~RgbaInputFile ();
+    virtual ~AcesInputFile ();
 
 
     //-----------------------------------------------------
@@ -284,19 +274,10 @@ class RgbaInputFile
 						size_t yStride);
 
 
-    //----------------------------------------------------------------
-    // Switch to a different layer -- subsequent calls to readPixels()
-    // will read channels layerName.R, layerName.G, etc.
-    // After each call to setLayerName(), setFrameBuffer() must be
-    // called at least once before the next call to readPixels().
-    //----------------------------------------------------------------
-
-    void			setLayerName (const std::string &layerName);
-
-
-    //-------------------------------------------
+    //--------------------------------------------
     // Read pixel data (see class Imf::InputFile)
-    //-------------------------------------------
+    // Pixels returned will contain ACES RGB data.
+    //--------------------------------------------
 
     void			readPixels (int scanLine1, int scanLine2);
     void			readPixels (int scanLine);
@@ -307,7 +288,6 @@ class RgbaInputFile
     //--------------------------
 
     const Header &		header () const;
-    const FrameBuffer &		frameBuffer () const;
     const Imath::Box2i &	displayWindow () const;
     const Imath::Box2i &	dataWindow () const;
     float			pixelAspectRatio () const;
@@ -328,14 +308,12 @@ class RgbaInputFile
 
   private:
 
-    RgbaInputFile (const RgbaInputFile &);		  // not implemented
-    RgbaInputFile & operator = (const RgbaInputFile &);   // not implemented
+    AcesInputFile (const AcesInputFile &);		  // not implemented
+    AcesInputFile & operator = (const AcesInputFile &);   // not implemented
 
-    class FromYca;
+    class Data;
 
-    InputFile *			_inputFile;
-    FromYca *			_fromYca;
-    std::string			_channelNamePrefix;
+    Data *			_data;
 };
 
 
