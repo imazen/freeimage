@@ -7,6 +7,7 @@ What's New for FreeImage
 
 Month day, 2010 - 3.14.0
 
+! FreeImage now uses OpenEXR 1.7.0
 ! FreeImage now uses ZLib 1.2.5
 ! FreeImage now uses LibPNG 1.4.3
 ! FreeImage now uses LibJPEG 8b
