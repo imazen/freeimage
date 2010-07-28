@@ -9,6 +9,12 @@ unit FreeBitmap;
 //
 // Contributors:
 // - Enzo Costantini (enzocostantini@libero.it)
+// - Lorenzo Monti (LM)  lomo74@gmail.com
+//
+// Revision history
+// When        Who   What
+// ----------- ----- -----------------------------------------------------------
+// 2010-07-14  LM    made RAD2010 compliant (unicode)
 //
 // This file is part of FreeImage 3
 //
@@ -33,6 +39,8 @@ unit FreeBitmap;
 
 interface
 
+{$I 'Version.inc'}
+
 uses
   SysUtils, Classes, Windows, FreeImage;
 
@@ -53,16 +61,16 @@ type
 
     // getters & setters
     function GetCount: Cardinal;
-    function GetDescription: string;
+    function GetDescription: AnsiString;
     function GetID: Word;
-    function GetKey: string;
+    function GetKey: AnsiString;
     function GetLength: Cardinal;
     function GetTagType: FREE_IMAGE_MDTYPE;
     function GetValue: Pointer;
     procedure SetCount(const Value: Cardinal);
-    procedure SetDescription(const Value: string);
+    procedure SetDescription(const Value: AnsiString);
     procedure SetID(const Value: Word);
-    procedure SetKey(const Value: string);
+    procedure SetKey(const Value: AnsiString);
     procedure SetLength(const Value: Cardinal);
     procedure SetTagType(const Value: FREE_IMAGE_MDTYPE);
     procedure SetValue(const Value: Pointer);
@@ -74,11 +82,11 @@ type
     // methods
     function Clone: TFreeTag;
     function IsValid: Boolean; override;
-    function ToString(Model: FREE_IMAGE_MDMODEL; Make: PChar = nil): string;
+    function ToString(Model: FREE_IMAGE_MDMODEL; Make: PAnsiChar = nil): AnsiString; reintroduce;
 
     // properties
-    property Key: string read GetKey write SetKey;
-    property Description: string read GetDescription write SetDescription;
+    property Key: AnsiString read GetKey write SetKey;
+    property Description: AnsiString read GetDescription write SetDescription;
     property ID: Word read GetID write SetID;
     property TagType: FREE_IMAGE_MDTYPE read GetTagType write SetTagType;
     property Count: Cardinal read GetCount write SetCount;
@@ -116,15 +124,15 @@ type
     function CopySubImage(Left, Top, Right, Bottom: Integer; Dest: TFreeBitmap): Boolean;
     function PasteSubImage(Src: TFreeBitmap; Left, Top: Integer; Alpha: Integer = 256): Boolean;
     procedure Clear; virtual;
-    function Load(const FileName: string; Flag: Integer = 0): Boolean;
-    function LoadU(const FileName: WideString; Flag: Integer = 0): Boolean;
+    function Load(const FileName: AnsiString; Flag: Integer = 0): Boolean;
+    function LoadU(const FileName: {$IFDEF DELPHI2010}string{$ELSE}WideString{$ENDIF}; Flag: Integer = 0): Boolean;
     function LoadFromHandle(IO: PFreeImageIO; Handle: fi_handle; Flag: Integer = 0): Boolean;
     function LoadFromMemory(MemIO: TFreeMemoryIO; Flag: Integer = 0): Boolean;
     function LoadFromStream(Stream: TStream; Flag: Integer = 0): Boolean;
     // save functions
     function CanSave(fif: FREE_IMAGE_FORMAT): Boolean;
-    function Save(const FileName: string; Flag: Integer = 0): Boolean;
-    function SaveU(const FileName: WideString; Flag: Integer = 0): Boolean;
+    function Save(const FileName: AnsiString; Flag: Integer = 0): Boolean;
+    function SaveU(const FileName: {$IFDEF DELPHI2010}string{$ELSE}WideString{$ENDIF}; Flag: Integer = 0): Boolean;
     function SaveToHandle(fif: FREE_IMAGE_FORMAT; IO: PFreeImageIO; Handle: fi_handle; Flag: Integer = 0): Boolean;
     function SaveToMemory(fif: FREE_IMAGE_FORMAT; MemIO: TFreeMemoryIO; Flag: Integer = 0): Boolean;
     function SaveToStream(fif: FREE_IMAGE_FORMAT; Stream: TStream; Flag: Integer = 0): Boolean;
@@ -152,10 +160,10 @@ type
     // pixels access
     function AccessPixels: PByte;
     function GetScanLine(ScanLine: Integer): PByte;
-    function GetPixelIndex(X, Y: Cardinal; var Value: PByte): Boolean;
-    function GetPixelColor(X, Y: Cardinal; var Value: PRGBQUAD): Boolean;
-    function SetPixelIndex(X, Y: Cardinal; Value: PByte): Boolean;
-    function SetPixelColor(X, Y: Cardinal; Value: PRGBQUAD): Boolean;
+    function GetPixelIndex(X, Y: Cardinal; var Value: Byte): Boolean;
+    function GetPixelColor(X, Y: Cardinal; var Value: RGBQUAD): Boolean;
+    function SetPixelIndex(X, Y: Cardinal; var Value: Byte): Boolean;
+    function SetPixelColor(X, Y: Cardinal; var Value: RGBQUAD): Boolean;
     // convertion
     function ConvertToStandardType(ScaleLinear: Boolean): Boolean;
     function ConvertToType(ImageType: FREE_IMAGE_TYPE; ScaleLinear: Boolean): Boolean;
@@ -177,7 +185,7 @@ type
     function GetTransparencyTable: PByte;
     procedure SetTransparencyTable(Table: PByte; Count: Integer);
     function HasFileBkColor: Boolean;
-    function GetFileBkColor(var BkColor: PRGBQuad): Boolean;
+    function GetFileBkColor(var BkColor: RGBQUAD): Boolean;
     function SetFileBkColor(BkColor: PRGBQuad): Boolean;
     // channel processing routines
     function GetChannel(Bitmap: TFreeBitmap; Channel: FREE_IMAGE_COLOR_CHANNEL): Boolean;
@@ -203,8 +211,8 @@ type
     function FindFirstMetadata(Model: FREE_IMAGE_MDMODEL; var Tag: TFreeTag): PFIMETADATA;
     function FindNextMetadata(MDHandle: PFIMETADATA; var Tag: TFreeTag): Boolean;
     procedure FindCloseMetadata(MDHandle: PFIMETADATA);
-    function SetMetadata(Model: FREE_IMAGE_MDMODEL; const Key: string; Tag: TFreeTag): Boolean;
-    function GetMetadata(Model: FREE_IMAGE_MDMODEL; const Key: string; var Tag: TFreeTag): Boolean;
+    function SetMetadata(Model: FREE_IMAGE_MDMODEL; const Key: AnsiString; Tag: TFreeTag): Boolean;
+    function GetMetadata(Model: FREE_IMAGE_MDMODEL; const Key: AnsiString; var Tag: TFreeTag): Boolean;
     function GetMetadataCount(Model: FREE_IMAGE_MDMODEL): Cardinal;
 
     // properties
@@ -268,7 +276,7 @@ type
     destructor Destroy; override;
 
     // methods
-    function Open(const FileName: string; CreateNew, ReadOnly: Boolean; Flags: Integer = 0): Boolean;
+    function Open(const FileName: AnsiString; CreateNew, ReadOnly: Boolean; Flags: Integer = 0): Boolean;
     function Close(Flags: Integer = 0): Boolean;
     function GetPageCount: Integer;
     procedure AppendPage(Bitmap: TFreeBitmap);
@@ -720,9 +728,9 @@ begin
   Result := FreeImage_GetColorType(FDib);
 end;
 
-function TFreeBitmap.GetFileBkColor(var BkColor: PRGBQuad): Boolean;
+function TFreeBitmap.GetFileBkColor(var BkColor: RGBQUAD): Boolean;
 begin
-  Result := FreeImage_GetBackgroundColor(FDib, BkColor)
+  Result := FreeImage_GetBackgroundColor(FDib, BkColor);
 end;
 
 function TFreeBitmap.GetHeight: Integer;
@@ -756,7 +764,7 @@ end;
 
 function TFreeBitmap.GetInfo: PBitmapInfo;
 begin
-  Result := FreeImage_GetInfo(FDib^)
+  Result := FreeImage_GetInfo(FDib);
 end;
 
 function TFreeBitmap.GetInfoHeader: PBITMAPINFOHEADER;
@@ -770,9 +778,9 @@ begin
 end;
 
 function TFreeBitmap.GetMetadata(Model: FREE_IMAGE_MDMODEL;
-  const Key: string; var Tag: TFreeTag): Boolean;
+  const Key: AnsiString; var Tag: TFreeTag): Boolean;
 begin
-  Result := FreeImage_GetMetaData(Model, FDib, PChar(Key), Tag.FTag);
+  Result := FreeImage_GetMetaData(Model, FDib, PAnsiChar(Key), Tag.FTag);
 end;
 
 function TFreeBitmap.GetMetadataCount(Model: FREE_IMAGE_MDMODEL): Cardinal;
@@ -791,15 +799,15 @@ begin
 end;
 
 function TFreeBitmap.GetPixelColor(X, Y: Cardinal;
-  var Value: PRGBQUAD): Boolean;
+  var Value: RGBQUAD): Boolean;
 begin
-  Result := FreeImage_GetPixelColor(FDib, X, Y, Value)
+  Result := FreeImage_GetPixelColor(FDib, X, Y, Value);
 end;
 
 function TFreeBitmap.GetPixelIndex(X, Y: Cardinal;
-  var Value: PByte): Boolean;
+  var Value: Byte): Boolean;
 begin
-  Result := FreeImage_GetPixelIndex(FDib, X, Y, Value)
+  Result := FreeImage_GetPixelIndex(FDib, X, Y, Value);
 end;
 
 function TFreeBitmap.GetScanLine(ScanLine: Integer): PByte;
@@ -870,17 +878,17 @@ begin
   Result := FDib <> nil
 end;
 
-function TFreeBitmap.Load(const FileName: string; Flag: Integer): Boolean;
+function TFreeBitmap.Load(const FileName: AnsiString; Flag: Integer): Boolean;
 var
   fif: FREE_IMAGE_FORMAT;
 begin
 
   // check the file signature and get its format
-  fif := FreeImage_GetFileType(PChar(Filename), 0);
+  fif := FreeImage_GetFileType(PAnsiChar(Filename), 0);
   if fif = FIF_UNKNOWN then
     // no signature?
     // try to guess the file format from the file extention
-    fif := FreeImage_GetFIFFromFilename(PChar(FileName));
+    fif := FreeImage_GetFIFFromFilename(PAnsiChar(FileName));
 
     // check that the plugin has reading capabilities ...
     if (fif <> FIF_UNKNOWN) and FreeImage_FIFSupportsReading(FIF) then
@@ -890,7 +898,7 @@ begin
         FreeImage_Unload(dib);
 
       // load the file
-      FDib := FreeImage_Load(fif, PChar(FileName), Flag);
+      FDib := FreeImage_Load(fif, PAnsiChar(FileName), Flag);
 
       Change;
       Result := IsValid;
@@ -969,7 +977,7 @@ begin
   end;
 end;
 
-function TFreeBitmap.LoadU(const FileName: WideString;
+function TFreeBitmap.LoadU(const FileName: {$IFDEF DELPHI2010}string{$ELSE}WideString{$ENDIF};
   Flag: Integer): Boolean;
 var
   fif: FREE_IMAGE_FORMAT;
@@ -1254,16 +1262,16 @@ begin
   end;
 end;
 
-function TFreeBitmap.Save(const FileName: string; Flag: Integer): Boolean;
+function TFreeBitmap.Save(const FileName: AnsiString; Flag: Integer): Boolean;
 var
   fif: FREE_IMAGE_FORMAT;
 begin
   Result := False;
 
   // try to guess the file format from the file extension
-  fif := FreeImage_GetFIFFromFilename(PChar(Filename));
+  fif := FreeImage_GetFIFFromFilename(PAnsiChar(Filename));
   if CanSave(fif) then
-    Result := FreeImage_Save(fif, FDib, PChar(FileName), Flag);
+    Result := FreeImage_Save(fif, FDib, PAnsiChar(FileName), Flag);
 end;
 
 function TFreeBitmap.SaveToHandle(fif: FREE_IMAGE_FORMAT; IO: PFreeImageIO;
@@ -1303,7 +1311,7 @@ begin
   end;
 end;
 
-function TFreeBitmap.SaveU(const FileName: WideString;
+function TFreeBitmap.SaveU(const FileName: {$IFDEF DELPHI2010}string{$ELSE}WideString{$ENDIF};
   Flag: Integer): Boolean;
 var
   fif: FREE_IMAGE_FORMAT;
@@ -1349,19 +1357,19 @@ begin
 end;
 
 function TFreeBitmap.SetMetadata(Model: FREE_IMAGE_MDMODEL;
-  const Key: string; Tag: TFreeTag): Boolean;
+  const Key: AnsiString; Tag: TFreeTag): Boolean;
 begin
-  Result := FreeImage_SetMetadata(Model, FDib, PChar(Key), Tag.Tag);
+  Result := FreeImage_SetMetadata(Model, FDib, PAnsiChar(Key), Tag.Tag);
 end;
 
 function TFreeBitmap.SetPixelColor(X, Y: Cardinal;
-  Value: PRGBQUAD): Boolean;
+  var Value: RGBQUAD): Boolean;
 begin
   Result := FreeImage_SetPixelColor(FDib, X, Y, Value);
   Change;
 end;
 
-function TFreeBitmap.SetPixelIndex(X, Y: Cardinal; Value: PByte): Boolean;
+function TFreeBitmap.SetPixelIndex(X, Y: Cardinal; var Value: Byte): Boolean;
 begin
   Result := FreeImage_SetPixelIndex(FDib, X, Y, Value);
   Change;
@@ -1563,7 +1571,7 @@ begin
                          0,                        // first scan line
                          FreeImage_GetHeight(Dib), // number of scan lines to copy
                          FreeImage_GetBits(Dib),   // array for bitmap bits
-                         FreeImage_GetInfo(Dib^)^, // bitmap data buffer
+                         FreeImage_GetInfo(Dib)^,  // bitmap data buffer
                          DIB_RGB_COLORS            // RGB
     );
 
@@ -1656,7 +1664,7 @@ begin
                            FreeImage_GetInfoHeader(Dib)^,
                            CBM_INIT,
                            PAnsiChar(FreeImage_GetBits(Dib)),
-                           FreeImage_GetInfo(Dib^)^,
+                           FreeImage_GetInfo(Dib)^,
                            DIB_RGB_COLORS);
     ReleaseDC(0,DC);
   end;
@@ -1801,7 +1809,7 @@ begin
   StretchDIBits(DC, Rect.Left, Rect.Top,
     Rect.Right - Rect.Left, Rect.Bottom - Rect.Top,
     0, 0, FreeImage_GetWidth(FDisplayDib), FreeImage_GetHeight(FDisplayDib),
-    FreeImage_GetBits(FDisplayDib), FreeImage_GetInfo(FDisplayDib^)^, DIB_RGB_COLORS, SRCCOPY);
+    FreeImage_GetBits(FDisplayDib), FreeImage_GetInfo(FDisplayDib)^, DIB_RGB_COLORS, SRCCOPY);
 end;
 
 function TFreeWinBitmap.PasteFromClipBoard: Boolean;
@@ -1895,7 +1903,7 @@ begin
   Result := FreeImage_MovePage(FMPage, Target, Source);
 end;
 
-function TFreeMultiBitmap.Open(const FileName: string; CreateNew,
+function TFreeMultiBitmap.Open(const FileName: AnsiString; CreateNew,
   ReadOnly: Boolean; Flags: Integer): Boolean;
 var
   fif: FREE_IMAGE_FORMAT;
@@ -1903,14 +1911,14 @@ begin
   Result := False;
 
   // try to guess the file format from the filename
-  fif := FreeImage_GetFIFFromFilename(PChar(FileName));
+  fif := FreeImage_GetFIFFromFilename(PAnsiChar(FileName));
 
   // check for supported file types
   if (fif <> FIF_UNKNOWN) and (not fif in [FIF_TIFF, FIF_ICO, FIF_GIF]) then
     Exit;
 
   // open the stream
-  FMPage := FreeImage_OpenMultiBitmap(fif, PChar(FileName), CreateNew, ReadOnly, FMemoryCache, Flags);
+  FMPage := FreeImage_OpenMultiBitmap(fif, PAnsiChar(FileName), CreateNew, ReadOnly, FMemoryCache, Flags);
 
   Result := FMPage <> nil;  
 end;
@@ -2020,7 +2028,7 @@ begin
   Result := FreeImage_GetTagCount(FTag);
 end;
 
-function TFreeTag.GetDescription: string;
+function TFreeTag.GetDescription: AnsiString;
 begin
   Result := '';
   if not IsValid then Exit;
@@ -2036,7 +2044,7 @@ begin
   Result := FreeImage_GetTagID(FTag);
 end;
 
-function TFreeTag.GetKey: string;
+function TFreeTag.GetKey: AnsiString;
 begin
   Result := '';
   if not IsValid then Exit;
@@ -2079,10 +2087,10 @@ begin
     FreeImage_SetTagCount(FTag, Value);
 end;
 
-procedure TFreeTag.SetDescription(const Value: string);
+procedure TFreeTag.SetDescription(const Value: AnsiString);
 begin
   if IsValid then
-    FreeImage_SetTagDescription(FTag, PChar(Value));
+    FreeImage_SetTagDescription(FTag, PAnsiChar(Value));
 end;
 
 procedure TFreeTag.SetID(const Value: Word);
@@ -2091,10 +2099,10 @@ begin
     FreeImage_SetTagID(FTag, Value);
 end;
 
-procedure TFreeTag.SetKey(const Value: string);
+procedure TFreeTag.SetKey(const Value: AnsiString);
 begin
   if IsValid then
-    FreeImage_SetTagKey(FTag, PChar(Value));
+    FreeImage_SetTagKey(FTag, PAnsiChar(Value));
 end;
 
 procedure TFreeTag.SetLength(const Value: Cardinal);
@@ -2115,7 +2123,7 @@ begin
     FreeImage_SetTagValue(FTag, Value);
 end;
 
-function TFreeTag.ToString(Model: FREE_IMAGE_MDMODEL; Make: PChar): string;
+function TFreeTag.ToString(Model: FREE_IMAGE_MDMODEL; Make: PAnsiChar): AnsiString;
 begin
   Result := FreeImage_TagToString(Model, FTag, Make);
 end;

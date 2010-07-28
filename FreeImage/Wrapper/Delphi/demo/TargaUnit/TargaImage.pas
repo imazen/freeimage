@@ -127,7 +127,7 @@ var
   pbi: PBitmapInfo;
 begin
   if Assigned(fImage) then begin
-    pbi := FreeImage_GetInfo(fImage^);
+    pbi := FreeImage_GetInfo(fImage);
     SetStretchBltMode(ACanvas.Handle, COLORONCOLOR);
     StretchDIBits(ACanvas.Handle, ARect.left, ARect.top,
 	    ARect.right-ARect.left, ARect.bottom-ARect.top,

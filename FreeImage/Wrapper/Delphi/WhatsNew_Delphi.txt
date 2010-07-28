@@ -5,6 +5,24 @@ What's New for FreeImage Delphi Wrapper
 ! : changed
 + : added
 
+July 14, 2010
++ [Lorenzo Monti] updated wrapper for FreeImage 3.13.1
+* [Lorenzo Monti] fixed declaration of FreeImageIO functions (FI_ReadProc, FI_WriteProc, FI_SeekProc, FI_TellProc)
+! [Lorenzo Monti] renamed structure PluginStruct to Plugin, according to FreeImage.h
+* [Lorenzo Monti] fixed declaration of JPEG_CMYK constant
+* [Lorenzo Monti] fixed declaration of type FreeImage_OutputMessageFunction
+* [Lorenzo Monti] fixed declaration of FreeImage_OutputMessageProc
++ [Lorenzo Monti] added wrapper for FreeImage_OutputMessageProc for older Delphi compilers (<6) not supporting varargs
+* [Lorenzo Monti] fixed declaration of FreeImage_LookupX11Color and FreeImage_LookupSVGColor
+! [Lorenzo Monti] changed declaration of FreeImage_GetPixelIndex, FreeImage_GetPixelColor, FreeImage_SetPixelIndex, FreeImage_SetPixelColor
+! [Lorenzo Monti] changed declaration of FreeImage_GetInfo
+! [Lorenzo Monti] changed declaration of FreeImage_GetICCProfile, FreeImage_CreateICCProfile, FreeImage_DestroyICCProfile
+* [Lorenzo Monti] fixed declaration of FreeImage_SetComplexChannel
++ [Lorenzo Monti] added Delphi 2010 support
++ [Lorenzo Monti] added Version.inc to determine compiler version
+! [Lorenzo Monti] moved all "external" definitions to implementation section
+! [Lorenzo Monti] changed FreeBitmap.pas, FreeUtils.pas and TargaImage.pas to reflect changes in the FreeImage.pas unit
+
 July 17, 2006
 + [Hervé Drolon] added FIF_FAXG3 and FIF_SGI definitions, added FreeImage_MakeThumbnail definition. 
 
@@ -69,3 +87,5 @@ October 28, 2003
 August 9, 2003
 + [Simon Beavis] added a wrapper for FreeImage 2.6.1
 
+
+ 	  	 
