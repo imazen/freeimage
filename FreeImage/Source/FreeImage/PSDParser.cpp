@@ -1130,6 +1130,8 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 			
 			// Read the RLE data (assume 8-bit)
 			
+			const BYTE* const line_end = line_start + lineSize;
+
 			for (unsigned ch = 0; ch < nChannels; ch++) {
 				const unsigned channelOffset = ch * bytes;
 				
@@ -1143,7 +1145,9 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 					
 					io->read_proc(rle_line_start, rleLineSize, 1, handle);
 					
-					for (BYTE* rle_line = rle_line_start, *line = line_start; rle_line < rle_line_start + rleLineSize;) {
+					for (BYTE* rle_line = rle_line_start, *line = line_start; 
+						rle_line < rle_line_start + rleLineSize, line < line_end;) {
+
 						int len = *rle_line++;
 						
 						// NOTE len is signed byte in PackBits RLE
@@ -1155,7 +1159,8 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 							
 							++len;
 							
-							memcpy(line, rle_line, len);
+							// assert we don't write beyound eol
+							memcpy(line, rle_line, line + len > line_end ? line_end - line : len);
 							line += len;
 							rle_line += len;
 						}
@@ -1168,7 +1173,8 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 							len ^= 0xFF; // same as (-len + 1) & 0xFF 
 							len += 2;    //
 
-							memset(line, *rle_line++, len);
+							// assert we don't write beyound eol
+							memset(line, *rle_line++, line + len > line_end ? line_end - line : len);							
 							line += len;
 
 						}
