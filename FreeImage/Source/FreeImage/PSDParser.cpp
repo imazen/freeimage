@@ -28,10 +28,6 @@
 
 // --------------------------------------------------------------------------
 
-using std::numeric_limits;
-
-// --------------------------------------------------------------------------
-
 // PSD signature (= '8BPS')
 #define PSD_SIGNATURE	0x38425053
 // Image resource block signature (= '8BIM')
@@ -404,318 +400,6 @@ int psdICCProfile::Read(FreeImageIO *io, fi_handle handle, int size) {
 }
 
 //---------------------------------------------------------------------------
-
-#define PSD_CLAMP(v, min, max) ((v < min) ? min : (v > max) ? max : v)
-
-/**
-CIELab -> XYZ conversion from http://www.easyrgb.com/
-*/
-static void CIELabToXYZ(float L, float a, float b, float *X, float *Y, float *Z) {
-	float pow_3;
-	
-	// CIELab -> XYZ conversion 
-	// ------------------------
-	float var_Y = (L + 16.F ) / 116.F;
-	float var_X = a / 500.F + var_Y;
-	float var_Z = var_Y - b / 200.F;
-
-	pow_3 = powf(var_Y, 3);
-	if(pow_3 > 0.008856F) {
-		var_Y = pow_3;
-	} else {
-		var_Y = ( var_Y - 16.F / 116.F ) / 7.787F;
-	}
-	pow_3 = powf(var_X, 3);
-	if(pow_3 > 0.008856F) {
-		var_X = pow_3;
-	} else {
-		var_X = ( var_X - 16.F / 116.F ) / 7.787F;
-	}
-	pow_3 = powf(var_Z, 3);
-	if(pow_3 > 0.008856F) {
-		var_Z = pow_3;
-	} else {
-		var_Z = ( var_Z - 16.F / 116.F ) / 7.787F;
-	}
-
-	static const float ref_X =  95.047F;
-	static const float ref_Y = 100.000F;
-	static const float ref_Z = 108.883F;
-
-	*X = ref_X * var_X;	// ref_X = 95.047 (Observer= 2°, Illuminant= D65)
-	*Y = ref_Y * var_Y;	// ref_Y = 100.000
-	*Z = ref_Z * var_Z;	// ref_Z = 108.883
-}
-
-/**
-XYZ -> RGB conversion from http://www.easyrgb.com/
-*/
-static void XYZToRGB(float X, float Y, float Z, float *R, float *G, float *B) {
-	float var_X = X / 100;        //X from 0 to  95.047 (Observer = 2°, Illuminant = D65)
-	float var_Y = Y / 100;        //Y from 0 to 100.000
-	float var_Z = Z / 100;        //Z from 0 to 108.883
-
-	float var_R = var_X *  3.2406F + var_Y * -1.5372F + var_Z * -0.4986F;
-	float var_G = var_X * -0.9689F + var_Y *  1.8758F + var_Z *  0.0415F;
-	float var_B = var_X *  0.0557F + var_Y * -0.2040F + var_Z *  1.0570F;
-
-	float exponent = 1.F / 2.4F;
-
-	if(var_R > 0.0031308F) {
-		var_R = 1.055F * powf(var_R, exponent) - 0.055F;
-	} else {
-		var_R = 12.92F * var_R;
-	}
-	if(var_G > 0.0031308F) {
-		var_G = 1.055F * powf(var_G, exponent) - 0.055F;
-	} else {
-		var_G = 12.92F * var_G;
-	}
-	if(var_B > 0.0031308F) {
-		var_B = 1.055F * powf(var_B, exponent) - 0.055F;
-	} else {
-		var_B = 12.92F * var_B;
-	}
-
-	*R = var_R;
-	*G = var_G;
-	*B = var_B;
-}
-
-/**
-Red / Blue channel swapping
-@param bits Image bits
-@param height Image height
-@param pitch Image pitch
-@param Bpp Number of bytes per pixel (3 or 4)
-*/
-static 
-void _swapRandB(BYTE* bits, unsigned height, unsigned pitch, unsigned Bpp) {
-	if(Bpp > 4 || Bpp < 3)
-		return;
-	
-	BYTE* line_start = bits;
-	for(unsigned y = 0; y < height; ++y, line_start += pitch) {
-		for(BYTE *line = line_start; line < line_start + pitch; line += Bpp) {
-			INPLACESWAP(line[0], line[2]);
-		}
-	}
-}
-
-/**
-Red / Blue channel swapping
-@see _swapRandB
-*/
-static 
-void swapRandB(FIBITMAP* dib) {
-	_swapRandB(FreeImage_GetBits(dib), FreeImage_GetHeight(dib), FreeImage_GetPitch(dib), FreeImage_GetBPP(dib)/8);
-}
-
-inline
-void assignTri(WORD r, WORD g, WORD b, WORD* out) {
-	out[0]=	r;
-	out[1]=	g;
-	out[2]= b;
-}
-
-inline
-void assignTri(BYTE r, BYTE g, BYTE b, BYTE* out) {
-	out[FI_RGBA_RED]	= r;
-	out[FI_RGBA_GREEN]	= g;
-	out[FI_RGBA_BLUE]	= b;
-}
-
-template<class T>
-static 
-void CIELabToRGB(float L, float a, float b, T *rgb) {
-	float X, Y, Z;
-	float R, G, B;
-	const float max_val = numeric_limits<T>::max();
-
-	CIELabToXYZ(L, a, b, &X, &Y, &Z);
-	XYZToRGB(X, Y, Z, &R, &G, &B);
-	
-	assignTri( (T)PSD_CLAMP(R * max_val, 0, max_val), (T)PSD_CLAMP(G * max_val, 0, max_val), (T)PSD_CLAMP(B * max_val, 0, max_val), rgb);
-}
-
-/**
-CMYK -> CMY -> RGB conversion from http://www.easyrgb.com/
-
-CMYK to CMY [0-1]: C,M,Y * (1 - K) + K
-CMY to RGB [0-1]: (1 - C,M,Y)
-
-=> R,G,B = (1 - C,M,Y) * (1 - K)
-mapped to [0-MAX_VAL]: 
-(MAX_VAL - C,M,Y) * (MAX_VAL - K) / MAX_VAL
-*/
-template<class T >
-static inline
-void CMYKToRGB(T C, T M, T Y, T K, T* out) {
-	const unsigned max_val = numeric_limits<T>::max();
-	
-	unsigned r = (max_val - C) * (max_val - K) / max_val;
-	unsigned g = (max_val - M) * (max_val - K) / max_val;
-	unsigned b = (max_val - Y) * (max_val - K) / max_val;
-	
-	assignTri((T)PSD_CLAMP(r, 0, max_val), (T)PSD_CLAMP(g, 0, max_val), (T)PSD_CLAMP(b, 0, max_val), out);
-}
-
-template<class T>
-static
-void _convertCMYKtoRGBA(int width, int height, BYTE* line_start, unsigned pitch, unsigned ch) {
-	const bool hasBlack = ch > 3;
-	const T MAX_VAL = numeric_limits<T>::max();
-		
-	T K = 0;
-	for(int y = 0; y < height; y++) {
-		T *line = (T*)line_start;
-
-		for(int x = 0; x < width; x++) {
-			if(hasBlack) {
-				K = line[FI_RGBA_ALPHA];
-				line[FI_RGBA_ALPHA] = MAX_VAL; // TODO write the first extra channel as alpha!
-			}
-			
-			
-			CMYKToRGB<T>( line[0], line[1], line[2], K, line);
-			
-			line += ch;
-		}
-		line_start += pitch;
-	}
-}
-
-/**
-Inplace convert CMYK to RGBA (8- and 16-bit).
-Alpha is filled with the first extra channel if any or white otherwise.
-(Can be useful as public/utility function) (Also need in Tiff loading)
-*/
-static
-void convertCMYKtoRGBA(FIBITMAP* dib) {
-	const FREE_IMAGE_TYPE type = FreeImage_GetImageType(dib);
-	const unsigned Bpp = FreeImage_GetBPP(dib)/8;
-	
-	BYTE chSize = 1;
-	if (type == FIT_RGBA16 || type == FIT_RGB16) {
-		chSize = sizeof(WORD);
-	} else if (!(type == FIT_BITMAP && (Bpp > 2))) {
-		return;
-	}
-				
-	const int width = FreeImage_GetWidth(dib);
-	const int height = FreeImage_GetHeight(dib);
-	BYTE *line_start = FreeImage_GetScanLine(dib, 0);
-	const unsigned pitch = FreeImage_GetPitch(dib);
-	
-	unsigned ch = FreeImage_GetLine(dib) / width / chSize;
-		
-	if(chSize == sizeof(WORD)) {
-		_convertCMYKtoRGBA<WORD>(width, height, line_start, pitch, ch);
-	}
-	else {
-		_convertCMYKtoRGBA<BYTE>(width, height, line_start, pitch, ch);
-	}
-}
-
-template<class T>
-static
-void _convertLABtoRGB(int width, int height, BYTE* line_start, unsigned pitch, unsigned ch) {
-	const unsigned max_val = numeric_limits<T>::max();
-	const float sL = 100.F / max_val;
-	const float sa = 256.F / max_val;
-	const float sb = 256.F / max_val;
-	
-	for(int y = 0; y < height; y++) {
-		T *line = (T*)line_start;
-
-		for(int x = 0; x < width; x++) {
-			CIELabToRGB(line[0]* sL, line[1]* sa - 128.F, line[2]* sb - 128.F, line);
-			
-			line += ch;
-		}
-		line_start += pitch;
-	}
-}
-
-/**
-Inplace convert CIELab to RGBA (8- and 16-bit).
-(Can be useful as public/utility function)
-*/
-static
-void convertLABtoRGB(FIBITMAP* dib) {
-	const FREE_IMAGE_TYPE type = FreeImage_GetImageType(dib);
-	const unsigned Bpp = FreeImage_GetBPP(dib)/8;
-	
-	BYTE chSize = 1;
-	if (type == FIT_RGBA16 || type == FIT_RGB16) {
-		chSize = sizeof(WORD);
-	} else if (!(type == FIT_BITMAP && (Bpp > 2))) {
-		return;
-	}
-				
-	const int width = FreeImage_GetWidth(dib);
-	const int height = FreeImage_GetHeight(dib);
-	BYTE *line_start = FreeImage_GetScanLine(dib, 0);
-	const unsigned pitch = FreeImage_GetPitch(dib);
-	
-	unsigned ch = FreeImage_GetLine(dib) / width / chSize;
-			
-	if(chSize == 1) {
-		_convertLABtoRGB<BYTE>(width, height, line_start, pitch, ch);
-	}
-	else {
-		_convertLABtoRGB<WORD>(width, height, line_start, pitch, ch);
-	}
-	
-}
-
-/**
-RGBA to RGB (8- and 16-bit, trivial to extend to float)
-(Can be useful as public/utility function)
-*/
-static
-FIBITMAP* stripAlpha(FIBITMAP* dib) {
-	const int width = FreeImage_GetWidth(dib);
-	const int height = FreeImage_GetHeight(dib);
-	BYTE *line_start = FreeImage_GetScanLine(dib, 0);
-	const unsigned pitch = FreeImage_GetPitch(dib);
-	const unsigned Bpp = FreeImage_GetBPP(dib)/8;
-	
-	FIBITMAP* dst_dib = NULL;
-	if (FreeImage_GetImageType(dib) == FIT_RGBA16) {
-		dst_dib = FreeImage_AllocateT(FIT_RGB16, width, height);
-	} else {
-		dst_dib = FreeImage_Allocate(width, height, 24);
-	}
-	if(!dst_dib)
-		return NULL;
-		
-	BYTE *dst_line_start = FreeImage_GetScanLine(dst_dib, 0);
-	const unsigned dstPitch = FreeImage_GetPitch(dst_dib);
-	const unsigned dstBpp = FreeImage_GetBPP(dst_dib)/8;
-
-	for(int y = 0; y < height; y++) {
-		BYTE *line = line_start;
-		BYTE *dst_line = dst_line_start;
-
-		for(int x = 0; x < width; x++) {
-			
-			for(BYTE b=0; b < dstBpp; ++b) {
-				dst_line[b] = line[b];
-			}
-				
-			line += Bpp;
-			dst_line += dstBpp;
-		}
-		line_start += pitch;
-		dst_line_start += dstPitch;
-	}
-	
-	// copy metadata from src to dst
-	FreeImage_CloneMetadata(dst_dib, dib);
-	
-	return dst_dib;
-}
 
 /**
 Invert only color components, skipping Alpha/Black
@@ -1247,14 +931,14 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 		else { 
 			// convert to RGB
 			
-			convertCMYKtoRGBA(bitmap);
+			ConvertCMYKtoRGBA(bitmap);
 			
 			// The ICC Profile is no longer valid
 			_iccProfile.clear();
 			
 			// remove the pending A if not present in source 
 			if(nChannels == 4 || nChannels == 3 ) {
-				FIBITMAP* t = stripAlpha(bitmap);
+				FIBITMAP* t = RemoveAlphaLayer(bitmap);
 				if(t) {
 					FreeImage_Unload(bitmap);
 					bitmap = t;
@@ -1263,7 +947,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 		}
 	}
 	else if ( mode == PSDP_LAB && !((_fi_flags & PSD_LAB) == PSD_LAB)) {
-		convertLABtoRGB(bitmap);
+		ConvertLABtoRGB(bitmap);
 	}
 	else {
 		if (needPalette) {
@@ -1284,7 +968,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 		
 #if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 		if(FreeImage_GetImageType(bitmap) == FIT_BITMAP) {
-			swapRandB(bitmap);
+			SwapRedBlue32(bitmap);
 		}
 #endif
 	}

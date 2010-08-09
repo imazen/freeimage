@@ -3,7 +3,7 @@
 //
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
-// - Hervé Drolon <drolon@infonie.fr>
+// - HervÃ© Drolon <drolon@infonie.fr>
 // - Ryan Rubley (ryan@lostreality.org)
 //
 // This file is part of FreeImage 3
@@ -87,6 +87,7 @@ Allocate a FIBITMAP of type FIT_BITMAP, with possibly no pixel data
 @see FreeImage_Allocate
 */
 DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeader(BOOL header_only, int width, int height, int bpp, unsigned red_mask FI_DEFAULT(0), unsigned green_mask FI_DEFAULT(0), unsigned blue_mask FI_DEFAULT(0));
+
 
 // ==========================================================
 //   File I/O structs
@@ -204,6 +205,93 @@ inline unsigned char *
 CalculateScanLine(unsigned char *bits, unsigned pitch, int scanline) {
 	return (bits + (pitch * scanline));
 }
+
+// ----------------------------------------------------------
+
+/**
+Fast generic assign (faster then for loop)
+@param dst Destination pixel
+@param src Source pixel
+@param bytesperpixel # of bytes per pixel
+*/
+inline void 
+AssignPixel(BYTE* dst, BYTE* src, unsigned bytesperpixel) {
+	switch (bytesperpixel) {
+		case 1:	// FIT_BITMAP (8-bit)
+			*dst = *src;
+			break;
+
+		case 2: // FIT_UINT16 / FIT_INT16 / 16-bit
+			*(reinterpret_cast<WORD*>(dst)) = *(reinterpret_cast<WORD*> (src));
+			break;
+
+		case 3: // FIT_BITMAP (24-bit)
+			*(reinterpret_cast<WORD*>(dst)) = *(reinterpret_cast<WORD*> (src));
+			dst[2] = src[2];
+			break;
+
+		case 4: // FIT_BITMAP (32-bit) / FIT_UINT32 / FIT_INT32 / FIT_FLOAT
+			*(reinterpret_cast<DWORD*>(dst)) = *(reinterpret_cast<DWORD*> (src));
+			break;
+
+		case 6: // FIT_RGB16 (3 x 16-bit)
+			*(reinterpret_cast<DWORD*>(dst)) = *(reinterpret_cast<DWORD*> (src));
+			*(reinterpret_cast<WORD*>(dst + 4)) = *(reinterpret_cast<WORD*> (src + 4));	
+			break;
+
+		// the rest can be speeded up with int64
+			
+		case 8: // FIT_RGBA16 (4 x 16-bit)
+			*(reinterpret_cast<DWORD*>(dst)) = *(reinterpret_cast<DWORD*> (src));
+			*(reinterpret_cast<DWORD*>(dst + 4)) = *(reinterpret_cast<DWORD*> (src + 4));	
+			break;
+		
+		case 12: // FIT_RGBF (3 x 32-bit IEEE floating point)
+			*(reinterpret_cast<float*>(dst)) = *(reinterpret_cast<float*> (src));
+			*(reinterpret_cast<float*>(dst + 4)) = *(reinterpret_cast<float*> (src + 4));
+			*(reinterpret_cast<float*>(dst + 8)) = *(reinterpret_cast<float*> (src + 8));
+			break;
+		
+		case 16: // FIT_RGBAF (4 x 32-bit IEEE floating point)
+			*(reinterpret_cast<float*>(dst)) = *(reinterpret_cast<float*> (src));
+			*(reinterpret_cast<float*>(dst + 4)) = *(reinterpret_cast<float*> (src + 4));
+			*(reinterpret_cast<float*>(dst + 8)) = *(reinterpret_cast<float*> (src + 8));
+			*(reinterpret_cast<float*>(dst + 12)) = *(reinterpret_cast<float*> (src + 12));
+			break;
+			
+		default:
+			assert(FALSE);
+	}
+}
+
+/**
+Swap red and blue channels in a 24- or 32-bit dib. 
+@return Returns TRUE if successful, returns FALSE otherwise
+@see See definition in Conversion.cpp
+*/
+BOOL SwapRedBlue32(FIBITMAP* dib);
+
+/**
+Inplace convert CMYK to RGBA.(8- and 16-bit). 
+Alpha is filled with the first extra channel if any or white otherwise.
+@return Returns TRUE if successful, returns FALSE otherwise
+@see See definition in Conversion.cpp
+*/
+BOOL ConvertCMYKtoRGBA(FIBITMAP* dib);
+
+/**
+Inplace convert CIELab to RGBA (8- and 16-bit).
+@return Returns TRUE if successful, returns FALSE otherwise
+@see See definition in Conversion.cpp
+*/
+BOOL ConvertLABtoRGB(FIBITMAP* dib);
+
+/**
+RGBA to RGB conversion
+@see See definition in Conversion.cpp
+*/
+FIBITMAP* RemoveAlphaLayer(FIBITMAP* dib);
+
 
 // ==========================================================
 //   Big Endian / Little Endian utility functions
@@ -331,6 +419,11 @@ template <class T> T MIN(T a, T b) {
 /// INPLACESWAP adopted from codeguru.com 
 template <class T> void INPLACESWAP(T& a, T& b) {
 	a ^= b; b ^= a; a ^= b;
+}
+
+/// Clamp function
+template <class T> T CLAMP(T value, T min_value, T max_value) {
+	return ((value < min_value) ? min_value : (value > max_value) ? max_value : value);
 }
 
 /** This procedure computes minimum min and maximum max

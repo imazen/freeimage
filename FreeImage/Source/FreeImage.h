@@ -723,6 +723,7 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define TIFF_CCITTFAX4		0x2000  // save using CCITT Group 4 fax encoding
 #define TIFF_LZW			0x4000	// save using LZW compression
 #define TIFF_JPEG			0x8000	// save using JPEG compression
+#define TIFF_LOGLUV			0x10000	// save using LogLuv compression
 #define WBMP_DEFAULT        0
 #define XBM_DEFAULT			0
 #define XPM_DEFAULT			0
