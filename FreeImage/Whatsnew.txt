@@ -12,12 +12,13 @@ Month day, 2010 - 3.14.0
 ! FreeImage now uses LibPNG 1.4.3
 ! FreeImage now uses LibJPEG 8b
 ! FreeImage now uses LibTIFF 3.9.4 (CVS patch 2010-07-13)
-! FreeImage now uses LibRaw 0.10-Beta2
+! FreeImage now uses LibRaw 0.10-Beta3
 ! FreeImage now uses OpenJPEG 1.4.0 (SVN patch 2010-04-16)
 ! [Herve Drolon] FreeImage_AllocateT now builds a default greyscale palette for 8-bit images
 ! [Volodymyr Goncharov] FreeImage_LoadMultiBitmapFromMemory now supports read/write operations
 ! [Herve Drolon] FreeImage_OpenMultiBitmapFromHandle now supports read/write operations
 ! [Herve Drolon] greyscale conversions now use the Rec. 709 formula
+! [Mihail Naydenov] saving RGBF images to TIFF no longer use LogLuv encoding (unless you use the TIFF_LOGLUV save flag)
 + [Herve Drolon] added FIT_FLOAT to FIT_RGBF conversion to FreeImage_ConvertToRGBF & FreeImage_ConvertToType
 + [Herve Drolon] added VS 2008 project files
 + [Herve Drolon] added FreeImage_ConvertToFloat
@@ -34,9 +35,10 @@ Month day, 2010 - 3.14.0
 + [Herve Drolon] added FreeImage_HasPixels
 + [Herve Drolon] added FreeImage_FIFSupportsNoPixels
 + [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to JPEG, PNG, PCD, PCX plugins
-+ [Mihail Naydenov] added support for FIF_LOAD_NOPIXELS flag to TGA, PSD plugins
++ [Mihail Naydenov] added support for FIF_LOAD_NOPIXELS flag to TGA, PSD, TIFF plugins
 + [Mihail Naydenov] added support for 16-bit image types to FreeImage_Invert
 + [Mihail Naydenov] improved PSD plugin (faster code, added support for CMYK and LAB loading) + added load flags PSD_CMYK & PSD_LAB
++ [Mihail Naydenov] improved TIFF plugin (CMYK 16-bit loading and saving / RGBAF saving) + added TIFF_LOGLUV save flag
 * [Herve Drolon] fixed FreeImage_GetFileType behavior with ANI file formats
 * [Herve Drolon] fixed loading of JNG with progressive-JPEG formats
 * [Mihail Naydenov] fixed loading of TGA with a corrupted rle count
