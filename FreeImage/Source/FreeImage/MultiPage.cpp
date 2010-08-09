@@ -531,9 +531,9 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 
 				// close the files
 
-				success = (fclose(f) == 0) ? TRUE:FALSE;
-				if(!success) {
-					FreeImage_OutputMessageProc(header->fif, "Failed to save %s", spool_name.c_str());
+				if (fclose(f) != 0) {
+					success = FALSE;
+					FreeImage_OutputMessageProc(header->fif, "Failed to rename %s to %s, %s", spool_name.c_str(), header->m_filename, strerror(errno));
 				}
 
 				if (header->handle) {
