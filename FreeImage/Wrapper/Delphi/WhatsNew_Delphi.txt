@@ -5,6 +5,9 @@ What's New for FreeImage Delphi Wrapper
 ! : changed
 + : added
 
+July 29, 2010
++ [Lorenzo Monti] added Free Pascal / Lazarus 32 bit support
+
 July 14, 2010
 + [Lorenzo Monti] updated wrapper for FreeImage 3.13.1
 * [Lorenzo Monti] fixed declaration of FreeImageIO functions (FI_ReadProc, FI_WriteProc, FI_SeekProc, FI_TellProc)
@@ -87,5 +90,3 @@ October 28, 2003
 August 9, 2003
 + [Simon Beavis] added a wrapper for FreeImage 2.6.1
 
-
- 	  	 
