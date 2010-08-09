@@ -1,6 +1,19 @@
 /* 
-   GENERATED FILE, DO NOT EDIT
-   Generated from dcraw/dcraw.c at Mon Jul  5 20:29:17 2010
+  Copyright 2008-2010 LibRaw LLC (info@libraw.org)
+
+LibRaw is free software; you can redistribute it and/or modify
+it under the terms of the one of three licenses as you choose:
+
+1. GNU LESSER GENERAL PUBLIC LICENSE version 2.1
+   (See file LICENSE.LGPL provided in LibRaw distribution archive for details).
+
+2. COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
+   (See file LICENSE.CDDL provided in LibRaw distribution archive for details).
+
+3. LibRaw Software License 27032010
+   (See file LICENSE.LibRaw.pdf provided in LibRaw distribution archive for details).
+
+   This file is generated from Dave Coffin's dcraw.c
    Look into original file (probably http://cybercom.net/~dcoffin/dcraw/dcraw.c)
    for copyright information.
 */
@@ -2804,7 +2817,7 @@ void CLASS sony_arw2_load_raw()
   ushort pix[16];
   int row, col, val, max, min, imax, imin, sh, bit, i;
 
-  data = (uchar *) malloc (raw_width);
+  data = (uchar *) malloc (raw_width+1);
   merror (data, "sony_arw2_load_raw()");
   for (row=0; row < height; row++) {
     fread (data, 1, raw_width, ifp);
@@ -4471,6 +4484,13 @@ void CLASS parse_makernote (int base, int uptag)
       color_flags.cam_mul_state = LIBRAW_COLORSTATE_LOADED;
 #endif
     }
+    if (tag == 0xd && type == 7 && get2() == 0xaaaa) {
+      fread (buf97, 1, sizeof buf97, ifp);
+      char *pp = (char*)memmem ((char*)buf97, sizeof buf97,(char*)"\xbb\xbb",2);
+      i = ((uchar*)pp  - buf97) + 10;
+      if (i < 70 && buf97[i] < 3)
+	flip = "065"[buf97[i]]-'0';
+    }
     if (tag == 0x10 && type == 4)
       unique_id = get4();
     if (tag == 0x11 && is_raw && !strncmp(make,"NIKON",5)) {
@@ -4695,7 +4715,7 @@ void CLASS parse_exif (int base)
   unsigned kodak, entries, tag, type, len, save, c;
   double expo;
 
-  kodak = !strncmp(make,"EASTMAN",7);
+  kodak = !strncmp(make,"EASTMAN",7) && tiff_nifds < 3;
   entries = get2();
   while (entries--) {
     tiff_get (base, &tag, &type, &len, &save);
@@ -4885,7 +4905,7 @@ void CLASS parse_kodak_ifd (int base)
   }
 }
 
-#line 6004 "dcraw/dcraw.c"
+#line 6012 "dcraw/dcraw.c"
 int CLASS parse_tiff_ifd (int base)
 {
   unsigned entries, tag, type, len, plen=16, save;
@@ -4973,7 +4993,7 @@ int CLASS parse_tiff_ifd (int base)
 	load_raw = &CLASS panasonic_load_raw;
 	load_flags = 0x2008;
       case 273:				/* StripOffset */
-      case 513:
+      case 513:				/* JpegIFOffset */
       case 61447:
 	tiff_ifd[ifd].offset = get4()+base;
 	if (!tiff_ifd[ifd].bps) {
@@ -4986,6 +5006,9 @@ int CLASS parse_tiff_ifd (int base)
 	    tiff_ifd[ifd].samples = jh.clrs;
 	    if (!(jh.sraw || (jh.clrs & 1)))
 	      tiff_ifd[ifd].t_width *= jh.clrs;
+	    i = order;
+	    parse_tiff (tiff_ifd[ifd].offset + 12);
+	    order = i;
 	  }
 	}
 	break;
@@ -5383,21 +5406,26 @@ guess_cfa_pc:
   return 0;
 }
 
-void CLASS parse_tiff (int base)
+int CLASS parse_tiff (int base)
 {
-  int doff, max_samp=0, raw=-1, thm=-1, i;
-  struct jhead jh;
+  int doff;
 
   fseek (ifp, base, SEEK_SET);
   order = get2();
-  if (order != 0x4949 && order != 0x4d4d) return;
+  if (order != 0x4949 && order != 0x4d4d) return 0;
   get2();
-  memset (tiff_ifd, 0, sizeof tiff_ifd);
-  tiff_nifds = 0;
   while ((doff = get4())) {
     fseek (ifp, doff+base, SEEK_SET);
     if (parse_tiff_ifd (base)) break;
   }
+  return 1;
+}
+
+void CLASS apply_tiff()
+{
+  int max_samp=0, raw=-1, thm=-1, i;
+  struct jhead jh;
+
   thumb_misc = 16;
   if (thumb_offset) {
     fseek (ifp, thumb_offset, SEEK_SET);
@@ -5424,8 +5452,8 @@ void CLASS parse_tiff (int base)
       raw = i;
     }
   }
-  fuji_width *= (raw_width+1)/2;
-  if (tiff_ifd[0].t_flip) tiff_flip = tiff_ifd[0].t_flip;
+  for (i=tiff_nifds; i--; )
+    if (tiff_ifd[i].t_flip) tiff_flip = tiff_ifd[i].t_flip;
   if (raw >= 0 && !load_raw)
     switch (tiff_compress) {
       case 0:  case 1:
@@ -5987,7 +6015,7 @@ int CLASS parse_jpeg (int offset)
     hlen  = get4();
     if (get4() == 0x48454150)		/* "HEAP" */
       parse_ciff (save+hlen, len-hlen);
-    parse_tiff (save+6);
+    if (parse_tiff (save+6)) apply_tiff();
     fseek (ifp, save+len, SEEK_SET);
   }
   return 1;
@@ -6107,7 +6135,7 @@ void CLASS parse_cine()
   data_offset  = (INT64) get4() + 8;
   data_offset += (INT64) get4() << 32;
 }
-#line 7327 "dcraw/dcraw.c"
+#line 7343 "dcraw/dcraw.c"
 void CLASS adobe_coeff (const char *p_make, const char *p_model)
 {
   static const struct {
@@ -6692,7 +6720,7 @@ short CLASS guess_byte_order (int words)
   return sum[0] < sum[1] ? 0x4d4d : 0x4949;
 }
 
-#line 7915 "dcraw/dcraw.c"
+#line 7931 "dcraw/dcraw.c"
 
 float CLASS find_green (int bps, int bite, int off0, int off1)
 {
@@ -6765,7 +6793,7 @@ void CLASS identify()
     {  6573120, "Canon",    "PowerShot A610"  ,0 },
     {  9219600, "Canon",    "PowerShot A620"  ,0 },
     {  9243240, "Canon",    "PowerShot A470"  ,0 },
-    { 10341600, "Canon",    "PowerShot A720"  ,0 },
+    { 10341600, "Canon",    "PowerShot A720 IS",0 },
     { 10383120, "Canon",    "PowerShot A630"  ,0 },
     { 12945240, "Canon",    "PowerShot A640"  ,0 },
     { 15636240, "Canon",    "PowerShot A650"  ,0 },
@@ -6827,6 +6855,8 @@ void CLASS identify()
   maximum = height = width = top_margin = left_margin = 0;
   cdesc[0] = desc[0] = artist[0] = make[0] = model[0] = model2[0] = 0;
   iso_speed = shutter = aperture = focal_len = unique_id = 0;
+  tiff_nifds = 0;
+  memset (tiff_ifd, 0, sizeof tiff_ifd);
   memset (gpsdata, 0, sizeof gpsdata);
   memset (cblack, 0, sizeof cblack);
   memset (white, 0, sizeof white);
@@ -6870,14 +6900,12 @@ void CLASS identify()
   if ((cp = (char *) memmem (head, 32, (char*)"MMMM", 4)) ||
       (cp = (char *) memmem (head, 32, (char*)"IIII", 4))) {
     parse_phase_one (cp-head);
-    if (cp-head) parse_tiff(0);
+    if (cp-head && parse_tiff(0)) apply_tiff();
   } else if (order == 0x4949 || order == 0x4d4d) {
     if (!memcmp (head+6,"HEAPCCDR",8)) {
       data_offset = hlen;
       parse_ciff (hlen, flen - hlen);
-    } else {
-      parse_tiff(0);
-    }
+    } else if (parse_tiff(0)) apply_tiff();
   } else if (!memcmp (head,"\xff\xd8\xff\xe1",4) &&
 	     !memcmp (head+6,"Exif",4)) {
     fseek (ifp, 4, SEEK_SET);
@@ -6920,6 +6948,7 @@ void CLASS identify()
     fseek (ifp, 100, SEEK_SET);
     parse_tiff (data_offset = get4());
     parse_tiff (thumb_offset+12);
+    apply_tiff();
   } else if (!memcmp (head,"RIFF",4)) {
     fseek (ifp, 0, SEEK_SET);
     parse_riff();
@@ -6981,6 +7010,7 @@ void CLASS identify()
   if (!height) height = raw_height;
   if (!width)  width  = raw_width;
   if (fuji_width) {
+    fuji_width = (raw_width+1)/2;
     width = height + fuji_width;
     height = width - 1;
     pixel_aspect = 1;
@@ -7115,7 +7145,7 @@ if (is_canon && tiff_bps == 15) {
     top_margin  = 6;
     left_margin = 12;
     goto canon_a5;
-  } else if (!strcmp(model,"PowerShot A720")) {
+  } else if (!strcmp(model,"PowerShot A720 IS")) {
     height = 2472;
     width  = 3298;
     raw_height = 2480;
@@ -8465,7 +8495,7 @@ else if (!strcmp(model,"QV-2000UX")) {
   }
 }
 
-#line 9779 "dcraw/dcraw.c"
+#line 9797 "dcraw/dcraw.c"
 void CLASS convert_to_rgb()
 {
   int row, col, c, i, j, k;
@@ -8684,7 +8714,7 @@ int CLASS flip_index (int row, int col)
   return row * iwidth + col;
 }
 
-#line 10022 "dcraw/dcraw.c"
+#line 10040 "dcraw/dcraw.c"
 void CLASS tiff_set (ushort *ntag,
 	ushort tag, ushort type, int count, int val)
 {

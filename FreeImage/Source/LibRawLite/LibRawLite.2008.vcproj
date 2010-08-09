@@ -188,6 +188,7 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
+				OpenMP="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"

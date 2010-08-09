@@ -1,3 +1,9 @@
+2010-07-31 Alex Tutubalin <lexa@lexa.ru>
+           * dcraw 9.04 (1.438) imported: changes in tiff metadata parser,
+            fixed a typo in Canon A720 model name
+           * small patch in Sony ARW2 unpacking code to make valgrind happy
+           * LibRaw 0.10.0-Beta3.
+
 2010-07-05 Alex Tutubalin <lexa@lexa.ru>
            * dcraw 9.03 (1.437) imported:
              + New cameras: Canon SX20, Nikon D3s, Olympus E-P2, Panasoni DMC-GF1,
