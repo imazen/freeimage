@@ -573,7 +573,7 @@ SupportsExportDepth(int depth) {
 
 static BOOL DLL_CALLCONV 
 SupportsExportType(FREE_IMAGE_TYPE type) {
-	return (type == FIT_BITMAP) ? TRUE : FALSE;
+	return FALSE;
 }
 
 // ----------------------------------------------------------

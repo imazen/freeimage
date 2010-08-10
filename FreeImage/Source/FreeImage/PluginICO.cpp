@@ -210,6 +210,11 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 	return (type == FIT_BITMAP) ? TRUE : FALSE;
 }
 
+static BOOL DLL_CALLCONV
+SupportsNoPixels() {
+	return TRUE;
+}
+
 // ----------------------------------------------------------
 
 static void * DLL_CALLCONV
@@ -265,8 +270,11 @@ PageCount(FreeImageIO *io, fi_handle handle, void *data) {
 
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
-	if (page == -1)
+	if (page == -1) {
 		page = 0;
+	}
+
+	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 	if (handle != NULL) {
 		FIBITMAP *dib = NULL;
@@ -291,7 +299,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				// Vista icon support
 				if((icon_list[page].bWidth == 0) && (icon_list[page].bHeight == 0)) {
-					dib = FreeImage_LoadFromHandle(FIF_PNG, io, handle, 0);
+					dib = FreeImage_LoadFromHandle(FIF_PNG, io, handle, header_only ? FIF_LOAD_NOPIXELS : PNG_DEFAULT);
 					free(icon_list);
 					return dib;
 				}
@@ -314,7 +322,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				// allocate memory for one icon
 
-				dib = FreeImage_Allocate(width, height, bit_count);
+				dib = FreeImage_AllocateHeader(header_only, width, height, bit_count);
 
 				if (dib == NULL) {
 					return NULL;
@@ -329,6 +337,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						INPLACESWAP(pal[i].rgbRed, pal[i].rgbBlue);
 					}
 #endif
+				}
+				
+				if(header_only) {
+					// header only mode
+					return dib;
 				}
 
 				// read the icon
@@ -717,4 +730,5 @@ InitICO(Plugin *plugin, int format_id) {
 	plugin->supports_export_bpp_proc = SupportsExportDepth;
 	plugin->supports_export_type_proc = SupportsExportType;
 	plugin->supports_icc_profiles_proc = NULL;
+	plugin->supports_no_pixels_proc = SupportsNoPixels;
 }

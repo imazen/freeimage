@@ -94,6 +94,11 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 	return FALSE;
 }
 
+static BOOL DLL_CALLCONV
+SupportsNoPixels() {
+	return TRUE;
+}
+
 // ----------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
@@ -101,6 +106,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	if (handle != NULL) {
 		CUTHEADER header;
 		FIBITMAP *dib;
+
+		BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 		// read the cut header
 
@@ -110,22 +117,30 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		SwapShort((WORD *)&header.height);
 #endif
 
-		if ((header.width == 0) || (header.height == 0))
+		if ((header.width == 0) || (header.height == 0)) {
 			return NULL;
+		}
 
 		// allocate a new bitmap
 
-		dib = FreeImage_Allocate(header.width, header.height, 8);
+		dib = FreeImage_AllocateHeader(header_only, header.width, header.height, 8);
 
-		if (dib == NULL)
+		if (dib == NULL) {
 			return NULL;
+		}
 
 		// stuff it with a palette
 
 		RGBQUAD *palette = FreeImage_GetPalette(dib);
 
-		for (int j = 0; j < 256; ++j)
+		for (int j = 0; j < 256; ++j) {
 			palette[j].rgbBlue = palette[j].rgbGreen = palette[j].rgbRed = (BYTE)j;
+		}
+		
+		if(header_only) {
+			// header only mode
+			return dib;
+		}
 
 		// unpack the RLE bitmap bits
 
@@ -194,4 +209,5 @@ InitCUT(Plugin *plugin, int format_id) {
 	plugin->supports_export_bpp_proc = SupportsExportDepth;
 	plugin->supports_export_type_proc = SupportsExportType;
 	plugin->supports_icc_profiles_proc = NULL;
+	plugin->supports_no_pixels_proc = SupportsNoPixels;
 }

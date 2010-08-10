@@ -418,12 +418,24 @@ SupportsExportType(FREE_IMAGE_TYPE type) {
 	return FALSE;
 }
 
+static BOOL DLL_CALLCONV
+SupportsICCProfiles() {
+	return TRUE;
+}
+
+static BOOL DLL_CALLCONV
+SupportsNoPixels() {
+	return TRUE;
+}
+
 // ----------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	FIBITMAP *dib = NULL;
 	LibRaw RawProcessor;
+
+	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 	try {
 		// wrap the input datastream
@@ -434,17 +446,23 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			throw "LibRaw : failed to open input stream (unknown format)";
 		}
 
-		if((flags & RAW_PREVIEW) == RAW_PREVIEW) {
+		if(header_only) {
+			// header only mode
+			dib = FreeImage_AllocateHeaderT(header_only, FIT_RGB16, RawProcessor.imgdata.sizes.width, RawProcessor.imgdata.sizes.height);
+		}
+		else if((flags & RAW_PREVIEW) == RAW_PREVIEW) {
 			// try to get the embedded JPEG
 			dib = libraw_LoadEmbeddedPreview(RawProcessor);
 			if(!dib) {
 				// no JPEG preview: try to load as 8-bit
 				dib = libraw_LoadRawData(RawProcessor, 8);
 			}
-		} else if((flags & RAW_DISPLAY) == RAW_DISPLAY) {
+		} 
+		else if((flags & RAW_DISPLAY) == RAW_DISPLAY) {
 			// load raw data as RGB 24-bit
 			dib = libraw_LoadRawData(RawProcessor, 8);
-		} else {
+		} 
+		else {
 			// default: load raw data as linear 16-bit
 			dib = libraw_LoadRawData(RawProcessor, 16);
 		}
@@ -492,5 +510,6 @@ InitRAW(Plugin *plugin, int format_id) {
 	plugin->mime_proc = MimeType;
 	plugin->supports_export_bpp_proc = SupportsExportDepth;
 	plugin->supports_export_type_proc = SupportsExportType;
-	plugin->supports_icc_profiles_proc = NULL;
+	plugin->supports_icc_profiles_proc = SupportsICCProfiles;
+	plugin->supports_no_pixels_proc = SupportsNoPixels;
 }
