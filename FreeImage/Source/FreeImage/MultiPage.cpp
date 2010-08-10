@@ -234,170 +234,151 @@ FreeImage_InternalGetPageCount(FIMULTIBITMAP *bitmap) {
 
 FIMULTIBITMAP * DLL_CALLCONV
 FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL create_new, BOOL read_only, BOOL keep_cache_in_memory, int flags) {
-	// sanity check on the parameters
 
-	if (create_new) {
-		read_only = FALSE;
-	}
+	FILE *handle = NULL;
+	try {
+		// sanity check on the parameters
 
-	// retrieve the plugin list to find the node belonging to this plugin
+		if (create_new) {
+			read_only = FALSE;
+		}
 
-	PluginList *list = FreeImage_GetPluginList();
+		// retrieve the plugin list to find the node belonging to this plugin
 
-	if (list) {
-		PluginNode *node = list->FindNodeFromFIF(fif);
+		PluginList *list = FreeImage_GetPluginList();
 
-		if (node) {
-			FreeImageIO *io = new(std::nothrow) FreeImageIO;
+		if (list) {
+			PluginNode *node = list->FindNodeFromFIF(fif);
 
-			if (io) {
-				SetDefaultIO(io);
+			if (node) {
+				std::auto_ptr<FreeImageIO> io (new FreeImageIO);
 
-				FILE *handle = NULL;
+				SetDefaultIO(io.get());
 
 				if (!create_new) {
 					handle = fopen(filename, "rb");
 					if (handle == NULL) {
-						delete io;
 						return NULL;
 					}
 				}
 
-				FIMULTIBITMAP *bitmap = new(std::nothrow) FIMULTIBITMAP;
+				std::auto_ptr<FIMULTIBITMAP> bitmap (new FIMULTIBITMAP);
+				std::auto_ptr<MULTIBITMAPHEADER> header (new MULTIBITMAPHEADER);
+				header->m_filename = new char[strlen(filename) + 1];
+				strcpy(header->m_filename, filename);
+				header->node = node;
+				header->fif = fif;
+				header->io = io.get ();
+				header->handle = handle;						
+				header->changed = FALSE;						
+				header->read_only = read_only;
+				header->m_cachefile = NULL;
+				header->cache_fif = fif;
+				header->load_flags = flags;
 
-				if (bitmap) {
-					MULTIBITMAPHEADER *header = new(std::nothrow) MULTIBITMAPHEADER;
+				// store the MULTIBITMAPHEADER in the surrounding FIMULTIBITMAP structure
 
-					if (header) {
-						header->m_filename = new char[strlen(filename) + 1];
-						strcpy(header->m_filename, filename);
-						header->node = node;
-						header->fif = fif;
-						header->io = io;
-						header->handle = handle;						
-						header->changed = FALSE;						
-						header->read_only = read_only;
-						header->m_cachefile = NULL;
-						header->cache_fif = fif;
-						header->load_flags = flags;
+				bitmap->data = header.get();
 
-						// store the MULTIBITMAPHEADER in the surrounding FIMULTIBITMAP structure
+				// cache the page count
 
-						bitmap->data = header;
+				header->page_count = FreeImage_InternalGetPageCount(bitmap.get());
 
-						// cache the page count
+				// allocate a continueus block to describe the bitmap
 
-						header->page_count = FreeImage_InternalGetPageCount(bitmap);
-
-						// allocate a continueus block to describe the bitmap
-
-						if (!create_new) {
-							header->m_blocks.push_back((BlockTypeS *)new BlockContinueus(0, header->page_count - 1));
-						}
-
-						// set up the cache
-
-						if (!read_only) {
-							std::string cache_name;
-							ReplaceExtension(cache_name, filename, "ficache");
-
-							CacheFile *cache_file = new(std::nothrow) CacheFile(cache_name, keep_cache_in_memory);
-
-							if (cache_file && cache_file->open()) {
-								header->m_cachefile = cache_file;
-
-								// return the multibitmap
-								return bitmap;
-
-							} else {
-								// an error occured ...
-								delete cache_file;
-								delete header;
-								delete bitmap;
-								delete io;
-								return NULL;
-							}
-						}
-
-						return bitmap;
-					}
-					
-					delete bitmap;
+				if (!create_new) {
+					header->m_blocks.push_back((BlockTypeS *)new BlockContinueus(0, header->page_count - 1));
 				}
-				
-				delete io;
+
+				// set up the cache
+
+				if (!read_only) {
+					std::string cache_name;
+					ReplaceExtension(cache_name, filename, "ficache");
+
+					std::auto_ptr<CacheFile> cache_file (new CacheFile(cache_name, keep_cache_in_memory));
+
+					if (cache_file->open()) {
+						// we can use release() as std::bad_alloc won't be thrown from here on
+						header->m_cachefile = cache_file.release();
+					} else {
+						// an error occured ...
+						fclose(handle);
+						return NULL;
+					}
+				}
+				// return the multibitmap
+				// std::bad_alloc won't be thrown from here on
+				header.release(); // now owned by bitmap
+				io.release();	  // now owned by bitmap
+				return bitmap.release(); // now owned by caller
 			}
 		}
+	} catch (std::bad_alloc &) {
+		/** @todo report error */
 	}
-
+	if (handle)
+		fclose(handle);
 	return NULL;
 }
 
 FIMULTIBITMAP * DLL_CALLCONV
 FreeImage_OpenMultiBitmapFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags) {
-	BOOL read_only = FALSE;	// modifications (if any) will be stored into the memory cache
+	try {
+		BOOL read_only = FALSE;	// modifications (if any) will be stored into the memory cache
 
-	if (io && handle) {
+		if (io && handle) {
 		
-		// retrieve the plugin list to find the node belonging to this plugin
-		PluginList *list = FreeImage_GetPluginList();
+			// retrieve the plugin list to find the node belonging to this plugin
+			PluginList *list = FreeImage_GetPluginList();
 		
-		if (list) {
-			PluginNode *node = list->FindNodeFromFIF(fif);
+			if (list) {
+				PluginNode *node = list->FindNodeFromFIF(fif);
 			
-			if (node) {
-				FIMULTIBITMAP *bitmap = new(std::nothrow) FIMULTIBITMAP;
-				
-				if (bitmap) {
-					MULTIBITMAPHEADER *header = new(std::nothrow) MULTIBITMAPHEADER;
-					
-					if (header) {
-						header->io = new(std::nothrow) FreeImageIO;
+				if (node) {
+					std::auto_ptr<FIMULTIBITMAP> bitmap (new FIMULTIBITMAP);
+					std::auto_ptr<MULTIBITMAPHEADER> header (new MULTIBITMAPHEADER);
+					std::auto_ptr<FreeImageIO> tmp_io (new FreeImageIO (*io));
+					header->io = tmp_io.get();
+					header->m_filename = NULL;
+					header->node = node;
+					header->fif = fif;
+					header->handle = handle;						
+					header->changed = FALSE;						
+					header->read_only = read_only;	
+					header->m_cachefile = NULL;
+					header->cache_fif = fif;
+					header->load_flags = flags;
+							
+					// store the MULTIBITMAPHEADER in the surrounding FIMULTIBITMAP structure
+
+					bitmap->data = header.get();
+
+					// cache the page count
+
+					header->page_count = FreeImage_InternalGetPageCount(bitmap.get());
+
+					// allocate a continueus block to describe the bitmap
+
+					header->m_blocks.push_back((BlockTypeS *)new BlockContinueus(0, header->page_count - 1));
+
+					if (!read_only) {
+						// set up the cache
+						std::auto_ptr<CacheFile> cache_file (new CacheFile("", TRUE));
 						
-						if (header->io) {
-							
-							header->m_filename = NULL;
-							header->node = node;
-							header->fif = fif;
-							*header->io = *io;
-							header->handle = handle;						
-							header->changed = FALSE;						
-							header->read_only = read_only;	
-							header->m_cachefile = NULL;
-							header->cache_fif = fif;
-							header->load_flags = flags;
-							
-							// store the MULTIBITMAPHEADER in the surrounding FIMULTIBITMAP structure
-
-							bitmap->data = header;
-
-							// cache the page count
-
-							header->page_count = FreeImage_InternalGetPageCount(bitmap);
-
-							// allocate a continueus block to describe the bitmap
-
-							header->m_blocks.push_back((BlockTypeS *)new BlockContinueus(0, header->page_count - 1));
-
-							if (!read_only) {
-								// set up the cache
-								CacheFile *cache_file = new(std::nothrow) CacheFile("", TRUE);
-								
-								if (cache_file && cache_file->open()) {
-									header->m_cachefile = cache_file;
-								}
-							}
-
-							return bitmap;
+						if (cache_file->open()) {
+							header->m_cachefile = cache_file.release();
 						}
-						delete header;
 					}
-					delete bitmap;
+					tmp_io.release();
+					header.release();
+					return bitmap.release();
 				}
 			}
 		}
+	} catch (std::bad_alloc &) {
+		/** @todo report error */
 	}
-
 	return NULL;
 }
 
@@ -515,41 +496,48 @@ FreeImage_CloseMultiBitmap(FIMULTIBITMAP *bitmap, int flags) {
 			
 			// saves changes only of images loaded directly from a file
 			if (header->changed && header->m_filename) {
-				// open a temp file
+				try {
+					// open a temp file
 
-				std::string spool_name;
+					std::string spool_name;
 
-				ReplaceExtension(spool_name, header->m_filename, "fispool");
+					ReplaceExtension(spool_name, header->m_filename, "fispool");
 
-				// open the spool file and the source file
+					// open the spool file and the source file
         
-				FILE *f = fopen(spool_name.c_str(), "w+b");
+					FILE *f = fopen(spool_name.c_str(), "w+b");
 				
-				// saves changes
-				
-				success = FreeImage_SaveMultiBitmapToHandle(header->fif, bitmap, header->io, (fi_handle)f, flags);
+					// saves changes
+					if (f == NULL) {
+						FreeImage_OutputMessageProc(header->fif, "Failed to open %s, %s", spool_name.c_str(), strerror(errno));
+						success = FALSE;
+					} else {
+						success = FreeImage_SaveMultiBitmapToHandle(header->fif, bitmap, header->io, (fi_handle)f, flags);
 
-				// close the files
+						// close the files
 
-				if (fclose(f) != 0) {
-					success = FALSE;
-					FreeImage_OutputMessageProc(header->fif, "Failed to rename %s to %s, %s", spool_name.c_str(), header->m_filename, strerror(errno));
-				}
-
-				if (header->handle) {
-					fclose((FILE *)header->handle);
-				}
-				
-				// applies changes to the destination file
-
-				if (success) {
-					remove(header->m_filename);
-					success = (rename(spool_name.c_str(), header->m_filename) == 0) ? TRUE:FALSE;
-					if(!success) {
-						FreeImage_OutputMessageProc(header->fif, "Failed to rename %s to %s", spool_name.c_str(), header->m_filename);
+						if (fclose(f) != 0) {
+							success = FALSE;
+							FreeImage_OutputMessageProc(header->fif, "Failed to close %s, %s", spool_name.c_str(), strerror(errno));
+						}
 					}
-				} else {
-					remove(spool_name.c_str());
+					if (header->handle) {
+						fclose((FILE *)header->handle);
+					}
+				
+					// applies changes to the destination file
+
+					if (success) {
+						remove(header->m_filename);
+						success = (rename(spool_name.c_str(), header->m_filename) == 0) ? TRUE:FALSE;
+						if(!success) {
+							FreeImage_OutputMessageProc(header->fif, "Failed to rename %s to %s", spool_name.c_str(), header->m_filename);
+						}
+					} else {
+						remove(spool_name.c_str());
+					}
+				} catch (std::bad_alloc &) {
+					success = FALSE;
 				}
 
 			} else {

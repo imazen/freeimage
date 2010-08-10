@@ -47,6 +47,7 @@
 #include <sstream>
 #include <algorithm>
 #include <limits>
+#include <memory>
 
 // ==========================================================
 //   Bitmap palette and pixels alignment
@@ -73,7 +74,7 @@ Allocate a FIBITMAP with possibly no pixel data
 @param blue_mask
 @see FreeImage_AllocateT
 */
-DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int height, int bpp, unsigned red_mask FI_DEFAULT(0), unsigned green_mask FI_DEFAULT(0), unsigned blue_mask FI_DEFAULT(0));
+DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int height, int bpp FI_DEFAULT(8), unsigned red_mask FI_DEFAULT(0), unsigned green_mask FI_DEFAULT(0), unsigned blue_mask FI_DEFAULT(0));
 
 /**
 Allocate a FIBITMAP of type FIT_BITMAP, with possibly no pixel data 
