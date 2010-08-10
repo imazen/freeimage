@@ -328,7 +328,7 @@ ConvertLABtoRGB(FIBITMAP* dib) {
 // ----------------------------------------------------------
 
 FIBITMAP* 
-RemoveAlphaLayer(FIBITMAP* src) { 
+RemoveAlphaChannel(FIBITMAP* src) { 
 	FIBITMAP *dst = NULL;
 
 	if(!FreeImage_HasPixels(src)) {

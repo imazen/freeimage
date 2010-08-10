@@ -1676,7 +1676,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						FreeImage_Unload(alpha);
 					}
 					else {
-						FIBITMAP *t = RemoveAlphaLayer(dib);
+						FIBITMAP *t = RemoveAlphaChannel(dib);
 						if(t) {
 							FreeImage_Unload(dib);
 							dib = t;

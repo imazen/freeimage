@@ -938,7 +938,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 			
 			// remove the pending A if not present in source 
 			if(nChannels == 4 || nChannels == 3 ) {
-				FIBITMAP* t = RemoveAlphaLayer(bitmap);
+				FIBITMAP* t = RemoveAlphaChannel(bitmap);
 				if(t) {
 					FreeImage_Unload(bitmap);
 					bitmap = t;

@@ -292,7 +292,7 @@ BOOL ConvertLABtoRGB(FIBITMAP* dib);
 RGBA to RGB conversion
 @see See definition in Conversion.cpp
 */
-FIBITMAP* RemoveAlphaLayer(FIBITMAP* dib);
+FIBITMAP* RemoveAlphaChannel(FIBITMAP* dib);
 
 
 // ==========================================================
