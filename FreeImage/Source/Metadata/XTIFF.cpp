@@ -487,7 +487,7 @@ BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 
 	// loop over all Core Directory Tags
 	// ### uses private data, but there is no other way
-	if(md_model == FIMD_EXIF_MAIN) {
+	if(md_model == TagLib::EXIF_MAIN) {
 
 		ttag_t lastTag = 0;	//<- used to prevent reading some tags twice (as stored in tif_fieldinfo)
 
