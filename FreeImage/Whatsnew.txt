@@ -5,6 +5,11 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month day, 2010 - 3.14.1
++ [Mihail Naydenov] added support for FIF_LOAD_NOPIXELS flag to EXR plugin
++ [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to CUT, HDR, RAS, ICO, PNM, RAW, BMP, PFM, XPM plugins
+* [Eberhard Mattes] fixed memory allocation checking in multipage API
+
 August 9th, 2010 - 3.14.0
 ! FreeImage now uses OpenEXR 1.7.0
 ! FreeImage now uses ZLib 1.2.5
