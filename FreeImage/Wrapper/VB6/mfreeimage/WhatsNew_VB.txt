@@ -5,6 +5,10 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+August 11, 2010 - 2.13
++ [Carsten Klein] added PSD load flags PSD_CMYK and PSD_LAB as well as the enum constants FILO_PSD_CYMK and FILO_PSD_LAB.
++ [Carsten Klein] added TIFF_LOGLUV save flag as well as the enum constant FISO_TIFF_LOGLUV.
+
 July 20, 2010 - 2.12
 + [Carsten Klein] added support for the new EXIF_RAW metadata model by adding enum constant FIMD_EXIF_RAW.
 + [Carsten Klein] added the new FIF_LOAD_NOPIXELS flag as well as the enum constant FILO_LOAD_NOPIXELS.
