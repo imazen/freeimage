@@ -152,6 +152,10 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'August 11, 2010 - 2.13
+'+ [Carsten Klein] added PSD load flags PSD_CMYK and PSD_LAB as well as the enum constants FILO_PSD_CYMK and FILO_PSD_LAB.
+'+ [Carsten Klein] added TIFF_LOGLUV save flag as well as the enum constant FISO_TIFF_LOGLUV.
+'
 'July 5, 2010 - 2.12
 '+ [Carsten Klein] added support for the new EXIF_RAW metadata model by adding enum constant FIMD_EXIF_RAW.
 '+ [Carsten Klein] added the new FIF_LOAD_NOPIXELS flag as well as the enum constant FILO_LOAD_NOPIXELS.
@@ -1239,6 +1243,8 @@ Public Const PNM_DEFAULT As Long = 0
 Public Const PNM_SAVE_RAW As Long = 0                ' if set, the writer saves in RAW format (i.e. P4, P5 or P6)
 Public Const PNM_SAVE_ASCII As Long = 1              ' if set, the writer saves in ASCII format (i.e. P1, P2 or P3)
 Public Const PSD_DEFAULT As Long = 0
+Public Const PSD_CMYK As Long = 1                    ' reads tags for separated CMYK (default is conversion to RGB)
+Public Const PSD_LAB As Long = 2                     ' reads tags for CIELab (default is conversion to RGB)
 Public Const RAS_DEFAULT As Long = 0
 Public Const RAW_DEFAULT As Long = 0                 ' load the file as linear RGB 48-bit
 Public Const RAW_PREVIEW = 1                         ' try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit
@@ -1257,6 +1263,7 @@ Public Const TIFF_CCITTFAX3 As Long = &H1000         ' save using CCITT Group 3 
 Public Const TIFF_CCITTFAX4 As Long = &H2000         ' save using CCITT Group 4 fax encoding
 Public Const TIFF_LZW As Long = &H4000               ' save using LZW compression
 Public Const TIFF_JPEG As Long = &H8000              ' save using JPEG compression
+Public Const TIFF_LOGLUV As Long = &H10000           ' save using LogLuv compression
 Public Const WBMP_DEFAULT As Long = 0
 Public Const XBM_DEFAULT As Long = 0
 Public Const XPM_DEFAULT As Long = 0
@@ -1359,6 +1366,8 @@ Public Enum FREE_IMAGE_LOAD_OPTIONS
    FILO_PCD_BASEDIV16 = PCD_BASEDIV16             ' load the bitmap sized 192 x 128
    FILO_PNG_DEFAULT = PNG_DEFAULT
    FILO_PNG_IGNOREGAMMA = PNG_IGNOREGAMMA         ' avoid gamma correction
+   FILO_PSD_CMYK = PSD_CMYK                       ' reads tags for separated CMYK (default is conversion to RGB)
+   FILO_PSD_LAB = PSD_LAB                         ' reads tags for CIELab (default is conversion to RGB)
    FILO_RAW_DEFAULT = RAW_DEFAULT                 ' load the file as linear RGB 48-bit
    FILO_RAW_PREVIEW = RAW_PREVIEW                 ' try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit
    FILO_RAW_DISPLAY = RAW_DISPLAY                 ' load the file as RGB 24-bit
@@ -1435,6 +1444,7 @@ Public Enum FREE_IMAGE_SAVE_OPTIONS
    FISO_TIFF_CCITTFAX4 = TIFF_CCITTFAX4           ' save using CCITT Group 4 fax encoding
    FISO_TIFF_LZW = TIFF_LZW                       ' save using LZW compression
    FISO_TIFF_JPEG = TIFF_JPEG                     ' save using JPEG compression
+   FISO_TIFF_LOGLUV = TIFF_LOGLUV                 ' save using LogLuv compression
 End Enum
 #If False Then
    Const FISO_SAVE_DEFAULT = 0
