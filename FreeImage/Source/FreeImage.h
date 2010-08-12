@@ -30,7 +30,7 @@
 
 #define FREEIMAGE_MAJOR_VERSION   3
 #define FREEIMAGE_MINOR_VERSION   14
-#define FREEIMAGE_RELEASE_SERIAL  0
+#define FREEIMAGE_RELEASE_SERIAL  1
 
 // Compiler options ---------------------------------------------------------
 

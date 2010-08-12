@@ -255,7 +255,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib FreeImaged.lib vld-10\vldmt.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib FreeImaged.lib"
 				OutputFile=".\Debug/Test.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
