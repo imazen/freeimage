@@ -317,7 +317,7 @@ void assignPixel<16>(BYTE* bits, BYTE* val, BOOL as24bit) {
 	WORD value(*reinterpret_cast<WORD*>(val));
 
 #ifdef FREEIMAGE_BIGENDIAN
-	SwapShort(value);
+	SwapShort(&value);
 #endif
 
 	if (as24bit) {
