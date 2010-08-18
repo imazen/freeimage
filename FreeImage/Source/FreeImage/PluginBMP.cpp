@@ -1350,9 +1350,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			int padding = FreeImage_GetPitch(dib) - FreeImage_GetWidth(dib) * sizeof(WORD);
 			WORD pad = 0;
 			WORD pixel;
-			for(int y = 0; y < FreeImage_GetHeight(dib); y++) {
+			for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
 				BYTE *line = FreeImage_GetScanLine(dib, y);
-				for(int x = 0; x < FreeImage_GetWidth(dib); x++) {
+				for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
 					pixel = ((WORD *)line)[x];
 					SwapShort(&pixel);
 					if (io->write_proc(&pixel, sizeof(WORD), 1, handle) != 1)
@@ -1370,9 +1370,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			int padding = FreeImage_GetPitch(dib) - FreeImage_GetWidth(dib) * sizeof(FILE_BGR);
 			DWORD pad = 0;
 			FILE_BGR bgr;
-			for(int y = 0; y < FreeImage_GetHeight(dib); y++) {
+			for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
 				BYTE *line = FreeImage_GetScanLine(dib, y);
-				for(int x = 0; x < FreeImage_GetWidth(dib); x++) {
+				for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
 					RGBTRIPLE *triple = ((RGBTRIPLE *)line)+x;
 					bgr.b = triple->rgbtBlue;
 					bgr.g = triple->rgbtGreen;
@@ -1388,9 +1388,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			}
 		} else if (bpp == 32) {
 			FILE_BGRA bgra;
-			for(int y = 0; y < FreeImage_GetHeight(dib); y++) {
+			for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
 				BYTE *line = FreeImage_GetScanLine(dib, y);
-				for(int x = 0; x < FreeImage_GetWidth(dib); x++) {
+				for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
 					RGBQUAD *quad = ((RGBQUAD *)line)+x;
 					bgra.b = quad->rgbBlue;
 					bgra.g = quad->rgbGreen;
