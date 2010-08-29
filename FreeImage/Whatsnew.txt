@@ -8,6 +8,7 @@ What's New for FreeImage
 Month day, 2010 - 3.14.2
 * [Domingo Stephan] fixed a compilation error in TARGA plugin when using a big endian OS (OS X 10.6)
 * [Christian Heimes] fixed a compilation error with gcc 4.3.x and OpenEXR
+* [Eric Fruhinsholz] fixed a crash in JPEG plugin when reading a JPEG with corrupted XMP data
 
 August 12th, 2010 - 3.14.1
 + [Mihail Naydenov] added support for FIF_LOAD_NOPIXELS flag to EXR plugin
