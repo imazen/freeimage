@@ -571,19 +571,25 @@ jpeg_read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen)
 static BOOL  
 jpeg_read_xmp_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 	// marker identifying string for XMP (null terminated)
-	char *xmp_signature = "http://ns.adobe.com/xap/1.0/";
+	const char *xmp_signature = "http://ns.adobe.com/xap/1.0/";
+	// XMP signature is 29 bytes long
+	const size_t xmp_signature_size = strlen(xmp_signature) + 1;
 
 	size_t length = datalen;
 	BYTE *profile = (BYTE*)dataptr;
+
+	if(length <= xmp_signature_size) {
+		// avoid reading corrupted or empty data 
+		return FALSE;
+	}
 
 	// verify the identifying string
 
 	if(memcmp(xmp_signature, profile, strlen(xmp_signature)) == 0) {
 		// XMP profile
 
-		size_t offset = strlen(xmp_signature) + 1;
-		profile += offset;
-		length  -= offset;
+		profile += xmp_signature_size;
+		length  -= xmp_signature_size;
 
 		// create a tag
 		FITAG *tag = FreeImage_CreateTag();
@@ -804,7 +810,7 @@ jpeg_write_iptc_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 static BOOL  
 jpeg_write_xmp_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 	// marker identifying string for XMP (null terminated)
-	char *xmp_signature = "http://ns.adobe.com/xap/1.0/";
+	const char *xmp_signature = "http://ns.adobe.com/xap/1.0/";
 
 	FITAG *tag_xmp = NULL;
 	FreeImage_GetMetadata(FIMD_XMP, dib, g_TagLib_XMPFieldName, &tag_xmp);
