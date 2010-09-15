@@ -1,3 +1,78 @@
+2010-09-07 Alex Tutubalin <lexa@lexa.ru>
+           * Phase One files: LibRaw::unpack() sets colordata.black to
+             approximately correct value. 
+           * Fixed minor error in setting colordata.maximum value
+             for Phase One files.
+           * LibRaw::subtract_black() sets colordata.black and
+             colordata.cblack[] to zero to preserve data integrity.
+           * LibRaw 0.11-Beta2
+             
+
+2010-09-04 Alex Tutubalin <lexa@lexa.ru>
+
+           * It is now possible to crop output image on postprocessing
+            stage (dcraw_process). Coordinates and size of the output box
+            are set via imgdata.params.cropbox[4] parameter. Look into
+            LibRaw documentation for more details.
+
+              + New fatal error code LIBRAW_BAD_CROP
+
+              + New dcraw_emu sample command line switch: -B x y w h
+                (sets cropbox)
+
+             Thanks to Patrick and Jan.
+
+            * Processing pipeline has changed: the black level is subtracted
+              from data on postprocessing stage either automatically 
+              (on dcraw_process() stage) or by special LibRaw API call:
+
+               + New API calls:  LibRaw::subtract_black() (C++ API) and
+                 libraw_subtract_black (C API). 
+                 If you use dcraw_process() or dcraw_document_mode_processing()
+                 calls YOU DON'T NEED to call subtract_black() directly.
+               
+               + The raw preprocessing mode LIBRAW_FILTERING_NOBLACKS
+                 is deprecated and removed from LibRaw.
+
+             * New ./configure script.
+               Use ./configure -h for usage details.
+               Thanks to Siddhesh Poyarekar
+
+             * New API cals static LibRaw::dcraw_clear_mem() (C++ API)
+               and libraw_dcraw_clear_mem(..) (C API).
+               This calls are used to free memory, allocated by
+               dcraw_make_mem_image() and dcraw_make_mem_thumb() instead
+               of free() call.
+
+               In some cases LibRaw and calling process have different
+               memory managers, so free() of make_mem_image() data 
+               results to program crash (especially in Win32/VisualStudio
+               enviroment).
+
+             * LibRaw::free() is now private instead of public (again).
+
+             * Minor changes and bugfixes:
+
+               + Memory allocation exceptions (std::bad_alloc) are caught,
+                 so LibRaw API calls will return reasonable error codes
+                 instead of C++ exception (possibly unhandled).
+                 This problem is very unlikely to see in wild: if application
+                 cannot allocate small data for internal structure, it will 
+                 always fail on allocation for RAW image data.
+
+               + WIN32/VisualStudio 2008/2010: fopen,fscanf and sscanf calls
+                 in Libraw_datastream code are changed to *_s (secure) ones.
+
+               + Debug print removed from fatal error handler.
+
+               + Mmaped I/O for dcraw_emu sample is turned on via -E switch
+                 now (because old -B switch is used for settng cropbox).
+
+           * all client code should be recompiled due to structures size change
+           
+           * LibRaw 0.11-Beta1
+
+
 2010-07-31 Alex Tutubalin <lexa@lexa.ru>
            * dcraw 9.04 (1.438) imported: changes in tiff metadata parser,
             fixed a typo in Canon A720 model name

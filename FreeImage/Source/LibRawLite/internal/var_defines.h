@@ -89,6 +89,7 @@ it under the terms of the one of three licenses as you choose:
 
 //imgdata.output
 #define greybox         (imgdata.params.greybox)
+#define cropbox         (imgdata.params.cropbox)
 #define aber            (imgdata.params.aber)
 #define gamm            (imgdata.params.gamm)
 #define user_mul        (imgdata.params.user_mul)

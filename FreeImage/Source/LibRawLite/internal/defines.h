@@ -85,7 +85,7 @@ it under the terms of the one of three licenses as you choose:
 #ifndef LONG_BIT
 #define LONG_BIT (8 * sizeof (long))
 #endif
-#line 175 "dcraw/dcraw.c"
+#line 176 "dcraw/dcraw.c"
 #define FORC(cnt) for (c=0; c < cnt; c++)
 #define FORC3 FORC(3)
 #define FORC4 FORC(4)
@@ -139,7 +139,7 @@ it under the terms of the one of three licenses as you choose:
 	3 G R G R G R	3 B G B G B G	3 R G R G R G	3 G B G B G B
  */
 
-#line 233 "dcraw/dcraw.c"
+#line 234 "dcraw/dcraw.c"
 #define BAYER(row,col) \
 	image[((row) >> shrink)*iwidth + ((col) >> shrink)][FC(row,col)]
 #define BAYER2(row,col) \

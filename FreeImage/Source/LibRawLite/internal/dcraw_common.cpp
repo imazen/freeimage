@@ -18,7 +18,7 @@ it under the terms of the one of three licenses as you choose:
    for copyright information.
 */
 
-#line 264 "dcraw/dcraw.c"
+#line 265 "dcraw/dcraw.c"
 #define CLASS LibRaw::
 #include "libraw/libraw_types.h"
 #define LIBRAW_LIBRARY_BUILD
@@ -26,7 +26,7 @@ it under the terms of the one of three licenses as you choose:
 #include "libraw/libraw.h"
 #include "internal/defines.h"
 #include "internal/var_defines.h"
-#line 274 "dcraw/dcraw.c"
+#line 275 "dcraw/dcraw.c"
 
 #ifndef __GLIBC__
 char *my_memmem (char *haystack, size_t haystacklen,
@@ -41,7 +41,7 @@ char *my_memmem (char *haystack, size_t haystacklen,
 #define memmem my_memmem
 #endif
 
-#line 308 "dcraw/dcraw.c"
+#line 309 "dcraw/dcraw.c"
 
 ushort CLASS sget2 (uchar *s)
 {
@@ -116,7 +116,7 @@ void CLASS read_shorts (ushort *pixel, int count)
   if ((order == 0x4949) == (ntohs(0x1234) == 0x1234))
       swab ((char*)pixel, (char*)pixel, count*2);
 }
-#line 386 "dcraw/dcraw.c"
+#line 387 "dcraw/dcraw.c"
 
 void CLASS canon_600_fixed_wb (int temp)
 {
@@ -281,11 +281,6 @@ void CLASS canon_600_load_raw()
     black = black / ((raw_width - width) * height) - 4;
   for (row=0; row < height; row++)
     for (col=0; col < width; col++) {
-#ifdef LIBRAW_LIBRARY_BUILD
-     if( filtering_mode & LIBRAW_FILTERING_NOBLACKS)  
-         val = BAYER(row,col);
-     else
-#endif
       if ((val = BAYER(row,col) - black) < 0) val = 0;
       val = val * mul[row & 3][col & 1] >> 9;
       BAYER(row,col) = val;
@@ -595,7 +590,7 @@ void CLASS canon_compressed_load_raw()
   FORC4 if (cblack[4+c]) cblack[c] /= cblack[4+c];
 }
 
-#line 875 "dcraw/dcraw.c"
+#line 871 "dcraw/dcraw.c"
 int CLASS ljpeg_start (struct jhead *jh, int info_only)
 {
   int c, tag, len;
@@ -1212,7 +1207,7 @@ void CLASS fuji_load_raw()
   free (pixel);
 #endif
 }
-#line 1496 "dcraw/dcraw.c"
+#line 1492 "dcraw/dcraw.c"
 void CLASS ppm_thumb()
 {
   char *thumb;
@@ -1626,11 +1621,7 @@ void CLASS phase_one_load_raw_c()
 #else
     {
       for (col=0; col < raw_width; col++) {
-          if( filtering_mode & LIBRAW_FILTERING_NOBLACKS)  
               i = (pixel[col] << 2);
-          else
-              i = (pixel[col] << 2)
-                  - ph1.t_black + t_black[row][(col /* - left_margin */) >= ph1.split_col]; // changed to fix Coffin's bug!
           if(col >= left_margin && col < width+left_margin)
               {
                   if (i > 0){
@@ -1650,8 +1641,7 @@ void CLASS phase_one_load_raw_c()
         {
             // top-bottom fields
             for (col=0; col < raw_width; col++) {
-                i = (pixel[col] << 2)
-                    - ph1.t_black + t_black[row][(col+left_margin) >= ph1.split_col];
+                i = (pixel[col] << 2);
                 if (i > 0) 
                     {
                         ushort *dfp = get_masked_pointer(row,col);
@@ -1665,8 +1655,13 @@ void CLASS phase_one_load_raw_c()
 #ifdef LIBRAW_LIBRARY_BUILD
   if(!( filtering_mode & LIBRAW_FILTERING_NORAWCURVE) )
 #endif
+#ifndef LIBRAW_LIBRARY_BUILD
   phase_one_correct();
   maximum = 0xfffc - ph1.t_black;
+#else
+  maximum = 0xfffc;
+  black = ph1.t_black;
+#endif
 }
 
 void CLASS hasselblad_load_raw()
@@ -1747,7 +1742,7 @@ void CLASS leaf_hdr_load_raw()
   }
 }
 
-#line 2034 "dcraw/dcraw.c"
+#line 2030 "dcraw/dcraw.c"
 void CLASS sinar_4shot_load_raw()
 {
   ushort *pixel;
@@ -3007,7 +3002,36 @@ void CLASS smal_v9_load_raw()
     smal_decode_segment (seg+i, holes);
   if (holes) fill_holes (holes);
 }
-#line 4107 "dcraw/dcraw.c"
+#line 4103 "dcraw/dcraw.c"
+
+void CLASS crop_pixels()
+{
+  int crop[4], filt, row, c;
+
+  FORC4 crop[c] = (cropbox[c] + shrink) >> shrink;
+  crop[2] = MIN (crop[2], (signed)  iwidth-crop[0]);
+  crop[3] = MIN (crop[3], (signed) iheight-crop[1]);
+  if (crop[2] <= 0 || crop[3] <= 0) {
+#ifdef DCRAW_VERBOSE
+  if(verbose) fprintf (stderr, _("%s is cropped to nothing!\n"), ifname);
+#endif
+#ifdef LIBRAW_LIBRARY_BUILD
+  throw LIBRAW_EXCEPTION_BAD_CROP;
+#else
+    longjmp (failure, 4);
+#endif
+  }
+  for (row=0; row < crop[3]; row++)
+    memmove (image[crop[2]*row],
+	     image[(crop[1]+row)*iwidth+crop[0]], crop[2]*sizeof *image);
+  image = (ushort (*)[4]) realloc (image, crop[2]*crop[3]*sizeof *image);
+  width  = (iwidth  = crop[2]) << shrink;
+  height = (iheight = crop[3]) << shrink;
+  for (filt=c=0; c < 16; c++)
+    filt |= FC((c >> 1)+(crop[1] << shrink),
+	       (c &  1)+(crop[0] << shrink)) << c*2;
+  filters = filt;
+}
 
 void CLASS gamma_curve (double pwr, double ts, int mode, int imax)
 {
@@ -3501,13 +3525,6 @@ skip_block: ;
   sat = maximum;
   if (threshold) wavelet_denoise();
   maximum -= black;
-#ifdef LIBRAW_LIBRARY_BUILD
-  for(i=0;i<4;i++)
-      if(channel_maximum[i]>=cblack[i])
-          channel_maximum[i]-=cblack[i];
-      else
-          channel_maximum[i] = 0;
-#endif
   for (dmin=DBL_MAX, dmax=c=0; c < 4; c++) {
     if (dmin > pre_mul[c])
 	dmin = pre_mul[c];
@@ -4356,7 +4373,7 @@ void CLASS parse_thumb_note (int base, unsigned toff, unsigned tlen)
   }
 }
 
-#line 5459 "dcraw/dcraw.c"
+#line 5477 "dcraw/dcraw.c"
 void CLASS parse_makernote (int base, int uptag)
 {
   static const uchar xlat[2][256] = {
@@ -4905,7 +4922,7 @@ void CLASS parse_kodak_ifd (int base)
   }
 }
 
-#line 6012 "dcraw/dcraw.c"
+#line 6030 "dcraw/dcraw.c"
 int CLASS parse_tiff_ifd (int base)
 {
   unsigned entries, tag, type, len, plen=16, save;
@@ -6135,7 +6152,7 @@ void CLASS parse_cine()
   data_offset  = (INT64) get4() + 8;
   data_offset += (INT64) get4() << 32;
 }
-#line 7343 "dcraw/dcraw.c"
+#line 7361 "dcraw/dcraw.c"
 void CLASS adobe_coeff (const char *p_make, const char *p_model)
 {
   static const struct {
@@ -6720,7 +6737,7 @@ short CLASS guess_byte_order (int words)
   return sum[0] < sum[1] ? 0x4d4d : 0x4949;
 }
 
-#line 7931 "dcraw/dcraw.c"
+#line 7949 "dcraw/dcraw.c"
 
 float CLASS find_green (int bps, int bite, int off0, int off1)
 {
@@ -8495,7 +8512,7 @@ else if (!strcmp(model,"QV-2000UX")) {
   }
 }
 
-#line 9797 "dcraw/dcraw.c"
+#line 9815 "dcraw/dcraw.c"
 void CLASS convert_to_rgb()
 {
   int row, col, c, i, j, k;
@@ -8714,7 +8731,7 @@ int CLASS flip_index (int row, int col)
   return row * iwidth + col;
 }
 
-#line 10040 "dcraw/dcraw.c"
+#line 10058 "dcraw/dcraw.c"
 void CLASS tiff_set (ushort *ntag,
 	ushort tag, ushort type, int count, int val)
 {

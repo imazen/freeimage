@@ -53,6 +53,7 @@ DllDef    int                 libraw_unpack(libraw_data_t*);
 DllDef    int                 libraw_unpack_thumb(libraw_data_t*);
 DllDef    void                libraw_recycle(libraw_data_t*);
 DllDef    void                libraw_close(libraw_data_t*);
+DllDef    void                libraw_subtract_black(libraw_data_t*);
     /* version helpers */
 DllDef    const char*               libraw_version();
 DllDef    int                 libraw_versionNumber();
@@ -75,7 +76,7 @@ DllDef    int                 libraw_dcraw_thumb_writer(libraw_data_t* lr,const 
 DllDef    int                 libraw_dcraw_process(libraw_data_t* lr);
 DllDef    libraw_processed_image_t* libraw_dcraw_make_mem_image(libraw_data_t* lr, int *errc);
 DllDef    libraw_processed_image_t* libraw_dcraw_make_mem_thumb(libraw_data_t* lr, int *errc);
-
+DllDef    void libraw_dcraw_clear_mem(libraw_processed_image_t*);
 #ifdef __cplusplus
 }
 #endif
@@ -99,6 +100,7 @@ class DllDef LibRaw
     int                         unpack_thumb(void);
 
     int                         adjust_sizes_info_only(void);
+    void                        subtract_black();
     int                         adjust_maximum();
     void                        set_memerror_handler( memory_callback cb,void *data) {callbacks.memcb_data = data; callbacks.mem_cb = cb; }
     void                        set_dataerror_handler(data_callback func, void *data) { callbacks.datacb_data = data; callbacks.data_cb = func;}
@@ -118,7 +120,8 @@ class DllDef LibRaw
     int                         dcraw_process(void);
     /* memory writers */
     libraw_processed_image_t*   dcraw_make_mem_image(int *errcode=NULL);  
-    libraw_processed_image_t*   dcraw_make_mem_thumb(int *errcode=NULL);  
+    libraw_processed_image_t*   dcraw_make_mem_thumb(int *errcode=NULL);
+    static void                 dcraw_clear_mem(libraw_processed_image_t*);
 
     /* free all internal data structures */
     void         recycle(); 
@@ -133,7 +136,6 @@ class DllDef LibRaw
     const char *unpack_function_name();
     int         rotate_fuji_raw();
 
-    void        free(void *p);
   private:
 
     int FCF(int row,int col) { 
@@ -150,6 +152,8 @@ class DllDef LibRaw
 
     void*        malloc(size_t t);
     void*        calloc(size_t n,size_t t);
+    void*        realloc(void *p, size_t s);
+    void        free(void *p);
     void        merror (void *ptr, const char *where);
     void        derror();
 
@@ -162,9 +166,9 @@ class DllDef LibRaw
 
     LibRaw_constants rgb_constants;
     void        (LibRaw:: *write_thumb)();
-	void		(LibRaw:: *write_fun)();
+	void        (LibRaw:: *write_fun)();
     void        (LibRaw:: *load_raw)();
-	void		(LibRaw:: *thumb_load_raw)();
+    void        (LibRaw:: *thumb_load_raw)();
 
     void        kodak_thumb_loader();
     void        write_thumb_ppm_tiff(FILE *); 
@@ -179,6 +183,7 @@ class DllDef LibRaw
     void        convert_to_rgb();
     void        kodak_ycbcr_load_raw();
     void        remove_zeroes();
+    void        crop_pixels();
 #ifndef NO_LCMS
     void	apply_profile(const char*,const char*);
 #endif

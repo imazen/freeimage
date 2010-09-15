@@ -22,6 +22,7 @@ it under the terms of the one of three licenses as you choose:
 #include <errno.h>
 #include <float.h>
 #include <math.h>
+#include <new>
 #ifndef WIN32
 #include <netinet/in.h>
 #else
@@ -75,6 +76,8 @@ extern "C"
                 return "Input/output error";
             case LIBRAW_CANCELLED_BY_CALLBACK:
                 return "Cancelled by user callback";
+            case LIBRAW_BAD_CROP:
+                return "Bad crop box";
             default:
                 return "Unknown error code";
         }
@@ -104,7 +107,7 @@ const float LibRaw_constants::d65_white[3] =  { 0.950456, 1, 1.088754 };
 #define ID libraw_internal_data.internal_data
 
 #define EXCEPTION_HANDLER(e) do{                        \
-        fprintf(stderr,"Exception %d caught\n",e);      \
+        /* fprintf(stderr,"Exception %d caught\n",e);*/ \
         switch(e)                                       \
             {                                           \
             case LIBRAW_EXCEPTION_ALLOC:                \
@@ -121,6 +124,9 @@ const float LibRaw_constants::d65_white[3] =  { 0.950456, 1, 1.088754 };
             case LIBRAW_EXCEPTION_CANCELLED_BY_CALLBACK:\
                 recycle();                              \
                 return LIBRAW_CANCELLED_BY_CALLBACK;    \
+            case LIBRAW_EXCEPTION_BAD_CROP:             \
+                recycle();                              \
+                return LIBRAW_BAD_CROP;                 \
             default:                                    \
                 return LIBRAW_UNSPECIFIED_ERROR;        \
             } \
@@ -152,6 +158,11 @@ void LibRaw::derror()
     libraw_internal_data.unpacker_data.data_error++;
 }
 
+void LibRaw::dcraw_clear_mem(libraw_processed_image_t* p)
+{
+    if(p) ::free(p);
+}
+
 #define ZERO(a) memset(&a,0,sizeof(a))
 
 
@@ -160,6 +171,7 @@ LibRaw:: LibRaw(unsigned int flags)
     double aber[4] = {1,1,1,1};
     double gamm[6] = { 0.45,4.5,0,0,0,0 };
     unsigned greybox[4] =  { 0, 0, UINT_MAX, UINT_MAX };
+    unsigned cropbox[4] =  { 0, 0, UINT_MAX, UINT_MAX };
 #ifdef DCRAW_VERBOSE
     verbose = 1;
 #else
@@ -173,6 +185,7 @@ LibRaw:: LibRaw(unsigned int flags)
     memmove(&imgdata.params.aber,&aber,sizeof(aber));
     memmove(&imgdata.params.gamm,&gamm,sizeof(gamm));
     memmove(&imgdata.params.greybox,&greybox,sizeof(greybox));
+    memmove(&imgdata.params.cropbox,&cropbox,sizeof(cropbox));
     
     imgdata.params.bright=1;
     imgdata.params.use_camera_matrix=-1;
@@ -198,6 +211,13 @@ void* LibRaw:: malloc(size_t t)
     void *p = memmgr.malloc(t);
     return p;
 }
+void* LibRaw:: realloc(void *q,size_t t)
+{
+    void *p = memmgr.realloc(q,t);
+    return p;
+}
+
+
 void* LibRaw::       calloc(size_t n,size_t t)
 {
     void *p = memmgr.calloc(n,t);
@@ -530,7 +550,15 @@ int LibRaw::add_masked_borders_to_bitmap()
 int LibRaw::open_file(const char *fname)
 {
     // this stream will close on recycle()
-    LibRaw_file_datastream *stream = new LibRaw_file_datastream(fname);
+    LibRaw_file_datastream *stream;
+    try {
+         stream = new LibRaw_file_datastream(fname);
+    }
+    catch (std::bad_alloc)
+        {
+            recycle();
+            return LIBRAW_UNSUFFICIENT_MEMORY;
+        }
     if(!stream->valid())
         {
             delete stream;
@@ -556,7 +584,15 @@ int LibRaw::open_buffer(void *buffer, size_t size)
     if(!buffer  || buffer==(void*)-1)
         return LIBRAW_IO_ERROR;
 
-    LibRaw_buffer_datastream *stream = new LibRaw_buffer_datastream(buffer,size);
+    LibRaw_buffer_datastream *stream;
+    try {
+        stream = new LibRaw_buffer_datastream(buffer,size);
+    }
+    catch (std::bad_alloc)
+        {
+            recycle();
+            return LIBRAW_UNSUFFICIENT_MEMORY;
+        }
     if(!stream->valid())
         {
             delete stream;
@@ -726,7 +762,16 @@ int LibRaw::unpack(void)
 
         if (O.filtering_mode & LIBRAW_FILTERING_AUTOMATIC_BIT)
             O.filtering_mode = LIBRAW_FILTERING_AUTOMATIC; // restore automated mode
-        
+
+        // adjust black to possible maximum
+        unsigned int i = C.cblack[3];
+        unsigned int c;
+        for(c=0;c<3;c++)
+            if (i > C.cblack[c]) i = C.cblack[c];
+        for (c=0;c<4;c++)
+            C.cblack[c] -= i;
+        C.black += i;
+
         SET_PROC_FLAG(LIBRAW_PROGRESS_LOAD_RAW);
         RUN_CALLBACK(LIBRAW_PROGRESS_LOAD_RAW,1,2);
         
@@ -744,20 +789,26 @@ int LibRaw::dcraw_document_mode_processing(void)
 
     try {
 
-        if(IO.fwidth) 
-            rotate_fuji_raw();
-
         if(!own_filtering_supported() && (O.filtering_mode & LIBRAW_FILTERING_AUTOMATIC_BIT))
             O.filtering_mode = LIBRAW_FILTERING_AUTOMATIC_BIT; // turn on black and zeroes filtering
 
-        O.document_mode = 2;
-
-        O.use_fuji_rotate = 0;
         if (!(O.filtering_mode & LIBRAW_FILTERING_NOZEROES) && IO.zero_is_bad)
             {
                 remove_zeroes();
                 SET_PROC_FLAG(LIBRAW_PROGRESS_REMOVE_ZEROES);
             }
+
+        if (O.user_black >= 0) 
+            C.black = O.user_black;
+        subtract_black();
+
+        if(IO.fwidth) 
+            rotate_fuji_raw();
+
+        O.document_mode = 2;
+
+        O.use_fuji_rotate = 0;
+
         if(O.bad_pixels) 
             {
                 bad_pixels(O.bad_pixels);
@@ -768,11 +819,10 @@ int LibRaw::dcraw_document_mode_processing(void)
                 subtract (O.dark_frame);
                 SET_PROC_FLAG(LIBRAW_PROGRESS_DARK_FRAME);
             }
-        if(O.filtering_mode & LIBRAW_FILTERING_NOBLACKS)
-            C.black=0;
+        if (~O.cropbox[2] && ~O.cropbox[3]) crop_pixels();
 
-        if (O.user_black >= 0) 
-            C.black = O.user_black;
+
+        adjust_maximum();
 
         if (O.user_sat > 0) 
             C.maximum = O.user_sat;
@@ -1410,6 +1460,74 @@ int LibRaw::rotate_fuji_raw(void)
     
 }
 
+void LibRaw::subtract_black()
+{
+
+#define BAYERC(row,col,c) imgdata.image[((row) >> IO.shrink)*S.iwidth + ((col) >> IO.shrink)][c] 
+
+    if(imgdata.masked_pixels.ph1_black)
+        {
+            // Phase One compressed format
+            int row,col,val,cc;
+            for(row=0;row<S.height;row++)
+                for(col=0;col<S.width;col++)
+                    {
+                        cc=FC(row,col);
+                        val = BAYERC(row,col,cc) 
+                            - imgdata.color.phase_one_data.t_black 
+                            + imgdata.masked_pixels.ph1_black[row+S.top_margin][(col + S.left_margin) 
+                                                                                >=C.phase_one_data.split_col];
+                        if(val<0) val = 0;
+                        BAYERC(row,col,cc) = val;
+                    }
+            C.maximum -= C.black;
+            if(!( O.filtering_mode & LIBRAW_FILTERING_NORAWCURVE) )
+                {
+                    phase_one_correct();
+                }
+            // recalculate channel maximum
+            ZERO(C.channel_maximum);
+            for(row=0;row<S.height;row++)
+                for(col=0;col<S.width;col++)
+                    {
+                        cc=FC(row,col);
+                        val = BAYERC(row,col,cc);
+                        if(C.channel_maximum[cc] > val) C.channel_maximum[cc] = val;
+                    }
+            // clear P1 black level data
+            imgdata.color.phase_one_data.t_black = 0;
+            if(imgdata.masked_pixels.ph1_black)
+                {
+                    free(imgdata.masked_pixels.ph1_black);
+                    imgdata.masked_pixels.ph1_black = 0;
+                }
+            ZERO(C.cblack);
+            C.black = 0;
+        }
+    else if((C.black || C.cblack[0] || C.cblack[1] || C.cblack[2] || C.cblack[3]))
+        {
+            int cblk[4],i,row,col,val,cc;
+            for(i=0;i<4;i++)
+                cblk[i] = C.cblack[i]+C.black;
+            ZERO(C.channel_maximum);
+
+            for(row=0;row<S.height;row++)
+                for(col=0;col<S.width;col++)
+                    {
+                        cc=COLOR(row,col);
+                        val = BAYERC(row,col,cc);
+                        if(val > cblk[cc])
+                            val -= cblk[cc];
+                        else
+                            val = 0;
+                        if(C.channel_maximum[cc] < val) C.channel_maximum[cc] = val;
+                        BAYERC(row,col,cc) = val;
+                    }
+            C.maximum -= C.black;
+            ZERO(C.cblack);
+            C.black = 0;
+        }
+}
 
 int LibRaw::dcraw_process(void)
 {
@@ -1421,22 +1539,26 @@ int LibRaw::dcraw_process(void)
 
     try {
 
-        adjust_maximum();
-        if(IO.fwidth) 
-            rotate_fuji_raw();
-
-
         if(!own_filtering_supported() && (O.filtering_mode & LIBRAW_FILTERING_AUTOMATIC_BIT))
             O.filtering_mode = LIBRAW_FILTERING_AUTOMATIC_BIT; // turn on black and zeroes filtering
-
-        if(O.half_size) 
-            O.four_color_rgb = 1;
 
         if (!(O.filtering_mode & LIBRAW_FILTERING_NOZEROES) && IO.zero_is_bad) 
             {
                 remove_zeroes();
                 SET_PROC_FLAG(LIBRAW_PROGRESS_REMOVE_ZEROES);
             }
+
+        // black already set to possible maximum
+        if (O.user_black >= 0) C.black = O.user_black;
+        subtract_black();
+
+        if(IO.fwidth) 
+            rotate_fuji_raw();
+
+
+        if(O.half_size) 
+            O.four_color_rgb = 1;
+
         if(O.bad_pixels) 
             {
                 bad_pixels(O.bad_pixels);
@@ -1448,26 +1570,14 @@ int LibRaw::dcraw_process(void)
                 SET_PROC_FLAG(LIBRAW_PROGRESS_DARK_FRAME);
             }
 
-        quality = 2 + !IO.fuji_width;
+        if (~O.cropbox[2] && ~O.cropbox[3]) crop_pixels();
 
-        if(O.filtering_mode & LIBRAW_FILTERING_NOBLACKS)
-            {
-                C.black=0;
-                memset(&C.cblack,0,sizeof(C.cblack));
-            }
+        quality = 2 + !IO.fuji_width;
 
         if (O.user_qual >= 0) quality = O.user_qual;
 
-        unsigned int i = C.cblack[3];
-        unsigned int c;
-        for(c=0;c<3;c++)
-            if (i > C.cblack[c]) i = C.cblack[c];
-        for (c=0;c<4;c++)
-            C.cblack[c] -= i;
-        C.black += i;
+        adjust_maximum();
 
-
-        if (O.user_black >= 0) C.black = O.user_black;
         if (O.user_sat > 0) C.maximum = O.user_sat;
 
         if (O.green_matching)
@@ -1991,3 +2101,263 @@ const char * LibRaw::strprogress(enum LibRaw_progress p)
             return "Some strange things";
         }
 }
+
+// -- LibRaw datastream implementation
+
+// WIN32 _s functions
+#if defined (WIN32)
+#if __MSVCRT_VERSION__ >= 0x800
+#define WIN32S
+#endif
+#endif
+
+
+LibRaw_file_datastream::LibRaw_file_datastream(const char *fname) 
+{ 
+    if(fname)
+        {
+            filename = fname; 
+#ifndef WIN32S
+            f = fopen(fname,"rb");
+#else
+            if(fopen_s(&f,fname,"rb"))
+                f = 0;
+#endif
+        }
+    else 
+        {filename=0;f=0;}
+    sav=0;
+}
+
+LibRaw_file_datastream::~LibRaw_file_datastream() {if(f)fclose(f); if(sav)fclose(sav);}
+
+
+#define CHK() do {if(!f) throw LIBRAW_EXCEPTION_IO_EOF;}while(0)
+
+int LibRaw_file_datastream::read(void * ptr,size_t size, size_t nmemb) 
+{ 
+    CHK(); 
+    return substream?substream->read(ptr,size,nmemb):int(fread(ptr,size,nmemb,f));
+}
+
+int LibRaw_file_datastream::eof() 
+{ 
+    CHK(); 
+    return substream?substream->eof():feof(f);
+}
+INT64 LibRaw_file_datastream:: tell() 
+{ 
+    CHK(); 
+#if defined (WIN32)
+#if __MSVCRT_VERSION__ >= 0x800
+    return substream?substream->tell():_ftelli64(f);
+#else
+    return substream?substream->tell():ftell(f);
+#endif
+#else
+    return substream?substream->tell():ftello(f);
+#endif
+}
+
+int LibRaw_file_datastream::get_char() 
+{ 
+    CHK(); 
+    return substream?substream->get_char():fgetc(f);
+
+}
+
+char* LibRaw_file_datastream::gets(char *str, int sz)
+{ 
+    CHK(); 
+    return substream?substream->gets(str,sz):fgets(str,sz,f);
+}
+
+int LibRaw_file_datastream::scanf_one(const char *fmt, void*val) 
+{ 
+    CHK(); 
+    return substream?substream->scanf_one(fmt,val):
+#ifndef WIN32S			
+        fscanf(f,fmt,val)
+#else
+        fscanf_s(f,fmt,val)
+#endif
+        ;
+    
+}
+
+int LibRaw_file_datastream::subfile_open(const char *fn)
+{
+    if(sav) return EBUSY;
+    sav = f;
+#ifndef WIN32S
+    f = fopen(fn,"rb");
+#else
+    fopen_s(&f,fn,"rb");
+#endif
+    if(!f)
+        {
+            f = sav;
+            sav = NULL;
+            return ENOENT;
+        }
+    else
+        return 0;
+}
+
+void LibRaw_file_datastream::subfile_close()
+{
+    if(!sav) return;
+    fclose(f);
+    f = sav;
+    sav = 0;
+}
+
+int LibRaw_file_datastream::seek(INT64 o, int whence) 
+    { 
+        CHK(); 
+#if defined (WIN32) 
+#if __MSVCRT_VERSION__ >= 0x800
+        return substream?substream->seek(o,whence):_fseeki64(f,o,whence);
+#else
+        return substream?substream->seek(o,whence):fseek(f,(size_t)o,whence);
+#endif
+#else
+        return substream?substream->seek(o,whence):fseeko(f,o,whence);
+#endif
+    }
+
+LibRaw_buffer_datastream::LibRaw_buffer_datastream(void *buffer, size_t bsize)
+{
+    buf = (unsigned char*)buffer; streampos = 0; streamsize = bsize;
+}
+
+int LibRaw_buffer_datastream::read(void * ptr,size_t sz, size_t nmemb) 
+{ 
+    if(substream) return substream->read(ptr,sz,nmemb);
+    size_t to_read = sz*nmemb;
+    if(to_read > streamsize - streampos)
+        to_read = streamsize-streampos;
+    if(to_read<1) 
+        return 0;
+    memmove(ptr,buf+streampos,to_read);
+    streampos+=to_read;
+    return int((to_read+sz-1)/sz);
+}
+
+int LibRaw_buffer_datastream::eof() 
+{ 
+    if(substream) return substream->eof();
+    return streampos >= streamsize;
+}
+
+int LibRaw_buffer_datastream::seek(INT64 o, int whence) 
+{ 
+    if(substream) return substream->seek(o,whence);
+    switch(whence)
+        {
+        case SEEK_SET:
+            if(o<0)
+                streampos = 0;
+            else if (size_t(o) > streamsize)
+                streampos = streamsize;
+            else
+                streampos = size_t(o);
+            return 0;
+        case SEEK_CUR:
+            if(o<0)
+                {
+                    if(size_t(-o) >= streampos)
+                        streampos = 0;
+                    else
+                        streampos += (size_t)o;
+                }
+            else if (o>0)
+                {
+                    if(o+streampos> streamsize)
+                        streampos = streamsize;
+                    else
+                        streampos += (size_t)o;
+                }
+            return 0;
+        case SEEK_END:
+            if(o>0)
+                streampos = streamsize;
+            else if ( size_t(-o) > streamsize)
+                streampos = 0;
+            else
+                streampos = streamsize+(size_t)o;
+            return 0;
+        default:
+            return 0;
+        }
+}
+
+
+INT64 LibRaw_buffer_datastream::tell() 
+{ 
+    if(substream) return substream->tell();
+    return INT64(streampos);
+}
+
+int LibRaw_buffer_datastream::get_char() 
+{ 
+    if(substream) return substream->get_char();
+    if(streampos>=streamsize)
+        return -1;
+    return buf[streampos++];
+}
+
+char* LibRaw_buffer_datastream::gets(char *s, int sz) 
+{ 
+    if (substream) return substream->gets(s,sz);
+    unsigned char *psrc,*pdest,*str;
+    str = (unsigned char *)s;
+    psrc = buf+streampos;
+    pdest = str;
+    while ( (size_t(psrc - buf) < streamsize)
+            &&
+            ((pdest-str)<sz)
+        )
+        {
+            *pdest = *psrc;
+            if(*psrc == '\n')
+                break;
+            psrc++;
+            pdest++;
+        }
+    if(size_t(psrc-buf) < streamsize)
+        psrc++;
+    if((pdest-str)<sz)
+        *(++pdest)=0;
+    streampos = psrc - buf;
+    return s;
+}
+
+int LibRaw_buffer_datastream::scanf_one(const char *fmt, void* val) 
+{ 
+    if(substream) return substream->scanf_one(fmt,val);
+    int scanf_res;
+    if(streampos>streamsize) return 0;
+#ifndef WIN32S
+    scanf_res = sscanf((char*)(buf+streampos),fmt,val);
+#else
+    scanf_res = sscanf_s((char*)(buf+streampos),fmt,val);
+#endif
+    if(scanf_res>0)
+        {
+            int xcnt=0;
+            while(streampos<streamsize)
+                {
+                    streampos++;
+                    xcnt++;
+                    if(buf[streampos] == 0
+                       || buf[streampos]==' '
+                       || buf[streampos]=='\t'
+                       || buf[streampos]=='\n'
+                       || xcnt>24)
+                        break;
+                }
+        }
+    return scanf_res;
+}
+
