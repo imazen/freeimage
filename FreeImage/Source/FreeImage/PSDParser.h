@@ -203,7 +203,7 @@ public:
 	/**
 	@return Returns the number of bytes read
 	*/
-	int Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool isBGR);
+	int Read(FreeImageIO *io, fi_handle handle, int iResourceSize, bool isBGR);
 };
 
 class psdICCProfile {

@@ -308,8 +308,8 @@ psdThumbnail::~psdThumbnail() {
 	SAFE_DELETE_ARRAY(_plData); 
 }
 
-int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool isBGR) {
-	BYTE c[1], ShortValue[2], IntValue[4];
+int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iResourceSize, bool isBGR) {
+	BYTE ShortValue[2], IntValue[4];
 	int nBytes=0, n;
 	
 	n = (int)io->read_proc(&IntValue, sizeof(IntValue), 1, handle);
@@ -344,6 +344,20 @@ int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool i
 	nBytes += n * sizeof(ShortValue);
 	_Planes = (short)psdGetValue(ShortValue, sizeof(_Planes) );
 
+	// remove the header size (28 bytes) from the total data size
+	int iTotalData = iResourceSize - nBytes;
+
+	// skip the thumbnail part
+	io->seek_proc(handle, iTotalData, SEEK_CUR);
+
+	return iResourceSize;
+
+	/**
+	TO BE IMPLEMENTED
+	*/
+	/*
+	BYTE c[1];
+
 	_plData = new BYTE[iTotalData];
 	  
 	if (isBGR) {
@@ -371,6 +385,7 @@ int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iTotalData, bool i
 	}
 
 	return nBytes;
+	*/
 }
 
 //---------------------------------------------------------------------------
@@ -571,8 +586,9 @@ bool psdParser::ReadImageResource(FreeImageIO *io, fi_handle handle) {
 					{
 						_bThumbnailFilled = true;
 						bool bBGR = (1033==oResource._ID);
-						int nTotalData = oResource._Size - 28; // header
-						nBytes += _thumbnail.Read(io, handle, nTotalData, bBGR);
+						//int nTotalData = oResource._Size - 28; // header
+						//nBytes += _thumbnail.Read(io, handle, nTotalData, bBGR);
+						nBytes += _thumbnail.Read(io, handle, oResource._Size, bBGR);
 						break;
 					}
 					
