@@ -39,6 +39,7 @@
 #include "FreeImage.h"
 #include "Utilities.h"
 #include "../Metadata/FreeImageTag.h"
+#include "../OpenEXR/Half/half.h"
 
 // ----------------------------------------------------------
 //   geotiff interface (see XTIFF.cpp)
@@ -74,7 +75,8 @@ typedef enum {
 	LoadAs8BitTrns		= 2, 
 	LoadAsGenericStrip	= 3, 
 	LoadAsTiled			= 4,
-	LoadAsLogLuv		= 5
+	LoadAsLogLuv		= 5,
+	LoadAsHalfFloat		= 6
 } TIFFLoadMethod;
 
 // ----------------------------------------------------------
@@ -542,6 +544,12 @@ ReadImageType(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel) {
 				switch (bpp) {
 					case 32:
 						fit = FIT_FLOAT;
+						break;
+					case 48:
+						// 3 x half float => convert to RGBF
+						if((samplesperpixel == 3) && (bitspersample == 16)) {
+							fit = FIT_RGBF;
+						}
 						break;
 					case 64:
 						if(samplesperpixel == 2) {
@@ -1107,6 +1115,12 @@ FindLoadMethod(TIFF *tif, FREE_IMAGE_TYPE image_type, int flags) {
 				// load 48-bit RGB and 64-bit RGBA without conversion 
 				loadMethod = LoadAsGenericStrip;
 			} 
+			else if(image_type == FIT_RGBF) {
+				if((samplesperpixel == 3) && (bitspersample == 16)) {
+					// load 3 x 16-bit half as RGBF
+					loadMethod = LoadAsHalfFloat;
+				}
+			}
 			break;
 		case PHOTOMETRIC_YCBCR:
 		case PHOTOMETRIC_CIELAB:
@@ -1459,8 +1473,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// ---------------------------------------------------------------------------------
 			// CMYK loading
 			// ---------------------------------------------------------------------------------
-
-			BOOL has_alpha = FALSE;    
 
 			// At this place, samplesperpixel could be > 4, esp. when a CMYK(A) format
 			// is recognized. Where all other formats are handled straight-forward, this
@@ -1969,6 +1981,75 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// this cannot happen according to the LogLuv specification
 				throw "Unable to handle PLANARCONFIG_SEPARATE LogLuv images";
 			}
+
+		} else if(loadMethod == LoadAsHalfFloat) {
+			// ---------------------------------------------------------------------------------
+			// RGBF loading from a half format
+			// ---------------------------------------------------------------------------------
+
+			// create a new DIB
+			dib = CreateImageType(header_only, image_type, width, height, bitspersample, samplesperpixel);
+			if (dib == NULL) {
+				throw FI_MSG_ERROR_MEMORY;
+			}
+
+			// fill in the resolution (english or universal)
+
+			ReadResolution(tif, dib);
+
+			if(!header_only) {
+
+				// calculate the line + pitch (separate for scr & dest)
+
+				tsize_t src_line = TIFFScanlineSize(tif);
+				unsigned dst_pitch = FreeImage_GetPitch(dib);
+
+				// In the tiff file the lines are save from up to down 
+				// In a DIB the lines must be saved from down to up
+
+				BYTE *bits = FreeImage_GetScanLine(dib, height - 1);
+
+				// read the tiff lines and save them in the DIB
+
+				if(planar_config == PLANARCONFIG_CONTIG) {
+
+					BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
+					if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
+
+					for (uint32 y = 0; y < height; y += rowsperstrip) {
+						uint32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
+
+						if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, y, 0), buf, nrow * src_line) == -1) {
+							free(buf);
+							throw FI_MSG_ERROR_PARSING;
+						} 
+
+						// convert from half (16-bit) to float (32-bit)
+						// !!! use OpenEXR half helper class
+
+						half half_value;
+
+						for (uint32 l = 0; l < nrow; l++) {
+							WORD *src_pixel = (WORD*)(buf + l * src_line);
+							float *dst_pixel = (float*)bits;
+
+							for(tsize_t x = 0; x < (tsize_t)(src_line / sizeof(WORD)); x++) {
+								half_value.setBits(src_pixel[x]);
+								dst_pixel[x] = half_value;
+							}
+
+							bits -= dst_pitch;
+						}
+					}
+
+					free(buf);
+				}
+				else if(planar_config == PLANARCONFIG_SEPARATE) {
+					// this use case was never encountered yet
+					throw "Unable to handle PLANARCONFIG_SEPARATE RGB half float images";
+				}
+				
+			} // !header only
 
 		} else {
 			// ---------------------------------------------------------------------------------
