@@ -14,6 +14,7 @@ Month day, 2010 - 3.14.2
 * [Herve Drolon] improved FreeImage_MultigridPoissonSolver for images whose size is a power-of-two
 * [Herve Drolon] fixed a crash in PSD plugin when loading a PSD with a CMYK embedded thumbnail
 * [Herve Drolon] fixed loading of JPEG images with a not null but zero length IPTC segment (bad files produced by Picasa)
+* [Carsten Klein] fixed a bug in FreeImage_ColorQuantizeEx when using FIQ_WUQUANT quantizer
 
 August 12th, 2010 - 3.14.1
 + [Mihail Naydenov] added support for FIF_LOAD_NOPIXELS flag to EXR plugin
