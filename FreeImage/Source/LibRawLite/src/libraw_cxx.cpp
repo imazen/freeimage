@@ -1538,6 +1538,8 @@ int LibRaw::dcraw_process(void)
     CHECK_ORDER_HIGH(LIBRAW_PROGRESS_PRE_INTERPOLATE);
 
     try {
+        
+        int save_4color = O.four_color_rgb;
 
         if(!own_filtering_supported() && (O.filtering_mode & LIBRAW_FILTERING_AUTOMATIC_BIT))
             O.filtering_mode = LIBRAW_FILTERING_AUTOMATIC_BIT; // turn on black and zeroes filtering
@@ -1592,6 +1594,7 @@ int LibRaw::dcraw_process(void)
             }
 
         pre_interpolate();
+
         SET_PROC_FLAG(LIBRAW_PROGRESS_PRE_INTERPOLATE);
 
         if (P1.filters && !O.document_mode) 
@@ -1660,6 +1663,9 @@ int LibRaw::dcraw_process(void)
             }
         if (O.filtering_mode & LIBRAW_FILTERING_AUTOMATIC_BIT)
             O.filtering_mode = LIBRAW_FILTERING_AUTOMATIC; // restore automated mode
+
+        O.four_color_rgb = save_4color; // also, restore
+
         return 0;
     }
     catch ( LibRaw_exceptions err) {

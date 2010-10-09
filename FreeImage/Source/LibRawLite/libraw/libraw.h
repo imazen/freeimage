@@ -128,8 +128,8 @@ class DllDef LibRaw
     ~LibRaw(void) { recycle(); delete tls; }
 
     int COLOR(int row, int col) { return libraw_internal_data.internal_output_params.fuji_width? FCF(row,col):FC(row,col);}
-
-    int FC(int row,int col) { return (imgdata.idata.filters >> ((((row) << 1 & 14) + ((col) & 1)) << 1) & 3);}
+ 
+    int FC(int row,int col) { return (imgdata.idata.filters >> (((row << 1 & 14) | (col & 1)) << 1) & 3);}
     int         fc (int row, int col);
     int add_masked_borders_to_bitmap();
     
@@ -166,7 +166,7 @@ class DllDef LibRaw
 
     LibRaw_constants rgb_constants;
     void        (LibRaw:: *write_thumb)();
-	void        (LibRaw:: *write_fun)();
+    void        (LibRaw:: *write_fun)();
     void        (LibRaw:: *load_raw)();
     void        (LibRaw:: *thumb_load_raw)();
 
