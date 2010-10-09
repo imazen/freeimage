@@ -463,8 +463,15 @@ void fipWinImage::setToneMappingOperator(FREE_IMAGE_TMO tmo, double first_param,
 		_tmo_param_4 = fourth_param;
 
 		FREE_IMAGE_TYPE image_type = getImageType();
-		if((image_type == FIT_RGBF) || (image_type == FIT_RGB16)) {
-			_bHasChanged = TRUE;
+		switch(image_type) {
+			case FIT_RGBF:
+			case FIT_RGBAF:
+			case FIT_RGB16:
+			case FIT_RGBA16:
+				_bHasChanged = TRUE;
+				break;
+			default:
+				break;
 		}
 	}
 }

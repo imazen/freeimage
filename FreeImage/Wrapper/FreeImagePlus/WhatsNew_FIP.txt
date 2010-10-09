@@ -5,6 +5,9 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+October 9th, 2010
+* [Herve Drolon] fixed fipWinImage::setToneMappingOperator when displaying RGBA HDR images
+
 April 18th, 2010
 + [Herve Drolon] added new multi-page functions
 	added fipMemoryIO:close
