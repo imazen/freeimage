@@ -623,12 +623,22 @@ FreeImage_SetBackgroundColor(FIBITMAP *dib, RGBQUAD *bkcolor) {
 BOOL DLL_CALLCONV
 FreeImage_IsTransparent(FIBITMAP *dib) {
 	if(dib) {
-		if(FreeImage_GetBPP(dib) == 32) {
-			if(FreeImage_GetColorType(dib) == FIC_RGBALPHA) {
+		FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+		switch(image_type) {
+			case FIT_BITMAP:
+				if(FreeImage_GetBPP(dib) == 32) {
+					if(FreeImage_GetColorType(dib) == FIC_RGBALPHA) {
+						return TRUE;
+					}
+				} else {
+					return ((FREEIMAGEHEADER *)dib->data)->transparent ? TRUE : FALSE;
+				}
+				break;
+			case FIT_RGBA16:
+			case FIT_RGBAF:
 				return TRUE;
-			}
-		} else {
-			return ((FREEIMAGEHEADER *)dib->data)->transparent ? TRUE : FALSE;
+			default:
+				break;
 		}
 	}
 	return FALSE;
