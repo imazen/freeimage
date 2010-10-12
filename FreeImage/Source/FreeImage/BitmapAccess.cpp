@@ -989,6 +989,10 @@ FreeImage_CloneMetadata(FIBITMAP *dst, FIBITMAP *src) {
 		}
 	}
 
+	// clone resolution 
+	FreeImage_SetDotsPerMeterX(dst, FreeImage_GetDotsPerMeterX(src)); 
+	FreeImage_SetDotsPerMeterY(dst, FreeImage_GetDotsPerMeterY(src)); 
+
 	return TRUE;
 }
 
