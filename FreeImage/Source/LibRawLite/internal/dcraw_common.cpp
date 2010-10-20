@@ -14,11 +14,13 @@ it under the terms of the one of three licenses as you choose:
    (See file LICENSE.LibRaw.pdf provided in LibRaw distribution archive for details).
 
    This file is generated from Dave Coffin's dcraw.c
-   Look into original file (probably http://cybercom.net/~dcoffin/dcraw/dcraw.c)
-   for copyright information.
+   dcraw.c -- Dave Coffin's raw photo decoder
+   Copyright 1997-2010 by Dave Coffin, dcoffin a cybercom o net
+
+   Look into dcraw homepage (probably http://cybercom.net/~dcoffin/dcraw/)
+   for more information
 */
 
-#line 265 "dcraw/dcraw.c"
 #define CLASS LibRaw::
 #include "libraw/libraw_types.h"
 #define LIBRAW_LIBRARY_BUILD
@@ -26,7 +28,6 @@ it under the terms of the one of three licenses as you choose:
 #include "libraw/libraw.h"
 #include "internal/defines.h"
 #include "internal/var_defines.h"
-#line 275 "dcraw/dcraw.c"
 
 #ifndef __GLIBC__
 char *my_memmem (char *haystack, size_t haystacklen,
@@ -41,7 +42,6 @@ char *my_memmem (char *haystack, size_t haystacklen,
 #define memmem my_memmem
 #endif
 
-#line 309 "dcraw/dcraw.c"
 
 ushort CLASS sget2 (uchar *s)
 {
@@ -116,7 +116,6 @@ void CLASS read_shorts (ushort *pixel, int count)
   if ((order == 0x4949) == (ntohs(0x1234) == 0x1234))
       swab ((char*)pixel, (char*)pixel, count*2);
 }
-#line 387 "dcraw/dcraw.c"
 
 void CLASS canon_600_fixed_wb (int temp)
 {
@@ -590,7 +589,6 @@ void CLASS canon_compressed_load_raw()
   FORC4 if (cblack[4+c]) cblack[c] /= cblack[4+c];
 }
 
-#line 871 "dcraw/dcraw.c"
 int CLASS ljpeg_start (struct jhead *jh, int info_only)
 {
   int c, tag, len;
@@ -1182,7 +1180,6 @@ void CLASS fuji_load_raw()
   free (pixel);
 #else
   int row,col;
-  int wide, r, c;
   pixel = (ushort *) calloc (raw_width, sizeof *pixel);
   merror (pixel, "fuji_load_raw()");
   for (row=0; row < raw_height; row++) {
@@ -1207,7 +1204,6 @@ void CLASS fuji_load_raw()
   free (pixel);
 #endif
 }
-#line 1492 "dcraw/dcraw.c"
 void CLASS ppm_thumb()
 {
   char *thumb;
@@ -1742,7 +1738,6 @@ void CLASS leaf_hdr_load_raw()
   }
 }
 
-#line 2030 "dcraw/dcraw.c"
 void CLASS sinar_4shot_load_raw()
 {
   ushort *pixel;
@@ -3002,7 +2997,6 @@ void CLASS smal_v9_load_raw()
     smal_decode_segment (seg+i, holes);
   if (holes) fill_holes (holes);
 }
-#line 4103 "dcraw/dcraw.c"
 
 void CLASS crop_pixels()
 {
@@ -3207,7 +3201,7 @@ void CLASS hat_transform (float *temp, float *base, int st, int size, int sc)
     temp[i] = 2*base[st*i] + base[st*(i-sc)] + base[st*(2*size-2-(i+sc))];
 }
 
-#ifndef _OPENMP
+#ifndef _OPENMP || defined(__APPLE__) || defined(__MACOSX__)
 void CLASS wavelet_denoise()
 {
   float *fimg=0, *temp, thold, mul[2], avg, diff;
@@ -4136,6 +4130,7 @@ void CLASS ahd_interpolate()
   ushort (*rgb)[TS][TS][3];
   short (*lab)[TS][TS][3];
   char (*homo)[TS][2];
+  int terminate_flag = 0;
 
   if(dcraw_cbrt[0]<-0.1){
       for (i=0; i < 0x10000; i++) {
@@ -4161,7 +4156,7 @@ void CLASS ahd_interpolate()
 
 #ifdef LIBRAW_LIBRARY_BUILD
 #ifdef _OPENMP
-#pragma omp parallel private(buffer,rgb,lab,homo,top,left,i,j,k) shared(xyz_cam)
+#pragma omp parallel private(buffer,rgb,lab,homo,top,left,i,j,k) shared(xyz_cam,terminate_flag)
 #endif
 #endif
   {
@@ -4176,17 +4171,28 @@ void CLASS ahd_interpolate()
 #endif
     for (top=2; top < height-5; top += TS-6){
 #ifdef LIBRAW_LIBRARY_BUILD
-      RUN_CALLBACK(LIBRAW_PROGRESS_INTERPOLATE,top-2,height-7);
+#ifdef _OPENMP
+        if(0== omp_get_thread_num())
 #endif
-      for (left=2; left < width-5; left += TS-6) {
-        ahd_interpolate_green_h_and_v(top, left, rgb);
-        ahd_interpolate_r_and_b_and_convert_to_cielab(top, left, rgb, lab, xyz_cam);
-        ahd_interpolate_build_homogeneity_map(top, left, lab, homo);
-        ahd_interpolate_combine_homogeneous_pixels(top, left, rgb, homo);
+           if(callbacks.progress_cb) {                                     
+               int rr = (*callbacks.progress_cb)(callbacks.progresscb_data,LIBRAW_PROGRESS_INTERPOLATE,top-2,height-7);
+               if(rr)
+                   terminate_flag = 1;
+           }
+#endif
+        for (left=2; !terminate_flag && (left < width-5); left += TS-6) {
+            ahd_interpolate_green_h_and_v(top, left, rgb);
+            ahd_interpolate_r_and_b_and_convert_to_cielab(top, left, rgb, lab, xyz_cam);
+            ahd_interpolate_build_homogeneity_map(top, left, lab, homo);
+            ahd_interpolate_combine_homogeneous_pixels(top, left, rgb, homo);
       }
     }
     free (buffer);
   }
+#ifdef LIBRAW_LIBRARY_BUILD 
+  if(terminate_flag)
+      throw LIBRAW_EXCEPTION_CANCELLED_BY_CALLBACK;
+#endif
 }
 
 
@@ -4378,7 +4384,6 @@ void CLASS parse_thumb_note (int base, unsigned toff, unsigned tlen)
   }
 }
 
-#line 5482 "dcraw/dcraw.c"
 void CLASS parse_makernote (int base, int uptag)
 {
   static const uchar xlat[2][256] = {
@@ -4927,7 +4932,6 @@ void CLASS parse_kodak_ifd (int base)
   }
 }
 
-#line 6035 "dcraw/dcraw.c"
 int CLASS parse_tiff_ifd (int base)
 {
   unsigned entries, tag, type, len, plen=16, save;
@@ -4940,7 +4944,9 @@ int CLASS parse_tiff_ifd (int base)
   unsigned sony_curve[] = { 0,0,0,0,0,4095 };
   unsigned *buf, sony_offset=0, sony_length=0, sony_key=0;
   struct jhead jh;
+#ifndef LIBRAW_LIBRARY_BUILD
   FILE *sfp;
+#endif
 
   if (tiff_nifds >= sizeof tiff_ifd / sizeof tiff_ifd[0])
     return 1;
@@ -6157,7 +6163,6 @@ void CLASS parse_cine()
   data_offset  = (INT64) get4() + 8;
   data_offset += (INT64) get4() << 32;
 }
-#line 7366 "dcraw/dcraw.c"
 void CLASS adobe_coeff (const char *p_make, const char *p_model)
 {
   static const struct {
@@ -6742,7 +6747,6 @@ short CLASS guess_byte_order (int words)
   return sum[0] < sum[1] ? 0x4d4d : 0x4949;
 }
 
-#line 7954 "dcraw/dcraw.c"
 
 float CLASS find_green (int bps, int bite, int off0, int off1)
 {
@@ -6887,11 +6891,7 @@ void CLASS identify()
   write_thumb = &CLASS jpeg_thumb;
   data_offset = meta_length = tiff_bps = tiff_compress = 0;
   kodak_cbpp = zero_after_ff = dng_version = load_flags = 0;
-  timestamp = shot_order = tiff_samples = black = 
-#ifndef LIBRAW_LIBRARY_BUILD
-      is_foveon = 
-#endif
-      0;
+  timestamp = shot_order = tiff_samples = black = 0;
   mix_green = profile_length = data_error = zero_is_bad = 0;
   pixel_aspect = is_raw = raw_color = 1;
   tile_width = tile_length = INT_MAX;
@@ -6991,10 +6991,6 @@ void CLASS identify()
     parse_sinar_ia();
   else if (!memcmp (head,"\0MRM",4))
     parse_minolta(0);
-#ifndef LIBRAW_LIBRARY_BUILD
-  else if (!memcmp (head,"FOVb",4))
-    parse_foveon();
-#endif
   else if (!memcmp (head,"CI",2))
     parse_cine();
   else
@@ -7072,15 +7068,6 @@ void CLASS identify()
 
 /* Set parameters based on camera name (for non-DNG files). */
 
-#ifndef LIBRAW_LIBRARY_BUILD
-  if (is_foveon) {
-    if (height*2 < width) pixel_aspect = 0.5;
-    if (height   > width) pixel_aspect = 2;
-    filters = 0;
-    load_raw = &CLASS foveon_load_raw;
-    simple_coeff(0);
-  } else 
-#endif
 if (is_canon && tiff_bps == 15) {
     switch (width) {
       case 3344: width -= 66;
@@ -8517,7 +8504,6 @@ else if (!strcmp(model,"QV-2000UX")) {
   }
 }
 
-#line 9820 "dcraw/dcraw.c"
 void CLASS convert_to_rgb()
 {
   int row, col, c, i, j, k;
@@ -8736,7 +8722,6 @@ int CLASS flip_index (int row, int col)
   return row * iwidth + col;
 }
 
-#line 10063 "dcraw/dcraw.c"
 void CLASS tiff_set (ushort *ntag,
 	ushort tag, ushort type, int count, int val)
 {
@@ -8850,26 +8835,11 @@ void CLASS jpeg_thumb_writer (FILE *tfp,char *t_humb,int t_humb_length)
 void CLASS jpeg_thumb()
 {
   char *thumb;
-  ushort exif[5];
-  struct tiff_hdr th;
 
   thumb = (char *) malloc (thumb_length);
   merror (thumb, "jpeg_thumb()");
   fread (thumb, 1, thumb_length, ifp);
-#if 0
-  fputc (0xff, ofp);
-  fputc (0xd8, ofp);
-  if (strcmp (thumb+6, "Exif")) {
-    memcpy (exif, "\xff\xe1  Exif\0\0", 10);
-    exif[1] = htons (8 + sizeof th);
-    fwrite (exif, 1, sizeof exif, ofp);
-    tiff_head (&th, 0);
-    fwrite (&th, 1, sizeof th, ofp);
-  }
-  fwrite (thumb+2, 1, thumb_length-2, ofp);
-#else
   jpeg_thumb_writer(ofp,thumb,thumb_length);
-#endif
   free (thumb);
 }
 

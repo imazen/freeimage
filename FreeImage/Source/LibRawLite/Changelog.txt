@@ -1,16 +1,74 @@
+2010-10-18 Alex Tutubalin <lexa@lexa.ru>
+           * Disabled OpenMP for wavelet_denoise under Mac OS X
+           * More Visual C++ 2003 warnings cleaned in libraw/*h files
+           * LibRaw 0.11-Beta7
+
+2010-10-16 Alex Tutubalin <lexa@lexa.ru>
+           * internal/dcraw_fileio.c can be compiled with -DDCRAW_VERBOSE again
+           * fixed comment style in libraw_datastream.h
+           * LibRaw 0.11-Beta6
+
+2010-10-15 Alex Tutubalin <lexa@lexa.ru>
+
+           * New changes to I/O layer. Three LibRaw_*datastream clasees are
+             exists: 
+               + LibRaw_buffer_datastream - buffer reaging
+               + LibRaw_file_datastream - file reading using iostreams
+                 (large files are no supported on some systems)
+               + LibRaw_bigfile_datastream - FILE*-based file I/O
+
+           *  file/bigfile_datastream is selected automatically by
+              LibRaw::open_file based on input file size.
+              By default, files larger than 250Mb are opened using
+              bigfile interface, you may change this behaviour
+              by using second optional parameter of open_file()
+
+           * There is no way to use default parameter values in C API,
+             so new call libraw_open_file_ex added with two parameters
+             (file name and minimal file size for bigfile_datastream use).
+
+           * all client code should be recompiled due to internals change.
+
+           * All LibRaw_abstract_datastream functions are virtual again. You may
+             (again) use your own I/O layer.
+
+           * new -d key for dcraw_emu sample: print timings of processing stages
+
+           * simple_dcraw sample simplified: no mmap code
+
+           * LibRaw 0.11-Beta5
+
+2010-10-08 Alex Tutubalin <lexa@lexa.ru>
+           * Fixed bug in exception handling in OpenMP sections in 
+             AHD interpolation code.
+
+           * LibRaw_datastreams are now C++ iostreams based instead of old
+             plain FILE* calls.
+             LibRaw::open_file() in multithreaded programs are WAY faster
+             on many OSes (Linux, Windows, MacOSX) because of no extra locks.
+
+           * all client code should be recompiled due to internals change.
+
+           * LibRaw 0.11-Beta4
+
+
 2010-10-01 Alex Tutubalin <lexa@lexa.ru>
            * Fixed bug in LibRaw::dcraw_process() code: for half_size
              processing, params.four_color_rgb was set to 1 internally
              and not returned back after postprocessing.
 
-            * Several Visual Studio 2003 compatibility fixes
+           * Several Visual Studio 2003 compatibility fixes
 
             * AHD interpolation refactored. Now it is about 10% faster than
               dcraw in single-process mode and up to 1.5 times faster on
               4-core and OpenMP (total execution time counted, not AHD itself)
               Thanks to Adam Hooper
+           * AHD interpolation refactored. Now it is about 10% faster than
+             dcraw in single-process mode and up to 1.5 times faster on
+             4-core and OpenMP (total execution time counted, not AHD itself)
+             Thanks to Adam Hooper
               
-            * LibRaw 0.11-Beta3
+           * LibRaw 0.11-Beta3
 
 2010-09-07 Alex Tutubalin <lexa@lexa.ru>
            * Phase One files: LibRaw::unpack() sets colordata.black to
