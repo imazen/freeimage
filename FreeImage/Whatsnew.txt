@@ -20,6 +20,8 @@ Month day, 2010 - 3.14.2
 * [Carsten Klein] fixed a bug in FreeImage_ColorQuantizeEx when using FIQ_WUQUANT quantizer
 * [Herve Drolon] added support for RGBA[16][F] to FreeImage_IsTransparent
 * [Herve Drolon] fixed loading of resolution info in TIFF CMYK images (bug introduced with 3.14.0)
+* [Tom May] fixed JPEG plugin crashing on some Exif files containing tags with an invalid tag length
+* [Herve Drolon] fixed a crash when loading TIFF images with a TIFFTAG_TRANSFERFUNCTION Exif tag
 
 August 12th, 2010 - 3.14.1
 + [Mihail Naydenov] added support for FIF_LOAD_NOPIXELS flag to EXR plugin
