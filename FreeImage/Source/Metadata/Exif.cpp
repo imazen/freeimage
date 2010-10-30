@@ -379,6 +379,10 @@ processExifTag(FIBITMAP *dib, FITAG *tag, char *pval, BOOL msb_order, TagLib::MD
 
 	// allocate a buffer to store the tag value
 	BYTE *exif_value = (BYTE*)malloc(FreeImage_GetTagLength(tag) * sizeof(BYTE));
+	if(NULL == exif_value) {
+		// out of memory ...
+		return;
+	}
 	memset(exif_value, 0, FreeImage_GetTagLength(tag) * sizeof(BYTE));
 
 	// get the tag value
@@ -562,8 +566,14 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned long offset, unsig
 
 			// get number of components
 			FreeImage_SetTagCount(tag, ReadUint32(msb_order, pde + 4));
-			// get the size of the tag value in bytes
-			FreeImage_SetTagLength(tag, FreeImage_GetTagCount(tag) * FreeImage_TagDataWidth(FreeImage_GetTagType(tag)));
+            // check that tag length (size of the tag value in bytes) will fit in a DWORD
+            int tag_data_width = FreeImage_TagDataWidth(FreeImage_GetTagType(tag));
+            if (tag_data_width != 0 && FreeImage_GetTagCount(tag) > ~(DWORD)0 / tag_data_width) {
+                FreeImage_DeleteTag(tag);
+                // jump to next entry
+                continue;
+            }
+			FreeImage_SetTagLength(tag, FreeImage_GetTagCount(tag) * tag_data_width);
 
 			if(FreeImage_GetTagLength(tag) <= 4) {
 				// 4 bytes or less and value is in the dir entry itself
@@ -578,8 +588,8 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned long offset, unsig
 					// jump to next entry
 					continue;
 				}
-				// now check if offset + tag length exceeds buffer
-				if((int)offset_value > (int)length - (int)FreeImage_GetTagLength(tag)) {
+				// now check that length does not exceed the buffer size
+				if(FreeImage_GetTagLength(tag) > length - offset_value){
 					// a problem occured : delete the tag (not free'd after)
 					FreeImage_DeleteTag(tag);
 					// jump to next entry
@@ -635,7 +645,7 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned long offset, unsig
 					break; // break out of the for loop
 				}
 				else {
-					// unsupported camera model, canon maker tag or or something unknown
+					// unsupported camera model, canon maker tag or something unknown
 					// process as a standard tag
 					processExifTag(dib, tag, pval, msb_order, md_model);
 				}			
