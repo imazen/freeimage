@@ -49,6 +49,10 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 			}
 			break;
 		}
+		case FIT_UINT16:
+			// allow conversion from 16-bit
+			src = dib;
+			break;
 		case FIT_RGB16:
 			// allow conversion from 48-bit RGB
 			src = dib;
@@ -109,6 +113,28 @@ FreeImage_ConvertToRGBF(FIBITMAP *dib) {
 
 					src_pixel += bytespp;
 					dst_pixel ++;
+				}
+				src_bits += src_pitch;
+				dst_bits += dst_pitch;
+			}
+		}
+		break;
+
+		case FIT_UINT16:
+		{
+			const BYTE *src_bits = (BYTE*)FreeImage_GetBits(src);
+			BYTE *dst_bits = (BYTE*)FreeImage_GetBits(dst);
+
+			for(unsigned y = 0; y < height; y++) {
+				const WORD *src_pixel = (WORD*)src_bits;
+				FIRGBF *dst_pixel = (FIRGBF*)dst_bits;
+
+				for(unsigned x = 0; x < width; x++) {
+					// convert and scale to the range [0..1]
+					const float dst_value = (float)src_pixel[x] / 65535;
+					dst_pixel[x].red   = dst_value;
+					dst_pixel[x].green = dst_value;
+					dst_pixel[x].blue  = dst_value;
 				}
 				src_bits += src_pitch;
 				dst_bits += dst_pitch;

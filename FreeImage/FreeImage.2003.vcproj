@@ -323,6 +323,9 @@ copy Source\FreeImage.h Dist
 					RelativePath="Source\FreeImage\ConversionType.cpp">
 				</File>
 				<File
+					RelativePath=".\Source\FreeImage\ConversionUINT16.cpp">
+				</File>
+				<File
 					RelativePath="Source\FreeImage\Halftoning.cpp">
 				</File>
 				<File

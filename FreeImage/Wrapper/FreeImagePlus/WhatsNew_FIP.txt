@@ -5,6 +5,9 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+November 7th, 2010
++ [Herve Drolon] added fipImage::convertToUINT16
+
 October 9th, 2010
 * [Herve Drolon] fixed fipWinImage::setToneMappingOperator when displaying RGBA HDR images
 

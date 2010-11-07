@@ -322,7 +322,7 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 		case FIT_BITMAP:
 			switch(dst_type) {
 				case FIT_UINT16:
-					dst = (src_bpp == 8) ? convertByteToUShort.convert(src, dst_type) : NULL;
+					dst = FreeImage_ConvertToUINT16(src);
 					break;
 				case FIT_INT16:
 					dst = (src_bpp == 8) ? convertByteToShort.convert(src, dst_type) : NULL;
@@ -378,6 +378,7 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 				case FIT_RGBA16:
 					break;
 				case FIT_RGBF:
+					dst = FreeImage_ConvertToRGBF(src);
 					break;
 				case FIT_RGBAF:
 					break;
@@ -563,6 +564,7 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 					dst = FreeImage_ConvertTo24Bits(src);
 					break;
 				case FIT_UINT16:
+					dst = FreeImage_ConvertToUINT16(src);
 					break;
 				case FIT_INT16:
 					break;
@@ -592,6 +594,7 @@ FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_line
 					dst = FreeImage_ConvertTo32Bits(src);
 					break;
 				case FIT_UINT16:
+					dst = FreeImage_ConvertToUINT16(src);
 					break;
 				case FIT_INT16:
 					break;

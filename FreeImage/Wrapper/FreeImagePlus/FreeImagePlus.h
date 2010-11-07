@@ -606,6 +606,13 @@ public:
 	*/
 	BOOL convertToRGBF();
 
+	/** 
+	Converts the bitmap to a 16-bit unsigned short image. 
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertToUINT16
+	*/
+	BOOL convertToUINT16();
+
 	/**
 	Converts a High Dynamic Range image (48-bit RGB or 96-bit RGB Float) to a 24-bit RGB image. 
 	@param tmo Tone mapping operator

@@ -602,7 +602,14 @@ BOOL fipImage::convertToRGBF() {
 		return replace(dib);
 	}
 	return FALSE;
+}
 
+BOOL fipImage::convertToUINT16() {
+	if(_dib) {
+		FIBITMAP *dib = FreeImage_ConvertToUINT16(_dib);
+		return replace(dib);
+	}
+	return FALSE;
 }
 
 BOOL fipImage::toneMapping(FREE_IMAGE_TMO tmo, double first_param, double second_param, double third_param, double fourth_param) {
