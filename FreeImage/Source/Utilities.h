@@ -63,6 +63,10 @@
 void* FreeImage_Aligned_Malloc(size_t amount, size_t alignment);
 void FreeImage_Aligned_Free(void* mem);
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
 Allocate a FIBITMAP with possibly no pixel data 
 (i.e. only header data and some or all metadata)
@@ -91,6 +95,10 @@ Allocate a FIBITMAP of type FIT_BITMAP, with possibly no pixel data
 @see FreeImage_Allocate
 */
 DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeader(BOOL header_only, int width, int height, int bpp, unsigned red_mask FI_DEFAULT(0), unsigned green_mask FI_DEFAULT(0), unsigned blue_mask FI_DEFAULT(0));
+
+#if defined(__cplusplus)
+}
+#endif
 
 
 // ==========================================================
