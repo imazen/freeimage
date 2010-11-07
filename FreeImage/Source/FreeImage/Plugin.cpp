@@ -114,7 +114,6 @@ PluginList::AddNode(FI_InitProc init_proc, void *instance, const char *format, c
 				node->m_description = description;
 				node->m_extension = extension;
 				node->m_regexpr = regexpr;
-				node->m_next = NULL;
 				node->m_enabled = TRUE;
 
 				m_plugin_map[(const int)m_plugin_map.size()] = node;
@@ -299,10 +298,11 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 							if (instance != NULL) {
 								FARPROC proc_address = GetProcAddress(instance, "_Init@8");
 
-								if (proc_address != NULL)
+								if (proc_address != NULL) {
 									s_plugins->AddNode((FI_InitProc)proc_address, (void *)instance);
-								else
+								} else {
 									FreeLibrary(instance);
+								}
 							}
 						} while (_findnext(find_handle, &find_data) != -1L);
 
@@ -314,8 +314,9 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 
 				// restore the current directory
 
-				if (bOk)
+				if (bOk) {
 					SetCurrentDirectory(current_dir);
+				}
 			}
 #endif // _WIN32
 		}
@@ -337,16 +338,18 @@ FreeImage_DeInitialise() {
 
 void * DLL_CALLCONV
 FreeImage_Open(PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_for_reading) {
-	if (node->m_plugin->open_proc != NULL)
+	if (node->m_plugin->open_proc != NULL) {
        return node->m_plugin->open_proc(io, handle, open_for_reading);
+	}
 
 	return NULL;
 }
 
 void DLL_CALLCONV
 FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data) {
-	if (node->m_plugin->close_proc != NULL)
+	if (node->m_plugin->close_proc != NULL) {
 		node->m_plugin->close_proc(io, handle, data);
+	}
 }
 
 // =====================================================================
