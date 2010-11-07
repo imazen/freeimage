@@ -11,6 +11,8 @@ Month day, 2010 - 3.14.2
 ! [Herve Drolon] FreeImage_CloneMetadata now clone resolution info returned by FreeImage_GetDotsPerMeter(X / Y)
 + [Herve Drolon] added loading support for "half float" format to TIF plugin
 + [Herve Drolon] FreeImage_IsTransparent is now independant of FREE_IMAGE_TYPE
++ [Herve Drolon] added FIT_UINT16 to FIT_RGBF conversion to FreeImage_ConvertToRGBF & FreeImage_ConvertToType
++ [Herve Drolon] added FreeImage_ConvertToUINT16 and updated FreeImage_ConvertToType
 * [Domingo Stephan] fixed a compilation error in TARGA plugin when using a big endian OS (OS X 10.6)
 * [Christian Heimes] fixed a compilation error with gcc 4.3.x and OpenEXR
 * [Eric Fruhinsholz] fixed a crash in JPEG plugin when reading a JPEG with corrupted XMP data
