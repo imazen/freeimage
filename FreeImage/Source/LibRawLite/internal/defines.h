@@ -22,7 +22,7 @@ it under the terms of the one of three licenses as you choose:
 */
 
 #define NO_JPEG
-#define VERSION "9.04"
+#define VERSION "9.05"
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -40,9 +40,7 @@ it under the terms of the one of three licenses as you choose:
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
-#ifdef _OPENMP
-#include <omp.h>
-#endif
+
 /*
    NO_JPEG disables decoding of compressed Kodak DC120 files.
    NO_LCMS disables the "-p" option.
