@@ -17,6 +17,7 @@ unit FreeImage;
 // 2010-07-14  LM    Fixed some C->Delphi translation errors,
 //                   updated to 3.13.1, made RAD2010 compliant (unicode)
 // 2010-07-29  LM    Added Free Pascal / Lazarus 32 bit support
+// 2010-11-12  LM    Updated to 3.14.1
 //
 // This file is part of FreeImage 3
 //
@@ -89,7 +90,7 @@ const
 const
   // Version information
   FREEIMAGE_MAJOR_VERSION  = 3;
-  FREEIMAGE_MINOR_VERSION  = 13;
+  FREEIMAGE_MINOR_VERSION  = 14;
   FREEIMAGE_RELEASE_SERIAL = 1;
   // This really only affects 24 and 32 bit formats, the rest are always RGB order.
   FREEIMAGE_COLORORDER_BGR = 0;
@@ -374,6 +375,7 @@ const
   FIMD_GEOTIFF        = FREE_IMAGE_MDMODEL(8);  // GeoTIFF metadata (to be implemented)
   FIMD_ANIMATION      = FREE_IMAGE_MDMODEL(9);  // Animation metadata
   FIMD_CUSTOM         = FREE_IMAGE_MDMODEL(10); // Used to attach other metadata types to a dib
+  FIMD_EXIF_RAW       = FREE_IMAGE_MDMODEL(11); // Exif metadata as a raw buffer
 
 type
   // Handle to a metadata model
@@ -451,6 +453,7 @@ type
   FI_SupportsExportBPPProc = function(bpp: integer): Boolean; stdcall;
   FI_SupportsExportTypeProc = function(atype: FREE_IMAGE_TYPE): Boolean; stdcall;
   FI_SupportsICCProfilesProc = function: Boolean; stdcall;
+  FI_SupportsNoPixelsProc = function: Boolean; stdcall;
 
   Plugin = record
     format_proc: FI_FormatProc;
@@ -468,6 +471,7 @@ type
     supports_export_bpp_proc: FI_SupportsExportBPPProc;
     supports_export_type_proc: FI_SupportsExportTypeProc;
     supports_icc_profiles_proc: FI_SupportsICCProfilesProc;
+    supports_no_pixels_proc: FI_SupportsNoPixelsProc;
   end;
 
   FI_InitProc = procedure(aplugin: PPlugin; format_id: Integer); stdcall;
@@ -477,6 +481,7 @@ type
 // --------------------------------------------------------------------------
 
 const
+  FIF_LOAD_NOPIXELS   = $8000;  // loading: load the image header only (not supported by all plugins)
   BMP_DEFAULT         = 0;
   BMP_SAVE_RLE        = 1;
   CUT_DEFAULT         = 0;
@@ -514,6 +519,7 @@ const
   JPEG_SUBSAMPLING_420 = $4000;  // save with medium 2x2 medium chroma subsampling (4:2:0) - default value
   JPEG_SUBSAMPLING_422 = $8000;  // save with low 2x1 chroma subsampling (4:2:2)
   JPEG_SUBSAMPLING_444 = $10000; // save with no chroma subsampling (4:4:4)
+  JPEG_OPTIMIZE       = $20000; // on saving, compute optimal Huffman coding tables (can reduce a few percent of file size)
   KOALA_DEFAULT       = 0;
   LBM_DEFAULT         = 0;
   MNG_DEFAULT         = 0;
@@ -535,6 +541,8 @@ const
   PNM_SAVE_RAW        = 0;     // If set the writer saves in RAW format (i.e. P4, P5 or P6)
   PNM_SAVE_ASCII      = 1;     // If set the writer saves in ASCII format (i.e. P1, P2 or P3)
   PSD_DEFAULT         = 0;
+  PSD_CMYK            = 1; // reads tags for separated CMYK (default is conversion to RGB)
+  PSD_LAB             = 2; // reads tags for CIELab (default is conversion to RGB)
   RAS_DEFAULT         = 0;
   RAW_DEFAULT         = 0; // load the file as linear RGB 48-bit
   RAW_PREVIEW         = 1; // try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit
@@ -542,6 +550,7 @@ const
   SGI_DEFAULT         = 0;
   TARGA_DEFAULT       = 0;
   TARGA_LOAD_RGB888   = 1;     // If set the loader converts RGB555 and ARGB8888 -> RGB888.
+  TARGA_SAVE_RLE      = 2;     // If set, the writer saves with RLE compression
   TIFF_DEFAULT        = 0;
   TIFF_CMYK           = $0001;  // reads/stores tags for separated CMYK (use | to combine with compression flags)
   TIFF_PACKBITS       = $0100;  // save using PACKBITS compression
@@ -552,6 +561,7 @@ const
   TIFF_CCITTFAX4      = $2000;  // save using CCITT Group 4 fax encoding
   TIFF_LZW            = $4000;  // save using LZW compression
   TIFF_JPEG           = $8000;  // save using JPEG compression
+  TIFF_LOGLUV         = $10000; // save using LogLuv compression
   WBMP_DEFAULT        = 0;
   XBM_DEFAULT         = 0;
   XPM_DEFAULT         = 0;
@@ -614,7 +624,7 @@ procedure FreeImage_OutputMessageProc(fif: Integer; fmt: PAnsiChar; args: array 
 {$ENDIF}
 
 // --------------------------------------------------------------------------
-// Allocate/Unload routines -------------------------------------------------
+// Allocate / Clone / Unload routines ---------------------------------------
 // --------------------------------------------------------------------------
 
 function FreeImage_Allocate(width, height, bpp: Integer; red_mask: Cardinal = 0;
@@ -628,6 +638,12 @@ function FreeImage_Clone(dib: PFIBITMAP): PFIBITMAP; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Clone@4'{$ENDIF};
 procedure FreeImage_Unload(dib: PFIBITMAP); stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Unload@4'{$ENDIF};
+
+// --------------------------------------------------------------------------
+// Header loading routines
+// --------------------------------------------------------------------------
+function FreeImage_HasPixels(dib: PFIBITMAP): Boolean; stdcall;
+  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_HasPixels@4'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Load / Save routines -----------------------------------------------------
@@ -683,6 +699,9 @@ function FreeImage_WriteMemory(buffer: Pointer; size, count: Cardinal;
 function FreeImage_LoadMultiBitmapFromMemory(fif: FREE_IMAGE_FORMAT; stream: PFIMEMORY;
   flags: Integer = 0): PFIMULTIBITMAP; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_LoadMultiBitmapFromMemory@12'{$ENDIF};
+function FreeImage_SaveMultiBitmapToMemory(fif: FREE_IMAGE_FORMAT; bitmap: PFIMULTIBITMAP;
+  stream: PFIMEMORY; flags: Integer): Boolean; stdcall;
+  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SaveMultiBitmapToMemory@16'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Plugin Interface ---------------------------------------------------------
@@ -732,6 +751,8 @@ function FreeImage_FIFSupportsExportType(fif: FREE_IMAGE_FORMAT;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FIFSupportsExportType@8'{$ENDIF};
 function FreeImage_FIFSupportsICCProfiles(fif: FREE_IMAGE_FORMAT): Boolean; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FIFSupportsICCProfiles@4'{$ENDIF};
+function FreeImage_FIFSupportsNoPixels(fif: FREE_IMAGE_FORMAT): Boolean; stdcall;
+  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FIFSupportsNoPixels@4'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Multipaging interface ----------------------------------------------------
@@ -744,6 +765,9 @@ function FreeImage_OpenMultiBitmap(fif: FREE_IMAGE_FORMAT; filename: PAnsiChar;
 function FreeImage_OpenMultiBitmapFromHandle(fif: FREE_IMAGE_FORMAT; io: PFreeImageIO;
   handle: fi_handle; flags: Integer = 0): PFIMULTIBITMAP; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_OpenMultiBitmapFromHandle@16'{$ENDIF};
+function FreeImage_SaveMultiBitmapToHandle(fif: FREE_IMAGE_FORMAT; bitmap: PFIMULTIBITMAP;
+  io: PFreeImageIO; handle: fi_handle; flags: Integer = 0): Boolean; stdcall;
+  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SaveMultiBitmapToHandle@20'{$ENDIF};
 function FreeImage_CloseMultiBitmap(bitmap: PFIMULTIBITMAP;
   flags: Integer = 0): Boolean; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_CloseMultiBitmap@8'{$ENDIF};
@@ -1030,6 +1054,8 @@ procedure FreeImage_ConvertToRawBits(bits: PByte; dib: PFIBITMAP; pitch: Integer
   bpp, red_mask, green_mask, blue_mask: Cardinal; topdown: Boolean = False); stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToRawBits@32'{$ENDIF};
 
+function FreeImage_ConvertToFloat(dib: PFIBITMAP): PFIBITMAP;
+  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToFloat@4'{$ENDIF};
 function FreeImage_ConvertToRGBF(dib: PFIBITMAP): PFIBITMAP; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToRGBF@4'{$ENDIF};
 
@@ -1209,7 +1235,7 @@ function FreeImage_SwapPaletteIndices(dib: PFIBITMAP; index_a, index_b: PByte): 
 // channel processing routines
 function FreeImage_GetChannel(dib: PFIBITMAP; channel: FREE_IMAGE_COLOR_CHANNEL): PFIBITMAP; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetChannel@8'{$ENDIF};
-function FreeImage_SetChannel(dib, dib8: PFIBITMAP; channel: FREE_IMAGE_COLOR_CHANNEL): Boolean; stdcall;
+function FreeImage_SetChannel(dst, src: PFIBITMAP; channel: FREE_IMAGE_COLOR_CHANNEL): Boolean; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetChannel@12'{$ENDIF};
 function FreeImage_GetComplexChannel(src: PFIBITMAP; channel: FREE_IMAGE_COLOR_CHANNEL): PFIBITMAP; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetComplexChannel@8'{$ENDIF};

@@ -13,6 +13,7 @@
 // When        Who   What
 // ----------- ----- -----------------------------------------------------------
 // 2010-07-29  LM    Added Free Pascal / Lazarus 32 bit support
+// 2010-11-12  LM    Added Delphi XE support
 //
 // This file is part of FreeImage 3
 //
@@ -182,5 +183,22 @@
 		{$DEFINE DELPHI2007}
 		{$DEFINE DELPHI2009}
 		{$DEFINE DELPHI2010}
+	{$ENDIF}
+
+	{$IFDEF VER220}
+		{$DEFINE DELPHI1}
+		{$DEFINE DELPHI2}
+		{$DEFINE DELPHI3}
+		{$DEFINE DELPHI4}
+		{$DEFINE DELPHI5}
+		{$DEFINE DELPHI6}
+		{$DEFINE DELPHI7}
+		{$DEFINE DELPHI8}
+		{$DEFINE DELPHI2005}
+		{$DEFINE DELPHI2006}
+		{$DEFINE DELPHI2007}
+		{$DEFINE DELPHI2009}
+		{$DEFINE DELPHI2010}
+		{$DEFINE DELPHIXE}
 	{$ENDIF}
 {$ENDIF}
