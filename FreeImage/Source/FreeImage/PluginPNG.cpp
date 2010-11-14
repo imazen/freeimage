@@ -288,15 +288,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			io->read_proc(png_check, PNG_BYTES_TO_CHECK, 1, handle);
 
-			if (png_sig_cmp(png_check, (png_size_t)0, PNG_BYTES_TO_CHECK) != 0)
+			if (png_sig_cmp(png_check, (png_size_t)0, PNG_BYTES_TO_CHECK) != 0) {
 				return NULL;	// Bad signature
+			}
 			
 			// create the chunk manage structure
 
 			png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, error_handler, warning_handler);
 
-			if (!png_ptr)
+			if (!png_ptr) {
 				return NULL;			
+			}
 
 			// create the info structure
 
@@ -360,8 +362,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 #if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 					// flip the RGB pixels to BGR (or RGBA to BGRA)
 
-					if(image_type == FIT_BITMAP)
+					if(image_type == FIT_BITMAP) {
 						png_set_bgr(png_ptr);
+					}
 #endif
 					break;
 
@@ -403,29 +406,18 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					throw FI_MSG_ERROR_UNSUPPORTED_FORMAT;
 			}
 
-			// Get the background color to draw transparent and alpha images over.
-			// Note that even if the PNG file supplies a background, you are not required to
-			// use it - you should use the (solid) application background if it has one.
-
-			png_color_16p image_background = NULL;
-			RGBQUAD rgbBkColor;
-
-			if (png_get_bKGD(png_ptr, info_ptr, &image_background)) {
-				rgbBkColor.rgbRed      = (BYTE)image_background->red;
-				rgbBkColor.rgbGreen    = (BYTE)image_background->green;
-				rgbBkColor.rgbBlue     = (BYTE)image_background->blue;
-				rgbBkColor.rgbReserved = 0;
-			}
-
 			// unlike the example in the libpng documentation, we have *no* idea where
 			// this file may have come from--so if it doesn't have a file gamma, don't
 			// do any correction ("do no harm")
 
-			double gamma = 0;
-			double screen_gamma = 2.2;
+			if (png_get_valid(png_ptr, info_ptr, PNG_INFO_gAMA)) {
+				double gamma = 0;
+				double screen_gamma = 2.2;
 
-			if (png_get_gAMA(png_ptr, info_ptr, &gamma) && ( flags & PNG_IGNOREGAMMA ) != PNG_IGNOREGAMMA)
-				png_set_gamma(png_ptr, screen_gamma, gamma);
+				if (png_get_gAMA(png_ptr, info_ptr, &gamma) && ( flags & PNG_IGNOREGAMMA ) != PNG_IGNOREGAMMA) {
+					png_set_gamma(png_ptr, screen_gamma, gamma);
+				}
+			}
 
 			// all transformations have been registered; now update info_ptr data
 
@@ -460,7 +452,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				case PNG_COLOR_TYPE_PALETTE:
 					dib = FreeImage_AllocateHeader(header_only, width, height, pixel_depth);
 
-					png_get_PLTE(png_ptr,info_ptr, &png_palette,&palette_entries);
+					png_get_PLTE(png_ptr,info_ptr, &png_palette, &palette_entries);
 
 					palette = FreeImage_GetPalette(dib);
 
@@ -471,16 +463,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						palette[i].rgbGreen = png_palette[i].green;
 						palette[i].rgbBlue  = png_palette[i].blue;
 					}
-
-					// store the transparency table
-
-					if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
-						int num_trans = 0; 
-						png_bytep trans = NULL; 
-						png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, NULL); 
-						FreeImage_SetTransparencyTable(dib, (BYTE *)trans, num_trans);
-					}
-
 					break;
 
 				case PNG_COLOR_TYPE_GRAY:
@@ -496,31 +478,56 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							palette[i].rgbBlue  = (BYTE)((i * 255) / (palette_entries - 1));
 						}
 					}
-
-					// store the transparency table
-
-					if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
-						png_color_16p trans_values = NULL; 
-						png_get_tRNS(png_ptr, info_ptr, NULL, NULL, &trans_values); 
-						if(trans_values) {
-							if (trans_values->gray < palette_entries) { 
-								BYTE table[256]; 
-								memset(table, 0xFF, palette_entries); 
-								table[trans_values->gray] = 0; 
-								FreeImage_SetTransparencyTable(dib, table, palette_entries); 
-							}
-						}
-					}
-
 					break;
 
 				default:
 					throw FI_MSG_ERROR_UNSUPPORTED_FORMAT;
 			}
 
+			// store the transparency table
+
+			if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+				// array of alpha (transparency) entries for palette
+				png_bytep trans_alpha = NULL;
+				// number of transparent entries
+				int num_trans = 0;						
+				// graylevel or color sample values of the single transparent color for non-paletted images
+				png_color_16p trans_color = NULL;
+
+				png_get_tRNS(png_ptr, info_ptr, &trans_alpha, &num_trans, &trans_color);
+
+				if((color_type == PNG_COLOR_TYPE_GRAY) && trans_color) {
+					// single transparent color
+					if (trans_color->gray < palette_entries) { 
+						BYTE table[256]; 
+						memset(table, 0xFF, palette_entries); 
+						table[trans_color->gray] = 0; 
+						FreeImage_SetTransparencyTable(dib, table, palette_entries); 
+					}
+				} else if((color_type == PNG_COLOR_TYPE_PALETTE) && trans_alpha) {
+					// transparency table
+					FreeImage_SetTransparencyTable(dib, (BYTE *)trans_alpha, num_trans);
+				}
+			}
+
 			// store the background color 
-			if(image_background) {
-				FreeImage_SetBackgroundColor(dib, &rgbBkColor);
+
+			if (png_get_valid(png_ptr, info_ptr, PNG_INFO_bKGD)) {
+				// Get the background color to draw transparent and alpha images over.
+				// Note that even if the PNG file supplies a background, you are not required to
+				// use it - you should use the (solid) application background if it has one.
+
+				png_color_16p image_background = NULL;
+				RGBQUAD rgbBkColor;
+
+				if (png_get_bKGD(png_ptr, info_ptr, &image_background)) {
+					rgbBkColor.rgbRed      = (BYTE)image_background->red;
+					rgbBkColor.rgbGreen    = (BYTE)image_background->green;
+					rgbBkColor.rgbBlue     = (BYTE)image_background->blue;
+					rgbBkColor.rgbReserved = 0;
+
+					FreeImage_SetBackgroundColor(dib, &rgbBkColor);
+				}
 			}
 
 			// get physical resolution
@@ -533,7 +540,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				int res_unit_type = 0;
 
-				png_get_pHYs(png_ptr,info_ptr,&res_x,&res_y,&res_unit_type);
+				png_get_pHYs(png_ptr,info_ptr, &res_x, &res_y, &res_unit_type);
 
 				if (res_unit_type == 1) {
 					FreeImage_SetDotsPerMeterX(dib, res_x);
@@ -580,18 +587,21 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// read in the bitmap bits via the pointer table
 
-			for (png_uint_32 k = 0; k < height; k++)				
+			for (png_uint_32 k = 0; k < height; k++) {
 				row_pointers[height - 1 - k] = FreeImage_GetScanLine(dib, k);			
+			}
 
 			png_read_image(png_ptr, row_pointers);
 
 			// check if the bitmap contains transparency, if so enable it in the header
 
-			if (FreeImage_GetBPP(dib) == 32)
-				if (FreeImage_GetColorType(dib) == FIC_RGBALPHA)
+			if (FreeImage_GetBPP(dib) == 32) {
+				if (FreeImage_GetColorType(dib) == FIC_RGBALPHA) {
 					FreeImage_SetTransparent(dib, TRUE);
-				else
+				} else {
 					FreeImage_SetTransparent(dib, FALSE);
+				}
+			}
 				
 			// cleanup
 
@@ -614,16 +624,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 
 			return dib;
+
 		} catch (const char *text) {
-			if (png_ptr)
+			if (png_ptr) {
 				png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-			
-			if (row_pointers)
+			}
+			if (row_pointers) {
 				free(row_pointers);
-
-			if (dib)
+			}
+			if (dib) {
 				FreeImage_Unload(dib);			
-
+			}
 			FreeImage_OutputMessageProc(s_format_id, text);
 			
 			return NULL;
@@ -786,8 +797,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 #if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 					// flip BGR pixels to RGB
-					if(image_type == FIT_BITMAP)
+					if(image_type == FIT_BITMAP) {
 						png_set_bgr(png_ptr);
+					}
 #endif
 					break;
 	
@@ -798,8 +810,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 #if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
 					// flip BGR pixels to RGB
-					if(image_type == FIT_BITMAP)
+					if(image_type == FIT_BITMAP) {
 						png_set_bgr(png_ptr);
+					}
 #endif
 					break;
 					
