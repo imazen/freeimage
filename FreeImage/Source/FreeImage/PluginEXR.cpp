@@ -30,6 +30,7 @@
 #include "../OpenEXR/IlmImf/ImfChannelList.h"
 #include "../OpenEXR/IlmImf/ImfRgba.h"
 #include "../OpenEXR/IlmImf/ImfArray.h"
+#include "../OpenEXR/IlmImf/ImfPreviewImage.h"
 #include "../OpenEXR/Half/half.h"
 
 
@@ -308,9 +309,47 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		dib = FreeImage_AllocateHeaderT(header_only, image_type, width, height, 0);
 		if(!dib) THROW (Iex::NullExc, FI_MSG_ERROR_MEMORY);
 
+		// try to load the preview image
+		// --------------------------------------------------------------
+
+		if(file.header().hasPreviewImage()) {
+			const Imf::PreviewImage& preview = file.header().previewImage();
+			const unsigned thWidth = preview.width();
+			const unsigned thHeight = preview.height();
+			
+			FIBITMAP* thumbnail = FreeImage_Allocate(thWidth, thHeight, 32);
+			if(thumbnail) {
+				const Imf::PreviewRgba *src_line = preview.pixels();
+				BYTE *dst_line = FreeImage_GetScanLine(thumbnail, thHeight - 1);
+				const unsigned dstPitch = FreeImage_GetPitch(thumbnail);
+				
+				for (unsigned y = 0; y < thHeight; ++y) {
+					const Imf::PreviewRgba *src_pixel = src_line;
+					RGBQUAD* dst_pixel = (RGBQUAD*)dst_line;
+					
+					for(unsigned x = 0; x < thWidth; ++x) {
+						dst_pixel->rgbRed = src_pixel->r;
+						dst_pixel->rgbGreen = src_pixel->g;
+						dst_pixel->rgbBlue = src_pixel->b;
+						dst_pixel->rgbReserved = src_pixel->a;				
+						src_pixel++;
+						dst_pixel++;
+					}
+					src_line += thWidth;
+					dst_line -= dstPitch;
+				}
+				FreeImage_SetThumbnail(dib, thumbnail);
+				FreeImage_Unload(thumbnail);
+			}
+		}
+
 		if(header_only) {
+			// header only mode
 			return dib;
 		}
+
+		// load pixels
+		// --------------------------------------------------------------
 
 		BYTE *bits = FreeImage_GetBits(dib);			// pointer to our pixel buffer
 		size_t bytespp = sizeof(float) * components;	// size of our pixel in bytes
@@ -406,6 +445,54 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	return dib;
 }
 
+/**
+Set the preview image using the dib embedded thumbnail
+*/
+static BOOL
+SetPreviewImage(FIBITMAP *dib, Imf::Header& header) {
+	if(!FreeImage_GetThumbnail(dib)) {
+		return FALSE;
+	}
+	FIBITMAP* thumbnail = FreeImage_GetThumbnail(dib);
+
+	if((FreeImage_GetImageType(thumbnail) != FIT_BITMAP) || (FreeImage_GetBPP(thumbnail) != 32)) {
+		// invalid thumbnail - ignore it
+		FreeImage_OutputMessageProc(s_format_id, FI_MSG_WARNING_INVALID_THUMBNAIL);
+	} else {
+		const unsigned thWidth = FreeImage_GetWidth(thumbnail);
+		const unsigned thHeight = FreeImage_GetHeight(thumbnail);
+		
+		Imf::PreviewImage preview(thWidth, thHeight);
+
+		// copy thumbnail to 32-bit RGBA preview image
+		
+		const BYTE* src_line = FreeImage_GetScanLine(thumbnail, thHeight - 1);
+		Imf::PreviewRgba* dst_line = preview.pixels();
+		const unsigned srcPitch = FreeImage_GetPitch(thumbnail);
+		
+		for (unsigned y = 0; y < thHeight; y++) {
+			const RGBQUAD* src_pixel = (RGBQUAD*)src_line;
+			Imf::PreviewRgba* dst_pixel = dst_line;
+			
+			for(unsigned x = 0; x < thWidth; x++) {
+				dst_pixel->r = src_pixel->rgbRed;
+				dst_pixel->g = src_pixel->rgbGreen;
+				dst_pixel->b = src_pixel->rgbBlue;
+				dst_pixel->a = src_pixel->rgbReserved;
+				
+				src_pixel++;
+				dst_pixel++;
+			}
+			
+			src_line -= srcPitch;
+			dst_line += thWidth;
+		}
+		
+		header.setPreviewImage(preview);
+	}
+
+	return TRUE;
+}
 
 /**
 Save using EXR_LC compression (works only with RGB[A]F images)
@@ -524,6 +611,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			Imath::V2f(0,0), 1, 
 			Imf::INCREASING_Y, compress);        		
 
+		// handle thumbnail
+		SetPreviewImage(dib, header);
+		
 		// check for EXR_LC compression
 		if((flags & EXR_LC) == EXR_LC) {
 			return SaveAsEXR_LC(ostream, dib, header, width, height);

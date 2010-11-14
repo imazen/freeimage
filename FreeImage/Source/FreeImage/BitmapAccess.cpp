@@ -7,6 +7,7 @@
 // - Detlev Vendt (detlev.vendt@brillit.de)
 // - Petr Supina (psup@centrum.cz)
 // - Carsten Klein (c.klein@datagis.com)
+// - Mihail Naydenov (mnaydenov@users.sourceforge.net)
 //
 // This file is part of FreeImage 3
 //
@@ -59,7 +60,7 @@ FI_STRUCT (METADATAHEADER) {
 // ----------------------------------------------------------
 
 FI_STRUCT (FREEIMAGEHEADER) {
-    FREE_IMAGE_TYPE type;		// data type - bitmap, array of long, double, complex, etc
+	FREE_IMAGE_TYPE type;		// data type - bitmap, array of long, double, complex, etc
 
 	unsigned red_mask;			// bit layout of the red components
 	unsigned green_mask;		// bit layout of the green components
@@ -67,15 +68,17 @@ FI_STRUCT (FREEIMAGEHEADER) {
 
 	RGBQUAD bkgnd_color;		// background color used for RGB transparency
 
-	BOOL transparent;			 // why another table? for easy transparency table retrieval!
-	int  transparency_count;	 // transparency could be stored in the palette, which is better
-	BYTE transparent_table[256]; // overall, but it requires quite some changes and it will render
-								 // FreeImage_GetTransparencyTable obsolete in its current form;
-	FIICCPROFILE iccProfile;	 // space to hold ICC profile
+	BOOL transparent;			// why another table? for easy transparency table retrieval!
+	int  transparency_count;	// transparency could be stored in the palette, which is better
+	BYTE transparent_table[256];// overall, but it requires quite some changes and it will render
+								// FreeImage_GetTransparencyTable obsolete in its current form;
+	FIICCPROFILE iccProfile;	// space to hold ICC profile
 
-	METADATAMAP *metadata;		 // contains a list of metadata models attached to the bitmap
+	METADATAMAP *metadata;		// contains a list of metadata models attached to the bitmap
 
-	BOOL has_pixels;			 // FALSE if the FIBITMAP only contains the header and no pixel data
+	BOOL has_pixels;			// FALSE if the FIBITMAP only contains the header and no pixel data
+
+	FIBITMAP *thumbnail;		// optionally contains a thumbnail attached to the bitmap
 
 	//BYTE filler[1];			 // fill to 32-bit alignment
 };
@@ -272,6 +275,10 @@ FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int
 
 			fih->metadata = new(std::nothrow) METADATAMAP;
 
+			// initialize attached thumbnail
+
+			fih->thumbnail = NULL;
+
 			// write out the BITMAPINFOHEADER
 
 			BITMAPINFOHEADER *bih   = FreeImage_GetInfoHeader(bitmap);
@@ -346,6 +353,9 @@ FreeImage_Unload(FIBITMAP *dib) {
 
 			delete metadata;
 
+			// delete embedded thumbnail
+			FreeImage_Unload(FreeImage_GetThumbnail(dib));
+
 			// delete bitmap ...
 			FreeImage_Aligned_Free(dib->data);
 		}
@@ -395,6 +405,9 @@ FreeImage_Clone(FIBITMAP *dib) {
 		// restore metadata link for new_dib
 		((FREEIMAGEHEADER *)new_dib->data)->metadata = dst_metadata;
 
+		// reset thumbnail link for new_dib
+		((FREEIMAGEHEADER *)new_dib->data)->thumbnail = NULL;
+
 		// copy possible ICC profile
 		FreeImage_CreateICCProfile(new_dib, src_iccProfile->data, src_iccProfile->size);
 		dst_iccProfile->flags = src_iccProfile->flags;
@@ -424,10 +437,36 @@ FreeImage_Clone(FIBITMAP *dib) {
 			}
 		}
 
+		// copy the thumbnail
+		FreeImage_SetThumbnail(new_dib, FreeImage_GetThumbnail(dib));
+
 		return new_dib;
 	}
 
 	return NULL;
+}
+
+// ----------------------------------------------------------
+
+FIBITMAP* DLL_CALLCONV
+FreeImage_GetThumbnail(FIBITMAP *dib) {
+	return (dib != NULL) ? ((FREEIMAGEHEADER *)dib->data)->thumbnail : NULL;
+}
+
+BOOL DLL_CALLCONV
+FreeImage_SetThumbnail(FIBITMAP *dib, FIBITMAP *thumbnail) {
+	if(dib == NULL) {
+		return FALSE;
+	}
+	FIBITMAP *currentThumbnail = ((FREEIMAGEHEADER *)dib->data)->thumbnail;
+	if(currentThumbnail == thumbnail) {
+		return TRUE;
+	}
+	FreeImage_Unload(currentThumbnail);
+
+	((FREEIMAGEHEADER *)dib->data)->thumbnail = FreeImage_HasPixels(thumbnail) ? FreeImage_Clone(thumbnail) : NULL;
+
+	return TRUE;
 }
 
 // ----------------------------------------------------------
@@ -668,6 +707,7 @@ FreeImage_GetTransparencyCount(FIBITMAP *dib) {
 void DLL_CALLCONV
 FreeImage_SetTransparencyTable(FIBITMAP *dib, BYTE *table, int count) {
 	if (dib) {
+		count = MIN(count, 256);
 		if (FreeImage_GetBPP(dib) <= 8) {
 			((FREEIMAGEHEADER *)dib->data)->transparent = TRUE;
 			((FREEIMAGEHEADER *)dib->data)->transparency_count = count;

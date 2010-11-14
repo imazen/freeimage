@@ -9,6 +9,7 @@
 // - Karl-Heinz Bussian (khbussian@moss.de)
 // - Hervé Drolon (drolon@infonie.fr)
 // - Jascha Wetzel (jascha@mainia.de)
+// - Mihail Naydenov (mnaydenov@users.sourceforge.net)
 //
 // This file is part of FreeImage 3
 //
@@ -65,6 +66,12 @@ static int s_format_id;
 #define ICC_HEADER_SIZE 14				// size of non-profile data in APP2
 #define MAX_BYTES_IN_MARKER 65533L		// maximum data length of a JPEG marker
 #define MAX_DATA_BYTES_IN_MARKER 65519L	// maximum data length of a JPEG APP2 marker
+
+#define MAX_JFXX_THUMB_SIZE (MAX_BYTES_IN_MARKER - 5 - 1)
+
+#define JFXX_TYPE_JPEG 	0x10	// JFIF extension marker: JPEG-compressed thumbnail image
+#define JFXX_TYPE_8bit 	0x11	// JFIF extension marker: palette thumbnail image
+#define JFXX_TYPE_24bit	0x13	// JFIF extension marker: RGB thumbnail image
 
 // ----------------------------------------------------------
 //   Typedef declarations
@@ -621,7 +628,7 @@ jpeg_read_xmp_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) 
 	@param datalen APP1 marker length
 	@return Returns TRUE if successful, FALSE otherwise
 */
-BOOL  
+static BOOL  
 jpeg_read_exif_profile_raw(FIBITMAP *dib, const BYTE *profile, unsigned int length) {
     // marker identifying string for Exif = "Exif\0\0"
     BYTE exif_signature[6] = { 0x45, 0x78, 0x69, 0x66, 0x00, 0x00 };
@@ -655,6 +662,53 @@ jpeg_read_exif_profile_raw(FIBITMAP *dib, const BYTE *profile, unsigned int leng
 }
 
 /**
+	Read JFIF "JFXX" extension APP0 marker
+	@param dib Input FIBITMAP
+	@param dataptr Pointer to the APP0 marker
+	@param datalen APP0 marker length
+	@return Returns TRUE if successful, FALSE otherwise
+*/
+static BOOL 
+jpeg_read_jfxx(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
+	if(datalen < 6) {
+		return FALSE;
+	}
+	
+	const int id_length = 5;
+	const BYTE *data = dataptr + id_length;
+	unsigned remaining = datalen - id_length;
+		
+	const BYTE type = *data;
+	++data, --remaining;
+
+	switch(type) {
+		case JFXX_TYPE_JPEG:
+		{
+			// load the thumbnail
+			FIMEMORY* hmem = FreeImage_OpenMemory(const_cast<BYTE*>(data), remaining);
+			FIBITMAP* thumbnail = FreeImage_LoadFromMemory(FIF_JPEG, hmem);
+			FreeImage_CloseMemory(hmem);
+			// store the thumbnail
+			FreeImage_SetThumbnail(dib, thumbnail);
+			// then delete it
+			FreeImage_Unload(thumbnail);
+			break;
+		}
+		case JFXX_TYPE_8bit:
+			// colormapped uncompressed thumbnail (no supported)
+			break;
+		case JFXX_TYPE_24bit:
+			// truecolor uncompressed thumbnail (no supported)
+			break;
+		default:
+			break;
+	}
+
+	return TRUE;
+}
+
+
+/**
 	Read JPEG special markers
 */
 static BOOL 
@@ -663,6 +717,19 @@ read_markers(j_decompress_ptr cinfo, FIBITMAP *dib) {
 
 	for(marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
 		switch(marker->marker) {
+			case JPEG_APP0:
+				// JFIF is handled by libjpeg already, handle JFXX
+				if(memcmp(marker->data, "JFIF" , 5) == 0) {
+					continue;
+				}
+				if(memcmp(marker->data, "JFXX" , 5) == 0) {
+					if(!cinfo->saw_JFIF_marker || cinfo->JFIF_minor_version < 2) {
+						FreeImage_OutputMessageProc(s_format_id, "Warning: non-standard JFXX segment");
+					}					
+					jpeg_read_jfxx(dib, marker->data, marker->data_length);
+				}
+				// other values such as 'Picasa' : ignore safely unknown APP0 marker
+				break;
 			case JPEG_COM:
 				// JPEG comment
 				jpeg_read_comment(dib, marker->data, marker->data_length);
@@ -848,7 +915,7 @@ jpeg_write_xmp_profile(j_compress_ptr cinfo, FIBITMAP *dib) {
 	Write JPEG_APP1 marker (Exif profile)
 	@return Returns TRUE if successful, FALSE otherwise
 */
-BOOL  
+static BOOL 
 jpeg_write_exif_profile_raw(j_compress_ptr cinfo, FIBITMAP *dib) {
     // marker identifying string for Exif = "Exif\0\0"
     BYTE exif_signature[6] = { 0x45, 0x78, 0x69, 0x66, 0x00, 0x00 };
@@ -888,10 +955,90 @@ jpeg_write_exif_profile_raw(j_compress_ptr cinfo, FIBITMAP *dib) {
 }
 
 /**
+	Write thumbnail (JFXX segment, JPEG compressed)
+*/
+static BOOL
+jpeg_write_jfxx(j_compress_ptr cinfo, FIBITMAP *dib) {
+	// get the thumbnail to be stored
+	FIBITMAP* thumbnail = FreeImage_GetThumbnail(dib);
+	if(!thumbnail) {
+		return TRUE;
+	}
+	// check for a compatible output format
+	if((FreeImage_GetImageType(thumbnail) != FIT_BITMAP) || (FreeImage_GetBPP(thumbnail) != 8) && (FreeImage_GetBPP(thumbnail) != 24)) {
+		FreeImage_OutputMessageProc(s_format_id, FI_MSG_WARNING_INVALID_THUMBNAIL);
+		return FALSE;
+	}
+	
+	// stores the thumbnail as a baseline JPEG into a memory block
+	// return the memory block only if its size is within JFXX marker size limit!
+	FIMEMORY *stream = FreeImage_OpenMemory();
+	
+	if(FreeImage_SaveToMemory(FIF_JPEG, thumbnail, stream, JPEG_BASELINE)) {
+		// check that the memory block size is within JFXX marker size limit
+		FreeImage_SeekMemory(stream, 0, SEEK_END);
+		const long eof = FreeImage_TellMemory(stream);
+		if(eof > MAX_JFXX_THUMB_SIZE) {
+			FreeImage_OutputMessageProc(s_format_id, "Warning: attached thumbnail is %d bytes larger than maximum supported size - Thumbnail saving aborted", eof - MAX_JFXX_THUMB_SIZE);
+			FreeImage_CloseMemory(stream);
+			return FALSE;
+		}
+	} else {
+		FreeImage_CloseMemory(stream);
+		return FALSE;
+	}
+
+	BYTE* thData = NULL;
+	DWORD thSize = 0;
+	
+	FreeImage_AcquireMemory(stream, &thData, &thSize);	
+	
+	BYTE id_length = 5; //< "JFXX"
+	BYTE type = JFXX_TYPE_JPEG;
+	
+	DWORD totalsize = id_length + sizeof(type) + thSize;
+	jpeg_write_m_header(cinfo, JPEG_APP0, totalsize);
+	
+	jpeg_write_m_byte(cinfo, 'J');
+	jpeg_write_m_byte(cinfo, 'F');
+	jpeg_write_m_byte(cinfo, 'X');
+	jpeg_write_m_byte(cinfo, 'X');
+	jpeg_write_m_byte(cinfo, '\0');
+	
+	jpeg_write_m_byte(cinfo, type);
+	
+	// write thumbnail to destination.
+	// We "cram it straight into the data destination module", because write_m_byte is slow
+	
+	freeimage_dst_ptr dest = (freeimage_dst_ptr) cinfo->dest;
+	
+	BYTE* & out = dest->pub.next_output_byte;
+	size_t & bufRemain = dest->pub.free_in_buffer;
+	
+	const BYTE *thData_end = thData + thSize;
+
+	while(thData < thData_end) {
+		*(out)++ = *(thData)++;
+		if (--bufRemain == 0) {	
+			// buffer full - flush
+			if (!dest->pub.empty_output_buffer(cinfo)) {
+				break;
+			}
+		}
+	}
+	
+	FreeImage_CloseMemory(stream);
+
+	return TRUE;
+}
+
+/**
 	Write JPEG special markers
 */
 static BOOL 
 write_markers(j_compress_ptr cinfo, FIBITMAP *dib) {
+	// write thumbnail as a JFXX marker
+	jpeg_write_jfxx(cinfo, dib);
 
 	// write user comment as a JPEG_COM marker
 	jpeg_write_comment(cinfo, dib);
@@ -1350,6 +1497,18 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			cinfo.Y_density = (UINT16) (0.5 + 0.0254 * FreeImage_GetDotsPerMeterY(dib));
 			cinfo.density_unit = 1;	// dots / inch
 
+			// thumbnail support (JFIF 1.02 extension markers)
+			if(FreeImage_GetThumbnail(dib) != NULL) {
+				cinfo.write_JFIF_header = 1; //<### force it, though when color is CMYK it will be incorrect
+				cinfo.JFIF_minor_version = 2;
+			}
+
+			// baseline JPEG support
+			if ((flags & JPEG_BASELINE) ==  JPEG_BASELINE) {
+				cinfo.write_JFIF_header = 0;	// No marker for non-JFIF colorspaces
+				cinfo.write_Adobe_marker = 0;	// write no Adobe marker by default				
+			}
+
 			// set subsampling options if required
 
 			if(cinfo.in_color_space == JCS_RGB) {
@@ -1426,8 +1585,10 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			jpeg_start_compress(&cinfo, TRUE);
 
 			// Step 6: Write special markers
-
-			write_markers(&cinfo, dib);
+			
+			if ((flags & JPEG_BASELINE) !=  JPEG_BASELINE) {
+				write_markers(&cinfo, dib);
+			}
 
 			// Step 7: while (scan lines remain to be written) 
 

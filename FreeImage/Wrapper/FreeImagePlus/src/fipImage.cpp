@@ -222,6 +222,27 @@ BOOL fipImage::isGrayscale() const {
 }
 
 ///////////////////////////////////////////////////////////////////
+// Thumbnail access
+
+BOOL fipImage::getThumbnail(fipImage& image) const {
+	image = FreeImage_Clone( FreeImage_GetThumbnail(_dib) );
+	return image.isValid();
+}
+
+BOOL fipImage::setThumbnail(const fipImage& image) {
+	return FreeImage_SetThumbnail(_dib, (FIBITMAP*)image._dib);
+}
+
+BOOL fipImage::hasThumbnail() const {
+	return (FreeImage_GetThumbnail(_dib) != NULL);
+}
+
+BOOL fipImage::clearThumbnail() {
+	return FreeImage_SetThumbnail(_dib, NULL);
+}
+
+
+///////////////////////////////////////////////////////////////////
 // Pixel access
 
 BYTE* fipImage::accessPixels() const {

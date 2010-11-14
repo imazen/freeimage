@@ -195,15 +195,20 @@ public:
 	int _CompressedSize;	//! Size after compression. Used for consistentcy check. 
 	short _BitPerPixel;		//! = 24. Bits per pixel.
 	short _Planes;			//! = 1. Number of planes.
-	BYTE * _plData;			//! JFIF data in RGB format. Note: For resource ID 1033 the data is in BGR format.
+	FIBITMAP * _dib;		//! JFIF data as uncompressed dib. Note: For resource ID 1033 the data is in BGR format.
 	
 public:
 	psdThumbnail();
 	~psdThumbnail();
+	FIBITMAP* getDib() { return _dib; }
 	/**
 	@return Returns the number of bytes read
 	*/
 	int Read(FreeImageIO *io, fi_handle handle, int iResourceSize, bool isBGR);
+
+private:
+	psdThumbnail(const psdThumbnail&);
+	psdThumbnail& operator=(const psdThumbnail&);
 };
 
 class psdICCProfile {
@@ -250,7 +255,6 @@ private:
 	/**	Actually ignore it */
 	bool ReadLayerAndMaskInfoSection(FreeImageIO *io, fi_handle handle);
 	FIBITMAP* ReadImageData(FreeImageIO *io, fi_handle handle);
-	FIBITMAP* ProcessBuffer(BYTE * iprData);
 
 public:
 	psdParser();

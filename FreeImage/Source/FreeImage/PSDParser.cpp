@@ -304,16 +304,21 @@ int psdDisplayInfo::Read(FreeImageIO *io, fi_handle handle) {
 // --------------------------------------------------------------------------
 
 psdThumbnail::psdThumbnail() : 
-_Format(-1), _Width(-1), _Height(-1), _WidthBytes(-1), _Size(-1), _CompressedSize(-1), _BitPerPixel(-1), _Planes(-1), _plData(NULL) {
+_Format(-1), _Width(-1), _Height(-1), _WidthBytes(-1), _Size(-1), _CompressedSize(-1), _BitPerPixel(-1), _Planes(-1), _dib(NULL) {
 }
 
 psdThumbnail::~psdThumbnail() { 
-	SAFE_DELETE_ARRAY(_plData); 
+	FreeImage_Unload(_dib);
 }
 
 int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iResourceSize, bool isBGR) {
 	BYTE ShortValue[2], IntValue[4];
 	int nBytes=0, n;
+
+	// remove the header size (28 bytes) from the total data size
+	int iTotalData = iResourceSize - 28;
+
+	const long block_end = io->tell_proc(handle) + iTotalData;	
 	
 	n = (int)io->read_proc(&IntValue, sizeof(IntValue), 1, handle);
 	nBytes += n * sizeof(IntValue);
@@ -347,48 +352,33 @@ int psdThumbnail::Read(FreeImageIO *io, fi_handle handle, int iResourceSize, boo
 	nBytes += n * sizeof(ShortValue);
 	_Planes = (short)psdGetValue(ShortValue, sizeof(_Planes) );
 
-	// remove the header size (28 bytes) from the total data size
-	int iTotalData = iResourceSize - nBytes;
+	const long JFIF_startpos = io->tell_proc(handle);
 
-	// skip the thumbnail part
-	io->seek_proc(handle, iTotalData, SEEK_CUR);
-
-	return iResourceSize;
-
-	/**
-	TO BE IMPLEMENTED
-	*/
-	/*
-	BYTE c[1];
-
-	_plData = new BYTE[iTotalData];
-	  
-	if (isBGR) {
-		// In BGR format
-		for (int i=0; i<iTotalData; i+=3 ) {
-			n = (int)io->read_proc(&c, sizeof(BYTE), 1, handle);
-			nBytes += n * sizeof(BYTE);
-			_plData[i+2] = (BYTE)psdGetValue(c, sizeof(BYTE) );
-
-			n = (int)io->read_proc(&c, sizeof(BYTE), 1, handle);
-			nBytes += n * sizeof(BYTE);
-			_plData[i+1] = (BYTE)psdGetValue(c, sizeof(BYTE) );
-
-			n = (int)io->read_proc(&c, sizeof(BYTE), 1, handle);
-			nBytes += n * sizeof(BYTE);
-			_plData[i+0] = (BYTE)psdGetValue(c, sizeof(BYTE) );
-		}
-	} else {
-		// In RGB format										
-		for (int i=0; i<iTotalData; ++i) {
-			n = (int)io->read_proc(&c, sizeof(BYTE), 1, handle);
-			nBytes += n * sizeof(BYTE);
-			_plData[i] = (BYTE)psdGetValue(c, sizeof(BYTE) );
-		}
+	if(_dib) {
+		FreeImage_Unload(_dib);
 	}
 
+	if(_Format == 1) {
+		// kJpegRGB thumbnail image
+		_dib = FreeImage_LoadFromHandle(FIF_JPEG, io, handle);
+		if(isBGR) {
+			SwapRedBlue32(_dib);
+		}			
+		// HACK: manually go to end of thumbnail, because (for some reason) LoadFromHandle consumes more bytes then available! 
+		io->seek_proc(handle, block_end, SEEK_SET);
+	}
+	else {
+		// kRawRGB thumbnail image		
+		// ### Unimplemented (should be trivial)
+
+		// skip the thumbnail part
+		io->seek_proc(handle, iTotalData, SEEK_CUR);
+		return iResourceSize;
+	}
+	
+	nBytes += (block_end - JFIF_startpos); 
+
 	return nBytes;
-	*/
 }
 
 //---------------------------------------------------------------------------
@@ -741,6 +731,9 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 	if(!bitmap) {
 		throw FI_MSG_ERROR_DIB_MEMORY;
 	}
+
+	// write thumbnail
+	FreeImage_SetThumbnail(bitmap, _thumbnail.getDib());
 		
 	// @todo Add some metadata model
 		

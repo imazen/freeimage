@@ -449,6 +449,39 @@ public:
 	BOOL isGrayscale() const;
 	//@}
 
+	/**@name Thumbnail access */
+	//@{
+
+	/**
+	Retrieves a copy the thumbnail possibly attached to the bitmap
+	@return Returns TRUE if the thumbnail is present in the bitmap and successfully retrieved, returns FALSE otherwise
+	@see FreeImage_GetThumbnail
+	*/
+	BOOL getThumbnail(fipImage& image) const;
+
+	/**
+	Attach a thumbnail to the bitmap
+	@return Returns TRUE if the thumbnail was successfully set, returns FALSE otherwise
+	@see FreeImage_SetThumbnail
+	*/
+	BOOL setThumbnail(const fipImage& image);
+
+	/**
+	Check if the image has an embedded thumbnail
+	@return Returns TRUE if a thumbnail is present in the bitmap, returns FALSE otherwise
+	@see FreeImage_GetThumbnail
+	*/
+	BOOL hasThumbnail() const;
+
+	/**
+	Clear the thumbnail possibly attached to the bitmap
+	@return Returns TRUE if successful, returns FALSe otherwise
+	@see FreeImage_SetThumbnail
+	*/
+	BOOL clearThumbnail();
+
+	//@}
+
 	/**@name Pixel access */
 	//@{	
 
