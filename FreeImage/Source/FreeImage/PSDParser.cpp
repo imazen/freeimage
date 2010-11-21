@@ -485,20 +485,24 @@ bool psdParser::ReadLayerAndMaskInfoSection(FreeImageIO *io, fi_handle handle)	{
 	return bSuccess;
 }
 
-bool psdParser::ReadImageResource(FreeImageIO *io, fi_handle handle) {
+bool psdParser::ReadImageResources(FreeImageIO *io, fi_handle handle, LONG length) {
 	psdImageResource oResource;
 	bool bSuccess = false;
 	
-	BYTE Length[4];
-	int n = (int)io->read_proc(&Length, sizeof(Length), 1, handle);
-	
-	oResource._Length = psdGetValue( Length, sizeof(oResource._Length) );
+	if(length > 0) {
+		oResource._Length = length;
+	} else {
+		BYTE Length[4];
+		int n = (int)io->read_proc(&Length, sizeof(Length), 1, handle);
+		
+		oResource._Length = psdGetValue( Length, sizeof(oResource._Length) );
+	}
 	
 	int nBytes = 0;
 	int nTotalBytes = oResource._Length;
 	
 	while(nBytes < nTotalBytes) {
-		n = 0;
+		int n = 0;
 		oResource.Reset();
 		
 		n = (int)io->read_proc(&oResource._OSType, sizeof(oResource._OSType), 1, handle);
@@ -1007,7 +1011,7 @@ FIBITMAP* psdParser::Load(FreeImageIO *io, fi_handle handle, int s_format_id, in
 			throw("Error in ColourMode Data");
 		}
 		
-		if (!ReadImageResource(io, handle)) {
+		if (!ReadImageResources(io, handle)) {
 			throw("Error in Image Resource");
 		}
 		

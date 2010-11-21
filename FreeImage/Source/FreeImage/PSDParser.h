@@ -251,7 +251,6 @@ private:
 	int _fi_format_id;
 	
 private:
-	bool ReadImageResource(FreeImageIO *io, fi_handle handle);
 	/**	Actually ignore it */
 	bool ReadLayerAndMaskInfoSection(FreeImageIO *io, fi_handle handle);
 	FIBITMAP* ReadImageData(FreeImageIO *io, fi_handle handle);
@@ -260,7 +259,12 @@ public:
 	psdParser();
 	~psdParser();
 	FIBITMAP* Load(FreeImageIO *io, fi_handle handle, int s_format_id, int flags=0);
-
+	/** Also used by the TIFF plugin */
+	bool ReadImageResources(FreeImageIO *io, fi_handle handle, LONG length=0);
+	/** Used by the TIFF plugin */
+	FIBITMAP* GetThumbnail() {
+		return _thumbnail.getDib();
+	}
 };
 
 #endif // PSDPARSER_H
