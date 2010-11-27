@@ -431,7 +431,7 @@ ReadPalette(TIFF *tiff, uint16 photometric, uint16 bitspersample, FIBITMAP *dib)
 				}
 			}
 
-			break;						
+			break;
 	}
 }
 
@@ -1171,7 +1171,7 @@ FindLoadMethod(TIFF *tif, FREE_IMAGE_TYPE image_type, int flags) {
 			// When samplesperpixel = 2 and bitspersample = 8, set the image as a
 			// 8-bit indexed image + 8-bit alpha layer image
 			// and convert to a 8-bit image with a transparency table
-			if((samplesperpixel == 2) && (bitspersample == 8)) {
+			if((samplesperpixel > 1) && (bitspersample == 8)) {
 				loadMethod = LoadAs8BitTrns;
 			} else {
 				loadMethod = LoadAsGenericStrip;
@@ -1475,7 +1475,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// ---------------------------------------------------------------------------------
 
 			// create a new 8-bit DIB
-			dib = CreateImageType(header_only, image_type, width, height, bitspersample, samplesperpixel);
+			dib = CreateImageType(header_only, image_type, width, height, bitspersample, MIN<uint16>(2, samplesperpixel));
 			if (dib == NULL) {
 				throw FI_MSG_ERROR_MEMORY;
 			}
@@ -1510,8 +1510,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if(planar_config == PLANARCONFIG_CONTIG && !header_only) {
 
 				BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
-				if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
-
+				if(buf == NULL) {
+					throw FI_MSG_ERROR_MEMORY;
+				}
 
 				for (uint32 y = 0; y < height; y += rowsperstrip) {
 					int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
@@ -1852,7 +1853,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// read the tiff lines and save them in the DIB
 
 				BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
-				if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
+				if(buf == NULL) {
+					throw FI_MSG_ERROR_MEMORY;
+				}
 				
 				BOOL bThrowMessage = FALSE;
 				
@@ -1984,7 +1987,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				// allocate tile buffer
 				BYTE *tileBuffer = (BYTE*)malloc(tileSize * sizeof(BYTE));
-				if(tileBuffer == NULL) throw FI_MSG_ERROR_MEMORY;
+				if(tileBuffer == NULL) {
+					throw FI_MSG_ERROR_MEMORY;
+				}
 
 				// calculate src line and dst pitch
 				int dst_pitch = FreeImage_GetPitch(dib);
@@ -2071,7 +2076,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// read the tiff lines and save them in the DIB
 
 				BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
-				if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
+				if(buf == NULL) {
+					throw FI_MSG_ERROR_MEMORY;
+				}
 
 				for (uint32 y = 0; y < height; y += rowsperstrip) {
 					int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
@@ -2126,7 +2133,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if(planar_config == PLANARCONFIG_CONTIG) {
 
 					BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
-					if(buf == NULL) throw FI_MSG_ERROR_MEMORY;
+					if(buf == NULL) {
+						throw FI_MSG_ERROR_MEMORY;
+					}
 
 					for (uint32 y = 0; y < height; y += rowsperstrip) {
 						uint32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
@@ -2361,7 +2370,9 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 			RGBQUAD *pal = FreeImage_GetPalette(dib);
 
 			r = (uint16 *) _TIFFmalloc(sizeof(uint16) * 3 * nColors);
-			if(r == NULL) throw FI_MSG_ERROR_MEMORY;
+			if(r == NULL) {
+				throw FI_MSG_ERROR_MEMORY;
+			}
 			g = r + nColors;
 			b = g + nColors;
 
@@ -2413,7 +2424,9 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 						BYTE *trns = FreeImage_GetTransparencyTable(dib);
 
 						BYTE *buffer = (BYTE *)malloc(2 * width * sizeof(BYTE));
-						if(buffer == NULL) throw FI_MSG_ERROR_MEMORY;
+						if(buffer == NULL) {
+							throw FI_MSG_ERROR_MEMORY;
+						}
 
 						for (y = height - 1; y >= 0; y--) {
 							BYTE *bits = FreeImage_GetScanLine(dib, y);
@@ -2440,7 +2453,9 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 					else {
 						// other cases
 						BYTE *buffer = (BYTE *)malloc(pitch * sizeof(BYTE));
-						if(buffer == NULL) throw FI_MSG_ERROR_MEMORY;
+						if(buffer == NULL) {
+							throw FI_MSG_ERROR_MEMORY;
+						}
 
 						for (y = 0; y < height; y++) {
 							// get a copy of the scanline
@@ -2458,7 +2473,9 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 				case 32:
 				{
 					BYTE *buffer = (BYTE *)malloc(pitch * sizeof(BYTE));
-					if(buffer == NULL) throw FI_MSG_ERROR_MEMORY;
+					if(buffer == NULL) {
+						throw FI_MSG_ERROR_MEMORY;
+					}
 
 					for (y = 0; y < height; y++) {
 						// get a copy of the scanline
@@ -2492,7 +2509,9 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 			// RGBF image => store as XYZ using a LogLuv encoding
 
 			BYTE *buffer = (BYTE *)malloc(pitch * sizeof(BYTE));
-			if(buffer == NULL) throw FI_MSG_ERROR_MEMORY;
+			if(buffer == NULL) {
+				throw FI_MSG_ERROR_MEMORY;
+			}
 
 			for (y = 0; y < height; y++) {
 				// get a copy of the scanline and convert from RGB to XYZ
@@ -2505,7 +2524,9 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 			// just dump the dib (tiff supports all dib types)
 			
 			BYTE *buffer = (BYTE *)malloc(pitch * sizeof(BYTE));
-			if(buffer == NULL) throw FI_MSG_ERROR_MEMORY;
+			if(buffer == NULL) {
+				throw FI_MSG_ERROR_MEMORY;
+			}
 			
 			for (y = 0; y < height; y++) {
 				// get a copy of the scanline
