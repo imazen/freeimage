@@ -56,7 +56,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibOpenJPEG", "Source\LibOp
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibRawLite", "Source\LibRawLite\LibRawLite.2003.vcproj", "{1B0A722E-A6A5-4DF2-9A7F-DE24E20E6937}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibRaw", "Source\LibRawLite\LibRawLite.2003.vcproj", "{1B0A722E-A6A5-4DF2-9A7F-DE24E20E6937}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject

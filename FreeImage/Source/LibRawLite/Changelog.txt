@@ -1,26 +1,65 @@
+2010-11-27 Alex Tutubalin <lexa@lexa.ru>
+        * Fixed allocation bug in lmmse_interpolation (demosaic-pack-GPL2)
+	* In LMMSE and AMaZE interpolators allocation changed to calloc
+	  to make valgrind happy with uninitialized values
+        * Changes in distribution-making scripts
+        * LibRaw 0.12.0-Beta2
+
+2010-11-21 Alex Tutubalin <lexa@lexa.ru>
+	* Fixes to green_matching code by Sergey Pavlov
+
+2010-11-20 Alex Tutubalin <lexa@lexa.ru>
+        * Update for new demosaic-pack-GPL3
+	* LibRaw 0.12.0-Beta1
+
+2010-11-19 Alex Tutubalin <lexa@lexa.ru>
+        * Demosaic pack(s) supported via ./configure   
+
 2010-11-17 Alex Tutubalin <lexa@lexa.ru>
+	* LCMS2 support
+	* afd_interpolate(2,1) instead of (5,0)
+        * dcraw_emu sample command line keys added and reordered
+          to reflect changes in LibRaw 0.12. 
 	* Nikon P7000: color matrix data and black level patch for ISO >=400
 	  Thanks to Gunnar Thorburn 
         * Support for several industrial cameras based on Sony ICX 625/655 
 	  sensor: JAI BB500CL/GE, SVS625CL, ptGrey GRAS-50S5C
 	  Thanks to kaare
-	* LibRaw 0.11.3
+
+2010-11-15 Alex Tutubalin <lexa@lexa.ru>
+
+        * Several demosaic algorithms, found in other open-source RAW processing
+          packages are implemented in LibRaw. 
+
+          1) DCB demosaic and FBDD denoise by Jacek Gozdz are included in 
+             main LibRaw source.
+          2) GPL2 demosaic pack with these demosaic methods:
+             * AFD and LMMSE implementations from PerfectRaw by Manuel Llorens
+             * VCD, Modified AHD, post-demosaic refinemend and median
+               filters by Paul Lee
+          3) GPL3 demosaic pack with AMaZe interpolation  by Emil Martinec
+
+          See more details in README.demosaic-packs
+        
+        * Current implementation of dcraw_emu sample allows only selection
+          of demosaic method (via -q) options. All other parameters change
+          will be implemented later.
+
+	* LibRaw 0.12-alpha1
 
 2010-11-11 Alex Tutubalin <lexa@lexa.ru>
-        * OpenMP is completely disabled on MacOS X if compiled with -pthread
-          due to well-known MacOS problem.
-        * dcraw 9.05 (1.439) imported, many new cameras supported:
-            Canon: G12, SX120, 60D,
-            Hasselblad H4D, Nokia X2, Olympus E-5,
-            Nikon: D3100, D7000, P7000,
-            Panasonic: FZ40, FZ100, LX5,
-            Pentax: K-r, K-5, 645D,
-            Samsung GX20, WB2000
-	* LibRaw 0.11.2
-
-2010-11-10 Alex Tutubalin <lexa@lexa.ru>
-	* Fixes in dcraw_emu sample command line options processing
-	* LibRaw 0.11.1
+	* Imported 0.11(2) version changes:
+	  + Fixed dcraw_emu command line processing code
+          + OpenMP is completely disabled on MacOS X if compiled with -pthread
+            due to well-known MacOS problem.
+          + dcraw 9.05 (1.439) imported, many new cameras supported:
+              Canon: G12, SX120, 60D,
+              Hasselblad H4D, Nokia X2, Olympus E-5,
+              Nikon: D3100, D7000, P7000,
+              Panasonic: FZ40, FZ100, LX5,
+              Pentax: K-r, K-5, 645D,
+              Samsung GX20, WB2000
+	* LibRaw 0.12-alpha0
 
 2010-11-08 Alex Tutubalin <lexa@lexa.ru>
 	* Fixes for Sun Studio compiler compatibility

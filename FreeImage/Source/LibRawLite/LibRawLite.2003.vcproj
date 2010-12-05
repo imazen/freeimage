@@ -126,6 +126,9 @@
 				<File
 					RelativePath=".\internal\dcraw_fileio.cpp">
 				</File>
+				<File
+					RelativePath=".\internal\demosaic_packs.cpp">
+				</File>
 			</Filter>
 			<Filter
 				Name="libraw"
