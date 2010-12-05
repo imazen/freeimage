@@ -449,6 +449,11 @@ static FIBITMAP*
 CreateImageType(BOOL header_only, FREE_IMAGE_TYPE fit, int width, int height, uint16 bitspersample, uint16 samplesperpixel) {
 	FIBITMAP *dib = NULL;
 
+	if((width < 0) || (height < 0)) {
+		// check for malicious images
+		return NULL;
+	}
+
 	int bpp = bitspersample * samplesperpixel;
 
 	if(fit == FIT_BITMAP) {
@@ -1543,6 +1548,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			else if(planar_config == PLANARCONFIG_SEPARATE && !header_only) {
 				tsize_t stripsize = TIFFStripSize(tif) * sizeof(BYTE);
 				BYTE *buf = (BYTE*)malloc(2 * stripsize);
+				if(buf == NULL) {
+					throw FI_MSG_ERROR_MEMORY;
+				}
 				BYTE *grey = buf;
 				BYTE *alpha = buf + stripsize;
 
@@ -2359,7 +2367,8 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 			TIFFSetField(out, TIFFTAG_PAGENAME, page_number);
 
 		} else {
-			TIFFSetField(out, TIFFTAG_SUBFILETYPE, (ifd == 0) ? 0 : FILETYPE_REDUCEDIMAGE);			
+			// is it a thumbnail ? 
+			TIFFSetField(out, TIFFTAG_SUBFILETYPE, (ifd == 0) ? 0 : FILETYPE_REDUCEDIMAGE);
 		}
 
 		// palettes (image colormaps are automatically scaled to 16-bits)
