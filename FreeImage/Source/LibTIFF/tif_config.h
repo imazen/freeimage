@@ -43,8 +43,7 @@
 /* Support NeXT 2-bit RLE algorithm */
 #define NEXT_SUPPORT 1
 
-/* Support Old JPEG compresson (read contrib/ojpeg/README first! Compilation
-   fails with unpatched IJG JPEG library) */
+/* Support Old JPEG compression (read-only) */
 #define OJPEG_SUPPORT 1
 
 /* Support Macintosh PackBits algorithm */

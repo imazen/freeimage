@@ -830,21 +830,13 @@ tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib) {
 	// get the IFD offset
 	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &exif_offset)) {
 
-		// save current position
-		tdir_t cur_dir = TIFFCurrentDirectory(tiff);
-
 		// read EXIF tags
 		if(!TIFFReadEXIFDirectory(tiff, exif_offset)) {
-			// restore current position
-			TIFFSetDirectory(tiff, cur_dir);
 			return FALSE;
 		}
 
 		// read all known exif tags
 		bResult = tiff_read_exif_tags(tiff, TagLib::EXIF_EXIF, dib);
-
-		// restore current position
-		TIFFSetDirectory(tiff, cur_dir);
 	}
 
 	return bResult;
@@ -1084,9 +1076,16 @@ PageCount(FreeImageIO *io, fi_handle handle, void *data) {
 check for uncommon bitspersample values (e.g. 10, 12, ...)
 @param photometric TIFFTAG_PHOTOMETRIC tiff tag
 @param bitspersample TIFFTAG_BITSPERSAMPLE tiff tag
+@param samplesperpixel TIFFTAG_SAMPLESPERPIXEL tiff tag
 @return Returns FALSE if a uncommon bit-depth is encountered, returns TRUE otherwise
 */
-static BOOL IsValidBitsPerSample(uint16 photometric, uint16 bitspersample) {
+static BOOL 
+IsValidBitsPerSample(uint16 photometric, uint16 bitspersample, uint16 samplesperpixel) {
+	// check for missing mandatory tags
+	const uint16 missing_value = (uint16)-1;
+	if((photometric == missing_value) || (bitspersample == missing_value) || (samplesperpixel == missing_value)) {
+		return FALSE;
+	}
 	switch(bitspersample) {
 		case 1:
 		case 4:
@@ -1122,10 +1121,10 @@ static BOOL IsValidBitsPerSample(uint16 photometric, uint16 bitspersample) {
 
 static TIFFLoadMethod  
 FindLoadMethod(TIFF *tif, FREE_IMAGE_TYPE image_type, int flags) {
-	uint16 bitspersample;
-	uint16 samplesperpixel;
-	uint16 photometric;
-	uint16 planar_config;
+	uint16 bitspersample	= (uint16)-1;
+	uint16 samplesperpixel	= (uint16)-1;
+	uint16 photometric		= (uint16)-1;
+	uint16 planar_config	= (uint16)-1;
 
 	TIFFLoadMethod loadMethod = LoadAsGenericStrip;
 
@@ -1212,22 +1211,23 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 
 	uint32 exif_offset = 0;
 	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &exif_offset)) {
-		// save current position
-		long tell_pos = io->tell_proc(handle);
-		tdir_t cur_dir = TIFFCurrentDirectory(tiff);
 
 		if(tiff->tif_nextdiroff) {
+			// save current position
+			long tell_pos = io->tell_proc(handle);
+			tdir_t cur_dir = TIFFCurrentDirectory(tiff);
+
 			// load the thumbnail
 			int page = 1; 
 			int flags = TIFF_DEFAULT;
 			thumbnail = Load(io, handle, page, flags, data);
 			// store the thumbnail (remember to release it later ...)
 			FreeImage_SetThumbnail(dib, thumbnail);
-		}
 
-		// restore current position
-		io->seek_proc(handle, tell_pos, SEEK_SET);
-		TIFFSetDirectory(tiff, cur_dir);
+			// restore current position
+			io->seek_proc(handle, tell_pos, SEEK_SET);
+			TIFFSetDirectory(tiff, cur_dir);
+		}
 	}
 
 	// ... or read the first subIFD
@@ -1294,11 +1294,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	TIFF   *tif = NULL;
 	uint32 height = 0; 
 	uint32 width = 0; 
-	uint16 bitspersample = 1;
-	uint16 samplesperpixel = 1;
-	uint32 rowsperstrip;  
-	uint16 photometric = PHOTOMETRIC_MINISWHITE;
-	uint16 compression = COMPRESSION_NONE;
+	uint16 bitspersample = (uint16)-1;
+	uint16 samplesperpixel = (uint16)-1;
+	uint32 rowsperstrip = (uint32)-1;  
+	uint16 photometric = (uint16)-1;
+	uint16 compression = (uint16)-1;
 	uint16 planar_config;
 
 	FIBITMAP *dib = NULL;
@@ -1350,7 +1350,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// check for unsupported formats
 		// ---------------------------------------------------------------------------------
 
-		if(IsValidBitsPerSample(photometric, bitspersample) == FALSE) {
+		if(IsValidBitsPerSample(photometric, bitspersample, samplesperpixel) == FALSE) {
 			FreeImage_OutputMessageProc(s_format_id, 
 				"Unable to handle this format: bitspersample = %d, samplesperpixel = %d, photometric = %d", 
 				(int)bitspersample, (int)samplesperpixel, (int)photometric);
