@@ -1,5 +1,5 @@
 
-Libpng 1.4.4 - September 23, 2010
+Libpng 1.4.5 - December 9, 2010
 
 This is a public release of libpng, intended for use in production codes.
 
@@ -8,55 +8,44 @@ Files available for download:
 Source files with LF line endings (for Unix/Linux) and with a
 "configure" script
 
-   libpng-1.4.4.tar.xz (LZMA-compressed, recommended)
-   libpng-1.4.4.tar.gz
-   libpng-1.4.4.tar.bz2
+   libpng-1.4.5.tar.xz (LZMA-compressed, recommended)
+   libpng-1.4.5.tar.gz
+   libpng-1.4.5.tar.bz2
 
 Source files with CRLF line endings (for Windows), without the
 "configure" script
 
-   lpng144.zip
-   lpng144.7z
+   lpng145.zip
+   lpng145.7z
 
 Other information:
 
-   libpng-1.4.4-README.txt
-   libpng-1.4.4-LICENSE.txt
+   libpng-1.4.5-README.txt
+   libpng-1.4.5-LICENSE.txt
 
-Changes since the last public release (1.4.3):
-  Removed extraneous new_push_process_row.c file.
-  Revised the "SEE ALSO" style of libpng.3, libpngpf.3, and png.5
-  Removed some newly-added TAB characters from pngpread.c.
-  Fixed some indentation in pngpread.c and pngrutil.c
-  Changed "extern PNG_EXPORT" to "PNG_EXPORT" in png.h (Jan Nijtmans)
-  Changed "extern" to "PNG_EXTERN" in pngpriv.h (except for the 'extern "C" {')
-  Put "#ifndef PNG_EXTERN, #endif" around "#define PNG_EXTERN" in pngpriv.h
-  Added -DNO_PNG_SNPRINTF to CFLAGS in scripts/makefile.dj2
-  Moved the definition of png_snprintf() outside of the enclosing
-    #ifdef blocks in pngconf.h
-  Made a special case "#define PNGAPI" in pngconf.h for WATCOM.
-  Removed reference to cbuilder5/* from Makefile.in and Makefile.am
-  Updated the read macros and functions from 1.5.0beta38.
-  Updated projects/visualc71 so it can find scripts/pnglibconf.h
-  Removed unused png_mem_* defines from pngconf.h.
-  Correct use of _WINDOWS_ in pngconf.h
-  Don't try to use version-script with cygwin/mingw.
-  Revised contrib/gregbook to work under cygwin/mingw.
-  Updated prebuilt aclocal.m4 and ltmain.sh
-  Add .dll.a to the list of extensions to be symlinked by Makefile.am (Yaakov)
-  Updated CMakelists.txt to use CMAKE_INSTALL_LIBDIR variable; useful for
-    installing libpng in /usr/lib64 (Funda Wang).
-  Revised CMakeLists.txt to put the man pages in share/man/man* not man/man*
-  Revised CMakeLists.txt to make symlinks instead of copies when installing.
-  Moved "#include pngusr.h" ahead of PNG_USER_PRIVATEBUILD test in pngconf.h
-  Eliminated a deprecated reference to png_ptr->io_ptr in pngtest.c
-  Eliminated new unnecessary #if tests regarding the sCAL chunk from pngrutil.c
-  Updated the xcode project to work with libpng-1.4.x and added iOS targets
-    for simulator and device (Philippe Hausler).
-  Revised autogen.sh to recognize and use $AUTOCONF, $AUTOMAKE, $AUTOHEADER,
-    $AUTOPOINT, $ACLOCAL and $LIBTOOLIZE
-  Rebuilt configure scripts with automake-1.11.1 instead of automake-1.11.
-  Removed unused mkinstalldirs file.
+Changes since the last public release (1.4.4):
+
+  Fixed possible configure.ac bug introduced in version 1.4.4.
+  Wrapped long lines in CMakeLists.txt and introduced ${libpng_public_hdrs}
+  Check for out-of-range text compression mode in png_set_text().
+  Removed some extraneous parentheses that appeared in pngrutil.c of
+    libpng-1.4.3
+  Revised png_get_uint_32, png_get_int_32, png_get_uint_16 (Cosmin)
+  Moved reading of file signature into png_read_sig (Cosmin)
+  Fixed atomicity of chunk header serialization (Cosmin)
+  Added test for io_state in pngtest.c (Cosmin)
+  Added "#!/bin/sh" at the top of contrib/pngminim/*/gather.sh scripts.
+  Changes to remove gcc warnings (John Bowler)
+    Certain optional gcc warning flags resulted in warnings in libpng code.
+    With these changes only -Wconversion and -Wcast-qual cannot be turned on.
+    Changes are trivial rearrangements of code.  -Wconversion is not possible
+    for pngrutil.c (because of the widespread use of += et al on variables
+    smaller than (int) or (unsigned int)) and -Wcast-qual is not possible
+    with pngwio.c and pngwutil.c because the 'write' callback and zlib
+    compression both fail to declare their input buffers with 'const'.
+  Added comment about the potential API incompatibility of the
+    png_get_uint_16() macro with libpng-1.4.0 through 1.4.4.
+  Removed PNG_NO_WRITE_GAMMA from pngminim/encoder/pngusr.h
 
 Send comments/corrections/commendations to glennrp at users.sourceforge.net
 or to png-mng-implement at lists.sf.net (subscription required; visit
