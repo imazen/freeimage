@@ -219,17 +219,17 @@ SupportsNoPixels() {
 
 static void * DLL_CALLCONV
 Open(FreeImageIO *io, fi_handle handle, BOOL read) {
-	ICONHEADER *lpIH = NULL;
-
 	// Allocate memory for the header structure
-	if((lpIH = (ICONHEADER*)malloc( sizeof(ICONHEADER) )) == NULL) 
+	ICONHEADER *lpIH = (ICONHEADER*)malloc(sizeof(ICONHEADER));
+	if(lpIH == NULL) {
 		return NULL;
+	}
 
 	if (read) {
 		// Read in the header
 		io->read_proc(lpIH, 1, sizeof(ICONHEADER), handle);
 #ifdef FREEIMAGE_BIGENDIAN
-	SwapIconHeader(lpIH);
+		SwapIconHeader(lpIH);
 #endif
 
 		if(!(lpIH->idReserved == 0) || !(lpIH->idType == 1)) {
@@ -244,6 +244,7 @@ Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 		lpIH->idType = 1;
 		lpIH->idCount = 0;
 	}
+
 	return lpIH;
 }
 
@@ -285,6 +286,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		if (icon_header) {
 			// load the icon descriptions
 			ICONDIRENTRY *icon_list = (ICONDIRENTRY*)malloc(icon_header->idCount * sizeof(ICONDIRENTRY));
+			if(icon_list == NULL) {
+				return NULL;
+			}
 			io->seek_proc(handle, sizeof(ICONHEADER), SEEK_SET);
 			io->read_proc(icon_list, icon_header->idCount * sizeof(ICONDIRENTRY), 1, handle);
 #ifdef FREEIMAGE_BIGENDIAN
@@ -427,9 +431,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 	if(dib) {
 		// check format limits
-		int w = FreeImage_GetWidth(dib);
-		int h = FreeImage_GetHeight(dib);
-		if((w < 16) || (w > 128) || (h < 16) || (h > 128)) {
+		unsigned w = FreeImage_GetWidth(dib);
+		unsigned h = FreeImage_GetHeight(dib);
+		if((w < 16) || (w > 256) || (h < 16) || (h > 256)) {
 			FreeImage_OutputMessageProc(s_format_id, "Unsupported icon size");
 			return FALSE;
 		}
@@ -437,8 +441,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 		return FALSE;
 	}
 
-	if (page == -1)
+	if (page == -1) {
 		page = 0;
+	}
 
 	// get the icon header
 	ICONHEADER *icon_header = (ICONHEADER*)data;
