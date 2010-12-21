@@ -6,9 +6,9 @@ What's New for FreeImage
 + : added
 
 Month day, 2010 - 3.15.0
-! FreeImage now uses LibRaw 0.12
+! FreeImage now uses LibRaw 0.12.1
 ! FreeImage now uses LibPNG 1.4.5
-! FreeImage now uses LibTIFF 3.9.4 (CVS patch 2010-12-11)
+! FreeImage now uses LibTIFF 3.9.4 (CVS patch 2010-12-14)
 ! [Herve Drolon] FreeImage_CloneMetadata now clone resolution info returned by FreeImage_GetDotsPerMeter(X / Y)
 + [Herve Drolon] added loading support for "half float" format to TIF plugin
 + [Herve Drolon] FreeImage_IsTransparent is now independant of FREE_IMAGE_TYPE
@@ -18,6 +18,7 @@ Month day, 2010 - 3.15.0
 + [Mihail Naydenov] added thumbnail support to Exif, JPEG, EXR, PSD, TGA, TIF formats
 + [Mihail Naydenov] added JPEG_BASELINE save flag to the JPEG plugin
 + [Herve Drolon] added new Exif-TIFF tags (PageName, PageNumber, XPosition, YPosition)
++ [Herve Drolon] added support for 256x256 icon size to PluginICO:Save
 * [Domingo Stephan] fixed a compilation error in TARGA plugin when using a big endian OS (OS X 10.6)
 * [Christian Heimes] fixed a compilation error with gcc 4.3.x and OpenEXR
 * [Eric Fruhinsholz] fixed a crash in JPEG plugin when reading a JPEG with corrupted XMP data
