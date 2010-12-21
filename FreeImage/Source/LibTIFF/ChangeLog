@@ -1,3 +1,53 @@
+2010-12-14  Lee Howard <faxguy@howardsilvan.com>
+
+	* libtiff/tif_dirread.c: tolerate some cases where
+	FIELD_COLORMAP is missing
+	http://bugzilla.maptools.org/show_bug.cgi?id=2189
+
+2010-12-14  Lee Howard <faxguy@howardsilvan.com>
+
+	* libtiff/tif_strip.c: use TIFFGetFieldDefaulted instead
+	of TIFFGetField when we assume that it will succeed
+	http://bugzilla.maptools.org/show_bug.cgi?id=2215
+
+2010-12-14  Lee Howard <faxguy@howardsilvan.com>
+
+	* tools/gif2tiff.c: fix buffer overrun
+	http://bugzilla.maptools.org/show_bug.cgi?id=2270
+
+2010-12-14  Lee Howard <faxguy@howardsilvan.com>
+
+	* libtiff/tif_jpeg.c: reduce usage of JCS_UNKNOWN in order
+	to improve compatibility with various viewers
+	submitted by e-mail from Dwight Kelly <dkelly@apago.com>
+
+2010-12-13  Lee Howard <faxguy@howardsilvan.com>
+
+	* tools/fax2ps.c: be consistent with page-numbering
+	http://bugzilla.maptools.org/show_bug.cgi?id=2225
+
+2010-12-13  Lee Howard <faxguy@howardsilvan.com>
+
+	* libtiff/tif_dirread.c: fix needless tag ordering warning
+	http://bugzilla.maptools.org/show_bug.cgi?id=2210
+
+2010-12-13  Lee Howard <faxguy@howardsilvan.com>
+
+	* libtiff/tif_color.c: prevent crash in handling bad TIFFs
+	resolves CVE-2010-2595
+	http://bugzilla.maptools.org/show_bug.cgi?id=2208
+
+2010-12-13  Lee Howard <faxguy@howardsilvan.com>
+
+	* tools/tiffcrop.c: new release by Richard Nolde
+	http://bugzilla.maptools.org/show_bug.cgi?id=2004
+
+2010-12-12  Lee Howard <faxguy@howardsilvan.com>
+
+	* tools/tiff2pdf.c: fix colors for images with RGBA 
+	interleaved data
+	http://bugzilla.maptools.org/show_bug.cgi?id=2250
+
 2010-12-11  Lee Howard <faxguy@howardsilvan.com>
 
 	* tools/tiff2pdf.c: remove invalid duplication for Lab 
