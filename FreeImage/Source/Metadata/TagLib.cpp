@@ -155,9 +155,14 @@ static TagInfo
     {  0xA40B, (char *) "DeviceSettingDescription", (char *) "Device settings description"},
     {  0xA40C, (char *) "SubjectDistanceRange", (char *) "Subject distance range"},
     {  0xA420, (char *) "ImageUniqueID", (char *) "Unique image ID"},
-	// These tags are not part of the Exiv v2.2 specifications but are often loaded by applications as Exif data
+	// These tags are not part of the Exiv v2.3 specifications but are often loaded by applications as Exif data
 	{  0x4746, (char *) "Rating", (char *) "Rating tag used by Windows"},
 	{  0x4749, (char *) "RatingPercent", (char *) "Rating tag used by Windows, value in percent"},
+	{  0x9C9B, (char *) "XPTitle", (char *) "Title tag used by Windows, encoded in UCS2"},
+	{  0x9C9C, (char *) "XPComment", (char *) "Comment tag used by Windows, encoded in UCS2"},
+	{  0x9C9D, (char *) "XPAuthor", (char *) "Author tag used by Windows, encoded in UCS2"},
+	{  0x9C9E, (char *) "XPKeywords", (char *) "Keywords tag used by Windows, encoded in UCS2"},
+	{  0x9C9F, (char *) "XPSubject", (char *) "Subject tag used by Windows, encoded in UCS2"},
     {  0x0000, (char *) NULL, (char *) NULL}
   };
 
