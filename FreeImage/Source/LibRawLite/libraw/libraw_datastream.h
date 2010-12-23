@@ -44,8 +44,140 @@ it under the terms of the one of three licenses as you choose:
 #endif
 #endif
 
+#define IOERROR() do { throw LIBRAW_EXCEPTION_IO_EOF; } while(0)
+
+
+class LibRaw_byte_buffer
+{
+  public:
+    LibRaw_byte_buffer(unsigned sz=0) 
+        { 
+            buf=0; size=sz; offt=0; do_free=0; next_ff=0;
+            if(size)
+                { 
+                    buf = (unsigned char*)malloc(size); do_free=1;
+                }
+        }
+    
+    void set_buffer(void *bb, unsigned int sz) { buf = (unsigned char*)bb; size = sz; offt=0; do_free=0;}
+    
+    virtual ~LibRaw_byte_buffer() { if(do_free) free(buf);}
+
+    int get_byte() { if(offt>=size) return EOF; return buf[offt++];}
+    void unseek2() { if(offt>=2) offt-=2;}
+    void *get_buffer() { return buf; }
+    int get_ljpeg_byte() {
+        if(offt<next_ff) return buf[offt++];
+        int ret = buf[offt++];
+        if(ret == 0xff) { if(buf[offt]==0x00) offt++; else return 0;}
+        // find next 0xff
+        unsigned char *p = (unsigned char*) memchr(buf+offt,0xff,size-offt);
+        if(p)
+            next_ff = p-buf;
+        else
+            next_ff = size;
+        return ret;
+    }
+
+  private:
+    unsigned char *buf;
+    unsigned int  size,offt, do_free,next_ff;
+
+};
+
+class LibRaw_bit_buffer
+{
+    unsigned bitbuf;
+    int vbits, rst;
+  public:
+    LibRaw_bit_buffer() : bitbuf(0),vbits(0),rst(0) {}
+
+        void reset() {  bitbuf=vbits=rst=0;}
+        void fill_lj(LibRaw_byte_buffer* buf,int nbits)
+        {
+            unsigned c1,c2,c3;
+            if(rst || nbits < vbits) return;
+            int m = vbits >> 3;
+            switch(m)
+                {
+                case 2:	
+                    c1 = buf->get_ljpeg_byte();
+                    bitbuf = (bitbuf <<8) | (c1);
+                    vbits+=8;
+                    break;
+                case 1:
+                    c1 = buf->get_ljpeg_byte();
+                    c2 = buf->get_ljpeg_byte();
+                    bitbuf = (bitbuf <<16) | (c1<<8) | c2;
+                    vbits+=16;		
+                    break;
+                case 0:
+                    c1 = buf->get_ljpeg_byte();
+                    c2 = buf->get_ljpeg_byte();
+                    c3 = buf->get_ljpeg_byte();
+                    bitbuf = (bitbuf <<24) | (c1<<16) | (c2<<8)|c3;
+                    vbits+=24;
+                    break;
+                }
+        }
+
+        unsigned _getbits_lj(LibRaw_byte_buffer* buf, int nbits)
+        {
+            unsigned c;
+            if(nbits==0 || vbits < 0) return 0;
+            fill_lj(buf,nbits);
+            c = bitbuf << (32-vbits) >> (32-nbits);
+            vbits-=nbits;
+            if(vbits<0)throw LIBRAW_EXCEPTION_IO_EOF;
+            return c;
+        }
+        unsigned _gethuff_lj(LibRaw_byte_buffer* buf, int nbits, unsigned short* huff)
+        {
+            unsigned c;
+            if(nbits==0 || vbits < 0) return 0;
+            fill_lj(buf,nbits);
+            c = bitbuf << (32-vbits) >> (32-nbits);
+            vbits -= huff[c] >> 8;
+            c = (uchar) huff[c];
+            if(vbits<0)throw LIBRAW_EXCEPTION_IO_EOF;
+            return c;
+        }
+        void fill(LibRaw_byte_buffer* buf,int nbits,int zer0_ff)
+        {
+            unsigned c;
+            while (!rst && vbits < nbits && (c = buf->get_byte()) != EOF &&
+                   !(rst = zer0_ff && c == 0xff && buf->get_byte())) {
+                bitbuf = (bitbuf << 8) + (uchar) c;
+                vbits += 8;
+            }
+        }
+        unsigned _getbits(LibRaw_byte_buffer* buf, int nbits,int zer0_ff)
+        {
+            unsigned c;
+            if(nbits==0 || vbits < 0) return 0;
+            fill(buf,nbits,zer0_ff);
+            c = bitbuf << (32-vbits) >> (32-nbits);
+            vbits-=nbits;
+            if(vbits<0)throw LIBRAW_EXCEPTION_IO_EOF;
+            return c;
+        }
+        unsigned _gethuff(LibRaw_byte_buffer* buf, int nbits, unsigned short* huff, int zer0_ff)
+        {
+            unsigned c;
+            if(nbits==0 || vbits < 0) return 0;
+            fill(buf,nbits,zer0_ff);
+            c = bitbuf << (32-vbits) >> (32-nbits);
+            vbits -= huff[c] >> 8;
+            c = (uchar) huff[c];
+            if(vbits<0)throw LIBRAW_EXCEPTION_IO_EOF;
+            return c;
+        }
+
+};
+
 
 class LibRaw_buffer_datastream;
+
 
 class LibRaw_abstract_datastream
 {
@@ -60,6 +192,13 @@ class LibRaw_abstract_datastream
     virtual char*       gets(char *, int) = 0;
     virtual int         scanf_one(const char *, void *) = 0;
     virtual int         eof() = 0;
+    // Make buffer from current offset
+    virtual LibRaw_byte_buffer *make_byte_buffer(unsigned int sz)
+    {
+        LibRaw_byte_buffer *ret = new LibRaw_byte_buffer(sz);
+        read(ret->get_buffer(),sz,1);
+        return ret;
+    }
 
     /* subfile parsing not implemented in base class */
     virtual const char* fname(){ return NULL;};
@@ -202,7 +341,6 @@ class LibRaw_file_datastream: public LibRaw_abstract_datastream
 };
 #undef LR_STREAM_CHK
 
-
 class LibRaw_buffer_datastream : public LibRaw_abstract_datastream
 {
   public:
@@ -211,6 +349,16 @@ class LibRaw_buffer_datastream : public LibRaw_abstract_datastream
 
     virtual ~LibRaw_buffer_datastream(){}
     virtual int valid() { return buf?1:0;}
+
+    virtual LibRaw_byte_buffer *make_byte_buffer(unsigned int sz)
+    {
+        printf("Making zero-copy buffer\n");
+        LibRaw_byte_buffer *ret = new LibRaw_byte_buffer(0);
+        ret->set_buffer(buf+streampos,sz);
+        return ret;
+    }
+
+
     virtual int read(void * ptr,size_t sz, size_t nmemb)
     { 
         if(substream) return substream->read(ptr,sz,nmemb);

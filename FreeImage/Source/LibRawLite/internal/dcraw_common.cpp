@@ -332,6 +332,7 @@ int CLASS canon_s2is()
    getbits(-1) initializes the buffer
    getbits(n) where 0 <= n <= 25 returns an n-bit integer
  */
+
 unsigned CLASS getbithuff (int nbits, ushort *huff)
 {
 #ifdef LIBRAW_NOTHREADS
@@ -646,6 +647,7 @@ void CLASS ljpeg_end (struct jhead *jh)
   free (jh->row);
 }
 
+// used for kodak-262 decoder
 int CLASS ljpeg_diff (ushort *huff)
 {
   int len, diff;
@@ -658,6 +660,39 @@ int CLASS ljpeg_diff (ushort *huff)
     diff -= (1 << len) - 1;
   return diff;
 }
+
+#ifdef LIBRAW_LIBRARY_BUILD
+int CLASS ljpeg_diff_new (LibRaw_bit_buffer& bits, LibRaw_byte_buffer* buf,ushort *huff)
+{
+  int len, diff;
+
+  len = bits._gethuff_lj(buf,*huff,huff+1);
+  if (len == 16 && (!dng_version || dng_version >= 0x1010000))
+    return -32768;
+  diff = bits._getbits_lj(buf,len);
+  if ((diff & (1 << (len-1))) == 0)
+    diff -= (1 << len) - 1;
+  return diff;
+}
+
+int CLASS ljpeg_diff_pef (LibRaw_bit_buffer& bits, LibRaw_byte_buffer* buf,ushort *huff)
+{
+  int len, diff;
+
+  len = bits._gethuff(buf,*huff,huff+1,zero_after_ff);
+  if (len == 16 && (!dng_version || dng_version >= 0x1010000))
+    return -32768;
+  diff = bits._getbits(buf,len,zero_after_ff);
+  if ((diff & (1 << (len-1))) == 0)
+    diff -= (1 << len) - 1;
+  return diff;
+}
+
+
+#endif
+
+
+#ifndef LIBRAW_LIBRARY_BUILD
 
 ushort * CLASS ljpeg_row (int jrow, struct jhead *jh)
 {
@@ -697,19 +732,123 @@ ushort * CLASS ljpeg_row (int jrow, struct jhead *jh)
     }
   return row[2];
 }
+#endif
+
+#ifdef LIBRAW_LIBRARY_BUILD
+ushort * CLASS ljpeg_row_new (int jrow, struct jhead *jh, LibRaw_bit_buffer& bits,LibRaw_byte_buffer* bytes)
+{
+  int col, c, diff, pred, spred=0;
+  ushort mark=0, *row[3];
+
+  if (jrow * jh->wide % jh->restart == 0) {
+    FORC(6) jh->vpred[c] = 1 << (jh->bits-1);
+    if (jrow) {
+        bytes->unseek2();
+        do mark = (mark << 8) + (c = bytes->get_byte());
+        while (c != EOF && mark >> 4 != 0xffd);
+    }
+    bits.reset();
+  }
+  FORC3 row[c] = jh->row + jh->wide*jh->clrs*((jrow+c) & 1);
+  for (col=0; col < jh->wide; col++)
+    FORC(jh->clrs) {
+        diff = ljpeg_diff_new (bits,bytes,jh->huff[c]);
+      if (jh->sraw && c <= jh->sraw && (col | c))
+		    pred = spred;
+      else if (col) pred = row[0][-jh->clrs];
+      else	    pred = (jh->vpred[c] += diff) - diff;
+      if (jrow && col) switch (jh->psv) {
+	case 1:	break;
+	case 2: pred = row[1][0];					break;
+	case 3: pred = row[1][-jh->clrs];				break;
+	case 4: pred = pred +   row[1][0] - row[1][-jh->clrs];		break;
+	case 5: pred = pred + ((row[1][0] - row[1][-jh->clrs]) >> 1);	break;
+	case 6: pred = row[1][0] + ((pred - row[1][-jh->clrs]) >> 1);	break;
+	case 7: pred = (pred + row[1][0]) >> 1;				break;
+	default: pred = 0;
+      }
+      if ((**row = pred + diff) >> jh->bits) derror();
+      if (c <= jh->sraw) spred = **row;
+      row[0]++; row[1]++;
+    }
+  return row[2];
+}
+
+#endif
 
 void CLASS lossless_jpeg_load_raw()
 {
-  int jwide, jrow, jcol, val, jidx, c, i, j, row=0, col=0;
+  int jwide, jrow, jcol, val, c, i, row=0, col=0;
+#ifndef LIBRAW_LIBRARY_BUILD
+  int jidx,j;
+#endif
   struct jhead jh;
   int min=INT_MAX;
   ushort *rp;
+#ifdef LIBRAW_LIBRARY_BUILD
+  unsigned slicesW[16],slicesWcnt=0,slices;
+  unsigned *offset;
+  unsigned t_y=0,t_x=0,t_s=0,slice=0,pixelsInSlice,pixno;
+#endif
+
+#ifdef LIBRAW_LIBRARY_BUILD
+  if (cr2_slice[0]>15)
+      throw LIBRAW_EXCEPTION_IO_EOF; // change many slices
+#else
+  fprintf(stderr,"Too many CR2 slices: %d\n",cr2_slice[0]+1);
+  return;
+#endif
+
 
   if (!ljpeg_start (&jh, 0)) return;
   jwide = jh.wide * jh.clrs;
 
+#ifdef LIBRAW_LIBRARY_BUILD
+  if(cr2_slice[0])
+      {
+          for(i=0;i<cr2_slice[0];i++)
+              slicesW[slicesWcnt++] = cr2_slice[1];
+          slicesW[slicesWcnt++] = cr2_slice[2];
+      }
+  else
+      {
+          // not sliced
+          slicesW[slicesWcnt++] = raw_width; // safe fallback
+      }
+       
+  slices = slicesWcnt * jh.high;
+  offset = (unsigned*)calloc(slices+1,sizeof(offset[0]));
+  
+  for(slice=0;slice<slices;slice++)
+      {
+          offset[slice] = (t_x + t_y * raw_width)| (t_s<<28);
+          if(offset[slice] & 0x0fffffff >= raw_width * raw_height)
+              throw LIBRAW_EXCEPTION_IO_BADFILE; 
+          t_y++;
+          if(t_y == jh.high)
+              {
+                  t_y = 0;
+                  t_x += slicesW[t_s++];
+              }
+      }
+  offset[slices] = offset[slices-1];
+  slice = 1; // next slice
+  pixno = offset[0];
+  pixelsInSlice = slicesW[0];
+#endif
+
+#ifdef LIBRAW_LIBRARY_BUILD
+  if(!data_size)
+      throw LIBRAW_EXCEPTION_IO_BADFILE;
+  LibRaw_byte_buffer *buf = ifp->make_byte_buffer(data_size);
+  LibRaw_bit_buffer bits;
+#endif
   for (jrow=0; jrow < jh.high; jrow++) {
+#ifdef LIBRAW_LIBRARY_BUILD
+      rp = ljpeg_row_new (jrow, &jh,bits,buf);
+#else
     rp = ljpeg_row (jrow, &jh);
+#endif
     for (jcol=0; jcol < jwide; jcol++) {
       val = *rp++;
       if (jh.bits <= 12)
@@ -717,6 +856,7 @@ void CLASS lossless_jpeg_load_raw()
           if( !(filtering_mode & LIBRAW_FILTERING_NORAWCURVE))
 #endif
 	val = curve[val & 0xfff];
+#ifndef LIBRAW_LIBRARY_BUILD
       if (cr2_slice[0]) {
 	jidx = jrow*jwide + jcol;
 	i = jidx / (cr2_slice[1]*jh.high);
@@ -726,8 +866,21 @@ void CLASS lossless_jpeg_load_raw()
 	row = jidx / cr2_slice[1+j];
 	col = jidx % cr2_slice[1+j] + i*cr2_slice[1];
       }
+#else
+      row = pixno/raw_width;
+//      col = pixno-(row*raw_width);
+      col = pixno % raw_width;
+      pixno++;
+      if (0 == --pixelsInSlice)
+          {
+              unsigned o = offset[slice++];
+              pixno = o & 0x0fffffff;
+              pixelsInSlice = slicesW[o>>28];
+          }
+#endif
       if (raw_width == 3984 && (col -= 2) < 0)
-	col += (row--,raw_width);
+              col += (row--,raw_width);
+
 #ifdef LIBRAW_LIBRARY_BUILD
       ushort *dfp = get_masked_pointer(row,col);
       if(dfp) *dfp = val;
@@ -743,14 +896,20 @@ void CLASS lossless_jpeg_load_raw()
 	} else if (col > 1 && (unsigned) (col-left_margin+2) > width+3)
 	  cblack[c] += (cblack[4+c]++,val);
       }
+#ifndef LIBRAW_LIBRARY_BUILD
       if (++col >= raw_width)
 	col = (row++,0);
+#endif
     }
   }
   ljpeg_end (&jh);
   FORC4 if (cblack[4+c]) cblack[c] /= cblack[4+c];
   if (!strcasecmp(make,"KODAK"))
     black = min;
+#ifdef LIBRAW_LIBRARY_BUILD
+  delete buf;
+  free(offset);
+#endif
 }
 
 void CLASS canon_sraw_load_raw()
@@ -764,6 +923,14 @@ void CLASS canon_sraw_load_raw()
   if (!ljpeg_start (&jh, 0)) return;
   jwide = (jh.wide >>= 1) * jh.clrs;
 
+#ifdef LIBRAW_LIBRARY_BUILD
+  if(!data_size)
+      throw LIBRAW_EXCEPTION_IO_BADFILE;
+  LibRaw_byte_buffer *buf = ifp->make_byte_buffer(data_size);
+  LibRaw_bit_buffer bits;
+#endif
+
+
   for (ecol=slice=0; slice <= cr2_slice[0]; slice++) {
     scol = ecol;
     ecol += cr2_slice[1] * 2 / jh.clrs;
@@ -772,7 +939,11 @@ void CLASS canon_sraw_load_raw()
       ip = (short (*)[4]) image + row*width;
       for (col=scol; col < ecol; col+=2, jcol+=jh.clrs) {
 	if ((jcol %= jwide) == 0)
-	  rp = (short *) ljpeg_row (jrow++, &jh);
+#ifdef LIBRAW_LIBRARY_BUILD
+            rp = (short*) ljpeg_row_new (jrow++, &jh,bits,buf);
+#else
+            rp = (short *) ljpeg_row (jrow++, &jh);
+#endif
 	if (col >= width) continue;
 	FORC (jh.clrs-2)
 	  ip[col + (c >> 1)*width + (c & 1)][0] = rp[jcol+c];
@@ -824,6 +995,9 @@ void CLASS canon_sraw_load_raw()
 #endif
     }
   }
+#ifdef LIBRAW_LIBRARY_BUILD
+  delete buf;
+#endif
   ljpeg_end (&jh);
   maximum = 0x3fff;
 }
@@ -876,7 +1050,6 @@ void CLASS adobe_dng_load_raw_lj()
   unsigned save, trow=0, tcol=0, jwide, jrow, jcol, row, col;
   struct jhead jh;
   ushort *rp;
-
   while (trow < raw_height) {
     save = ftell(ifp);
     if (tile_length < INT_MAX)
@@ -885,8 +1058,18 @@ void CLASS adobe_dng_load_raw_lj()
     jwide = jh.wide;
     if (filters) jwide *= jh.clrs;
     jwide /= is_raw;
+#ifdef LIBRAW_LIBRARY_BUILD
+    if(!data_size)
+        throw LIBRAW_EXCEPTION_IO_BADFILE;
+    LibRaw_byte_buffer *buf = ifp->make_byte_buffer(data_size);
+    LibRaw_bit_buffer bits;
+#endif
     for (row=col=jrow=0; jrow < jh.high; jrow++) {
-      rp = ljpeg_row (jrow, &jh);
+#ifdef LIBRAW_LIBRARY_BUILD
+        rp = ljpeg_row_new (jrow, &jh,bits,buf);
+#else
+        rp = ljpeg_row (jrow, &jh);
+#endif
       for (jcol=0; jcol < jwide; jcol++) {
 	adobe_copy_pixel (trow+row, tcol+col, &rp);
 	if (++col >= tile_width || col >= raw_width)
@@ -897,6 +1080,9 @@ void CLASS adobe_dng_load_raw_lj()
     if ((tcol += tile_width) >= raw_width)
       trow += tile_length + (tcol = 0);
     ljpeg_end (&jh);
+#ifdef LIBRAW_LIBRARY_BUILD
+    delete buf;
+#endif
   }
 }
 
@@ -907,18 +1093,41 @@ void CLASS adobe_dng_load_raw_nc()
 
   pixel = (ushort *) calloc (raw_width * tiff_samples, sizeof *pixel);
   merror (pixel, "adobe_dng_load_raw_nc()");
+
+
+#ifdef LIBRAW_LIBRARY_BUILD
+  int dsz= raw_height*raw_width * tiff_samples * tiff_bps/8;
+  LibRaw_byte_buffer *buf = NULL;
+  if (tiff_bps != 16)
+      {
+          buf = ifp->make_byte_buffer(dsz);
+      }
+  LibRaw_bit_buffer bits;
+#endif
+
   for (row=0; row < raw_height; row++) {
     if (tiff_bps == 16)
       read_shorts (pixel, raw_width * tiff_samples);
     else {
+#ifdef LIBRAW_LIBRARY_BUILD
+        bits.reset();
+        for (col=0; col < raw_width * tiff_samples; col++)
+            pixel[col] = bits._getbits(buf,tiff_bps,zero_after_ff);
+
+#else
       getbits(-1);
       for (col=0; col < raw_width * tiff_samples; col++)
 	pixel[col] = getbits(tiff_bps);
+#endif
     }
     for (rp=pixel, col=0; col < raw_width; col++)
       adobe_copy_pixel (row, col, &rp);
   }
   free (pixel);
+#ifdef LIBRAW_LIBRARY_BUILD
+    if(buf)
+        delete buf;
+#endif
 }
 
 void CLASS pentax_load_raw()
@@ -937,14 +1146,26 @@ void CLASS pentax_load_raw()
       huff[++i] = bit[1][c] << 8 | c;
   huff[0] = 12;
   fseek (ifp, data_offset, SEEK_SET);
+#ifdef LIBRAW_LIBRARY_BUILD
+  if(!data_size)
+      throw LIBRAW_EXCEPTION_IO_BADFILE;
+  LibRaw_byte_buffer *buf = ifp->make_byte_buffer(data_size);
+  LibRaw_bit_buffer bits;
+  bits.reset();
+#else
   getbits(-1);
+#endif
   for (row=0; row < raw_height; row++)
       {
 #ifndef LIBRAW_LIBRARY_BUILD
           if(row >= height) break;
 #endif
     for (col=0; col < raw_width; col++) {
+#ifdef LIBRAW_LIBRARY_BUILD
+        diff = ljpeg_diff_pef(bits,buf,huff);
+#else
       diff = ljpeg_diff (huff);
+#endif
       if (col < 2) hpred[col] = vpred[row & 1][col] += diff;
       else	   hpred[col & 1] += diff;
 
@@ -969,6 +1190,9 @@ void CLASS pentax_load_raw()
       if (val >> tiff_bps) derror();
     }
       }
+#ifdef LIBRAW_LIBRARY_BUILD
+  delete buf;
+#endif
 }
 
 void CLASS nikon_compressed_load_raw()
@@ -1021,7 +1245,15 @@ void CLASS nikon_compressed_load_raw()
   while (curve[max-2] == curve[max-1]) max--;
   huff = make_decoder (nikon_tree[tree]);
   fseek (ifp, data_offset, SEEK_SET);
+#ifdef LIBRAW_LIBRARY_BUILD
+  if(!data_size)
+      throw LIBRAW_EXCEPTION_IO_BADFILE;
+  LibRaw_byte_buffer *buf = ifp->make_byte_buffer(data_size);
+  LibRaw_bit_buffer bits;
+  bits.reset();
+#else
   getbits(-1);
+#endif
   for (min=row=0; row < height; row++) {
     if (split && row == split) {
       free (huff);
@@ -1029,10 +1261,18 @@ void CLASS nikon_compressed_load_raw()
       max += (min = 16) << 1;
     }
     for (col=0; col < raw_width; col++) {
+#ifdef LIBRAW_LIBRARY_BUILD
+        i = bits._gethuff(buf,*huff,huff+1,zero_after_ff);
+#else
       i = gethuff(huff);
+#endif
       len = i & 15;
       shl = i >> 4;
+#ifdef LIBRAW_LIBRARY_BUILD
+      diff = ((bits._getbits(buf,len-shl,zero_after_ff) << 1) + 1) << shl >> 1;
+#else
       diff = ((getbits(len-shl) << 1) + 1) << shl >> 1;
+#endif
       if ((diff & (1 << (len-1))) == 0)
 	diff -= (1 << len) - !shl;
       if (col < 2) hpred[col] = vpred[row & 1][col] += diff;
@@ -1060,6 +1300,9 @@ void CLASS nikon_compressed_load_raw()
 
     }
   }
+#ifdef LIBRAW_LIBRARY_BUILD
+  delete buf;
+#endif
   free (huff);
 }
 
@@ -2013,18 +2256,34 @@ void CLASS olympus_load_raw()
   for (i=12; i--; )
     FORC(2048 >> i) huff[++n] = (i+1) << 8 | i;
   fseek (ifp, 7, SEEK_CUR);
+#ifdef LIBRAW_LIBRARY_BUILD
+  if(!data_size)
+      throw LIBRAW_EXCEPTION_IO_BADFILE;
+  LibRaw_byte_buffer *buf = ifp->make_byte_buffer(data_size);
+  LibRaw_bit_buffer bits;
+  bits.reset();
+#else
   getbits(-1);
+#endif
   for (row=0; row < height; row++) {
     memset (acarry, 0, sizeof acarry);
     for (col=0; col < raw_width; col++) {
       carry = acarry[col & 1];
       i = 2 * (carry[2] < 3);
       for (nbits=2+i; (ushort) carry[0] >> (nbits+i); nbits++);
+#ifdef LIBRAW_LIBRARY_BUILD
+      low = (sign = bits._getbits(buf,3,zero_after_ff)) & 3;
+      sign = sign << 29 >> 31;
+      if ((high = bits._gethuff(buf,12,huff,zero_after_ff)) == 12)
+          high = bits._getbits(buf,16-nbits,zero_after_ff) >> 1;
+      carry[0] = (high << nbits) | bits._getbits(buf,nbits,zero_after_ff);
+#else
       low = (sign = getbits(3)) & 3;
       sign = sign << 29 >> 31;
       if ((high = getbithuff(12,huff)) == 12)
 	high = getbits(16-nbits) >> 1;
       carry[0] = (high << nbits) | getbits(nbits);
+#endif
       diff = (carry[0] ^ sign) + carry[1];
       carry[1] = (diff*3 + carry[1]) >> 5;
       carry[2] = carry[0] > 16 ? 0 : carry[2]+1;
@@ -2055,6 +2314,9 @@ void CLASS olympus_load_raw()
 #endif
     }
   }
+#ifdef LIBRAW_LIBRARY_BUILD
+  delete buf;
+#endif
 }
 
 void CLASS minolta_rd175_load_raw()
@@ -2780,12 +3042,25 @@ void CLASS sony_arw_load_raw()
 
   for (n=i=0; i < 18; i++)
     FORC(32768 >> (tab[i] >> 8)) huff[n++] = tab[i];
+#ifdef LIBRAW_LIBRARY_BUILD
+  if(!data_size)
+      throw LIBRAW_EXCEPTION_IO_BADFILE;
+  LibRaw_byte_buffer *buf = ifp->make_byte_buffer(data_size);
+  LibRaw_bit_buffer bits;
+  bits.reset();
+#else
   getbits(-1);
+#endif
   for (col = raw_width; col--; )
     for (row=0; row < raw_height+1; row+=2) {
       if (row == raw_height) row = 1;
+#ifdef LIBRAW_LIBRARY_BUILD
+      len = bits._gethuff(buf,15,huff,zero_after_ff);
+      diff = bits._getbits(buf,len,zero_after_ff);
+#else
       len = getbithuff(15,huff);
       diff = getbits(len);
+#endif
       if ((diff & (1 << (len-1))) == 0)
 	diff -= (1 << len) - 1;
       if ((sum += diff) >> 12) derror();
@@ -2805,6 +3080,9 @@ void CLASS sony_arw_load_raw()
           }
 #endif
     }
+#ifdef LIBRAW_LIBRARY_BUILD
+  delete buf;
+#endif
 }
 
 void CLASS sony_arw2_load_raw()
@@ -5103,6 +5381,16 @@ int CLASS parse_tiff_ifd (int base)
 	  is_raw = 5;
 	}
 	break;
+#ifdef LIBRAW_LIBRARY_BUILD
+      case 325:				/* TileByteCount */
+          tiff_ifd[ifd].tile_maxbytes = 0;
+          for(int jj=0;jj<len;jj++)
+              {
+                  int s = get4();
+                  if(s > tiff_ifd[ifd].tile_maxbytes) tiff_ifd[ifd].tile_maxbytes=s;
+              }
+	break;
+#endif
       case 330:				/* SubIFDs */
 	if (!strcmp(model,"DSLR-A100") && tiff_ifd[ifd].t_width == 3872) {
 	  load_raw = &CLASS sony_arw_load_raw;
@@ -5497,6 +5785,9 @@ void CLASS apply_tiff()
       data_offset   = tiff_ifd[i].offset;
       tiff_flip     = tiff_ifd[i].t_flip;
       tiff_samples  = tiff_ifd[i].samples;
+#ifdef LIBRAW_LIBRARY_BUILD
+      data_size     = tile_length < INT_MAX ? tiff_ifd[i].tile_maxbytes: tiff_ifd[i].bytes;
+#endif
       raw = i;
     }
   }
