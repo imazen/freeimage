@@ -677,19 +677,33 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				FreeImage_SetDotsPerMeterY(dib, bih.biYPelsPerMeter);
 				
 				// load the palette
+				// note that it may contain RGB or RGBA values : we will calculate this
+				unsigned pal_size = (bitmap_bits_offset - sizeof(BITMAPFILEHEADER) - bih.biSize) / used_colors; 
 
 				io->seek_proc(handle, sizeof(BITMAPFILEHEADER) + bih.biSize, SEEK_SET);
 
 				RGBQUAD *pal = FreeImage_GetPalette(dib);
 
-				for (int count = 0; count < used_colors; count++) {
-					FILE_BGR bgr;
+				if(pal_size == 4) {
+					for (int count = 0; count < used_colors; count++) {
+						FILE_BGRA bgra;
 
-					io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
-					
-					pal[count].rgbRed	= bgr.r;
-					pal[count].rgbGreen = bgr.g;
-					pal[count].rgbBlue	= bgr.b;
+						io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
+						
+						pal[count].rgbRed	= bgra.r;
+						pal[count].rgbGreen = bgra.g;
+						pal[count].rgbBlue	= bgra.b;
+					} 
+				} else if(pal_size == 3) {
+					for (int count = 0; count < used_colors; count++) {
+						FILE_BGR bgr;
+
+						io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
+						
+						pal[count].rgbRed	= bgr.r;
+						pal[count].rgbGreen = bgr.g;
+						pal[count].rgbBlue	= bgr.b;
+					} 
 				}
 				
 				if(header_only) {
@@ -1033,34 +1047,24 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	if (handle != NULL) {
 		BITMAPFILEHEADER bitmapfileheader;
 		DWORD type = 0;
-		BYTE magic[2];
 
 		// we use this offset value to make seemingly absolute seeks relative in the file
 		
 		long offset_in_file = io->tell_proc(handle);
 
-		// read the magic
-
-		io->read_proc(&magic, sizeof(magic), 1, handle);
-
-		// compare the magic with the number we know
-
-		// somebody put a comment here explaining the purpose of this loop
-		while (memcmp(&magic, "BA", 2) == 0) {
-			io->read_proc(&bitmapfileheader.bfSize, sizeof(DWORD), 1, handle);
-			io->read_proc(&bitmapfileheader.bfReserved1, sizeof(WORD), 1, handle);
-			io->read_proc(&bitmapfileheader.bfReserved2, sizeof(WORD), 1, handle);
-			io->read_proc(&bitmapfileheader.bfOffBits, sizeof(DWORD), 1, handle);
-			io->read_proc(&magic, sizeof(magic), 1, handle);
-		}
-
 		// read the fileheader
 
-		io->seek_proc(handle, 0 - sizeof(magic), SEEK_CUR);
 		io->read_proc(&bitmapfileheader, sizeof(BITMAPFILEHEADER), 1, handle);
 #ifdef FREEIMAGE_BIGENDIAN
 		SwapFileHeader(&bitmapfileheader);
 #endif
+
+		// check the signature
+
+		if((bitmapfileheader.bfType != 0x4D42) && (bitmapfileheader.bfType != 0x4142)) {
+			FreeImage_OutputMessageProc(s_format_id, FI_MSG_ERROR_MAGIC_NUMBER);
+			return NULL;
+		}
 
 		// read the first byte of the infoheader
 
@@ -1078,7 +1082,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		if (type == 12)
 			return LoadOS21XBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits);
 
-		if (type <= 64)
+		if (type == 64)
 			return LoadOS22XBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits);
 
 		FreeImage_OutputMessageProc(s_format_id, "unknown bmp subtype with id %d", type);
