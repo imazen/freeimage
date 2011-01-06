@@ -66,7 +66,7 @@ implementation
 
 {$R *.dfm}
 
-uses FreeImage;
+uses FreeImage, GR32_Resamplers;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -82,8 +82,11 @@ begin
 end;
 // -----------------------------------------------------------------------------
 procedure TMainForm.FormShow(Sender: TObject);
+var
+  Resampler: TKernelResampler;
 begin
-  ImgView32.Bitmap.StretchFilter := sfSPline;
+  Resampler := TKernelResampler.Create(ImgView32.Bitmap);
+  Resampler.Kernel := TSplineKernel.Create;
   if ParamCount = 1 then
     LoadImage(ParamStr(1));
 end;
@@ -101,7 +104,7 @@ var
   DC : HDC;
 begin
   try
-    t := FreeImage_GetFileType(PChar(Name), 16);
+    t := FreeImage_GetFileType(PAnsiChar(AnsiString(Name)), 16);
 
     if t = FIF_UNKNOWN then
     begin
@@ -121,11 +124,11 @@ begin
         raise Exception.Create('The file "' + Name + '" cannot be displayed because SFM does not recognise the file type.');
     end;
 
-    dib := FreeImage_Load(t, PChar(name), 0);
+    dib := FreeImage_Load(t, PAnsiChar(AnsiString(name)), 0);
     if Dib = nil then
       Close;
     PBH := FreeImage_GetInfoHeader(dib);
-    PBI := FreeImage_GetInfo(dib^);
+    PBI := FreeImage_GetInfo(dib);
 
     BPP := FreeImage_GetBPP(dib);
 
@@ -197,8 +200,8 @@ end;
 procedure TMainForm.ZoomInItemClick(Sender: TObject);
 begin
   FilterTimer.Enabled := False;
-  if ImgView32.Bitmap.StretchFilter <> sfNearest then
-    ImgView32.Bitmap.StretchFilter := sfNearest;
+  if not (ImgView32.Bitmap.Resampler is TNearestResampler) then
+    TNearestResampler.Create(ImgView32.Bitmap);
   FilterTimer.Enabled := True;
 
   ImgView32.Scale := ImgView32.Scale * 2.0;
@@ -208,8 +211,8 @@ end;
 procedure TMainForm.ZoomOutItemClick(Sender: TObject);
 begin
   FilterTimer.Enabled := False;
-  if ImgView32.Bitmap.StretchFilter <> sfNearest then
-    ImgView32.Bitmap.StretchFilter := sfNearest;
+  if not (ImgView32.Bitmap.Resampler is TNearestResampler) then
+    TNearestResampler.Create(ImgView32.Bitmap);
   FilterTimer.Enabled := True;
 
   ImgView32.Scale := ImgView32.Scale / 2.0;
@@ -219,8 +222,8 @@ end;
 procedure TMainForm.ActualSizeItemClick(Sender: TObject);
 begin
   FilterTimer.Enabled := False;
-  if ImgView32.Bitmap.StretchFilter <> sfNearest then
-    ImgView32.Bitmap.StretchFilter := sfNearest;
+  if not (ImgView32.Bitmap.Resampler is TNearestResampler) then
+    TNearestResampler.Create(ImgView32.Bitmap);
   FilterTimer.Enabled := True;
 
   ImgView32.Scale := 1.0;
@@ -285,8 +288,8 @@ procedure TMainForm.ScrollBoxMouseWheel(Sender: TObject;
   var Handled: Boolean);
 begin
   FilterTimer.Enabled := False;
-  if ImgView32.Bitmap.StretchFilter <> sfNearest then
-    ImgView32.Bitmap.StretchFilter := sfNearest;
+  if not (ImgView32.Bitmap.Resampler is TNearestResampler) then
+    TNearestResampler.Create(ImgView32.Bitmap);
   FilterTimer.Enabled := True;
 
   if WheelDelta < 0 then
@@ -302,8 +305,8 @@ var
   Amount : integer;
 begin
   FilterTimer.Enabled := False;
-  if ImgView32.Bitmap.StretchFilter <> sfNearest then
-    ImgView32.Bitmap.StretchFilter := sfNearest;
+  if not (ImgView32.Bitmap.Resampler is TNearestResampler) then
+    TNearestResampler.Create(ImgView32.Bitmap);
   FilterTimer.Enabled := True;
 
   if ssShift in Shift then
@@ -489,16 +492,19 @@ end;
 
 // -----------------------------------------------------------------------------
 procedure TMainForm.FilterTimerTimer(Sender: TObject);
+var
+  Resampler: TKernelResampler;
 begin
   FilterTimer.Enabled := False;
-  ImgView32.Bitmap.StretchFilter := sfSPline;
+  Resampler := TKernelResampler.Create(ImgView32.Bitmap);
+  Resampler.Kernel := TSplineKernel.Create;
 end;
 // -----------------------------------------------------------------------------
 procedure TMainForm.ImgView32Scroll(Sender: TObject);
 begin
   FilterTimer.Enabled := False;
-  if ImgView32.Bitmap.StretchFilter <> sfNearest then
-    ImgView32.Bitmap.StretchFilter := sfNearest;
+  if not (ImgView32.Bitmap.Resampler is TNearestResampler) then
+    TNearestResampler.Create(ImgView32.Bitmap);
   FilterTimer.Enabled := True;
 end;
 // -----------------------------------------------------------------------------

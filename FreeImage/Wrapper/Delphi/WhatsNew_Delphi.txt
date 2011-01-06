@@ -5,6 +5,9 @@ What's New for FreeImage Delphi Wrapper
 ! : changed
 + : added
 
+January 4, 2011
++ [Lorenzo Monti] updated ImagePreview demo to support latest Graphics32 components (1.9) and Delphi 2010 / XE
+
 November 12, 2010
 + [Lorenzo Monti] updated wrapper for FreeImage 3.14.1
 + [Lorenzo Monti] added Delphi XE support
