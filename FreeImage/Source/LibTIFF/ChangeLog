@@ -1,3 +1,15 @@
+2011-01-03  Lee Howard <faxguy@howardsilvan.com>
+
+	* libtiff/tif_jpeg.c: Fix regressions with 2 and 3 band images
+	caused by commit on 2010-12-14.  Submitted by e-mail from 
+	Even Rouault <even.rouault@mines-paris.org>
+
+2010-12-31  Olivier Paquet  <olivier.paquet@gmail.com>
+
+	* libtiff/tif_dirread.c: Allow reading directories where
+	TIFFTAG_SMINSAMPLEVALUE and TIFFTAG_SMAXSAMPLEVALUE values differ for each
+	channel. The min/max of all channels is used as appropriate.
+
 2010-12-14  Lee Howard <faxguy@howardsilvan.com>
 
 	* libtiff/tif_dirread.c: tolerate some cases where
