@@ -560,6 +560,12 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 				}
 
 				// load pixel data and swap as needed if OS is Big Endian
+
+				if (bitmap_bits_offset > (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER))) {
+					// seek to the actual pixel data
+					io->seek_proc(handle, bitmap_bits_offset, SEEK_SET);
+				}
+
 				LoadPixelData(io, handle, dib, height, pitch, bit_count);
 
 				return dib;
@@ -1076,14 +1082,31 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		// call the appropriate load function for the found bitmap type
 
-		if (type == 40)
-			return LoadWindowsBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits);
-		
-		if (type == 12)
-			return LoadOS21XBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits);
-
-		if (type == 64)
-			return LoadOS22XBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits);
+		switch(type) {
+			case 12:
+				// OS/2 and also all Windows versions since Windows 3.0
+				return LoadOS21XBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits);
+			case 64:
+				// OS/2
+				return LoadOS22XBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits);
+			case 40:
+				// BITMAPINFOHEADER - all Windows versions since Windows 3.0
+				return LoadWindowsBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits);
+			case 52:
+				// BITMAPV2INFOHEADER (undocumented)
+				break;
+			case 56:
+				// BITMAPV3INFOHEADER (undocumented)
+				break;
+			case 108:
+				// BITMAPV4HEADER - all Windows versions since Windows 95/NT4 (not supported)
+				break;
+			case 124:
+				// BITMAPV5HEADER - Windows 98/2000 and newer (not supported)
+				break;
+			default:
+				break;
+		}
 
 		FreeImage_OutputMessageProc(s_format_id, "unknown bmp subtype with id %d", type);
 	}
