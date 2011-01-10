@@ -226,6 +226,7 @@ public:
 		
 	BOOL isNull() { return _begin == NULL;}
 	
+	inline
 	BYTE getByte() {
 		if (_ptr >= _end) {
 			// need refill
@@ -240,6 +241,7 @@ public:
 		return result;
 	}
 	
+	inline
 	BYTE* getBytes(size_t count /*must be < _size!*/) {
 		if (_ptr + count >= _end) {
 			
@@ -570,6 +572,8 @@ loadRLE(FIBITMAP* dib, int width, int height, FreeImageIO* io, fi_handle handle,
 	// ...and allocate cache of this size (yields good results)
 	IOCache cache(io, handle, sz);
 	if(cache.isNull()) {
+		FreeImage_Unload(dib);
+		dib = NULL;
 		return;
 	}
 		
@@ -590,6 +594,7 @@ loadRLE(FIBITMAP* dib, int width, int height, FreeImageIO* io, fi_handle handle,
 
 		if ((line_bits+x) + packet_count*pixel_size > dib_end) {
 			FreeImage_OutputMessageProc(s_format_id, FI_MSG_ERROR_CORRUPTED);
+			// return what is left from the bitmap
 			return;
 		}
 

@@ -137,6 +137,61 @@ typedef struct tagFILE_BGR {
 #endif // _WIN32
 
 // ==========================================================
+//   Template utility functions
+// ==========================================================
+
+/// Max function
+template <class T> T MAX(T a, T b) {
+	return (a > b) ? a: b;
+}
+
+/// Min function
+template <class T> T MIN(T a, T b) {
+	return (a < b) ? a: b;
+}
+
+/// INPLACESWAP adopted from codeguru.com 
+template <class T> void INPLACESWAP(T& a, T& b) {
+	a ^= b; b ^= a; a ^= b;
+}
+
+/// Clamp function
+template <class T> T CLAMP(T value, T min_value, T max_value) {
+	return ((value < min_value) ? min_value : (value > max_value) ? max_value : value);
+}
+
+/** This procedure computes minimum min and maximum max
+ of n numbers using only (3n/2) - 2 comparisons.
+ min = L[i1] and max = L[i2].
+ ref: Aho A.V., Hopcroft J.E., Ullman J.D., 
+ The design and analysis of computer algorithms, 
+ Addison-Wesley, Reading, 1974.
+*/
+template <class T> void 
+MAXMIN(const T* L, long n, T& max, T& min) {
+	long i1, i2, i, j;
+	T x1, x2;
+	long k1, k2;
+
+	i1 = 0; i2 = 0; min = L[0]; max = L[0]; j = 0;
+	if((n % 2) != 0)  j = 1;
+	for(i = j; i < n; i+= 2) {
+		k1 = i; k2 = i+1;
+		x1 = L[k1]; x2 = L[k2];
+		if(x1 > x2)	{
+			k1 = k2;  k2 = i;
+			x1 = x2;  x2 = L[k2];
+		}
+		if(x1 < min) {
+			min = x1;  i1 = k1;
+		}
+		if(x2 > max) {
+			max = x2;  i2 = k2;
+		}
+	}
+}
+
+// ==========================================================
 //   Utility functions
 // ==========================================================
 
@@ -227,48 +282,48 @@ Fast generic assign (faster then for loop)
 @param bytesperpixel # of bytes per pixel
 */
 inline void 
-AssignPixel(BYTE* dst, BYTE* src, unsigned bytesperpixel) {
+AssignPixel(BYTE* dst, const BYTE* src, unsigned bytesperpixel) {
 	switch (bytesperpixel) {
 		case 1:	// FIT_BITMAP (8-bit)
 			*dst = *src;
 			break;
 
 		case 2: // FIT_UINT16 / FIT_INT16 / 16-bit
-			*(reinterpret_cast<WORD*>(dst)) = *(reinterpret_cast<WORD*> (src));
+			*(reinterpret_cast<WORD*>(dst)) = *(reinterpret_cast<const WORD*> (src));
 			break;
 
 		case 3: // FIT_BITMAP (24-bit)
-			*(reinterpret_cast<WORD*>(dst)) = *(reinterpret_cast<WORD*> (src));
+			*(reinterpret_cast<WORD*>(dst)) = *(reinterpret_cast<const WORD*> (src));
 			dst[2] = src[2];
 			break;
 
 		case 4: // FIT_BITMAP (32-bit) / FIT_UINT32 / FIT_INT32 / FIT_FLOAT
-			*(reinterpret_cast<DWORD*>(dst)) = *(reinterpret_cast<DWORD*> (src));
+			*(reinterpret_cast<DWORD*>(dst)) = *(reinterpret_cast<const DWORD*> (src));
 			break;
 
 		case 6: // FIT_RGB16 (3 x 16-bit)
-			*(reinterpret_cast<DWORD*>(dst)) = *(reinterpret_cast<DWORD*> (src));
-			*(reinterpret_cast<WORD*>(dst + 4)) = *(reinterpret_cast<WORD*> (src + 4));	
+			*(reinterpret_cast<DWORD*>(dst)) = *(reinterpret_cast<const DWORD*> (src));
+			*(reinterpret_cast<WORD*>(dst + 4)) = *(reinterpret_cast<const WORD*> (src + 4));	
 			break;
 
 		// the rest can be speeded up with int64
 			
 		case 8: // FIT_RGBA16 (4 x 16-bit)
-			*(reinterpret_cast<DWORD*>(dst)) = *(reinterpret_cast<DWORD*> (src));
-			*(reinterpret_cast<DWORD*>(dst + 4)) = *(reinterpret_cast<DWORD*> (src + 4));	
+			*(reinterpret_cast<DWORD*>(dst)) = *(reinterpret_cast<const DWORD*> (src));
+			*(reinterpret_cast<DWORD*>(dst + 4)) = *(reinterpret_cast<const DWORD*> (src + 4));	
 			break;
 		
 		case 12: // FIT_RGBF (3 x 32-bit IEEE floating point)
-			*(reinterpret_cast<float*>(dst)) = *(reinterpret_cast<float*> (src));
-			*(reinterpret_cast<float*>(dst + 4)) = *(reinterpret_cast<float*> (src + 4));
-			*(reinterpret_cast<float*>(dst + 8)) = *(reinterpret_cast<float*> (src + 8));
+			*(reinterpret_cast<float*>(dst)) = *(reinterpret_cast<const float*> (src));
+			*(reinterpret_cast<float*>(dst + 4)) = *(reinterpret_cast<const float*> (src + 4));
+			*(reinterpret_cast<float*>(dst + 8)) = *(reinterpret_cast<const float*> (src + 8));
 			break;
 		
 		case 16: // FIT_RGBAF (4 x 32-bit IEEE floating point)
-			*(reinterpret_cast<float*>(dst)) = *(reinterpret_cast<float*> (src));
-			*(reinterpret_cast<float*>(dst + 4)) = *(reinterpret_cast<float*> (src + 4));
-			*(reinterpret_cast<float*>(dst + 8)) = *(reinterpret_cast<float*> (src + 8));
-			*(reinterpret_cast<float*>(dst + 12)) = *(reinterpret_cast<float*> (src + 12));
+			*(reinterpret_cast<float*>(dst)) = *(reinterpret_cast<const float*> (src));
+			*(reinterpret_cast<float*>(dst + 4)) = *(reinterpret_cast<const float*> (src + 4));
+			*(reinterpret_cast<float*>(dst + 8)) = *(reinterpret_cast<const float*> (src + 8));
+			*(reinterpret_cast<float*>(dst + 12)) = *(reinterpret_cast<const float*> (src + 12));
 			break;
 			
 		default:
@@ -413,61 +468,6 @@ A Standard Default Color Space for the Internet - sRGB.
 	for (unsigned i = 0, v = 0x00FFFFFF; i < entries; i++, v -= (0x00FFFFFF / (entries - 1))) { \
 		((unsigned *)palette)[i] = v; \
 	}
-
-// ==========================================================
-//   Template utility functions
-// ==========================================================
-
-/// Max function
-template <class T> T MAX(T a, T b) {
-	return (a > b) ? a: b;
-}
-
-/// Min function
-template <class T> T MIN(T a, T b) {
-	return (a < b) ? a: b;
-}
-
-/// INPLACESWAP adopted from codeguru.com 
-template <class T> void INPLACESWAP(T& a, T& b) {
-	a ^= b; b ^= a; a ^= b;
-}
-
-/// Clamp function
-template <class T> T CLAMP(T value, T min_value, T max_value) {
-	return ((value < min_value) ? min_value : (value > max_value) ? max_value : value);
-}
-
-/** This procedure computes minimum min and maximum max
- of n numbers using only (3n/2) - 2 comparisons.
- min = L[i1] and max = L[i2].
- ref: Aho A.V., Hopcroft J.E., Ullman J.D., 
- The design and analysis of computer algorithms, 
- Addison-Wesley, Reading, 1974.
-*/
-template <class T> void 
-MAXMIN(const T* L, long n, T& max, T& min) {
-	long i1, i2, i, j;
-	T x1, x2;
-	long k1, k2;
-
-	i1 = 0; i2 = 0; min = L[0]; max = L[0]; j = 0;
-	if((n % 2) != 0)  j = 1;
-	for(i = j; i < n; i+= 2) {
-		k1 = i; k2 = i+1;
-		x1 = L[k1]; x2 = L[k2];
-		if(x1 > x2)	{
-			k1 = k2;  k2 = i;
-			x1 = x2;  x2 = L[k2];
-		}
-		if(x1 < min) {
-			min = x1;  i1 = k1;
-		}
-		if(x2 > max) {
-			max = x2;  i2 = k2;
-		}
-	}
-}
 
 // ==========================================================
 //   Generic error messages

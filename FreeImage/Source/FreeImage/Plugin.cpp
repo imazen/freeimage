@@ -90,7 +90,8 @@ PluginList::AddNode(FI_InitProc init_proc, void *instance, const char *format, c
 
 		memset(plugin, 0, sizeof(Plugin));
 
-		// fill-in the plugin structure
+		// fill-in the plugin structure 
+		// note we have memset to 0, so all unset pointers should be NULL)
 
 		init_proc(plugin, (int)m_plugin_map.size());
 
