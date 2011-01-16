@@ -37,6 +37,7 @@
 
 // ----------------------------------------------------------
 
+#include "../ZLib/zlib.h"
 #include "../LibPNG/png.h"
 
 // ----------------------------------------------------------
@@ -326,7 +327,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			png_read_info(png_ptr, info_ptr);
 			png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, NULL, NULL, NULL);
-			pixel_depth = info_ptr->pixel_depth;
+
+			pixel_depth = png_get_bit_depth(png_ptr, info_ptr) * png_get_channels(png_ptr, info_ptr);
 
 			// get image data type (assume standard image type)
 
