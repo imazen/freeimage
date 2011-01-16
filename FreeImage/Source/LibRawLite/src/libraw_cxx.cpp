@@ -19,9 +19,9 @@ it under the terms of the one of three licenses as you choose:
 
  */
 
+#include <math.h>
 #include <errno.h>
 #include <float.h>
-#include <math.h>
 #include <new>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,6 +32,7 @@ it under the terms of the one of three licenses as you choose:
 #endif
 #define LIBRAW_LIBRARY_BUILD
 #include "libraw/libraw.h"
+//#include "internal/defines.h"
 
 #ifdef __cplusplus
 extern "C" 
@@ -198,6 +199,7 @@ LibRaw:: LibRaw(unsigned int flags)
     imgdata.params.output_color=1;
     imgdata.params.output_bps=8;
     imgdata.params.use_fuji_rotate=1;
+    imgdata.params.exp_shift = 1.0;
     imgdata.params.auto_bright_thr = LIBRAW_DEFAULT_AUTO_BRIGHTNESS_THRESHOLD;
     imgdata.params.adjust_maximum_thr= LIBRAW_DEFAULT_ADJUST_MAXIMUM_THRESHOLD;
     imgdata.params.green_matching = 0;
@@ -277,7 +279,7 @@ void LibRaw:: recycle()
     ZERO(imgdata.masked_pixels);
     ZERO(imgdata.sizes);
     ZERO(imgdata.color);
-    ZERO(libraw_internal_data.internal_output_params);
+    ZERO(libraw_internal_data);
     memmgr.cleanup();
     imgdata.thumbnail.tformat = LIBRAW_THUMBNAIL_UNKNOWN;
     imgdata.progress_flags = 0;
@@ -1567,6 +1569,61 @@ void LibRaw::subtract_black()
         }
 }
 
+#define TBLN 65535
+
+void LibRaw::exp_bef(float shift, float smooth)
+{
+    // params limits
+    if(shift>8) shift = 8;
+    if(shift<0.25) shift = 0.25;
+    if(smooth < 0.0) smooth = 0.0;
+    if(smooth > 1.0) smooth = 1.0;
+    
+    unsigned short *lut = (ushort*)malloc((TBLN+1)*sizeof(unsigned short));
+
+    if(shift <=1.0)
+        {
+            for(int i=0;i<=TBLN;i++)
+                lut[i] = ushort((float)i*shift);
+        }
+    else
+        {
+            float x1,x2,y1,y2;
+
+            float cstops = log(shift)/log(2.0f);
+            float room = cstops*2;
+            float roomlin = powf(2.0f,room);
+            x2 = (float)TBLN;
+            x1 = (x2+1)/roomlin-1;
+            y1 = x1*shift;
+            y2 = x2*(1+(1-smooth)*(shift-1));
+            float sq3x=powf(x1*x1*x2,1.0f/3.0f);
+            float B = (y2-y1+shift*(3*x1-3.0f*sq3x)) / (x2+2.0f*x1-3.0f*sq3x);
+            float A = (shift - B)*3.0f*powf(x1*x1,1.0f/3.0f);
+            float CC = y2 - A*powf(x2,1.0f/3.0f)-B*x2;
+            for(int i=0;i<=TBLN;i++)
+                {
+                    float X = (float)i;
+                    float Y = A*powf(X,1.0f/3.0f)+B*X+CC;
+                    if(i<x1)
+                        lut[i] = ushort((float)i*shift);
+                    else
+                        lut[i] = Y<0?0:(Y>TBLN?TBLN:ushort(Y));
+                }
+        }
+    for(int i=0; i< S.height*S.width; i++)
+        {
+            imgdata.image[i][0] = lut[imgdata.image[i][0]];
+            imgdata.image[i][1] = lut[imgdata.image[i][1]];
+            imgdata.image[i][2] = lut[imgdata.image[i][2]];
+            imgdata.image[i][3] = lut[imgdata.image[i][3]];
+        }
+    for(int i=0;i<4;i++)
+        C.channel_maximum[i] = lut[C.channel_maximum[i]];
+    C.maximum = lut[C.maximum];
+    // no need to adjust the minumum, black is already subtracted
+    free(lut);
+}
 int LibRaw::dcraw_process(void)
 {
     int quality,i;
@@ -1577,6 +1634,9 @@ int LibRaw::dcraw_process(void)
     float linenoise=0; 
     float lclean=0,cclean=0;
     float thresh=0;
+    float preser=0;
+    float expos=1.0;
+
 
     CHECK_ORDER_LOW(LIBRAW_PROGRESS_LOAD_RAW);
     CHECK_ORDER_HIGH(LIBRAW_PROGRESS_PRE_INTERPOLATE);
@@ -1654,9 +1714,9 @@ int LibRaw::dcraw_process(void)
         if (O.es_med_passes >0 ) es_med_passes_fl = O.es_med_passes;
 
 // LIBRAW_DEMOSAIC_PACK_GPL3
-        //if (quality == 10 && O.amaze_ca_refine >0 ) {CA_correct_RT();}
 
         if (O.cfa_green >0) {thresh=O.green_thresh ;green_equilibrate(thresh);} 
+        if (O.exp_correc >0) {expos=O.exp_shift ; preser=O.exp_preser; exp_bef(expos,preser);} 
         if (O.ca_correc >0 ) {cablue=O.cablue; cared=O.cared; CA_correct_RT(cablue, cared);}
         if (O.cfaline >0 ) {linenoise=O.linenoise; cfa_linedn(linenoise);}
         if (O.cfa_clean >0 ) {lclean=O.lclean; cclean=O.cclean; cfa_impulse_gauss(lclean,cclean);}
