@@ -24,14 +24,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
+#include "opj_config.h"
 #include "opj_includes.h"
 
 /* ---------------------------------------------------------------------- */
-#ifdef WIN32
+#ifdef _WIN32
 #ifndef OPJ_STATIC
 BOOL APIENTRY
 DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
@@ -48,13 +49,13 @@ DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
     return TRUE;
 }
 #endif /* OPJ_STATIC */
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 /* ---------------------------------------------------------------------- */
 
 
 const char* OPJ_CALLCONV opj_version(void) {
-    return OPENJPEG_VERSION;
+    return PACKAGE_VERSION;
 }
 
 opj_dinfo_t* OPJ_CALLCONV opj_create_decompress(OPJ_CODEC_FORMAT format) {

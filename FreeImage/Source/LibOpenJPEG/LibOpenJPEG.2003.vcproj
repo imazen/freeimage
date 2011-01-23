@@ -497,6 +497,9 @@
 				RelativePath="openjpeg.h">
 			</File>
 			<File
+				RelativePath=".\opj_config.h">
+			</File>
+			<File
 				RelativePath="opj_includes.h">
 			</File>
 			<File

@@ -5,6 +5,252 @@ What's New for OpenJPEG
 ! : changed
 + : added
 
+January 18, 2001
+! [rdieter] cmake: SOVERSION change to 1 (from 1.4) to match auto-tools
+
+January 17, 2011
+- [rdieter] remove generated files (ticket 52)
+
+January 16, 2011
+* [antonin] convert.c: inclusion of endian.h has to be different on APPLE platforms
+
+January 13, 2011
++ [rdieter] add pkg-config support to cmake
+! [rdieter] adjust autotools pkg-config support to match
+* [rdieter] fix symlink creation (cmake)
+
+January 9, 2011 
+- [antonin] removed forgotten debug info in imagetopnm().
+
+January 9, 2011 
+! [antonin] imagetopnm() has been rewritten to allow 16-bits precision, and PAM (P7) support. See Netpbm for more info. (patch from szukw000).
+
+January 7, 2011
+! [szukw000] changed report code in Makefile.am
+
+January 3, 2011
+- [antonin] removed badly written tests from CTest in 'codec/CMakeLists.txt'
+
+_______ R697 : OPENJPEG 1.4 RELEASED ______________________________
+
+January 2, 2011
+* [antonin] bug fixes to enable cmake compilation on WIN32 platform
+			- fixed getopt bug in jpwl/CMakeLists.txt
+			- added png, zlib and lcms win32 libraries to libs directory
+			- updated libs/libtiff library
+			- moved j2k_dump_{image,cp} to j2k_dump.c to remain consistent with API interface
+			- changed mj2 cmake compilation method: as long as mj2 binaries do not strictly use the API interface, libopenjpeg source files are directly included in mj2 executables compilation.
+! [antonin] small update to xcode project
+
+December 14, 2010
+! [szukw000] adapted Makefile.am/Makefile.nix to build
+             choice: shared xor static
+
+December 11, 2010
+* [antonin] fixed flags when building jp3d with MinGW
+
+December 10, 2010
+! [szukw000] changed build choice in configure.ac/Makefile.am/Makefile.nix:
+             shared xor static
+
+December 9, 2010
+! [antonin] removed LCMS dependency in jp3d/libjp3dvm/CMakeLists.txt
+! [antonin] updated xcode project
+! [antonin] renamed jp3d/libjp3dvm/openjpeg.h => jp3d/libjp3dvm/openjpeg3d.h
+- [antonin] removed "codec/compat/" directory
+* [szukw000] updated Makefile.in
+! [szukw000] removed LCMS dependencies from Makefile.am/Makefile.nix
+
+December 8, 2010 
+  (thanks to Winfried for his help)
+* [antonin] changed remaining "WIN32" to "_WIN32"
+! [antonin] libopenjpeg has no more dependency on LCMS lib. Everything concerning color (icc profile, conversion to rgb, etc) has been put outside libopenjpeg and is used in j2k_to_image.c and mj2_to_frames.c.
+- [antonin] removed 'opj_convert{.c,.h}'
++ [antonin] added a directory 'common/' that contains 'getopt{.c,.h}' (previously in 'codec/compat').
++ [antonin] added files 'color{.c,.h}' in 'common/' that define the code for icc profile management and sycc_to_rgb conversion
++ [antonin] added 'common/format_defs.h' that contains common definitions used in image_to_j2k, j2k_to_image, j2k_dump.
+
+December 5, 2010
+! [antonin] revert to previous behaviour for cmake: builds (and links) dynamically by default. Static build only if -DBUILD_SHARED_LIBS is set to OFF.
+* [antonin] added a definition in getopt.h and an initial value in convert.c
+
+December 3, 2010
+* [antonin] workaround for name clash when building static and dynamic on WIN32 (see http://www.vtk.org/Bug/view.php?id=10190 for description) 
+
+November 28, 2010
+* [antonin] fixed a bug in codec/convert.c that prevented to build executables with WIN32 compiler (thanks winfried)
+! [antonin] changed cmake behaviour: executables are now always statically linked. When -DBUIL_SHARED_LIBS option is ON (the default), the shared versions of the libraries are also built (but executables remain linked against the static libraries).
+
+November 25, 2010
+* [antonin] fix compilation and DLL creation of libopenjpeg with MSYS/MinGW (from vincent.torri, see issue 47 on googlecode)
+
+November 22, 2010
+! [antonin] xcode : changed to native architecture build by default
+* [antonin] reverted 'include "../opj_config.h"' to 'include "opj_config.h"'
+
+November 17, 2010
+! [antonin] install man pages by default. install CHANGES and LICENSE
+! [antonin] minor changes in cmake files (from winfried)
+
+November 16, 2010
+! [antonin] minor changes in cmake flags
+
+November 15, 2010
+! [antonin] xcode project rewrite.
+! [antonin] changed imagetopng() function to correctly deal with non-standard bit-depths. Add png support for win32. (from winfried)
+* [antonin] minor changes in header inclusions
+* [antonin] complete rewrite of opj_convert.c with correct values (from winfried)
+
+November 11, 2010
+- [antonin] removed call to dirent.h in jp3d;
+
+October 28, 2010
+* [ben.boeckel] Set the soname and soversion on the jpwl library with CMake
++ [ben.boeckel] Install jpwl binaries with CMake
+
+October 26, 2010
+* [ben.boeckel] Install symlinks to versioned directory headers when using CMake
++ [ben.boeckel] Set the library version on jp3d when using CMake
+
+October 25, 2010
+* [ben.boeckel] Fix jp3d version
+
+October 24, 2010
+* [antonin] Fixed doxygen data inside source code (from winfried)
+
+October 22, 2010
+* [ben.boeckel] Don't install jp3d and libopenjpeg headers to the same place
+
+October 22, 2010
+* [ben.boeckel] Install man pages when using CMake
+
+October 22, 2010
+! [ben.boeckel] Default to building shared libraries
+
+October 22, 2010
+* [antonin] Patch to support the MSVC Win 64 builds (from szekerest)
+
+October 22, 2010
+* [antonin] Currently the Visual Studio builds are broken in the SVN. Attached a patch to fix this issue (from szekerest)
+
+October 22, 2010
+* [szukw000] replaced 'cp -d' with 'cp -P' for MacOSX
+
+October 22, 2010
+* [szukw000] 'jpwl/Makefile.am': added CFLAGS for bin_PROGRAMS
+
+October 22, 2010
++ [szukw000] added 'libopenjpeg.pc.in'
+! [szukw000] changed 'configure.ac' to create 'libopenjpeg.pc'
+! [szukw000] changed 'Makefile.am' to [un]install 'libopenjpeg.pc'
+! [szukw000] changed 'doc/Makefile.am' : 'uninstall-hook' added
+
+October 20, 2010 
+* [antonin] fixed help display (patch from winfried)
+
+October 20, 2010 
+* [antonin] 
+    fixed paths to png and tiff in CMakeLists.txt (patch from winfried)
+    fixed link to lcms library (patch from winfried)
+
+October 18, 2010 
+* [antonin] fixed options and help display (patch from winfried) 
+
+October 18, 2010
+! [szukw000]
+	doc/Makefile.am 
+	doc/Makefile.nix
+	jp3d/Makefile.nix
+	jpwl/Makefile.nix
+	Makefile.nix
+	config.nix
+
+October 17, 2010
+! [szukw000]
+	configure.ac : 'enable_shared' YES by default
+	doc/Makefile.am :
+		'all-local' and 'install-data-hook' added
+		'with_doxygen' conditional added
+	Makefile.am : 'doc' directory no longer substituted in SUBDIRS
+
+	to link binaries statically: '-static' added to:
+		codec/Makefile.am
+		mj2/Makefile.am
+		jpwl/Makefile.am
+		jp3d/codec/Makefile.am
+
+	mj2/Makefile.am : 'with_libjpwl' removed
+	mj2/Makefile.nix : 'with_libjpwl' removed
+
+	config.nix : 'WITH_JPWL', 'WITH_JP3D' added
+	doc/Makefile.nix : 'clean', 'install', 'uninstall' added
+	Makefile.nix : 'WITH_JPWL', 'WITH_JP3D' added
+
+	INSTALL : topic 3) changed regarding the changes in 'config.nix'
+
+October 13, 2010
+! [szukw000] 
+	configure.ac
+	bootstrap.sh
+
+	'with_libjpwl' removed from:
+		libopenjpeg/Makefile.am
+		codec/Makefile.am
+		codec/Makefile.nix
+		Makefile.nix
+
+October 10, 2010
+* [antonin] Patch from winfried
+
+				1. The jp3d/libjp3dvm/Makefile.am has been changed:
+
+				Installing: /usr/local/TEST_CONFIG/include/openjpeg3d-1.3/
+				Installing: /usr/local/TEST_CONFIG/include/openjpeg3d-1.3/openjpeg3d.h
+
+				PREFIX/include:
+
+					 23  openjpeg.h -> openjpeg-1.4/openjpeg.h
+					 27  openjpeg3d.h -> openjpeg3d-1.3/openjpeg3d.h
+
+				28773  openjpeg-1.4/openjpeg.h
+				22158  openjpeg3d-1.3/openjpeg3d.h
+					
+				2. The jp3d/Makefile.nix has been changed respectivly.
+					
+				3. The mj2/Makefile.nix contained a wrong path to 'compat/'
+					
+				4. opj_config.h.in.user contained a comment within a comment.
+					
+				5. 'autoreconf' reported that AC_PROG_RANLIB is no longer
+					necessary in 'configure.ac'.
+
+October 08, 2010
+* [antonin] fixed a bug in mj2.c that prevented extract_j2k_from_mj2 to build properly. Patch from winfried.
+
+October 04, 2010
++ [antonin] Added files to let people build openjpeg with 'configure' tools
++ [antonin] Added makefiles to let people manually build openjpeg on *nix platforms
+- [antonin] Removed obsolete Makefiles
+! [antonin] Renamed dirent.h to windirent.h
+! [antonin] Made optional the PNG, TIFF, and LCMS support in CMake files
++ [antonin] Added opj_config* files to configure openjpeg before building it (opj_config.h generated by 'configure', cmake, or manually by the user) 
+! [antonin] Renamed this file from ChangeLog to CHANGES
+! [antonin] Renamed 'License.txt' to 'LICENSE'
+! [antonin] Updated README files
++ [antonin] Added INSTALL and LICENSE files
++ [antonin] Added man pages
+
+June 22, 2010
++ [MM] Apply patch from w. szukalski (sent to list)
++ [MM] Also dump the image info as well as cp info.
+
+June 21, 2010
++ [MM] Added a j2k_dump to simply dump the parameter of a J2K file
+
+May 26, 2010
++ [antonin] Added CTestConfig.cmake to the root directory to incorporate the testing dashboard.
++ [antonin] MACOSX : Added a "build all" target to the XCode project file.
+
 April 16, 2010
 * [antonin] MACOSX : Fixed the XCode project file to link with the PNG library. Library and header should be located in /usr/local/lib/ and /usr/local/include/, respectively. Check http://ethan.tira-thompson.org/Mac_OS_X_Ports.html if it is not the case on your mac.
 
@@ -13,7 +259,7 @@ April 8, 2010
 * [FOD] Fixed problem with Borland C++ Builder (Borland C do not have lrintf). Thanks Marek Mauder for this fix.
 * [FOD] Fixed pi.c bug (issue 15 on google code). Thanks to Anton Lionel for catching this.
 * [FOD] Fixed MJ2 codec bugs (issues 23-24 on google code). Thanks to Winfried for these patches
-* [FOD] Fixed JP3D codec file format analyzer. Thanks to Kristóf Ralovich for this patch.
+* [FOD] Fixed JP3D codec file format analyzer. Thanks to KristÃ³f Ralovich for this patch.
 ! [FOD] Significant optimizations of MCT, DWT, MQ and T1 modules by Peter Wimmer (thanks Peter)
 
 March 26, 2010
@@ -97,7 +343,7 @@ February 11, 2008
 
 February 5, 2008
 ! [Parvatha] In convert.c, corrected imagetobmp() conversion for grayscale. In tcd.c, corrected Rate modification in
-  tcd_init_encode(). Thanks to Jeremy Furtek and Jérôme Fimes.
+  tcd_init_encode(). Thanks to Jeremy Furtek and JÃ©rÃ´me Fimes.
 
 January 31, 2008
 ! [GB] In opjviewer, unification of JPEG 2000 family handlers (*.jp2, *.mj2, *.j2k) in a single file
@@ -407,7 +653,7 @@ March 30, 2007
 * [GB] OPJViewer should now work under Linux, at least with not big j2k files. Tested under Suse 10.1 64 bit.
 
 March 29, 2007
-* [Parvatha] Enable accepting file names with `-´ symbol .Modification getopt.c
+* [Parvatha] Enable accepting file names with `-Â´ symbol .Modification getopt.c
 * [Parvatha] Rsiz profile name generation to be STD_RSIZ for profiles which are not DCI compliant.Modification in image_to_j2k.c
 ! [Parvatha] renamed convert_progression_order to j2k_convert_progression_order. Modification j2k.c
 * [Parvatha] Calculation of number of tile part in each tile in j2k_calculate_tp. Modification j2k.c
@@ -424,7 +670,7 @@ March 28, 2007
 March 27, 2007
 + [GB] Improved parsing in OPJViewer, as well some minor aesthetic modifications; support for image rendering with bit depths lower than 8 bits; 
 		can display an arbitrary frame of an MJ2 file (only in B/W, though); can reload a file; better resizing capabilities
-* [GB] Following to Hervé's suggestions, all the exit() calls, added by JPWL strict checking in t2.c and j2k.c, 
+* [GB] Following to HervÃ©'s suggestions, all the exit() calls, added by JPWL strict checking in t2.c and j2k.c, 
 		have been substituted with (object free'ing + opj_evt_message(EVT_ERROR) + return)
 + [GB] Added linking to TIFF library in the JPWL VC6 workspaces
 
