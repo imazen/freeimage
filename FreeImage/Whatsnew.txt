@@ -9,6 +9,8 @@ Month day, 2010 - 3.15.0
 ! FreeImage now uses LibRaw 0.13-Beta3
 ! FreeImage now uses LibPNG 1.4.5
 ! FreeImage now uses LibTIFF 3.9.4 (CVS patch 2011-01-03)
+! FreeImage now uses LibJPEG 8c
+! FreeImage now uses OpenJPEG 1.4.0 (SVN patch 2011-01-18)
 ! [Herve Drolon] FreeImage_CloneMetadata now clone resolution info returned by FreeImage_GetDotsPerMeter(X / Y)
 + [Herve Drolon] added loading support for "half float" format to TIF plugin
 + [Herve Drolon] FreeImage_IsTransparent is now independant of FREE_IMAGE_TYPE
