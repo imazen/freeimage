@@ -182,7 +182,19 @@
 				RelativePath=".\pngconf.h">
 			</File>
 			<File
+				RelativePath=".\pngdebug.h">
+			</File>
+			<File
+				RelativePath=".\pnginfo.h">
+			</File>
+			<File
+				RelativePath=".\pnglibconf.h">
+			</File>
+			<File
 				RelativePath=".\pngpriv.h">
+			</File>
+			<File
+				RelativePath=".\pngstruct.h">
 			</File>
 		</Filter>
 	</Files>
