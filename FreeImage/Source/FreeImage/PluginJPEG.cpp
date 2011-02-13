@@ -186,8 +186,12 @@ METHODDEF(boolean)
 empty_output_buffer (j_compress_ptr cinfo) {
 	freeimage_dst_ptr dest = (freeimage_dst_ptr) cinfo->dest;
 
-	if (dest->m_io->write_proc(dest->buffer, 1, OUTPUT_BUF_SIZE, dest->outfile) != OUTPUT_BUF_SIZE)
-		throw(cinfo, JERR_FILE_WRITE);
+	if (dest->m_io->write_proc(dest->buffer, 1, OUTPUT_BUF_SIZE, dest->outfile) != OUTPUT_BUF_SIZE) {
+		// let the memory manager delete any temp files before we die
+		jpeg_destroy((j_common_ptr)cinfo);
+
+		throw(JERR_FILE_WRITE);
+	}
 
 	dest->pub.next_output_byte = dest->buffer;
 	dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
@@ -210,8 +214,12 @@ term_destination (j_compress_ptr cinfo) {
 	// write any data remaining in the buffer
 
 	if (datacount > 0) {
-		if (dest->m_io->write_proc(dest->buffer, 1, (unsigned int)datacount, dest->outfile) != datacount)
-		  throw(cinfo, JERR_FILE_WRITE);
+		if (dest->m_io->write_proc(dest->buffer, 1, (unsigned int)datacount, dest->outfile) != datacount) {
+			// let the memory manager delete any temp files before we die
+			jpeg_destroy((j_common_ptr)cinfo);
+			
+			throw(JERR_FILE_WRITE);
+		}
 	}
 }
 
@@ -255,8 +263,14 @@ fill_input_buffer (j_decompress_ptr cinfo) {
 	size_t nbytes = src->m_io->read_proc(src->buffer, 1, INPUT_BUF_SIZE, src->infile);
 
 	if (nbytes <= 0) {
-		if (src->start_of_file)	/* Treat empty input file as fatal error */
-			throw(cinfo, JERR_INPUT_EMPTY);
+		if (src->start_of_file)	{
+			// treat empty input file as fatal error
+
+			// let the memory manager delete any temp files before we die
+			jpeg_destroy((j_common_ptr)cinfo);
+
+			throw(JERR_INPUT_EMPTY);
+		}
 
 		WARNMS(cinfo, JWRN_JPEG_EOF);
 
@@ -1433,13 +1447,15 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			FREE_IMAGE_COLOR_TYPE color_type = FreeImage_GetColorType(dib);
 			WORD bpp = (WORD)FreeImage_GetBPP(dib);
 
-			if ((bpp != 24) && (bpp != 8))
+			if ((bpp != 24) && (bpp != 8)) {
 				throw sError;
+			}
 
 			if(bpp == 8) {
 				// allow grey, reverse grey and palette 
-				if ((color_type != FIC_MINISBLACK) && (color_type != FIC_MINISWHITE) && (color_type != FIC_PALETTE))
+				if ((color_type != FIC_MINISBLACK) && (color_type != FIC_MINISWHITE) && (color_type != FIC_PALETTE)) {
 					throw sError;
+				}
 			}
 
 
