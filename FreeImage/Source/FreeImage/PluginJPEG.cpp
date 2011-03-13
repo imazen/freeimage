@@ -577,7 +577,7 @@ jpeg_read_icc_profile(j_decompress_ptr cinfo, JOCTET **icc_data_ptr, unsigned *i
 /**
 	Read JPEG_APPD marker (IPTC or Adobe Photoshop profile)
 */
-BOOL 
+static BOOL 
 jpeg_read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 	return read_iptc_profile(dib, dataptr, datalen);
 }
