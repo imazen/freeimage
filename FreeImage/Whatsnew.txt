@@ -6,9 +6,11 @@ What's New for FreeImage
 + : added
 
 Month Day, 2011 - 3.15.1
-! FreeImage now uses LibRaw 0.13.1
+! FreeImage now uses LibRaw 0.13.2
 ! FreeImage now uses LibPNG 1.5.1
 * [Herve Drolon] fixed a memory leak in JPEG plugin occuring when loading some corrupted images
+* [Eberhard Mattes] improved thread safety behavior inside internal TagLib class
+* [Hew How Chee] fixed a bug in FreeImage_EnlargeCanvas when called with negative left and right parameters and bpp <= 4
 
 January 24th, 2011 - 3.15.0
 ! FreeImage now uses LibRaw 0.13-Beta3
