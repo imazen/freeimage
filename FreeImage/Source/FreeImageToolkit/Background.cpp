@@ -826,8 +826,8 @@ FreeImage_EnlargeCanvas(FIBITMAP *src, int left, int top, int right, int bottom,
 		FIBITMAP *copy = FreeImage_Copy(src,
 			((left >= 0) ? 0 : -left),
 			((top >= 0) ? 0 : -top),
-			width - 1 - ((right >= 0) ? 0 : -top),
-			height - 1 - ((bottom >= 0) ? 0 : -bottom));
+			((width+right)>width)?width:(width+right),
+			((height+bottom)>height)?height:(height+bottom));
 		
 		if (!copy) {
 			FreeImage_Unload(dst);
