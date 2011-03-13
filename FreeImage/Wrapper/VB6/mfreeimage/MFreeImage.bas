@@ -152,6 +152,9 @@ Option Explicit
 '! : changed
 '+ : added
 '
+' March 13, 2011 - 2.14
+'* [Glenn Thorpe] fixed a typo error with the call to FreeImage_HasPixels inside FreeImage_CreateMask 
+'
 'August 11, 2010 - 2.13
 '+ [Carsten Klein] added PSD load flags PSD_CMYK and PSD_LAB as well as the enum constants FILO_PSD_CYMK and FILO_PSD_LAB.
 '+ [Carsten Klein] added TIFF_LOGLUV save flag as well as the enum constant FISO_TIFF_LOGLUV.
@@ -8617,7 +8620,7 @@ Dim i As Long
                    (lBitDepth = 24) Or _
                    (lBitDepth = 32))) Then
                    
-      If (Not FreeImage_HasPixels(Bitmap)) Then
+      If (Not FreeImage_HasPixels(hDIB)) Then
          Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
                         "Unable to create a mask image from a 'header-only' bitmap.")
       End If

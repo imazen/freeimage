@@ -5,6 +5,9 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+March 13, 2011 - 2.14
+* [Glenn Thorpe] fixed a typo error with the call to FreeImage_HasPixels inside FreeImage_CreateMask 
+
 August 11, 2010 - 2.13
 + [Carsten Klein] added PSD load flags PSD_CMYK and PSD_LAB as well as the enum constants FILO_PSD_CYMK and FILO_PSD_LAB.
 + [Carsten Klein] added TIFF_LOGLUV save flag as well as the enum constant FISO_TIFF_LOGLUV.
