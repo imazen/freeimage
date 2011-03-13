@@ -18,6 +18,7 @@ unit FreeImage;
 //                   updated to 3.13.1, made RAD2010 compliant (unicode)
 // 2010-07-29  LM    Added Free Pascal / Lazarus 32 bit support
 // 2010-11-12  LM    Updated to 3.14.1
+// 2011-02-15  LM    Updated to 3.15.0
 //
 // This file is part of FreeImage 3
 //
@@ -90,8 +91,8 @@ const
 const
   // Version information
   FREEIMAGE_MAJOR_VERSION  = 3;
-  FREEIMAGE_MINOR_VERSION  = 14;
-  FREEIMAGE_RELEASE_SERIAL = 1;
+  FREEIMAGE_MINOR_VERSION  = 15;
+  FREEIMAGE_RELEASE_SERIAL = 0;
   // This really only affects 24 and 32 bit formats, the rest are always RGB order.
   FREEIMAGE_COLORORDER_BGR = 0;
   FREEIMAGE_COLORORDER_RGB = 1;
@@ -520,6 +521,7 @@ const
   JPEG_SUBSAMPLING_422 = $8000;  // save with low 2x1 chroma subsampling (4:2:2)
   JPEG_SUBSAMPLING_444 = $10000; // save with no chroma subsampling (4:4:4)
   JPEG_OPTIMIZE       = $20000; // on saving, compute optimal Huffman coding tables (can reduce a few percent of file size)
+  JPEG_BASELINE       = $40000; // save basic JPEG, without metadata or any markers
   KOALA_DEFAULT       = 0;
   LBM_DEFAULT         = 0;
   MNG_DEFAULT         = 0;
@@ -911,6 +913,11 @@ function FreeImage_GetBackgroundColor(dib: PFIBITMAP; var bkcolor: RGBQUAD): Boo
 function FreeImage_SetBackgroundColor(dib: PFIBITMAP; bkcolor: PRGBQuad): Boolean; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetBackgroundColor@8'{$ENDIF};
 
+function FreeImage_GetThumbnail(dib: PFIBITMAP): PFIBITMAP; stdcall;
+  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetThumbnail@4'{$ENDIF};
+function FreeImage_SetThumbnail(dib, thumbnail: PFIBITMAP): Boolean; stdcall;
+  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetThumbnail@8'{$ENDIF};
+
 // --------------------------------------------------------------------------
 // ICC profile routines -----------------------------------------------------
 // --------------------------------------------------------------------------
@@ -1058,6 +1065,8 @@ function FreeImage_ConvertToFloat(dib: PFIBITMAP): PFIBITMAP;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToFloat@4'{$ENDIF};
 function FreeImage_ConvertToRGBF(dib: PFIBITMAP): PFIBITMAP; stdcall;
   external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToRGBF@4'{$ENDIF};
+function FreeImage_ConvertToUINT16(dib: PFIBITMAP): PFIBITMAP; stdcall;
+  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToUINT16@4'{$ENDIF};
 
 function FreeImage_ConvertToStandardType(src: PFIBITMAP;
   scale_linear: Boolean = True): PFIBITMAP; stdcall;
