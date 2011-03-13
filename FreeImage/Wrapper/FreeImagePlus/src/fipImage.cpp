@@ -617,6 +617,14 @@ BOOL fipImage::dither(FREE_IMAGE_DITHER algorithm) {
 	return FALSE;
 }
 
+BOOL fipImage::convertToFloat() {
+	if(_dib) {
+		FIBITMAP *dib = FreeImage_ConvertToFloat(_dib);
+		return replace(dib);
+	}
+	return FALSE;
+}
+
 BOOL fipImage::convertToRGBF() {
 	if(_dib) {
 		FIBITMAP *dib = FreeImage_ConvertToRGBF(_dib);
