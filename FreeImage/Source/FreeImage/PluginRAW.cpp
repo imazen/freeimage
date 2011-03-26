@@ -260,15 +260,10 @@ libraw_LoadRawData(LibRaw& RawProcessor, int bitspersample) {
 			RawProcessor.imgdata.params.gamm[0] = 1/2.222;
 			RawProcessor.imgdata.params.gamm[1] = 4.5;
 		}
-		// (-w) Use camera white balance, if possible (otherwise, fallback to auto_wb)
-		RawProcessor.imgdata.params.use_camera_wb = 1;
 		// (-a) Use automatic white balance obtained after averaging over the entire image
 		RawProcessor.imgdata.params.use_auto_wb = 1;
 		// (-q 3) Adaptive homogeneity-directed demosaicing algorithm (AHD)
 		RawProcessor.imgdata.params.user_qual = 3;
-
-		// RAW data filtration mode during data unpacking and postprocessing
-		RawProcessor.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
 
 		// -----------------------
 
@@ -445,6 +440,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	try {
 		// wrap the input datastream
 		LibRaw_freeimage_datastream datastream(io, handle);
+
+		// set decoding parameters
+		// the following parameters affect data reading
+		// --------------------------------------------
+
+		// (-w) Use camera white balance, if possible (otherwise, fallback to auto_wb)
+		RawProcessor.imgdata.params.use_camera_wb = 1;
+		// RAW data filtration mode during data unpacking and postprocessing
+		RawProcessor.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
+		// (-h) outputs the image in 50% size
+		RawProcessor.imgdata.params.half_size = ((flags & RAW_HALFSIZE) == RAW_HALFSIZE) ? 1 : 0;
 
 		// open the datastream
 		if(RawProcessor.open_datastream(&datastream) != LIBRAW_SUCCESS) {
