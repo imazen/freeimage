@@ -70,7 +70,12 @@ FreeImage_ConvertToUINT16(FIBITMAP *dib) {
 	const unsigned height = FreeImage_GetHeight(src);
 
 	dst = FreeImage_AllocateT(FIT_UINT16, width, height);
-	if(!dst) return NULL;
+	if(!dst) {
+		if(src != dib) {
+			FreeImage_Unload(src);
+		}
+		return NULL;
+	}
 
 	// copy metadata from src to dst
 	FreeImage_CloneMetadata(dst, src);
