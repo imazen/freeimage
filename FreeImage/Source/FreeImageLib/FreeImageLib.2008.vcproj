@@ -418,6 +418,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\FreeImage\ConversionRGB16.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\FreeImage\ConversionRGBF.cpp"
 					>
 				</File>
