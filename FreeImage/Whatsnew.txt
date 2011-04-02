@@ -6,7 +6,7 @@ What's New for FreeImage
 + : added
 
 Month Day, 2011 - 3.15.1
-! FreeImage now uses LibRaw 0.13.2
+! FreeImage now uses LibRaw 0.13.4
 ! FreeImage now uses LibPNG 1.5.1
 + [Herve Drolon] added FreeImage_ConvertToRGB16 and updated FreeImage_ConvertToType
 + [Herve Drolon] added RAW_HALFSIZE flag to RAW plugin
