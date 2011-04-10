@@ -908,6 +908,8 @@ static TagInfo
 	{  0x0042, (char *) "FilmMode", (char *) NULL},
 	{  0x0046, (char *) "WBAdjustAB", (char *) NULL},
 	{  0x0047, (char *) "WBAdjustGM", (char *) NULL},
+	{  0x004B, (char *) "PanasonicImageWidth", (char *) NULL},
+	{  0x004C, (char *) "PanasonicImageHeight", (char *) NULL},
 	{  0x004D, (char *) "AFPointPosition", (char *) NULL},
 	{  0x004E, (char *) "FaceDetInfo", (char *) NULL},
 	{  0x0051, (char *) "LensType", (char *) NULL},
