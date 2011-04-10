@@ -1081,11 +1081,7 @@ check for uncommon bitspersample values (e.g. 10, 12, ...)
 */
 static BOOL 
 IsValidBitsPerSample(uint16 photometric, uint16 bitspersample, uint16 samplesperpixel) {
-	// check for missing mandatory tags
-	const uint16 missing_value = (uint16)-1;
-	if((photometric == missing_value) || (bitspersample == missing_value) || (samplesperpixel == missing_value)) {
-		return FALSE;
-	}
+
 	switch(bitspersample) {
 		case 1:
 		case 4:
@@ -1294,10 +1290,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	TIFF   *tif = NULL;
 	uint32 height = 0; 
 	uint32 width = 0; 
-	uint16 bitspersample = (uint16)-1;
-	uint16 samplesperpixel = (uint16)-1;
+	uint16 bitspersample = 1;
+	uint16 samplesperpixel = 1;
 	uint32 rowsperstrip = (uint32)-1;  
-	uint16 photometric = (uint16)-1;
+	uint16 photometric = PHOTOMETRIC_MINISWHITE;
 	uint16 compression = (uint16)-1;
 	uint16 planar_config;
 
