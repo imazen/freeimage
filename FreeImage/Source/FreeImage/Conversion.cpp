@@ -329,7 +329,6 @@ ConvertLABtoRGB(FIBITMAP* dib) {
 
 FIBITMAP* 
 RemoveAlphaChannel(FIBITMAP* src) { 
-	FIBITMAP *dst = NULL;
 
 	if(!FreeImage_HasPixels(src)) {
 		return NULL;
@@ -337,9 +336,6 @@ RemoveAlphaChannel(FIBITMAP* src) {
 
 	const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(src);
 		
-	const unsigned width = FreeImage_GetWidth(src);
-	const unsigned height = FreeImage_GetHeight(src);
-	
 	switch(image_type) {
 		case FIT_BITMAP:
 			if(FreeImage_GetBPP(src) == 32) {
@@ -349,8 +345,7 @@ RemoveAlphaChannel(FIBITMAP* src) {
 			break;
 		case FIT_RGBA16:
 			// convert to RGB16
-			dst = FreeImage_AllocateT(FIT_RGB16, width, height);
-			break;
+			return FreeImage_ConvertToRGB16(src);
 		case FIT_RGBAF:
 			// convert to RGBF
 			return FreeImage_ConvertToRGBF(src);
@@ -359,40 +354,7 @@ RemoveAlphaChannel(FIBITMAP* src) {
 			return NULL;
 	}
 
-	if(!dst) {
-		return NULL;
-	}
-		
-	BYTE *src_line_start = FreeImage_GetScanLine(src, 0);
-	BYTE *dst_line_start = FreeImage_GetScanLine(dst, 0);
-
-	const unsigned src_pitch = FreeImage_GetPitch(src);
-	const unsigned src_bytesperpixel = FreeImage_GetBPP(src) / 8;
-
-	const unsigned dst_pitch = FreeImage_GetPitch(dst);
-	const unsigned dst_bytesperpixel = FreeImage_GetBPP(dst) / 8;
-
-	for(unsigned y = 0; y < height; y++) {
-		BYTE *src_line = src_line_start;
-		BYTE *dst_line = dst_line_start;
-		
-		for(unsigned x = 0; x < width; x++) {
-
-			for(unsigned b = 0; b < dst_bytesperpixel; b++) {
-				dst_line[b] = src_line[b];
-			}
-				
-			src_line += src_bytesperpixel;
-			dst_line += dst_bytesperpixel;
-		}
-		src_line_start += src_pitch;
-		dst_line_start += dst_pitch;
-	}
-	
-	// copy metadata from src to dst
-	FreeImage_CloneMetadata(dst, src);
-	
-	return dst;
+	return NULL;
 }
 
 
