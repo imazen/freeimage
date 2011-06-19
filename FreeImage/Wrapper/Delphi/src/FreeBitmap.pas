@@ -15,7 +15,17 @@ unit FreeBitmap;
 // When        Who   What
 // ----------- ----- -----------------------------------------------------------
 // 2010-07-14  LM    made RAD2010 compliant (unicode)
-//
+// 2011-03-04  JMB   modifications to run on 64 bits (Windows and linux) :
+//                     - FreeImage_RotateClassic : deprecated function, call to DeprecationManager in 64 bits crashes freeimage.dll
+//                     ==> FreeImage_RotateClassic : replaced by FreeImage_Rotate
+//                   modifications to run on linux :
+//                     - exclude windows specific functions by compilation directives
+//                   some corrections in :
+//                     - TFreeBitmap.DoChanging
+//                     - TFreeBitmap.IsGrayScale
+//                     - TFreeWinBitmap.CopyFromBitmap
+//                     - TFreeMultiBitmap.Open
+
 // This file is part of FreeImage 3
 //
 // COVERED CODE IS PROVIDED UNDER THIS LICENSE ON AN "AS IS" BASIS, WITHOUT WARRANTY
@@ -42,7 +52,11 @@ interface
 {$I 'Version.inc'}
 
 uses
-  SysUtils, Classes, Windows, FreeImage;
+  SysUtils, Classes,
+{$IFDEF MSWINDOWS}
+  Windows,
+{$ENDIF}
+  FreeImage;
 
 type
   { TFreeObject }
@@ -232,6 +246,7 @@ type
     destructor Destroy; override;
 
     procedure Clear; override;
+{$IFDEF MSWINDOWS}
     function CopyToHandle: THandle;
     function CopyFromHandle(HMem: THandle): Boolean;
     function CopyFromBitmap(HBmp: HBITMAP): Boolean;
@@ -242,6 +257,7 @@ type
 
     procedure Draw(DC: HDC; Rect: TRect);
     procedure DrawEx(DC: HDC; Rect: TRect; UseFileBkg: Boolean = False; AppBkColor: PRGBQuad = nil; Bg: PFIBITMAP = nil);
+{$ENDIF}
   end;
 
   { TFreeMemoryIO }
@@ -780,7 +796,7 @@ end;
 function TFreeBitmap.GetMetadata(Model: FREE_IMAGE_MDMODEL;
   const Key: AnsiString; var Tag: TFreeTag): Boolean;
 begin
-  Result := FreeImage_GetMetaData(Model, FDib, PAnsiChar(Key), Tag.FTag);
+  Result := FreeImage_GetMetadata(Model, FDib, PAnsiChar(Key), Tag.FTag);
 end;
 
 function TFreeBitmap.GetMetadataCount(Model: FREE_IMAGE_MDMODEL): Cardinal;
@@ -865,7 +881,12 @@ end;
 function TFreeBitmap.IsGrayScale: Boolean;
 begin
   Result := (FreeImage_GetBPP(FDib) = 8)
-            and (FreeImage_GetColorType(FDib) = FIC_PALETTE); 
+// modif JMB NOVAXEL
+// 	FIC_PALETTE isn't enough to tell the bitmap is grayscale
+//            and (FreeImage_GetColorType(FDib) = FIC_PALETTE);
+            and ((FreeImage_GetColorType(FDib) = FIC_MINISBLACK) or
+            		(FreeImage_GetColorType(FDib) = FIC_MINISWHITE));
+// end of modif JMB NOVAXEL
 end;
 
 function TFreeBitmap.IsTransparent: Boolean;
@@ -1240,7 +1261,11 @@ begin
     Bpp := FreeImage_GetBPP(FDib);
     if Bpp in [1, 8, 24, 32] then
     begin
-      Rotated := FreeImage_RotateClassic(FDib, Angle);
+// modif JMB : FreeImage_RotateClassic : deprecated function, call to DeprecationManager in 64 bits crash freeimage.dll
+      //Rotated := FreeImage_RotateClassic(FDib, Angle);
+      Rotated := FreeImage_Rotate(FDib, Angle, nil);
+// end of modif JMB
+      //Rotated := FreeImage_Rotate(FDib, Angle);
       Result := Replace(Rotated);
     end
   end;
@@ -1399,7 +1424,7 @@ begin
         Pal.rgbBlue := I;
         Pal.rgbGreen := I;
         Pal.rgbRed := I;
-        Inc(Pal, SizeOf(RGBQUAD));
+        Inc(Pal);//, SizeOf(RGBQUAD));
       end;
     end;
   end;
@@ -1463,7 +1488,7 @@ begin
 end;
 
 { TFreeWinBitmap }
-
+{$IFDEF MSWINDOWS}
 function TFreeWinBitmap.CaptureWindow(ApplicationWindow,
   SelectedWindow: HWND): Boolean;
 var
@@ -1539,6 +1564,7 @@ begin
 
   Result := True;
 end;
+{$ENDIF}
 
 procedure TFreeWinBitmap.Clear;
 begin
@@ -1546,11 +1572,16 @@ begin
   inherited;
 end;
 
+{$IFDEF MSWINDOWS}
 function TFreeWinBitmap.CopyFromBitmap(HBmp: HBITMAP): Boolean;
 var
   bm: BITMAP;
   DC: HDC;
   Success: Integer;
+// modif NOVAXEL
+  nColors : integer;
+  bmih: PBitmapInfoHeader;
+// end of modif NOVAXEL
 begin
   Result := False;
 
@@ -1562,6 +1593,12 @@ begin
     // create the image
     SetSize(FIT_BITMAP, bm.bmWidth, bm.bmHeight, bm.bmBitsPixel);
 
+// modif NOVAXEL
+    // GetDIBits clears the biClrUsed and biClrImportant BITMAPINFO properties.
+    // So for the Palettized bitmaps, we need to save the count of colors and
+    // to restore it after the call to GetDIBits
+    nColors := GetColorsUsed;
+// end of modif NOVAXEL
     // create the device context for the bitmap
     DC := GetDC(0);
 
@@ -1576,6 +1613,12 @@ begin
     );
 
     ReleaseDC(0, DC);
+// modif NOVAXEL
+    // as seen above, wr restore the properties which have been cleared by GetDIBits
+    bmih := GetInfoHeader;
+    bmih.biClrUsed := nColors;
+    bmih.biClrImportant := nColors;
+// end of modif NOVAXEL
 
     if Success = 0 then
       raise Exception.Create('Error: GetDIBits failed')
@@ -1731,6 +1774,7 @@ begin
     GlobalUnlock(Result);
   end;
 end;
+{$ENDIF}
 
 constructor TFreeWinBitmap.Create(ImageType: FREE_IMAGE_TYPE; Width,
   Height, Bpp: Integer);
@@ -1748,6 +1792,7 @@ begin
   inherited;
 end;
 
+{$IFDEF MSWINDOWS}
 procedure TFreeWinBitmap.Draw(DC: HDC; Rect: TRect);
 begin
   DrawEx(DC, Rect);
@@ -1827,6 +1872,7 @@ begin
   end;
   CloseClipboard;
 end;
+{$ENDIF}
 
 { TFreeMultiBitmap }
 
@@ -1910,8 +1956,15 @@ var
 begin
   Result := False;
 
-  // try to guess the file format from the filename
-  fif := FreeImage_GetFIFFromFilename(PAnsiChar(FileName));
+// modif NOVAXEL
+// In order to try to get the file format even if the extension is not standard,
+// we check first the file signature
+  fif := FreeImage_GetFileType(PAnsiChar(Filename), 0);
+  if fif = FIF_UNKNOWN then
+    // no signature?
+// end of modif NOVAXEL
+	// try to guess the file format from the filename
+  	fif := FreeImage_GetFIFFromFilename(PAnsiChar(FileName));
 
   // check for supported file types
   if (fif <> FIF_UNKNOWN) and (not fif in [FIF_TIFF, FIF_ICO, FIF_GIF]) then

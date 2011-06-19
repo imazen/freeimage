@@ -14,6 +14,7 @@
 // ----------- ----- -----------------------------------------------------------
 // 2010-07-29  LM    Added Free Pascal / Lazarus 32 bit support
 // 2010-11-12  LM    Added Delphi XE support
+// 2011-03-04  JMB   Added 64 bit compiler support
 //
 // This file is part of FreeImage 3
 //
@@ -41,7 +42,7 @@
 {$IFDEF FPC}
   //Free pascal
   {$IFNDEF CPU32}
-    {$ERROR "64 bit platforms not tested yet. Remove this line if you feel brave."}
+    //{$ERROR "64 bit platforms not tested yet. Remove this line if you feel brave."}
   {$ENDIF}
   {$IFNDEF ENDIAN_LITTLE}
     {$ERROR "Big endian CPUs not tested yet. Remove this line if you feel brave."}

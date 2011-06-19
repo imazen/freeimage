@@ -19,6 +19,16 @@ unit FreeImage;
 // 2010-07-29  LM    Added Free Pascal / Lazarus 32 bit support
 // 2010-11-12  LM    Updated to 3.14.1
 // 2011-02-15  LM    Updated to 3.15.0
+// 2011-03-04  JMB   Modifications to compile on Free Pascal / Lazarus 64 bits (tested on Windows 7 and linux OpenSuse) :
+//                   - in 64 bits, the names of the exported function are different :
+//                      e.g. : _FreeImage_AcquireMemory@12 in 32 bits and FreeImage_AcquireMemory in 64 bits
+//                      so the define WIN32 will allow to distinguish 32 and 64 bits in the calls to the freeimage library
+//                   - in 64 bits, the Boolean type is not correctly converted to freeimage BOOL type (integer 32 bits)
+//                    ==> replace Boolean with LongBool in the calls to the freeimage library
+//                   - as linux sees the difference between uppercase and lowercase :
+//                    ==> replace FreeImage_GetMetaData with FreeImage_GetMetadata in the call to the freeimage library
+//
+
 //
 // This file is part of FreeImage 3
 //
@@ -82,6 +92,11 @@ type
   LPBITMAPINFO = ^BITMAPINFO;
   PBITMAPINFO = ^BITMAPINFO;
   TBITMAPINFO = BITMAPINFO;
+// modif JMB NOVAXEL
+  HBITMAP = type LongWord;
+  HWND = type LongWord;
+  HDC = type LongWord;
+// end of modif JMB NOVAXEL
 {$ENDIF}
 
 const
@@ -438,7 +453,7 @@ type
   FI_ExtensionListProc = function: PAnsiChar; stdcall;
   FI_RegExprProc = function: PAnsiChar; stdcall;
   FI_OpenProc = function(io: PFreeImageIO; handle: fi_handle;
-    read: Boolean): Pointer; stdcall;
+    read: LongBool): Pointer; stdcall;
   FI_CloseProc = procedure(io: PFreeImageIO; handle: fi_handle;
     data: Pointer); stdcall;
   FI_PageCountProc = function(io: PFreeImageIO; handle: fi_handle;
@@ -448,13 +463,13 @@ type
   FI_LoadProc = function(io: PFreeImageIO; handle: fi_handle; page, flags: Integer;
     data: Pointer): PFIBITMAP; stdcall;
   FI_SaveProc = function(io: PFreeImageIO; dib: PFIBITMAP; handle: fi_handle;
-    page, flags: Integer; data: Pointer): Boolean; stdcall;
-  FI_ValidateProc = function(io: PFreeImageIO; handle: fi_handle): Boolean; stdcall;
+    page, flags: Integer; data: Pointer): LongBool; stdcall;
+  FI_ValidateProc = function(io: PFreeImageIO; handle: fi_handle): LongBool; stdcall;
   FI_MimeProc = function: PAnsiChar; stdcall;
-  FI_SupportsExportBPPProc = function(bpp: integer): Boolean; stdcall;
-  FI_SupportsExportTypeProc = function(atype: FREE_IMAGE_TYPE): Boolean; stdcall;
-  FI_SupportsICCProfilesProc = function: Boolean; stdcall;
-  FI_SupportsNoPixelsProc = function: Boolean; stdcall;
+  FI_SupportsExportBPPProc = function(bpp: integer): LongBool; stdcall;
+  FI_SupportsExportTypeProc = function(atype: FREE_IMAGE_TYPE): LongBool; stdcall;
+  FI_SupportsICCProfilesProc = function: LongBool; stdcall;
+  FI_SupportsNoPixelsProc = function: LongBool; stdcall;
 
   Plugin = record
     format_proc: FI_FormatProc;
@@ -584,19 +599,19 @@ const
 // Init/Error routines ------------------------------------------------------
 // --------------------------------------------------------------------------
 
-procedure FreeImage_Initialise(load_local_plugins_only: Boolean = False); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Initialise@4'{$ENDIF};
+procedure FreeImage_Initialise(load_local_plugins_only: LongBool = False); stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Initialise@4'{$ENDIF};
 procedure FreeImage_DeInitialise; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_DeInitialise@0'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_DeInitialise@0'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Version routines ---------------------------------------------------------
 // --------------------------------------------------------------------------
 
 function FreeImage_GetVersion: PAnsiChar; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetVersion@0'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetVersion@0'{$ENDIF};
 function FreeImage_GetCopyrightMessage: PAnsiChar; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetCopyrightMessage@0'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetCopyrightMessage@0'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Message output functions -------------------------------------------------
@@ -609,16 +624,16 @@ type
     msg: PAnsiChar); stdcall;
 
 procedure FreeImage_SetOutputMessageStdCall(omf: FreeImage_OutputMessageFunctionStdCall); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetOutputMessageStdCall@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetOutputMessageStdCall@4'{$ENDIF};
 procedure FreeImage_SetOutputMessage(omf: FreeImage_OutputMessageFunction); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetOutputMessage@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetOutputMessage@4'{$ENDIF};
 {$IFDEF DELPHI6}
 //this is declared stdcall in the C header but it is actually cdecl.
 //with varargs functions, clearing the stack is caller's responsibility
 //(since the callee doesn't know how many parameters were passed).
 //cdecl is the right convention here, not stdcall
 procedure FreeImage_OutputMessageProc(fif: Integer; fmt: PAnsiChar); cdecl; varargs;
-  external FIDLL {$IFDEF MSWINDOWS}name 'FreeImage_OutputMessageProc'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name 'FreeImage_OutputMessageProc'{$ENDIF};
 {$ELSE}
 //older Delphi versions (<6) do not support varargs.
 //we provide a wrapper that uses open arrays instead
@@ -631,21 +646,21 @@ procedure FreeImage_OutputMessageProc(fif: Integer; fmt: PAnsiChar; args: array 
 
 function FreeImage_Allocate(width, height, bpp: Integer; red_mask: Cardinal = 0;
   green_mask: Cardinal = 0; blue_mask: Cardinal = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Allocate@24'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Allocate@24'{$ENDIF};
 function FreeImage_AllocateT(atype: FREE_IMAGE_TYPE; width, height: Integer;
   bpp: Integer = 8; red_mask: Cardinal = 0; green_mask: Cardinal = 0;
   blue_mask: Cardinal = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_AllocateT@28'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_AllocateT@28'{$ENDIF};
 function FreeImage_Clone(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Clone@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Clone@4'{$ENDIF};
 procedure FreeImage_Unload(dib: PFIBITMAP); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Unload@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Unload@4'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Header loading routines
 // --------------------------------------------------------------------------
-function FreeImage_HasPixels(dib: PFIBITMAP): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_HasPixels@4'{$ENDIF};
+function FreeImage_HasPixels(dib: PFIBITMAP): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_HasPixels@4'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Load / Save routines -----------------------------------------------------
@@ -653,57 +668,57 @@ function FreeImage_HasPixels(dib: PFIBITMAP): Boolean; stdcall;
 
 function FreeImage_Load(fif: FREE_IMAGE_FORMAT; filename: PAnsiChar;
   flags: Integer = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Load@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Load@12'{$ENDIF};
 function FreeImage_LoadU(fif: FREE_IMAGE_FORMAT; filename: PWideChar;
   flags: Integer = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_LoadU@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_LoadU@12'{$ENDIF};
 function FreeImage_LoadFromHandle(fif: FREE_IMAGE_FORMAT; io: PFreeImageIO;
   handle: fi_handle; flags: Integer = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_LoadFromHandle@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_LoadFromHandle@16'{$ENDIF};
 function FreeImage_Save(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP; filename: PAnsiChar;
-  flags: Integer = 0): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Save@16'{$ENDIF};
+  flags: Integer = 0): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Save@16'{$ENDIF};
 function FreeImage_SaveU(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP; filename: PWideChar;
-  flags: Integer = 0): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SaveU@16'{$ENDIF};
+  flags: Integer = 0): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SaveU@16'{$ENDIF};
 function FreeImage_SaveToHandle(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP;
-  io: PFreeImageIO; handle: fi_handle; flags: Integer = 0): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SaveToHandle@20'{$ENDIF};
+  io: PFreeImageIO; handle: fi_handle; flags: Integer = 0): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SaveToHandle@20'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Memory I/O stream routines -----------------------------------------------
 // --------------------------------------------------------------------------
 
 function FreeImage_OpenMemory(data: PByte = nil; size_in_bytes: DWORD = 0): PFIMEMORY; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_OpenMemory@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_OpenMemory@8'{$ENDIF};
 procedure FreeImage_CloseMemory(stream: PFIMEMORY); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_CloseMemory@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_CloseMemory@4'{$ENDIF};
 function FreeImage_LoadFromMemory(fif: FREE_IMAGE_FORMAT; stream: PFIMEMORY;
   flags: Integer = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_LoadFromMemory@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_LoadFromMemory@12'{$ENDIF};
 function FreeImage_SaveToMemory(fif: FREE_IMAGE_FORMAT; dib: PFIBITMAP;
-  stream: PFIMEMORY; flags: Integer = 0): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SaveToMemory@16'{$ENDIF};
+  stream: PFIMEMORY; flags: Integer = 0): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SaveToMemory@16'{$ENDIF};
 function FreeImage_TellMemory(stream: PFIMEMORY): LongInt; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_TellMemory@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_TellMemory@4'{$ENDIF};
 function FreeImage_SeekMemory(stream: PFIMEMORY; offset: LongInt;
-  origin: Integer): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SeekMemory@12'{$ENDIF};
+  origin: Integer): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SeekMemory@12'{$ENDIF};
 function FreeImage_AcquireMemory(stream: PFIMEMORY; var data: PByte;
-  var size_in_bytes: DWORD): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_AcquireMemory@12'{$ENDIF};
+  var size_in_bytes: DWORD): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_AcquireMemory@12'{$ENDIF};
 function FreeImage_ReadMemory(buffer: Pointer; size, count: Cardinal;
   stream: PFIMEMORY): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ReadMemory@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ReadMemory@16'{$ENDIF};
 function FreeImage_WriteMemory(buffer: Pointer; size, count: Cardinal;
   stream: PFIMEMORY): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_WriteMemory@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_WriteMemory@16'{$ENDIF};
 function FreeImage_LoadMultiBitmapFromMemory(fif: FREE_IMAGE_FORMAT; stream: PFIMEMORY;
   flags: Integer = 0): PFIMULTIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_LoadMultiBitmapFromMemory@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_LoadMultiBitmapFromMemory@12'{$ENDIF};
 function FreeImage_SaveMultiBitmapToMemory(fif: FREE_IMAGE_FORMAT; bitmap: PFIMULTIBITMAP;
-  stream: PFIMEMORY; flags: Integer): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SaveMultiBitmapToMemory@16'{$ENDIF};
+  stream: PFIMEMORY; flags: Integer): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SaveMultiBitmapToMemory@16'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Plugin Interface ---------------------------------------------------------
@@ -712,86 +727,86 @@ function FreeImage_SaveMultiBitmapToMemory(fif: FREE_IMAGE_FORMAT; bitmap: PFIMU
 function FreeImage_RegisterLocalPlugin(proc_address: FI_InitProc; format: PAnsiChar = nil;
   description: PAnsiChar = nil; extension: PAnsiChar = nil;
   regexpr: PAnsiChar = nil): FREE_IMAGE_FORMAT; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_RegisterLocalPlugin@20'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_RegisterLocalPlugin@20'{$ENDIF};
 function FreeImage_RegisterExternalPlugin(path: PAnsiChar; format: PAnsiChar = nil;
   description: PAnsiChar = nil; extension: PAnsiChar = nil;
   regexpr: PAnsiChar = nil): FREE_IMAGE_FORMAT; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_RegisterExternalPlugin@20'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_RegisterExternalPlugin@20'{$ENDIF};
 function FreeImage_GetFIFCount: Integer; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFIFCount@0'{$ENDIF};
-procedure FreeImage_SetPluginEnabled(fif: FREE_IMAGE_FORMAT; enable: Boolean); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetPluginEnabled@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFIFCount@0'{$ENDIF};
+procedure FreeImage_SetPluginEnabled(fif: FREE_IMAGE_FORMAT; enable: LongBool); stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetPluginEnabled@8'{$ENDIF};
 function FreeImage_IsPluginEnabled(fif: FREE_IMAGE_FORMAT): Integer; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_IsPluginEnabled@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_IsPluginEnabled@4'{$ENDIF};
 function FreeImage_GetFIFFromFormat(format: PAnsiChar): FREE_IMAGE_FORMAT; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFIFFromFormat@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFIFFromFormat@4'{$ENDIF};
 function FreeImage_GetFIFFromMime(mime: PAnsiChar): FREE_IMAGE_FORMAT; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFIFFromMime@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFIFFromMime@4'{$ENDIF};
 function FreeImage_GetFormatFromFIF(fif: FREE_IMAGE_FORMAT): PAnsiChar; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFormatFromFIF@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFormatFromFIF@4'{$ENDIF};
 function FreeImage_GetFIFExtensionList(fif: FREE_IMAGE_FORMAT): PAnsiChar; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFIFExtensionList@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFIFExtensionList@4'{$ENDIF};
 function FreeImage_GetFIFDescription(fif: FREE_IMAGE_FORMAT): PAnsiChar; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFIFDescription@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFIFDescription@4'{$ENDIF};
 function FreeImage_GetFIFRegExpr(fif: FREE_IMAGE_FORMAT): PAnsiChar; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFIFRegExpr@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFIFRegExpr@4'{$ENDIF};
 function FreeImage_GetFIFMimeType(fif: FREE_IMAGE_FORMAT): PAnsiChar; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFIFMimeType@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFIFMimeType@4'{$ENDIF};
 function FreeImage_GetFIFFromFilename(filename: PAnsiChar): FREE_IMAGE_FORMAT; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFIFFromFilename@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFIFFromFilename@4'{$ENDIF};
 function FreeImage_GetFIFFromFilenameU(filename: PWideChar): FREE_IMAGE_FORMAT; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFIFFromFilenameU@4'{$ENDIF};
-function FreeImage_FIFSupportsReading(fif: FREE_IMAGE_FORMAT): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FIFSupportsReading@4'{$ENDIF};
-function FreeImage_FIFSupportsWriting(fif: FREE_IMAGE_FORMAT): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FIFSupportsWriting@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFIFFromFilenameU@4'{$ENDIF};
+function FreeImage_FIFSupportsReading(fif: FREE_IMAGE_FORMAT): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FIFSupportsReading@4'{$ENDIF};
+function FreeImage_FIFSupportsWriting(fif: FREE_IMAGE_FORMAT): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FIFSupportsWriting@4'{$ENDIF};
 function FreeImage_FIFSupportsExportBPP(fif: FREE_IMAGE_FORMAT;
-  bpp: Integer): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FIFSupportsExportBPP@8'{$ENDIF};
+  bpp: Integer): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FIFSupportsExportBPP@8'{$ENDIF};
 function FreeImage_FIFSupportsExportType(fif: FREE_IMAGE_FORMAT;
-  atype: FREE_IMAGE_TYPE): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FIFSupportsExportType@8'{$ENDIF};
-function FreeImage_FIFSupportsICCProfiles(fif: FREE_IMAGE_FORMAT): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FIFSupportsICCProfiles@4'{$ENDIF};
-function FreeImage_FIFSupportsNoPixels(fif: FREE_IMAGE_FORMAT): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FIFSupportsNoPixels@4'{$ENDIF};
+  atype: FREE_IMAGE_TYPE): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FIFSupportsExportType@8'{$ENDIF};
+function FreeImage_FIFSupportsICCProfiles(fif: FREE_IMAGE_FORMAT): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FIFSupportsICCProfiles@4'{$ENDIF};
+function FreeImage_FIFSupportsNoPixels(fif: FREE_IMAGE_FORMAT): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FIFSupportsNoPixels@4'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Multipaging interface ----------------------------------------------------
 // --------------------------------------------------------------------------
 
 function FreeImage_OpenMultiBitmap(fif: FREE_IMAGE_FORMAT; filename: PAnsiChar;
-  create_new, read_only: Boolean; keep_cache_in_memory: Boolean = False;
+  create_new, read_only: LongBool; keep_cache_in_memory: LongBool = False;
   flags: Integer = 0): PFIMULTIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_OpenMultiBitmap@24'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_OpenMultiBitmap@24'{$ENDIF};
 function FreeImage_OpenMultiBitmapFromHandle(fif: FREE_IMAGE_FORMAT; io: PFreeImageIO;
   handle: fi_handle; flags: Integer = 0): PFIMULTIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_OpenMultiBitmapFromHandle@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_OpenMultiBitmapFromHandle@16'{$ENDIF};
 function FreeImage_SaveMultiBitmapToHandle(fif: FREE_IMAGE_FORMAT; bitmap: PFIMULTIBITMAP;
-  io: PFreeImageIO; handle: fi_handle; flags: Integer = 0): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SaveMultiBitmapToHandle@20'{$ENDIF};
+  io: PFreeImageIO; handle: fi_handle; flags: Integer = 0): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SaveMultiBitmapToHandle@20'{$ENDIF};
 function FreeImage_CloseMultiBitmap(bitmap: PFIMULTIBITMAP;
-  flags: Integer = 0): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_CloseMultiBitmap@8'{$ENDIF};
+  flags: Integer = 0): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_CloseMultiBitmap@8'{$ENDIF};
 function FreeImage_GetPageCount(bitmap: PFIMULTIBITMAP): Integer; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetPageCount@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetPageCount@4'{$ENDIF};
 procedure FreeImage_AppendPage(bitmap: PFIMULTIBITMAP; data: PFIBITMAP); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_AppendPage@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_AppendPage@8'{$ENDIF};
 procedure FreeImage_InsertPage(bitmap: PFIMULTIBITMAP; page: Integer;
   data: PFIBITMAP); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_InsertPage@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_InsertPage@12'{$ENDIF};
 procedure FreeImage_DeletePage(bitmap: PFIMULTIBITMAP; page: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_DeletePage@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_DeletePage@8'{$ENDIF};
 function FreeImage_LockPage(bitmap: PFIMULTIBITMAP; page: Integer): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_LockPage@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_LockPage@8'{$ENDIF};
 procedure FreeImage_UnlockPage(bitmap: PFIMULTIBITMAP; data: PFIBITMAP;
-  changed: Boolean); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_UnlockPage@12'{$ENDIF};
-function FreeImage_MovePage(bitmap: PFIMULTIBITMAP; target, source: Integer): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_MovePage@12'{$ENDIF};
+  changed: LongBool); stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_UnlockPage@12'{$ENDIF};
+function FreeImage_MovePage(bitmap: PFIMULTIBITMAP; target, source: Integer): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_MovePage@12'{$ENDIF};
 function FreeImage_GetLockedPageNumbers(bitmap: PFIMULTIBITMAP; var pages: Integer;
-  var count: Integer): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetLockedPageNumbers@12'{$ENDIF};
+  var count: Integer): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetLockedPageNumbers@12'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Filetype request routines ------------------------------------------------
@@ -799,314 +814,314 @@ function FreeImage_GetLockedPageNumbers(bitmap: PFIMULTIBITMAP; var pages: Integ
 
 function FreeImage_GetFileType(filename: PAnsiChar;
   size: Integer = 0): FREE_IMAGE_FORMAT; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFileType@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFileType@8'{$ENDIF};
 function FreeImage_GetFileTypeU(filename: PWideChar;
   size: Integer = 0): FREE_IMAGE_FORMAT; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFileTypeU@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFileTypeU@8'{$ENDIF};
 function FreeImage_GetFileTypeFromHandle(io: PFreeImageIO; handle: FI_Handle;
   size: Integer = 0): FREE_IMAGE_FORMAT; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFileTypeFromHandle@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFileTypeFromHandle@12'{$ENDIF};
 function FreeImage_GetFileTypeFromMemory(stream: PFIMEMORY;
   size: Integer = 0): FREE_IMAGE_FORMAT; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetFileTypeFromMemory@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetFileTypeFromMemory@8'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // ImageType request routine ------------------------------------------------
 // --------------------------------------------------------------------------
 
 function FreeImage_GetImageType(dib: PFIBITMAP): FREE_IMAGE_TYPE; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetImageType@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetImageType@4'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // FreeImage helper routines ------------------------------------------------
 // --------------------------------------------------------------------------
 
-function FreeImage_IsLittleEndian: Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_IsLittleEndian@0'{$ENDIF};
-function FreeImage_LookupX11Color(szColor: PAnsiChar; var nRed, nGreen, nBlue: Byte): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_LookupX11Color@16'{$ENDIF};
-function FreeImage_LookupSVGColor(szColor: PAnsiChar; var nRed, nGreen, nBlue: Byte): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_LookupSVGColor@16'{$ENDIF};
+function FreeImage_IsLittleEndian: LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_IsLittleEndian@0'{$ENDIF};
+function FreeImage_LookupX11Color(szColor: PAnsiChar; var nRed, nGreen, nBlue: Byte): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_LookupX11Color@16'{$ENDIF};
+function FreeImage_LookupSVGColor(szColor: PAnsiChar; var nRed, nGreen, nBlue: Byte): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_LookupSVGColor@16'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Pixels access routines ---------------------------------------------------
 // --------------------------------------------------------------------------
 
 function FreeImage_GetBits(dib: PFIBITMAP): PByte; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetBits@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetBits@4'{$ENDIF};
 function FreeImage_GetScanLine(dib: PFIBITMAP; scanline: Integer): PByte; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetScanLine@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetScanLine@8'{$ENDIF};
 
-function FreeImage_GetPixelIndex(dib: PFIBITMAP; x, y: Cardinal; var value: Byte): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetPixelIndex@16'{$ENDIF};
-function FreeImage_GetPixelColor(dib: PFIBITMAP; x, y: Cardinal; var value: RGBQUAD): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetPixelColor@16'{$ENDIF};
-function FreeImage_SetPixelIndex(dib: PFIBITMAP; x, y: Cardinal; var value: Byte): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetPixelIndex@16'{$ENDIF};
-function FreeImage_SetPixelColor(dib: PFIBITMAP; x, y: Cardinal; var value: RGBQUAD): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetPixelColor@16'{$ENDIF};
+function FreeImage_GetPixelIndex(dib: PFIBITMAP; x, y: Cardinal; var value: Byte): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetPixelIndex@16'{$ENDIF};
+function FreeImage_GetPixelColor(dib: PFIBITMAP; x, y: Cardinal; var value: RGBQUAD): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetPixelColor@16'{$ENDIF};
+function FreeImage_SetPixelIndex(dib: PFIBITMAP; x, y: Cardinal; var value: Byte): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetPixelIndex@16'{$ENDIF};
+function FreeImage_SetPixelColor(dib: PFIBITMAP; x, y: Cardinal; var value: RGBQUAD): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetPixelColor@16'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // DIB info routines --------------------------------------------------------
 // --------------------------------------------------------------------------
 
 function FreeImage_GetColorsUsed(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetColorsUsed@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetColorsUsed@4'{$ENDIF};
 function FreeImage_GetBPP(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetBPP@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetBPP@4'{$ENDIF};
 function FreeImage_GetWidth(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetWidth@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetWidth@4'{$ENDIF};
 function FreeImage_GetHeight(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetHeight@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetHeight@4'{$ENDIF};
 function FreeImage_GetLine(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetLine@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetLine@4'{$ENDIF};
 function FreeImage_GetPitch(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetPitch@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetPitch@4'{$ENDIF};
 function FreeImage_GetDIBSize(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetDIBSize@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetDIBSize@4'{$ENDIF};
 function FreeImage_GetPalette(dib: PFIBITMAP): PRGBQuad; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetPalette@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetPalette@4'{$ENDIF};
 
 function FreeImage_GetDotsPerMeterX(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetDotsPerMeterX@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetDotsPerMeterX@4'{$ENDIF};
 function FreeImage_GetDotsPerMeterY(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetDotsPerMeterY@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetDotsPerMeterY@4'{$ENDIF};
 procedure FreeImage_SetDotsPerMeterX(dib: PFIBITMAP; res: Cardinal); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetDotsPerMeterX@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetDotsPerMeterX@8'{$ENDIF};
 procedure FreeImage_SetDotsPerMeterY(dib: PFIBITMAP; res: Cardinal); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetDotsPerMeterY@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetDotsPerMeterY@8'{$ENDIF};
 
 function FreeImage_GetInfoHeader(dib: PFIBITMAP): PBITMAPINFOHEADER; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetInfoHeader@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetInfoHeader@4'{$ENDIF};
 function FreeImage_GetInfo(dib: PFIBITMAP): PBITMAPINFO; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetInfo@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetInfo@4'{$ENDIF};
 function FreeImage_GetColorType(dib: PFIBITMAP): FREE_IMAGE_COLOR_TYPE; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetColorType@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetColorType@4'{$ENDIF};
 
 function FreeImage_GetRedMask(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetRedMask@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetRedMask@4'{$ENDIF};
 function FreeImage_GetGreenMask(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetGreenMask@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetGreenMask@4'{$ENDIF};
 function FreeImage_GetBlueMask(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetBlueMask@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetBlueMask@4'{$ENDIF};
 
 function FreeImage_GetTransparencyCount(dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetTransparencyCount@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetTransparencyCount@4'{$ENDIF};
 function FreeImage_GetTransparencyTable(dib: PFIBITMAP): PByte; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetTransparencyTable@4'{$ENDIF};
-procedure FreeImage_SetTransparent(dib: PFIBITMAP; enabled: Boolean); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetTransparent@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetTransparencyTable@4'{$ENDIF};
+procedure FreeImage_SetTransparent(dib: PFIBITMAP; enabled: LongBool); stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetTransparent@8'{$ENDIF};
 procedure FreeImage_SetTransparencyTable(dib: PFIBITMAP; table: PByte;
   count: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetTransparencyTable@12'{$ENDIF};
-function FreeImage_IsTransparent(dib: PFIBITMAP): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_IsTransparent@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetTransparencyTable@12'{$ENDIF};
+function FreeImage_IsTransparent(dib: PFIBITMAP): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_IsTransparent@4'{$ENDIF};
 procedure FreeImage_SetTransparentIndex(dib: PFIBITMAP; index: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetTransparentIndex@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetTransparentIndex@8'{$ENDIF};
 function FreeImage_GetTransparentIndex(dib: PFIBITMAP): Integer; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetTransparentIndex@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetTransparentIndex@4'{$ENDIF};
 
-function FreeImage_HasBackgroundColor(dib: PFIBITMAP): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_HasBackgroundColor@4'{$ENDIF};
-function FreeImage_GetBackgroundColor(dib: PFIBITMAP; var bkcolor: RGBQUAD): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetBackgroundColor@8'{$ENDIF};
-function FreeImage_SetBackgroundColor(dib: PFIBITMAP; bkcolor: PRGBQuad): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetBackgroundColor@8'{$ENDIF};
+function FreeImage_HasBackgroundColor(dib: PFIBITMAP): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_HasBackgroundColor@4'{$ENDIF};
+function FreeImage_GetBackgroundColor(dib: PFIBITMAP; var bkcolor: RGBQUAD): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetBackgroundColor@8'{$ENDIF};
+function FreeImage_SetBackgroundColor(dib: PFIBITMAP; bkcolor: PRGBQuad): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetBackgroundColor@8'{$ENDIF};
 
 function FreeImage_GetThumbnail(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetThumbnail@4'{$ENDIF};
-function FreeImage_SetThumbnail(dib, thumbnail: PFIBITMAP): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetThumbnail@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetThumbnail@4'{$ENDIF};
+function FreeImage_SetThumbnail(dib, thumbnail: PFIBITMAP): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetThumbnail@8'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // ICC profile routines -----------------------------------------------------
 // --------------------------------------------------------------------------
 
 function FreeImage_GetICCProfile(dib: PFIBITMAP): PFIICCPROFILE; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetICCProfile@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetICCProfile@4'{$ENDIF};
 function FreeImage_CreateICCProfile(dib: PFIBITMAP; data: Pointer;
   size: LongInt): PFIICCPROFILE; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name 'FreeImage_CreateICCProfile@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name 'FreeImage_CreateICCProfile@12'{$ENDIF};
 procedure FreeImage_DestroyICCProfile(dib: PFIBITMAP); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name 'FreeImage_DestroyICCProfile@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name 'FreeImage_DestroyICCProfile@4'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Line conversion routines -------------------------------------------------
 // --------------------------------------------------------------------------
 
 procedure FreeImage_ConvertLine1To4(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine1To4@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine1To4@12'{$ENDIF};
 procedure FreeImage_ConvertLine8To4(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad);  stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine8To4@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine8To4@16'{$ENDIF};
 procedure FreeImage_ConvertLine16To4_555(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine16To4_555@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16To4_555@12'{$ENDIF};
 procedure FreeImage_ConvertLine16To4_565(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine16To4_565@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16To4_565@12'{$ENDIF};
 procedure FreeImage_ConvertLine24To4(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine24To4@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine24To4@12'{$ENDIF};
 procedure FreeImage_ConvertLine32To4(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine32To4@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine32To4@12'{$ENDIF};
 
 procedure FreeImage_ConvertLine1To8(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine1To8@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine1To8@12'{$ENDIF};
 procedure FreeImage_ConvertLine4To8(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine4To8@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine4To8@12'{$ENDIF};
 procedure FreeImage_ConvertLine16To8_555(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine16To8_555@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16To8_555@12'{$ENDIF};
 procedure FreeImage_ConvertLine16To8_565(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine16To8_565@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16To8_565@12'{$ENDIF};
 procedure FreeImage_ConvertLine24To8(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine24To8@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine24To8@12'{$ENDIF};
 procedure FreeImage_ConvertLine32To8(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine32To8@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine32To8@12'{$ENDIF};
 
 procedure FreeImage_ConvertLine1To16_555(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine1To16_555@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine1To16_555@16'{$ENDIF};
 procedure FreeImage_ConvertLine4To16_555(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine4To16_555@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine4To16_555@16'{$ENDIF};
 procedure FreeImage_ConvertLine8To16_555(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine8To16_555@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine8To16_555@16'{$ENDIF};
 procedure FreeImage_ConvertLine16_565_To16_555(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine16_565_To16_555@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16_565_To16_555@12'{$ENDIF};
 procedure FreeImage_ConvertLine24To16_555(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine24To16_555@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine24To16_555@12'{$ENDIF};
 procedure FreeImage_ConvertLine32To16_555(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine32To16_555@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine32To16_555@12'{$ENDIF};
 
 procedure FreeImage_ConvertLine1To16_565(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine1To16_565@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine1To16_565@16'{$ENDIF};
 procedure FreeImage_ConvertLine4To16_565(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine4To16_565@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine4To16_565@16'{$ENDIF};
 procedure FreeImage_ConvertLine8To16_565(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine8To16_565@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine8To16_565@16'{$ENDIF};
 procedure FreeImage_ConvertLine16_555_To16_565(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine16_555_To16_565@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16_555_To16_565@12'{$ENDIF};
 procedure FreeImage_ConvertLine24To16_565(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine24To16_565@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine24To16_565@12'{$ENDIF};
 procedure FreeImage_ConvertLine32To16_565(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine32To16_565@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine32To16_565@12'{$ENDIF};
 
 procedure FreeImage_ConvertLine1To24(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine1To24@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine1To24@16'{$ENDIF};
 procedure FreeImage_ConvertLine4To24(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine4To24@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine4To24@16'{$ENDIF};
 procedure FreeImage_ConvertLine8To24(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine8To24@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine8To24@16'{$ENDIF};
 procedure FreeImage_ConvertLine16To24_555(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine16To24_555@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16To24_555@12'{$ENDIF};
 procedure FreeImage_ConvertLine16To24_565(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine16To24_565@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16To24_565@12'{$ENDIF};
 procedure FreeImage_ConvertLine32To24(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine32To24@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine32To24@12'{$ENDIF};
 
 procedure FreeImage_ConvertLine1To32(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine1To32@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine1To32@16'{$ENDIF};
 procedure FreeImage_ConvertLine4To32(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine4To32@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine4To32@16'{$ENDIF};
 procedure FreeImage_ConvertLine8To32(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine8To32@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine8To32@16'{$ENDIF};
 procedure FreeImage_ConvertLine16To32_555(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine16To32_555@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16To32_555@12'{$ENDIF};
 procedure FreeImage_ConvertLine16To32_565(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine16To32_565@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16To32_565@12'{$ENDIF};
 procedure FreeImage_ConvertLine24To32(target, source: PByte; width_in_pixels: Integer); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertLine24To32@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine24To32@12'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Smart conversion routines ------------------------------------------------
 // --------------------------------------------------------------------------
 
 function FreeImage_ConvertTo4Bits(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertTo4Bits@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertTo4Bits@4'{$ENDIF};
 function FreeImage_ConvertTo8Bits(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertTo8Bits@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertTo8Bits@4'{$ENDIF};
 function FreeImage_ConvertToGreyscale(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToGreyscale@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToGreyscale@4'{$ENDIF};
 function FreeImage_ConvertTo16Bits555(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertTo16Bits555@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertTo16Bits555@4'{$ENDIF};
 function FreeImage_ConvertTo16Bits565(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertTo16Bits565@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertTo16Bits565@4'{$ENDIF};
 function FreeImage_ConvertTo24Bits(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertTo24Bits@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertTo24Bits@4'{$ENDIF};
 function FreeImage_ConvertTo32Bits(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertTo32Bits@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertTo32Bits@4'{$ENDIF};
 function FreeImage_ColorQuantize(dib: PFIBITMAP; quantize: FREE_IMAGE_QUANTIZE): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ColorQuantize@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ColorQuantize@8'{$ENDIF};
 function FreeImage_ColorQuantizeEx(dib: PFIBITMAP; quantize: FREE_IMAGE_QUANTIZE = FIQ_WUQUANT;
   PaletteSize: Integer = 256; ReserveSize: Integer = 0;
   ReservePalette: PRGBQuad = nil): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ColorQuantizeEx@20'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ColorQuantizeEx@20'{$ENDIF};
 function FreeImage_Threshold(dib: PFIBITMAP; T: Byte): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Threshold@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Threshold@8'{$ENDIF};
 function FreeImage_Dither(dib: PFIBITMAP; algorithm: FREE_IMAGE_DITHER): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Dither@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Dither@8'{$ENDIF};
 
 function FreeImage_ConvertFromRawBits(bits: PByte; width, height, pitch: Integer;
-  bpp, red_mask, green_mask, blue_mask: Cardinal; topdown: Boolean = False): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertFromRawBits@36'{$ENDIF};
+  bpp, red_mask, green_mask, blue_mask: Cardinal; topdown: LongBool = False): PFIBITMAP; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertFromRawBits@36'{$ENDIF};
 procedure FreeImage_ConvertToRawBits(bits: PByte; dib: PFIBITMAP; pitch: Integer;
-  bpp, red_mask, green_mask, blue_mask: Cardinal; topdown: Boolean = False); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToRawBits@32'{$ENDIF};
+  bpp, red_mask, green_mask, blue_mask: Cardinal; topdown: LongBool = False); stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToRawBits@32'{$ENDIF};
 
 function FreeImage_ConvertToFloat(dib: PFIBITMAP): PFIBITMAP;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToFloat@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToFloat@4'{$ENDIF};
 function FreeImage_ConvertToRGBF(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToRGBF@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToRGBF@4'{$ENDIF};
 function FreeImage_ConvertToUINT16(dib: PFIBITMAP): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToUINT16@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToUINT16@4'{$ENDIF};
 
 function FreeImage_ConvertToStandardType(src: PFIBITMAP;
-  scale_linear: Boolean = True): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToStandardType@8'{$ENDIF};
+  scale_linear: LongBool = True): PFIBITMAP; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToStandardType@8'{$ENDIF};
 function FreeImage_ConvertToType(src: PFIBITMAP; dst_type: FREE_IMAGE_TYPE;
-  scale_linear: Boolean = True): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ConvertToType@12'{$ENDIF};
+  scale_linear: LongBool = True): PFIBITMAP; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToType@12'{$ENDIF};
 
 // tone mapping operators
 function FreeImage_ToneMapping(dib: PFIBITMAP; tmo: FREE_IMAGE_TMO;
   first_param: Double = 0; second_param: Double = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ToneMapping@24'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ToneMapping@24'{$ENDIF};
 function FreeImage_TmoDrago03(src: PFIBITMAP; gamma: Double = 2.2;
   exposure: Double = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_TmoDrago03@20'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_TmoDrago03@20'{$ENDIF};
 function FreeImage_TmoReinhard05(src: PFIBITMAP; intensity: Double = 0;
   contrast: Double = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_TmoReinhard05@20'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_TmoReinhard05@20'{$ENDIF};
 function FreeImage_TmoReinhard05Ex(src: PFIBITMAP; intensity: Double = 0;
   contrast: Double = 0; adaptation: Double = 1; color_correction: Double = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_TmoReinhard05Ex@36'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_TmoReinhard05Ex@36'{$ENDIF};
 
 function FreeImage_TmoFattal02(src: PFIBITMAP; color_saturation: Double = 0.5;
   attenuation: Double = 0.85): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_TmoFattal02@20'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_TmoFattal02@20'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // ZLib interface -----------------------------------------------------------
 // --------------------------------------------------------------------------
 
 function FreeImage_ZLibCompress(target: PByte; target_size: DWORD; source: PByte; source_size: DWORD): DWORD; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ZLibCompress@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ZLibCompress@16'{$ENDIF};
 function FreeImage_ZLibUncompress(target: PByte; target_size: DWORD; source: PByte; source_size: DWORD): DWORD; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ZLibUncompress@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ZLibUncompress@16'{$ENDIF};
 function FreeImage_ZLibGZip(target: PByte; target_size: DWORD; source: PByte; source_size: DWORD): DWORD; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ZLibGZip@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ZLibGZip@16'{$ENDIF};
 function FreeImage_ZLibGUnzip(target: PByte; target_size: DWORD; source: PByte; source_size: DWORD): DWORD; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ZLibGUnzip@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ZLibGUnzip@16'{$ENDIF};
 function FreeImage_ZLibCRC32(crc: DWORD; source: PByte; source_size: DWORD): DWORD; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ZLibCRC32@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ZLibCRC32@12'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Metadata routines --------------------------------------------------------
@@ -1114,181 +1129,182 @@ function FreeImage_ZLibCRC32(crc: DWORD; source: PByte; source_size: DWORD): DWO
 
 // tag creation / destruction
 function FreeImage_CreateTag: PFITAG; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_CreateTag@0'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_CreateTag@0'{$ENDIF};
 procedure FreeImage_DeleteTag(tag: PFITAG); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_DeleteTag@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_DeleteTag@4'{$ENDIF};
 function FreeImage_CloneTag(tag: PFITAG): PFITAG; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_CloneTag@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_CloneTag@4'{$ENDIF};
 
 // tag getters and setters
 function FreeImage_GetTagKey(tag: PFITAG): PAnsiChar; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetTagKey@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetTagKey@4'{$ENDIF};
 function FreeImage_GetTagDescription(tag: PFITAG): PAnsiChar; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetTagDescription@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetTagDescription@4'{$ENDIF};
 function FreeImage_GetTagID(tag: PFITAG): Word; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetTagID@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetTagID@4'{$ENDIF};
 function FreeImage_GetTagType(tag: PFITAG): FREE_IMAGE_MDTYPE; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetTagType@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetTagType@4'{$ENDIF};
 function FreeImage_GetTagCount(tag: PFITAG): DWORD; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetTagCount@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetTagCount@4'{$ENDIF};
 function FreeImage_GetTagLength(tag: PFITAG): DWORD; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetTagLength@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetTagLength@4'{$ENDIF};
 function FreeImage_GetTagValue(tag: PFITAG): Pointer; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetTagValue@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetTagValue@4'{$ENDIF};
 
-function FreeImage_SetTagKey(tag: PFITAG; key: PAnsiChar): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetTagKey@8'{$ENDIF};
-function FreeImage_SetTagDescription(tag: PFITAG; description: PAnsiChar): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetTagDescription@8'{$ENDIF};
-function FreeImage_SetTagID(tag: PFITAG; id: Word): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetTagID@8'{$ENDIF};
-function FreeImage_SetTagType(tag: PFITAG; atype: FREE_IMAGE_MDTYPE): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetTagType@8'{$ENDIF};
-function FreeImage_SetTagCount(tag: PFITAG; count: DWORD): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetTagCount@8'{$ENDIF};
-function FreeImage_SetTagLength(tag: PFITAG; length: DWORD): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetTagLength@8'{$ENDIF};
-function FreeImage_SetTagValue(tag: PFITAG; value: Pointer): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetTagValue@8'{$ENDIF};
+function FreeImage_SetTagKey(tag: PFITAG; key: PAnsiChar): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetTagKey@8'{$ENDIF};
+function FreeImage_SetTagDescription(tag: PFITAG; description: PAnsiChar): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetTagDescription@8'{$ENDIF};
+function FreeImage_SetTagID(tag: PFITAG; id: Word): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetTagID@8'{$ENDIF};
+function FreeImage_SetTagType(tag: PFITAG; atype: FREE_IMAGE_MDTYPE): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetTagType@8'{$ENDIF};
+function FreeImage_SetTagCount(tag: PFITAG; count: DWORD): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetTagCount@8'{$ENDIF};
+function FreeImage_SetTagLength(tag: PFITAG; length: DWORD): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetTagLength@8'{$ENDIF};
+function FreeImage_SetTagValue(tag: PFITAG; value: Pointer): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetTagValue@8'{$ENDIF};
 
 // iterator
 function FreeImage_FindFirstMetadata(model: FREE_IMAGE_MDMODEL; dib: PFIBITMAP;
   var tag: PFITAG): PFIMETADATA; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FindFirstMetadata@12'{$ENDIF};
-function FreeImage_FindNextMetadata(mdhandle: PFIMETADATA; var tag: PFITAG): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FindNextMetadata@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FindFirstMetadata@12'{$ENDIF};
+function FreeImage_FindNextMetadata(mdhandle: PFIMETADATA; var tag: PFITAG): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FindNextMetadata@8'{$ENDIF};
 procedure FreeImage_FindCloseMetadata(mdhandle: PFIMETADATA); stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FindCloseMetadata@4'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FindCloseMetadata@4'{$ENDIF};
 
 // metadata setter and getter
 function FreeImage_SetMetadata(model: FREE_IMAGE_MDMODEL; dib: PFIBITMAP;
-  key: PAnsiChar; tag: PFITAG): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetMetadata@16'{$ENDIF};
-function FreeImage_GetMetaData(model: FREE_IMAGE_MDMODEL; dib: PFIBITMAP;
-  key: PAnsiChar; var tag: PFITAG): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetMetadata@16'{$ENDIF};
+  key: PAnsiChar; tag: PFITAG): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetMetadata@16'{$ENDIF};
+function FreeImage_GetMetadata(model: FREE_IMAGE_MDMODEL; dib: PFIBITMAP;
+  key: PAnsiChar; var tag: PFITAG): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetMetadata@16'{$ENDIF};
 
 // helpers
 function FreeImage_GetMetadataCount(model: FREE_IMAGE_MDMODEL; dib: PFIBITMAP): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetMetadataCount@8'{$ENDIF};
-function FreeImage_CloneMetadata(dst, src: PFIBITMAP): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_CloneMetadata@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetMetadataCount@8'{$ENDIF};
+function FreeImage_CloneMetadata(dst, src: PFIBITMAP): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_CloneMetadata@8'{$ENDIF};
 
 // tag to C string conversion
 function FreeImage_TagToString(model: FREE_IMAGE_MDMODEL; tag: PFITAG;
   Make: PAnsiChar = nil): PAnsiChar; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_TagToString@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_TagToString@12'{$ENDIF};
 
 // --------------------------------------------------------------------------
 // Image manipulation toolkit -----------------------------------------------
 // --------------------------------------------------------------------------
 
 // rotation and flipping
-function FreeImage_RotateClassic(dib: PFIBITMAP; angle: Double): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_RotateClassic@12'{$ENDIF};
+// modif JMB : FreeImage_RotateClassic : deprecated function, call to DeprecationManager in 64 bits crashes freeimage.dll
+//function FreeImage_RotateClassic(dib: PFIBITMAP; angle: Double): PFIBITMAP; stdcall;
+//  external FIDLL {$IFDEF WIN32}name '_FreeImage_RotateClassic@12'{$ENDIF};
 function FreeImage_Rotate(dib: PFIBITMAP; angle: Double; bkcolor: Pointer = nil): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Rotate@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Rotate@16'{$ENDIF};
 function FreeImage_RotateEx(dib: PFIBITMAP; angle, x_shift, y_shift, x_origin, y_origin: Double;
-  use_mask: Boolean): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_RotateEx@48'{$ENDIF};
-function FreeImage_FlipHorizontal(dib: PFIBITMAP): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FlipHorizontal@4'{$ENDIF};
-function FreeImage_FlipVertical(dib: PFIBITMAP): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FlipVertical@4'{$ENDIF};
+  use_mask: LongBool): PFIBITMAP; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_RotateEx@48'{$ENDIF};
+function FreeImage_FlipHorizontal(dib: PFIBITMAP): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FlipHorizontal@4'{$ENDIF};
+function FreeImage_FlipVertical(dib: PFIBITMAP): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FlipVertical@4'{$ENDIF};
 function FreeImage_JPEGTransform(src_file, dst_file: PAnsiChar; operation: FREE_IMAGE_JPEG_OPERATION;
-  perfect: Boolean = False): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_JPEGTransform@16'{$ENDIF};
+  perfect: LongBool = False): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_JPEGTransform@16'{$ENDIF};
 function FreeImage_JPEGTransformU(src_file, dst_file: PWideChar; operation: FREE_IMAGE_JPEG_OPERATION;
-  perfect: Boolean = False): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_JPEGTransformU@16'{$ENDIF};
+  perfect: LongBool = False): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_JPEGTransformU@16'{$ENDIF};
 
 // upsampling / downsampling
 function FreeImage_Rescale(dib: PFIBITMAP; dst_width, dst_height: Integer; filter: FREE_IMAGE_FILTER): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Rescale@16'{$ENDIF};
-function FreeImage_MakeThumbnail(dib: PFIBITMAP; max_pixel_size: Integer; convert: Boolean = True): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_MakeThumbnail@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Rescale@16'{$ENDIF};
+function FreeImage_MakeThumbnail(dib: PFIBITMAP; max_pixel_size: Integer; convert: LongBool = True): PFIBITMAP; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_MakeThumbnail@12'{$ENDIF};
 
 // color manipulation routines (point operations)
 function FreeImage_AdjustCurve(dib: PFIBITMAP; LUT: PByte;
-  channel: FREE_IMAGE_COLOR_CHANNEL): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_AdjustCurve@12'{$ENDIF};
-function FreeImage_AdjustGamma(dib: PFIBITMAP; gamma: Double): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_AdjustGamma@12'{$ENDIF};
-function FreeImage_AdjustBrightness(dib: PFIBITMAP; percentage: Double): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_AdjustBrightness@12'{$ENDIF};
-function FreeImage_AdjustContrast(dib: PFIBITMAP; percentage: Double): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_AdjustContrast@12'{$ENDIF};
-function FreeImage_Invert(dib: PFIBITMAP): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Invert@4'{$ENDIF};
+  channel: FREE_IMAGE_COLOR_CHANNEL): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_AdjustCurve@12'{$ENDIF};
+function FreeImage_AdjustGamma(dib: PFIBITMAP; gamma: Double): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_AdjustGamma@12'{$ENDIF};
+function FreeImage_AdjustBrightness(dib: PFIBITMAP; percentage: Double): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_AdjustBrightness@12'{$ENDIF};
+function FreeImage_AdjustContrast(dib: PFIBITMAP; percentage: Double): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_AdjustContrast@12'{$ENDIF};
+function FreeImage_Invert(dib: PFIBITMAP): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Invert@4'{$ENDIF};
 function FreeImage_GetHistogram(dib: PFIBITMAP; histo: PDWORD;
-  channel: FREE_IMAGE_COLOR_CHANNEL = FICC_BLACK): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetHistogram@12'{$ENDIF};
+  channel: FREE_IMAGE_COLOR_CHANNEL = FICC_BLACK): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetHistogram@12'{$ENDIF};
 function FreeImage_GetAdjustColorsLookupTable(LUT: PByte; brightness, contrast, gamma: Double;
-  invert: Boolean): Integer; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetAdjustColorsLookupTable@32'{$ENDIF};
+  invert: LongBool): Integer; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetAdjustColorsLookupTable@32'{$ENDIF};
 function FreeImage_AdjustColors(dib: PFIBITMAP; brightness, contrast, gamma: Double;
-  invert: Boolean = False): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_AdjustColors@32'{$ENDIF};
+  invert: LongBool = False): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_AdjustColors@32'{$ENDIF};
 function FreeImage_ApplyColorMapping(dib: PFIBITMAP; srccolors, dstcolors: PRGBQuad;
-  count: Cardinal; ignore_alpha, swap: Boolean): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ApplyColorMapping@24'{$ENDIF};
+  count: Cardinal; ignore_alpha, swap: LongBool): Cardinal; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ApplyColorMapping@24'{$ENDIF};
 function FreeImage_SwapColors(dib: PFIBITMAP; color_a, color_b: PRGBQuad;
-  ignore_alpha: Boolean): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SwapColors@16'{$ENDIF};
+  ignore_alpha: LongBool): Cardinal; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SwapColors@16'{$ENDIF};
 function FreeImage_ApplyPaletteIndexMapping(dib: PFIBITMAP; srcindices, dstindices: PByte;
-  count: Cardinal; swap: Boolean): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_ApplyPaletteIndexMapping@20'{$ENDIF};
+  count: Cardinal; swap: LongBool): Cardinal; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ApplyPaletteIndexMapping@20'{$ENDIF};
 function FreeImage_SwapPaletteIndices(dib: PFIBITMAP; index_a, index_b: PByte): Cardinal; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SwapPaletteIndices@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SwapPaletteIndices@12'{$ENDIF};
 
 // channel processing routines
 function FreeImage_GetChannel(dib: PFIBITMAP; channel: FREE_IMAGE_COLOR_CHANNEL): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetChannel@8'{$ENDIF};
-function FreeImage_SetChannel(dst, src: PFIBITMAP; channel: FREE_IMAGE_COLOR_CHANNEL): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetChannel@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetChannel@8'{$ENDIF};
+function FreeImage_SetChannel(dst, src: PFIBITMAP; channel: FREE_IMAGE_COLOR_CHANNEL): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetChannel@12'{$ENDIF};
 function FreeImage_GetComplexChannel(src: PFIBITMAP; channel: FREE_IMAGE_COLOR_CHANNEL): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_GetComplexChannel@8'{$ENDIF};
-function FreeImage_SetComplexChannel(dst, src: PFIBITMAP; channel: FREE_IMAGE_COLOR_CHANNEL): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_SetComplexChannel@12'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetComplexChannel@8'{$ENDIF};
+function FreeImage_SetComplexChannel(dst, src: PFIBITMAP; channel: FREE_IMAGE_COLOR_CHANNEL): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetComplexChannel@12'{$ENDIF};
 
 // copy / paste / composite routines
 
 function FreeImage_Copy(dib: PFIBITMAP; left, top, right, bottom: Integer): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Copy@20'{$ENDIF};
-function FreeImage_Paste(dst, src: PFIBITMAP; left, top, alpha: Integer): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Paste@20'{$ENDIF};
-function FreeImage_Composite(fg: PFIBITMAP; useFileBkg: Boolean = False;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Copy@20'{$ENDIF};
+function FreeImage_Paste(dst, src: PFIBITMAP; left, top, alpha: Integer): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Paste@20'{$ENDIF};
+function FreeImage_Composite(fg: PFIBITMAP; useFileBkg: LongBool = False;
   appBkColor: PRGBQuad = nil; bg: PFIBITMAP = nil): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_Composite@16'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_Composite@16'{$ENDIF};
 function FreeImage_JPEGCrop(src_file, dst_file: PAnsiChar;
-  left, top, right, bottom: Integer): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_JPEGCrop@24'{$ENDIF};
+  left, top, right, bottom: Integer): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_JPEGCrop@24'{$ENDIF};
 function FreeImage_JPEGCropU(src_file, dst_file: PWideChar;
-  left, top, right, bottom: Integer): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_JPEGCropU@24'{$ENDIF};
-function FreeImage_PreMultiplyWithAlpha(dib: PFIBITMAP): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_PreMultiplyWithAlpha@4'{$ENDIF};
+  left, top, right, bottom: Integer): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_JPEGCropU@24'{$ENDIF};
+function FreeImage_PreMultiplyWithAlpha(dib: PFIBITMAP): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_PreMultiplyWithAlpha@4'{$ENDIF};
 
 // background filling routines
 function FreeImage_FillBackground(dib: PFIBITMAP; color: Pointer;
-  options: Integer = 0): Boolean; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_FillBackground@12'{$ENDIF};
+  options: Integer = 0): LongBool; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_FillBackground@12'{$ENDIF};
 function FreeImage_EnlargeCanvas(src: PFIBITMAP; left, top, right, bottom: Integer;
   color: Pointer; options: Integer = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_EnlargeCanvas@28'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_EnlargeCanvas@28'{$ENDIF};
 function FreeImage_AllocateEx(width, height, bpp: Integer; color: PRGBQuad;
   options: Integer = 0; palette: PRGBQuad = nil; red_mask: Cardinal = 0;
   green_mask: Cardinal = 0; blue_mask: Cardinal = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_AllocateEx@36'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_AllocateEx@36'{$ENDIF};
 function FreeImage_AllocateExT(atype: FREE_IMAGE_TYPE; width, height, bpp: Integer;
   color: Pointer; options: Integer = 0; palette: PRGBQuad = nil; red_mask: Cardinal = 0;
   green_mask: Cardinal = 0; blue_mask: Cardinal = 0): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_AllocateExT@40'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_AllocateExT@40'{$ENDIF};
 
 // miscellaneous algorithms
 function FreeImage_MultigridPoissonSolver(Laplacian: PFIBITMAP;
   ncycle: Integer = 3): PFIBITMAP; stdcall;
-  external FIDLL {$IFDEF MSWINDOWS}name '_FreeImage_MultigridPoissonSolver@8'{$ENDIF};
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_MultigridPoissonSolver@8'{$ENDIF};
 
 
 implementation
