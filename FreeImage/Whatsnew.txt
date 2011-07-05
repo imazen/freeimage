@@ -6,7 +6,7 @@ What's New for FreeImage
 + : added
 
 Month Day, 2011 - 3.15.1
-! FreeImage now uses LibRaw 0.13.5
+! FreeImage now uses LibRaw 0.13.6
 ! FreeImage now uses LibPNG 1.5.2
 ! FreeImage now uses LibTIFF 3.9.5
 + [Herve Drolon] added FreeImage_ConvertToRGB16 and updated FreeImage_ConvertToType
