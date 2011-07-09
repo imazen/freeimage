@@ -142,17 +142,26 @@ Load uncompressed image pixels for 1-, 4-, 8-, 16-, 24- and 32-bit dib
 @param height Image height
 @param pitch Image pitch
 @param bit_count Image bit-depth (1-, 4-, 8-, 16-, 24- or 32-bit)
+@return Returns TRUE if successful, returns FALSE otherwise
 */
-static void 
-LoadPixelData(FreeImageIO *io, fi_handle handle, FIBITMAP *dib, int height, int pitch, int bit_count) {
+static BOOL 
+LoadPixelData(FreeImageIO *io, fi_handle handle, FIBITMAP *dib, int height, unsigned pitch, unsigned bit_count) {
+	unsigned count = 0;
+
 	// Load pixel data
 	// NB: height can be < 0 for BMP data
 	if (height > 0) {
-		io->read_proc((void *)FreeImage_GetBits(dib), height * pitch, 1, handle);
+		count = io->read_proc((void *)FreeImage_GetBits(dib), height * pitch, 1, handle);
+		if(count != 1) {
+			return FALSE;
+		}
 	} else {
 		int positiveHeight = abs(height);
 		for (int c = 0; c < positiveHeight; ++c) {
-			io->read_proc((void *)FreeImage_GetScanLine(dib, positiveHeight - c - 1), pitch, 1, handle);
+			count = io->read_proc((void *)FreeImage_GetScanLine(dib, positiveHeight - c - 1), pitch, 1, handle);
+			if(count != 1) {
+				return FALSE;
+			}
 		}
 	}
 
@@ -179,6 +188,8 @@ LoadPixelData(FreeImageIO *io, fi_handle handle, FIBITMAP *dib, int height, int 
 		}
 	}
 #endif
+
+	return TRUE;
 }
 
 /**
@@ -458,19 +469,19 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 		// keep some general information about the bitmap
 
-		int used_colors = bih.biClrUsed;
-		int width       = bih.biWidth;
-		int height      = bih.biHeight;		// WARNING: height can be < 0 => check each call using 'height' as a parameter
-		int bit_count   = bih.biBitCount;
-		int compression = bih.biCompression;
-		int pitch       = CalculatePitch(CalculateLine(width, bit_count));
+		unsigned used_colors	= bih.biClrUsed;
+		int width				= bih.biWidth;
+		int height				= bih.biHeight;		// WARNING: height can be < 0 => check each call using 'height' as a parameter
+		unsigned bit_count		= bih.biBitCount;
+		unsigned compression	= bih.biCompression;
+		unsigned pitch			= CalculatePitch(CalculateLine(width, bit_count));
 
 		switch (bit_count) {
 			case 1 :
 			case 4 :
 			case 8 :
 			{
-				if ((used_colors <= 0) || (used_colors > CalculateUsedPaletteEntries(bit_count)))
+				if ((used_colors == 0) || (used_colors > CalculateUsedPaletteEntries(bit_count)))
 					used_colors = CalculateUsedPaletteEntries(bit_count);
 				
 				// allocate enough memory to hold the bitmap (header, palette, pixels) and read the palette
@@ -509,8 +520,12 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 				switch (compression) {
 					case BI_RGB :
-						LoadPixelData(io, handle, dib, height, pitch, bit_count);				
-						return dib;
+						if( LoadPixelData(io, handle, dib, height, pitch, bit_count) ) {
+							return dib;
+						} else {
+							throw "Error encountered while decoding BMP data";
+						}
+						break;
 
 					case BI_RLE4 :
 						if( LoadPixelDataRLE4(io, handle, width, height, dib) ) {
@@ -655,19 +670,19 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 
 		// keep some general information about the bitmap
 
-		int used_colors = bih.biClrUsed;
-		int width       = bih.biWidth;
-		int height      = bih.biHeight;		// WARNING: height can be < 0 => check each read_proc using 'height' as a parameter
-		int bit_count   = bih.biBitCount;
-		int compression = bih.biCompression;
-		int pitch       = CalculatePitch(CalculateLine(width, bit_count));
+		unsigned used_colors	= bih.biClrUsed;
+		int width				= bih.biWidth;
+		int height				= bih.biHeight;		// WARNING: height can be < 0 => check each read_proc using 'height' as a parameter
+		unsigned bit_count		= bih.biBitCount;
+		unsigned compression	= bih.biCompression;
+		unsigned pitch			= CalculatePitch(CalculateLine(width, bit_count));
 		
 		switch (bit_count) {
 			case 1 :
 			case 4 :
 			case 8 :
 			{
-				if ((used_colors <= 0) || (used_colors > CalculateUsedPaletteEntries(bit_count)))
+				if ((used_colors == 0) || (used_colors > CalculateUsedPaletteEntries(bit_count)))
 					used_colors = CalculateUsedPaletteEntries(bit_count);
 					
 				// allocate enough memory to hold the bitmap (header, palette, pixels) and read the palette
@@ -691,7 +706,7 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				RGBQUAD *pal = FreeImage_GetPalette(dib);
 
 				if(pal_size == 4) {
-					for (int count = 0; count < used_colors; count++) {
+					for (unsigned count = 0; count < used_colors; count++) {
 						FILE_BGRA bgra;
 
 						io->read_proc(&bgra, sizeof(FILE_BGRA), 1, handle);
@@ -701,7 +716,7 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 						pal[count].rgbBlue	= bgra.b;
 					} 
 				} else if(pal_size == 3) {
-					for (int count = 0; count < used_colors; count++) {
+					for (unsigned count = 0; count < used_colors; count++) {
 						FILE_BGR bgr;
 
 						io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
@@ -853,11 +868,11 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 #endif
 		// keep some general information about the bitmap
 
-		int used_colors = 0;
-		int width       = bios2_1x.biWidth;
-		int height      = bios2_1x.biHeight;	// WARNING: height can be < 0 => check each read_proc using 'height' as a parameter
-		int bit_count   = bios2_1x.biBitCount;
-		int pitch       = CalculatePitch(CalculateLine(width, bit_count));
+		unsigned used_colors = 0;
+		unsigned width		= bios2_1x.biWidth;
+		unsigned height		= bios2_1x.biHeight;	// WARNING: height can be < 0 => check each read_proc using 'height' as a parameter
+		unsigned bit_count	= bios2_1x.biBitCount;
+		unsigned pitch		= CalculatePitch(CalculateLine(width, bit_count));
 		
 		switch (bit_count) {
 			case 1 :
@@ -882,7 +897,7 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 
 				RGBQUAD *pal = FreeImage_GetPalette(dib);
 
-				for (int count = 0; count < used_colors; count++) {
+				for (unsigned count = 0; count < used_colors; count++) {
 					FILE_BGR bgr;
 
 					io->read_proc(&bgr, sizeof(FILE_BGR), 1, handle);
