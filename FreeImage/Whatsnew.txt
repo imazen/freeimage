@@ -16,6 +16,10 @@ Month Day, 2011 - 3.15.1
 * [Hew How Chee] fixed a bug in FreeImage_EnlargeCanvas when called with negative left and right parameters and bpp <= 4
 * [Herve Drolon] improved memory allocation checking in FreeImage_ConvertTo[Float/RGBF/UINT16]
 * [Herve Drolon] allowed loading of TIF with missing bitspersample/samplesperpixel/photometric tags
+* [Herve Drolon] fixed FreeImage_AllocateHeaderT against possible malloc overflow
+* [Herve Drolon] fixed CUT plugin against heap corruption vulnerability
+* [Herve Drolon] fixed BMP plugin for images with a truncated input data stream
+
 
 January 24th, 2011 - 3.15.0
 ! FreeImage now uses LibRaw 0.13-Beta3
