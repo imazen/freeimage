@@ -320,9 +320,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// allocate the bitmap
 				int width  = bmih.biWidth;
 				int height = bmih.biHeight / 2; // height == xor + and mask
-				int bit_count = bmih.biBitCount;
-				int line   = CalculateLine(width, bit_count);
-				int pitch  = CalculatePitch(line);
+				unsigned bit_count = bmih.biBitCount;
+				unsigned line   = CalculateLine(width, bit_count);
+				unsigned pitch  = CalculatePitch(line);
 
 				// allocate memory for one icon
 
@@ -337,7 +337,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					io->read_proc(FreeImage_GetPalette(dib), CalculateUsedPaletteEntries(bit_count) * sizeof(RGBQUAD), 1, handle);
 #if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 					RGBQUAD *pal = FreeImage_GetPalette(dib);
-					for(int i = 0; i < CalculateUsedPaletteEntries(bit_count); i++) {
+					for(unsigned i = 0; i < CalculateUsedPaletteEntries(bit_count); i++) {
 						INPLACESWAP(pal[i].rgbRed, pal[i].rgbBlue);
 					}
 #endif
@@ -535,21 +535,21 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			}
 
 			// write the bits
-			int width		= bmih->biWidth;
-			int height		= bmih->biHeight;
-			int bit_count	= bmih->biBitCount;
-			int line		= CalculateLine(width, bit_count);
-			int pitch		= CalculatePitch(line);
-			int size_xor	= height * pitch;
-			int size_and	= height * WidthBytes(width);
+			int width			= bmih->biWidth;
+			int height			= bmih->biHeight;
+			unsigned bit_count	= bmih->biBitCount;
+			unsigned line		= CalculateLine(width, bit_count);
+			unsigned pitch		= CalculatePitch(line);
+			int size_xor		= height * pitch;
+			int size_and		= height * WidthBytes(width);
 
 			// XOR mask
 #ifdef FREEIMAGE_BIGENDIAN
 			if (bit_count == 16) {
 				WORD pixel;
-				for(int y = 0; y < FreeImage_GetHeight(icon_dib); y++) {
+				for(unsigned y = 0; y < FreeImage_GetHeight(icon_dib); y++) {
 					BYTE *line = FreeImage_GetScanLine(icon_dib, y);
-					for(int x = 0; x < FreeImage_GetWidth(icon_dib); x++) {
+					for(unsigned x = 0; x < FreeImage_GetWidth(icon_dib); x++) {
 						pixel = ((WORD *)line)[x];
 						SwapShort(&pixel);
 						if (io->write_proc(&pixel, sizeof(WORD), 1, handle) != 1)
@@ -561,9 +561,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 #if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_RGB
 			if (bit_count == 24) {
 				FILE_BGR bgr;
-				for(int y = 0; y < FreeImage_GetHeight(icon_dib); y++) {
+				for(unsigned y = 0; y < FreeImage_GetHeight(icon_dib); y++) {
 					BYTE *line = FreeImage_GetScanLine(icon_dib, y);
-					for(int x = 0; x < FreeImage_GetWidth(icon_dib); x++) {
+					for(unsigned x = 0; x < FreeImage_GetWidth(icon_dib); x++) {
 						RGBTRIPLE *triple = ((RGBTRIPLE *)line)+x;
 						bgr.b = triple->rgbtBlue;
 						bgr.g = triple->rgbtGreen;
@@ -574,9 +574,9 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				}
 			} else if (bit_count == 32) {
 				FILE_BGRA bgra;
-				for(int y = 0; y < FreeImage_GetHeight(icon_dib); y++) {
+				for(unsigned y = 0; y < FreeImage_GetHeight(icon_dib); y++) {
 					BYTE *line = FreeImage_GetScanLine(icon_dib, y);
-					for(int x = 0; x < FreeImage_GetWidth(icon_dib); x++) {
+					for(unsigned x = 0; x < FreeImage_GetWidth(icon_dib); x++) {
 						RGBQUAD *quad = ((RGBQUAD *)line)+x;
 						bgra.b = quad->rgbBlue;
 						bgra.g = quad->rgbGreen;

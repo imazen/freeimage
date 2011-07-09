@@ -156,9 +156,9 @@ Align the palette and the pixels on a FIBITMAP_ALIGNMENT bytes alignment boundar
 @param bpp
 @see FreeImage_AllocateHeaderT
 */
-static unsigned 
-FreeImage_GetImageSizeHeader(BOOL header_only, int width, int height, int bpp) {
-	unsigned dib_size = sizeof(FREEIMAGEHEADER); 
+static size_t 
+FreeImage_GetImageSizeHeader(BOOL header_only, unsigned width, unsigned height, unsigned bpp) {
+	size_t dib_size = sizeof(FREEIMAGEHEADER); 
 	dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);  
 	dib_size += FIBITMAP_ALIGNMENT - sizeof(BITMAPINFOHEADER) % FIBITMAP_ALIGNMENT; 
 	dib_size += sizeof(BITMAPINFOHEADER);  
@@ -166,8 +166,31 @@ FreeImage_GetImageSizeHeader(BOOL header_only, int width, int height, int bpp) {
 	dib_size += sizeof(RGBQUAD) * CalculateUsedPaletteEntries(bpp);  
 	dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);  
 	if(!header_only) {
+		const size_t header_size = dib_size;
+
 		// pixels are aligned on a 16 bytes boundary
 		dib_size += CalculatePitch(CalculateLine(width, bpp)) * height; 
+
+		// check for possible malloc overflow using a KISS integer overflow detection mechanism
+		{
+			/*
+			The following constant take into account the additionnal memory used by 
+			aligned malloc functions as well as debug malloc functions. 
+			It is supposed here that using a (8 * FIBITMAP_ALIGNMENT) risk margin will be enough
+			for the target compiler. 
+			*/
+			const double FIBITMAP_MAX_MEMORY = (double)((size_t)-1) - 8 * FIBITMAP_ALIGNMENT;
+			const double dPitch = floor( ((double)bpp * width + 31.0) / 32.0 ) * 4.0;
+			const double dImageSize = (double)header_size + dPitch * height;
+			if(dImageSize != (double)dib_size) {
+				// here, we are sure to encounter a malloc overflow: try to avoid it ...
+				return 0;
+			}
+			if(dImageSize > FIBITMAP_MAX_MEMORY) {
+				// avoid possible overflow inside C allocation functions
+				return 0;
+			}
+		}
 	}
 
 	return dib_size;
@@ -240,7 +263,13 @@ FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int
 		// palette is aligned on a 16 bytes boundary
 		// pixels are aligned on a 16 bytes boundary
 
-		unsigned dib_size = FreeImage_GetImageSizeHeader(header_only, width, height, bpp); 
+		size_t dib_size = FreeImage_GetImageSizeHeader(header_only, width, height, bpp); 
+
+		if(dib_size == 0) {
+			// memory allocation will fail (probably a malloc overflow)
+			free(bitmap);
+			return NULL;
+		}
 
 		bitmap->data = (BYTE *)FreeImage_Aligned_Malloc(dib_size * sizeof(BYTE), FIBITMAP_ALIGNMENT);
 
@@ -394,7 +423,7 @@ FreeImage_Clone(FIBITMAP *dib) {
 		// palette is aligned on a 16 bytes boundary
 		// pixels are aligned on a 16 bytes boundary
 
-		unsigned dib_size = FreeImage_GetImageSizeHeader(header_only, width, height, bpp); 
+		size_t dib_size = FreeImage_GetImageSizeHeader(header_only, width, height, bpp); 
 
 		// copy the bitmap + internal pointers (remember to restore new_dib internal pointers later)
 		memcpy(new_dib->data, dib->data, dib_size);
