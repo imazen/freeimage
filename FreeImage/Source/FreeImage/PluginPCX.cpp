@@ -71,6 +71,31 @@ typedef struct tagPCXHEADER {
 // Internal functions
 // ==========================================================
 
+static BOOL 
+pcx_validate(FreeImageIO *io, fi_handle handle) {
+	BYTE pcx_signature = 0x0A;
+	BYTE signature[4] = { 0, 0, 0, 0 };
+
+	if(io->read_proc(&signature, 1, 4, handle) != 4) {
+		return FALSE;
+	}
+	// magic number (0x0A = ZSoft Z)
+	if(signature[0] == pcx_signature) {
+		// version
+		if(signature[1] <= 5) {
+			// encoding
+			if((signature[2] == 0) || (signature[2] == 1)) {
+				// bits per pixel per plane
+				if((signature[3] == 1) || (signature[3] == 8)) {
+					return TRUE;
+				}
+			}
+		}
+	}
+
+	return FALSE;
+}
+
 static unsigned
 readline(FreeImageIO &io, fi_handle handle, BYTE *buffer, unsigned length, BOOL rle, BYTE * ReadBuf, int * ReadPos) {
 	// -----------------------------------------------------------//
@@ -238,12 +263,7 @@ MimeType() {
 
 static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {
-	BYTE pcx_signature = 0x0A;
-	BYTE signature = 0;
-
-	io->read_proc(&signature, 1, 1, handle);
-
-	return (pcx_signature == signature);
+	return pcx_validate(io, handle);
 }
 
 /*!
@@ -326,20 +346,25 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 	try {
+		// check PCX identifier
+
+		long start_pos = io->tell_proc(handle);
+		BOOL validated = pcx_validate(io, handle);		
+		io->seek_proc(handle, start_pos, SEEK_SET);
+		if(!validated) {
+			throw FI_MSG_ERROR_MAGIC_NUMBER;
+		}
+
 		// process the header
 
 		PCXHEADER header;
 
-		io->read_proc(&header, sizeof(PCXHEADER), 1, handle);
+		if(io->read_proc(&header, sizeof(PCXHEADER), 1, handle) != 1) {
+			throw FI_MSG_ERROR_PARSING;
+		}
 #ifdef FREEIMAGE_BIGENDIAN
 		SwapHeader(&header);
 #endif
-
-		// check PCX identifier
-
-		if ((header.manufacturer != 0x0A) || (header.version > 5)) {
-			throw FI_MSG_ERROR_MAGIC_NUMBER;
-		}
 
 		// allocate a new DIB
 
