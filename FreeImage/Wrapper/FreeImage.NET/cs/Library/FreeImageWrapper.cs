@@ -179,10 +179,10 @@ namespace FreeImageAPI
 				Version wrapperVersion = GetWrapperVersion();
 				// No exception thrown, the library seems to be present
 				return
-				(nativeVersion.Major >= wrapperVersion.Major) &&
-				(nativeVersion.Minor >= wrapperVersion.Minor) &&
-				(nativeVersion.Build >= wrapperVersion.Build);
-			}
+                    (nativeVersion.Major > wrapperVersion.Major) ||
+                    ((nativeVersion.Major == wrapperVersion.Major) && (nativeVersion.Minor > wrapperVersion.Minor)) ||
+                    ((nativeVersion.Major == wrapperVersion.Major) && (nativeVersion.Minor == wrapperVersion.Minor) && (nativeVersion.Build >= wrapperVersion.Build));
+            }
 			catch (DllNotFoundException)
 			{
 				return false;
@@ -598,8 +598,12 @@ namespace FreeImageAPI
 				GetRedMask(dib), GetGreenMask(dib), GetBlueMask(dib), true);
 			// Unlock the bitmap
 			result.UnlockBits(data);
-			// Apply the bitmaps resolution
-			result.SetResolution(GetResolutionX(dib), GetResolutionY(dib));
+			// Apply the bitmap resolution
+            if((GetResolutionX(dib) > 0) && (GetResolutionY(dib) > 0)) 
+            {
+                // SetResolution will throw an exception when zero values are given on input 
+                result.SetResolution(GetResolutionX(dib), GetResolutionY(dib));
+            }
 			// Check whether the bitmap has a palette
 			if (GetPalette(dib) != IntPtr.Zero)
 			{
