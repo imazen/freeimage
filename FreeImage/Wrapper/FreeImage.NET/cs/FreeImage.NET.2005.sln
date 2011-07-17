@@ -1,33 +1,33 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library", "Library\Library.csproj", "{6598A7CD-8F27-4D3F-A675-5AE63113A7C3}"
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library", "Library\Library.2005.csproj", "{6598A7CD-8F27-4D3F-A675-5AE63113A7C3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceFileMerger", "SourceFileMerger\SourceFileMerger.csproj", "{2AD35641-C1EA-492C-B081-F4AA5AAE8FA1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceFileMerger", "SourceFileMerger\SourceFileMerger.2005.csproj", "{2AD35641-C1EA-492C-B081-F4AA5AAE8FA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "UnitTest\UnitTest.csproj", "{FC7B3A04-FACE-4F07-9CFD-8C6ED06E3CDC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "UnitTest\UnitTest.2005.csproj", "{FC7B3A04-FACE-4F07-9CFD-8C6ED06E3CDC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 01 - Loading and saving", "Samples\Sample 01 - Loading and saving\Sample 01 - Loading and saving.csproj", "{0D294AB6-FAD4-4364-AAB6-43C1796116A9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 01 - Loading and saving", "Samples\Sample 01 - Loading and saving\Sample 01 - Loading and saving.2005.csproj", "{0D294AB6-FAD4-4364-AAB6-43C1796116A9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 02 - Multipaged bitmaps", "Samples\Sample 02 - Multipaged bitmaps\Sample 02 - Multipaged bitmaps.csproj", "{AF8B72BD-1A8B-4E6B-A0F1-0BD57497777B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 02 - Multipaged bitmaps", "Samples\Sample 02 - Multipaged bitmaps\Sample 02 - Multipaged bitmaps.2005.csproj", "{AF8B72BD-1A8B-4E6B-A0F1-0BD57497777B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 03 - Allocating", "Samples\Sample 03 - Allocating\Sample 03 - Allocating.csproj", "{A7E452A1-1A43-47C4-8BF3-DA28E1402FB9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 03 - Allocating", "Samples\Sample 03 - Allocating\Sample 03 - Allocating.2005.csproj", "{A7E452A1-1A43-47C4-8BF3-DA28E1402FB9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 04 - Getting bitmap informations", "Samples\Sample 04 - Getting bitmap informations\Sample 04 - Getting bitmap informations.csproj", "{1F4BCDD7-5BD9-4237-8B14-C52B2A9FF52A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 04 - Getting bitmap informations", "Samples\Sample 04 - Getting bitmap informations\Sample 04 - Getting bitmap informations.2005.csproj", "{1F4BCDD7-5BD9-4237-8B14-C52B2A9FF52A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 05 - Working with pixels", "Samples\Sample 05 - Working with pixels\Sample 05 - Working with pixels.csproj", "{A501F134-8FB6-460B-AFE9-884A696C1C07}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 05 - Working with pixels", "Samples\Sample 05 - Working with pixels\Sample 05 - Working with pixels.2005.csproj", "{A501F134-8FB6-460B-AFE9-884A696C1C07}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 06 - Converting", "Samples\Sample 06 - Converting\Sample 06 - Converting.csproj", "{E2EA945D-E22C-47B3-9DD9-3A0B07FA3F81}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 06 - Converting", "Samples\Sample 06 - Converting\Sample 06 - Converting.2005.csproj", "{E2EA945D-E22C-47B3-9DD9-3A0B07FA3F81}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 07 - ICC Profiles", "Samples\Sample 07 - ICC Profiles\Sample 07 - ICC Profiles.csproj", "{3B1BB976-64A7-41FD-B7E2-59104161AF7E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 07 - ICC Profiles", "Samples\Sample 07 - ICC Profiles\Sample 07 - ICC Profiles.2005.csproj", "{3B1BB976-64A7-41FD-B7E2-59104161AF7E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 08 - Creating a plugin", "Samples\Sample 08 - Creating a plugin\Sample 08 - Creating a plugin.csproj", "{491042DB-495B-420C-A3BE-5D13019707C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 08 - Creating a plugin", "Samples\Sample 08 - Creating a plugin\Sample 08 - Creating a plugin.2005.csproj", "{491042DB-495B-420C-A3BE-5D13019707C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 09 - Working with streams", "Samples\Sample 09 - Working with streams\Sample 09 - Working with streams.csproj", "{92A454B2-67EF-4B70-99C9-F22B83B6FBFF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 09 - Working with streams", "Samples\Sample 09 - Working with streams\Sample 09 - Working with streams.2005.csproj", "{92A454B2-67EF-4B70-99C9-F22B83B6FBFF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 10 - Metadata", "Samples\Sample 10 - Metadata\Sample 10 - Metadata.csproj", "{55DCC37A-E56C-44D9-9C44-8DAB10CD3003}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 10 - Metadata", "Samples\Sample 10 - Metadata\Sample 10 - Metadata.2005.csproj", "{55DCC37A-E56C-44D9-9C44-8DAB10CD3003}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 11 - Using the FreeImageBitmap class", "Samples\Sample 11 - Using the FreeImageBitmap class\Sample 11 - Using the FreeImageBitmap class.csproj", "{996068CD-D07A-42E0-856F-ACC71E8565EF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample 11 - Using the FreeImageBitmap class", "Samples\Sample 11 - Using the FreeImageBitmap class\Sample 11 - Using the FreeImageBitmap class.2005.csproj", "{996068CD-D07A-42E0-856F-ACC71E8565EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
