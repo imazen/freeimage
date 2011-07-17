@@ -20,6 +20,7 @@ Month Day, 2011 - 3.15.1
 * [Herve Drolon] fixed CUT plugin against heap corruption vulnerability
 * [Herve Drolon] fixed BMP plugin for images with a truncated input data stream
 * [Herve Drolon] improved PCX format detection in FreeImage_GetFileType* functions
+* [Christian Heimes] fixed a TIFF G4 compression bug occuring with gcc-Version 4.1.2 20080704 (Red Hat 4.1.2-50)
 
 January 24th, 2011 - 3.15.0
 ! FreeImage now uses LibRaw 0.13-Beta3
