@@ -5,6 +5,11 @@ What's New for FreeImage.NET
 ! : changed
 + : added
 
+Month Day, 2011 - 3.15.1.0
++ [Herve Drolon] added VS 2008 project files
+* [Stefan Wetter] fixed FreeImage.IsAvailable method returning false in case the wrapper was out of date
+* [Herve Drolon] fixed FreeImage.GetBitmap returning false with dib without resolution info
+
 December 21, 2009 - 3.13.1.1
 * [Carsten Klein] Fixed a threading bug in OpenMultiBitmapFromStream and CloseMultiBitmap. Access to the streamHandles Dictionary is now thread safe.
 
