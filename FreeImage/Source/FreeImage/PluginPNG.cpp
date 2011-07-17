@@ -540,11 +540,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// we'll overload this var and use 0 to mean no phys data,
 				// since if it's not in meters we can't use it anyway
 
-				int res_unit_type = 0;
+				int res_unit_type = PNG_RESOLUTION_UNKNOWN;
 
 				png_get_pHYs(png_ptr,info_ptr, &res_x, &res_y, &res_unit_type);
 
-				if (res_unit_type == 1) {
+				if (res_unit_type == PNG_RESOLUTION_METER) {
 					FreeImage_SetDotsPerMeterX(dib, res_x);
 					FreeImage_SetDotsPerMeterY(dib, res_y);
 				}
@@ -703,7 +703,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			png_uint_32 res_y = (png_uint_32)FreeImage_GetDotsPerMeterY(dib);
 
 			if ((res_x > 0) && (res_y > 0))  {
-				png_set_pHYs(png_ptr, info_ptr, res_x, res_y, 1);
+				png_set_pHYs(png_ptr, info_ptr, res_x, res_y, PNG_RESOLUTION_METER);
 			}
 	
 			// Set the image information here.  Width and height are up to 2^31,
