@@ -653,6 +653,13 @@ public:
 	*/
 	BOOL convertToUINT16();
 
+	/** 
+	Converts the bitmap to a 48-bit RGB16 image. 
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertToRGB16
+	*/
+	BOOL convertToRGB16();
+
 	/**
 	Converts a High Dynamic Range image (48-bit RGB or 96-bit RGB Float) to a 24-bit RGB image. 
 	@param tmo Tone mapping operator

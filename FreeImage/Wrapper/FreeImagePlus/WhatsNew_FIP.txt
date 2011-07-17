@@ -5,6 +5,9 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+July 17th, 2011
++ [Herve Drolon] added fipImage::convertToRGB16
+
 February 26th, 2011
 + [Herve Drolon] added fipImage::convertToFloat
 
