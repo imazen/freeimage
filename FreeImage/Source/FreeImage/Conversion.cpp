@@ -152,7 +152,7 @@ ConvertCMYKtoRGBA(FIBITMAP* dib) {
 	const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 	const unsigned bytesperpixel = FreeImage_GetBPP(dib)/8;
 	
-	size_t channelSize = 1;
+	unsigned channelSize = 1;
 	if (image_type == FIT_RGBA16 || image_type == FIT_RGB16) {
 		channelSize = sizeof(WORD);
 	} else if (!(image_type == FIT_BITMAP && (bytesperpixel > 2))) {
@@ -301,7 +301,7 @@ ConvertLABtoRGB(FIBITMAP* dib) {
 	const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 	const unsigned bytesperpixel = FreeImage_GetBPP(dib) / 8;
 	
-	size_t channelSize = 1;
+	unsigned channelSize = 1;
 	if (image_type == FIT_RGBA16 || image_type == FIT_RGB16) {
 		channelSize = sizeof(WORD);
 	} else if (!(image_type == FIT_BITMAP && (bytesperpixel > 2))) {

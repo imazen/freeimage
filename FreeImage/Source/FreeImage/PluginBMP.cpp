@@ -1090,7 +1090,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// read the first byte of the infoheader
 
 		io->read_proc(&type, sizeof(DWORD), 1, handle);
-		io->seek_proc(handle, 0 - sizeof(DWORD), SEEK_CUR);
+		io->seek_proc(handle, 0 - (long)sizeof(DWORD), SEEK_CUR);
 #ifdef FREEIMAGE_BIGENDIAN
 		SwapLong(&type);
 #endif

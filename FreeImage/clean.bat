@@ -1,7 +1,5 @@
 rd Release /s /q
 rd Debug /s /q
-rd Source\FreeImageQt\Release /s /q
-rd Source\FreeImageQt\Debug /s /q
 rd Source\FreeImageLib\Debug /s /q
 rd Source\FreeImageLib\Release /s /q
 rd Source\Source\Release /s /q
@@ -24,6 +22,17 @@ rd Source\LibRawLite\Debug /s /q
 rd Source\LibRawLite\Release /s /q
 rd TestAPI\Debug /s /q
 rd TestAPI\Release /s /q
+rd x64 /s /q
+rd Source\FreeImageLib\x64 /s /q
+rd Source\LibJPEG\x64 /s /q
+rd Source\LibMNG\x64 /s /q
+rd Source\LibOpenJPEG\x64 /s /q
+rd Source\LibPNG\x64 /s /q
+rd Source\LibRawLite\x64 /s /q
+rd Source\LibTIFF\x64 /s /q
+rd Source\OpenEXR\x64 /s /q
+rd Source\ZLib\x64 /s /q
+rd TestAPI\x64 /s /q
 del TestAPI\blob.png
 del TestAPI\buffer.png
 del TestAPI\dump.png
