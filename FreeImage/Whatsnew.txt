@@ -5,7 +5,7 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month Day, 2011 - 3.15.1
+July 25th, 2011 - 3.15.1
 ! FreeImage now uses LibRaw 0.13.7
 ! FreeImage now uses LibPNG 1.5.4
 ! FreeImage now uses LibTIFF 3.9.5
