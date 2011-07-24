@@ -9,6 +9,7 @@ Month Day, 2011 - 3.15.1
 ! FreeImage now uses LibRaw 0.13.7
 ! FreeImage now uses LibPNG 1.5.4
 ! FreeImage now uses LibTIFF 3.9.5
+! FreeImage now uses OpenJPEG 1.5.0 (SVN patch 2011-07-23)
 + [Herve Drolon] added FreeImage_ConvertToRGB16 and updated FreeImage_ConvertToType
 + [Herve Drolon] added RAW_HALFSIZE flag to RAW plugin
 * [Herve Drolon] fixed a memory leak in JPEG plugin occuring when loading some corrupted images
