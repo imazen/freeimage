@@ -5,11 +5,119 @@ What's New for OpenJPEG
 ! : changed
 + : added
 
-January 18, 2001
+July 23, 2011
++ [vtorri] Fixed issue #74.
++ [vtorri] Added libpng 1.5 detection. Dropped libpng 1.0.* explicit detection (we are in 2011 !). Patch by Winfried.
+
+July 13, 2011
++ [vtorri] added 'libopenjpeg-jpwl.pc.in'
+* [vtorri] fixed substitution in libopenjpeg1.pc.in
+! [vtorri] increase micro version to 99. When released, set minor to 5 and micro to 0
+* [vtorri] added -lm to the linker for libopenjpeg and to the .pc file
+- [vtorri] removed useless LCMS flags from Makefile.am for libopenjpeg
+
+_______ R812 : 'openjpeg-1.5' branch created ______________________________
+
+
+July 10, 2011
+! [antonin] improved encoding speed in t1_encode_cblks (credit to Giuseppe Baruffa)
+
+July 3, 2011
+* [antonin] fixed bmptoimage (see http://groups.google.com/group/openjpeg/browse_thread/thread/33a24c5896bf6391)
+* [antonin] fixed handling of "jp2->meth" value (Restricted ICC profile handling currently not implemented)
+
+June 30, 2011
+! [antonin] fixed CTest configuration files
+
+June 3, 2011
++ [malaterre] adding partno and numpart info as part of the warning message (issue #69)
++ [malaterre] make sure that cmake build system works on debian
+
+May 23, 2011
+* [antonin] fixed a bug in autotools that prevented "make distcheck" to work properly (credit to Vincent Torri)
++ [antonin] added autotools as a build method for jpip (credit to Vincent Torri)
+* [antonin] fixed autotools (broken since the new directory structure) (credit to Vincent Torri)
+
+May 18, 2011
+! [antonin] defined new type "opj_bool", and new constants OPJ_FALSE and OPJ_TRUE, to avoid having to deal with "stdbool.h" (patch from Winfried)
+
+May 16, 2011
+* [antonin] fixed another bug related to the number of packets in a tile-part, not correctly taken into acccount when generating an index file during decoding.
+* [antonin] fixed part of issue 69, when tile-part index is inconsistent with the total number of tile-parts
+
+May 12, 2011
+* [antonin] xcode project file updated (now integrates openjpip)
+
+April 16, 2011
+* [antonin] fixed a bug in mqc.c (see https://groups.google.com/d/topic/openjpeg/kQ1PbZUd19k/discussion, credit to Peter Wimmer)
+* [antonin] fixed wrong path in Doxyfile.dox
+
+April 14, 2011
++ [antonin] initial commit of OpenJPIP 1.0, a JPIP client-server architecture based on OpenJPEG (see README file in jpip directory for more details, see 'applications/jpip/CHANGES' for subsequent jpip-related commits)
+* [antonin] fixed applications/codec/CMakeLists.txt that prevented JPWL executables to be built with JPWL functionalities.
+! [antonin] changed make all behaviour : DOC target removed from ALL.
+
+April 13, 2011
+! [antonin] changed the directory hierarchy of the whole project. See README files for details.
+! [antonin] moved "openjpeg3d" directory from the trunk to the branches directory.
+! [antonin] renamed and reorganized "jp3d" directory to "openjpeg3d". Is now a standalone directory, with independent cmake files. Done as it uses its own version of the openjpeg library and does not depend on the one currently developped. Will be removed from the trunk and stored in a branch.
+
+April 12, 2011
+* [antonin] Fixed internal function names conflict with Jasper (http://code.google.com/p/openjpeg/issues/detail?id=30)
+* [antonin] convert.c: ENDIAN condition removed, tiftoimage and imagetotif updated (ALPHA added for RGB and GRAY, correct handling of 12-bit precision), small bugfixes (credit to Winfried)
+* [antonin] small fix in configure.ac (credit to Vincent Torri)
+
+March 21, 2011
++ [antonin] added two files FindLCMS.cmake and FindLCMS2.cmake as they are not shipped by default with other cmake modules.
+
+March 20, 2011
++ [antonin] added a 'thirdparty' directory to include main source files of libtiff, libpng, libz and liblcms to enable support of these formats in the codec executables. CMake will try to statically build these libraries if they are not found on the system. Note that these third party libraries are not required to build libopenjpeg (which has no dependencies).
+- [antonin] removed the 'libs' directory containing win32 compiled versions of libpng, libtiff and liblcms. 
+
+March 10, 2011
+* [antonin] fixed lt_version in configure.ac
+
+March 5, 2011
+! [antonin] cosmetic change for status report of ./configure
+
+March 4, 2011
+* [antonin] now assume MinGW does not have dirent.h (actually have it but without opendir function). Fixed also a WIN32 check in jp3d/libjp3dvm/openjpeg3d.h.
+! [antonin] updated autotools files to improve build and install procedures (credit to Vincent Torri).
+
+February 17, 2011
+* [antonin] replaced 'long' by 'size_t' in dwt.c to be sure to cast to a pointer size.
+* [antonin] now allows 16-bit precision for mj2 encoding and decoding (solves Issue 49 and Issue 63). Credit to Winfried.
+
+February 9, 2011
+! [antonin] renamed "java sources" to "java-sources" to avoid blank space
+- [antonin] removed opj_config.h.in from svn, as it is automaticaly generated by autoheader when calling ./bootstrap.sh
+
+February 6, 2011
+* [antonin] cmake : fixed installed links to openjpeg.h and openjpeg3d.h.
+
+January 30, 2011
+* [antonin] fixed warnings in jp2.c (signed compared to unsigned) and dwt.c (bad cast)
+- [antonin] removed depcomp file from trunk (automatically copied by automake in main folder)
+
+January 29, 2011
+* [antonin] removed 'é' in license header to prevent warning C4819 (see Issue 57).
+
+January 24, 2011
+- [antonin] remove more obsolete VS files. Left only mj2_to_metadata VS files, as this is the only executable not yet handled by CMake.
+
+January 23, 2011
+- [antonin] removed obsolete VS files
+! [antonin] MJ2 module: 
+			- Add two components to mj2.h: meth, enumcs.
+			- Define or reset all components of mj2_cparameters_t before its usage.
+			- Add argument '-D prec' to frames_to_mj2.c and use the precision in mj2_convert.c (solves Issue 49).
+* [antonin] move 'KK' definition from rs.h to rs.c to prevent duplicate symbol error when building jpwl with autotools.
+
+January 18, 2011
 ! [rdieter] cmake: SOVERSION change to 1 (from 1.4) to match auto-tools
 
 January 17, 2011
-- [rdieter] remove generated files (ticket 52)
+- [rdieter] remove generated files (Issue 52)
 
 January 16, 2011
 * [antonin] convert.c: inclusion of endian.h has to be different on APPLE platforms

@@ -1103,7 +1103,7 @@ static double t1_getwmsedec(
 	return wmsedec;
 }
 
-static bool allocate_buffers(
+static opj_bool allocate_buffers(
 		opj_t1_t *t1,
 		int w,
 		int h)
@@ -1115,7 +1115,7 @@ static bool allocate_buffers(
 		opj_aligned_free(t1->data);
 		t1->data = (int*) opj_aligned_malloc(datasize * sizeof(int));
 		if(!t1->data){
-			return false;
+			return OPJ_FALSE;
 		}
 		t1->datasize=datasize;
 	}
@@ -1128,7 +1128,7 @@ static bool allocate_buffers(
 		opj_aligned_free(t1->flags);
 		t1->flags = (flag_t*) opj_aligned_malloc(flagssize * sizeof(flag_t));
 		if(!t1->flags){
-			return false;
+			return OPJ_FALSE;
 		}
 		t1->flagssize=flagssize;
 	}
@@ -1137,7 +1137,7 @@ static bool allocate_buffers(
 	t1->w=w;
 	t1->h=h;
 
-	return true;
+	return OPJ_TRUE;
 }
 
 /** mod fixed_quality */
@@ -1413,6 +1413,7 @@ void t1_encode_cblks(
 
 			for (bandno = 0; bandno < res->numbands; ++bandno) {
 				opj_tcd_band_t* restrict band = &res->bands[bandno];
+        int bandconst = 8192 * 8192 / ((int) floor(band->stepsize * 8192));
 
 				for (precno = 0; precno < res->pw * res->ph; ++precno) {
 					opj_tcd_precinct_t *prc = &band->precincts[precno];
@@ -1463,7 +1464,7 @@ void t1_encode_cblks(
 									datap[(j * cblk_w) + i] =
 										fix_mul(
 										tmp,
-										8192 * 8192 / ((int) floor(band->stepsize * 8192))) >> (11 - T1_NMSEDEC_FRACBITS);
+										bandconst) >> (11 - T1_NMSEDEC_FRACBITS);
 								}
 							}
 						}
