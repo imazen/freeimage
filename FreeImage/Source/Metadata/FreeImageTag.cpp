@@ -275,13 +275,32 @@ FreeImage_SetTagValue(FITAG *tag, const void *value) {
 // FITAG internal helper functions
 // --------------------------------------------------------------------------
 
+/**
+Given a FREE_IMAGE_MDTYPE, calculate the size of this type in bytes unit
+@param type Input data type
+@return Returns the size of the data type, in bytes unit
+*/
 int 
 FreeImage_TagDataWidth(FREE_IMAGE_MDTYPE type) {
-	static const int format_bytes[] = { 0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 4, 4 };
+	static const int format_bytes[] = { 
+		0, // FIDT_NOTYPE	= 0,	// placeholder 
+		1, // FIDT_BYTE		= 1,	// 8-bit unsigned integer 
+		1, // FIDT_ASCII	= 2,	// 8-bit bytes w/ last byte null 
+		2, // FIDT_SHORT	= 3,	// 16-bit unsigned integer 
+		4, // FIDT_LONG		= 4,	// 32-bit unsigned integer 
+		8, // FIDT_RATIONAL	= 5,	// 64-bit unsigned fraction 
+		1, // FIDT_SBYTE	= 6,	// 8-bit signed integer 
+		1, // FIDT_UNDEFINED= 7,	// 8-bit untyped data 
+		2, // FIDT_SSHORT	= 8,	// 16-bit signed integer 
+		4, // FIDT_SLONG	= 9,	// 32-bit signed integer 
+		8, // FIDT_SRATIONAL= 10,	// 64-bit signed fraction 
+		4, // FIDT_FLOAT	= 11,	// 32-bit IEEE floating point 
+		8, // FIDT_DOUBLE	= 12,	// 64-bit IEEE floating point 
+		4, // FIDT_IFD		= 13,	// 32-bit unsigned integer (offset) 
+		4  // FIDT_PALETTE	= 14	// 32-bit RGBQUAD 
+	};
 
 	  return (type < (sizeof(format_bytes)/sizeof(format_bytes[0]))) ?
 		  format_bytes[type] : 0;
 }
-
-
 
