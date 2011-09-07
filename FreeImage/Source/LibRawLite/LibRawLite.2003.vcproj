@@ -139,6 +139,9 @@
 				<File
 					RelativePath=".\src\libraw_cxx.cpp">
 				</File>
+				<File
+					RelativePath=".\src\libraw_datastream.cpp">
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -150,6 +153,9 @@
 				Filter="">
 				<File
 					RelativePath=".\internal\defines.h">
+				</File>
+				<File
+					RelativePath=".\internal\libraw_bytebuffer.h">
 				</File>
 				<File
 					RelativePath=".\internal\libraw_internal_funcs.h">

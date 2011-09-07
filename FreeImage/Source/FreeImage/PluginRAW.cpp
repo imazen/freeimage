@@ -19,11 +19,11 @@
 // Use at your own risk!
 // ==========================================================
 
+#include "../LibRawLite/libraw/libraw.h"
+
 #include "FreeImage.h"
 #include "Utilities.h"
 #include "../Metadata/FreeImageTag.h"
-
-#include "../LibRawLite/libraw/libraw.h"
 
 // ==========================================================
 // Plugin Interface
@@ -53,6 +53,9 @@ public:
 		io->seek_proc(handle, start_pos, SEEK_SET);
 	}
 	~LibRaw_freeimage_datastream() {
+	}
+	virtual void * make_jas_stream() {
+		return NULL;
 	}
     virtual int valid() { 
 		return (_io && _handle);
@@ -188,7 +191,8 @@ libraw_LoadEmbeddedPreview(LibRaw& RawProcessor, int flags) {
 	try {
 		// unpack data
 		if(RawProcessor.unpack_thumb() != LIBRAW_SUCCESS) {
-			throw (char*)NULL;	// run silently "LibRaw : failed to run unpack_thumb"
+			// run silently "LibRaw : failed to run unpack_thumb"
+			return NULL;
 		}
 
 		// retrieve thumb image
@@ -447,8 +451,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		// (-w) Use camera white balance, if possible (otherwise, fallback to auto_wb)
 		RawProcessor.imgdata.params.use_camera_wb = 1;
-		// RAW data filtration mode during data unpacking and postprocessing
-		RawProcessor.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
 		// (-h) outputs the image in 50% size
 		RawProcessor.imgdata.params.half_size = ((flags & RAW_HALFSIZE) == RAW_HALFSIZE) ? 1 : 0;
 
@@ -460,14 +462,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		if(header_only) {
 			// header only mode
 			dib = FreeImage_AllocateHeaderT(header_only, FIT_RGB16, RawProcessor.imgdata.sizes.width, RawProcessor.imgdata.sizes.height);
-			// try to get JPEG embedded Exif metadata
-			if(dib) {
-				FIBITMAP *metadata_dib = libraw_LoadEmbeddedPreview(RawProcessor, FIF_LOAD_NOPIXELS);
-				if(metadata_dib) {
-					FreeImage_CloneMetadata(dib, metadata_dib);
-					FreeImage_Unload(metadata_dib);
-				}
-			}
 		}
 		else if((flags & RAW_PREVIEW) == RAW_PREVIEW) {
 			// try to get the embedded JPEG
@@ -487,12 +481,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		}
 
 		// save ICC profile if present
-		if(NULL != RawProcessor.imgdata.color.profile) {
+		if(dib && (NULL != RawProcessor.imgdata.color.profile)) {
 			FreeImage_CreateICCProfile(dib, RawProcessor.imgdata.color.profile, RawProcessor.imgdata.color.profile_length);
 		}
 
 		// try to get JPEG embedded Exif metadata
-		if(dib && !((flags & RAW_PREVIEW) == RAW_PREVIEW) ) {
+		if(dib && !((flags & RAW_PREVIEW) == RAW_PREVIEW)) {
 			FIBITMAP *metadata_dib = libraw_LoadEmbeddedPreview(RawProcessor, FIF_LOAD_NOPIXELS);
 			if(metadata_dib) {
 				FreeImage_CloneMetadata(dib, metadata_dib);

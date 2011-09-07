@@ -85,8 +85,9 @@ void        crw_init_tables (unsigned table, ushort *huff[2]);
     void        fuji_load_raw();
     void        parse_fuji (int offset);
 
-
-
+// RedCine
+    void        parse_redcine();
+    void        redcine_load_raw();
 
 // Rollei
     void        rollei_load_raw();
@@ -139,6 +140,9 @@ void        crw_init_tables (unsigned table, ushort *huff[2]);
     void        kodak_65000_load_raw();
     void        kodak_rgb_load_raw();
     void        kodak_yrgb_load_raw();
+    void        kodak_ycbcr_load_raw();
+    void        kodak_rgb_load_thumb();
+    void        kodak_ycbcr_load_thumb();
 
 // It's a Sony (and K&M)
     void        sony_decrypt (unsigned *data, int len, int start, int key);
