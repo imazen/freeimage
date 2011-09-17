@@ -1068,7 +1068,156 @@ Sony maker note
 static TagInfo
   exif_sony_tag_table[] =
   {
+    {  0x0102, (char *) "Quality", (char *) NULL},
+    {  0x0104, (char *) "FlashExposureComp", (char *) NULL},
+    {  0x0105, (char *) "Teleconverter", (char *) NULL},
+    {  0x0112, (char *) "WhiteBalanceFineTune", (char *) NULL},
+    {  0x0114, (char *) "CameraSettings", (char *) NULL},
+    {  0x0115, (char *) "WhiteBalance", (char *) NULL},
     {  0x0E00, (char *) "PrintIM", (char *) NULL},
+    {  0x1000, (char *) "MultiBurstMode", (char *) NULL},
+    {  0x1001, (char *) "MultiBurstImageWidth", (char *) NULL},
+    {  0x1002, (char *) "MultiBurstImageHeight", (char *) NULL},
+    {  0x1003, (char *) "Panorama", (char *) NULL},
+    {  0x2001, (char *) "PreviewImage", (char *) NULL},
+    {  0x2004, (char *) "Contrast", (char *) NULL},
+    {  0x2005, (char *) "Saturation", (char *) NULL},
+    {  0x2006, (char *) "Sharpness", (char *) NULL},
+    {  0x2007, (char *) "Brightness", (char *) NULL},
+    {  0x2008, (char *) "LongExposureNoiseReduction", (char *) NULL},
+    {  0x2009, (char *) "HighISONoiseReduction", (char *) NULL},
+    {  0x200A, (char *) "HDR", (char *) NULL},
+    {  0x200B, (char *) "MultiFrameNoiseReduction", (char *) NULL},
+    {  0x3000, (char *) "ShotInfo", (char *) NULL},
+    {  0xB000, (char *) "FileFormat", (char *) NULL},
+    {  0xB001, (char *) "SonyModelID", (char *) NULL},
+    {  0xB020, (char *) "ColorReproduction", (char *) NULL},
+    {  0xB021, (char *) "ColorTemperature", (char *) NULL},
+    {  0xB022, (char *) "ColorCompensationFilter", (char *) NULL},
+    {  0xB023, (char *) "SceneMode", (char *) NULL},
+    {  0xB024, (char *) "ZoneMatching", (char *) NULL},
+    {  0xB025, (char *) "DynamicRangeOptimizer", (char *) NULL},
+    {  0xB026, (char *) "ImageStabilization", (char *) NULL},
+    {  0xB027, (char *) "LensType", (char *) NULL},
+    {  0xB028, (char *) "MinoltaMakerNote", (char *) NULL},
+    {  0xB029, (char *) "ColorMode", (char *) NULL},
+    {  0xB02B, (char *) "FullImageSize", (char *) NULL},
+    {  0xB02C, (char *) "PreviewImageSize", (char *) NULL},
+    {  0xB040, (char *) "Macro", (char *) NULL},
+    {  0xB041, (char *) "ExposureMode", (char *) NULL},
+    {  0xB042, (char *) "FocusMode", (char *) NULL},
+    {  0xB043, (char *) "AFMode", (char *) NULL},
+    {  0xB044, (char *) "AFIlluminator", (char *) NULL},
+    {  0xB047, (char *) "Quality2", (char *) NULL},
+    {  0xB048, (char *) "FlashLevel", (char *) NULL},
+    {  0xB049, (char *) "ReleaseMode", (char *) NULL},
+    {  0xB04A, (char *) "SequenceNumber", (char *) NULL},
+    {  0xB04B, (char *) "Anti-Blur", (char *) NULL},
+    {  0xB04E, (char *) "LongExposureNoiseReduction", (char *) NULL},
+    {  0xB04F, (char *) "DynamicRangeOptimizer", (char *) NULL},
+    {  0xB052, (char *) "IntelligentAuto", (char *) NULL},
+    {  0xB054, (char *) "WhiteBalance2", (char *) NULL},
+    {  0x0000, (char *) NULL, (char *) NULL}
+  };
+
+/**
+Sigma SD1 maker note
+*/
+static TagInfo
+  exif_sigma_sd1_tag_table[] =
+  {
+    {  0x0002, (char *) "SerialNumber", (char *) NULL},
+    {  0x0003, (char *) "DriveMode", (char *) NULL},
+    {  0x0004, (char *) "ResolutionMode", (char *) NULL},
+    {  0x0005, (char *) "AFMode", (char *) NULL},
+    {  0x0006, (char *) "FocusSetting", (char *) NULL},
+    {  0x0007, (char *) "WhiteBalance", (char *) NULL},
+    {  0x0008, (char *) "ExposureMode", (char *) NULL},
+    {  0x0009, (char *) "MeteringMode", (char *) NULL},
+    {  0x000A, (char *) "LensFocalRange", (char *) NULL},
+    {  0x000B, (char *) "ColorSpace", (char *) NULL},
+    {  0x000C, (char *) "ExposureCompensation", (char *) NULL},
+    {  0x000D, (char *) "Contrast", (char *) NULL},
+    {  0x000E, (char *) "Shadow", (char *) NULL},
+    {  0x000F, (char *) "Highlight", (char *) NULL},
+    {  0x0010, (char *) "Saturation", (char *) NULL},
+    {  0x0011, (char *) "Sharpness", (char *) NULL},
+    {  0x0012, (char *) "X3FillLight", (char *) NULL},
+    {  0x0014, (char *) "ColorAdjustment", (char *) NULL},
+    {  0x0015, (char *) "AdjustmentMode", (char *) NULL},
+    {  0x0016, (char *) "Quality", (char *) NULL},
+    {  0x0017, (char *) "Firmware", (char *) NULL},
+    {  0x0018, (char *) "Software", (char *) NULL},
+    {  0x0019, (char *) "AutoBracket", (char *) NULL},
+    {  0x001A, (char *) "ChrominanceNoiseReduction", (char *) NULL},
+    {  0x001B, (char *) "LuminanceNoiseReduction", (char *) NULL},
+    {  0x001C, (char *) "PreviewImageStart", (char *) NULL},
+    {  0x001D, (char *) "PreviewImageLength", (char *) NULL},
+    {  0x001F, (char *) "MakerNoteVersion", (char *) NULL},
+    {  0x0026, (char *) "FileFormat", (char *) NULL},
+    {  0x002C, (char *) "ColorMode", (char *) NULL},
+    {  0x0030, (char *) "Calibration", (char *) NULL},
+    {  0x0048, (char *) "LensApertureRange", (char *) NULL},
+    {  0x0049, (char *) "FNumber", (char *) NULL},
+    {  0x004A, (char *) "ExposureTime", (char *) NULL},
+    {  0x004B, (char *) "ExposureTime2", (char *) NULL},
+    {  0x004D, (char *) "ExposureCompensation_SD1", (char *) NULL},
+    {  0x0055, (char *) "SensorTemperature", (char *) NULL},
+    {  0x0056, (char *) "FlashExposureComp", (char *) NULL},
+    {  0x0057, (char *) "Firmware_SD1", (char *) NULL},
+    {  0x0058, (char *) "WhiteBalance", (char *) NULL},
+    {  0x0000, (char *) NULL, (char *) NULL}
+  };
+
+/**
+Sigma / Foveon maker note (others than SD1 models)
+NB: many tags are not consistent between different models
+*/
+static TagInfo
+  exif_sigma_foveon_tag_table[] =
+  {
+    {  0x0002, (char *) "SerialNumber", (char *) NULL},
+    {  0x0003, (char *) "DriveMode", (char *) NULL},
+    {  0x0004, (char *) "ResolutionMode", (char *) NULL},
+    {  0x0005, (char *) "AFMode", (char *) NULL},
+    {  0x0006, (char *) "FocusSetting", (char *) NULL},
+    {  0x0007, (char *) "WhiteBalance", (char *) NULL},
+    {  0x0008, (char *) "ExposureMode", (char *) NULL},
+    {  0x0009, (char *) "MeteringMode", (char *) NULL},
+    {  0x000A, (char *) "LensFocalRange", (char *) NULL},
+    {  0x000B, (char *) "ColorSpace", (char *) NULL},
+    {  0x000C, (char *) "ExposureCompensation", (char *) NULL},
+    {  0x000D, (char *) "Contrast", (char *) NULL},
+    {  0x000E, (char *) "Shadow", (char *) NULL},
+    {  0x000F, (char *) "Highlight", (char *) NULL},
+    {  0x0010, (char *) "Saturation", (char *) NULL},
+    {  0x0011, (char *) "Sharpness", (char *) NULL},
+    {  0x0012, (char *) "X3FillLight", (char *) NULL},
+    {  0x0014, (char *) "ColorAdjustment", (char *) NULL},
+    {  0x0015, (char *) "AdjustmentMode", (char *) NULL},
+    {  0x0016, (char *) "Quality", (char *) NULL},
+    {  0x0017, (char *) "Firmware", (char *) NULL},
+    {  0x0018, (char *) "Software", (char *) NULL},
+    {  0x0019, (char *) "AutoBracket", (char *) NULL},
+    {  0x001A, (char *) "PreviewImageStart", (char *) NULL},
+    {  0x001B, (char *) "PreviewImageLength", (char *) NULL},
+    {  0x001C, (char *) "PreviewImageSize", (char *) NULL},
+    {  0x001D, (char *) "MakerNoteVersion", (char *) NULL},
+    {  0x001F, (char *) "AFPoint", (char *) NULL},
+    {  0x0022, (char *) "FileFormat", (char *) NULL},
+    {  0x0024, (char *) "Calibration", (char *) NULL},
+    {  0x002C, (char *) "ColorMode", (char *) NULL},
+    {  0x0030, (char *) "LensApertureRange", (char *) NULL},
+    {  0x0031, (char *) "FNumber", (char *) NULL},
+    {  0x0032, (char *) "ExposureTime", (char *) NULL},
+    {  0x0033, (char *) "ExposureTime2", (char *) NULL},
+    {  0x0034, (char *) "BurstShot", (char *) NULL},
+    {  0x0035, (char *) "ExposureCompensation", (char *) NULL},
+    {  0x0039, (char *) "SensorTemperature", (char *) NULL},
+    {  0x003A, (char *) "FlashExposureComp", (char *) NULL},
+    {  0x003B, (char *) "Firmware", (char *) NULL},
+    {  0x003C, (char *) "WhiteBalance", (char *) NULL},
+    {  0x003D, (char *) "PictureMode", (char *) NULL},
     {  0x0000, (char *) NULL, (char *) NULL}
   };
 
@@ -1226,6 +1375,8 @@ TagLib::TagLib() {
 	addMetadataModel(TagLib::EXIF_MAKERNOTE_ASAHI, exif_asahi_tag_table);
 	addMetadataModel(TagLib::EXIF_MAKERNOTE_PENTAX, exif_pentax_tag_table);
 	addMetadataModel(TagLib::EXIF_MAKERNOTE_SONY, exif_sony_tag_table);
+	addMetadataModel(TagLib::EXIF_MAKERNOTE_SIGMA_SD1, exif_sigma_sd1_tag_table);
+	addMetadataModel(TagLib::EXIF_MAKERNOTE_SIGMA_FOVEON, exif_sigma_foveon_tag_table);
 
 	// IPTC/NAA
 	addMetadataModel(TagLib::IPTC, iptc_tag_table);
@@ -1359,6 +1510,8 @@ TagLib::getFreeImageModel(MDMODEL model) {
 		case EXIF_MAKERNOTE_ASAHI:
 		case EXIF_MAKERNOTE_PENTAX:
 		case EXIF_MAKERNOTE_SONY:
+		case EXIF_MAKERNOTE_SIGMA_SD1:
+		case EXIF_MAKERNOTE_SIGMA_FOVEON:
 			return FIMD_EXIF_MAKERNOTE;
 
 		case IPTC:
