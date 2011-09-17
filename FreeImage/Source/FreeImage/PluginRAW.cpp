@@ -264,6 +264,8 @@ libraw_LoadRawData(LibRaw& RawProcessor, int bitspersample) {
 			RawProcessor.imgdata.params.gamm[0] = 1/2.222;
 			RawProcessor.imgdata.params.gamm[1] = 4.5;
 		}
+		// (-W) Don't use automatic increase of brightness by histogram
+		RawProcessor.imgdata.params.no_auto_bright = 1;
 		// (-a) Use automatic white balance obtained after averaging over the entire image
 		RawProcessor.imgdata.params.use_auto_wb = 1;
 		// (-q 3) Adaptive homogeneity-directed demosaicing algorithm (AHD)
@@ -377,7 +379,8 @@ Extension() {
 		"rwl,"	 // Leica Camera Raw Image Format.
 		"rwz,"   // Rawzor Digital Camera Raw Image Format.
 		"sr2,"   // Sony Digital Camera Raw Image Format.
-		"srf,"   // Sony Digital Camera Raw Image Format for DSC-F828 8 megapixel digital camera or Sony DSC-R1
+		"srf,"   // Sony Digital Camera Raw Image Format for DSC-F828 8 megapixel digital camera or Sony DSC-R1.
+		"srw,"   // Samsung Raw Image Format.
 		"sti";   // Sinar Capture Shop Raw Image File.
 //		"x3f"   // Sigma Digital Camera Raw Image Format for devices based on Foveon X3 direct image sensor.
 	return raw_extensions;
