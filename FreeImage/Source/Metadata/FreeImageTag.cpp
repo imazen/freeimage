@@ -280,9 +280,9 @@ Given a FREE_IMAGE_MDTYPE, calculate the size of this type in bytes unit
 @param type Input data type
 @return Returns the size of the data type, in bytes unit
 */
-int 
+unsigned 
 FreeImage_TagDataWidth(FREE_IMAGE_MDTYPE type) {
-	static const int format_bytes[] = { 
+	static const unsigned format_bytes[] = { 
 		0, // FIDT_NOTYPE	= 0,	// placeholder 
 		1, // FIDT_BYTE		= 1,	// 8-bit unsigned integer 
 		1, // FIDT_ASCII	= 2,	// 8-bit bytes w/ last byte null 

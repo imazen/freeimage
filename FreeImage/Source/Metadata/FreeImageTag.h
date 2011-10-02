@@ -263,7 +263,7 @@ Describes the tag format descriptor
 @return Returns the width of a single element, in bytes
 @see FREE_IMAGE_MDTYPE
 */
-int FreeImage_TagDataWidth(FREE_IMAGE_MDTYPE type);
+unsigned FreeImage_TagDataWidth(FREE_IMAGE_MDTYPE type);
 
 // --------------------------------------------------------------------------
 
