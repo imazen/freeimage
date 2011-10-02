@@ -1373,7 +1373,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					jpeg_read_scanlines(&cinfo, buffer, 1);
 
-					for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
+					for(unsigned x = 0; x < cinfo.output_width; x++) {
 						WORD K = (WORD)src[3];
 						dst[FI_RGBA_RED]   = (BYTE)((K * src[0]) / 255);
 						dst[FI_RGBA_GREEN] = (BYTE)((K * src[1]) / 255);
@@ -1396,15 +1396,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// LibJPEG "as is".
 
 #if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
-				if(cinfo.num_components == 3) {
-					for(unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
-						BYTE *target = FreeImage_GetScanLine(dib, y);
-						for(unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
-							INPLACESWAP(target[0], target[2]);
-							target += 3;
-						}
-					}
-				}
+				SwapRedBlue32(dib);
 #endif
 			}
 
@@ -1423,7 +1415,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// everything went well. return the loaded dib
 
-			return (FIBITMAP *)dib;
+			return dib;
 		} catch (...) {
 			if(NULL != dib) {
 				FreeImage_Unload(dib);

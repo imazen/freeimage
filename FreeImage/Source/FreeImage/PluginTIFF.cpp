@@ -1208,7 +1208,7 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 	uint32 exif_offset = 0;
 	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &exif_offset)) {
 
-		if(tiff->tif_nextdiroff) {
+		if(TIFFLastDirectory(tiff) != 0) {
 			// save current position
 			long tell_pos = io->tell_proc(handle);
 			tdir_t cur_dir = TIFFCurrentDirectory(tiff);
