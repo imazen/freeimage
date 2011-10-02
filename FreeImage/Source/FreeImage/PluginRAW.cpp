@@ -180,7 +180,7 @@ libraw_ConvertToDib(libraw_processed_image_t *image) {
 /** 
 Get the embedded JPEG preview image from RAW picture with included Exif Data. 
 @param RawProcessor Libraw handle
-@param flags Loading JPEG flags
+@param flags JPEG load flags
 @return Returns the loaded dib if successfull, returns NULL otherwise
 */
 static FIBITMAP * 
@@ -452,6 +452,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// the following parameters affect data reading
 		// --------------------------------------------
 
+		// (-s [0..N-1]) Select one raw image from input file
+		RawProcessor.imgdata.params.shot_select = 0;
 		// (-w) Use camera white balance, if possible (otherwise, fallback to auto_wb)
 		RawProcessor.imgdata.params.use_camera_wb = 1;
 		// (-h) outputs the image in 50% size
