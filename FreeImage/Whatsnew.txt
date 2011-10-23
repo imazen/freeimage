@@ -6,11 +6,12 @@ What's New for FreeImage
 + : added
 
 Month day, 2011 - 3.15.2
-! FreeImage now uses LibRaw 0.14.1
+! FreeImage now uses LibRaw 0.14.2
 ! FreeImage now uses LibPNG 1.5.5
 + [Herve Drolon] added new Exif maker note tags
 * [Mylek Grey] enabled the use of multi-component transforms (MCT) in J2K and JP2 saving
 * [Herve Drolon] refactored PluginICO in order to correctly support Windows Vista 256x256 icons
+* [Herve Drolon] added minor speed improvements to FreeImage_Rescale
 
 July 25th, 2011 - 3.15.1
 ! FreeImage now uses LibRaw 0.13.7
