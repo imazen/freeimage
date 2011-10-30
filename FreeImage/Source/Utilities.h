@@ -252,7 +252,7 @@ CalculateUsedBits(int bits) {
 
 inline unsigned
 CalculateLine(unsigned width, unsigned bitdepth) {
-	return ((width * bitdepth) + 7) / 8;
+	return (unsigned)( ((unsigned long long)width * bitdepth + 7) / 8 );
 }
 
 inline unsigned
