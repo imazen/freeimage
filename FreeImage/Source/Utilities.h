@@ -141,12 +141,12 @@ typedef struct tagFILE_BGR {
 // ==========================================================
 
 /// Max function
-template <class T> T MAX(T a, T b) {
+template <class T> T MAX(const T &a, const T &b) {
 	return (a > b) ? a: b;
 }
 
 /// Min function
-template <class T> T MIN(T a, T b) {
+template <class T> T MIN(const T &a, const T &b) {
 	return (a < b) ? a: b;
 }
 
@@ -156,7 +156,7 @@ template <class T> void INPLACESWAP(T& a, T& b) {
 }
 
 /// Clamp function
-template <class T> T CLAMP(T value, T min_value, T max_value) {
+template <class T> T CLAMP(const T &value, const T &min_value, const T &max_value) {
 	return ((value < min_value) ? min_value : (value > max_value) ? max_value : value);
 }
 
@@ -276,7 +276,7 @@ CalculateScanLine(unsigned char *bits, unsigned pitch, int scanline) {
 // ----------------------------------------------------------
 
 /**
-Fast generic assign (faster then for loop)
+Fast generic assign (faster than for loop)
 @param dst Destination pixel
 @param src Source pixel
 @param bytesperpixel # of bytes per pixel
