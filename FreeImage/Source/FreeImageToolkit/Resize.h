@@ -57,7 +57,7 @@ public:
 	Constructor<br>
 	Allocate and compute the weights table
 	@param pFilter Filter used for upsampling or downsampling
-	@param uLineSize Length (in pixels) of the destination line buffer
+	@param uDstSize Length (in pixels) of the destination line buffer
 	@param uSrcSize Length (in pixels) of the source line buffer
 	*/
 	CWeightsTable(CGenericFilter *pFilter, unsigned uDstSize, unsigned uSrcSize);
