@@ -87,41 +87,49 @@ FreeImage_CloneTag(FITAG *tag) {
 	FITAG *clone = FreeImage_CreateTag();
 	if(!clone) return NULL;
 
-	// copy the tag
-	FITAGHEADER *src_tag = (FITAGHEADER *)tag->data;
-	FITAGHEADER *dst_tag = (FITAGHEADER *)clone->data;
+	try {
+		// copy the tag
+		FITAGHEADER *src_tag = (FITAGHEADER *)tag->data;
+		FITAGHEADER *dst_tag = (FITAGHEADER *)clone->data;
 
-	// tag ID
-	dst_tag->id = src_tag->id;
-	// tag key
-	if(src_tag->key) {
-		dst_tag->key = (char*)malloc((strlen(src_tag->key) + 1) * sizeof(char));
-		strcpy(dst_tag->key, src_tag->key);
-	}
-	// tag description
-	if(src_tag->description) {
-		dst_tag->description = (char*)malloc((strlen(src_tag->description) + 1) * sizeof(char));
-		strcpy(dst_tag->description, src_tag->description);
-	}
-	// tag data type
-	dst_tag->type = src_tag->type;
-	// tag count
-	dst_tag->count = src_tag->count;
-	// tag length
-	dst_tag->length = src_tag->length;
-	// tag value
-	switch(dst_tag->type) {
-		case FIDT_ASCII:
-			dst_tag->value = (char*)malloc((strlen((char*)src_tag->value) + 1) * sizeof(char));
-			strcpy((char*)dst_tag->value, (char*)src_tag->value);
-			break;
-		default:
-			dst_tag->value = (BYTE*)malloc(src_tag->length * sizeof(BYTE));
-			memcpy(dst_tag->value, src_tag->value, src_tag->length);
-			break;
-	}
+		// tag ID
+		dst_tag->id = src_tag->id;
+		// tag key
+		if(src_tag->key) {
+			dst_tag->key = (char*)malloc((strlen(src_tag->key) + 1) * sizeof(char));
+			if(!dst_tag->key) {
+				throw FI_MSG_ERROR_MEMORY;
+			}
+			strcpy(dst_tag->key, src_tag->key);
+		}
+		// tag description
+		if(src_tag->description) {
+			dst_tag->description = (char*)malloc((strlen(src_tag->description) + 1) * sizeof(char));
+			if(!dst_tag->description) {
+				throw FI_MSG_ERROR_MEMORY;
+			}
+			strcpy(dst_tag->description, src_tag->description);
+		}
+		// tag data type
+		dst_tag->type = src_tag->type;
+		// tag count
+		dst_tag->count = src_tag->count;
+		// tag length
+		dst_tag->length = src_tag->length;
+		// tag value
+		dst_tag->value = (BYTE*)malloc(src_tag->length * sizeof(BYTE));
+		if(!dst_tag->value) {
+			throw FI_MSG_ERROR_MEMORY;
+		}
+		memcpy(dst_tag->value, src_tag->value, src_tag->length);
 
-	return clone;
+		return clone;
+
+	} catch(const char *message) {
+		FreeImage_DeleteTag(clone);
+		FreeImage_OutputMessageProc(FIF_UNKNOWN, message);
+		return NULL;
+	}
 }
 
 // --------------------------------------------------------------------------
