@@ -61,6 +61,7 @@ void tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib);
 
 // TIFF Exif profile
 BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib);
+BOOL tiff_write_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib);
 
 // ----------------------------------------------------------
 //   LogLuv conversion functions interface (see TIFFLogLuv.cpp)
@@ -920,16 +921,36 @@ tiff_write_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
 }
 
 /**
+	Write the Exif profile to TIFF
+	@param dib Input FIBITMAP
+	@param tiff LibTIFF TIFF handle
+	@return Returns TRUE if successful, FALSE otherwise
+*/
+static BOOL
+tiff_write_exif_profile(TIFF *tiff, FIBITMAP *dib) {
+	BOOL bResult = FALSE;
+	uint32 exif_offset = 0;
+	
+	// write EXIF_MAIN tags, EXIF_EXIF not supported yet
+	bResult = tiff_write_exif_tags(tiff, TagLib::EXIF_MAIN, dib);
+
+	return bResult;
+}
+
+/**
 Write TIFF special profiles
 */
 static void 
 WriteMetadata(TIFF *tiff, FIBITMAP *dib) {
 	// IPTC
 	tiff_write_iptc_profile(tiff, dib);
-
+	
 	// Adobe XMP
 	tiff_write_xmp_profile(tiff, dib);
-
+	
+	// EXIF_MAIN tags
+	tiff_write_exif_profile(tiff, dib);
+	
 	// GeoTIFF tags
 	tiff_write_geotiff_profile(tiff, dib);
 }
@@ -2228,8 +2249,8 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 
 		const FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
 
-		const int32 width = FreeImage_GetWidth(dib);
-		const int32 height = FreeImage_GetHeight(dib);
+		const uint32 width = FreeImage_GetWidth(dib);
+		const uint32 height = FreeImage_GetHeight(dib);
 		const uint16 bitsperpixel = (uint16)FreeImage_GetBPP(dib);
 
 		const FIICCPROFILE* iccProfile = FreeImage_GetICCProfile(dib);
@@ -2343,6 +2364,7 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 		TIFFSetField(out, TIFFTAG_PHOTOMETRIC, photometric);
 		TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);	// single image plane 
 		TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+		TIFFSetField(out, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
 		TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, TIFFDefaultStripSize(out, (uint32) -1)); 
 
 		// handle metrics
@@ -2435,7 +2457,7 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 
 							BYTE *p = bits, *b = buffer;
 
-							for(int x = 0; x < width; x++) {
+							for(uint32 x = 0; x < width; x++) {
 								// copy the 8-bit layer
 								b[0] = *p;
 								// convert the trns table to a 8-bit alpha layer
@@ -2459,7 +2481,7 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 							throw FI_MSG_ERROR_MEMORY;
 						}
 
-						for (int y = 0; y < height; y++) {
+						for (uint32 y = 0; y < height; y++) {
 							// get a copy of the scanline
 							memcpy(buffer, FreeImage_GetScanLine(dib, height - y - 1), pitch);
 							// write the scanline to disc
@@ -2479,7 +2501,7 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 						throw FI_MSG_ERROR_MEMORY;
 					}
 
-					for (int y = 0; y < height; y++) {
+					for (uint32 y = 0; y < height; y++) {
 						// get a copy of the scanline
 
 						memcpy(buffer, FreeImage_GetScanLine(dib, height - y - 1), pitch);
@@ -2490,7 +2512,7 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 		
 							BYTE *pBuf = buffer;
 		
-							for (int x = 0; x < width; x++) {
+							for (uint32 x = 0; x < width; x++) {
 								INPLACESWAP(pBuf[0], pBuf[2]);
 								pBuf += samplesperpixel;
 							}
@@ -2515,7 +2537,7 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 				throw FI_MSG_ERROR_MEMORY;
 			}
 
-			for (int y = 0; y < height; y++) {
+			for (uint32 y = 0; y < height; y++) {
 				// get a copy of the scanline and convert from RGB to XYZ
 				tiff_ConvertLineRGBToXYZ(buffer, FreeImage_GetScanLine(dib, height - y - 1), width);
 				// write the scanline to disc
@@ -2530,7 +2552,7 @@ SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flag
 				throw FI_MSG_ERROR_MEMORY;
 			}
 			
-			for (int y = 0; y < height; y++) {
+			for (uint32 y = 0; y < height; y++) {
 				// get a copy of the scanline
 				memcpy(buffer, FreeImage_GetScanLine(dib, height - y - 1), pitch);
 				// write the scanline to disc
