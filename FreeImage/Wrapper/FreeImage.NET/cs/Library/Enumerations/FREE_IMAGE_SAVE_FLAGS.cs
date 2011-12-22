@@ -117,6 +117,14 @@ namespace FreeImageAPI
 		/// Save with no chroma subsampling (4:4:4).
 		/// </summary>
 		JPEG_SUBSAMPLING_444 = 0x10000,
+        /// <summary>
+        /// On saving, compute optimal Huffman coding tables (can reduce a few percent of file size).
+        /// </summary>
+        JPEG_OPTIMIZE = 0x20000,
+        /// <summary>
+        /// save basic JPEG, without metadata or any markers.
+        /// </summary>
+        JPEG_BASELINE = 0x40000,
 		/// <summary>
 		/// Save using ZLib level 1 compression flag
 		/// (default value is <see cref="PNG_Z_DEFAULT_COMPRESSION"/>).
