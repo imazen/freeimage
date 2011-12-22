@@ -460,6 +460,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					png_get_PLTE(png_ptr,info_ptr, &png_palette, &palette_entries);
 
+					palette_entries = MIN((unsigned)palette_entries, FreeImage_GetColorsUsed(dib));
 					palette = FreeImage_GetPalette(dib);
 
 					// store the palette
