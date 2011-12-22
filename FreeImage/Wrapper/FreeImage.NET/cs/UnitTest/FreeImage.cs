@@ -9848,7 +9848,7 @@ namespace FreeImageAPI
 			: this(width, height)
 		{
 			FreeImage.SetResolutionX(dib, (uint)g.DpiX);
-			FreeImage.SetResolutionX(dib, (uint)g.DpiY);
+			FreeImage.SetResolutionY(dib, (uint)g.DpiY);
 		}
 
 		/// <summary>
