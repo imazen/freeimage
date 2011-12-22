@@ -193,6 +193,9 @@ copy Source\FreeImage.h Dist
 					RelativePath=".\Source\FreeImage\J2KHelper.cpp">
 				</File>
 				<File
+					RelativePath=".\Source\FreeImage\MNGHelper.cpp">
+				</File>
+				<File
 					RelativePath="Source\FreeImage\Plugin.cpp">
 				</File>
 				<File
@@ -224,6 +227,9 @@ copy Source\FreeImage.h Dist
 				</File>
 				<File
 					RelativePath=".\Source\FreeImage\PluginJ2K.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\FreeImage\PluginJNG.cpp">
 				</File>
 				<File
 					RelativePath=".\Source\FreeImage\PluginJP2.cpp">
@@ -339,12 +345,6 @@ copy Source\FreeImage.h Dist
 				</File>
 				<File
 					RelativePath=".\Source\FreeImage\tmoFattal02.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							WarningLevel="4"/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="Source\FreeImage\tmoReinhard05.cpp">

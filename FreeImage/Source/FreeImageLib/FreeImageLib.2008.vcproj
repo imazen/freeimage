@@ -468,6 +468,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\FreeImage\MNGHelper.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\FreeImage\Plugin.cpp"
 					>
 				</File>
@@ -509,6 +513,10 @@
 				</File>
 				<File
 					RelativePath="..\FreeImage\PluginJ2K.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\FreeImage\PluginJNG.cpp"
 					>
 				</File>
 				<File

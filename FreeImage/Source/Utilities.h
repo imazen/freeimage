@@ -474,7 +474,7 @@ A Standard Default Color Space for the Internet - sRGB.
 // ==========================================================
 
 static const char *FI_MSG_ERROR_MEMORY = "Memory allocation failed";
-static const char *FI_MSG_ERROR_DIB_MEMORY = "DIB allocation failed, probably caused by an invalid image";
+static const char *FI_MSG_ERROR_DIB_MEMORY = "DIB allocation failed, maybe caused by an invalid image size or by a lack of memory";
 static const char *FI_MSG_ERROR_PARSING = "Parsing error";
 static const char *FI_MSG_ERROR_MAGIC_NUMBER = "Invalid magic number";
 static const char *FI_MSG_ERROR_UNSUPPORTED_FORMAT = "Unsupported format";

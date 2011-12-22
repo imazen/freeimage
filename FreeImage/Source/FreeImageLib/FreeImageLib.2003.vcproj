@@ -230,6 +230,9 @@ copy ..\FreeImage.h ..\..\Dist
 					RelativePath="..\FreeImage\J2KHelper.cpp">
 				</File>
 				<File
+					RelativePath="..\FreeImage\MNGHelper.cpp">
+				</File>
+				<File
 					RelativePath="..\FreeImage\Plugin.cpp">
 				</File>
 				<File
@@ -261,6 +264,9 @@ copy ..\FreeImage.h ..\..\Dist
 				</File>
 				<File
 					RelativePath="..\FreeImage\PluginJ2K.cpp">
+				</File>
+				<File
+					RelativePath="..\FreeImage\PluginJNG.cpp">
 				</File>
 				<File
 					RelativePath="..\FreeImage\PluginJP2.cpp">
