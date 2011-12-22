@@ -572,6 +572,11 @@ skip_write_field(TIFF* tif, ttag_t tag) {
 			// skip always, values have been set in SaveOneTIFF()
 			return TRUE;
 			break;
+		
+		case TIFFTAG_RICHTIFFIPTC:
+			// skip always, IPTC metadata model is set in tiff_write_iptc_profile()
+			return TRUE;
+			break;
 
 		case TIFFTAG_YCBCRCOEFFICIENTS:
 		case TIFFTAG_REFERENCEBLACKWHITE:
@@ -603,7 +608,7 @@ Write all known exif tags
 BOOL 
 tiff_write_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 	char defaultKey[16];
-	size_t tag_size;
+	size_t tag_size = 0;
 	const TIFFFieldInfo *tiffFieldInfos;
 	
 	// only EXIF_MAIN so far
@@ -622,10 +627,12 @@ tiff_write_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 		const TIFFFieldInfo *fieldInfo = &tiffFieldInfos[i];
 
 		if(skip_write_field(tif, fieldInfo->field_tag)) {
+			// skip tags that are already handled by the LibTIFF writing process
 			continue;
 		}
 
 		FITAG *tag = NULL;
+		// get the tag key
 		const char *key = tag_lib.getTagFieldName(TagLib::EXIF_MAIN, (WORD)fieldInfo->field_tag, defaultKey);
 
 		if(FreeImage_GetMetadata(FIMD_EXIF_MAIN, dib, key, &tag)) {

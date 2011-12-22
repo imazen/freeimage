@@ -155,6 +155,13 @@ static TagInfo
     {  0xA40B, (char *) "DeviceSettingDescription", (char *) "Device settings description"},
     {  0xA40C, (char *) "SubjectDistanceRange", (char *) "Subject distance range"},
     {  0xA420, (char *) "ImageUniqueID", (char *) "Unique image ID"},
+    {  0xA430, (char *) "CameraOwnerName", (char *) "Camera owner name"},
+    {  0xA431, (char *) "BodySerialNumber", (char *) "Body serial number"},
+    {  0xA432, (char *) "LensSpecification", (char *) "Lens specification"},
+    {  0xA433, (char *) "LensMake", (char *) "Lens make"},
+    {  0xA434, (char *) "LensModel", (char *) "Lens model"},
+    {  0xA435, (char *) "LensSerialNumber", (char *) "Lens serial number"},
+
 	// These tags are not part of the Exiv v2.3 specifications but are often loaded by applications as Exif data
 	{  0x4746, (char *) "Rating", (char *) "Rating tag used by Windows"},
 	{  0x4749, (char *) "RatingPercent", (char *) "Rating tag used by Windows, value in percent"},
