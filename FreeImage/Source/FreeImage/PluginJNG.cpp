@@ -1,5 +1,5 @@
 // ==========================================================
-// MNG loader
+// JNG loader
 //
 // Design and implementation by
 // - Herve Drolon (drolon@infonie.fr)
@@ -30,7 +30,7 @@ static int s_format_id;
 
 // ----------------------------------------------------------
 
-#define MNG_SIGNATURE_SIZE 8	// size of the signature
+#define JNG_SIGNATURE_SIZE 8	// size of the signature
 
 // ----------------------------------------------------------
 
@@ -39,7 +39,7 @@ static int s_format_id;
 // ----------------------------------------------------------
 
 FIBITMAP* mng_ReadChunks(int format_id, FreeImageIO *io, fi_handle handle, long Offset, int flags = 0);
-
+BOOL mng_WriteJNG(int format_id, FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int flags);
 
 // ==========================================================
 // Plugin Implementation
@@ -47,17 +47,17 @@ FIBITMAP* mng_ReadChunks(int format_id, FreeImageIO *io, fi_handle handle, long 
 
 static const char * DLL_CALLCONV
 Format() {
-	return "MNG";
+	return "JNG";
 }
 
 static const char * DLL_CALLCONV
 Description() {
-	return "Multiple-image Network Graphics";
+	return "JPEG Network Graphics";
 }
 
 static const char * DLL_CALLCONV
 Extension() {
-	return "mng";
+	return "jng";
 }
 
 static const char * DLL_CALLCONV
@@ -67,27 +67,31 @@ RegExpr() {
 
 static const char * DLL_CALLCONV
 MimeType() {
-	return "video/x-mng";
+	return "image/x-mng";
 }
 
 static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {
-	BYTE mng_signature[8] = { 138, 77, 78, 71, 13, 10, 26, 10 };
+	BYTE jng_signature[8] = { 139, 74, 78, 71, 13, 10, 26, 10 };
 	BYTE signature[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	io->read_proc(&signature, 1, MNG_SIGNATURE_SIZE, handle);
+	io->read_proc(&signature, 1, JNG_SIGNATURE_SIZE, handle);
 
-	return (memcmp(mng_signature, signature, MNG_SIGNATURE_SIZE) == 0) ? TRUE : FALSE;
+	return (memcmp(jng_signature, signature, JNG_SIGNATURE_SIZE) == 0) ? TRUE : FALSE;
 }
 
 static BOOL DLL_CALLCONV
 SupportsExportDepth(int depth) {
-	return FALSE;
+	return (
+			(depth == 8) ||
+			(depth == 24) ||
+			(depth == 32)
+		);
 }
 
 static BOOL DLL_CALLCONV 
 SupportsExportType(FREE_IMAGE_TYPE type) {
-	return FALSE;
+	return (type == FIT_BITMAP) ? TRUE : FALSE;
 }
 
 static BOOL DLL_CALLCONV
@@ -97,7 +101,7 @@ SupportsICCProfiles() {
 
 static BOOL DLL_CALLCONV
 SupportsNoPixels() {
-	return FALSE;
+	return TRUE;
 }
 
 
@@ -114,7 +118,7 @@ Close(FreeImageIO *io, fi_handle handle, void *data) {
 
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
-	long offset = MNG_SIGNATURE_SIZE;	// move to skip first 8 bytes of signature
+	long offset = JNG_SIGNATURE_SIZE;	// move to skip first 8 bytes of signature
 
 	// check the signature (8 bytes)
 	if(Validate(io, handle) == FALSE) {
@@ -125,13 +129,18 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	return mng_ReadChunks(s_format_id, io, handle, offset, flags);
 }
 
+static BOOL DLL_CALLCONV
+Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data) {
+
+	return mng_WriteJNG(s_format_id, io, dib, handle, flags);
+}
 
 // ==========================================================
 //   Init
 // ==========================================================
 
 void DLL_CALLCONV
-InitMNG(Plugin *plugin, int format_id) {
+InitJNG(Plugin *plugin, int format_id) {
 	s_format_id = format_id;
 
 	plugin->format_proc = Format;
@@ -143,7 +152,7 @@ InitMNG(Plugin *plugin, int format_id) {
 	plugin->pagecount_proc = NULL;
 	plugin->pagecapability_proc = NULL;
 	plugin->load_proc = Load;
-	plugin->save_proc = NULL;
+	plugin->save_proc = Save;
 	plugin->validate_proc = Validate;
 	plugin->mime_proc = MimeType;
 	plugin->supports_export_bpp_proc = SupportsExportDepth;
