@@ -38,7 +38,7 @@
 #include "FreeImageTag.h"
 
 /**
- HOW-TO : add a new TagIngo table
+ HOW-TO : add a new TagInfo table
  --------------------------------------------------------------------------
  1) add a table identifier in the TagLib class definition (see enum MDMODEL)
  2) declare the tag table as static and use a 0/NULL value as last entry
