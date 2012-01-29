@@ -8,6 +8,7 @@ What's New for FreeImage
 Month day, 2011 - 3.15.2
 ! FreeImage now uses LibRaw 0.14.5
 ! FreeImage now uses LibPNG 1.5.7
+! FreeImage now uses LibJPEG 8d
 - [Herve Drolon] removed dependency on LibMNG 1.0.10 (MNG and JNG files are now handled internally)
 + [Herve Drolon] replaced the MNG plugin with a new MNG internal FreeImage plugin (with read support)
 + [Herve Drolon] added a new JNG internal FreeImage plugin (with read/write support)
@@ -24,6 +25,7 @@ Month day, 2011 - 3.15.2
 * [Herve Drolon] fixed a bug inside IFF plugin occuring when loading a 24-bit dib with a palette
 * [Herve Drolon] fixed a bug with loading of PNG images containing a cHRM chunk (regression introduced by LibPNG 1.5.4 and fixed by LibPNG 1.5.5)
 * [Herve Drolon] allowed loading of PNG with benign errors (such as images with too many IDATs)
+* [Mihail Naydenov] fixed some incorrect MIME types returned by FreeImage_GetFIFMimeType
 
 July 25th, 2011 - 3.15.1
 ! FreeImage now uses LibRaw 0.13.7
