@@ -153,7 +153,7 @@ RegExpr() {
 
 static const char * DLL_CALLCONV
 MimeType() {
-	return "image/freeimage-iff";
+	return "image/x-iff";
 }
 
 static BOOL DLL_CALLCONV

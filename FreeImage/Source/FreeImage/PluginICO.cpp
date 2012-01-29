@@ -178,7 +178,7 @@ RegExpr() {
 
 static const char * DLL_CALLCONV
 MimeType() {
-	return "image/x-icon";
+	return "image/vnd.microsoft.icon";
 }
 
 static BOOL DLL_CALLCONV
