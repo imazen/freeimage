@@ -722,6 +722,13 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, unsigned long offset, unsig
 
 		// point to the directory entry
 		const BYTE* base = DIR_ENTRY_ADDR(ifd1st, e);
+		
+		// check for buffer overflow
+		const size_t remaining = (size_t)base + 12 - (size_t)tiffp;
+		if(remaining >= length) {
+			// bad IFD1 directory, ignore it
+			return FALSE;
+		}
 
 		// get the tag ID
 		WORD tag = ReadUint16(msb_order, base);
@@ -826,6 +833,10 @@ jpeg_read_exif_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen)
 
 		// this is the offset to the first IFD (Image File Directory)
 		unsigned long first_offset = ReadUint32(bMotorolaOrder, profile + 4);
+		if (first_offset > length) {
+			// bad Exif data
+			return FALSE;
+		}
 
 		/*
 		Note: as FreeImage 3.14.0, this test is no longer needed for images with similar suspicious offset
