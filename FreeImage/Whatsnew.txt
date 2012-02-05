@@ -7,8 +7,9 @@ What's New for FreeImage
 
 Month day, 2011 - 3.15.2
 ! FreeImage now uses LibRaw 0.14.5
-! FreeImage now uses LibPNG 1.5.7
+! FreeImage now uses LibPNG 1.5.8
 ! FreeImage now uses LibJPEG 8d
+! FreeImage now uses ZLib 1.2.6
 - [Herve Drolon] removed dependency on LibMNG 1.0.10 (MNG and JNG files are now handled internally)
 + [Herve Drolon] replaced the MNG plugin with a new MNG internal FreeImage plugin (with read support)
 + [Herve Drolon] added a new JNG internal FreeImage plugin (with read/write support)
