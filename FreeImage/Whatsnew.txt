@@ -26,6 +26,7 @@ Month day, 2011 - 3.15.2
 * [Herve Drolon] fixed a bug with loading of PNG images containing a cHRM chunk (regression introduced by LibPNG 1.5.4 and fixed by LibPNG 1.5.5)
 * [Herve Drolon] allowed loading of PNG with benign errors (such as images with too many IDATs)
 * [Mihail Naydenov] fixed some incorrect MIME types returned by FreeImage_GetFIFMimeType
+* [Herve Drolon] fixed loading of Exif with bad thumbnail data or with a bad first offset size
 
 July 25th, 2011 - 3.15.1
 ! FreeImage now uses LibRaw 0.13.7
