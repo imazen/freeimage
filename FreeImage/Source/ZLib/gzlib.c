@@ -5,6 +5,15 @@
 
 #include "gzguts.h"
 
+/** added by FreeImage */
+#ifdef _MSC_VER
+#include <io.h>	/* read, close */
+/**
+disable warning "The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name"
+*/
+#pragma warning(disable : 4996)
+#endif /* _MSC_VER */
+
 #if defined(_WIN32) && !defined(__BORLANDC__)
 #  define LSEEK _lseeki64
 #else

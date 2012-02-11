@@ -5,6 +5,15 @@
 
 #include "gzguts.h"
 
+/** added by FreeImage */
+#ifdef _MSC_VER
+#include <io.h>	/* write, close */
+/**
+disable warning "The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name"
+*/
+#pragma warning(disable : 4996)
+#endif /* _MSC_VER */
+
 /* Local functions */
 local int gz_init OF((gz_statep));
 local int gz_comp OF((gz_statep, int));
