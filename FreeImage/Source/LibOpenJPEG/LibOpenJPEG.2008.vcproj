@@ -375,6 +375,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\cidx_manager.c"
+				>
+			</File>
+			<File
 				RelativePath="cio.c"
 				>
 				<FileConfiguration
@@ -837,6 +841,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\phix_manager.c"
+				>
+			</File>
+			<File
 				RelativePath="pi.c"
 				>
 				<FileConfiguration
@@ -877,6 +885,10 @@
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ppix_manager.c"
+				>
 			</File>
 			<File
 				RelativePath="raw.c"
@@ -961,6 +973,10 @@
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\t1_generate_luts.c"
+				>
 			</File>
 			<File
 				RelativePath="t2.c"
@@ -1088,6 +1104,14 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\thix_manager.c"
+				>
+			</File>
+			<File
+				RelativePath=".\tpix_manager.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1095,6 +1119,10 @@
 			>
 			<File
 				RelativePath="bio.h"
+				>
+			</File>
+			<File
+				RelativePath=".\cidx_manager.h"
 				>
 			</File>
 			<File
@@ -1115,6 +1143,10 @@
 			</File>
 			<File
 				RelativePath="image.h"
+				>
+			</File>
+			<File
+				RelativePath=".\indexbox_manager.h"
 				>
 			</File>
 			<File
@@ -1171,6 +1203,10 @@
 			</File>
 			<File
 				RelativePath="t1.h"
+				>
+			</File>
+			<File
+				RelativePath=".\t1_luts.h"
 				>
 			</File>
 			<File

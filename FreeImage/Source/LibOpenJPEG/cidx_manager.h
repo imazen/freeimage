@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2002-2012, Communications and Remote Sensing Laboratory, Universite catholique de Louvain (UCL), Belgium
- * Copyright (c) 2002-2012, Professor Benoit Macq
- * Copyright (c) 2003-2012, Antonin Descampe
- * Copyright (c) 2003-2009, Francois-Olivier Devaux
- * Copyright (c) 2005, Herve Drolon, FreeImage Team
- * Copyright (c) 2002-2003, Yannick Verschueren
- * Copyright (c) 2001-2003, David Janssens
+ * $Id$
+ *
+ * Copyright (c) 2002-2011, Communications and Remote Sensing Laboratory, Universite catholique de Louvain (UCL), Belgium
+ * Copyright (c) 2002-2011, Professor Benoit Macq
+ * Copyright (c) 2003-2004, Yannick Verschueren
+ * Copyright (c) 2010-2011, Kaori Hagihara
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,3 +28,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*! \file
+ *  \brief Modification of jpip.h from 2KAN indexer
+ */
+
+
+#ifndef  CIDX_MANAGER_H_
+# define CIDX_MANAGER_H_
+
+#include "openjpeg.h"
+
+
+/* 
+ * Write Codestream index box (superbox)
+ *
+ * @param[in] offset    offset of j2k codestream
+ * @param[in] cio       file output handle
+ * @param[in] image     image data
+ * @param[in] cstr_info codestream information
+ * @param[in] j2klen    length of j2k codestream
+ * @return              length of cidx box
+ */
+int write_cidx( int offset, opj_cio_t *cio, opj_image_t *image, opj_codestream_info_t cstr_info, int j2klen);
+
+
+#endif      /* !CIDX_MANAGER_H_ */

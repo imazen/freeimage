@@ -145,6 +145,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\cidx_manager.c">
+			</File>
+			<File
 				RelativePath="cio.c">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -343,6 +346,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\phix_manager.c">
+			</File>
+			<File
 				RelativePath="pi.c">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -359,6 +365,9 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ppix_manager.c">
 			</File>
 			<File
 				RelativePath="raw.c">
@@ -395,6 +404,9 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\t1_generate_luts.c">
 			</File>
 			<File
 				RelativePath="t2.c">
@@ -450,12 +462,21 @@
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\thix_manager.c">
+			</File>
+			<File
+				RelativePath=".\tpix_manager.c">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
 				RelativePath="bio.h">
+			</File>
+			<File
+				RelativePath=".\cidx_manager.h">
 			</File>
 			<File
 				RelativePath="cio.h">
@@ -471,6 +492,9 @@
 			</File>
 			<File
 				RelativePath="image.h">
+			</File>
+			<File
+				RelativePath=".\indexbox_manager.h">
 			</File>
 			<File
 				RelativePath="int.h">
@@ -513,6 +537,9 @@
 			</File>
 			<File
 				RelativePath="t1.h">
+			</File>
+			<File
+				RelativePath=".\t1_luts.h">
 			</File>
 			<File
 				RelativePath="t2.h">
