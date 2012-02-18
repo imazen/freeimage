@@ -975,10 +975,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\t1_generate_luts.c"
-				>
-			</File>
-			<File
 				RelativePath="t2.c"
 				>
 				<FileConfiguration

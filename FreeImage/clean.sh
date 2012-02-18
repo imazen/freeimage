@@ -15,6 +15,8 @@ rm -rf Source/LibMNG/Debug
 rm -rf Source/LibMNG/Release
 rm -rf Source/LibTIFF/Debug
 rm -rf Source/LibTIFF/Release
+rm -rf Source/LibTIFF4/Debug
+rm -rf Source/LibTIFF4/Release
 rm -rf Source/Zlib/Debug
 rm -rf Source/Zlib/Release
 rm -rf Source/OpenEXR/Debug
