@@ -83,6 +83,11 @@ void testJPEG();
 void testImageChannels(unsigned width, unsigned height);
 
 
+// Thumbnails test suite
+// ==========================================================
+void testThumbnail(const char *lpszPathName, int flags);
+
+
 #endif // TEST_FREEIMAGE_API_H
 
 

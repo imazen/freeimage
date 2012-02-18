@@ -95,6 +95,9 @@ int main(int argc, char *argv[]) {
 	// test Exif raw metadata loading & saving
 	testExifRaw();
 
+	// test thumbnail functions
+	testThumbnail("exif.jpg", 0);
+
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)
 	FreeImage_DeInitialise();
 #endif
