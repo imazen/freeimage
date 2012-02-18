@@ -11,11 +11,13 @@ Month day, 2011 - 3.15.2
 ! FreeImage now uses LibJPEG 8d
 ! FreeImage now uses ZLib 1.2.6
 ! FreeImage now uses OpenJPEG 1.5.0 (released version)
+! FreeImage now uses LibTIFF 4.0.0
 - [Herve Drolon] removed dependency on LibMNG 1.0.10 (MNG and JNG files are now handled internally)
 + [Herve Drolon] replaced the MNG plugin with a new MNG internal FreeImage plugin (with read support)
 + [Herve Drolon] added a new JNG internal FreeImage plugin (with read/write support)
 + [Christian Heimes] added write support to the TIFF plugin for EXIF_MAIN tags
 + [Herve Drolon] added new Exif maker note tags
++ [Herve Drolon] added TAG_COMPRESSION conversion to FreeImage_TagToString
 * [Mylek Grey] enabled the use of multi-component transforms (MCT) in J2K and JP2 saving
 * [Herve Drolon] refactored PluginICO in order to correctly support Windows Vista 256x256 icons
 * [Herve Drolon] added minor speed improvements to FreeImage_Rescale
