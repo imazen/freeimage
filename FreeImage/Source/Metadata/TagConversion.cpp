@@ -854,6 +854,93 @@ ConvertExifTag(FITAG *tag) {
 		}
 		break;
 
+		case TAG_COMPRESSION:
+		{
+			WORD compression = *((WORD*)FreeImage_GetTagValue(tag));
+			switch(compression) {
+				case TAG_COMPRESSION_NONE:
+					sprintf(format, "dump mode (%d)", compression);
+					break;
+				case TAG_COMPRESSION_CCITTRLE:
+					sprintf(format, "CCITT modified Huffman RLE (%d)", compression);
+					break;
+				case TAG_COMPRESSION_CCITTFAX3:
+					sprintf(format, "CCITT Group 3 fax encoding (%d)", compression);
+					break;
+				/*
+				case TAG_COMPRESSION_CCITT_T4:
+					sprintf(format, "CCITT T.4 (TIFF 6 name) (%d)", compression);
+					break;
+				*/
+				case TAG_COMPRESSION_CCITTFAX4:
+					sprintf(format, "CCITT Group 4 fax encoding (%d)", compression);
+					break;
+				/*
+				case TAG_COMPRESSION_CCITT_T6:
+					sprintf(format, "CCITT T.6 (TIFF 6 name) (%d)", compression);
+					break;
+				*/
+				case TAG_COMPRESSION_LZW:
+					sprintf(format, "LZW (%d)", compression);
+					break;
+				case TAG_COMPRESSION_OJPEG:
+					sprintf(format, "!6.0 JPEG (%d)", compression);
+					break;
+				case TAG_COMPRESSION_JPEG:
+					sprintf(format, "JPEG (%d)", compression);
+					break;
+				case TAG_COMPRESSION_NEXT:
+					sprintf(format, "NeXT 2-bit RLE (%d)", compression);
+					break;
+				case TAG_COMPRESSION_CCITTRLEW:
+					sprintf(format, "CCITTRLEW (%d)", compression);
+					break;
+				case TAG_COMPRESSION_PACKBITS:
+					sprintf(format, "PackBits Macintosh RLE (%d)", compression);
+					break;
+				case TAG_COMPRESSION_THUNDERSCAN:
+					sprintf(format, "ThunderScan RLE (%d)", compression);
+					break;
+				case TAG_COMPRESSION_PIXARFILM:
+					sprintf(format, "Pixar companded 10bit LZW (%d)", compression);
+					break;
+				case TAG_COMPRESSION_PIXARLOG:
+					sprintf(format, "Pixar companded 11bit ZIP (%d)", compression);
+					break;
+				case TAG_COMPRESSION_DEFLATE:
+					sprintf(format, "Deflate compression (%d)", compression);
+					break;
+				case TAG_COMPRESSION_ADOBE_DEFLATE:
+					sprintf(format, "Adobe Deflate compression (%d)", compression);
+					break;
+				case TAG_COMPRESSION_DCS:
+					sprintf(format, "Kodak DCS encoding (%d)", compression);
+					break;
+				case TAG_COMPRESSION_JBIG:
+					sprintf(format, "ISO JBIG (%d)", compression);
+					break;
+				case TAG_COMPRESSION_SGILOG:
+					sprintf(format, "SGI Log Luminance RLE (%d)", compression);
+					break;
+				case TAG_COMPRESSION_SGILOG24:
+					sprintf(format, "SGI Log 24-bit packed (%d)", compression);
+					break;
+				case TAG_COMPRESSION_JP2000:
+					sprintf(format, "Leadtools JPEG2000 (%d)", compression);
+					break;
+				case TAG_COMPRESSION_LZMA:
+					sprintf(format, "LZMA2 (%d)", compression);
+					break;
+				default:
+					sprintf(format, "Unknown type (%d)", compression);
+					break;
+			}
+
+			buffer += format;
+			return buffer.c_str();
+		}
+		break;
+
 	}
 
 	return ConvertAnyTag(tag);
