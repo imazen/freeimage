@@ -11,9 +11,6 @@
    machine */
 #define HAVE_IEEEFP 1
 
-/* Define to 1 if you have the `jbg_newlen' function. */
-#define HAVE_JBG_NEWLEN 1
-
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
@@ -35,19 +32,23 @@
 /* Define to 1 if you have the `memset' function. */
 #define HAVE_MEMSET 1
 
-/* The size of a `int', as computed by sizeof. */
-#define SIZEOF_INT 4
+/* Signed 32-bit type formatter */
+#define TIFF_INT32_FORMAT "%d"
 
-/* The size of a `long', as computed by sizeof. */
-#include <limits.h>
-#if (LONG_MAX == +9223372036854775807L)
-#define SIZEOF_LONG 8
-#elif (LONG_MAX == +2147483647)
-#define SIZEOF_LONG 4
-#else
-#error "Cannot detect SIZEOF_LONG"
-#endif
+/* Unsigned 32-bit type formatter */
+#define TIFF_UINT32_FORMAT "%u"
 
+/* Signed 64-bit type formatter */
+#define TIFF_INT64_FORMAT "%ld"
+
+/* Unsigned 64-bit type formatter */
+#define TIFF_UINT64_FORMAT "%lu"
+
+/* Pointer difference type formatter */
+#define TIFF_PTRDIFF_FORMAT "%ld"
+
+/* Signed size type formatter */
+#define TIFF_SSIZE_FORMAT "%ld"
 
 /* 
 -----------------------------------------------------------------------
@@ -81,6 +82,7 @@ If your big endian system isn't being detected, add an OS specific check
 
 #ifdef _WIN32
 #define snprintf _snprintf
+#define lfind _lfind
 #endif // _WIN32
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
@@ -91,14 +93,5 @@ If your big endian system isn't being detected, add an OS specific check
 # endif
 #endif
 
-#define lfind _lfind
 
 #endif // TIF_CONFIG_H
-
-/*
- * Local Variables:
- * mode: c
- * c-basic-offset: 8
- * fill-column: 78
- * End:
- */

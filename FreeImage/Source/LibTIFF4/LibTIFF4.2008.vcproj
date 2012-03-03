@@ -291,6 +291,7 @@
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
 			/>
@@ -399,15 +400,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\tif_jbig.c"
-				>
-			</File>
-			<File
 				RelativePath=".\tif_jpeg.c"
-				>
-			</File>
-			<File
-				RelativePath=".\tif_jpeg_12.c"
 				>
 			</File>
 			<File
@@ -452,10 +445,6 @@
 			</File>
 			<File
 				RelativePath=".\tif_read.c"
-				>
-			</File>
-			<File
-				RelativePath=".\tif_stream.cxx"
 				>
 			</File>
 			<File
@@ -525,10 +514,6 @@
 			</File>
 			<File
 				RelativePath=".\tiffio.h"
-				>
-			</File>
-			<File
-				RelativePath=".\tiffio.hxx"
 				>
 			</File>
 			<File

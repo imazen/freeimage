@@ -7,17 +7,20 @@
 #ifndef _TIFFCONF_
 #define _TIFFCONF_
 
-/* Define to 1 if the system has the type `int16'. */
-/* #undef HAVE_INT16 */
-
-/* Define to 1 if the system has the type `int32'. */
-/* #undef HAVE_INT32 */
-
-/* Define to 1 if the system has the type `int8'. */
-/* #undef HAVE_INT8 */
-
 /* The size of a `int', as computed by sizeof. */
 #define SIZEOF_INT 4
+
+/* The size of a `long', as computed by sizeof. */
+#include <limits.h>
+#if (LONG_MAX == +9223372036854775807L)
+#define SIZEOF_LONG 8
+#define SIZEOF_UNSIGNED_LONG 8
+#elif (LONG_MAX == +2147483647)
+#define SIZEOF_LONG 4
+#define SIZEOF_UNSIGNED_LONG 4
+#else
+#error "Cannot detect SIZEOF_LONG"
+#endif
 
 /* Signed 8-bit type */
 #define TIFF_INT8_T signed char
@@ -31,54 +34,35 @@
 /* Unsigned 16-bit type */
 #define TIFF_UINT16_T unsigned short
 
-/* Signed 32-bit type formatter */
-#define TIFF_INT32_FORMAT "%d"
-
 /* Signed 32-bit type */
 #define TIFF_INT32_T signed int
 
-/* Unsigned 32-bit type formatter */
-#define TIFF_UINT32_FORMAT "%u"
-
 /* Unsigned 32-bit type */
 #define TIFF_UINT32_T unsigned int
-
-/* Signed 64-bit type formatter */
-#define TIFF_INT64_FORMAT "%I64d"
 
 /* Signed 64-bit type */
 #ifdef _MSC_VER
 #define TIFF_INT64_T signed __int64
 #else
-#define TIFF_INT64_T signed long long
+#define TIFF_INT64_T signed long
 #endif // _MSC_VER
-
-/* Unsigned 64-bit type formatter */
-#define TIFF_UINT64_FORMAT "%I64u"
 
 /* Unsigned 64-bit type */
 #ifdef _MSC_VER
 #define TIFF_UINT64_T unsigned __int64
 #else
-#define TIFF_UINT64_T unsigned long long
+#define TIFF_UINT64_T unsigned long
 #endif // _MSC_VER
 
-/* Signed size type */
+/* Signed 64-bit type */
 #if defined(_WIN64)
 #define TIFF_SSIZE_T signed __int64
 #else
-#define TIFF_SSIZE_T signed int
-#endif
-
-/* Signed size type formatter */
-#if defined(_WIN64)
-#define TIFF_SSIZE_FORMAT "%I64d"
-#else
-#define TIFF_SSIZE_FORMAT "%ld"
+#define TIFF_SSIZE_T signed long
 #endif
 
 /* Pointer difference type */
-#define TIFF_PTRDIFF_T long
+#define TIFF_PTRDIFF_T ptrdiff_t
 
 /* Compatibility stuff. */
 
@@ -188,10 +172,3 @@ If your big endian system isn't being detected, add an OS specific check
 #define IPTC_SUPPORT
 
 #endif /* _TIFFCONF_ */
-/*
- * Local Variables:
- * mode: c
- * c-basic-offset: 8
- * fill-column: 78
- * End:
- */
