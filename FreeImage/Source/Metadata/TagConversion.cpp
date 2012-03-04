@@ -295,7 +295,7 @@ ConvertExifTag(FITAG *tag) {
 
 		case TAG_COMPONENTS_CONFIGURATION:
 		{
-			char *componentStrings[7] = {"", "Y", "Cb", "Cr", "R", "G", "B"};
+			const char *componentStrings[7] = {"", "Y", "Cb", "Cr", "R", "G", "B"};
 			BYTE *pvalue = (BYTE*)FreeImage_GetTagValue(tag);
 			for(DWORD i = 0; i < MIN((DWORD)4, FreeImage_GetTagCount(tag)); i++) {
 				int j = pvalue[i];

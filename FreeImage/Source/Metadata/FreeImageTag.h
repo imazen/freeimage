@@ -444,10 +444,10 @@ public:
 // --------------------------------------------------------------------------
 
 /// Name of the XMP field
-static char *g_TagLib_XMPFieldName = "XMLPacket";
+static const char *g_TagLib_XMPFieldName = "XMLPacket";
 
 /// Name of the Exif raw field
-static char *g_TagLib_ExifRawFieldName = "ExifRaw";
+static const char *g_TagLib_ExifRawFieldName = "ExifRaw";
 
 // --------------------------------------------------------------------------
 // Metadata routines
