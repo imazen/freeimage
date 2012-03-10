@@ -226,27 +226,6 @@ tiff_read_exif_tag(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib, TagLib& t
 		return TRUE;
 	}
 
-	// ### for some reason TIFFFieldWithTag returns wrong version (TIFF_LONG vs TIFF_SHORT) for some params, correct this
-	if(fip->field_tag == TIFFTAG_IMAGEWIDTH && fip->field_type == TIFF_SHORT) {
-		fip = TIFFFindField(tif, tag, TIFF_LONG);
-	} else if(fip->field_tag == TIFFTAG_IMAGELENGTH && fip->field_type == TIFF_SHORT) {
-		fip = TIFFFindField(tif, tag, TIFF_LONG);
-	} else if(fip->field_tag == TIFFTAG_BITSPERSAMPLE && fip->field_type == TIFF_LONG) {
-		fip = TIFFFindField(tif, tag, TIFF_SHORT);
-	} else if(fip->field_tag == TIFFTAG_COMPRESSION && fip->field_type == TIFF_LONG) {
-		fip = TIFFFindField(tif, tag, TIFF_SHORT);
-	} else if(fip->field_tag == TIFFTAG_PHOTOMETRIC && fip->field_type == TIFF_LONG) {
-		fip = TIFFFindField(tif, tag, TIFF_SHORT);
-	} else if(fip->field_tag == TIFFTAG_ROWSPERSTRIP && fip->field_type == TIFF_SHORT) {
-		fip = TIFFFindField(tif, tag, TIFF_LONG);
-	} else if(fip->field_tag == TIFFTAG_STRIPOFFSETS && fip->field_type == TIFF_SHORT) {
-		fip = TIFFFindField(tif, tag, TIFF_LONG);
-	} else if(fip->field_tag == TIFFTAG_STRIPBYTECOUNTS && fip->field_type == TIFF_SHORT) {
-		fip = TIFFFindField(tif, tag, TIFF_LONG);
-	}
-	// ### the tags left unchecked are SGI, Pixar and DNG tags filtered by tagLib.getTagFieldName 
-
-
 	if(fip->field_passcount) { //<- "passcount" means "returns count"
 		if (fip->field_readcount != TIFF_VARIABLE2) { //<- TIFF_VARIABLE2 means "uses LONG count"
 
@@ -446,6 +425,27 @@ tiff_read_exif_tag(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib, TagLib& t
 
 		case TIFF_DOUBLE:
 			FreeImage_SetTagType(fitag, FIDT_DOUBLE);
+			FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+			FreeImage_SetTagCount(fitag, value_count);
+			FreeImage_SetTagValue(fitag, raw_data);
+			break;
+
+		case TIFF_LONG8:	// BigTIFF 64-bit unsigned integer 
+			FreeImage_SetTagType(fitag, FIDT_LONG8);
+			FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+			FreeImage_SetTagCount(fitag, value_count);
+			FreeImage_SetTagValue(fitag, raw_data);
+			break;
+
+		case TIFF_IFD8:		// BigTIFF 64-bit unsigned integer (offset) 
+			FreeImage_SetTagType(fitag, FIDT_IFD8);
+			FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
+			FreeImage_SetTagCount(fitag, value_count);
+			FreeImage_SetTagValue(fitag, raw_data);
+			break;
+
+		case TIFF_SLONG8:		// BigTIFF 64-bit signed integer 
+			FreeImage_SetTagType(fitag, FIDT_SLONG8);
 			FreeImage_SetTagLength(fitag, TIFFDataWidth(fip->field_type) * value_count);
 			FreeImage_SetTagCount(fitag, value_count);
 			FreeImage_SetTagValue(fitag, raw_data);
