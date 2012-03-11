@@ -306,6 +306,7 @@ FreeImage_TagDataWidth(FREE_IMAGE_MDTYPE type) {
 		8, // FIDT_DOUBLE	= 12,	// 64-bit IEEE floating point 
 		4, // FIDT_IFD		= 13,	// 32-bit unsigned integer (offset) 
 		4, // FIDT_PALETTE	= 14	// 32-bit RGBQUAD 
+		0, // placeholder (15)
 		8, // FIDT_LONG8	= 16,	// 64-bit unsigned integer 
 		8, // FIDT_SLONG8	= 17,	// 64-bit signed integer
 		8  // FIDT_IFD8		= 18	// 64-bit unsigned integer (offset)
