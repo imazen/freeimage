@@ -1404,13 +1404,41 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					for(unsigned x = 0; x < cinfo.output_width; x++) {
 						WORD K = (WORD)src[3];
-						dst[FI_RGBA_RED]   = (BYTE)((K * src[0]) / 255);
-						dst[FI_RGBA_GREEN] = (BYTE)((K * src[1]) / 255);
-						dst[FI_RGBA_BLUE]  = (BYTE)((K * src[2]) / 255);
+						dst[FI_RGBA_RED]   = (BYTE)((K * src[0]) / 255);	// C -> R
+						dst[FI_RGBA_GREEN] = (BYTE)((K * src[1]) / 255);	// M -> G
+						dst[FI_RGBA_BLUE]  = (BYTE)((K * src[2]) / 255);	// Y -> B
 						src += 4;
 						dst += 3;
 					}
 				}
+			} else if((cinfo.out_color_space == JCS_CMYK) && ((flags & JPEG_CMYK) == JPEG_CMYK)) {
+				// convert from LibJPEG CMYK to standard CMYK
+
+				JSAMPARRAY buffer;		// output row buffer
+				unsigned row_stride;	// physical row width in output buffer
+
+				// JSAMPLEs per row in output buffer
+				row_stride = cinfo.output_width * cinfo.output_components;
+				// make a one-row-high sample array that will go away when done with image
+				buffer = (*cinfo.mem->alloc_sarray)((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
+
+				while (cinfo.output_scanline < cinfo.output_height) {
+					JSAMPROW src = buffer[0];
+					JSAMPROW dst = FreeImage_GetScanLine(dib, cinfo.output_height - cinfo.output_scanline - 1);
+
+					jpeg_read_scanlines(&cinfo, buffer, 1);
+
+					for(unsigned x = 0; x < cinfo.output_width; x++) {
+						// CMYK pixels are inverted
+						dst[0] = ~src[0];	// C
+						dst[1] = ~src[1];	// M
+						dst[2] = ~src[2];	// Y
+						dst[3] = ~src[3];	// K
+						src += 4;
+						dst += 4;
+					}
+				}
+
 			} else {
 				// normal case (RGB or greyscale image)
 
