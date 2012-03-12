@@ -5,8 +5,20 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+March 12, 2012 - 2.15
++ [Carsten Klein] added function FreeImage_ConvertToUINT16.
++ [Carsten Klein] added function FreeImage_ConvertToRGB16.
++ [Carsten Klein] added function FreeImage_GetThumbnail.
++ [Carsten Klein] added function declaration FreeImage_SetThumbnailInt and a real VB Boolean returning function FreeImage_SetThumbnail.
++ [Carsten Klein] added RAW_HALFSIZE load flag as well as the enum constant FILO_RAW_HALFSIZE.
++ [Carsten Klein] added wrapper function FreeImage_GetPictureData, which returns a byte array suitable for assigning to an Office image control's PictureData property.
++ [Carsten Klein] added wrapper function FreeImage_CreateFromPictureData, which creates a FreeImage bitmap from a PictureData byte array.
++ [Carsten Klein] added new save flag JPEG_BASELINE (also added FISO_JPEG_BASELINE to enumeration FREE_IMAGE_SAVE_OPTIONS).
++ [Carsten Klein] added a workaround for providing valid BITMAPINFO structures for non 555 16-bpp images to Windows API functions like CreateDIBSection, CreateDIBBitmap, StretchDIBits or SetDIBitsToDevice.
+! [Carsten Klein] changed constants FREEIMAGE_MINOR_VERSION and FREEIMAGE_RELEASE_SERIAL: set to 15 and 2 respectively to match current version 3.15.2
+
 March 13, 2011 - 2.14
-* [Glenn Thorpe] fixed a typo error with the call to FreeImage_HasPixels inside FreeImage_CreateMask 
+* [Glenn Thorpe] fixed a typo error with the call to FreeImage_HasPixels inside FreeImage_CreateMask. 
 
 August 11, 2010 - 2.13
 + [Carsten Klein] added PSD load flags PSD_CMYK and PSD_LAB as well as the enum constants FILO_PSD_CYMK and FILO_PSD_LAB.
