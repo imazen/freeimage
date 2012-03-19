@@ -152,6 +152,12 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'March 19, 2012 - 2.16
+'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL to 3 to match current version 3.15.3
+'
+'! now FreeImage version 3.15.3
+'
+'
 'March 12, 2012 - 2.15
 '+ [Carsten Klein] added function FreeImage_ConvertToUINT16.
 '+ [Carsten Klein] added function FreeImage_ConvertToRGB16.
@@ -1153,7 +1159,7 @@ End Enum
 ' Version information
 Public Const FREEIMAGE_MAJOR_VERSION As Long = 3
 Public Const FREEIMAGE_MINOR_VERSION As Long = 15
-Public Const FREEIMAGE_RELEASE_SERIAL As Long = 2
+Public Const FREEIMAGE_RELEASE_SERIAL As Long = 3
 
 ' Memory stream pointer operation flags
 Public Const SEEK_SET As Long = 0
@@ -7176,8 +7182,8 @@ Dim bIsTransparent As Boolean
             ' original palette
             For i = 0 To UBound(abTT)
                If (abTT(i) = 0) Then
-                  alPalMask(i) = &HFFFFFFFF
-                  alPalMod(i) = &H0
+                  alPalMask(i) = &HFFFFFFFF   ' white
+                  alPalMod(i) = &H0           ' black
                   bIsTransparent = True
                End If
             Next i
@@ -7222,7 +7228,7 @@ Dim bIsTransparent As Boolean
             
             ' create a premultiplied palette
             ' since we have no real per pixel transparency in a palletized
-            ' image, we only need to set all transparent colors to null.
+            ' image, we only need to set all transparent colors to zero.
             For i = 0 To UBound(abTT)
                If (abTT(i) = 0) Then
                   alPalMod(i) = 0
