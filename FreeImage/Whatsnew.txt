@@ -5,6 +5,9 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month day, 2012 - 3.15.4
+* [Carsten Klein] updated makefile for building FreeImage with MinGW
+
 March 17th, 2012 - 3.15.3
 ! FreeImage now uses LibPNG 1.5.9
 ! FreeImage now uses LibTIFF 4.0.1
