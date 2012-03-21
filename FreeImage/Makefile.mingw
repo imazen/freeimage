@@ -25,17 +25,20 @@ CC = gcc
 # wrong (Linux) standard library search paths)
 LD = g++
 
-#Define the dlltool
+#Define the ´dlltool´ command
 DLLTOOL = dlltool
 
 #Define the resource compiler
 RC = windres
 
-# Define the copy command
+# Define the ´copy´ command
 CP = cp
 
-# Define the mkdir command
+# Define the ´mkdir´ command
 MD = mkdir
+
+# Define the ´remove´ command
+RM = rm -f
 
 # Define additional libraries needed:
 # libstdc++ is included by default with MinGW, however for
@@ -43,8 +46,14 @@ MD = mkdir
 LIBRARIES = -lwsock32 -lws2_32
 
 # Define some additional symboles only needed for WIN32 based builds:
-WIN32_CFLAGS = $(LIB_TYPE_FLAGS) -DOPJ_STATIC
-WIN32_CXXFLAGS = $(WIN32_CFLAGS) -DLIBRAW_NODLL -DLIBRAW_LIBRARY_BUILD
+WIN32_CFLAGS = -DWINVER=0x0500 $(LIB_TYPE_FLAGS) -DOPJ_STATIC
+WIN32_CXXFLAGS = $(WIN32_CFLAGS) -DLIBRAW_NODLL
+
+# Workaround for LibRawLite, which does not include C++ header
+# file stdexcept, which is casually included with MSVC but not
+# with MinGW. This can be removed after LibRawLite got control
+# over its includes again.
+WIN32_CXXFLAGS += -include stdexcept 
 
 WIN32_STATIC_FLAGS = -DFREEIMAGE_LIB
 WIN32_SHARED_FLAGS = -DFREEIMAGE_EXPORTS
@@ -54,11 +63,11 @@ MODULES := $(MODULES:.cpp=.o)
 RESOURCE = $(RCFILE:.rc=.coff)
 CFLAGS ?= -O3 -fexceptions -DNDEBUG $(WIN32_CFLAGS)
 CFLAGS += $(INCLUDE)
-CXXFLAGS ?= -O3 -fexceptions -Wno-ctor-dtor-privacy -DNDEBUG $(WIN32_CXXFLAGS) -DNO_LCMS
+CXXFLAGS ?= -O3 -fexceptions -Wno-ctor-dtor-privacy -DNDEBUG $(WIN32_CXXFLAGS)
 CXXFLAGS += $(INCLUDE)
 RCFLAGS ?= -DNDEBUG
-LDFLAGS = -s -shared -static -Wl,-soname,$(SOLIBNAME)
-DLLTOOLFLAGS = --add-stdcall-underscore
+LDFLAGS ?= -s -shared -static -Wl,-soname,$(SOLIBNAME)
+DLLTOOLFLAGS ?= --add-stdcall-underscore
 
 TARGET = FreeImage
 STATICLIB = $(TARGET).a
