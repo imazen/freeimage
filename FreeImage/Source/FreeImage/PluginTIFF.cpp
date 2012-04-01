@@ -986,16 +986,21 @@ MimeType() {
 
 static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {	
-	BYTE tiff_id1[] = { 0x49, 0x49, 0x2A, 0x00 };
-	BYTE tiff_id2[] = { 0x4D, 0x4D, 0x00, 0x2A };
+	BYTE tiff_id1[] = { 0x49, 0x49, 0x2A, 0x00 };	// Classic TIFF, little-endian
+	BYTE tiff_id2[] = { 0x4D, 0x4D, 0x00, 0x2A };	// Classic TIFF, big-endian
+	BYTE tiff_id3[] = { 0x49, 0x49, 0x2B, 0x00 };	// Big TIFF, little-endian
+	BYTE tiff_id4[] = { 0x4D, 0x4D, 0x00, 0x2B };	// Big TIFF, big-endian
 	BYTE signature[4] = { 0, 0, 0, 0 };
 
 	io->read_proc(signature, 1, 4, handle);
 
 	if(memcmp(tiff_id1, signature, 4) == 0)
 		return TRUE;
-
 	if(memcmp(tiff_id2, signature, 4) == 0)
+		return TRUE;
+	if(memcmp(tiff_id3, signature, 4) == 0)
+		return TRUE;
+	if(memcmp(tiff_id4, signature, 4) == 0)
 		return TRUE;
 
 	return FALSE;
