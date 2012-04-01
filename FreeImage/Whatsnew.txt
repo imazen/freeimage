@@ -9,6 +9,7 @@ Month day, 2012 - 3.15.4
 ! FreeImage now uses LibPNG 1.5.10
 * [Carsten Klein] updated makefile for building FreeImage with MinGW
 * [Herve Drolon] fixed BigTIFF signature validation in FreeImage_GetFileType* functions
+* [Carsten Klein] fixed handling of RGB-565 16-bit images (needed for conversion from HBITMAP to FIBITMAP)
 
 March 17th, 2012 - 3.15.3
 ! FreeImage now uses LibPNG 1.5.9
