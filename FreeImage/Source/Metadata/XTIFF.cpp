@@ -452,7 +452,9 @@ tiff_read_exif_tag(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib, TagLib& t
 			break;
 
 		default: {
-			size_t length = strlen((char*)raw_data) + 1;
+			// remember that raw_data = _TIFFmalloc(value_size * value_count);
+			const int value_size = _TIFFDataSize(fip->field_type);
+			size_t length = value_size * value_count;
 			FreeImage_SetTagType(fitag, FIDT_ASCII);
 			FreeImage_SetTagLength(fitag, (DWORD)length);
 			FreeImage_SetTagCount(fitag, (DWORD)length);
