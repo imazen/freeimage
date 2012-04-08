@@ -7,9 +7,11 @@ What's New for FreeImage
 
 Month day, 2012 - 3.15.4
 ! FreeImage now uses LibPNG 1.5.10
+! FreeImage now uses LibRaw 0.14.6
 * [Carsten Klein] updated makefile for building FreeImage with MinGW
 * [Herve Drolon] fixed BigTIFF signature validation in FreeImage_GetFileType* functions
 * [Carsten Klein] fixed handling of RGB-565 16-bit images (needed for conversion from HBITMAP to FIBITMAP)
+* [Herve Drolon] fixed loading of JPEG with invalid IPTC marker
 
 March 17th, 2012 - 3.15.3
 ! FreeImage now uses LibPNG 1.5.9
