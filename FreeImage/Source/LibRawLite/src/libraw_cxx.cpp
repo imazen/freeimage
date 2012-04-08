@@ -23,6 +23,7 @@ it under the terms of the one of three licenses as you choose:
 #include <errno.h>
 #include <float.h>
 #include <new>
+#include <exception>
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifndef WIN32
@@ -690,6 +691,9 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
     catch ( LibRaw_exceptions err) {
         EXCEPTION_HANDLER(err);
     }
+    catch (std::exception ee) {
+        EXCEPTION_HANDLER(LIBRAW_EXCEPTION_IO_CORRUPT);
+    }
 
     if(P1.raw_count < 1) 
         return LIBRAW_FILE_UNSUPPORTED;
@@ -893,6 +897,9 @@ int LibRaw::unpack(void)
     }
     catch ( LibRaw_exceptions err) {
         EXCEPTION_HANDLER(err);
+    }
+    catch (std::exception ee) {
+        EXCEPTION_HANDLER(LIBRAW_EXCEPTION_IO_CORRUPT);
     }
 }
 
@@ -2371,6 +2378,7 @@ static const char  *static_camera_list[] =
 "Casio EX-S100",
 "Casio EX-Z4",
 "Casio EX-Z50",
+"Casio EX-Z500",
 "Casio EX-Z55",
 "Casio EX-Z60",
 "Casio EX-Z75",
