@@ -153,7 +153,7 @@ _tiffWriteProc(thandle_t handle, void *buf, tmsize_t size) {
 static toff_t
 _tiffSeekProc(thandle_t handle, toff_t off, int whence) {
 	fi_TIFFIO *fio = (fi_TIFFIO*)handle;
-	fio->io->seek_proc(fio->handle, off, whence);
+	fio->io->seek_proc(fio->handle, (long)off, whence);
 	return fio->io->tell_proc(fio->handle);
 }
 
@@ -746,13 +746,20 @@ WriteCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesperpixel, uint1
 			TIFFSetField(tiff, TIFFTAG_PREDICTOR, 1);
 		}
 	}
-	else if(compression == COMPRESSION_CCITTFAX3) {
-		// try to be compliant with the TIFF Class F specification
-		// that documents the TIFF tags specific to FAX applications
-		// see http://palimpsest.stanford.edu/bytopic/imaging/std/tiff-f.html
-		uint32 group3options = GROUP3OPT_2DENCODING | GROUP3OPT_FILLBITS;	
-		TIFFSetField(tiff, TIFFTAG_GROUP3OPTIONS, group3options);	// 2d-encoded, has aligned EOL
-		TIFFSetField(tiff, TIFFTAG_FILLORDER, FILLORDER_LSB2MSB);	// lsb-to-msb fillorder
+	else if((compression == COMPRESSION_CCITTFAX3) || (compression == COMPRESSION_CCITTFAX4)) {
+		uint32 imageLength = 0;
+		TIFFGetField(tiff, TIFFTAG_IMAGELENGTH, &imageLength);
+		// overwrite previous RowsPerStrip
+		TIFFSetField(tiff, TIFFTAG_ROWSPERSTRIP, imageLength);
+
+		if(compression == COMPRESSION_CCITTFAX3) {
+			// try to be compliant with the TIFF Class F specification
+			// that documents the TIFF tags specific to FAX applications
+			// see http://palimpsest.stanford.edu/bytopic/imaging/std/tiff-f.html
+			uint32 group3options = GROUP3OPT_2DENCODING | GROUP3OPT_FILLBITS;	
+			TIFFSetField(tiff, TIFFTAG_GROUP3OPTIONS, group3options);	// 2d-encoded, has aligned EOL
+			TIFFSetField(tiff, TIFFTAG_FILLORDER, FILLORDER_LSB2MSB);	// lsb-to-msb fillorder
+		}
 	}
 }
 
