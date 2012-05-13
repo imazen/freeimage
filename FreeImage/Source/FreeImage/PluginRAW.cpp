@@ -396,8 +396,69 @@ MimeType() {
 	return "image/x-dcraw";
 }
 
+static BOOL 
+HasMagicHeader(FreeImageIO *io, fi_handle handle) {
+	const unsigned signature_size = 32;
+	BYTE signature[signature_size] = { 0 };
+
+	// Canon (CR2), Intel byte order
+	const BYTE CR2_II[] = { 0x49, 0x49, 0x2A, 0x00, 0x10, 0x00, 0x00, 0x00, 0x43, 0x52, 0x02, 0x00 };
+	// Canon (CR2), Motorola byte order
+	const BYTE CR2_MM[] = { 0x4D, 0x4D, 0x2A, 0x00, 0x10, 0x00, 0x00, 0x00, 0x43, 0x52, 0x02, 0x00 };
+	// Canon (CRW), Intel byte order
+	const BYTE CRW_II[] = { 0x49, 0x49, 0x1A, 0x00, 0x00, 0x00, 0x48, 0x45, 0x41, 0x50, 0x43, 0x43, 0x44, 0x52, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	// Minolta (MRW)
+	const BYTE MRW[] = { 0x00, 0x4D, 0x52, 0x4D, 0x00 };
+	// Olympus (ORF), Intel byte order
+	const BYTE ORF_IIRS[] = { 0x49, 0x49, 0x52, 0x53, 0x08, 0x00, 0x00, 0x00 }; 
+	const BYTE ORF_IIRO[] = { 0x49, 0x49, 0x52, 0x4F, 0x08, 0x00, 0x00, 0x00 }; 
+	// Olympus (ORF), Motorola byte order
+	const BYTE ORF_MMOR[] = { 0x4D, 0x4D, 0x4F, 0x52, 0x00, 0x00, 0x00, 0x08 }; 
+	// Fujifilm (RAF)
+	const BYTE RAF[] = { 0x46, 0x55, 0x4A, 0x49, 0x46, 0x49, 0x4C, 0x4D, 0x43, 0x43, 0x44, 0x2D, 0x52, 0x41, 0x57, 0x20, 0x30, 0x32, 0x30, 0x31 };
+	// Panasonic (RW2) or Leica (RWL)
+	const BYTE RW2_II[] = { 0x49, 0x49, 0x55, 0x00, 0x18, 0x00, 0x00, 0x00, 0x88, 0xE7, 0x74, 0xD8, 0xF8, 0x25, 0x1D, 0x4D, 0x94, 0x7A, 0x6E, 0x77, 0x82, 0x2B, 0x5D, 0x6A };
+
+	if(io->read_proc(signature, 1, signature_size, handle) != signature_size) {
+		return FALSE;
+	}
+	if(memcmp(CR2_II, signature, 12) == 0)
+		return TRUE;
+	if(memcmp(CR2_MM, signature, 12) == 0)
+		return TRUE;
+	if(memcmp(CRW_II, signature, 26) == 0)
+		return TRUE;
+	if(memcmp(MRW, signature, 5) == 0)
+		return TRUE;
+	if(memcmp(ORF_IIRS, signature, 8) == 0)
+		return TRUE;
+	if(memcmp(ORF_IIRO, signature, 8) == 0)
+		return TRUE;
+	if(memcmp(ORF_MMOR, signature, 8) == 0)
+		return TRUE;
+	if(memcmp(RAF, signature, 20) == 0)
+		return TRUE;
+	if(memcmp(RW2_II, signature, 24) == 0)
+		return TRUE;
+
+	return FALSE;
+}
+
 static BOOL DLL_CALLCONV
 Validate(FreeImageIO *io, fi_handle handle) {
+	// some RAW files have a magic signature (most of them have a TIFF signature)
+	// try to check this in order to speed up the file identification
+	{
+		long tell = io->tell_proc(handle);
+		if( HasMagicHeader(io, handle) ) {
+			return TRUE;
+		} else {
+			io->seek_proc(handle, tell, SEEK_SET);
+		}
+	}
+
+	// no magic signature : we need to open the file (it will take more time to identify it)
+
 	LibRaw RawProcessor;
 	BOOL bSuccess = TRUE;
 	
