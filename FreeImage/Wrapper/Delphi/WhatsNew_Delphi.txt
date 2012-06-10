@@ -5,6 +5,9 @@ What's New for FreeImage Delphi Wrapper
 ! : changed
 + : added
 
+June 4, 2012
++ [Lorenzo Monti] updated wrapper for FreeImage 3.15.3
+
 March 4, 2011
 * [Jean-Marc Bottura] some bugfixes in FreeBitmap.pas
 + [Jean-Marc Bottura] added support for 64 bit compilers

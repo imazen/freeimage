@@ -27,6 +27,7 @@ unit FreeImage;
 //                    ==> replace Boolean with LongBool in the calls to the freeimage library
 //                   - as linux sees the difference between uppercase and lowercase :
 //                    ==> replace FreeImage_GetMetaData with FreeImage_GetMetadata in the call to the freeimage library
+// 2012-06-04  LM    Updated to 3.15.3
 //
 
 //
@@ -107,7 +108,7 @@ const
   // Version information
   FREEIMAGE_MAJOR_VERSION  = 3;
   FREEIMAGE_MINOR_VERSION  = 15;
-  FREEIMAGE_RELEASE_SERIAL = 0;
+  FREEIMAGE_RELEASE_SERIAL = 3;
   // This really only affects 24 and 32 bit formats, the rest are always RGB order.
   FREEIMAGE_COLORORDER_BGR = 0;
   FREEIMAGE_COLORORDER_RGB = 1;
@@ -377,6 +378,9 @@ const
   FIDT_DOUBLE    = FREE_IMAGE_MDTYPE(12); // 64-bit IEEE floating point
   FIDT_IFD       = FREE_IMAGE_MDTYPE(13); // 32-bit unsigned integer (offset)
   FIDT_PALETTE   = FREE_IMAGE_MDTYPE(14); // 32-bit RGBQUAD
+  FIDT_LONG8     = FREE_IMAGE_MDTYPE(16); // 64-bit unsigned integer
+  FIDT_SLONG8    = FREE_IMAGE_MDTYPE(17); // 64-bit signed integer
+  FIDT_IFD8      = FREE_IMAGE_MDTYPE(18); // 64-bit unsigned integer (offset)
 
   // Metadata models supported by FreeImage
   FIMD_NODATA         = FREE_IMAGE_MDMODEL(-1);
@@ -440,6 +444,11 @@ const
   SEEK_SET = 0;
   SEEK_CUR = 1;
   SEEK_END = 2;
+
+type
+  // define portable types for 32-bit / 64-bit OS
+  FIINT64 = Int64;
+  FIUINT64 = UInt64;
 
 // --------------------------------------------------------------------------
 // Plugin routines ----------------------------------------------------------
@@ -564,6 +573,7 @@ const
   RAW_DEFAULT         = 0; // load the file as linear RGB 48-bit
   RAW_PREVIEW         = 1; // try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit
   RAW_DISPLAY         = 2; // load the file as RGB 24-bit
+  RAW_HALFSIZE        = 4; // output a half-size color image
   SGI_DEFAULT         = 0;
   TARGA_DEFAULT       = 0;
   TARGA_LOAD_RGB888   = 1;     // If set the loader converts RGB555 and ARGB8888 -> RGB888.
@@ -1082,6 +1092,8 @@ function FreeImage_ConvertToRGBF(dib: PFIBITMAP): PFIBITMAP; stdcall;
   external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToRGBF@4'{$ENDIF};
 function FreeImage_ConvertToUINT16(dib: PFIBITMAP): PFIBITMAP; stdcall;
   external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToUINT16@4'{$ENDIF};
+function FreeImage_ConvertToRGB16(dib: PFIBITMAP): PFIBITMAP; stdcall;
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToRGB16@4'{$ENDIF};
 
 function FreeImage_ConvertToStandardType(src: PFIBITMAP;
   scale_linear: LongBool = True): PFIBITMAP; stdcall;
