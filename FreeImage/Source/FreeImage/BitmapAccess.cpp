@@ -236,72 +236,78 @@ FreeImage_GetRGBMasks(FIBITMAP *dib) {
 
 FIBITMAP * DLL_CALLCONV
 FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int height, int bpp, unsigned red_mask, unsigned green_mask, unsigned blue_mask) {
-	FIBITMAP *bitmap = (FIBITMAP *)malloc(sizeof(FIBITMAP));
+
+	// check input variables
+	width = abs(width);
+	height = abs(height);
+	if(!((width > 0) && (height > 0))) {
+		return NULL;
+	}
+
 	// we only store the masks (and allocate memory for them) for 16 and 32 bit images
 	BOOL need_masks = FALSE;
 
-	if (bitmap != NULL) {
-		width = abs(width);
-		height = abs(height);
+	// check pixel bit depth
+	switch(type) {
+		case FIT_BITMAP:
+			switch(bpp) {
+				case 1:
+				case 4:
+				case 8:
+					break;
+				case 16:
+					need_masks = TRUE;
+                    break;
+				case 24:
+					break;
+				case 32:
+					need_masks = TRUE;
+					break;
+				default:
+					bpp = 8;
+					break;
+			}
+			break;
+		case FIT_UINT16:
+			bpp = 8 * sizeof(unsigned short);
+			break;
+		case FIT_INT16:
+			bpp = 8 * sizeof(short);
+			break;
+		case FIT_UINT32:
+			bpp = 8 * sizeof(DWORD);
+			break;
+		case FIT_INT32:
+			bpp = 8 * sizeof(LONG);
+			break;
+		case FIT_FLOAT:
+			bpp = 8 * sizeof(float);
+			break;
+		case FIT_DOUBLE:
+			bpp = 8 * sizeof(double);
+			break;
+		case FIT_COMPLEX:
+			bpp = 8 * sizeof(FICOMPLEX);
+			break;
+		case FIT_RGB16:
+			bpp = 8 * sizeof(FIRGB16);
+			break;
+		case FIT_RGBA16:
+			bpp = 8 * sizeof(FIRGBA16);
+			break;
+		case FIT_RGBF:
+			bpp = 8 * sizeof(FIRGBF);
+			break;
+		case FIT_RGBAF:
+			bpp = 8 * sizeof(FIRGBAF);
+			break;
+		default:
+			return NULL;
+	}
 
-		// check pixel bit depth
-		switch(type) {
-			case FIT_BITMAP:
-				switch(bpp) {
-					case 1:
-					case 4:
-					case 8:
-						break;
-					case 16:
-						need_masks = TRUE;
-                        break;
-					case 24:
-						break;
-					case 32:
-						need_masks = TRUE;
-						break;
-					default:
-						bpp = 8;
-						break;
-				}
-				break;
-			case FIT_UINT16:
-				bpp = 8 * sizeof(unsigned short);
-				break;
-			case FIT_INT16:
-				bpp = 8 * sizeof(short);
-				break;
-			case FIT_UINT32:
-				bpp = 8 * sizeof(DWORD);
-				break;
-			case FIT_INT32:
-				bpp = 8 * sizeof(LONG);
-				break;
-			case FIT_FLOAT:
-				bpp = 8 * sizeof(float);
-				break;
-			case FIT_DOUBLE:
-				bpp = 8 * sizeof(double);
-				break;
-			case FIT_COMPLEX:
-				bpp = 8 * sizeof(FICOMPLEX);
-				break;
-			case FIT_RGB16:
-				bpp = 8 * sizeof(FIRGB16);
-				break;
-			case FIT_RGBA16:
-				bpp = 8 * sizeof(FIRGBA16);
-				break;
-			case FIT_RGBF:
-				bpp = 8 * sizeof(FIRGBF);
-				break;
-			case FIT_RGBAF:
-				bpp = 8 * sizeof(FIRGBAF);
-				break;
-			default:
-				free(bitmap);
-				return NULL;
-		}
+	FIBITMAP *bitmap = (FIBITMAP *)malloc(sizeof(FIBITMAP));
+
+	if (bitmap != NULL) {
 
 		// calculate the size of a FreeImage image
 		// align the palette and the pixels on a FIBITMAP_ALIGNMENT bytes alignment boundary
