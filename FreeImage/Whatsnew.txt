@@ -6,7 +6,7 @@ What's New for FreeImage
 + : added
 
 Month day, 2012 - 3.15.4
-! FreeImage now uses LibPNG 1.5.10
+! FreeImage now uses LibPNG 1.5.11
 ! FreeImage now uses LibRaw 0.14.6
 ! FreeImage now uses ZLib 1.2.7
 + [Herve Drolon] improved speed of RAW file detection in FreeImage_GetFileType* functions
@@ -15,6 +15,7 @@ Month day, 2012 - 3.15.4
 * [Carsten Klein] fixed handling of RGB-565 16-bit images (needed for conversion from HBITMAP to FIBITMAP)
 * [Herve Drolon] fixed loading of JPEG with invalid IPTC marker
 * [Herve Drolon] changed default TIF RowsPerStrips to image height when saving as TIF G3 or TIF G4
+* [Herve Drolon] improved the memory behavior of the RAW plugin (do not allocate huge variables on the stack)
 
 March 17th, 2012 - 3.15.3
 ! FreeImage now uses LibPNG 1.5.9
