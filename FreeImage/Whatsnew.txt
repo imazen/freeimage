@@ -9,6 +9,7 @@ Month day, 2012 - 3.15.4
 ! FreeImage now uses LibPNG 1.5.11
 ! FreeImage now uses LibRaw 0.14.6
 ! FreeImage now uses ZLib 1.2.7
+! FreeImage now uses LibTIFF 4.0.2
 + [Herve Drolon] improved speed of RAW file detection in FreeImage_GetFileType* functions
 * [Carsten Klein] updated makefile for building FreeImage with MinGW
 * [Herve Drolon] fixed BigTIFF signature validation in FreeImage_GetFileType* functions
