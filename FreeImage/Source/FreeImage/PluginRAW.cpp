@@ -184,20 +184,20 @@ Get the embedded JPEG preview image from RAW picture with included Exif Data.
 @return Returns the loaded dib if successfull, returns NULL otherwise
 */
 static FIBITMAP * 
-libraw_LoadEmbeddedPreview(LibRaw& RawProcessor, int flags) {
+libraw_LoadEmbeddedPreview(LibRaw *RawProcessor, int flags) {
 	FIBITMAP *dib = NULL;
 	libraw_processed_image_t *thumb_image = NULL;
 	
 	try {
 		// unpack data
-		if(RawProcessor.unpack_thumb() != LIBRAW_SUCCESS) {
+		if(RawProcessor->unpack_thumb() != LIBRAW_SUCCESS) {
 			// run silently "LibRaw : failed to run unpack_thumb"
 			return NULL;
 		}
 
 		// retrieve thumb image
 		int error_code = 0;
-		thumb_image = RawProcessor.dcraw_make_mem_thumb(&error_code);
+		thumb_image = RawProcessor->dcraw_make_mem_thumb(&error_code);
 		if(thumb_image) {
 			if(thumb_image->type != LIBRAW_IMAGE_BITMAP) {
 				// attach the binary data to a memory stream
@@ -221,14 +221,14 @@ libraw_LoadEmbeddedPreview(LibRaw& RawProcessor, int flags) {
 		}
 
 		// clean-up and return
-		RawProcessor.dcraw_clear_mem(thumb_image);
+		RawProcessor->dcraw_clear_mem(thumb_image);
 
 		return dib;
 
 	} catch(const char *text) {
 		// clean-up and return
 		if(thumb_image) {
-			RawProcessor.dcraw_clear_mem(thumb_image);
+			RawProcessor->dcraw_clear_mem(thumb_image);
 		}
 		if(text != NULL) {
 			FreeImage_OutputMessageProc(s_format_id, text);
@@ -244,7 +244,7 @@ Load raw data and convert to FIBITMAP
 @return Returns the loaded dib if successfull, returns NULL otherwise
 */
 static FIBITMAP * 
-libraw_LoadRawData(LibRaw& RawProcessor, int bitspersample) {
+libraw_LoadRawData(LibRaw *RawProcessor, int bitspersample) {
 	FIBITMAP *dib = NULL;
 	libraw_processed_image_t *processed_image = NULL;
 
@@ -253,39 +253,39 @@ libraw_LoadRawData(LibRaw& RawProcessor, int bitspersample) {
 		// -----------------------
 		
 		// (-6) 16-bit or 8-bit
-		RawProcessor.imgdata.params.output_bps = bitspersample;
+		RawProcessor->imgdata.params.output_bps = bitspersample;
 		// (-g power toe_slope)
 		if(bitspersample == 16) {
 			// set -g 1 1 for linear curve
-			RawProcessor.imgdata.params.gamm[0] = 1;
-			RawProcessor.imgdata.params.gamm[1] = 1;
+			RawProcessor->imgdata.params.gamm[0] = 1;
+			RawProcessor->imgdata.params.gamm[1] = 1;
 		} else if(bitspersample == 8) {
 			// by default settings for rec. BT.709 are used: power 2.222 (i.e. gamm[0]=1/2.222) and slope 4.5
-			RawProcessor.imgdata.params.gamm[0] = 1/2.222;
-			RawProcessor.imgdata.params.gamm[1] = 4.5;
+			RawProcessor->imgdata.params.gamm[0] = 1/2.222;
+			RawProcessor->imgdata.params.gamm[1] = 4.5;
 		}
 		// (-W) Don't use automatic increase of brightness by histogram
-		RawProcessor.imgdata.params.no_auto_bright = 1;
+		RawProcessor->imgdata.params.no_auto_bright = 1;
 		// (-a) Use automatic white balance obtained after averaging over the entire image
-		RawProcessor.imgdata.params.use_auto_wb = 1;
+		RawProcessor->imgdata.params.use_auto_wb = 1;
 		// (-q 3) Adaptive homogeneity-directed demosaicing algorithm (AHD)
-		RawProcessor.imgdata.params.user_qual = 3;
+		RawProcessor->imgdata.params.user_qual = 3;
 
 		// -----------------------
 
 		// unpack data
-		if(RawProcessor.unpack() != LIBRAW_SUCCESS) {
+		if(RawProcessor->unpack() != LIBRAW_SUCCESS) {
 			throw "LibRaw : failed to unpack data";
 		}
 
 		// process data (... most consuming task ...)
-		if(RawProcessor.dcraw_process() != LIBRAW_SUCCESS) {
+		if(RawProcessor->dcraw_process() != LIBRAW_SUCCESS) {
 			throw "LibRaw : failed to process data";
 		}
 
 		// retrieve processed image
 		int error_code = 0;
-		processed_image = RawProcessor.dcraw_make_mem_image(&error_code);
+		processed_image = RawProcessor->dcraw_make_mem_image(&error_code);
 		if(processed_image) {
 			// type SHOULD be LIBRAW_IMAGE_BITMAP, but we'll check
 			if(processed_image->type != LIBRAW_IMAGE_BITMAP) {
@@ -303,14 +303,14 @@ libraw_LoadRawData(LibRaw& RawProcessor, int bitspersample) {
 		dib = libraw_ConvertToDib(processed_image);
 	
 		// clean-up and return
-		RawProcessor.dcraw_clear_mem(processed_image);
+		RawProcessor->dcraw_clear_mem(processed_image);
 
 		return dib;
 
 	} catch(const char *text) {
 		// clean-up and return
 		if(processed_image) {
-			RawProcessor.dcraw_clear_mem(processed_image);
+			RawProcessor->dcraw_clear_mem(processed_image);
 		}
 		FreeImage_OutputMessageProc(s_format_id, text);
 	}
@@ -458,22 +458,30 @@ Validate(FreeImageIO *io, fi_handle handle) {
 	}
 
 	// no magic signature : we need to open the file (it will take more time to identify it)
+	// do not declare RawProcessor on the stack as it may be huge (300 KB)
+	{
+		LibRaw *RawProcessor = new(std::nothrow) LibRaw;
 
-	LibRaw RawProcessor;
-	BOOL bSuccess = TRUE;
-	
-	// wrap the input datastream
-	LibRaw_freeimage_datastream datastream(io, handle);
+		if(RawProcessor) {
+			BOOL bSuccess = TRUE;
 
-	// open the datastream
-	if(RawProcessor.open_datastream(&datastream) != LIBRAW_SUCCESS) {
-		bSuccess = FALSE;	// LibRaw : failed to open input stream (unknown format)
+			// wrap the input datastream
+			LibRaw_freeimage_datastream datastream(io, handle);
+
+			// open the datastream
+			if(RawProcessor->open_datastream(&datastream) != LIBRAW_SUCCESS) {
+				bSuccess = FALSE;	// LibRaw : failed to open input stream (unknown format)
+			}
+
+			// clean-up internal memory allocations
+			RawProcessor->recycle();
+			delete RawProcessor;
+
+			return bSuccess;
+		}
 	}
 
-	// clean-up internal memory allocations
-	RawProcessor.recycle();
-
-	return bSuccess;
+	return FALSE;
 }
 
 static BOOL DLL_CALLCONV
@@ -501,11 +509,17 @@ SupportsNoPixels() {
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	FIBITMAP *dib = NULL;
-	LibRaw RawProcessor;
+	LibRaw *RawProcessor = NULL;
 
 	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 	try {
+		// do not declare RawProcessor on the stack as it may be huge (300 KB)
+		RawProcessor = new(std::nothrow) LibRaw;
+		if(!RawProcessor) {
+			throw FI_MSG_ERROR_MEMORY;
+		}
+
 		// wrap the input datastream
 		LibRaw_freeimage_datastream datastream(io, handle);
 
@@ -514,20 +528,20 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// --------------------------------------------
 
 		// (-s [0..N-1]) Select one raw image from input file
-		RawProcessor.imgdata.params.shot_select = 0;
+		RawProcessor->imgdata.params.shot_select = 0;
 		// (-w) Use camera white balance, if possible (otherwise, fallback to auto_wb)
-		RawProcessor.imgdata.params.use_camera_wb = 1;
+		RawProcessor->imgdata.params.use_camera_wb = 1;
 		// (-h) outputs the image in 50% size
-		RawProcessor.imgdata.params.half_size = ((flags & RAW_HALFSIZE) == RAW_HALFSIZE) ? 1 : 0;
+		RawProcessor->imgdata.params.half_size = ((flags & RAW_HALFSIZE) == RAW_HALFSIZE) ? 1 : 0;
 
 		// open the datastream
-		if(RawProcessor.open_datastream(&datastream) != LIBRAW_SUCCESS) {
+		if(RawProcessor->open_datastream(&datastream) != LIBRAW_SUCCESS) {
 			throw "LibRaw : failed to open input stream (unknown format)";
 		}
 
 		if(header_only) {
 			// header only mode
-			dib = FreeImage_AllocateHeaderT(header_only, FIT_RGB16, RawProcessor.imgdata.sizes.width, RawProcessor.imgdata.sizes.height);
+			dib = FreeImage_AllocateHeaderT(header_only, FIT_RGB16, RawProcessor->imgdata.sizes.width, RawProcessor->imgdata.sizes.height);
 		}
 		else if((flags & RAW_PREVIEW) == RAW_PREVIEW) {
 			// try to get the embedded JPEG
@@ -547,8 +561,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		}
 
 		// save ICC profile if present
-		if(dib && (NULL != RawProcessor.imgdata.color.profile)) {
-			FreeImage_CreateICCProfile(dib, RawProcessor.imgdata.color.profile, RawProcessor.imgdata.color.profile_length);
+		if(dib && (NULL != RawProcessor->imgdata.color.profile)) {
+			FreeImage_CreateICCProfile(dib, RawProcessor->imgdata.color.profile, RawProcessor->imgdata.color.profile_length);
 		}
 
 		// try to get JPEG embedded Exif metadata
@@ -561,15 +575,19 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		}
 
 		// clean-up internal memory allocations
-		RawProcessor.recycle();
+		RawProcessor->recycle();
+		delete RawProcessor;
 
 		return dib;
 
 	} catch(const char *text) {
+		if(RawProcessor) {
+			RawProcessor->recycle();
+			delete RawProcessor;
+		}
 		if(dib) {
 			FreeImage_Unload(dib);
 		}
-		RawProcessor.recycle();
 		FreeImage_OutputMessageProc(s_format_id, text);
 	}
 
