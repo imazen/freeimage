@@ -11,6 +11,7 @@ Month day, 2012 - 3.15.4
 ! FreeImage now uses ZLib 1.2.7
 ! FreeImage now uses LibTIFF 4.0.2
 + [Herve Drolon] improved speed of RAW file detection in FreeImage_GetFileType* functions
++ [Herve Drolon] added JPEG_GREYSCALE load flag to the JPEG plugin (force to load as 8-bit greyscale)
 * [Carsten Klein] updated makefile for building FreeImage with MinGW
 * [Herve Drolon] fixed BigTIFF signature validation in FreeImage_GetFileType* functions
 * [Carsten Klein] fixed handling of RGB-565 16-bit images (needed for conversion from HBITMAP to FIBITMAP)
@@ -18,6 +19,8 @@ Month day, 2012 - 3.15.4
 * [Herve Drolon] changed default TIF RowsPerStrips to image height when saving as TIF G3 or TIF G4 (improved compression)
 * [Herve Drolon] improved the memory behavior of the RAW plugin (do not allocate huge variables on the stack)
 * [Herve Drolon] fixed FreeImage_AllocateT so that it returns NULL with images with a zero width and/or height
+* [Herve Drolon] replaced FIUINT64/FIINT64 with standard types UINT64/INT64
+* [Rustam Abdullaev] fixed PNG plugin with saving of transparent monochrome images
 
 March 17th, 2012 - 3.15.3
 ! FreeImage now uses LibPNG 1.5.9
