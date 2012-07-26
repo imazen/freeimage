@@ -21,6 +21,7 @@ Month day, 2012 - 3.15.4
 * [Herve Drolon] fixed FreeImage_AllocateT so that it returns NULL with images with a zero width and/or height
 * [Herve Drolon] replaced FIUINT64/FIINT64 with standard types UINT64/INT64
 * [Rustam Abdullaev] fixed PNG plugin with saving of transparent monochrome images
+* [Floris van den Berg] improved plugin registering when replacing an existing internal plugin with a new equivalent plugin
 
 March 17th, 2012 - 3.15.3
 ! FreeImage now uses LibPNG 1.5.9
