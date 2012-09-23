@@ -10,8 +10,10 @@ Month day, 2012 - 3.15.4
 ! FreeImage now uses LibRaw 0.14.7
 ! FreeImage now uses ZLib 1.2.7
 ! FreeImage now uses LibTIFF 4.0.2
+! FreeImage now uses OpenJPEG 1.5.1
 + [Herve Drolon] improved speed of RAW file detection in FreeImage_GetFileType* functions
 + [Herve Drolon] added JPEG_GREYSCALE load flag to the JPEG plugin (force to load as 8-bit greyscale)
++ [Herve Drolon] added 64-bit RGBA to 24-bit conversion support in FreeImage_ConvertTo24Bits
 * [Carsten Klein] updated makefile for building FreeImage with MinGW
 * [Herve Drolon] fixed BigTIFF signature validation in FreeImage_GetFileType* functions
 * [Carsten Klein] fixed handling of RGB-565 16-bit images (needed for conversion from HBITMAP to FIBITMAP)
@@ -22,6 +24,8 @@ Month day, 2012 - 3.15.4
 * [Herve Drolon] replaced FIUINT64/FIINT64 with standard types UINT64/INT64
 * [Rustam Abdullaev] fixed PNG plugin with saving of transparent monochrome images
 * [Floris van den Berg] improved plugin registering when replacing an existing internal plugin with a new equivalent plugin
+* [Herve Drolon] fixed a crash when calling FreeImage_GetColorType on a 32-bit RGBA images loaded with the FIF_LOAD_NOPIXELS flag
+* [Herve Drolon] fixed FreeImage_SetTransparencyTable falsely setting a dib to 'transparent' when called with a count of 0
 
 March 17th, 2012 - 3.15.3
 ! FreeImage now uses LibPNG 1.5.9
