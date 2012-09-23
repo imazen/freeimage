@@ -96,6 +96,15 @@ Allocate a FIBITMAP of type FIT_BITMAP, with possibly no pixel data
 */
 DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeader(BOOL header_only, int width, int height, int bpp, unsigned red_mask FI_DEFAULT(0), unsigned green_mask FI_DEFAULT(0), unsigned blue_mask FI_DEFAULT(0));
 
+/**
+Helper for 16-bit FIT_BITMAP
+Returns a pointer to the bitmap's red-, green- and blue masks.
+@param dib The bitmap to obtain masks from.
+@return Returns a pointer to the bitmap's red-, green- and blue masks
+or NULL, if no masks are present (e.g. for 24 bit images).
+*/
+DLL_API BOOL DLL_CALLCONV FreeImage_HasRGBMasks(FIBITMAP *dib);
+
 #if defined(__cplusplus)
 }
 #endif

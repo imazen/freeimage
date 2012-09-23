@@ -178,7 +178,7 @@ FreeImage_GetImageSizeHeader(BOOL header_only, unsigned width, unsigned height, 
 	// palette is aligned on a 16 bytes boundary
 	dib_size += sizeof(RGBQUAD) * CalculateUsedPaletteEntries(bpp);
 	// we both add palette size and masks size if need_masks is true, since CalculateUsedPaletteEntries
-	// always returns 0 if need_masks is true (which is only for 16 an 32 bit images).
+	// always returns 0 if need_masks is true (which is only true for 16 bit images).
 	dib_size += need_masks ? sizeof(DWORD) * 3 : 0;
 	dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);  
 	if(!header_only) {
@@ -213,25 +213,14 @@ FreeImage_GetImageSizeHeader(BOOL header_only, unsigned width, unsigned height, 
 }
 
 /**
-Just like FreeImage_GetPalette, this function returns a pointer to the masks.
-Since this function is also called from FreeImage_GetRed/Green/BlueMask, the
-tests for image type and bpp are all needed. 
-@param dib
-@return returns a pointer to the masks if successfull, returns NULL if no masks are present (e.g. for a 24 bit image).
+Returns a pointer to the bitmap's red-, green- and blue masks.
+@param dib The bitmap to obtain masks from.
+@return Returns a pointer to the bitmap's red-, green- and blue masks
+or NULL, if no masks are present (e.g. for 24 bit images).
 */
 static FREEIMAGERGBMASKS *
 FreeImage_GetRGBMasks(FIBITMAP *dib) {
-	if (!dib) {
-		return NULL;
-	}
-	if (FreeImage_GetImageType(dib) != FIT_BITMAP) {
-		return NULL;
-	}
-	unsigned bpp = FreeImage_GetBPP(dib);
-	if (bpp != 16 && bpp != 32) {
-		return NULL;
-	}
-	return (FREEIMAGERGBMASKS *)(((BYTE *)FreeImage_GetInfoHeader(dib)) + sizeof(BITMAPINFOHEADER));
+	return FreeImage_HasRGBMasks(dib) ? (FREEIMAGERGBMASKS *)(((BYTE *)FreeImage_GetInfoHeader(dib)) + sizeof(BITMAPINFOHEADER)) : NULL;
 }
 
 FIBITMAP * DLL_CALLCONV
@@ -244,7 +233,8 @@ FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int
 		return NULL;
 	}
 
-	// we only store the masks (and allocate memory for them) for 16 and 32 bit images
+	// we only store the masks (and allocate memory for
+	// them) for 16 images of type FIT_BITMAP
 	BOOL need_masks = FALSE;
 
 	// check pixel bit depth
@@ -259,9 +249,7 @@ FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int
 					need_masks = TRUE;
                     break;
 				case 24:
-					break;
 				case 32:
-					need_masks = TRUE;
 					break;
 				default:
 					bpp = 8;
@@ -364,8 +352,8 @@ FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int
 			bih->biPlanes           = 1;
 			bih->biCompression      = need_masks ? BI_BITFIELDS : BI_RGB;
 			bih->biBitCount         = (WORD)bpp;
-			bih->biClrUsed          = need_masks ? 3 : CalculateUsedPaletteEntries(bpp);
-			bih->biClrImportant     = need_masks ? 0 : bih->biClrUsed;
+			bih->biClrUsed          = CalculateUsedPaletteEntries(bpp);
+			bih->biClrImportant     = bih->biClrUsed;
 			bih->biXPelsPerMeter	= 2835;	// 72 dpi
 			bih->biYPelsPerMeter	= 2835;	// 72 dpi
 
@@ -461,7 +449,7 @@ FreeImage_Clone(FIBITMAP *dib) {
 	// check for pixel availability ...
 	BOOL header_only = FreeImage_HasPixels(dib) ? FALSE : TRUE;
 	// check whether this image has masks defined ...
-	BOOL need_masks  = (type == FIT_BITMAP && (bpp == 16 || bpp == 32)) ? TRUE : FALSE;
+	BOOL need_masks  = (bpp == 16 && type == FIT_BITMAP) ? TRUE : FALSE;
 
 	// allocate a new dib
 	FIBITMAP *new_dib = FreeImage_AllocateHeaderT(header_only, type, width, height, bpp,
@@ -671,6 +659,11 @@ FreeImage_HasPixels(FIBITMAP *dib) {
 }
 
 // ----------------------------------------------------------
+
+BOOL DLL_CALLCONV
+FreeImage_HasRGBMasks(FIBITMAP *dib) {
+	return dib && FreeImage_GetInfoHeader(dib)->biCompression == BI_BITFIELDS;
+}
 
 unsigned DLL_CALLCONV
 FreeImage_GetRedMask(FIBITMAP *dib) {
