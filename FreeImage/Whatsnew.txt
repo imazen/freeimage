@@ -27,6 +27,7 @@ Month day, 2012 - 3.15.4
 * [Herve Drolon] fixed a crash when calling FreeImage_GetColorType on a 32-bit RGBA images loaded with the FIF_LOAD_NOPIXELS flag
 * [Herve Drolon] fixed FreeImage_SetTransparencyTable falsely setting a dib to 'transparent' when called with a count of 0
 * [Carsten Klein] fixed storing of RGB masks for 16-bit RGB standard images in order to be in a MSDN compatible way
+* [Herve Drolon] added an error handling message inside HDR plugin when trying to save an unsupported format
 
 March 17th, 2012 - 3.15.3
 ! FreeImage now uses LibPNG 1.5.9
