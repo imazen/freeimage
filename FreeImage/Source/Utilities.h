@@ -98,10 +98,7 @@ DLL_API FIBITMAP * DLL_CALLCONV FreeImage_AllocateHeader(BOOL header_only, int w
 
 /**
 Helper for 16-bit FIT_BITMAP
-Returns a pointer to the bitmap's red-, green- and blue masks.
-@param dib The bitmap to obtain masks from.
-@return Returns a pointer to the bitmap's red-, green- and blue masks
-or NULL, if no masks are present (e.g. for 24 bit images).
+@see FreeImage_GetRGBMasks
 */
 DLL_API BOOL DLL_CALLCONV FreeImage_HasRGBMasks(FIBITMAP *dib);
 

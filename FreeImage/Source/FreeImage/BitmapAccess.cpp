@@ -213,6 +213,7 @@ FreeImage_GetImageSizeHeader(BOOL header_only, unsigned width, unsigned height, 
 }
 
 /**
+Helper for 16-bit FIT_BITMAP
 Returns a pointer to the bitmap's red-, green- and blue masks.
 @param dib The bitmap to obtain masks from.
 @return Returns a pointer to the bitmap's red-, green- and blue masks
