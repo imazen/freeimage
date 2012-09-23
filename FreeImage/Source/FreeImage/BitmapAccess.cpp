@@ -636,15 +636,19 @@ FreeImage_GetColorType(FIBITMAP *dib) {
 			if (FreeImage_GetICCProfile(dib)->flags & FIICC_COLOR_IS_CMYK)
 				return FIC_CMYK;
 
-			for (unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
-				rgb = (RGBQUAD *)FreeImage_GetScanLine(dib, y);
+			if( FreeImage_HasPixels(dib) ) {
+				// check for fully opaque alpha layer
+				for (unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
+					rgb = (RGBQUAD *)FreeImage_GetScanLine(dib, y);
 
-				for (unsigned x = 0; x < FreeImage_GetWidth(dib); x++)
-					if (rgb[x].rgbReserved != 0xFF)
-						return FIC_RGBALPHA;			
+					for (unsigned x = 0; x < FreeImage_GetWidth(dib); x++)
+						if (rgb[x].rgbReserved != 0xFF)
+							return FIC_RGBALPHA;			
+				}
+				return FIC_RGB;
 			}
 
-			return FIC_RGB;
+			return FIC_RGBALPHA;
 		}
 				
 		default :
@@ -797,9 +801,9 @@ FreeImage_GetTransparencyCount(FIBITMAP *dib) {
 void DLL_CALLCONV
 FreeImage_SetTransparencyTable(FIBITMAP *dib, BYTE *table, int count) {
 	if (dib) {
-		count = MIN(count, 256);
+		count = MAX(0, MIN(count, 256));
 		if (FreeImage_GetBPP(dib) <= 8) {
-			((FREEIMAGEHEADER *)dib->data)->transparent = TRUE;
+			((FREEIMAGEHEADER *)dib->data)->transparent = (count > 0) ? TRUE : FALSE;
 			((FREEIMAGEHEADER *)dib->data)->transparency_count = count;
 
 			if (table) {
