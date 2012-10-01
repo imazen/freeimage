@@ -152,6 +152,15 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'October 1, 2012 - 2.17
+'- [Carsten Klein] removed temporary workaround for 16-bit standard type bitmaps introduced in version 2.15, which temporarily stored RGB masks directly after the BITMAPINFO structure, when creating a HBITMAP.
+'* [Carsten Klein] fixed a potential overflow bug in both pNormalizeRational and pNormalizeSRational: these now do nothing if any of numerator and denominator is either 1 or 0 (zero).
+'+ [Carsten Klein] added load flag JPEG_GREYSCALE as well as the enum constant FILO_JPEG_GREYSCALE.
+'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL to 4 to match current version 3.15.4
+'
+'! now FreeImage version 3.15.4
+'
+'
 'March 19, 2012 - 2.16
 '! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL to 3 to match current version 3.15.3
 '
@@ -1159,7 +1168,7 @@ End Enum
 ' Version information
 Public Const FREEIMAGE_MAJOR_VERSION As Long = 3
 Public Const FREEIMAGE_MINOR_VERSION As Long = 15
-Public Const FREEIMAGE_RELEASE_SERIAL As Long = 3
+Public Const FREEIMAGE_RELEASE_SERIAL As Long = 4
 
 ' Memory stream pointer operation flags
 Public Const SEEK_SET As Long = 0
@@ -1236,6 +1245,7 @@ Public Const JPEG_FAST As Long = &H1                 ' load the file as fast as 
 Public Const JPEG_ACCURATE As Long = &H2             ' load the file with the best quality, sacrificing some speed
 Public Const JPEG_CMYK As Long = &H4                 ' load separated CMYK "as is" (use 'OR' to combine with other flags)
 Public Const JPEG_EXIFROTATE As Long = &H8           ' load and rotate according to Exif 'Orientation' tag if available
+Public Const JPEG_GREYSCALE As Long = &H10           ' load and convert to a 8-bit greyscale image
 Public Const JPEG_QUALITYSUPERB As Long = &H80       ' save with superb quality (100:1)
 Public Const JPEG_QUALITYGOOD As Long = &H100        ' save with good quality (75:1)
 Public Const JPEG_QUALITYNORMAL As Long = &H200      ' save with normal quality (50:1)
@@ -1387,6 +1397,7 @@ Public Enum FREE_IMAGE_LOAD_OPTIONS
    FILO_JPEG_ACCURATE = JPEG_ACCURATE             ' load the file with the best quality, sacrificing some speed
    FILO_JPEG_CMYK = JPEG_CMYK                     ' load separated CMYK "as is" (use 'OR' to combine with other load flags)
    FILO_JPEG_EXIFROTATE = JPEG_EXIFROTATE         ' load and rotate according to Exif 'Orientation' tag if available
+   FILO_JPEG_GREYSCALE = JPEG_GREYSCALE           ' load and convert to a 8-bit greyscale image
    FILO_PCD_DEFAULT = PCD_DEFAULT
    FILO_PCD_BASE = PCD_BASE                       ' load the bitmap sized 768 x 512
    FILO_PCD_BASEDIV4 = PCD_BASEDIV4               ' load the bitmap sized 384 x 256
@@ -1949,6 +1960,9 @@ Public Type BITMAPINFOHEADER
    biYPelsPerMeter As Long
    biClrUsed As Long
    biClrImportant As Long
+   red As Long
+   green As Long
+   blue As Long
 End Type
 
 Public Type BITMAPINFO
@@ -1970,28 +1984,28 @@ Public Type FIICCPROFILE
 End Type
 
 Public Type FIRGB16
-   Red As Integer
-   Green As Integer
-   Blue As Integer
+   red As Integer
+   green As Integer
+   blue As Integer
 End Type
 
 Public Type FIRGBA16
-   Red As Integer
-   Green As Integer
-   Blue As Integer
+   red As Integer
+   green As Integer
+   blue As Integer
    Alpha As Integer
 End Type
 
 Public Type FIRGBF
-   Red As Single
-   Green As Single
-   Blue As Single
+   red As Single
+   green As Single
+   blue As Single
 End Type
 
 Public Type FIRGBAF
-   Red As Single
-   Green As Single
-   Blue As Single
+   red As Single
+   green As Single
+   blue As Single
    Alpha As Single
 End Type
 
@@ -2673,15 +2687,15 @@ Private Declare Function FreeImage_IsLittleEndianInt Lib "FreeImage.dll" Alias "
 
 Private Declare Function FreeImage_LookupX11ColorInt Lib "FreeImage.dll" Alias "_FreeImage_LookupX11Color@16" ( _
            ByVal Color As String, _
-           ByRef Red As Long, _
-           ByRef Green As Long, _
-           ByRef Blue As Long) As Long
+           ByRef red As Long, _
+           ByRef green As Long, _
+           ByRef blue As Long) As Long
 
 Private Declare Function FreeImage_LookupSVGColorInt Lib "FreeImage.dll" Alias "_FreeImage_LookupSVGColor@16" ( _
            ByVal Color As String, _
-           ByRef Red As Long, _
-           ByRef Green As Long, _
-           ByRef Blue As Long) As Long
+           ByRef red As Long, _
+           ByRef green As Long, _
+           ByRef blue As Long) As Long
 
 
 '--------------------------------------------------------------------------------
@@ -2795,6 +2809,16 @@ Private Declare Function FreeImage_JPEGTransformUInt Lib "FreeImage.dll" Alias "
 ' Upsampling and downsampling
 Public Declare Function FreeImage_Rescale Lib "FreeImage.dll" Alias "_FreeImage_Rescale@16" ( _
            ByVal Bitmap As Long, _
+           ByVal Width As Long, _
+           ByVal Height As Long, _
+           ByVal Filter As FREE_IMAGE_FILTER) As Long
+           
+Public Declare Function FreeImage_RescaleRect Lib "FreeImage.dll" Alias "_FreeImage_RescaleRect@32" ( _
+           ByVal Bitmap As Long, _
+           ByVal Left As Long, _
+           ByVal Top As Long, _
+           ByVal Right As Long, _
+           ByVal Bottom As Long, _
            ByVal Width As Long, _
            ByVal Height As Long, _
            ByVal Filter As FREE_IMAGE_FILTER) As Long
@@ -3512,9 +3536,9 @@ End Function
 
 Public Function FreeImage_GetBackgroundColorEx(ByVal Bitmap As Long, _
                                                ByRef Alpha As Byte, _
-                                               ByRef Red As Byte, _
-                                               ByRef Green As Byte, _
-                                               ByRef Blue As Byte) As Boolean
+                                               ByRef red As Byte, _
+                                               ByRef green As Byte, _
+                                               ByRef blue As Byte) As Boolean
                                               
 Dim bkcolor As RGBQUAD
 
@@ -3524,9 +3548,9 @@ Dim bkcolor As RGBQUAD
    FreeImage_GetBackgroundColorEx = (FreeImage_GetBackgroundColorInt(Bitmap, bkcolor) = 1)
    With bkcolor
       Alpha = .rgbReserved
-      Red = .rgbRed
-      Green = .rgbGreen
-      Blue = .rgbBlue
+      red = .rgbRed
+      green = .rgbGreen
+      blue = .rgbBlue
    End With
 
 End Function
@@ -3552,9 +3576,9 @@ End Function
 
 Public Function FreeImage_SetBackgroundColorEx(ByVal Bitmap As Long, _
                                                ByVal Alpha As Byte, _
-                                               ByVal Red As Byte, _
-                                               ByVal Green As Byte, _
-                                               ByVal Blue As Byte) As Boolean
+                                               ByVal red As Byte, _
+                                               ByVal green As Byte, _
+                                               ByVal blue As Byte) As Boolean
                                               
 Dim tColor As RGBQUAD
 
@@ -3564,9 +3588,9 @@ Dim tColor As RGBQUAD
                                              
    With tColor
       .rgbReserved = Alpha
-      .rgbRed = Red
-      .rgbGreen = Green
-      .rgbBlue = Blue
+      .rgbRed = red
+      .rgbGreen = green
+      .rgbBlue = blue
    End With
    FreeImage_SetBackgroundColorEx = (FreeImage_SetBackgroundColorInt(Bitmap, tColor) = 1)
 
@@ -3610,9 +3634,9 @@ Public Function FreeImage_GetPixelColorEx(ByVal Bitmap As Long, _
                                           ByVal X As Long, _
                                           ByVal Y As Long, _
                                           ByRef Alpha As Byte, _
-                                          ByRef Red As Byte, _
-                                          ByRef Green As Byte, _
-                                          ByRef Blue As Byte) As Boolean
+                                          ByRef red As Byte, _
+                                          ByRef green As Byte, _
+                                          ByRef blue As Byte) As Boolean
                                               
 Dim Value As RGBQUAD
 
@@ -3622,9 +3646,9 @@ Dim Value As RGBQUAD
    FreeImage_GetPixelColorEx = (FreeImage_GetPixelColorInt(Bitmap, X, Y, Value) = 1)
    With Value
       Alpha = .rgbReserved
-      Red = .rgbRed
-      Green = .rgbGreen
-      Blue = .rgbBlue
+      red = .rgbRed
+      green = .rgbGreen
+      blue = .rgbBlue
    End With
 
 End Function
@@ -3667,9 +3691,9 @@ Public Function FreeImage_SetPixelColorEx(ByVal Bitmap As Long, _
                                           ByVal X As Long, _
                                           ByVal Y As Long, _
                                           ByVal Alpha As Byte, _
-                                          ByVal Red As Byte, _
-                                          ByVal Green As Byte, _
-                                          ByVal Blue As Byte) As Boolean
+                                          ByVal red As Byte, _
+                                          ByVal green As Byte, _
+                                          ByVal blue As Byte) As Boolean
                                               
 Dim Value As RGBQUAD
 
@@ -3679,9 +3703,9 @@ Dim Value As RGBQUAD
                                              
    With Value
       .rgbReserved = Alpha
-      .rgbRed = Red
-      .rgbGreen = Green
-      .rgbBlue = Blue
+      .rgbRed = red
+      .rgbGreen = green
+      .rgbBlue = blue
    End With
    FreeImage_SetPixelColorEx = (FreeImage_SetPixelColorInt(Bitmap, X, Y, Value) = 1)
 
@@ -3806,24 +3830,24 @@ Public Function FreeImage_IsLittleEndian() As Boolean
 End Function
 
 Public Function FreeImage_LookupX11Color(ByVal Color As String, _
-                                         ByRef Red As Long, _
-                                         ByRef Green As Long, _
-                                         ByRef Blue As Long) As Boolean
+                                         ByRef red As Long, _
+                                         ByRef green As Long, _
+                                         ByRef blue As Long) As Boolean
                                          
    ' Thin wrapper function returning a real VB Boolean value
 
-   FreeImage_LookupX11Color = (FreeImage_LookupX11ColorInt(Color, Red, Green, Blue) = 1)
+   FreeImage_LookupX11Color = (FreeImage_LookupX11ColorInt(Color, red, green, blue) = 1)
            
 End Function
 
 Public Function FreeImage_LookupSVGColor(ByVal Color As String, _
-                                         ByRef Red As Long, _
-                                         ByRef Green As Long, _
-                                         ByRef Blue As Long) As Boolean
+                                         ByRef red As Long, _
+                                         ByRef green As Long, _
+                                         ByRef blue As Long) As Boolean
                                          
    ' Thin wrapper function returning a real VB Boolean value
 
-   FreeImage_LookupSVGColor = (FreeImage_LookupSVGColorInt(Color, Red, Green, Blue) = 1)
+   FreeImage_LookupSVGColor = (FreeImage_LookupSVGColorInt(Color, red, green, blue) = 1)
          
 End Function
 
@@ -6982,8 +7006,6 @@ Public Function FreeImage_PaintDC(ByVal hDC As Long, _
                          Optional ByVal Width As Long, _
                          Optional ByVal Height As Long) As Long
  
-Dim abInfoBuffer() As Byte
-
    ' This function draws a FreeImage DIB directly onto a device context (DC). There
    ' are many (selfexplaining?) parameters that control the visual result.
    
@@ -7010,7 +7032,7 @@ Dim abInfoBuffer() As Byte
       End If
       
       FreeImage_PaintDC = SetDIBitsToDevice(hDC, XDst, YDst - YSrc, Width, Height, XSrc, YSrc, 0, _
-            Height, FreeImage_GetBits(Bitmap), FreeImage_GetInfoEx(Bitmap, abInfoBuffer), DIB_RGB_COLORS)
+            Height, FreeImage_GetBits(Bitmap), FreeImage_GetInfo(Bitmap), DIB_RGB_COLORS)
    End If
 
 End Function
@@ -7030,8 +7052,7 @@ Public Function FreeImage_PaintDCEx(ByVal hDC As Long, _
                            Optional ByVal StretchMode As STRETCH_MODE = SM_COLORONCOLOR) As Long
 
 Dim eLastStretchMode As STRETCH_MODE
-Dim abInfoBuffer() As Byte
-
+   
    ' This function draws a FreeImage DIB directly onto a device context (DC). There
    ' are many (selfexplaining?) parameters that control the visual result.
    
@@ -7074,7 +7095,7 @@ Dim abInfoBuffer() As Byte
       End If
 
       Call StretchDIBits(hDC, XDst, YDst, WidthDst, HeightDst, XSrc, YSrc, WidthSrc, HeightSrc, _
-            FreeImage_GetBits(Bitmap), FreeImage_GetInfoEx(Bitmap, abInfoBuffer), DIB_RGB_COLORS, _
+            FreeImage_GetBits(Bitmap), FreeImage_GetInfo(Bitmap), DIB_RGB_COLORS, _
             RasterOperator)
       
       ' restore last mode
@@ -8179,7 +8200,6 @@ Public Function FreeImage_GetBitmap(ByVal Bitmap As Long, _
                                
 Dim bReleaseDC As Boolean
 Dim ppvBits As Long
-Dim abInfoBuffer() As Byte
    
    ' This function returns an HBITMAP created by the CreateDIBSection() function which
    ' in turn has the same color depth as the original DIB. A reference DC may be provided
@@ -8198,7 +8218,7 @@ Dim abInfoBuffer() As Byte
          bReleaseDC = True
       End If
       If (hDC) Then
-         FreeImage_GetBitmap = CreateDIBSection(hDC, FreeImage_GetInfoEx(Bitmap, abInfoBuffer), _
+         FreeImage_GetBitmap = CreateDIBSection(hDC, FreeImage_GetInfo(Bitmap), _
                DIB_RGB_COLORS, ppvBits, 0, 0)
          If ((FreeImage_GetBitmap <> 0) And (ppvBits <> 0)) Then
             Call CopyMemory(ByVal ppvBits, ByVal FreeImage_GetBits(Bitmap), _
@@ -8220,7 +8240,6 @@ Public Function FreeImage_GetBitmapForDevice(ByVal Bitmap As Long, _
                                     Optional ByVal UnloadSource As Boolean) As Long
                                     
 Dim bReleaseDC As Boolean
-Dim abInfoBuffer() As Byte
 
    ' This function returns an HBITMAP created by the CreateDIBitmap() function which
    ' in turn has always the same color depth as the reference DC, which may be provided
@@ -8241,7 +8260,7 @@ Dim abInfoBuffer() As Byte
       If (hDC) Then
          FreeImage_GetBitmapForDevice = _
                CreateDIBitmap(hDC, FreeImage_GetInfoHeader(Bitmap), CBM_INIT, _
-                     FreeImage_GetBits(Bitmap), FreeImage_GetInfoEx(Bitmap, abInfoBuffer), _
+                     FreeImage_GetBits(Bitmap), FreeImage_GetInfo(Bitmap), _
                            DIB_RGB_COLORS)
          If (UnloadSource) Then
             Call FreeImage_Unload(Bitmap)
@@ -8254,37 +8273,6 @@ Dim abInfoBuffer() As Byte
 
 End Function
 
-Private Function FreeImage_GetInfoEx(ByVal Bitmap As Long, ByRef Buffer() As Byte, _
-                            Optional ByRef BufferUsed As Boolean) As Long
-
-Dim alMasks() As Long
-
-   If (FreeImage_GetBPP(Bitmap) = 16) Then
-      ' Check for 16-bit images with a color mask different to 555.
-      ReDim alMasks(2)
-      alMasks(0) = FreeImage_GetRedMask(Bitmap)
-      alMasks(1) = FreeImage_GetGreenMask(Bitmap)
-      alMasks(2) = FreeImage_GetBlueMask(Bitmap)
-      If ((alMasks(0) <> FI16_555_RED_MASK) Or _
-          (alMasks(1) <> FI16_555_GREEN_MASK) Or _
-          (alMasks(2) <> FI16_555_BLUE_MASK)) Then
-         ReDim Buffer(39 + 12)
-         Call CopyMemory(Buffer(0), ByVal FreeImage_GetInfo(Bitmap), 40)
-         Buffer(16) = BI_BITFIELDS
-         ' Set member biClrUsed to 3 colors (RGBQUAD), which
-         ' is the same size as 3 DWORD masks.
-         Buffer(32) = 3
-         Call CopyMemory(Buffer(40), alMasks(0), 12)
-         FreeImage_GetInfoEx = VarPtr(Buffer(0))
-         BufferUsed = True
-      Else
-         FreeImage_GetInfoEx = FreeImage_GetInfo(Bitmap)
-      End If
-   Else
-      FreeImage_GetInfoEx = FreeImage_GetInfo(Bitmap)
-   End If
-
-End Function
 '--------------------------------------------------------------------------------
 ' OlePicture conversion functions
 '--------------------------------------------------------------------------------
@@ -8674,16 +8662,16 @@ Dim lOffset As Long
       lPaletteSize = FreeImage_GetColorsUsed(Bitmap) * 4
       
       ' Copy the BITMAPINFOHEADER into the result array.
-      lpInfo = FreeImage_GetInfoEx(Bitmap, abInfoBuffer, bBufferUsed)
-      If (bBufferUsed) Then
-         ReDim abResult(39 + 12 + lPaletteSize + lImageSize)
-         Call CopyMemory(abResult(0), ByVal lpInfo, 40 + 12)
-         lOffset = 40 + 12
-      Else
-         ReDim abResult(39 + lPaletteSize + lImageSize)
-         Call CopyMemory(abResult(0), ByVal lpInfo, 40)
-         lOffset = 40
-      End If
+'''      lpInfo = FreeImage_GetInfoEx(Bitmap, abInfoBuffer, bBufferUsed)
+'''      If (bBufferUsed) Then
+'''         ReDim abResult(39 + 12 + lPaletteSize + lImageSize)
+'''         Call CopyMemory(abResult(0), ByVal lpInfo, 40 + 12)
+'''         lOffset = 40 + 12
+'''      Else
+'''         ReDim abResult(39 + lPaletteSize + lImageSize)
+'''         Call CopyMemory(abResult(0), ByVal lpInfo, 40)
+'''         lOffset = 40
+'''      End If
       
       If (lPaletteSize > 0) Then
          ' Copy the image's palette (if any) into the result array.
@@ -12047,10 +12035,12 @@ Dim vntCommon As Long
    ' This function normalizes an unsigned fraction stored in a FIRATIONAL
    ' structure by cancelling down the fraction. This is commonly done
    ' by dividing both numerator and denominator by their greates
-   ' common divisor (gcd)
+   ' common divisor (gcd).
+   ' Does nothing if any of numerator and denominator is 1 or 0.
 
    With Value
-      If ((.Numerator <> 1) And (.Denominator <> 1)) Then
+      If ((.Numerator <> 1) And (.Denominator <> 1) And _
+          (.Numerator <> 0) And (.Denominator <> 0)) Then
          vntCommon = gcd(.Numerator, .Denominator)
          If (vntCommon <> 1) Then
             ' convert values back to an unsigned long (may
@@ -12071,10 +12061,12 @@ Dim lCommon As Long
    ' This function normalizes a signed fraction stored in a FIRATIONAL
    ' structure by cancelling down the fraction. This is commonly done
    ' by dividing both numerator and denominator by their greates
-   ' common divisor (gcd)
+   ' common divisor (gcd).
+   ' Does nothing if any of numerator and denominator is 1 or 0.
    
    With Value
-      If ((.Numerator <> 1) And (.Denominator <> 1)) Then
+      If ((.Numerator <> 1) And (.Denominator <> 1) And _
+          (.Numerator <> 0) And (.Denominator <> 0)) Then
          lCommon = gcd(.Numerator, .Denominator)
          If (lCommon <> 1) Then
             ' using the CLng() function for not to get
@@ -12094,14 +12086,14 @@ Dim lCommon As Long
 
 End Sub
 
-Private Function gcd(ByVal a As Variant, ByVal B As Variant) As Variant
+Private Function gcd(ByVal a As Variant, ByVal b As Variant) As Variant
 
 Dim vntTemp As Variant
 
    ' calculate greatest common divisor
 
-   Do While (B)
-      vntTemp = B
+   Do While (b)
+      vntTemp = b
       ' calculate b = a % b (modulo)
       ' this could be just:
       ' b = a Mod b
@@ -12109,7 +12101,7 @@ Dim vntTemp As Variant
       ' long values stored in currency variables
       ' so, we use the mathematical definition of
       ' the modulo operator taken from WikipediA.
-      B = a - floor(a / B) * B
+      b = a - floor(a / b) * b
       a = vntTemp
    Loop
    gcd = a
