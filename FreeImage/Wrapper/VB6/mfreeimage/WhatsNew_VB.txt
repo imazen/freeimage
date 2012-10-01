@@ -5,6 +5,12 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+October 1, 2012 - 2.17
+- [Carsten Klein] removed temporary workaround for 16-bit standard type bitmaps introduced in version 2.15, which temporarily stored RGB masks directly after the BITMAPINFO structure, when creating a HBITMAP.
+* [Carsten Klein] fixed a potential overflow bug in both pNormalizeRational and pNormalizeSRational: these now do nothing if any of numerator and denominator is either 1 or 0 (zero).
++ [Carsten Klein] added load flag JPEG_GREYSCALE as well as the enum constant FILO_JPEG_GREYSCALE.
+! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL to 4 to match current version 3.15.4
+
 March 19, 2012 - 2.16
 ! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL to 3 to match current version 3.15.3
 
