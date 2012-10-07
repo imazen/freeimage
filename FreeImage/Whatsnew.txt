@@ -6,14 +6,15 @@ What's New for FreeImage
 + : added
 
 Month day, 2012 - 3.15.4
-! FreeImage now uses LibPNG 1.5.12
+! FreeImage now uses LibPNG 1.5.13
 ! FreeImage now uses LibRaw 0.14.7
 ! FreeImage now uses ZLib 1.2.7
-! FreeImage now uses LibTIFF 4.0.2
+! FreeImage now uses LibTIFF 4.0.3
 ! FreeImage now uses OpenJPEG 1.5.1
-+ [Herve Drolon] improved speed of RAW file detection in FreeImage_GetFileType* functions
++ [Herve Drolon] improved the speed of RAW files detection in FreeImage_GetFileType* functions
 + [Herve Drolon] added JPEG_GREYSCALE load flag to the JPEG plugin (force to load as 8-bit greyscale)
 + [Herve Drolon] added 64-bit RGBA to 24-bit conversion support in FreeImage_ConvertTo24Bits
++ [Carsten Klein] improved the speed of FreeImage_Rescale for FIT_BITMAP types
 * [Carsten Klein] updated makefile for building FreeImage with MinGW
 * [Herve Drolon] fixed BigTIFF signature validation in FreeImage_GetFileType* functions
 * [Carsten Klein] fixed handling of RGB-565 16-bit images (needed for conversion from HBITMAP to FIBITMAP)
