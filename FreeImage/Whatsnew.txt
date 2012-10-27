@@ -11,6 +11,7 @@ Month day, 2012 - 3.15.4
 ! FreeImage now uses ZLib 1.2.7
 ! FreeImage now uses LibTIFF 4.0.3
 ! FreeImage now uses OpenJPEG 1.5.1
+! FreeImage now uses OpenEXR 1.7.1
 + [Herve Drolon] improved the speed of RAW files detection in FreeImage_GetFileType* functions
 + [Herve Drolon] added JPEG_GREYSCALE load flag to the JPEG plugin (force to load as 8-bit greyscale)
 + [Herve Drolon] added 64-bit RGBA to 24-bit conversion support in FreeImage_ConvertTo24Bits
