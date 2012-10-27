@@ -44,45 +44,51 @@ private:
 	FreeImageIO *_io;
 	fi_handle _handle;
 	long _eof;
+	INT64 _fsize;
 
 public:
 	LibRaw_freeimage_datastream(FreeImageIO *io, fi_handle handle) : _io(io), _handle(handle) {
 		long start_pos = io->tell_proc(handle);
 		io->seek_proc(handle, 0, SEEK_END);
 		_eof = io->tell_proc(handle);
+		_fsize = _eof - start_pos;
 		io->seek_proc(handle, start_pos, SEEK_SET);
 	}
+
 	~LibRaw_freeimage_datastream() {
 	}
-	virtual void * make_jas_stream() {
-		return NULL;
-	}
-    virtual int valid() { 
+
+    int valid() { 
 		return (_io && _handle);
 	}
-    virtual int read(void *buffer, size_t size, size_t count) { 
+
+    int read(void *buffer, size_t size, size_t count) { 
 		if(substream) return substream->read(buffer, size, count);
 		return _io->read_proc(buffer, (unsigned)size, (unsigned)count, _handle);
-	}	
-    virtual int eof() { 
-        if(substream) return substream->eof();
-        return (_io->tell_proc(_handle) >= _eof);
-    }
-    virtual int seek(INT64 offset, int origin) { 
+	}
+
+    int seek(INT64 offset, int origin) { 
         if(substream) return substream->seek(offset, origin);
 		return _io->seek_proc(_handle, (long)offset, origin);
-	} 
-    virtual INT64 tell() { 
+	}
+
+    INT64 tell() { 
 		if(substream) return substream->tell();
         return _io->tell_proc(_handle);
     }
-    virtual int get_char() { 
+	
+	INT64 size() {
+		return _fsize;
+	}
+
+    int get_char() { 
 		int c = 0;
 		if(substream) return substream->get_char();
 		if(!_io->read_proc(&c, 1, 1, _handle)) return -1;
 		return c;
    }
-	virtual char* gets(char *buffer, int length) { 
+	
+	char* gets(char *buffer, int length) { 
 		if (substream) return substream->gets(buffer, length);
 		memset(buffer, 0, length);
 		for(int i = 0; i < length; i++) {
@@ -93,7 +99,8 @@ public:
 		}
 		return buffer;
 	}
-	virtual int scanf_one(const char *fmt, void* val) {
+
+	int scanf_one(const char *fmt, void* val) {
 		std::string buffer;
 		char element = 0;
 		bool bDone = false;
@@ -117,6 +124,15 @@ public:
 		} while(!bDone);
 
 		return sscanf(buffer.c_str(), fmt, val);
+	}
+
+	int eof() { 
+		if(substream) return substream->eof();
+        return (_io->tell_proc(_handle) >= _eof);
+    }
+
+	void * make_jas_stream() {
+		return NULL;
 	}
 };
 
