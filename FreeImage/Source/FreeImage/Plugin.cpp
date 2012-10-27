@@ -38,6 +38,8 @@
 #include "FreeImageIO.h"
 #include "Plugin.h"
 
+#include "../Metadata/FreeImageTag.h"
+
 // =====================================================================
 
 using namespace std;
@@ -216,6 +218,9 @@ FreeImage_GetPluginList() {
 void DLL_CALLCONV
 FreeImage_Initialise(BOOL load_local_plugins_only) {
 	if (s_plugin_reference_count++ == 0) {
+		
+		// initialise the TagLib singleton
+		TagLib& s = TagLib::instance();
 
 		// internal plugin initialization
 
