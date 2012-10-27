@@ -26,6 +26,15 @@
 
 #include "opj_includes.h"
 
+#ifdef WIN32
+	/* In Win32, vsnprintf is available as the "non-ANSI" _vsnprintf. */
+	#if !defined(vsnprintf) && !defined(NO_vsnprintf)
+		#if !defined(_MSC_VER) || ( defined(_MSC_VER) && _MSC_VER < 1500 )
+			#define vsnprintf _vsnprintf
+		#endif
+	#endif
+#endif
+
 /* ==========================================================
      Utility functions
    ==========================================================*/
