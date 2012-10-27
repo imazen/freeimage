@@ -14,7 +14,8 @@ Month day, 2012 - 3.15.4
 + [Herve Drolon] improved the speed of RAW files detection in FreeImage_GetFileType* functions
 + [Herve Drolon] added JPEG_GREYSCALE load flag to the JPEG plugin (force to load as 8-bit greyscale)
 + [Herve Drolon] added 64-bit RGBA to 24-bit conversion support in FreeImage_ConvertTo24Bits
-+ [Carsten Klein] improved the speed of FreeImage_Rescale for FIT_BITMAP types
++ [Carsten Klein] improved the speed of FreeImage_Rescale for FIT_BITMAP & UINT16, RGB[A]16 types
++ [Carsten Klein] improved the speed of FreeImage_ConvertToGreyscale
 * [Carsten Klein] updated makefile for building FreeImage with MinGW
 * [Herve Drolon] fixed BigTIFF signature validation in FreeImage_GetFileType* functions
 * [Carsten Klein] fixed handling of RGB-565 16-bit images (needed for conversion from HBITMAP to FIBITMAP)
@@ -30,6 +31,7 @@ Month day, 2012 - 3.15.4
 * [Carsten Klein] fixed storing of RGB masks for 16-bit RGB standard images in order to be in a MSDN compatible way
 * [Herve Drolon] added an error handling message inside HDR plugin when trying to save an unsupported format
 * [Corey Taylor] fixed DDS plugin color channel swapping for RGB color order, when using FREEIMAGE_COLORORDER_RGB color order
+* [Herve Drolon] fixed internal TagLib singleton initialization against double-checked locking so that it is multi-thread safe
 
 March 17th, 2012 - 3.15.3
 ! FreeImage now uses LibPNG 1.5.9
