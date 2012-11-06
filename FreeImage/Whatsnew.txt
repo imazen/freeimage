@@ -5,6 +5,9 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month day, 2012 - 3.15.5
+* [Herve Drolon] fixed FreeImage_CloneTag behavior with ASCII data handling (regression that appeared in 3.15.2, affect metadata writing)
+
 October 27th, 2012 - 3.15.4
 ! FreeImage now uses LibPNG 1.5.13
 ! FreeImage now uses LibRaw 0.14.7
