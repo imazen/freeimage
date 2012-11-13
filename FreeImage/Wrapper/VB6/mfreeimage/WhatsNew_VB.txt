@@ -5,16 +5,22 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
-October 1, 2012 - 2.17
+November 13, 2012 - 2.18 (3.15.4)
++ [Carsten Klein] added function declaration FreeImage_HasRGBMasksInt and a real VB Boolean returning function FreeImage_HasRGBMasks.
+- [Carsten Klein] removed members red, green and blue from BITMAPINFOHEADER struct: these were intended for debugging purposes only and could couse a GPF in FreeImage_GetInfoHeaderEx.
+* [Carsten Klein] fixed a bug in FreeImage_GetPictureData introduced in version 2.17.
+* [Carsten Klein] fixed a bug with declaration of FreeImage_Rotate: added default value 0 for Optional ByRef ... As Any parameter 'Color'.
+
+October 1, 2012 - 2.17 (3.15.4)
 - [Carsten Klein] removed temporary workaround for 16-bit standard type bitmaps introduced in version 2.15, which temporarily stored RGB masks directly after the BITMAPINFO structure, when creating a HBITMAP.
 * [Carsten Klein] fixed a potential overflow bug in both pNormalizeRational and pNormalizeSRational: these now do nothing if any of numerator and denominator is either 1 or 0 (zero).
 + [Carsten Klein] added load flag JPEG_GREYSCALE as well as the enum constant FILO_JPEG_GREYSCALE.
 ! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL to 4 to match current version 3.15.4
 
-March 19, 2012 - 2.16
+March 19, 2012 - 2.16 (3.15.3)
 ! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL to 3 to match current version 3.15.3
 
-March 12, 2012 - 2.15
+March 12, 2012 - 2.15 (3.15.2)
 + [Carsten Klein] added function FreeImage_ConvertToUINT16.
 + [Carsten Klein] added function FreeImage_ConvertToRGB16.
 + [Carsten Klein] added function FreeImage_GetThumbnail.
@@ -26,23 +32,23 @@ March 12, 2012 - 2.15
 + [Carsten Klein] added a workaround for providing valid BITMAPINFO structures for non 555 16-bpp images to Windows API functions like CreateDIBSection, CreateDIBBitmap, StretchDIBits or SetDIBitsToDevice.
 ! [Carsten Klein] changed constants FREEIMAGE_MINOR_VERSION and FREEIMAGE_RELEASE_SERIAL: set to 15 and 2 respectively to match current version 3.15.2
 
-March 13, 2011 - 2.14
+March 13, 2011 - 2.14 (3.14.1)
 * [Glenn Thorpe] fixed a typo error with the call to FreeImage_HasPixels inside FreeImage_CreateMask. 
 
-August 11, 2010 - 2.13
+August 11, 2010 - 2.13 (3.14.1)
 + [Carsten Klein] added PSD load flags PSD_CMYK and PSD_LAB as well as the enum constants FILO_PSD_CYMK and FILO_PSD_LAB.
 + [Carsten Klein] added TIFF_LOGLUV save flag as well as the enum constant FISO_TIFF_LOGLUV.
 
-July 20, 2010 - 2.12
+July 20, 2010 - 2.12 (3.14.1)
 + [Carsten Klein] added support for the new EXIF_RAW metadata model by adding enum constant FIMD_EXIF_RAW.
 + [Carsten Klein] added the new FIF_LOAD_NOPIXELS flag as well as the enum constant FILO_LOAD_NOPIXELS.
 + [Carsten Klein] added function declaration FreeImage_HasPixelsInt and a real VB Boolean returning function FreeImage_HasPixels.
 + [Carsten Klein] added function declaration FreeImage_FIFSupportsNoPixelsInt and a real VB Boolean returning function FreeImage_FIFSupportsNoPixels.
 
-June 20, 2010 - 2.11
+June 20, 2010 - 2.11 (3.14.0)
 + [Carsten Klein] added new save flag JPEG_OPTIMIZE (also added FISO_JPEG_OPTIMIZE to enumeration FREE_IMAGE_SAVE_OPTIONS).
 
-April 20, 2010 - 2.10
+April 20, 2010 - 2.10 (3.14.0)
 + [Carsten Klein] added new save flag TARGA_SAVE_RLE (also added FISO_TARGA_SAVE_RLE to enumeration FREE_IMAGE_SAVE_OPTIONS).
 ! [Carsten Klein] changed constants FREEIMAGE_MINOR_VERSION and FREEIMAGE_RELEASE_SERIAL: set to 14 and 0 respectively to match current version 3.14.0
 + [Carsten Klein] added function FreeImage_ConvertToFloat.
@@ -80,30 +86,26 @@ April 20, 2010 - 2.10
 + [Carsten Klein] added wrapper function FreeImage_UnloadEx, which additionally sets the ByRef-passed Bitmap handle to zero after unloading.
 + [Carsten Klein] added wrapper functions ConvertColor and ConvertOleColor to convert VB-style BGR colors into RGB color values.
 
-! now FreeImage version 3.14.0
-
-February 9, 2010 - 2.9.1
+February 9, 2010 - 2.9.1 (3.13.1)
 * [Carsten Klein] fixed a bug in FreeImage_GetBackgroundColorAsLong: parameter 'bkcolor' is now properly passed ByRef.
 
-February 9, 2010 - 2.9
+February 9, 2010 - 2.9 (3.13.1)
 * [Carsten Klein] fixed a syntax typo
 
-February 8, 2010 - 2.8
+February 8, 2010 - 2.8 (3.13.1)
 * [Mike Weir] fixed a bug in function FreeImage_ApplyColorMappingEx: now properly includes all specified mapping entries
 * [Carsten Klein] fixed a bug in function FreeImage_ApplyIndexMappingEx: now properly includes all specified mapping entries
 * [Mike Weir] fixed a bug in function FreeImage_RescaleEx: now also rescales the image, if either the new width or height matches the image's current size
 * [WinAnd / Carsten Klein] fixed a bug in function FreeImage_GetTransparencyTableExClone: returns an uninitialized array if there is no transparency table
 * [WinAnd / Carsten Klein] fixed a bug in function FreeImage_SearchPalette: no longer crashes if there is no transparency table
 
-December 21, 2009 - 2.7
+December 21, 2009 - 2.7 (3.13.1)
 ! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.13.1
 
-! now FreeImage version 3.13.1
-
-December 18, 2009 - 2.6
+December 18, 2009 - 2.6 (3.13.0)
 - [Carsten Klein] removed usage of constants vbPicTypeBitmap and vbPicTypeIcon: these are not available in VBA environments like Excel, Access or Outlook.
 
-September 08, 2009 - 2.5
+September 08, 2009 - 2.5 (3.13.0)
 ! [Carsten Klein] changed constant FREEIMAGE_MINOR_VERSION: set to 13 to match current version 3.13.0
 + [Carsten Klein] added load flag constant JPEG_EXIFROTATE and new member FILO_JPEG_EXIFROTATE to enumeration FREE_IMAGE_LOAD_OPTIONS.
 + [Carsten Klein] added support for the PFM image format.
@@ -118,19 +120,17 @@ September 08, 2009 - 2.5
 + [Carsten Klein] added function FreeImage_Rotate.
 + [Carsten Klein] added wrapper function FreeImage_RotateIOP.
 
-! now FreeImage version 3.13.0
-
-March 18, 2009 - 2.4.2
+March 18, 2009 - 2.4.2 (3.11.0)
 + [Carsten Klein] added enumeration FREE_IMAGE_FRAME_DISPOSAL_METHODS, which provides the frame disposal options needed to create animated GIF files.
 
-July 29, 2008 - 2.4.1
+July 29, 2008 - 2.4.1 (3.11.0)
 * [Carsten Klein] minor documentation updates
 ! [Carsten Klein] renamed member FICF_PALETTISED_8BPP of enumeration FREE_IMAGE_CONVERSION_FLAGS into FICF_PALLETISED_8BPP.
 
-June 30, 2008 - 2.4
+June 30, 2008 - 2.4 (3.11.0)
 * [Carsten Klein] fixed some minor issues in FreeImage_PaintTransparent()
 
-June 06, 2008 - 2.3
+June 06, 2008 - 2.3 (3.11.0)
 + [Carsten Klein] added new compression flags to the JPEG and PNG plugins
 ! [Carsten Klein] renamed wrapper function FreeImage_CloneMetadata() to FreeImage_CloneMetadataEx(): now, there is a native function called FreeImage_CloneMetadata().
 + [Carsten Klein] added private and internal function declaration for FreeImage_CloneMetadata() along with it's public Boolean returning wrapper function.
@@ -140,9 +140,7 @@ June 06, 2008 - 2.3
 + [Carsten Klein] added wrapper function FreeImage_GetPalettePtr(): gets the pointer to a specified array of RGBQUADs: intended to be used together with any of the ColorQuantizeEx functions.
 ! [Carsten Klein] changed constant FREEIMAGE_MINOR_VERSION: set to 11 to match current version 3.11.0
 
-! now FreeImage version 3.11.0
-
-December 14, 2007 - 2.2.1
+December 14, 2007 - 2.2.1 (3.10.0)
 + [Carsten Klein] added constants for member 'biCompression' in BITMAPINFOHEADER struct
 + [Carsten Klein] added wrapper function FreeImage_GetInfoHeaderEx(), which returns a fully populated BITMAPINFOHEADER struct for a bitmap.
 * [Carsten Klein] fixed a bug in FreeImage_GetFileTypeFromMemoryEx(): now calls FreeImage_CloseMemory() releasing the hStream to prevent memory leaks.
@@ -150,15 +148,15 @@ December 14, 2007 - 2.2.1
 + [Carsten Klein] added wrapper function FreeImage_Colorize(): applies a colorized greyscale palettte obtained from FreeImage_GetColorizedPalette() to a bitmap.
 + [Carsten Klein] added wrapper function FreeImage_Sepia(): calls FreeImage_Colorize() with proper parameters to apply a so called sepia palette to a bitmap.
 
-December 12, 2007 - 2.2
+December 12, 2007 - 2.2 (3.10.0)
 * [Carsten Klein] Fixed a small bug in FreeImage_PaintTransparent, which now calls function FreeImage_ConvertTo32Bits instead of FreeImage_ConvertTo32Bits2.
 
-November 15, 2007 - 2.1
+November 15, 2007 - 2.1 (3.10.0)
 * [Carsten Klein] adjusted page numbers of the API documentation in FreeImage function declarations to match FreeImage 3.10.0 API documentation
 - [Carsten Klein] removed parameter 'bUnloadSource' from function FreeImage_GetOlePictureIcon(): an hIcon should not be destroyed if OleCreatePictureIndirect() is called with fOwn = True.
 ! [Carsten Klein] refactored FreeImage_GetOlePicture(): now relies on FreeImage_GetBitmap().
 
-November 10, 2007 - 2.0.8
+November 10, 2007 - 2.0.8 (3.10.0)
 ! [Carsten Klein] changed declaration of FreeImage_SetOutputMessage(): now points transparently to the __stdcall version of this function in the library.
 + [Carsten Klein] added function declaraton for FreeImage_MultigridPoissonSolver().
 + [Carsten Klein] added function declaraton for FreeImage_GetTransparentIndex() and FreeImage_SetTransparentIndex().
@@ -172,24 +170,24 @@ November 10, 2007 - 2.0.8
 + [Carsten Klein] added wrapper function FreeImage_ApplyIndexMappingEx(): this takes a real VB style Byte array.
 + [Carsten Klein] added function declaraton for FreeImage_SwapPaletteIndices().
 
-November 05, 2007 - 2.0.7
+November 05, 2007 - 2.0.7 (3.10.0)
 + [Carsten Klein] added 4 bit color depth to both function pGetNextColorDepth() and pGetPrevousColorDepth()
 - [Carsten Klein] removed member FICF_PREPARE_RESCALE from enumeration FREE_IMAGE_CONVERSION_FLAGS
 - [Carsten Klein] removed all references to FICF_PREPARE_RESCALE: Converting color depth before rescaling an image is no longer performed by the wrapper. Since FreeImage now transparently converts color depth on rescaling, doing this in the wrapper is no longer needed.
 ! [Carsten Klein] refactored wrapper function FreeImage_ConvertColorDepth(): removed case FICF_PREPARE_RESCALE; is now more similar to C# wrapper's version of this function.
 ! [Carsten Klein] refactored wrapper function FreeImage_SaveEx(): removed case FICF_PREPARE_RESCALE; is now more similar to C# wrapper's version of this function.
 
-September 14, 2007 - 2.0.6
+September 14, 2007 - 2.0.6 (3.10.0)
 + [Carsten Klein] added function declaration and Boolean wrapper function for FreeImage_PreMultiplyWithAlpha().
 
-July 26, 2007 - 2.0.5
+July 26, 2007 - 2.0.5 (3.10.0)
 + [Carsten Klein] added wrapper function FreeImage_GetBitmap(): returns an HBITMAP created by the CreateDIBSection() function and so has the same color depth as the original DIB.
 + [Carsten Klein] added wrapper function FreeImage_GetBitmapForDevice(): returns an HBITMAP created by the CreateDIBitmap() function and so has the same color depth as the specified reference DC or as the desktop, if the 'hDC' parameter was omitted.
 - [Carsten Klein] removed function declaration for GetWindowDC(): this function is no longer used.
 * [Carsten Klein] fixed a bug in wrapper function FreeImage_IsExtensionValidForFIF(): string comparison now includes a comma.
 * [Carsten Klein] fixed a bug in wrapper function FreeImage_IsFilenameValidForFIF(): string comparison now includes a comma.
 
-July 25, 2007 - 2.0.4
+July 25, 2007 - 2.0.4 (3.10.0)
 * [Carsten Klein] fixed a bug in function FreeImage_GetPaletteExClone(): now actually returns the palette as RGBQUAD array plus some other minor improvements
 + [Carsten Klein] added wrapper function FreeImage_GetPaletteExLongClone(): this function returns a VB style Byte array that is only wrapped around FreeImage's pointer to a DIB's transparency table.
 + [Carsten Klein] added wrapper function FreeImage_GetTransparencyTableEx(): this function returns a VB style Byte array that is only wrapped around FreeImage's pointer to a DIB's transparency table.
@@ -200,10 +198,10 @@ July 25, 2007 - 2.0.4
 + [Carsten Klein] added function declaration for DeleteDC()
 * [Carsten Klein] fixed a bug in wrapper function FreeImage_CreateFromScreen(): now the memory DC is deleted with the DeleteDC() function and no longer with the DeleteObject() function.
 
-July 05, 2007 - 2.0.3
+July 05, 2007 - 2.0.3 (3.10.0)
 + [Carsten Klein] added wrapper function FreeImage_GetFileTypeFromMemoryEx(): more VB friendly version of FreeImage_GetFileTypeFromMemory() which may take an array rather than a FIMEMORY stream.
 
-May 21, 2007 - 2.0.2
+May 21, 2007 - 2.0.2 (3.10.0)
 ! [Carsten Klein] changed constant FREEIMAGE_MINOR_VERSION: set to 10 to match current version 3.10.0
 ! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 0 to match current version 3.10.0
 + [Carsten Klein] added image format constants FIF_EXR, FIF_J2K and FIF_JP2 to enumeration FREE_IMAGE_FORMAT.
@@ -213,15 +211,13 @@ May 21, 2007 - 2.0.2
 + [Carsten Klein] added save option constants for EXR format to enumeration FREE_IMAGE_SAVE_OPTIONS.
 + [Carsten Klein] added declared function FreeImage_TmoFattal02(): adds support for Gradient domain high dynamic range compression (R. Fattal, 2002)
 
-! now FreeImage version 3.10.0
-
-February 24, 2007 - 2.0.1
+February 24, 2007 - 2.0.1 (3.9.3)
 * [Carsten Klein] fixed a bug in function FreeImage_CreateFromScreen(): now size of image created is according to window to be captured if parameter 'hwnd' <> 0.
 + [Carsten Klein] added parameter 'bClientAreaOnly' to function FreeImage_CreateFromScreen().
 + [Carsten Klein] added blitting option 'CAPTUREBLT' when calling function BitBlt() in function FreeImage_CreateFromScreen().
 - [Carsten Klein] removed unused variable 'hDIB' from functions FreeImage_CreateFromScreen() and FreeImage_LoadEx(). Thanks to Bruce Rusk for pointing that out.
 
-February 16, 2007 - 2.0
+February 16, 2007 - 2.0 (3.9.3)
 ! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 3 to match current version 3.9.3
 ! [Carsten Klein] changed JPEG load/save flag option values: changed constants and both enumerations FREE_IMAGE_LOAD_OPTIONS and FREE_IMAGE_SAVE_OPTIONS.
 + [Carsten Klein] added ICC Color Profile support:
@@ -236,9 +232,7 @@ February 16, 2007 - 2.0
 ! [Carsten Klein] changed behaviour of wrapper function FreeImage_RescaleEx() and all it's derived functions: no clone is returned if the actual and desired image size are the same.
 + [Carsten Klein] added parameter 'bForceCloneCreation' to wrapper function FreeImage_RescaleEx() and all it's derived functions.
 
-! now FreeImage version 3.9.3
-
-January 09, 2007 - 1.9.4
+January 09, 2007 - 1.9.4 (3.9.2)
 ! [Carsten Klein] changed scope of declared function FreeImage_GetFileTypeUInt(): is now private according to all other '...Int' functions wrapped by a VB-friendly function.
 ! [Carsten Klein] changed scope of declared function FreeImage_GetFIFFromFilenameUInt(): is now private according to all other '...Int' functions wrapped by a VB-friendly function.
 ! [Carsten Klein] changed signature of declared functions FreeImage_GetBackgroundColorInt() and FreeImage_SetBackgroundColorInt(): now both have a 'ByRef bkcolor As RGBQUAD' parameter instead of 'ByVal bkcolor As Long'.
@@ -248,19 +242,19 @@ January 09, 2007 - 1.9.4
 + [Carsten Klein] added wrapper functions FreeImage_GetBackgroundColorAsLong() and FreeImage_SetBackgroundColorAsLong(): both have a 'ByRef bkcolor As Long' parameter and so offer getting and setting the background color through a Long value.
 + [Carsten Klein] added wrapper functions FreeImage_GetBackgroundColorEx() and FreeImage_SetBackgroundColorEx(): both both take 4 ByRef Byte parameters 'Alpha', 'Red', 'Green' and 'Blue', one for each color component.
 
-January 05, 2007 - 1.9.3
+January 05, 2007 - 1.9.3 (3.9.2)
 + [Carsten Klein] added wrapper function FreeImage_GetLockedPageNumbersEx(): this returns a real VB-style array of Longs containing the page numbers of all locked pages.
 
-January 02, 2007 - 1.9.2
+January 02, 2007 - 1.9.2 (3.9.2)
 * [Carsten Klein] fixed a bug in inline description of function FreeImage_GetPaletteEx(): now tells to use function FreeImage_DestroyLockedArrayRGBQUAD() to free an array returned by this function.
 * [Carsten Klein] fixed some minor bugs in inline documentation.
 * [Carsten Klein] fixed a serious bug in function FreeImage_SaveEx(): parameter 'bUnloadSource' is now interpreted correctly under all circumstances.
 * [Carsten Klein] fixed some minor issues in function FreeImage_SaveEx().
 
-December 29, 2006 - 1.9.1
+December 29, 2006 - 1.9.1 (3.9.2)
 + [Carsten Klein] added enumeration item FID_BAYER16x16: now supports Bayer ordered dispersed dot dithering (order 4 dithering matrix).
 
-October 31, 2006 - 1.9
+October 31, 2006 - 1.9 (3.9.2)
 * [Carsten Klein] adjusted page numbers of the API documentation in header comments in FreeImage function declarations to match FreeImage 3.9.2 API documentation
 ! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 2 to match current version 3.9.2
 + [Carsten Klein] added function declaration for FreeImage_JPEGCrop(): added both declaration and Boolean returning wrapper function.
@@ -268,9 +262,7 @@ October 31, 2006 - 1.9
 + [Carsten Klein] added function declaration for FreeImage_LoadMultiBitmapFromMemory().
 + [Carsten Klein] added wrapper function FreeImage_LoadMultiBitmapFromMemoryEx(): this is dealing with a VB style array (SAFEARRAY) like FreeImage_LoadFromMemoryEx() does.
 
-! now FreeImage version 3.9.2
-
-October 30, 2006 - 1.8
+October 30, 2006 - 1.8 (3.9.1)
 * [Carsten Klein] fixed a memory leak in wrapper function SavePictureEx(). Thanks to Roogames for reporting that bug.
 ! [Carsten Klein] changed return type of wrapper function SavePictureEx() to Boolean.
 + [Carsten Klein] added wrapper function FreeImage_SaveEx() which brings all the features, as there are inline size- and color conversion and format guessing, so far only known from SavePictureEx() for DIBs.
@@ -281,7 +273,7 @@ October 30, 2006 - 1.8
 + [Carsten Klein] added wrapper function FreeImage_LoadEx() which brings all the features, as there are inline size- and color conversion and format guessing, so far only known from LoadPictureEx() for DIBs.
 ! [Carsten Klein] changed wrapper function LoadPictureEx(): now this is only a thin wrapper for function FreeImage_LoadEx().
 
-October 13, 2006 - 1.7.2
+October 13, 2006 - 1.7.2 (3.9.1)
 + [Carsten Klein] added User32 function GetDesktopWindow()
 +                 added User32 function GetWindowDC()
 - [Carsten Klein] removed unused constants DI_MASK, DI_IMAGE and DI_NORMAL
@@ -293,23 +285,21 @@ October 13, 2006 - 1.7.2
 +                 added GDI32 function BitBlt()
 + [Carsten Klein] added wrapper function FreeImage_CreateFromScreen(): this function lets you capture the whole screen or any certain window
 
-October 10, 2006 - 1.7.1
+October 10, 2006 - 1.7.1 (3.9.1)
 ! [Carsten Klein] changed parameter name 'Page' into 'hPageDib' in declared function FreeImage_UnlockPage(). 'hPageDib' must be the (dib-)handle obtained from FreeImage_LockPage() and not the page number. Now, the declaration is less confusing. Thanks to Ender Wiggin.
 
-August 4, 2006 - 1.7
+August 4, 2006 - 1.7 (3.9.1)
 * [Carsten Klein] fixed a bug in pGetTagFromTagPtr(): removed overflow error when converting unsigned short tags (FIDT_SHORT) with values between 32768 and 65535. Thanks to André Hendriks.
 ! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.9.1
 
-! now FreeImage version 3.9.1
-
-July 17, 2006 - 1.6
+July 17, 2006 - 1.6 (3.9.0)
 + [Carsten Klein] added more public wrapper functions for tag copying and cloning:
 +                 added function FreeImage_CopyMetadata()
 +                 added function FreeImage_CloneMetadata()
 - [Carsten Klein] removed dead API functions, dead structures and dead variables
 * [Carsten Klein] fixed a bug in FreeImage_ConvertColorDepth(): now color images are converted to 24 bits when used with FICF_PREPARE_RESCALE, all others to 8 bit
 
-July 16, 2006 - 1.5.6
+July 16, 2006 - 1.5.6 (3.9.0)
 + [Carsten Klein] added more public wrapper functions for VB friendly tag access: these functions deal with a FREE_IMAGE_TAG structure instead of FreeImage's Tag pointer.
 +                 added function FreeImage_SetMetadataEx()
 +                 added function FreeImage_CreateTagEx()
@@ -335,15 +325,15 @@ July 16, 2006 - 1.5.6
 +                 added helper function pGetVariantAsByteBuffer()
 +                 added helper function pGetElementSize()
 
-July 5, 2006 - 1.5.5
+July 5, 2006 - 1.5.5 (3.9.0)
 ! [Carsten Klein] changed function signature of FreeImage_FindNextMetadataEx(): optional parameter 'Model' is now present; see the function's inline documentation
 
-June 30, 2006 - 1.5.4
+June 30, 2006 - 1.5.4 (3.9.0)
 * [Carsten Klein] fixed bug in functions creating a FreeImage DIB from a windows hBitmap: workaround for palettized bitmaps is now implemented
 *                 fixed function FreeImage_CreateFromOLEPicture()
 *                 fixed function FreeImage_CreateFromDC()
 
-June 22, 2006 - 1.5.3
+June 22, 2006 - 1.5.3 (3.9.0)
 ! [Carsten Klein] changed function declaration of FreeImage_GetMetadataInt(): parameter 'model' is now 'ByVal' and Tag is a Long pointer
 ! [Carsten Klein] changed function declaration of FreeImage_SetMetadataInt(): parameter 'model' is now 'ByVal' and Tag is a Long pointer
 ! [Carsten Klein] changed function declaration of FreeImage_GetMetadata(): parameter Tag is a Long pointer now
@@ -364,7 +354,7 @@ June 22, 2006 - 1.5.3
 - [Carsten Klein] removed workaround for thresholding and dithering non-MINISBLACK 8 bit images in function FreeImage_ConvertColorDepth(): was fixed in FreeImage 3.9.0
 * [Carsten Klein] fixed all pending issues in function FreeImage_PaintDC(): is now in production state
 
-June 14, 2006 - 1.5.2
+June 14, 2006 - 1.5.2 (3.9.0)
 ! [Carsten Klein] changed signature of function FreeImage_CreateMask()
 + [Carsten Klein] added function FreeImage_CreateMaskImage(): this creates a monochrome mask from a source image
 + [Carsten Klein] added function FreeImage_CreateMaskInPlace(): this creates a monochrome mask from a source image
@@ -395,7 +385,7 @@ June 14, 2006 - 1.5.2
 +                 added item 'Palette() As RGBQUAD'
 +                 added item 'RationalValue() As FIRATIONAL'
 
-June 13, 2006 - 1.5.1
+June 13, 2006 - 1.5.1 (3.9.0)
 ! [Carsten Klein] changed version constant 'FREEIMAGE_MINOR_VERSION' to 9 to meet version 3.9.0
 * [Carsten Klein] fixed and adjusted page numbers of the API documentation in header comments in FreeImage function declarations to match FreeImage 3.9.0 API documentation
 + [Carsten Klein] added function declaration for new Memory I/O functions in 3.9.0
@@ -417,15 +407,13 @@ June 13, 2006 - 1.5.1
 + [Carsten Klein] added enumeration FREE_IMAGE_teMask(): this creates a monochrome mask from a source image
 + [Carsten Klein] added function FreeImage_CreaMASK_CREATION_OPTION_FLAGS
 
-! now FreeImage version 3.9.0
-
-June 12, 2006 - 1.5
+June 12, 2006 - 1.5 (3.8.0)
 * [Carsten Klein] fixed bug in wrapper function FreeImage_PaintDCEx(): now handles boolean test correctly: 'If ((hDC <> 0) And (hDIB <> 0)) Then -> Thanks to ender_wiggin for reporting that bug.
 + [Carsten Klein] added private function pGetIOlePictureFromContainer(): used to get IPicture from image hosting control (Form, PictureBox) including custom drawings
 + [Carsten Klein] added wrapper function FreeImage_CreateFromImageContainer(): used to create FreeImage DIB from image hosting control (Form, PictureBox) including custom drawings
 + [Carsten Klein] added wrapper function SaveImageContainerEx(): derivate of wrapper function 'SavePictureEx()': saves content of image hosting control (Form, PictureBox) including custom drawings
 
-February 27, 2006 - 1.4.8
+February 27, 2006 - 1.4.8 (3.8.0)
 + [Carsten Klein] added inline documentation for these wrapper functions:
 +                 documented function FreeImage_CompareColorsLongLong()
 +                 documented function FreeImage_CompareColorsRGBTRIPLELong()
@@ -439,7 +427,7 @@ February 27, 2006 - 1.4.8
 + [Carsten Klein] added declaration of GDI function GetCurrentObject() and constant OBJ_BITMAP
 + [Carsten Klein] added wrapper function FreeImage_IsAvailable(): used to test for existence of FreeImage Library (FreeImage.dll)
 
-February 9, 2006 - 1.4.7
+February 9, 2006 - 1.4.7 (3.8.0)
 + [Carsten Klein] added private helper function pGetPreviousColorDepth()
 + [Carsten Klein] added private helper function pGetNextColorDepth()
 ! [Carsten Klein] changed/extended signature of wrapper function SavePictureEx(): now includes a parameter 'ColorDepth'
@@ -447,13 +435,13 @@ February 9, 2006 - 1.4.7
 + [Carsten Klein] added error handling capabilities to wrapper function SavePictureEx()
 + [Carsten Klein] added/updated inline documentation of wrapper function SavePictureEx()
 
-October 31, 2005 - 1.4.6
+October 31, 2005 - 1.4.6 (3.8.0)
 + [Carsten Klein] added wrapper function FreeImage_SwapColorLong(): this converts from a RGB to a BGR color value stored in a Long and vice versa
 
-October 27, 2005 - 1.4.5
+October 27, 2005 - 1.4.5 (3.8.0)
 + [Carsten Klein] added function FreeImage_IsTransparencyTableTransparent(): checks for transparency directly on the transparency table
 
-October 13, 2005 - 1.4.4
+October 13, 2005 - 1.4.4 (3.8.0)
 + [Carsten Klein] added some functions to compare colors in different formats and with tolerance:
 +                 added function FreeImage_CompareColorsLongLong()
 +                 added function FreeImage_CompareColorsRGBTRIPLELong()
@@ -462,28 +450,26 @@ October 13, 2005 - 1.4.4
 + [Carsten Klein] added enumeration FREE_IMAGE_TRANSPARENCY_STATE_FLAGS
 + [Carsten Klein] added function FreeImage_SearchPalette(): to search the palette index for a given color
 
-October 13, 2005 - 1.4.3
+October 13, 2005 - 1.4.3 (3.8.0)
 + [Carsten Klein] added additional function declaration FreeImage_SetPixelColorByLong(): now color values may be provided in a long value
 + [Carsten Klein] added additional function declaration FreeImage_GetPixelColorByLong(): now color values may be received in a long value
 + [Carsten Klein] added function FreeImage_SetPixelColorEx(): color values may be provided by four different byte values
 + [Carsten Klein] added function FreeImage_GetPixelColorEx(): color values are returned through four different byte values
 
-October 11, 2005 - 1.4.2
+October 11, 2005 - 1.4.2 (3.8.0)
 * [Carsten Klein] fixed bug in wrapper function FreeImage_GetBitsExRGBQUAD(): now tests for and works with 32 bit images
 
-October 10, 2005 - 1.4.1
+October 10, 2005 - 1.4.1 (3.8.0)
 * [Carsten Klein] fixed serious bug in FreeImage_GetBitsEx...() functions: created custom array descriptor now really has two dimensions
 *                 fixed wrapper function FreeImage_GetBitsEx()
 *                 fixed wrapper function FreeImage_GetBitsExRGBTRIPLE()
 *                 fixed wrapper function FreeImage_GetBitsExRGBQUAD()
 
-September 9, 2005 - 1.4
+September 9, 2005 - 1.4 (3.8.0)
 ! [Carsten Klein] changed wrapper function FreeImage_ConvertColorDepth(): now uses FreeImage_ConvertToGreyscale
 + [Carsten Klein] added version numbers to change log
 + [Carsten Klein] added comments to IOlePicture aware toolkit and conversion functions
 * [Carsten Klein] fixed and adjusted page numbers of the API documentation in header comments in FreeImage function declarations
-
-! now FreeImage version 3.8.0
 
 September 8, 2005 - 1.3.5
 ! [Carsten Klein] changed version constant 'FREEIMAGE_MINOR_VERSION' to 8 to meet version 3.8.0
