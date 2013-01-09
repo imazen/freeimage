@@ -7,6 +7,9 @@ What's New for FreeImage
 
 Month day, 2012 - 3.15.5
 * [Herve Drolon] fixed FreeImage_CloneTag behavior with ASCII data handling (regression that appeared in 3.15.2, affect metadata writing)
+* [Carsten Klein] ICO plugin: avoid using the AND mask when loading a 32-bit (already transparent) icon
+* [Andreas Baumann] HDR plugin: removed a comma at end of an enumerator list
+* [mark] added missing <string.h> in OpenEXR (needed with mingw)
 
 October 27th, 2012 - 3.15.4
 ! FreeImage now uses LibPNG 1.5.13
