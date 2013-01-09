@@ -857,3 +857,62 @@ jpeg_read_exif_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen)
 }
 
 
+/**
+Rotate a dib according to Exif info
+@param dib Input / Output dib to rotate
+@see PluginJPEG.cpp
+*/
+void 
+RotateExif(FIBITMAP **dib) {
+	// check for Exif rotation
+	if(FreeImage_GetMetadataCount(FIMD_EXIF_MAIN, *dib)) {
+		FIBITMAP *rotated = NULL;
+		// process Exif rotation
+		FITAG *tag = NULL;
+		FreeImage_GetMetadata(FIMD_EXIF_MAIN, *dib, "Orientation", &tag);
+		if(tag != NULL) {
+			if(FreeImage_GetTagID(tag) == TAG_ORIENTATION) {
+				unsigned short orientation = *((unsigned short *)FreeImage_GetTagValue(tag));
+				switch (orientation) {
+					case 1:		// "top, left side" => 0°
+						break;
+					case 2:		// "top, right side" => flip left-right
+						FreeImage_FlipHorizontal(*dib);
+						break;
+					case 3:		// "bottom, right side"; => -180°
+						rotated = FreeImage_Rotate(*dib, 180);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						break;
+					case 4:		// "bottom, left side" => flip up-down
+						FreeImage_FlipVertical(*dib);
+						break;
+					case 5:		// "left side, top" => +90° + flip up-down
+						rotated = FreeImage_Rotate(*dib, 90);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						FreeImage_FlipVertical(*dib);
+						break;
+					case 6:		// "right side, top" => -90°
+						rotated = FreeImage_Rotate(*dib, -90);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						break;
+					case 7:		// "right side, bottom" => -90° + flip up-down
+						rotated = FreeImage_Rotate(*dib, -90);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						FreeImage_FlipVertical(*dib);
+						break;
+					case 8:		// "left side, bottom" => +90°
+						rotated = FreeImage_Rotate(*dib, 90);
+						FreeImage_Unload(*dib);
+						*dib = rotated;
+						break;
+					default:
+						break;
+				}
+			}
+		}
+	}
+}
