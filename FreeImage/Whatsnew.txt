@@ -6,6 +6,9 @@ What's New for FreeImage
 + : added
 
 Month day, 2012 - 3.15.5
+! FreeImage now uses LibJPEG 9
+! FreeImage now uses LibPNG 1.5.14
+! FreeImage now uses LibTIFF 4.0.3 (CVS patch 2013-01-25)
 * [Herve Drolon] fixed FreeImage_CloneTag behavior with ASCII data handling (regression that appeared in 3.15.2, affect metadata writing)
 * [Carsten Klein] ICO plugin: avoid using the AND mask when loading a 32-bit (already transparent) icon
 * [Andreas Baumann] HDR plugin: removed a comma at end of an enumerator list
