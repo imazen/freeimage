@@ -556,6 +556,20 @@ FreeImage_GetColorType(FIBITMAP *dib) {
 	// special bitmap type
 	if(image_type != FIT_BITMAP) {
 		switch(image_type) {
+			case FIT_UINT16:
+			{
+				// 16-bit greyscale TIF can be either FIC_MINISBLACK (the most common case) or FIC_MINISWHITE
+				// you can check this using EXIF_MAIN metadata
+				FITAG *photometricTag = NULL;
+				if(FreeImage_GetMetadata(FIMD_EXIF_MAIN, dib, "PhotometricInterpretation", &photometricTag)) {
+					const short *value = (short*)FreeImage_GetTagValue(photometricTag);
+					// PHOTOMETRIC_MINISWHITE = 0 => min value is white
+					// PHOTOMETRIC_MINISBLACK = 1 => min value is black
+					return (*value == 0) ? FIC_MINISWHITE : FIC_MINISBLACK;
+				}
+				return FIC_MINISBLACK;
+			}
+			break;
 			case FIT_RGB16:
 			case FIT_RGBF:
 				return FIC_RGB;
