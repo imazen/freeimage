@@ -152,6 +152,9 @@ Option Explicit
 '! : changed
 '+ : added
 '
+'March 14, 2013 - 2.19 (3.15.4)
+'* [Jørgen Hartmann] fixed coordinate calculation in FreeImage_PaintDCEx applied for horizontal and/or vertical mirroring, which now works correctly for all XDst and YDst coordinates.
+'
 'November 13, 2012 - 2.18 (3.15.4)
 '+ [Carsten Klein] added function declaration FreeImage_HasRGBMasksInt and a real VB Boolean returning function FreeImage_HasRGBMasks.
 '- [Carsten Klein] removed members red, green and blue from BITMAPINFOHEADER struct: these were intended for debugging purposes only and could couse a GPF in FreeImage_GetInfoHeaderEx.
@@ -7070,12 +7073,12 @@ Dim eLastStretchMode As STRETCH_MODE
       End If
       
       If (DrawMode And DM_MIRROR_VERTICAL) Then
-         YDst = HeightDst
+         YDst = YDst + HeightDst
          HeightDst = -HeightDst
       End If
      
       If (DrawMode And DM_MIRROR_HORIZONTAL) Then
-         XDst = WidthDst
+         XDst = XDst + WidthDst
          WidthDst = -WidthDst
       End If
 
