@@ -61,13 +61,12 @@ public:
     {
          unsigned pad[128], p;
     }sony_decrypt;
-    uchar jpeg_buffer[4096];
     struct
     {
         uchar buf[0x4000];
         int vbits, padding;
     }pana_bits;
-
+	uchar jpeg_buffer[4096];
     void init() 
         { 
             getbits.bitbuf = 0; getbits.vbits = getbits.reset = 0;
@@ -156,6 +155,7 @@ struct decode
 struct tiff_ifd_t 
 {
     int t_width, t_height, bps, comp, phint, offset, t_flip, samples, bytes,tile_maxbytes;
+    int t_tile_width, t_tile_length;
 };
 
 

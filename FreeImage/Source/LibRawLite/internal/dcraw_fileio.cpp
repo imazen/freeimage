@@ -28,14 +28,13 @@ it under the terms of the one of three licenses as you choose:
 #include "libraw/libraw.h"
 #include "internal/defines.h"
 #include "internal/var_defines.h"
-
 /*
    Seach from the current directory up to the root looking for
    a ".badpixels" file, and fix those pixels now.
  */
 void CLASS bad_pixels (const char *cfname)
 {
-  FILE *fp=0;
+  FILE *fp=NULL;
 #ifndef LIBRAW_LIBRARY_BUILD
   char *fname, *cp, line[128];
   int len, time, row, col, r, c, rad, tot, n, fixed=0;
@@ -53,7 +52,7 @@ void CLASS bad_pixels (const char *cfname)
 #endif
   if (cfname)
     fp = fopen (cfname, "r");
-  if (!fp) 
+  if (!fp)
       {
 #ifdef LIBRAW_LIBRARY_BUILD
           imgdata.process_warnings |= LIBRAW_WARN_NO_BADPIXELMAP;
@@ -70,7 +69,7 @@ void CLASS bad_pixels (const char *cfname)
       for (r = row-rad; r <= row+rad; r++)
 	for (c = col-rad; c <= col+rad; c++)
 	  if ((unsigned) r < height && (unsigned) c < width &&
-		(r != row || c != col) && fc(r,c) == fc(row,col)) {
+		(r != row || c != col) && fcol(r,c) == fcol(row,col)) {
 	    tot += BAYER2(r,c);
 	    n++;
 	  }
@@ -124,7 +123,9 @@ void CLASS subtract (const char *fname)
     }
   }
   if (error || nd < 3) {
+#ifdef DCRAW_VERBOSE
     fprintf (stderr,_("%s is not a valid PGM file!\n"), fname);
+#endif
     fclose (fp);  return;
   } else if (dim[0] != width || dim[1] != height || dim[2] != 65535) {
 #ifdef DCRAW_VERBOSE
@@ -150,7 +151,6 @@ void CLASS subtract (const char *fname)
   RUN_CALLBACK(LIBRAW_PROGRESS_DARK_FRAME,1,2);
 #endif
 }
-
 #ifndef NO_LCMS
 void CLASS apply_profile (const char *input, const char *output)
 {
@@ -177,14 +177,14 @@ void CLASS apply_profile (const char *input, const char *output)
     hInProfile = cmsOpenProfileFromMem (imgdata.color.profile, profile_length);
 #endif
   } else
-      {
+    {
 #ifdef LIBRAW_LIBRARY_BUILD
           imgdata.process_warnings |= LIBRAW_WARN_NO_EMBEDDED_PROFILE;
 #endif
 #ifdef DCRAW_VERBOSE
           fprintf (stderr,_("%s has no embedded profile.\n"), ifname);
 #endif
-      }
+    }
   if (!hInProfile)
       {
 #ifdef LIBRAW_LIBRARY_BUILD
@@ -205,11 +205,10 @@ void CLASS apply_profile (const char *input, const char *output)
       free (oprof);
       oprof = 0;
     }
+  }
 #ifdef DCRAW_VERBOSE
-  } else
+ else
     fprintf (stderr,_("Cannot open file %s!\n"), output);
-#else
-}
 #endif
   if (!hOutProfile)
       {

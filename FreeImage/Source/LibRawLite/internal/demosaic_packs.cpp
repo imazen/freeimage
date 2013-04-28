@@ -34,10 +34,14 @@ it under the terms of the one of three licenses as you choose:
 #define SRC_USES_BLACK
 #define SRC_USES_CURVE
 
+/* WF filtering is allowed to triple libraw license */
+#include "./wf_filtering.cpp"
+
+
 #include "internal/var_defines.h"
 
 
-#ifdef LIBRAW_DEMOSAIC_PACK_GPL2
+#ifdef LIBRAW_DEMOSAIC_PACK_GPL2_ttt
 /*AHD-Mod*/
 #include <ahd_interpolate_mod.c>
 /*LMMSE*/
@@ -66,6 +70,7 @@ void CLASS refinement() {}
 /* DCB is BSD licensed, so include it */
 #include "./dcb_demosaicing.c"
 
+
 #ifdef LIBRAW_DEMOSAIC_PACK_GPL3
 /*AMaZE*/
 #include <amaze_demosaic_RT.cc>
@@ -90,8 +95,8 @@ void CLASS cfa_impulse_gauss(float lclean, float cclean){}
 #include <dcraw_foveon.c>
 #else
 void CLASS foveon_interpolate(){}
-void CLASS foveon_load_raw(){}
-void CLASS parse_foveon(){}
+void CLASS foveon_dp_load_raw(){}
+void CLASS foveon_sd_load_raw(){}
 void CLASS foveon_thumb_loader(){}
 void CLASS foveon_thumb(){}
 #endif
