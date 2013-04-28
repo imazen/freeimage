@@ -1,5 +1,5 @@
 
-Libpng 1.5.14 - January 24, 2013
+Libpng 1.6.1 - March 28, 2013
 
 This is a public release of libpng, intended for use in production codes.
 
@@ -8,64 +8,89 @@ Files available for download:
 Source files with LF line endings (for Unix/Linux) and with a
 "configure" script
 
-   libpng-1.5.14.tar.xz (LZMA-compressed, recommended)
-   libpng-1.5.14.tar.gz
-   libpng-1.5.14.tar.bz2
+   libpng-1.6.1.tar.xz (LZMA-compressed, recommended)
+   libpng-1.6.1.tar.gz
 
 Source files with CRLF line endings (for Windows), without the
 "configure" script
 
-   lpng1514.7z  (LZMA-compressed, recommended)
-   lpng1514.zip
+   lpng161.7z  (LZMA-compressed, recommended)
+   lpng161.zip
 
 Other information:
 
-   libpng-1.5.14-README.txt
-   libpng-1.5.14-LICENSE.txt
+   libpng-1.6.1-README.txt
+   libpng-1.6.1-LICENSE.txt
 
-Changes since the last public release (1.5.13):
-  Added -DZ_SOLO to contrib/pngminim/*/makefile to work with zlib-1.2.7
-  Warn about the incorrect runtime library setting for VS2010 debug DLL builds.
-  Fixed build when using #define PNG_NO_READ_GAMMA in png_do_compose() in
-    pngrtran.c (Domani Hannes).
-  Check for png_ptr==NULL earlier in png_zalloc().
-  Ignore, with a warning, out-of-range value of num_trans in png_set_tRNS().
-  Rearranged building of ARM NEON optimizations. The ARM specific code is
-    split out entirely to the arm subdirectory and changes to configure.ac and
-    Makefile.am to add new stuff are reduced.  Now material code changes,
-    although for build test purposes, --enable-arm-neon now builds on non-ARM
-    systems.
-  Rebuilt Makefile.in, configure, etc., with autoconf-2.69 and automake-1.12.5.
-  Fixed cases of unquoted DESTDIR in Makefile.am
-  Fixed a minor bug in types to malloc and major bug in handling compressed
-    iTXt. Compressed iTXt could not be handled.
-  Cleaned up whitespace in the synopsis portion of the manpage "libpng.3"
-  Disassembled the version number in scripts/options.awk (necessary for
-    building on SunOs).
-  Fixed Windows build issues, enabled ARM compilation. Various warnings issued
-    by earlier versions of GCC fixed for Cygwin and Min/GW (which both use old
-    GCCs.) ARM support is enabled by default in zlib.props (unsupported by
-    Microsoft) and ARM compilation is made possible by deleting the check for
-    x86. The test programs cannot be run because they are not signed.
-  Fixed 'make distcheck' on SUN OS - libpng.so was not being removed
-  Replaced AM_CONFIG_HEADER(config.h) with AC_CONFIG_HEADERS([config.h])
-    in configure.ac
-  De-configured build fixes to make a range of deconfiguration options (such
-    as switching off read or write support) work in more cases.  Also upgraded
-    pngtest and pngvalid to the libpng 1.6 versions (with some modifications)
-    which provide more extensive testing.  Replaced pngtest.png because pngtest
-    writes the ancillary chunks in a different order.
-  Check validity of "num_unknowns" parameter of png_set_unknown_chunks()
-    (Bug report from yuris).
-  Revised test for validity of "num_unknowns" to eliminate compiler warnings.
-  Check the validity of the "nentries" parameter of png_set_sPLT() and the
-  "num_text" parameter of png_set_text_2().
+Changes since the last public release (1.6.0):
 
-  ===========================================================================
-                       NOTICE November 17, 2012:
-     The location of the git repository at SourceForge has changed.
-               Visit http://libpng.sf.net/ for details.
-  ===========================================================================
+  Made symbol prefixing work with the ARM neon optimizations. Also allow
+    pngpriv.h to be included for preprocessor definitions only, so it can
+    be used in non-C/C++ files. Back ported from libpng 1.7.
+  Made sRGB check numbers consistent.
+  Ported libpng 1.5 options.awk/dfn file handling to 1.6, fixed one bug.
+  Removed cc -E workround, corrected png_get_palette_max API Tested on
+    SUN OS cc 5.9, which demonstrates the tokenization problem previously
+    avoided by using /lib/cpp.  Since all .dfn output is now protected in
+    double quotes unless it is to be macro substituted the fix should
+    work everywhere.
+  Enabled parallel tests - back ported from libpng-1.7.
+  scripts/pnglibconf.dfa formatting improvements back ported from libpng17.
+  Fixed a race condition in the creation of the build 'scripts' directory
+    while building with a parallel make.
+  Use approved/supported Android method to check for NEON, use Linux/POSIX
+    1003.1 API to check /proc/self/auxv avoiding buffer allocation and other
+    library calls (ported from libpng15).
+  Use parentheses more consistently in "#if defined(MACRO)" tests.
+  Folded long lines.
+  Reenabled code to allow zero length PLTE chunks for MNG.
+  Fixed ALIGNED_MEMORY support.
+  Allow run-time ARM NEON checking to be disabled. A new configure option:
+    --enable-arm-neon=always will stop the run-time checks. New checks
+    within arm/arm_init.c will cause the code not to be compiled unless
+    __ARM_NEON__ is set. This should make it fail safe (if someone asks
+    for it on then the build will fail if it can't be done.)
+  Updated the INSTALL document.
+  Revised INSTALL to recommend using CPPFLAGS instead of INCLUDES.
+  Revised scripts/makefile.freebsd to respect ZLIBLIB and ZLIBINC.
+  Revised scripts/dfn.awk to work with the buggy MSYS awk that has trouble
+    with CRLF line endings.
+  Avoid a possible memory leak in contrib/gregbook/readpng.c
+  Better documentation of unknown handling API interactions.
+  Corrected Android builds and corrected libpng.vers with symbol
+    prefixing This adds an API to set optimization options externally,
+    providing an alternative and general solution for the non-portable
+    run-time tests used by the ARM Neon code.  It also makes those tests
+    compile and link on Android.
+  The order of settings vs options in pnglibconf.h is reversed to allow
+    settings to depend on options and options can now set (or override) the
+    defaults for settings.
+  Corrected simplified API default gamma for color-mapped output, added
+    a flag to change default. In 1.6.0 when the simplified API was used
+    to produce color-mapped output from an input image with no gamma
+    information the gamma assumed for the input could be different from
+    that assumed for non-color-mapped output.  In particular 16-bit depth
+    input files were assumed to be sRGB encoded, whereas in the 'direct'
+    case they were assumed to have linear data.  This was an error.  The
+    fix makes the simplified API treat all input files the same way and
+    adds a new flag to the png_image::flags member to allow the
+    application/user to specify that 16-bit files contain sRGB data
+    rather than the default linear.
+  Fixed bugs in the pngpixel and makepng test programs.
+  Fixed CMakelists.txt to allow building a single variant of the library
+    (Claudio Bley):
+  Introduced a PNG_LIB_TARGETS variable that lists all activated library
+    targets.  It is an error if this variable ends up empty, ie. you have
+    to build at least one library variant.
+  Made the *_COPY targets only depend on library targets actually being build.
+  Use PNG_LIB_TARGETS to unify a code path.
+  Changed the CREATE_SYMLINK macro to expect the full path to a file as the
+    first argument. When symlinking the filename component of that path is
+    determined and used as the link target.
+  Use copy_if_different in the CREATE_SYMLINK macro.
+  Eliminated two warnings from the Intel C compiler. The warnings are
+    technically valid, although a reasonable treatment of division would
+    show it to be incorrect.
 
 Send comments/corrections/commendations to png-mng-implement at lists.sf.net
 (subscription required; visit
