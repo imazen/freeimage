@@ -28,6 +28,7 @@ unit FreeImage;
 //                   - as linux sees the difference between uppercase and lowercase :
 //                    ==> replace FreeImage_GetMetaData with FreeImage_GetMetadata in the call to the freeimage library
 // 2012-06-04  LM    Updated to 3.15.3
+// 2012-12-08  LM    Updated to 3.15.4
 //
 
 //
@@ -108,7 +109,7 @@ const
   // Version information
   FREEIMAGE_MAJOR_VERSION  = 3;
   FREEIMAGE_MINOR_VERSION  = 15;
-  FREEIMAGE_RELEASE_SERIAL = 3;
+  FREEIMAGE_RELEASE_SERIAL = 4;
   // This really only affects 24 and 32 bit formats, the rest are always RGB order.
   FREEIMAGE_COLORORDER_BGR = 0;
   FREEIMAGE_COLORORDER_RGB = 1;
@@ -445,10 +446,10 @@ const
   SEEK_CUR = 1;
   SEEK_END = 2;
 
-type
+//type
   // define portable types for 32-bit / 64-bit OS
-  FIINT64 = Int64;
-  FIUINT64 = UInt64;
+  //FIINT64 = Int64;
+  //FIUINT64 = UInt64;
 
 // --------------------------------------------------------------------------
 // Plugin routines ----------------------------------------------------------
@@ -506,7 +507,7 @@ type
 // --------------------------------------------------------------------------
 
 const
-  FIF_LOAD_NOPIXELS   = $8000;  // loading: load the image header only (not supported by all plugins)
+  FIF_LOAD_NOPIXELS   = $8000;  // loading: load the image header only (not supported by all plugins, default to full loading)
   BMP_DEFAULT         = 0;
   BMP_SAVE_RLE        = 1;
   CUT_DEFAULT         = 0;
@@ -534,6 +535,7 @@ const
   JPEG_ACCURATE       = 2;
   JPEG_CMYK           = $0004; // load separated CMYK "as is" (use | to combine with other flags)
   JPEG_EXIFROTATE     = $0008; // load and rotate according to Exif 'Orientation' tag if available
+  JPEG_GREYSCALE      = $0010; // load and convert to a 8-bit greyscale image
   JPEG_QUALITYSUPERB  = $0080; // save with superb quality (100:1)
   JPEG_QUALITYGOOD    = $0100; // save with good quality (75:1)
   JPEG_QUALITYNORMAL  = $0200; // save with normal quality (50:1)
