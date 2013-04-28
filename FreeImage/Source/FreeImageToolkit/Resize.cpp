@@ -253,6 +253,12 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 		// greyscale images require an 8-bit destination image
 		// (or a 32-bit image if the image is transparent)
 		dst_bpp = FreeImage_IsTransparent(src) ? 32 : 8;
+		if (dst_bpp == 32) {
+			// additionally, for transparent images we always need a
+			// palette including transparency information (an RGBA palette)
+			// so, set color_type accordingly.
+			color_type = FIC_PALETTE;
+		}
 	} else if (src_bpp == 16 && image_type == FIT_BITMAP) {
 		// 16-bit 555 and 565 RGB images require a high-color destination image
 		// (fixed to 24 bits, since 16-bit RGBs don't support transparency in FreeImage)
@@ -303,7 +309,7 @@ FIBITMAP* CResizeEngine::scale(FIBITMAP *src, unsigned dst_width, unsigned dst_h
 
 	// provide the source image's palette to the rescaler for
 	// FIC_PALETTE type images (this includes palletized greyscale
-	// images with an unordered palette)
+	// images with an unordered palette as well as transparent images)
 	if (color_type == FIC_PALETTE) {
 		if (dst_bpp == 32) {
 			// a 32 bit destination image signals transparency, so
