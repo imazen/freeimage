@@ -5,15 +5,17 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month day, 2012 - 3.15.5
+Month day, 2013 - 3.16.0
 ! FreeImage now uses LibJPEG 9
-! FreeImage now uses LibPNG 1.5.14
+! FreeImage now uses LibPNG 1.6.1
 ! FreeImage now uses LibTIFF 4.0.3 (CVS patch 2013-01-25)
+! FreeImage now uses LibRaw 0.15.0-Beta4
 * [Herve Drolon] fixed FreeImage_CloneTag behavior with ASCII data handling (regression that appeared in 3.15.2, affect metadata writing)
 * [Carsten Klein] ICO plugin: avoid using the AND mask when loading a 32-bit (already transparent) icon
 * [Andreas Baumann] HDR plugin: removed a comma at end of an enumerator list
 * [mark] added missing <string.h> in OpenEXR (needed with mingw)
 * [Herve Drolon] added support for FIC_MINISWHITE color type inside FreeImage_GetColorType for FIT_UINT16 images
+* [Takamasa Mitsuji] FreeImage_Rescale : fixed a NULL-pointer access bug occurring for transparent images with a linear palette
 
 October 27th, 2012 - 3.15.4
 ! FreeImage now uses LibPNG 1.5.13
