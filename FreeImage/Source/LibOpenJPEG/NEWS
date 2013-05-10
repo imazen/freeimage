@@ -2,23 +2,20 @@
 OpenJPEG NEWS - user visible changes
 ====================================
 
-Changes from OpenJPEG 1.5.1 to OpenJPEG 1.5.0
+Changes from OpenJPEG 1.5.x to OpenJPEG 2.0.0
 ----------------------------------------------
-
-Security:
-
-    * Fixes: CVE-2012-3535
-    * Fixes: CVE-2012-3358
 
 New Features:
 
-    * Use a new API scheme and solve the SOVERSIONing in OpenJPEG
-    * Allow better integration with multi-arch system
-    * Compile & Install Java bindings (CMake)
-    * Install required addXMLinJP2 (JPIP)
+    * streaming capabilities
+    * merge JP3D
 
+API modifications:
+
+    * Use a 64bits capable API
+    
 Misc:
 
-    * fix linker error by resolving all symbols (eg. missing -lm)
-    * fix some man page typos
+    * removed autotools build system
+    * folders hierarchies reorganisation
     * Huge amount of bug fixes. See CHANGES for details.

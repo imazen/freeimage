@@ -691,6 +691,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FreeImage\J2KHelper.h"
+				>
+			</File>
+			<File
 				RelativePath="..\Plugin.h"
 				>
 			</File>

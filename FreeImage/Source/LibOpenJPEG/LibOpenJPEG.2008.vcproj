@@ -375,10 +375,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\cidx_manager.c"
-				>
-			</File>
-			<File
 				RelativePath="cio.c"
 				>
 				<FileConfiguration
@@ -505,6 +501,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\function_list.c"
+				>
+			</File>
+			<File
 				RelativePath="image.c"
 				>
 				<FileConfiguration
@@ -545,6 +545,10 @@
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\invert.c"
+				>
 			</File>
 			<File
 				RelativePath="j2k.c"
@@ -589,91 +593,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="j2k_lib.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="jp2.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="jpt.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -841,7 +761,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\phix_manager.c"
+				RelativePath=".\opj_clock.c"
 				>
 			</File>
 			<File
@@ -885,10 +805,6 @@
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\ppix_manager.c"
-				>
 			</File>
 			<File
 				RelativePath="raw.c"
@@ -1100,45 +1016,33 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\thix_manager.c"
-				>
-			</File>
-			<File
-				RelativePath=".\tpix_manager.c"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath="bio.h"
+				RelativePath=".\bio.h"
 				>
 			</File>
 			<File
-				RelativePath=".\cidx_manager.h"
+				RelativePath=".\cio.h"
 				>
 			</File>
 			<File
-				RelativePath="cio.h"
+				RelativePath=".\dwt.h"
 				>
 			</File>
 			<File
-				RelativePath="dwt.h"
+				RelativePath=".\event.h"
 				>
 			</File>
 			<File
-				RelativePath="event.h"
+				RelativePath=".\function_list.h"
 				>
 			</File>
 			<File
-				RelativePath="fix.h"
-				>
-			</File>
-			<File
-				RelativePath="image.h"
+				RelativePath=".\image.h"
 				>
 			</File>
 			<File
@@ -1146,35 +1050,31 @@
 				>
 			</File>
 			<File
-				RelativePath="int.h"
+				RelativePath=".\invert.h"
 				>
 			</File>
 			<File
-				RelativePath="j2k.h"
+				RelativePath=".\j2k.h"
 				>
 			</File>
 			<File
-				RelativePath="j2k_lib.h"
+				RelativePath=".\jp2.h"
 				>
 			</File>
 			<File
-				RelativePath="jp2.h"
+				RelativePath=".\mct.h"
 				>
 			</File>
 			<File
-				RelativePath="jpt.h"
+				RelativePath=".\mqc.h"
 				>
 			</File>
 			<File
-				RelativePath="mct.h"
+				RelativePath=".\openjpeg.h"
 				>
 			</File>
 			<File
-				RelativePath="mqc.h"
-				>
-			</File>
-			<File
-				RelativePath="openjpeg.h"
+				RelativePath=".\opj_clock.h"
 				>
 			</File>
 			<File
@@ -1182,7 +1082,19 @@
 				>
 			</File>
 			<File
-				RelativePath="opj_includes.h"
+				RelativePath=".\opj_config_private.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opj_includes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opj_intmath.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opj_inttypes.h"
 				>
 			</File>
 			<File
@@ -1190,15 +1102,19 @@
 				>
 			</File>
 			<File
-				RelativePath="pi.h"
+				RelativePath=".\opj_stdint.h"
 				>
 			</File>
 			<File
-				RelativePath="raw.h"
+				RelativePath=".\pi.h"
 				>
 			</File>
 			<File
-				RelativePath="t1.h"
+				RelativePath=".\raw.h"
+				>
+			</File>
+			<File
+				RelativePath=".\t1.h"
 				>
 			</File>
 			<File
@@ -1206,15 +1122,15 @@
 				>
 			</File>
 			<File
-				RelativePath="t2.h"
+				RelativePath=".\t2.h"
 				>
 			</File>
 			<File
-				RelativePath="tcd.h"
+				RelativePath=".\tcd.h"
 				>
 			</File>
 			<File
-				RelativePath="tgt.h"
+				RelativePath=".\tgt.h"
 				>
 			</File>
 		</Filter>
