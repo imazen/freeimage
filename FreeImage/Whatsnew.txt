@@ -21,6 +21,7 @@ Month day, 2013 - 3.16.0
 * [Herve Drolon] added support for FIC_MINISWHITE color type inside FreeImage_GetColorType for FIT_UINT16 images
 * [Takamasa Mitsuji] FreeImage_Rescale : fixed a NULL-pointer access bug occurring for transparent images with a linear palette
 * [Herve Drolon] fixed PSD parser when reading PSD files with corrupted resources
+* [Herve Drolon] fixed TIFF plugin truncating metadata tag on loading if type is ASCII and it's value is of variable size (TIFF_VARIABLE) 
 
 October 27th, 2012 - 3.15.4
 ! FreeImage now uses LibPNG 1.5.13
