@@ -582,6 +582,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Source\FreeImage\PluginWebP.cpp"
+					>
+				</File>
+				<File
 					RelativePath="Source\FreeImage\PluginXBM.cpp"
 					>
 				</File>

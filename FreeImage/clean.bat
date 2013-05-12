@@ -22,19 +22,22 @@ rd Source\LibOpenJPEG\Debug /s /q
 rd Source\LibOpenJPEG\Release /s /q
 rd Source\LibRawLite\Debug /s /q
 rd Source\LibRawLite\Release /s /q
+rd Source\LibWebP\Debug /s /q
+rd Source\LibWebP\Release /s /q
 rd TestAPI\Debug /s /q
 rd TestAPI\Release /s /q
 rd x64 /s /q
 rd Source\FreeImageLib\x64 /s /q
 rd Source\LibJPEG\x64 /s /q
-rd Source\LibMNG\x64 /s /q
-rd Source\LibOpenJPEG\x64 /s /q
 rd Source\LibPNG\x64 /s /q
-rd Source\LibRawLite\x64 /s /q
+rd Source\LibMNG\x64 /s /q
 rd Source\LibTIFF\x64 /s /q
 rd Source\LibTIFF4\x64 /s /q
-rd Source\OpenEXR\x64 /s /q
 rd Source\ZLib\x64 /s /q
+rd Source\OpenEXR\x64 /s /q
+rd Source\LibOpenJPEG\x64 /s /q
+rd Source\LibRawLite\x64 /s /q
+rd Source\LibWebP\x64 /s /q
 rd TestAPI\x64 /s /q
 del TestAPI\blob.png
 del TestAPI\buffer.png

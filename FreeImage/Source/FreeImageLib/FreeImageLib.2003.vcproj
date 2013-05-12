@@ -320,6 +320,9 @@ copy ..\FreeImage.h ..\..\Dist
 					RelativePath="..\FreeImage\PluginWBMP.cpp">
 				</File>
 				<File
+					RelativePath="..\FreeImage\PluginWebP.cpp">
+				</File>
+				<File
 					RelativePath="..\FreeImage\PluginXBM.cpp">
 				</File>
 				<File

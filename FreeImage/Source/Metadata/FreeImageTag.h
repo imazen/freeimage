@@ -469,6 +469,7 @@ extern "C" {
 
 // JPEG Exif profile
 BOOL jpeg_read_exif_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen);
+BOOL jpeg_read_exif_profile_raw(FIBITMAP *dib, const BYTE *profile, unsigned int length);
 
 // JPEG / TIFF IPTC profile
 BOOL read_iptc_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen);

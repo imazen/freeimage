@@ -403,7 +403,8 @@ FI_ENUM(FREE_IMAGE_FORMAT) {
 	FIF_JP2		= 31,
 	FIF_PFM		= 32,
 	FIF_PICT	= 33,
-	FIF_RAW		= 34
+	FIF_RAW		= 34,
+	FIF_WEBP	= 35
 };
 
 /** Image type used in FreeImage.
@@ -737,6 +738,8 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define WBMP_DEFAULT        0
 #define XBM_DEFAULT			0
 #define XPM_DEFAULT			0
+#define WEBP_DEFAULT		0		// save with good quality (75:1)
+#define WEBP_LOSSLESS		0x100	// save in lossless mode
 
 // Background filling options ---------------------------------------------------------
 // Constants used in FreeImage_FillBackground and FreeImage_EnlargeCanvas
