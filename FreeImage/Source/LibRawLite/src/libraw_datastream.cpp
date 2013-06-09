@@ -1,3 +1,23 @@
+/* -*- C++ -*-
+ * File: libraw_datastream.cpp
+ * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
+ *
+ * LibRaw C++ interface (implementation)
+
+ LibRaw is free software; you can redistribute it and/or modify
+ it under the terms of the one of three licenses as you choose:
+
+1. GNU LESSER GENERAL PUBLIC LICENSE version 2.1
+   (See file LICENSE.LGPL provided in LibRaw distribution archive for details).
+
+2. COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
+   (See file LICENSE.CDDL provided in LibRaw distribution archive for details).
+
+3. LibRaw Software License 27032010
+   (See file LICENSE.LibRaw.pdf provided in LibRaw distribution archive for details).
+
+*/
+
 #ifdef WIN32
 #ifdef __MINGW32__
     #define _WIN32_WINNT 0x0500
@@ -99,25 +119,25 @@ LibRaw_file_datastream::LibRaw_file_datastream(const char *fname)
 #if (defined(_MSC_VER) && _MSC_VER > 1310)
 LibRaw_file_datastream::LibRaw_file_datastream(const wchar_t *fname) : filename(),wfilename(fname),jas_file(NULL),_fsize(0)
 {
-	if (wfilename.size()>0) {
-		struct _stati64 st;
-		if(!_wstati64(wfilename.c_str(),&st)) {
-			_fsize = st.st_size;
-		}
-		std::auto_ptr<std::filebuf> buf(new std::filebuf());
-		buf->open(wfilename.c_str(), std::ios_base::in | std::ios_base::binary);
-		if (buf->is_open()) {
-			f = buf;
-		}
-	}
+  if (wfilename.size()>0) 
+    {
+      struct _stati64 st;
+      if(!_wstati64(wfilename.c_str(),&st))
+        _fsize = st.st_size;
+      std::auto_ptr<std::filebuf> buf(new std::filebuf());
+      buf->open(wfilename.c_str(), std::ios_base::in | std::ios_base::binary);
+      if (buf->is_open()) {
+        f = buf;
+      }
+    }
 }
 const wchar_t *LibRaw_file_datastream::wfname()
 {
-	return wfilename.size() > 0 ? wfilename.c_str() : NULL;
+  return wfilename.size()>0?wfilename.c_str():NULL;
 }
 #endif // _MSCVER
 
-int LibRaw_file_datastream::valid()
+ int LibRaw_file_datastream::valid()
 { 
     return f.get() ? 1 : 0; 
 }
@@ -253,7 +273,7 @@ void * LibRaw_file_datastream::make_jas_stream()
 #ifdef NO_JASPER
     return NULL;
 #else
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 	if(wfname())
 	{
 		jas_file = _wfopen(wfname(),L"rb");
@@ -273,7 +293,7 @@ int LibRaw_file_datastream::jpeg_src(void *jpegdata)
   return -1; // not supported
 #else
   if(jas_file) { fclose(jas_file); jas_file = NULL;}
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
   if(wfname())
     {
       jas_file = _wfopen(wfname(),L"rb");
@@ -495,29 +515,28 @@ LibRaw_bigfile_datastream::LibRaw_bigfile_datastream(const char *fname): filenam
 #if (defined(_MSC_VER) && _MSC_VER > 1310)
 LibRaw_bigfile_datastream::LibRaw_bigfile_datastream(const wchar_t *fname) : filename(),wfilename(fname)
 { 
-	if(wfilename.size()>0) {
-		struct _stati64 st;
-		if(!_wstati64(wfilename.c_str(),&st)) {
-			_fsize = st.st_size;
-		}
+  if(wfilename.size()>0)
+    {
+      struct _stati64 st;
+      if(!_wstati64(wfilename.c_str(),&st))
+        _fsize = st.st_size;
 #ifndef WIN32SECURECALLS
-		f = _wfopen(wfilename.c_str(),L"rb");
+      f = _wfopen(wfilename.c_str(),L"rb");
 #else
-		if(_wfopen_s(&f,fname,L"rb")) {
-			f = 0;
-		}
+      if(_wfopen_s(&f,fname,L"rb"))
+        f = 0;
 #endif
-	}
-	else {
-		wfilename=std::wstring();
-		f=0;
-	}
-	sav=0;
+    }
+  else 
+    {
+      wfilename=std::wstring();
+      f=0;
+    }
+  sav=0;
 }
-
 const wchar_t *LibRaw_bigfile_datastream::wfname()
 {
-	return wfilename.size()>0?wfilename.c_str():NULL;
+  return wfilename.size()>0?wfilename.c_str():NULL;
 }
 #endif // _MSC_VER
 

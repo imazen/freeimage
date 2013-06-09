@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw_cxx.cpp
- * Copyright 2008-2010 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8 , 2008
  *
  * LibRaw C++ interface (implementation)
@@ -925,6 +925,16 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
             S.height += S.height & 1;
             S.width  += S.width  & 1;
         }
+	libraw_decoder_info_t dinfo;
+	get_decoder_info(&dinfo);
+	if(dinfo.decoder_flags & LIBRAW_DECODER_LEGACY)
+	{
+		// Adjust sizes according to image buffer size
+		S.raw_width = S.width;
+		S.left_margin = 0;
+		S.raw_height = S.height;
+		S.top_margin = 0;
+	}
 
     IO.shrink = P1.filters && (O.half_size ||
 	((O.threshold || O.aber[0] != 1 || O.aber[2] != 1) ));
@@ -936,9 +946,32 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
      {
     	//printf("BL=%d [%d,%d,%d,%d]\n",C.black,C.cblack[0],C.cblack[1],C.cblack[2],C.cblack[3]);
 		C.black = C.cblack[0];
-		C.cblack[0]=C.cblack[1]=C.cblack[2]=C.cblack[3];
+		C.cblack[0]=C.cblack[1]=C.cblack[2]=C.cblack[3]=0;
 		imgdata.idata.filters = 2;	
      }
+	// X20
+	if(imgdata.idata.filters == 0x5bb8445b)
+	{
+		C.black = 257;
+		C.cblack[0]=C.cblack[1]=C.cblack[2]=C.cblack[3]=0;
+		imgdata.idata.filters = 2;	
+		S.width = 4030;
+		S.height = 3010;
+		S.top_margin = 2;
+		S.left_margin = 2;
+	}
+	// X100S
+	if(imgdata.idata.filters == 0x5145bb84)
+	{
+		C.black = 1024;
+		C.cblack[0]=C.cblack[1]=C.cblack[2]=C.cblack[3]=0;
+		S.left_margin = 2;
+		S.top_margin = 1;
+		S.width = 4934;
+		S.height = 3290;
+		imgdata.idata.filters = 2;
+	}
+
     // Save color,sizes and internal data into raw_image fields
     memmove(&imgdata.rawdata.color,&imgdata.color,sizeof(imgdata.color));
     memmove(&imgdata.rawdata.sizes,&imgdata.sizes,sizeof(imgdata.sizes));
@@ -952,13 +985,16 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
 }
 
 #ifdef USE_RAWSPEED
-void LibRaw::fix_after_rawspeed()
+void LibRaw::fix_after_rawspeed(int bl)
 {
   if (load_raw == &LibRaw::lossy_dng_load_raw)
     C.maximum = 0xffff;
   else if (load_raw == &LibRaw::sony_load_raw)
     C.maximum = 0x3ff0;
-  else if (load_raw == &LibRaw::sony_arw2_load_raw || (load_raw == &LibRaw::packed_load_raw && !strcasecmp(imgdata.idata.make,"Sony")))
+  else if (
+	  (load_raw == &LibRaw::sony_arw2_load_raw || (load_raw == &LibRaw::packed_load_raw && !strcasecmp(imgdata.idata.make,"Sony")))
+	  && bl >= (C.black+C.cblack[0])*2
+	  )
     {
       C.maximum *=4;
       C.black *=4;
@@ -967,11 +1003,10 @@ void LibRaw::fix_after_rawspeed()
     }
 }
 #else
-void LibRaw::fix_after_rawspeed()
+void LibRaw::fix_after_rawspeed(int)
 {
 }
 #endif
-
 
 int LibRaw::unpack(void)
 {
@@ -1064,20 +1099,20 @@ int LibRaw::unpack(void)
                   _rawspeed_decoder = static_cast<void*>(d);
                   imgdata.rawdata.raw_image = (ushort*) r->getDataUncropped(0,0);
                   S.raw_pitch = r->pitch;
-                  fix_after_rawspeed();
+                  fix_after_rawspeed(r->blackLevel);
                 } else if(r->getCpp()==4) {
                   _rawspeed_decoder = static_cast<void*>(d);
                   imgdata.rawdata.color4_image = (ushort(*)[4]) r->getDataUncropped(0,0);
                   S.raw_pitch = r->pitch;
                   C.maximum = r->whitePoint;
-                  fix_after_rawspeed();
+                  fix_after_rawspeed(r->blackLevel);
                 } else if(r->getCpp() == 3)
                   {
                     _rawspeed_decoder = static_cast<void*>(d);
                     imgdata.rawdata.color3_image = (ushort(*)[3]) r->getDataUncropped(0,0);
                     S.raw_pitch = r->pitch;
                     C.maximum = r->whitePoint;
-                    fix_after_rawspeed();
+                    fix_after_rawspeed(r->blackLevel);
                   }
                 else
                   {
@@ -1109,13 +1144,25 @@ int LibRaw::unpack(void)
                 IO.shrink = 0;
 				S.raw_pitch = S.width*8;
                 // allocate image as temporary buffer, size 
-                imgdata.rawdata.raw_alloc = calloc(S.iwidth*S.iheight,sizeof(*imgdata.image));
-                imgdata.image = (ushort (*)[4]) imgdata.rawdata.raw_alloc;
+                imgdata.rawdata.raw_alloc = 0;
+                imgdata.image = (ushort (*)[4]) calloc(S.iwidth*S.iheight,sizeof(*imgdata.image));
               }
             ID.input->seek(libraw_internal_data.unpacker_data.data_offset, SEEK_SET);
+
+			unsigned m_save = C.maximum;
+			if(load_raw == &LibRaw::unpacked_load_raw && !strcasecmp(imgdata.idata.make,"Nikon"))
+				C.maximum=65535;
             (this->*load_raw)();
+			if(load_raw == &LibRaw::unpacked_load_raw && !strcasecmp(imgdata.idata.make,"Nikon"))
+				C.maximum = m_save;
+			if (decoder_info.decoder_flags & LIBRAW_DECODER_LEGACY)
+			{
+				// successfully decoded legacy image, attach image to raw_alloc
+				imgdata.rawdata.raw_alloc = imgdata.image;
+				imgdata.image = 0; 
+			}
           }
-	    
+
         if(imgdata.rawdata.raw_image)
           crop_masked_pixels(); // calculate black levels
 
@@ -2295,14 +2342,15 @@ int LibRaw::subtract_black()
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define LIM(x,min,max) MAX(min,MIN(x,max))
 #define CLIP(x) LIM(x,0,65535)
-
-            for(i=0; i< size*4; i++)
+	     int dmax = 0;
+	     for(i=0; i< size*4; i++)
               {
                 int val = imgdata.image[0][i];
                 val -= cblk[i & 3];
                 imgdata.image[0][i] = CLIP(val);
-                if(C.data_maximum < val) C.data_maximum = val;
+                if(dmax < val) dmax = val;
               }
+             C.data_maximum = dmax & 0xffff;
 #undef MIN
 #undef MAX
 #undef LIM
@@ -2318,9 +2366,10 @@ int LibRaw::subtract_black()
           // only calculate channel maximum;
           int idx;
           ushort *p = (ushort*)imgdata.image;
-          C.data_maximum = 0;
+          int dmax = 0;
           for(idx=0;idx<S.iheight*S.iwidth*4;idx++)
-            if(C.data_maximum < p[idx]) C.data_maximum = p[idx];
+            if(dmax < p[idx]) dmax = p[idx];
+	  C.data_maximum = dmax;
         }
 		return 0;
 	}
@@ -2380,8 +2429,10 @@ void LibRaw::exp_bef(float shift, float smooth)
             imgdata.image[i][3] = lut[imgdata.image[i][3]];
         }
 
-    C.data_maximum = lut[C.data_maximum];
-    C.maximum = lut[C.maximum];
+    if(C.data_maximum <=TBLN)
+      C.data_maximum = lut[C.data_maximum];
+    if(C.maximum <= TBLN)
+      C.maximum = lut[C.maximum];
     // no need to adjust the minumum, black is already subtracted
     free(lut);
 }
@@ -2762,6 +2813,7 @@ static const char  *static_camera_list[] =
 "Canon EOS 40D",
 "Canon EOS 50D",
 "Canon EOS 60D",
+"Canon EOS 100D/ Digital Rebel SL1",
 "Canon EOS 300D / Digital Rebel / Kiss Digital",
 "Canon EOS 350D / Digital Rebel XT / Kiss Digital N",
 "Canon EOS 400D / Digital Rebel XTi / Kiss Digital X",
@@ -2770,6 +2822,7 @@ static const char  *static_camera_list[] =
 "Canon EOS 550D / Digital Rebel T2i / Kiss Digital X4",
 "Canon EOS 600D / Digital Rebel T3i / Kiss Digital X5",
 "Canon EOS 650D / Digital Rebel T4i / Kiss Digital X6i",
+"Canon EOS 700D / Digital Rebel T54i",
 "Canon EOS 1000D / Digital Rebel XS / Kiss Digital F",
 "Canon EOS 1100D / Digital Rebel T3 / Kiss Digital X50",
 "Canon EOS D2000C",
@@ -2831,9 +2884,11 @@ static const char  *static_camera_list[] =
 "Fuji S9000/S9500",
 "Fuji S9100/S9600",
 "Fuji S200EXR",
+"Fuji SL1000",
 "Fuji HS10/HS11",
 "Fuji HS20EXR",
 "Fuji HS30EXR",
+"Fuji HS50EXR",
 "Fuji F550EXR",
 "Fuji F600EXR",
 "Fuji F770EXR",
@@ -2841,7 +2896,9 @@ static const char  *static_camera_list[] =
 "Fuji X-Pro1",
 "Fuji X-S1",
 "Fuji X100",
+"Fuji X100S",
 "Fuji X10",
+"Fuji X20",
 "Fuji X-E1",
 "Fuji XF1",
 "Fuji IS-1",
@@ -2983,9 +3040,11 @@ static const char  *static_camera_list[] =
 "Nikon D800",
 "Nikon D800E",
 "Nikon 1 J1",
+"Nikon 1 S1",
 "Nikon 1 V1",
 "Nikon 1 J2",
 "Nikon 1 V2",
+"Nikon 1 J3",
 "Nikon E700 (\"DIAG RAW\" hack)",
 "Nikon E800 (\"DIAG RAW\" hack)",
 "Nikon E880 (\"DIAG RAW\" hack)",
@@ -3005,6 +3064,8 @@ static const char  *static_camera_list[] =
 "Nikon E8400",
 "Nikon E8700",
 "Nikon E8800",
+"Nikon Coolpix A",
+"Nikon Coolpix P330",
 "Nikon Coolpix P6000",
 "Nikon Coolpix P7000",
 "Nikon Coolpix P7100",
@@ -3056,6 +3117,7 @@ static const char  *static_camera_list[] =
 "Olympus SP560UZ",
 "Olympus SP570UZ",
 "Olympus XZ-1",
+"Olympus XZ-10",
 "Olympus XZ-2",
 "Panasonic DMC-FZ8",
 "Panasonic DMC-FZ18",
@@ -3073,6 +3135,7 @@ static const char  *static_camera_list[] =
 "Panasonic DMC-G2",
 "Panasonic DMC-G3",
 "Panasonic DMC-G5",
+"Panasonic DMC-G6",
 "Panasonic DMC-GF1",
 "Panasonic DMC-GF2",
 "Panasonic DMC-GF3",
@@ -3107,6 +3170,7 @@ static const char  *static_camera_list[] =
 "Pentax K-5 II",
 "Pentax K-5 IIs",
 "Pentax K-7",
+"Pentax MX-1",
 "Pentax Q10",
 "Pentax Optio S",
 "Pentax Optio S4",
@@ -3206,6 +3270,7 @@ static const char  *static_camera_list[] =
 "Sony SLT-A37",
 "Sony SLT-A55V",
 "Sony SLT-A57",
+"Sony SLT-A58",
 "Sony SLT-A65V",
 "Sony SLT-A77V",
 "Sony SLT-A99V",

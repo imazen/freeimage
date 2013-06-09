@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw.h
- * Copyright 2008-2010 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8, 2008 
  *
  * LibRaw C++ interface
@@ -53,7 +53,7 @@ DllDef    const char          *libraw_strprogress(enum LibRaw_progress);
 DllDef    libraw_data_t       *libraw_init(unsigned int flags);
 DllDef    int                 libraw_open_file(libraw_data_t*, const char *);
 DllDef    int                 libraw_open_file_ex(libraw_data_t*, const char *, INT64 max_buff_sz);
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 DllDef    int                 libraw_open_wfile(libraw_data_t*, const wchar_t *);
 DllDef    int                 libraw_open_wfile_ex(libraw_data_t*, const wchar_t *, INT64 max_buff_sz);
 #endif
@@ -103,7 +103,7 @@ class DllDef LibRaw
     LibRaw(unsigned int flags = LIBRAW_OPTIONS_NONE);
     libraw_output_params_t*     output_params_ptr() { return &imgdata.params;}
     int                         open_file(const char *fname, INT64 max_buffered_sz=LIBRAW_USE_STREAMS_DATASTREAM_MAXSIZE);
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 	int                         open_file(const wchar_t *fname, INT64 max_buffered_sz=LIBRAW_USE_STREAMS_DATASTREAM_MAXSIZE);
 #endif
     int                         open_buffer(void *buffer, size_t size);
@@ -281,7 +281,7 @@ protected:
   /* RawSpeed data */
   void		*_rawspeed_camerameta;
   void	    *_rawspeed_decoder;
-  void		fix_after_rawspeed();
+  void		fix_after_rawspeed(int bl);
 
 
 #ifdef LIBRAW_LIBRARY_BUILD 

@@ -1,6 +1,6 @@
 /* -*- C -*-
  * File: libraw_datastream.h
- * Copyright 2008-2010 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
  * Created: Sun Jan 18 13:07:35 2009
  *
  * LibRaw Data stream interface
@@ -76,7 +76,7 @@ class DllDef LibRaw_abstract_datastream
 #if (defined(_MSC_VER) && _MSC_VER > 1310)
 	virtual const wchar_t* wfname(){ return NULL;};
 	virtual int         subfile_open(const wchar_t*) { return -1;}
-#endif
+#endif // _MSC_VER
     virtual int         subfile_open(const char*) { return -1;}
     virtual void        subfile_close() { }
 
@@ -108,7 +108,7 @@ class DllDef  LibRaw_file_datastream: public LibRaw_abstract_datastream
                 LibRaw_file_datastream(const char *fname);
 #if (defined(_MSC_VER) && _MSC_VER > 1310)
                 LibRaw_file_datastream(const wchar_t *fname);
-#endif
+#endif // _MSC_VER
     virtual void        *make_jas_stream();
     virtual int         jpeg_src(void *jpegdata);
     virtual int         valid();
@@ -128,7 +128,7 @@ class DllDef  LibRaw_file_datastream: public LibRaw_abstract_datastream
 #if (defined(_MSC_VER) && _MSC_VER > 1310)
     virtual const wchar_t* wfname();
     virtual int         subfile_open(const wchar_t *fn);
-#endif
+#endif // _MSC_VER
     virtual int         subfile_open(const char *fn);
     virtual void        subfile_close();
 };
@@ -169,7 +169,7 @@ class DllDef LibRaw_bigfile_datastream : public LibRaw_abstract_datastream
                         LibRaw_bigfile_datastream(const char *fname);
 #if (defined(_MSC_VER) && _MSC_VER > 1310)
 			LibRaw_bigfile_datastream(const wchar_t *fname);
-#endif
+#endif // _MSC_VER
     virtual             ~LibRaw_bigfile_datastream();
     virtual int         valid();
     virtual int         jpeg_src(void *jpegdata);
@@ -186,7 +186,7 @@ class DllDef LibRaw_bigfile_datastream : public LibRaw_abstract_datastream
 #if (defined(_MSC_VER) && _MSC_VER > 1310)
     virtual const wchar_t* wfname();
     virtual int         subfile_open(const wchar_t *fn);
-#endif
+#endif // _MSC_VER
     virtual int         subfile_open(const char *fn);
     virtual void        subfile_close();
     virtual int         get_char()

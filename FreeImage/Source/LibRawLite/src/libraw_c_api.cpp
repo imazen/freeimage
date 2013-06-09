@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw_c_api.cpp
- * Copyright 2008-2010 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8 , 2008
  *
  * LibRaw C interface 
@@ -75,7 +75,7 @@ extern "C"
         LibRaw *ip = (LibRaw*) lr->parent_class;
         return ip->open_file(file,sz);
     }
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
     int libraw_open_wfile(libraw_data_t* lr, const wchar_t *file)
     {
         if(!lr) return EINVAL;

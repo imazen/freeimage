@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw_types.h
- * Copyright 2008-2010 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8 , 2008
  *
  * LibRaw C data structures
@@ -69,16 +69,13 @@ extern "C" {
 #include "libraw_const.h"
 #include "libraw_version.h"
 
-#ifndef _MSC_VER
-// define portable types for 32-bit / 64-bit OS
-#include <inttypes.h>
-typedef int64_t INT64;
-typedef uint64_t UINT64;
-#else
-// MS is not C99 ISO compliant
-typedef signed __int64 INT64;
+#ifdef WIN32
+typedef __int64 INT64;
 typedef unsigned __int64 UINT64;
-#endif // _MSC_VER
+#else
+typedef long long INT64;
+typedef unsigned long long UINT64;
+#endif
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
@@ -167,13 +164,13 @@ typedef struct
 {
     ushort      raw_height, 
                 raw_width,
-                raw_pitch,
                 height, 
                 width, 
                 top_margin, 
                 left_margin;
     ushort      iheight,
                 iwidth;
+    unsigned    raw_pitch;
     double      pixel_aspect;
     int         flip;
     int         mask[8][4];
