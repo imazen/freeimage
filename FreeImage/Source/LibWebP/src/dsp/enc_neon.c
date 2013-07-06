@@ -1,8 +1,10 @@
 // Copyright 2012 Google Inc. All Rights Reserved.
 //
-// This code is licensed under the same terms as WebM:
-//  Software License Agreement:  http://www.webmproject.org/license/software/
-//  Additional IP Rights Grant:  http://www.webmproject.org/license/additional/
+// Use of this source code is governed by a BSD-style license
+// that can be found in the COPYING file in the root of the source
+// tree. An additional intellectual property rights grant can be found
+// in the file PATENTS. All contributing project authors may
+// be found in the AUTHORS file in the root of the source tree.
 // -----------------------------------------------------------------------------
 //
 // ARM NEON version of speed-critical encoding functions.
@@ -322,7 +324,7 @@ static void FTransform(const uint8_t* src, const uint8_t* ref,
     "vmlal.s16       q11, d6, d17             \n" // c1*2217 + d1*5352 + 12000
     "vmlsl.s16       q12, d6, d16             \n" // d1*2217 - c1*5352 + 51000
 
-    "vmvn.s16        d4, d4                   \n"
+    "vmvn            d4, d4                   \n" // !(d1 == 0)
     // op[4] = (c1*2217 + d1*5352 + 12000)>>16
     "vshrn.s32       d1, q11, #16             \n"
     // op[4] += (d1!=0)

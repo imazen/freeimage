@@ -1,8 +1,10 @@
 // Copyright 2010 Google Inc. All Rights Reserved.
 //
-// This code is licensed under the same terms as WebM:
-//  Software License Agreement:  http://www.webmproject.org/license/software/
-//  Additional IP Rights Grant:  http://www.webmproject.org/license/additional/
+// Use of this source code is governed by a BSD-style license
+// that can be found in the COPYING file in the root of the source
+// tree. An additional intellectual property rights grant can be found
+// in the file PATENTS. All contributing project authors may
+// be found in the AUTHORS file in the root of the source tree.
 // -----------------------------------------------------------------------------
 //
 // Boolean decoder
@@ -194,6 +196,7 @@ static WEBP_INLINE void VP8LoadNewBytes(VP8BitReader* const br) {
 #endif
 #else    // BIG_ENDIAN
     bits = (bit_t)in_bits;
+    if (BITS != 8 * sizeof(bit_t)) bits >>= (8 * sizeof(bit_t) - BITS);
 #endif
 #ifndef USE_RIGHT_JUSTIFY
     br->value_ |= bits << (-br->bits_);
@@ -313,9 +316,10 @@ static WEBP_INLINE uint32_t VP8LPrefetchBits(VP8LBitReader* const br) {
   return (uint32_t)(br->val_ >> br->bit_pos_);
 }
 
-// Discard 'num_bits' bits from the cache.
-static WEBP_INLINE void VP8LDiscardBits(VP8LBitReader* const br, int num_bits) {
-  br->bit_pos_ += num_bits;
+// For jumping over a number of bits in the bit stream when accessed with
+// VP8LPrefetchBits and VP8LFillBitWindow.
+static WEBP_INLINE void VP8LSetBitPos(VP8LBitReader* const br, int val) {
+  br->bit_pos_ = val;
 }
 
 // Advances the Read buffer by 4 bytes to make room for reading next 32 bits.

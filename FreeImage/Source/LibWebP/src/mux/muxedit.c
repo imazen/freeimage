@@ -1,8 +1,10 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
 //
-// This code is licensed under the same terms as WebM:
-//  Software License Agreement:  http://www.webmproject.org/license/software/
-//  Additional IP Rights Grant:  http://www.webmproject.org/license/additional/
+// Use of this source code is governed by a BSD-style license
+// that can be found in the COPYING file in the root of the source
+// tree. An additional intellectual property rights grant can be found
+// in the file PATENTS. All contributing project authors may
+// be found in the AUTHORS file in the root of the source tree.
 // -----------------------------------------------------------------------------
 //
 // Set and delete APIs for mux.
@@ -43,9 +45,16 @@ static void DeleteAllChunks(WebPChunk** const chunk_list) {
   }
 }
 
+// Delete all images in 'wpi_list'.
+static void DeleteAllImages(WebPMuxImage** const wpi_list) {
+  while (*wpi_list != NULL) {
+    *wpi_list = MuxImageDelete(*wpi_list);
+  }
+}
+
 static void MuxRelease(WebPMux* const mux) {
   if (mux == NULL) return;
-  MuxImageDeleteAll(&mux->images_);
+  DeleteAllImages(&mux->images_);
   DeleteAllChunks(&mux->vp8x_);
   DeleteAllChunks(&mux->iccp_);
   DeleteAllChunks(&mux->anim_);
@@ -273,7 +282,7 @@ WebPMuxError WebPMuxSetImage(WebPMux* mux, const WebPData* bitstream,
 
   if (mux->images_ != NULL) {
     // Only one 'simple image' can be added in mux. So, remove present images.
-    MuxImageDeleteAll(&mux->images_);
+    DeleteAllImages(&mux->images_);
   }
 
   MuxImageInit(&wpi);
@@ -478,7 +487,7 @@ static WebPMuxError GetImageCanvasWidthHeight(
     int64_t image_area = 0;
     // Aggregate the bounding box for animation frames & fragmented images.
     for (; wpi != NULL; wpi = wpi->next_) {
-      int x_offset, y_offset, duration, w, h;
+      int x_offset = 0, y_offset = 0, duration = 0, w = 0, h = 0;
       const WebPMuxError err = GetImageInfo(wpi, &x_offset, &y_offset,
                                             &duration, &w, &h);
       const int max_x_pos = x_offset + w;
@@ -630,6 +639,35 @@ static WebPMuxError MuxCleanup(WebPMux* const mux) {
   return WEBP_MUX_OK;
 }
 
+// Total size of a list of chunks.
+static size_t ChunkListDiskSize(const WebPChunk* chunk_list) {
+  size_t size = 0;
+  while (chunk_list != NULL) {
+    size += ChunkDiskSize(chunk_list);
+    chunk_list = chunk_list->next_;
+  }
+  return size;
+}
+
+// Total size of a list of images.
+static size_t ImageListDiskSize(const WebPMuxImage* wpi_list) {
+  size_t size = 0;
+  while (wpi_list != NULL) {
+    size += MuxImageDiskSize(wpi_list);
+    wpi_list = wpi_list->next_;
+  }
+  return size;
+}
+
+// Write out the given list of images into 'dst'.
+static uint8_t* ImageListEmit(const WebPMuxImage* wpi_list, uint8_t* dst) {
+  while (wpi_list != NULL) {
+    dst = MuxImageEmit(wpi_list, dst);
+    wpi_list = wpi_list->next_;
+  }
+  return dst;
+}
+
 WebPMuxError WebPMuxAssemble(WebPMux* mux, WebPData* assembled_data) {
   size_t size = 0;
   uint8_t* data = NULL;
@@ -647,10 +685,10 @@ WebPMuxError WebPMuxAssemble(WebPMux* mux, WebPData* assembled_data) {
   if (err != WEBP_MUX_OK) return err;
 
   // Allocate data.
-  size = ChunksListDiskSize(mux->vp8x_) + ChunksListDiskSize(mux->iccp_)
-       + ChunksListDiskSize(mux->anim_) + MuxImageListDiskSize(mux->images_)
-       + ChunksListDiskSize(mux->exif_) + ChunksListDiskSize(mux->xmp_)
-       + ChunksListDiskSize(mux->unknown_) + RIFF_HEADER_SIZE;
+  size = ChunkListDiskSize(mux->vp8x_) + ChunkListDiskSize(mux->iccp_)
+       + ChunkListDiskSize(mux->anim_) + ImageListDiskSize(mux->images_)
+       + ChunkListDiskSize(mux->exif_) + ChunkListDiskSize(mux->xmp_)
+       + ChunkListDiskSize(mux->unknown_) + RIFF_HEADER_SIZE;
 
   data = (uint8_t*)malloc(size);
   if (data == NULL) return WEBP_MUX_MEMORY_ERROR;
@@ -660,7 +698,7 @@ WebPMuxError WebPMuxAssemble(WebPMux* mux, WebPData* assembled_data) {
   dst = ChunkListEmit(mux->vp8x_, dst);
   dst = ChunkListEmit(mux->iccp_, dst);
   dst = ChunkListEmit(mux->anim_, dst);
-  dst = MuxImageListEmit(mux->images_, dst);
+  dst = ImageListEmit(mux->images_, dst);
   dst = ChunkListEmit(mux->exif_, dst);
   dst = ChunkListEmit(mux->xmp_, dst);
   dst = ChunkListEmit(mux->unknown_, dst);

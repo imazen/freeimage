@@ -1,8 +1,10 @@
 // Copyright 2012 Google Inc. All Rights Reserved.
 //
-// This code is licensed under the same terms as WebM:
-//  Software License Agreement:  http://www.webmproject.org/license/software/
-//  Additional IP Rights Grant:  http://www.webmproject.org/license/additional/
+// Use of this source code is governed by a BSD-style license
+// that can be found in the COPYING file in the root of the source
+// tree. An additional intellectual property rights grant can be found
+// in the file PATENTS. All contributing project authors may
+// be found in the AUTHORS file in the root of the source tree.
 // -----------------------------------------------------------------------------
 //
 // Utilities for building and looking up Huffman trees.
@@ -26,17 +28,24 @@ typedef struct {
 } HuffmanTreeNode;
 
 // Huffman Tree.
+#define HUFF_LUT_BITS 7
+#define HUFF_LUT (1U << HUFF_LUT_BITS)
 typedef struct HuffmanTree HuffmanTree;
 struct HuffmanTree {
+  // Fast lookup for short bit lengths.
+  uint8_t lut_bits_[HUFF_LUT];
+  int16_t lut_symbol_[HUFF_LUT];
+  int16_t lut_jump_[HUFF_LUT];
+  // Complete tree for lookups.
   HuffmanTreeNode* root_;   // all the nodes, starting at root.
   int max_nodes_;           // max number of nodes
   int num_nodes_;           // number of currently occupied nodes
 };
 
-// Returns true if the given node is a leaf of the Huffman tree.
-static WEBP_INLINE int HuffmanTreeNodeIsLeaf(
+// Returns true if the given node is not a leaf of the Huffman tree.
+static WEBP_INLINE int HuffmanTreeNodeIsNotLeaf(
     const HuffmanTreeNode* const node) {
-  return (node->children_ == 0);
+  return node->children_;
 }
 
 // Go down one level. Most critical function. 'right_child' must be 0 or 1.

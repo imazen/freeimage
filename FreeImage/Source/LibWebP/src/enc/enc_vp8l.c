@@ -1,8 +1,10 @@
 // Copyright 2012 Google Inc. All Rights Reserved.
 //
-// This code is licensed under the same terms as WebM:
-//  Software License Agreement:  http://www.webmproject.org/license/software/
-//  Additional IP Rights Grant:  http://www.webmproject.org/license/additional/
+// Use of this source code is governed by a BSD-style license
+// that can be found in the COPYING file in the root of the source
+// tree. An additional intellectual property rights grant can be found
+// in the file PATENTS. All contributing project authors may
+// be found in the AUTHORS file in the root of the source tree.
 // -----------------------------------------------------------------------------
 //
 // main entry for the lossless encoder.
@@ -86,7 +88,7 @@ static int AnalyzeAndCreatePalette(const WebPPicture* const pic,
     argb += pic->argb_stride;
   }
 
-  // TODO(skal): could we reuse in_use[] to speed up ApplyPalette()?
+  // TODO(skal): could we reuse in_use[] to speed up EncodePalette()?
   num_colors = 0;
   for (i = 0; i < (int)(sizeof(in_use) / sizeof(in_use[0])); ++i) {
     if (in_use[i]) {
@@ -166,9 +168,6 @@ static int VP8LEncAnalyze(VP8LEncoder* const enc, WebPImageHint image_hint) {
       }
       if (pred_entropy < 0.95 * non_pred_entropy) {
         enc->use_predict_ = 1;
-        // TODO(vikasa): Observed some correlation of cross_color transform with
-        // predict. Need to investigate this further and add separate heuristic
-        // for setting use_cross_color flag.
         enc->use_cross_color_ = 1;
       }
     }
@@ -700,7 +699,7 @@ static int ApplyCrossColorFilter(const VP8LEncoder* const enc,
   const int ccolor_transform_bits = enc->transform_bits_;
   const int transform_width = VP8LSubSampleSize(width, ccolor_transform_bits);
   const int transform_height = VP8LSubSampleSize(height, ccolor_transform_bits);
-  const int step = (quality == 0) ? 32 : 8;
+  const int step = (quality < 25) ? 32 : (quality > 50) ? 8 : 16;
 
   VP8LColorSpaceTransform(width, height, ccolor_transform_bits, step,
                           enc->argb_, enc->transform_data_);
@@ -811,13 +810,66 @@ static WebPEncodingError AllocateTransformBuffer(VP8LEncoder* const enc,
   return err;
 }
 
+static void ApplyPalette(uint32_t* src, uint32_t* dst,
+                         uint32_t src_stride, uint32_t dst_stride,
+                         const uint32_t* palette, int palette_size,
+                         int width, int height, int xbits, uint8_t* row) {
+  int i, x, y;
+  int use_LUT = 1;
+  for (i = 0; i < palette_size; ++i) {
+    if ((palette[i] & 0xffff00ffu) != 0) {
+      use_LUT = 0;
+      break;
+    }
+  }
+
+  if (use_LUT) {
+    uint8_t inv_palette[MAX_PALETTE_SIZE] = { 0 };
+    for (i = 0; i < palette_size; ++i) {
+      const int color = (palette[i] >> 8) & 0xff;
+      inv_palette[color] = i;
+    }
+    for (y = 0; y < height; ++y) {
+      for (x = 0; x < width; ++x) {
+        const int color = (src[x] >> 8) & 0xff;
+        row[x] = inv_palette[color];
+      }
+      VP8LBundleColorMap(row, width, xbits, dst);
+      src += src_stride;
+      dst += dst_stride;
+    }
+  } else {
+    // Use 1 pixel cache for ARGB pixels.
+    uint32_t last_pix = palette[0];
+    int last_idx = 0;
+    for (y = 0; y < height; ++y) {
+      for (x = 0; x < width; ++x) {
+        const uint32_t pix = src[x];
+        if (pix != last_pix) {
+          for (i = 0; i < palette_size; ++i) {
+            if (pix == palette[i]) {
+              last_idx = i;
+              last_pix = pix;
+              break;
+            }
+          }
+        }
+        row[x] = last_idx;
+      }
+      VP8LBundleColorMap(row, width, xbits, dst);
+      src += src_stride;
+      dst += dst_stride;
+    }
+  }
+}
+
 // Note: Expects "enc->palette_" to be set properly.
 // Also, "enc->palette_" will be modified after this call and should not be used
 // later.
-static WebPEncodingError ApplyPalette(VP8LBitWriter* const bw,
-                                      VP8LEncoder* const enc, int quality) {
+static WebPEncodingError EncodePalette(VP8LBitWriter* const bw,
+                                       VP8LEncoder* const enc, int quality) {
   WebPEncodingError err = VP8_ENC_OK;
-  int i, x, y;
+  int i;
   const WebPPicture* const pic = enc->pic_;
   uint32_t* src = pic->argb;
   uint32_t* dst;
@@ -827,7 +879,6 @@ static WebPEncodingError ApplyPalette(VP8LBitWriter* const bw,
   const int palette_size = enc->palette_size_;
   uint8_t* row = NULL;
   int xbits;
-  int is_alpha = 1;
 
   // Replace each input pixel by corresponding palette index.
   // This is done line by line.
@@ -844,44 +895,8 @@ static WebPEncodingError ApplyPalette(VP8LBitWriter* const bw,
   row = WebPSafeMalloc((uint64_t)width, sizeof(*row));
   if (row == NULL) return VP8_ENC_ERROR_OUT_OF_MEMORY;
 
-  for (i = 0; i < palette_size; ++i) {
-    if ((palette[i] & 0x00ff00ffu) != 0) {
-      is_alpha = 0;
-      break;
-    }
-  }
-
-  if (is_alpha) {
-    int inv_palette[MAX_PALETTE_SIZE] = { 0 };
-    for (i = 0; i < palette_size; ++i) {
-      const int color = (palette[i] >> 8) & 0xff;
-      inv_palette[color] = i;
-    }
-    for (y = 0; y < height; ++y) {
-      for (x = 0; x < width; ++x) {
-        const int color = (src[x] >> 8) & 0xff;
-        row[x] = inv_palette[color];
-      }
-      VP8LBundleColorMap(row, width, xbits, dst);
-      src += pic->argb_stride;
-      dst += enc->current_width_;
-    }
-  } else {
-    for (y = 0; y < height; ++y) {
-      for (x = 0; x < width; ++x) {
-        const uint32_t pix = src[x];
-        for (i = 0; i < palette_size; ++i) {
-          if (pix == palette[i]) {
-            row[x] = i;
-            break;
-          }
-        }
-      }
-      VP8LBundleColorMap(row, width, xbits, dst);
-      src += pic->argb_stride;
-      dst += enc->current_width_;
-    }
-  }
+  ApplyPalette(src, dst, pic->argb_stride, enc->current_width_,
+               palette, palette_size, width, height, xbits, row);
 
   // Save palette to bitstream.
   VP8LWriteBits(bw, 1, TRANSFORM_PRESENT);
@@ -941,6 +956,9 @@ static VP8LEncoder* VP8LEncoderNew(const WebPConfig* const config,
   }
   enc->config_ = config;
   enc->pic_ = picture;
+
+  VP8LDspInit();
+
   return enc;
 }
 
@@ -978,7 +996,7 @@ WebPEncodingError VP8LEncodeStream(const WebPConfig* const config,
   FinishEncParams(enc);
 
   if (enc->use_palette_) {
-    err = ApplyPalette(bw, enc, quality);
+    err = EncodePalette(bw, enc, quality);
     if (err != VP8_ENC_OK) goto Error;
     // Color cache is disabled for palette.
     enc->cache_bits_ = 0;

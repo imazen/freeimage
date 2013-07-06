@@ -12,7 +12,7 @@ Month day, 2013 - 3.16.0
 ! FreeImage now uses LibRaw 0.15.2
 ! FreeImage now uses OpenJPEG 2.0.0 (SVN patch 2343)
 ! FreeImage now uses ZLib 1.2.8
-! FreeImage now uses LibWebP 0.3.0 (GIT patch 2013-05-11)
+! FreeImage now uses LibWebP 0.3.1 (GIT patch 2013-07-03)
 + [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to JP2/J2K plugins
 + [Herve Drolon] added loading & writing support for the WebP image format (also support the FIF_LOAD_NOPIXELS flag)
 * [Herve Drolon] fixed FreeImage_CloneTag behavior with ASCII data handling (regression that appeared in 3.15.2, affect metadata writing)

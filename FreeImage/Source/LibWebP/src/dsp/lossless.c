@@ -1,8 +1,10 @@
 // Copyright 2012 Google Inc. All Rights Reserved.
 //
-// This code is licensed under the same terms as WebM:
-//  Software License Agreement:  http://www.webmproject.org/license/software/
-//  Additional IP Rights Grant:  http://www.webmproject.org/license/additional/
+// Use of this source code is governed by a BSD-style license
+// that can be found in the COPYING file in the root of the source
+// tree. An additional intellectual property rights grant can be found
+// in the file PATENTS. All contributing project authors may
+// be found in the AUTHORS file in the root of the source tree.
 // -----------------------------------------------------------------------------
 //
 // Image transforms and color space conversion methods for lossless decoder.
@@ -13,14 +15,11 @@
 
 #include "./dsp.h"
 
-// Define the following if target arch is sure to have SSE2
-// #define WEBP_TARGET_HAS_SSE2
-
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
 
-#if defined(WEBP_TARGET_HAS_SSE2)
+#if defined(WEBP_USE_SSE2)
 #include <emmintrin.h>
 #endif
 
@@ -285,61 +284,6 @@ static WEBP_INLINE uint32_t Average4(uint32_t a0, uint32_t a1,
   return Average2(Average2(a0, a1), Average2(a2, a3));
 }
 
-#if defined(WEBP_TARGET_HAS_SSE2)
-static WEBP_INLINE uint32_t ClampedAddSubtractFull(uint32_t c0, uint32_t c1,
-                                                   uint32_t c2) {
-  const __m128i zero = _mm_setzero_si128();
-  const __m128i C0 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(c0), zero);
-  const __m128i C1 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(c1), zero);
-  const __m128i C2 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(c2), zero);
-  const __m128i V1 = _mm_add_epi16(C0, C1);
-  const __m128i V2 = _mm_sub_epi16(V1, C2);
-  const __m128i b = _mm_packus_epi16(V2, V2);
-  const uint32_t output = _mm_cvtsi128_si32(b);
-  return output;
-}
-
-static WEBP_INLINE uint32_t ClampedAddSubtractHalf(uint32_t c0, uint32_t c1,
-                                                   uint32_t c2) {
-  const uint32_t ave = Average2(c0, c1);
-  const __m128i zero = _mm_setzero_si128();
-  const __m128i A0 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(ave), zero);
-  const __m128i B0 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(c2), zero);
-  const __m128i A1 = _mm_sub_epi16(A0, B0);
-  const __m128i BgtA = _mm_cmpgt_epi16(B0, A0);
-  const __m128i A2 = _mm_sub_epi16(A1, BgtA);
-  const __m128i A3 = _mm_srai_epi16(A2, 1);
-  const __m128i A4 = _mm_add_epi16(A0, A3);
-  const __m128i A5 = _mm_packus_epi16(A4, A4);
-  const uint32_t output = _mm_cvtsi128_si32(A5);
-  return output;
-}
-
-static WEBP_INLINE uint32_t Select(uint32_t a, uint32_t b, uint32_t c) {
-  int pa_minus_pb;
-  const __m128i zero = _mm_setzero_si128();
-  const __m128i A0 = _mm_cvtsi32_si128(a);
-  const __m128i B0 = _mm_cvtsi32_si128(b);
-  const __m128i C0 = _mm_cvtsi32_si128(c);
-  const __m128i AC0 = _mm_subs_epu8(A0, C0);
-  const __m128i CA0 = _mm_subs_epu8(C0, A0);
-  const __m128i BC0 = _mm_subs_epu8(B0, C0);
-  const __m128i CB0 = _mm_subs_epu8(C0, B0);
-  const __m128i AC = _mm_or_si128(AC0, CA0);
-  const __m128i BC = _mm_or_si128(BC0, CB0);
-  const __m128i pa = _mm_unpacklo_epi8(AC, zero);  // |a - c|
-  const __m128i pb = _mm_unpacklo_epi8(BC, zero);  // |b - c|
-  const __m128i diff = _mm_sub_epi16(pb, pa);
-  {
-    int16_t out[8];
-    _mm_storeu_si128((__m128i*)out, diff);
-    pa_minus_pb = out[0] + out[1] + out[2] + out[3];
-  }
-  return (pa_minus_pb <= 0) ? a : b;
-}
-
-#else
-
 static WEBP_INLINE uint32_t Clip255(uint32_t a) {
   if (a < 256) {
     return a;
@@ -394,7 +338,6 @@ static WEBP_INLINE uint32_t Select(uint32_t a, uint32_t b, uint32_t c) {
       Sub3((a      ) & 0xff, (b      ) & 0xff, (c      ) & 0xff);
   return (pa_minus_pb <= 0) ? a : b;
 }
-#endif
 
 //------------------------------------------------------------------------------
 // Predictors
@@ -447,18 +390,19 @@ static uint32_t Predictor10(uint32_t left, const uint32_t* const top) {
   return pred;
 }
 static uint32_t Predictor11(uint32_t left, const uint32_t* const top) {
-  const uint32_t pred = Select(top[0], left, top[-1]);
+  const uint32_t pred = VP8LSelect(top[0], left, top[-1]);
   return pred;
 }
 static uint32_t Predictor12(uint32_t left, const uint32_t* const top) {
-  const uint32_t pred = ClampedAddSubtractFull(left, top[0], top[-1]);
+  const uint32_t pred = VP8LClampedAddSubtractFull(left, top[0], top[-1]);
   return pred;
 }
 static uint32_t Predictor13(uint32_t left, const uint32_t* const top) {
-  const uint32_t pred = ClampedAddSubtractHalf(left, top[0], top[-1]);
+  const uint32_t pred = VP8LClampedAddSubtractHalf(left, top[0], top[-1]);
   return pred;
 }
 
+// TODO(vikasa): Export the predictor array, to allow SSE2 variants.
 typedef uint32_t (*PredictorFunc)(uint32_t left, const uint32_t* const top);
 static const PredictorFunc kPredictors[16] = {
   Predictor0, Predictor1, Predictor2, Predictor3,
@@ -714,21 +658,8 @@ static void PredictorInverseTransform(const VP8LTransform* const transform,
   }
 }
 
-void VP8LSubtractGreenFromBlueAndRed(uint32_t* argb_data, int num_pixs) {
+static void SubtractGreenFromBlueAndRed(uint32_t* argb_data, int num_pixs) {
   int i = 0;
-#if defined(WEBP_TARGET_HAS_SSE2)
-  const __m128i mask = _mm_set1_epi32(0x0000ff00);
-  for (; i + 4 < num_pixs; i += 4) {
-    const __m128i in = _mm_loadu_si128((__m128i*)&argb_data[i]);
-    const __m128i in_00g0 = _mm_and_si128(in, mask);     // 00g0|00g0|...
-    const __m128i in_0g00 = _mm_slli_epi32(in_00g0, 8);  // 0g00|0g00|...
-    const __m128i in_000g = _mm_srli_epi32(in_00g0, 8);  // 000g|000g|...
-    const __m128i in_0g0g = _mm_or_si128(in_0g00, in_000g);
-    const __m128i out = _mm_sub_epi8(in, in_0g0g);
-    _mm_storeu_si128((__m128i*)&argb_data[i], out);
-  }
-  // fallthrough and finish off with plain-C
-#endif
   for (; i < num_pixs; ++i) {
     const uint32_t argb = argb_data[i];
     const uint32_t green = (argb >> 8) & 0xff;
@@ -740,23 +671,7 @@ void VP8LSubtractGreenFromBlueAndRed(uint32_t* argb_data, int num_pixs) {
 
 // Add green to blue and red channels (i.e. perform the inverse transform of
 // 'subtract green').
-static void AddGreenToBlueAndRed(const VP8LTransform* const transform,
-                                 int y_start, int y_end, uint32_t* data) {
-  const int width = transform->xsize_;
-  const uint32_t* const data_end = data + (y_end - y_start) * width;
-#if defined(WEBP_TARGET_HAS_SSE2)
-  const __m128i mask = _mm_set1_epi32(0x0000ff00);
-  for (; data + 4 < data_end; data += 4) {
-    const __m128i in = _mm_loadu_si128((__m128i*)data);
-    const __m128i in_00g0 = _mm_and_si128(in, mask);     // 00g0|00g0|...
-    const __m128i in_0g00 = _mm_slli_epi32(in_00g0, 8);  // 0g00|0g00|...
-    const __m128i in_000g = _mm_srli_epi32(in_00g0, 8);  // 000g|000g|...
-    const __m128i in_0g0g = _mm_or_si128(in_0g00, in_000g);
-    const __m128i out = _mm_add_epi8(in, in_0g0g);
-    _mm_storeu_si128((__m128i*)data, out);
-  }
-  // fallthrough and finish off with plain-C
-#endif
+static void AddGreenToBlueAndRed(uint32_t* data, const uint32_t* data_end) {
   while (data < data_end) {
     const uint32_t argb = *data;
     const uint32_t green = ((argb >> 8) & 0xff);
@@ -1093,54 +1008,79 @@ static void ColorSpaceInverseTransform(const VP8LTransform* const transform,
 }
 
 // Separate out pixels packed together using pixel-bundling.
-static void ColorIndexInverseTransform(
-    const VP8LTransform* const transform,
-    int y_start, int y_end, const uint32_t* src, uint32_t* dst) {
-  int y;
-  const int bits_per_pixel = 8 >> transform->bits_;
-  const int width = transform->xsize_;
-  const uint32_t* const color_map = transform->data_;
-  if (bits_per_pixel < 8) {
-    const int pixels_per_byte = 1 << transform->bits_;
-    const int count_mask = pixels_per_byte - 1;
-    const uint32_t bit_mask = (1 << bits_per_pixel) - 1;
-    for (y = y_start; y < y_end; ++y) {
-      uint32_t packed_pixels = 0;
-      int x;
-      for (x = 0; x < width; ++x) {
-        // We need to load fresh 'packed_pixels' once every 'pixels_per_byte'
-        // increments of x. Fortunately, pixels_per_byte is a power of 2, so
-        // can just use a mask for that, instead of decrementing a counter.
-        if ((x & count_mask) == 0) packed_pixels = ((*src++) >> 8) & 0xff;
-        *dst++ = color_map[packed_pixels & bit_mask];
-        packed_pixels >>= bits_per_pixel;
-      }
-    }
-  } else {
-    for (y = y_start; y < y_end; ++y) {
-      int x;
-      for (x = 0; x < width; ++x) {
-        *dst++ = color_map[((*src++) >> 8) & 0xff];
-      }
-    }
-  }
+// We define two methods for ARGB data (uint32_t) and alpha-only data (uint8_t).
+#define COLOR_INDEX_INVERSE(FUNC_NAME, TYPE, GET_INDEX, GET_VALUE)             \
+void FUNC_NAME(const VP8LTransform* const transform,                           \
+               int y_start, int y_end, const TYPE* src, TYPE* dst) {           \
+  int y;                                                                       \
+  const int bits_per_pixel = 8 >> transform->bits_;                            \
+  const int width = transform->xsize_;                                         \
+  const uint32_t* const color_map = transform->data_;                          \
+  if (bits_per_pixel < 8) {                                                    \
+    const int pixels_per_byte = 1 << transform->bits_;                         \
+    const int count_mask = pixels_per_byte - 1;                                \
+    const uint32_t bit_mask = (1 << bits_per_pixel) - 1;                       \
+    for (y = y_start; y < y_end; ++y) {                                        \
+      uint32_t packed_pixels = 0;                                              \
+      int x;                                                                   \
+      for (x = 0; x < width; ++x) {                                            \
+        /* We need to load fresh 'packed_pixels' once every                */  \
+        /* 'pixels_per_byte' increments of x. Fortunately, pixels_per_byte */  \
+        /* is a power of 2, so can just use a mask for that, instead of    */  \
+        /* decrementing a counter.                                         */  \
+        if ((x & count_mask) == 0) packed_pixels = GET_INDEX(*src++);          \
+        *dst++ = GET_VALUE(color_map[packed_pixels & bit_mask]);               \
+        packed_pixels >>= bits_per_pixel;                                      \
+      }                                                                        \
+    }                                                                          \
+  } else {                                                                     \
+    for (y = y_start; y < y_end; ++y) {                                        \
+      int x;                                                                   \
+      for (x = 0; x < width; ++x) {                                            \
+        *dst++ = GET_VALUE(color_map[GET_INDEX(*src++)]);                      \
+      }                                                                        \
+    }                                                                          \
+  }                                                                            \
 }
+
+static WEBP_INLINE uint32_t GetARGBIndex(uint32_t idx) {
+  return (idx >> 8) & 0xff;
+}
+
+static WEBP_INLINE uint8_t GetAlphaIndex(uint8_t idx) {
+  return idx;
+}
+
+static WEBP_INLINE uint32_t GetARGBValue(uint32_t val) {
+  return val;
+}
+
+static WEBP_INLINE uint8_t GetAlphaValue(uint32_t val) {
+  return (val >> 8) & 0xff;
+}
+
+static COLOR_INDEX_INVERSE(ColorIndexInverseTransform, uint32_t, GetARGBIndex,
+                           GetARGBValue)
+COLOR_INDEX_INVERSE(VP8LColorIndexInverseTransformAlpha, uint8_t, GetAlphaIndex,
+                    GetAlphaValue)
+
+#undef COLOR_INDEX_INVERSE
 
 void VP8LInverseTransform(const VP8LTransform* const transform,
                           int row_start, int row_end,
                           const uint32_t* const in, uint32_t* const out) {
+  const int width = transform->xsize_;
   assert(row_start < row_end);
   assert(row_end <= transform->ysize_);
   switch (transform->type_) {
     case SUBTRACT_GREEN:
-      AddGreenToBlueAndRed(transform, row_start, row_end, out);
+      VP8LAddGreenToBlueAndRed(out, out + (row_end - row_start) * width);
       break;
     case PREDICTOR_TRANSFORM:
       PredictorInverseTransform(transform, row_start, row_end, out);
       if (row_end != transform->ysize_) {
         // The last predicted row in this iteration will be the top-pred row
         // for the first row in next iteration.
-        const int width = transform->xsize_;
         memcpy(out - width, out + (row_end - row_start - 1) * width,
                width * sizeof(*out));
       }
@@ -1155,7 +1095,7 @@ void VP8LInverseTransform(const VP8LTransform* const transform,
         // Also, note that this is the only transform that applies on
         // the effective width of VP8LSubSampleSize(xsize_, bits_). All other
         // transforms work on effective width of xsize_.
-        const int out_stride = (row_end - row_start) * transform->xsize_;
+        const int out_stride = (row_end - row_start) * width;
         const int in_stride = (row_end - row_start) *
             VP8LSubSampleSize(transform->xsize_, transform->bits_);
         uint32_t* const src = out + out_stride - in_stride;
@@ -1254,11 +1194,12 @@ static void CopyOrSwap(const uint32_t* src, int num_pixels, uint8_t* dst,
     while (src < src_end) {
       uint32_t argb = *src++;
 
+#if !defined(__BIG_ENDIAN__)
 #if !defined(WEBP_REFERENCE_IMPLEMENTATION)
-#if !defined(__BIG_ENDIAN__) && (defined(__i386__) || defined(__x86_64__))
+#if defined(__i386__) || defined(__x86_64__)
       __asm__ volatile("bswap %0" : "=r"(argb) : "0"(argb));
       *(uint32_t*)dst = argb;
-#elif !defined(__BIG_ENDIAN__) && defined(_MSC_VER)
+#elif defined(_MSC_VER)
       argb = _byteswap_ulong(argb);
       *(uint32_t*)dst = argb;
 #else
@@ -1267,11 +1208,17 @@ static void CopyOrSwap(const uint32_t* src, int num_pixels, uint8_t* dst,
       dst[2] = (argb >>  8) & 0xff;
       dst[3] = (argb >>  0) & 0xff;
 #endif
-#else   // WEBP_REFERENCE_IMPLEMENTATION
+#else  // WEBP_REFERENCE_IMPLEMENTATION
       dst[0] = (argb >> 24) & 0xff;
       dst[1] = (argb >> 16) & 0xff;
       dst[2] = (argb >>  8) & 0xff;
       dst[3] = (argb >>  0) & 0xff;
+#endif
+#else  // __BIG_ENDIAN__
+      dst[0] = (argb >>  0) & 0xff;
+      dst[1] = (argb >>  8) & 0xff;
+      dst[2] = (argb >> 16) & 0xff;
+      dst[3] = (argb >> 24) & 0xff;
 #endif
       dst += sizeof(argb);
     }
@@ -1343,6 +1290,142 @@ void VP8LBundleColorMap(const uint8_t* const row, int width,
     }
   } else {
     for (x = 0; x < width; ++x) dst[x] = 0xff000000 | (row[x] << 8);
+  }
+}
+
+//------------------------------------------------------------------------------
+
+// TODO(vikasa): Move the SSE2 functions to lossless_dsp.c (new file), once
+// color-space conversion methods (ConvertFromBGRA) are also updated for SSE2.
+#if defined(WEBP_USE_SSE2)
+static WEBP_INLINE uint32_t ClampedAddSubtractFullSSE2(uint32_t c0, uint32_t c1,
+                                                       uint32_t c2) {
+  const __m128i zero = _mm_setzero_si128();
+  const __m128i C0 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(c0), zero);
+  const __m128i C1 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(c1), zero);
+  const __m128i C2 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(c2), zero);
+  const __m128i V1 = _mm_add_epi16(C0, C1);
+  const __m128i V2 = _mm_sub_epi16(V1, C2);
+  const __m128i b = _mm_packus_epi16(V2, V2);
+  const uint32_t output = _mm_cvtsi128_si32(b);
+  return output;
+}
+
+static WEBP_INLINE uint32_t ClampedAddSubtractHalfSSE2(uint32_t c0, uint32_t c1,
+                                                       uint32_t c2) {
+  const uint32_t ave = Average2(c0, c1);
+  const __m128i zero = _mm_setzero_si128();
+  const __m128i A0 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(ave), zero);
+  const __m128i B0 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(c2), zero);
+  const __m128i A1 = _mm_sub_epi16(A0, B0);
+  const __m128i BgtA = _mm_cmpgt_epi16(B0, A0);
+  const __m128i A2 = _mm_sub_epi16(A1, BgtA);
+  const __m128i A3 = _mm_srai_epi16(A2, 1);
+  const __m128i A4 = _mm_add_epi16(A0, A3);
+  const __m128i A5 = _mm_packus_epi16(A4, A4);
+  const uint32_t output = _mm_cvtsi128_si32(A5);
+  return output;
+}
+
+static WEBP_INLINE uint32_t SelectSSE2(uint32_t a, uint32_t b, uint32_t c) {
+  int pa_minus_pb;
+  const __m128i zero = _mm_setzero_si128();
+  const __m128i A0 = _mm_cvtsi32_si128(a);
+  const __m128i B0 = _mm_cvtsi32_si128(b);
+  const __m128i C0 = _mm_cvtsi32_si128(c);
+  const __m128i AC0 = _mm_subs_epu8(A0, C0);
+  const __m128i CA0 = _mm_subs_epu8(C0, A0);
+  const __m128i BC0 = _mm_subs_epu8(B0, C0);
+  const __m128i CB0 = _mm_subs_epu8(C0, B0);
+  const __m128i AC = _mm_or_si128(AC0, CA0);
+  const __m128i BC = _mm_or_si128(BC0, CB0);
+  const __m128i pa = _mm_unpacklo_epi8(AC, zero);  // |a - c|
+  const __m128i pb = _mm_unpacklo_epi8(BC, zero);  // |b - c|
+  const __m128i diff = _mm_sub_epi16(pb, pa);
+  {
+    int16_t out[8];
+    _mm_storeu_si128((__m128i*)out, diff);
+    pa_minus_pb = out[0] + out[1] + out[2] + out[3];
+  }
+  return (pa_minus_pb <= 0) ? a : b;
+}
+
+static void SubtractGreenFromBlueAndRedSSE2(uint32_t* argb_data, int num_pixs) {
+  int i = 0;
+  const __m128i mask = _mm_set1_epi32(0x0000ff00);
+  for (; i + 4 < num_pixs; i += 4) {
+    const __m128i in = _mm_loadu_si128((__m128i*)&argb_data[i]);
+    const __m128i in_00g0 = _mm_and_si128(in, mask);     // 00g0|00g0|...
+    const __m128i in_0g00 = _mm_slli_epi32(in_00g0, 8);  // 0g00|0g00|...
+    const __m128i in_000g = _mm_srli_epi32(in_00g0, 8);  // 000g|000g|...
+    const __m128i in_0g0g = _mm_or_si128(in_0g00, in_000g);
+    const __m128i out = _mm_sub_epi8(in, in_0g0g);
+    _mm_storeu_si128((__m128i*)&argb_data[i], out);
+  }
+  // fallthrough and finish off with plain-C
+  for (; i < num_pixs; ++i) {
+    const uint32_t argb = argb_data[i];
+    const uint32_t green = (argb >> 8) & 0xff;
+    const uint32_t new_r = (((argb >> 16) & 0xff) - green) & 0xff;
+    const uint32_t new_b = ((argb & 0xff) - green) & 0xff;
+    argb_data[i] = (argb & 0xff00ff00) | (new_r << 16) | new_b;
+  }
+}
+
+static void AddGreenToBlueAndRedSSE2(uint32_t* data, const uint32_t* data_end) {
+  const __m128i mask = _mm_set1_epi32(0x0000ff00);
+  for (; data + 4 < data_end; data += 4) {
+    const __m128i in = _mm_loadu_si128((__m128i*)data);
+    const __m128i in_00g0 = _mm_and_si128(in, mask);     // 00g0|00g0|...
+    const __m128i in_0g00 = _mm_slli_epi32(in_00g0, 8);  // 0g00|0g00|...
+    const __m128i in_000g = _mm_srli_epi32(in_00g0, 8);  // 000g|000g|...
+    const __m128i in_0g0g = _mm_or_si128(in_0g00, in_000g);
+    const __m128i out = _mm_add_epi8(in, in_0g0g);
+    _mm_storeu_si128((__m128i*)data, out);
+  }
+  // fallthrough and finish off with plain-C
+  while (data < data_end) {
+    const uint32_t argb = *data;
+    const uint32_t green = ((argb >> 8) & 0xff);
+    uint32_t red_blue = (argb & 0x00ff00ffu);
+    red_blue += (green << 16) | green;
+    red_blue &= 0x00ff00ffu;
+    *data++ = (argb & 0xff00ff00u) | red_blue;
+  }
+}
+
+extern void VP8LDspInitSSE2(void);
+
+void VP8LDspInitSSE2(void) {
+  VP8LClampedAddSubtractFull = ClampedAddSubtractFullSSE2;
+  VP8LClampedAddSubtractHalf = ClampedAddSubtractHalfSSE2;
+  VP8LSelect = SelectSSE2;
+  VP8LSubtractGreenFromBlueAndRed = SubtractGreenFromBlueAndRedSSE2;
+  VP8LAddGreenToBlueAndRed = AddGreenToBlueAndRedSSE2;
+}
+#endif
+//------------------------------------------------------------------------------
+
+VP8LPredClampedAddSubFunc VP8LClampedAddSubtractFull;
+VP8LPredClampedAddSubFunc VP8LClampedAddSubtractHalf;
+VP8LPredSelectFunc VP8LSelect;
+VP8LSubtractGreenFromBlueAndRedFunc VP8LSubtractGreenFromBlueAndRed;
+VP8LAddGreenToBlueAndRedFunc VP8LAddGreenToBlueAndRed;
+
+void VP8LDspInit(void) {
+  VP8LClampedAddSubtractFull = ClampedAddSubtractFull;
+  VP8LClampedAddSubtractHalf = ClampedAddSubtractHalf;
+  VP8LSelect = Select;
+  VP8LSubtractGreenFromBlueAndRed = SubtractGreenFromBlueAndRed;
+  VP8LAddGreenToBlueAndRed = AddGreenToBlueAndRed;
+
+  // If defined, use CPUInfo() to overwrite some pointers with faster versions.
+  if (VP8GetCPUInfo != NULL) {
+#if defined(WEBP_USE_SSE2)
+    if (VP8GetCPUInfo(kSSE2)) {
+      VP8LDspInitSSE2();
+    }
+#endif
   }
 }
 

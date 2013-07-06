@@ -1,8 +1,10 @@
 // Copyright 2012 Google Inc. All Rights Reserved.
 //
-// This code is licensed under the same terms as WebM:
-//  Software License Agreement:  http://www.webmproject.org/license/software/
-//  Additional IP Rights Grant:  http://www.webmproject.org/license/additional/
+// Use of this source code is governed by a BSD-style license
+// that can be found in the COPYING file in the root of the source
+// tree. An additional intellectual property rights grant can be found
+// in the file PATENTS. All contributing project authors may
+// be found in the AUTHORS file in the root of the source tree.
 // -----------------------------------------------------------------------------
 //
 //  WebP container demux.
@@ -27,7 +29,7 @@ extern "C" {
 
 #define DMUX_MAJ_VERSION 0
 #define DMUX_MIN_VERSION 1
-#define DMUX_REV_VERSION 0
+#define DMUX_REV_VERSION 1
 
 typedef struct {
   size_t start_;        // start location of the data
@@ -595,6 +597,25 @@ static int IsValidSimpleFormat(const WebPDemuxer* const dmux) {
   return 1;
 }
 
+// If 'exact' is true, check that the image resolution matches the canvas.
+// If 'exact' is false, check that the x/y offsets do not exceed the canvas.
+static int CheckFrameBounds(const Frame* const frame, int exact,
+                            int canvas_width, int canvas_height) {
+  if (exact) {
+    if (frame->x_offset_ != 0 || frame->y_offset_ != 0) {
+      return 0;
+    }
+    if (frame->width_ != canvas_width || frame->height_ != canvas_height) {
+      return 0;
+    }
+  } else {
+    if (frame->x_offset_ < 0 || frame->y_offset_ < 0) return 0;
+    if (frame->width_ + frame->x_offset_ > canvas_width) return 0;
+    if (frame->height_ + frame->y_offset_ > canvas_height) return 0;
+  }
+  return 1;
+}
+
 static int IsValidExtendedFormat(const WebPDemuxer* const dmux) {
   const int has_fragments = !!(dmux->feature_flags_ & FRAGMENTS_FLAG);
   const int has_frames = !!(dmux->feature_flags_ & ANIMATION_FLAG);
@@ -618,7 +639,6 @@ static int IsValidExtendedFormat(const WebPDemuxer* const dmux) {
 
       if (!has_fragments && f->is_fragment_) return 0;
       if (!has_frames && f->frame_num_ > 1) return 0;
-      if (f->x_offset_ < 0 || f->y_offset_ < 0) return 0;
       if (f->complete_) {
         if (alpha->size_ == 0 && image->size_ == 0) return 0;
         // Ensure alpha precedes image bitstream.
@@ -638,6 +658,12 @@ static int IsValidExtendedFormat(const WebPDemuxer* const dmux) {
         }
         // There shouldn't be any frames after an incomplete one.
         if (f->next_ != NULL) return 0;
+      }
+
+      if (f->width_ > 0 && f->height_ > 0 &&
+          !CheckFrameBounds(f, !(has_frames || has_fragments),
+                            dmux->canvas_width_, dmux->canvas_height_)) {
+        return 0;
       }
 
       fragment_count += f->is_fragment_;

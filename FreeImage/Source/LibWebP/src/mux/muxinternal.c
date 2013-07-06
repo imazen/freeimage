@@ -1,8 +1,10 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
 //
-// This code is licensed under the same terms as WebM:
-//  Software License Agreement:  http://www.webmproject.org/license/software/
-//  Additional IP Rights Grant:  http://www.webmproject.org/license/additional/
+// Use of this source code is governed by a BSD-style license
+// that can be found in the COPYING file in the root of the source
+// tree. An additional intellectual property rights grant can be found
+// in the file PATENTS. All contributing project authors may
+// be found in the AUTHORS file in the root of the source tree.
 // -----------------------------------------------------------------------------
 //
 // Internal objects and utils for mux.
@@ -189,15 +191,6 @@ WebPChunk* ChunkDelete(WebPChunk* const chunk) {
 //------------------------------------------------------------------------------
 // Chunk serialization methods.
 
-size_t ChunksListDiskSize(const WebPChunk* chunk_list) {
-  size_t size = 0;
-  while (chunk_list != NULL) {
-    size += ChunkDiskSize(chunk_list);
-    chunk_list = chunk_list->next_;
-  }
-  return size;
-}
-
 static uint8_t* ChunkEmit(const WebPChunk* const chunk, uint8_t* dst) {
   const size_t chunk_size = chunk->data_.size;
   assert(chunk);
@@ -242,6 +235,19 @@ WebPMuxImage* MuxImageRelease(WebPMuxImage* const wpi) {
 //------------------------------------------------------------------------------
 // MuxImage search methods.
 
+// Get a reference to appropriate chunk list within an image given chunk tag.
+static WebPChunk** GetChunkListFromId(const WebPMuxImage* const wpi,
+                                      WebPChunkId id) {
+  assert(wpi != NULL);
+  switch (id) {
+    case WEBP_CHUNK_ANMF:
+    case WEBP_CHUNK_FRGM:  return (WebPChunk**)&wpi->header_;
+    case WEBP_CHUNK_ALPHA: return (WebPChunk**)&wpi->alpha_;
+    case WEBP_CHUNK_IMAGE: return (WebPChunk**)&wpi->img_;
+    default: return NULL;
+  }
+}
+
 int MuxImageCount(const WebPMuxImage* wpi_list, WebPChunkId id) {
   int count = 0;
   const WebPMuxImage* current;
@@ -249,7 +255,7 @@ int MuxImageCount(const WebPMuxImage* wpi_list, WebPChunkId id) {
     if (id == WEBP_CHUNK_NIL) {
       ++count;  // Special case: count all images.
     } else {
-      const WebPChunk* const wpi_chunk = *MuxImageGetListFromId(current, id);
+      const WebPChunk* const wpi_chunk = *GetChunkListFromId(current, id);
       if (wpi_chunk != NULL) {
         const WebPChunkId wpi_chunk_id = ChunkGetIdFromTag(wpi_chunk->tag_);
         if (wpi_chunk_id == id) ++count;  // Count images with a matching 'id'.
@@ -318,12 +324,6 @@ WebPMuxImage* MuxImageDelete(WebPMuxImage* const wpi) {
   return next;
 }
 
-void MuxImageDeleteAll(WebPMuxImage** const wpi_list) {
-  while (*wpi_list != NULL) {
-    *wpi_list = MuxImageDelete(*wpi_list);
-  }
-}
-
 WebPMuxError MuxImageDeleteNth(WebPMuxImage** wpi_list, uint32_t nth) {
   assert(wpi_list);
   if (!SearchImageToGetOrDelete(wpi_list, nth, &wpi_list)) {
@@ -360,15 +360,6 @@ size_t MuxImageDiskSize(const WebPMuxImage* const wpi) {
   return size;
 }
 
-size_t MuxImageListDiskSize(const WebPMuxImage* wpi_list) {
-  size_t size = 0;
-  while (wpi_list != NULL) {
-    size += MuxImageDiskSize(wpi_list);
-    wpi_list = wpi_list->next_;
-  }
-  return size;
-}
-
 // Special case as ANMF/FRGM chunk encapsulates other image chunks.
 static uint8_t* ChunkEmitSpecial(const WebPChunk* const header,
                                  size_t total_size, uint8_t* dst) {
@@ -397,14 +388,6 @@ uint8_t* MuxImageEmit(const WebPMuxImage* const wpi, uint8_t* dst) {
   }
   if (wpi->alpha_ != NULL) dst = ChunkEmit(wpi->alpha_, dst);
   if (wpi->img_ != NULL) dst = ChunkEmit(wpi->img_, dst);
-  return dst;
-}
-
-uint8_t* MuxImageListEmit(const WebPMuxImage* wpi_list, uint8_t* dst) {
-  while (wpi_list != NULL) {
-    dst = MuxImageEmit(wpi_list, dst);
-    wpi_list = wpi_list->next_;
-  }
   return dst;
 }
 

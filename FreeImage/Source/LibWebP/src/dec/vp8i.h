@@ -1,8 +1,10 @@
 // Copyright 2010 Google Inc. All Rights Reserved.
 //
-// This code is licensed under the same terms as WebM:
-//  Software License Agreement:  http://www.webmproject.org/license/software/
-//  Additional IP Rights Grant:  http://www.webmproject.org/license/additional/
+// Use of this source code is governed by a BSD-style license
+// that can be found in the COPYING file in the root of the source
+// tree. An additional intellectual property rights grant can be found
+// in the file PATENTS. All contributing project authors may
+// be found in the AUTHORS file in the root of the source tree.
 // -----------------------------------------------------------------------------
 //
 // VP8 decoder: internal header.
@@ -28,7 +30,7 @@ extern "C" {
 // version numbers
 #define DEC_MAJ_VERSION 0
 #define DEC_MIN_VERSION 3
-#define DEC_REV_VERSION 0
+#define DEC_REV_VERSION 1
 
 #define ONLY_KEYFRAME_CODE      // to remove any code related to P-Frames
 
@@ -151,17 +153,15 @@ typedef struct {
 // Informations about the macroblocks.
 
 typedef struct {  // filter specs
-  unsigned int f_level_:6;      // filter strength: 0..63
-  unsigned int f_ilevel_:6;     // inner limit: 1..63
-  unsigned int f_inner_:1;      // do inner filtering?
-  unsigned int pad_:19;
+  uint8_t f_level_;      // filter strength: 0..63
+  uint8_t f_ilevel_;     // inner limit: 1..63
+  uint8_t f_inner_;      // do inner filtering?
+  uint8_t pad_;          // mostly needed for struct aligning on ARM
 } VP8FInfo;
 
-typedef struct {  // used for syntax-parsing
-  unsigned int nz_:24;       // non-zero AC/DC coeffs (24bit)
-  unsigned int dc_nz_:1;     // non-zero DC coeffs
-  unsigned int skip_:1;      // block type
-  unsigned int pad_:6;
+typedef struct {  // Top/Left Contexts used for syntax-parsing
+  uint8_t nz_;        // non-zero AC/DC coeffs (4bit for luma + 4bit for chroma)
+  uint8_t nz_dc_;     // non-zero DC coeff (1bit)
 } VP8MB;
 
 // Dequantization matrices
@@ -169,6 +169,20 @@ typedef int quant_t[2];      // [DC / AC].  Can be 'uint16_t[2]' too (~slower).
 typedef struct {
   quant_t y1_mat_, y2_mat_, uv_mat_;
 } VP8QuantMatrix;
+
+// Data needed to reconstruct a macroblock
+typedef struct {
+  int16_t coeffs_[384];   // 384 coeffs = (16+4+4) * 4*4
+  uint8_t is_i4x4_;       // true if intra4x4
+  uint8_t imodes_[16];    // one 16x16 mode (#0) or sixteen 4x4 modes
+  uint8_t uvmode_;        // chroma prediction mode
+  // bit-wise info about the content of each sub-4x4 blocks: there are 16 bits
+  // for luma (bits #0->#15), then 4 bits for chroma-u (#16->#19) and 4 bits for
+  // chroma-v (#20->#23), each corresponding to one 4x4 block in decoding order.
+  // If the bit is set, the 4x4 block contains some non-zero coefficients.
+  uint32_t non_zero_;
+  uint32_t non_zero_ac_;
+} VP8MBData;
 
 // Persistent information needed by the parallel processing
 typedef struct {
@@ -178,6 +192,11 @@ typedef struct {
   VP8FInfo* f_info_;  // filter strengths
   VP8Io io_;          // copy of the VP8Io to pass to put()
 } VP8ThreadContext;
+
+// Saved top samples, per macroblock. Fits into a cache-line.
+typedef struct {
+  uint8_t y[16], u[8], v[8];
+} VP8TopSamples;
 
 //------------------------------------------------------------------------------
 // VP8Decoder: the main opaque structure handed over to user
@@ -236,17 +255,17 @@ struct VP8Decoder {
 #endif
 
   // Boundary data cache and persistent buffers.
-  uint8_t* intra_t_;     // top intra modes values: 4 * mb_w_
-  uint8_t  intra_l_[4];  // left intra modes values
-  uint8_t* y_t_;         // top luma samples: 16 * mb_w_
-  uint8_t* u_t_, *v_t_;  // top u/v samples: 8 * mb_w_ each
+  uint8_t* intra_t_;      // top intra modes values: 4 * mb_w_
+  uint8_t  intra_l_[4];   // left intra modes values
 
-  VP8MB* mb_info_;       // contextual macroblock info (mb_w_ + 1)
-  VP8FInfo* f_info_;     // filter strength info
-  uint8_t* yuv_b_;       // main block for Y/U/V (size = YUV_SIZE)
-  int16_t* coeffs_;      // 384 coeffs = (16+8+8) * 4*4
+  uint8_t segment_;       // segment of the currently parsed block
+  VP8TopSamples* yuv_t_;  // top y/u/v samples
 
-  uint8_t* cache_y_;     // macroblock row for storing unfiltered samples
+  VP8MB* mb_info_;        // contextual macroblock info (mb_w_ + 1)
+  VP8FInfo* f_info_;      // filter strength info
+  uint8_t* yuv_b_;        // main block for Y/U/V (size = YUV_SIZE)
+
+  uint8_t* cache_y_;      // macroblock row for storing unfiltered samples
   uint8_t* cache_u_;
   uint8_t* cache_v_;
   int cache_y_stride_;
@@ -258,29 +277,21 @@ struct VP8Decoder {
 
   // Per macroblock non-persistent infos.
   int mb_x_, mb_y_;       // current position, in macroblock units
-  uint8_t is_i4x4_;       // true if intra4x4
-  uint8_t imodes_[16];    // one 16x16 mode (#0) or sixteen 4x4 modes
-  uint8_t uvmode_;        // chroma prediction mode
-  uint8_t segment_;       // block's segment
-
-  // bit-wise info about the content of each sub-4x4 blocks: there are 16 bits
-  // for luma (bits #0->#15), then 4 bits for chroma-u (#16->#19) and 4 bits for
-  // chroma-v (#20->#23), each corresponding to one 4x4 block in decoding order.
-  // If the bit is set, the 4x4 block contains some non-zero coefficients.
-  uint32_t non_zero_;
-  uint32_t non_zero_ac_;
+  VP8MBData* mb_data_;    // reconstruction data
 
   // Filtering side-info
   int filter_type_;                          // 0=off, 1=simple, 2=complex
   int filter_row_;                           // per-row flag
   VP8FInfo fstrengths_[NUM_MB_SEGMENTS][2];  // precalculated per-segment/type
 
-  // extensions
-  const uint8_t* alpha_data_;   // compressed alpha data (if present)
+  // Alpha
+  struct ALPHDecoder* alph_dec_;  // alpha-plane decoder object
+  const uint8_t* alpha_data_;     // compressed alpha data (if present)
   size_t alpha_data_size_;
   int is_alpha_decoded_;  // true if alpha_data_ is decoded in alpha_plane_
   uint8_t* alpha_plane_;        // output. Persistent, contains the whole data.
 
+  // extensions
   int layer_colorspace_;
   const uint8_t* layer_data_;   // compressed layer data (if present)
   size_t layer_data_size_;
@@ -304,7 +315,7 @@ void VP8ParseQuant(VP8Decoder* const dec);
 // in frame.c
 int VP8InitFrame(VP8Decoder* const dec, VP8Io* io);
 // Predict a block and add residual
-void VP8ReconstructBlock(VP8Decoder* const dec);
+void VP8ReconstructBlock(const VP8Decoder* const dec);
 // Call io->setup() and finish setting up scan parameters.
 // After this call returns, one must always call VP8ExitCritical() with the
 // same parameters. Both functions should be used in pair. Returns VP8_STATUS_OK

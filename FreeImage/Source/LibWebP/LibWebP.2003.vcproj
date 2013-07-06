@@ -290,6 +290,9 @@
 				Name="dec"
 				Filter="">
 				<File
+					RelativePath=".\src\dec\alphai.h">
+				</File>
+				<File
 					RelativePath=".\src\dec\decode_vp8.h">
 				</File>
 				<File
