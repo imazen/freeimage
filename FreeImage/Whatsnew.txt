@@ -15,6 +15,7 @@ Month day, 2013 - 3.16.0
 ! FreeImage now uses LibWebP 0.3.1 (GIT patch 2013-07-03)
 + [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to JP2/J2K plugins
 + [Herve Drolon] added loading & writing support for the WebP image format (also support the FIF_LOAD_NOPIXELS flag)
++ [Gaël Zimmermann] added basic support for BMP v4, v5 in BMP plugin (useful for drag and drop from another application such as Firefox)
 * [Herve Drolon] fixed FreeImage_CloneTag behavior with ASCII data handling (regression that appeared in 3.15.2, affect metadata writing)
 * [Carsten Klein] ICO plugin: avoid using the AND mask when loading a 32-bit (already transparent) icon
 * [Andreas Baumann] HDR plugin: removed a comma at end of an enumerator list
@@ -23,6 +24,7 @@ Month day, 2013 - 3.16.0
 * [Takamasa Mitsuji] FreeImage_Rescale : fixed a NULL-pointer access bug occurring for transparent images with a linear palette
 * [Herve Drolon] fixed PSD parser when reading PSD files with corrupted resources
 * [Herve Drolon] fixed TIFF plugin truncating metadata tag on loading if type is ASCII and it's value is of variable size (TIFF_VARIABLE) 
+* [Herve Drolon] fixed loading of TGA 8-bit files with a palette size greater that 256
 
 October 27th, 2012 - 3.15.4
 ! FreeImage now uses LibPNG 1.5.13
