@@ -731,8 +731,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					// calculate the color map size
 					csize = header.cm_length * header.cm_size / 8;
+					
+					// read the color map
 					BYTE *cmap = (BYTE*)malloc(csize * sizeof(BYTE));
-
+					if (cmap == NULL) {
+						throw FI_MSG_ERROR_DIB_MEMORY;
+					}
 					io->read_proc(cmap, sizeof(BYTE), csize, handle);
 
 					// build the palette
@@ -740,8 +744,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					switch (header.cm_size) {
 						case 16: {
 							WORD *rgb555 = (WORD*)&cmap[0];
+							unsigned start = (unsigned)header.cm_first_entry;
+							unsigned stop = MIN((unsigned)256, (unsigned)header.cm_length);
 
-							for (count = header.cm_first_entry; count < header.cm_length; count++) {
+							for (count = start; count < stop; count++) {
 								palette[count].rgbRed   = (BYTE)((((*rgb555 & FI16_555_RED_MASK) >> FI16_555_RED_SHIFT) * 0xFF) / 0x1F);
 								palette[count].rgbGreen = (BYTE)((((*rgb555 & FI16_555_GREEN_MASK) >> FI16_555_GREEN_SHIFT) * 0xFF) / 0x1F);
 								palette[count].rgbBlue  = (BYTE)((((*rgb555 & FI16_555_BLUE_MASK) >> FI16_555_BLUE_SHIFT) * 0xFF) / 0x1F);
@@ -752,8 +758,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						case 24: {
 							FILE_BGR *bgr = (FILE_BGR*)&cmap[0];
+							unsigned start = (unsigned)header.cm_first_entry;
+							unsigned stop = MIN((unsigned)256, (unsigned)header.cm_length);
 
-							for (count = header.cm_first_entry; count < header.cm_length; count++) {
+							for (count = start; count < stop; count++) {
 								palette[count].rgbBlue  = bgr->b;
 								palette[count].rgbGreen = bgr->g;
 								palette[count].rgbRed   = bgr->r;
@@ -769,8 +777,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							memset(trns, 0xFF, 256);
 
 							FILE_BGRA *bgra = (FILE_BGRA*)&cmap[0];
+							unsigned start = (unsigned)header.cm_first_entry;
+							unsigned stop = MIN((unsigned)256, (unsigned)header.cm_length);
 
-							for (count = header.cm_first_entry; count < header.cm_length; count++) {
+							for (count = start; count < stop; count++) {
 								palette[count].rgbBlue  = bgra->b;
 								palette[count].rgbGreen = bgra->g;
 								palette[count].rgbRed   = bgra->r;
