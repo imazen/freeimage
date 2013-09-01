@@ -73,10 +73,10 @@ class DllDef LibRaw_abstract_datastream
 
     /* subfile parsing not implemented in base class */
     virtual const char* fname(){ return NULL;};
-#if (defined(_MSC_VER) && _MSC_VER > 1310)
+#if defined(WIN32) && !defined(__MINGW32__)
 	virtual const wchar_t* wfname(){ return NULL;};
 	virtual int         subfile_open(const wchar_t*) { return -1;}
-#endif // _MSC_VER
+#endif
     virtual int         subfile_open(const char*) { return -1;}
     virtual void        subfile_close() { }
 
@@ -106,9 +106,9 @@ class DllDef  LibRaw_file_datastream: public LibRaw_abstract_datastream
   public:
     virtual     ~LibRaw_file_datastream();
                 LibRaw_file_datastream(const char *fname);
-#if (defined(_MSC_VER) && _MSC_VER > 1310)
+#if defined(WIN32) && !defined(__MINGW32__)
                 LibRaw_file_datastream(const wchar_t *fname);
-#endif // _MSC_VER
+#endif
     virtual void        *make_jas_stream();
     virtual int         jpeg_src(void *jpegdata);
     virtual int         valid();
@@ -125,10 +125,10 @@ class DllDef  LibRaw_file_datastream: public LibRaw_abstract_datastream
     virtual char*       gets(char *str, int sz); 
     virtual int         scanf_one(const char *fmt, void*val); 
     virtual const char* fname();
-#if (defined(_MSC_VER) && _MSC_VER > 1310)
+#if  defined(WIN32) && !defined(__MINGW32__)
     virtual const wchar_t* wfname();
     virtual int         subfile_open(const wchar_t *fn);
-#endif // _MSC_VER
+#endif
     virtual int         subfile_open(const char *fn);
     virtual void        subfile_close();
 };
@@ -167,9 +167,9 @@ class DllDef LibRaw_bigfile_datastream : public LibRaw_abstract_datastream
 {
   public:
                         LibRaw_bigfile_datastream(const char *fname);
-#if (defined(_MSC_VER) && _MSC_VER > 1310)
+#if defined(WIN32) && !defined(__MINGW32__)
 			LibRaw_bigfile_datastream(const wchar_t *fname);
-#endif // _MSC_VER
+#endif
     virtual             ~LibRaw_bigfile_datastream();
     virtual int         valid();
     virtual int         jpeg_src(void *jpegdata);
@@ -183,10 +183,10 @@ class DllDef LibRaw_bigfile_datastream : public LibRaw_abstract_datastream
     virtual char*       gets(char *str, int sz);
     virtual int         scanf_one(const char *fmt, void*val);
     virtual const char *fname();
-#if (defined(_MSC_VER) && _MSC_VER > 1310)
+#if defined(WIN32) && !defined(__MINGW32__)
     virtual const wchar_t* wfname();
     virtual int         subfile_open(const wchar_t *fn);
-#endif // _MSC_VER
+#endif
     virtual int         subfile_open(const char *fn);
     virtual void        subfile_close();
     virtual int         get_char()
