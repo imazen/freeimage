@@ -1894,6 +1894,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if(buf == NULL) {
 					throw FI_MSG_ERROR_MEMORY;
 				}
+				memset(buf, 0, TIFFStripSize(tif) * sizeof(BYTE));
 				
 				BOOL bThrowMessage = FALSE;
 				
