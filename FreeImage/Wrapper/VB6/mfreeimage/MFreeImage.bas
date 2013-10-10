@@ -34,756 +34,6 @@ Attribute VB_Name = "MFreeImage"
 
 Option Explicit
 
-'--------------------------------------------------------------------------------
-' General notes on implementation and design
-'--------------------------------------------------------------------------------
-
-' General:
-
-' Most of the pointer type parameters used in the FreeImage API are actually
-' declared as Long in VB. That is also true for return values. 'Out' parameters
-' are declared ByRef, so they can receive the provided address of the pointer.
-' 'In' parameters are declared ByVal since in VB the Long variable is not a
-' pointer type but contains the address of the pointer.
-
-
-' Functions returning a special type:
-
-' Some of the following external function declarations of the FreeImage 3 functions
-' are declared Private. Additionally the token 'Int' is appended to the VB function
-' name, what means 'Internal' to avoid naming confusion. All of these return a value
-' of a certain type that can't be used with a declared function in VB directly but
-' would need the function to be declared in a type library. Since this wrapper module
-' should not depend on a compile time type library, these functions require some extra
-' work to be done and also a VB wrapper function to make them look like the C/C++
-' function.
-
-
-' Functions returning Strings:
-
-' Some of the declared FreeImage functions are defined as 'const char *' in C/C++
-' and so actually return a string pointer. Without using a type library for declaring
-' these functions, in VB it is impossible to declare these functions to return a
-' VB String type. So each of these functions is wrapped by a VB implemented function
-' named correctly according to the FreeImage API, actually returning a 'real' VB String.
-
-
-' Functions returning Booleans:
-
-' A Boolean is a numeric 32 bit value in both C/C++ and VB. In C/C++ TRUE is defined
-' as 1 whereas in VB True is -1 (all bits set). When a function is declared as 'Boolean'
-' in VB, the return value (all 32 bits) of the called function is just used "as is" and
-' maybe assigned to a VB boolean variable. A Boolean in VB is 'False' when the numeric
-' value is NULL (0) and 'True' in any other case. So, at a first glance, everything
-' would be great since both numeric values -1 (VB True) and 1 (C/C++ TRUE) are actually
-' 'True' in VB.
-' But, if you have a VB variable (or a function returning a Boolean) with just some bits
-' set and use the VB 'Not' operator, the result is not what you would expect. In this
-' case, if bTest is True, (Not bTest) is also True. The 'Not' operator just toggles all
-' bits by XOR-ing the value with -1. So, the result is not so surprisingly any more:
-' The C/C++ TRUE value is 0...0001. When all bits are XORed with 1, the result is
-' 1...1110 what is also not NULL (0) so this is still 'True' in VB.
-' The resolution is to convert these return values into real VB Booleans in a wrapper
-' function, one for each declared FreeImage function. Therefore each C/C++ BOOL
-' function is declared Private as xxxInt(...). A Public Boolean wrapper function
-' xxx(...) returns a real Boolean with 'xxx = (xxxInt(...) = 1)'.
-
-
-' Extended and derived functions:
-
-' Some of the functions are additionally provided in an extended, call it a more VB
-' friendly version, named '...Ex'. For example look at the 'FreeImage_GetPaletteEx'
-' function. Most of them are dealing with arrays and so actually return a VB style
-' array of correct type.
-
-' The wrapper also includes some derived functions that should make life easier for
-' not only a VB programmer.
-
-' Better VB interoperability is given by offering conversion between DIBs and
-' VB Picture objects. See the FreeImage_CreateFromOlePicture and
-' FreeImage_GetOlePicture functions.
-
-' Both known VB functions LoadPicture() and SavePicture() are provided in extended
-' versions calles LoadPictureEx() and SavePictureEx() offering the FreeImage 3´s
-' image file types.
-
-' The FreeImage 3 error handling is provided in VB after calling the VB specific
-' function FreeImage_InitErrorHandler()
-
-
-' Enumerations:
-
-' All of the enumaration members are additionally 'declared' as constants in a
-' conditional compiler directive '#If...#Then' block that is actually unreachable.
-' For example see:
-'
-' Public Enum FREE_IMAGE_QUANTIZE
-'    FIQ_WUQUANT = 0           ' Xiaolin Wu color quantization algorithm
-'    FIQ_NNQUANT = 1           ' NeuQuant neural-net quantization algorithm by Anthony Dekker
-' End Enum
-' #If False Then
-'    Const FIQ_WUQUANT = 0
-'    Const FIQ_NNQUANT = 1
-' #End If
-'
-' Since this module is supposed to be used directly in VB projects rather than in
-' compiled form (mybe through an ActiveX-DLL), this is for tweaking some ugly VB
-' behaviour regarding enumerations. Enum members are automatically adjusted in case
-' by the VB IDE whenever you type these members in wrong case. Since these are also
-' constants now, they are no longer adjusted to wrong case but always corrected
-' according to the definition of the constant. As the expression '#If False Then'
-' actually never comes true, these constants are not really defined either when running
-' in the VB IDE nor in compiled form.
-
-
-'--------------------------------------------------------------------------------
-' ToDo and known issues (unordered and with no priority)
-'--------------------------------------------------------------------------------
-
-' ToDo: more inline documentation for mask image creation and icon functions
-'       needed
-
-'--------------------------------------------------------------------------------
-' Change Log
-'--------------------------------------------------------------------------------
-
-'* : fixed
-'- : removed
-'! : changed
-'+ : added
-'
-'March 14, 2013 - 2.19 (3.15.4)
-'* [Jørgen Hartmann] fixed coordinate calculation in FreeImage_PaintDCEx applied for horizontal and/or vertical mirroring, which now works correctly for all XDst and YDst coordinates.
-'
-'November 13, 2012 - 2.18 (3.15.4)
-'+ [Carsten Klein] added function declaration FreeImage_HasRGBMasksInt and a real VB Boolean returning function FreeImage_HasRGBMasks.
-'- [Carsten Klein] removed members red, green and blue from BITMAPINFOHEADER struct: these were intended for debugging purposes only and could couse a GPF in FreeImage_GetInfoHeaderEx.
-'* [Carsten Klein] fixed a bug in FreeImage_GetPictureData introduced in version 2.17.
-'* [Carsten Klein] fixed a bug with declaration of FreeImage_Rotate: added default value 0 for Optional ByRef ... As Any parameter 'Color'.
-'
-'October 1, 2012 - 2.17 (3.15.4)
-'- [Carsten Klein] removed temporary workaround for 16-bit standard type bitmaps introduced in version 2.15, which temporarily stored RGB masks directly after the BITMAPINFO structure, when creating a HBITMAP.
-'* [Carsten Klein] fixed a potential overflow bug in both pNormalizeRational and pNormalizeSRational: these now do nothing if any of numerator and denominator is either 1 or 0 (zero).
-'+ [Carsten Klein] added load flag JPEG_GREYSCALE as well as the enum constant FILO_JPEG_GREYSCALE.
-'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL to 4 to match current version 3.15.4
-'
-'March 19, 2012 - 2.16 (3.15.3)
-'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL to 3 to match current version 3.15.3
-'
-'March 12, 2012 - 2.15 (3.15.2)
-'+ [Carsten Klein] added function FreeImage_ConvertToUINT16.
-'+ [Carsten Klein] added function FreeImage_ConvertToRGB16.
-'+ [Carsten Klein] added function FreeImage_GetThumbnail.
-'+ [Carsten Klein] added function declaration FreeImage_SetThumbnailInt and a real VB Boolean returning function FreeImage_SetThumbnail.
-'+ [Carsten Klein] added RAW_HALFSIZE load flag as well as the enum constant FILO_RAW_HALFSIZE.
-'+ [Carsten Klein] added wrapper function FreeImage_GetPictureData, which returns a byte array suitable for assigning to an Office image control's PictureData property.
-'+ [Carsten Klein] added wrapper function FreeImage_CreateFromPictureData, which creates a FreeImage bitmap from a PictureData byte array.
-'+ [Carsten Klein] added new save flag JPEG_BASELINE (also added FISO_JPEG_BASELINE to enumeration FREE_IMAGE_SAVE_OPTIONS).
-'+ [Carsten Klein] added a workaround for providing valid BITMAPINFO structures for non 555 16-bpp images to Windows API functions like CreateDIBSection, CreateDIBBitmap, StretchDIBits or SetDIBitsToDevice.
-'! [Carsten Klein] changed constants FREEIMAGE_MINOR_VERSION and FREEIMAGE_RELEASE_SERIAL: set to 15 and 2 respectively to match current version 3.15.2
-'
-'March 13, 2011 - 2.14 (3.14.1)
-'* [Glenn Thorpe] fixed a typo error with the call to FreeImage_HasPixels inside FreeImage_CreateMask.
-'
-'August 11, 2010 - 2.13 (3.14.1)
-'+ [Carsten Klein] added PSD load flags PSD_CMYK and PSD_LAB as well as the enum constants FILO_PSD_CYMK and FILO_PSD_LAB.
-'+ [Carsten Klein] added TIFF_LOGLUV save flag as well as the enum constant FISO_TIFF_LOGLUV.
-'
-'July 5, 2010 - 2.12 (3.14.1)
-'+ [Carsten Klein] added support for the new EXIF_RAW metadata model by adding enum constant FIMD_EXIF_RAW.
-'+ [Carsten Klein] added the new FIF_LOAD_NOPIXELS flag as well as the enum constant FILO_LOAD_NOPIXELS.
-'+ [Carsten Klein] added function declaration FreeImage_HasPixelsInt and a real VB Boolean returning function FreeImage_HasPixels.
-'+ [Carsten Klein] added function declaration FreeImage_FIFSupportsNoPixelsInt and a real VB Boolean returning function FreeImage_FIFSupportsNoPixels.
-'
-'June 20, 2010 - 2.11 (3.14.0)
-'+ [Carsten Klein] added new save flag JPEG_OPTIMIZE (also added FISO_JPEG_OPTIMIZE to enumeration FREE_IMAGE_SAVE_OPTIONS).
-'
-'April 20, 2010 - 2.10 (3.14.0)
-'+ [Carsten Klein] added new save flag TARGA_SAVE_RLE (also added FISO_TARGA_SAVE_RLE to enumeration FREE_IMAGE_SAVE_OPTIONS).
-'! [Carsten Klein] changed constants FREEIMAGE_MINOR_VERSION and FREEIMAGE_RELEASE_SERIAL: set to 14 and 0 respectively to match current version 3.14.0
-'+ [Carsten Klein] added function FreeImage_ConvertToFloat.
-'+ [Carsten Klein] added function FreeImage_SaveMultiBitmapToMemory.
-'+ [Carsten Klein] added wrapper functions FreeImage_SaveMultiBitmapToMemoryEx and FreeImage_SaveMultiBitmapToMemoryEx2.
-'+ [Carsten Klein] added wrapper function FreeImage_OpenMultiBitmapEx, which only opens existing files, but has support for automatic image format detection.
-'+ [Carsten Klein] added wrapper function FreeImage_CreateMultiBitmapEx, which only creates new (empty) multi-page bitmaps with support for automatic image format detection.
-'* [Carsten Klein] fixed a bug in FreeImage_LoadEx: now uses the file specified for format detection rather than the filename extension.
-'+ [Carsten Klein] improved error messages in function FreeImage_LoadEx.
-'* [Carsten Klein] fixed a bug in FreeImage_AcquireMemoryEx: no more crashes when passing an uninitialized array.
-'+ [Carsten Klein] added thin wrapper functions, enabling proper handling of Boolean parameters:
-'+                 added wrapper function FreeImage_OpenMultiBitmap
-'+                 added wrapper function FreeImage_UnlockPage
-'+                 added wrapper function FreeImage_RotateEx
-'+                 added wrapper function FreeImage_MakeThumbnail
-'+                 added wrapper function FreeImage_GetAdjustColorsLookupTable
-'+                 added wrapper function FreeImage_ApplyColorMapping
-'+                 added wrapper function FreeImage_SwapColors
-'+                 added wrapper function FreeImage_SwapColorsByLong
-'+                 added wrapper function FreeImage_ApplyIndexMapping
-'+                 added wrapper function FreeImage_SetTransparent
-'+                 added wrapper function FreeImage_ConvertFromRawBits
-'+                 added wrapper function FreeImage_ConvertToRawBits
-'+                 added wrapper function FreeImage_ConvertToStandardType
-'+                 added wrapper function FreeImage_ConvertToType
-'! [Carsten Klein] changed the parameter names of most functions.
-'! [Carsten Klein] changed signature of functions FreeImage_ConvertFromRawBits and FreeImage_ConvertToRawBits: 'ByRef Bits As Long' is now 'ByVal BitsPtr As Long'.
-'+ [Carsten Klein] added wrapper functions FreeImage_ConvertFromRawBitsEx and FreeImage_ConvertToRawBitsEx.
-'* [Carsten Klein] fixed a bug in declaration of function FreeImage_TmoReinhard05Ex: parameters 'Adaption' and 'ColorCorrection' are now passed by value.
-'- [Carsten Klein] removed half-implemented function FreeImage_SetChannelEx.
-'+ [Carsten Klein] added wrapper function FreeImage_SetChannelIOP.
-'- [Carsten Klein] removed needless default values of optional parameters.
-'- [Carsten Klein] removed function declaration FreeImage_CompositeByLong: replaced by declaration FreeImage_Composite.
-'! [Carsten Klein] changed function declaration FreeImage_Composite: application back color is now passed as ByRef ... As Any and so takes both RGBQUAD and Long valus.
-'+ [Carsten Klein] added wrapper function FreeImage_UnloadEx, which additionally sets the ByRef-passed Bitmap handle to zero after unloading.
-'+ [Carsten Klein] added wrapper functions ConvertColor and ConvertOleColor to convert VB-style BGR colors into RGB color values.
-'
-'February 9, 2010 - 2.9.1 (3.13.1)
-'* [Carsten Klein] fixed a bug in FreeImage_GetBackgroundColorAsLong: parameter 'bkcolor' is now properly passed ByRef.
-'
-'February 9, 2010 - 2.9 (3.13.1)
-'* [Carsten Klein] fixed a syntax typo
-'
-'February 8, 2010 - 2.8 (3.13.1)
-'* [Mike Weir] fixed a bug in function FreeImage_ApplyColorMappingEx: now properly includes all specified mapping entries
-'* [Carsten Klein] fixed a bug in function FreeImage_ApplyIndexMappingEx: now properly includes all specified mapping entries
-'* [Mike Weir] fixed a bug in function FreeImage_RescaleEx: now also rescales the image, if either the new width or height matches the image's current size
-'* [WinAnd / Carsten Klein] fixed a bug in function FreeImage_GetTransparencyTableExClone: returns an uninitialized array if there is no transparency table
-'* [WinAnd / Carsten Klein] fixed a bug in function FreeImage_SearchPalette: no longer crashes if there is no transparency table
-'
-'December 21, 2009 - 2.7 (3.13.1)
-'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.13.1
-'
-'December 18, 2009 - 2.6 (3.13.0)
-'- [Carsten Klein] removed usage of constants vbPicTypeBitmap and vbPicTypeIcon: these are not available in VBA environments like Excel, Access or Outlook.
-'
-'September 08, 2009 - 2.5 (3.13.0)
-'! [Carsten Klein] changed constant FREEIMAGE_MINOR_VERSION: set to 13 to match current version 3.13.0
-'+ [Carsten Klein] added load flag constant JPEG_EXIFROTATE and new member FILO_JPEG_EXIFROTATE to enumeration FREE_IMAGE_LOAD_OPTIONS.
-'+ [Carsten Klein] added support for the PFM image format.
-'+ [Carsten Klein] added support for the PICT and RAW image formats.
-'+ [Carsten Klein] added UNICODE functions FreeImage_JPEGTransformU and FreeImage_JPEGCropU.
-'+ [Carsten Klein] added enumeration FREE_IMAGE_COLOR_OPTIONS, which contains options to specify colors, used with FreeImage_FillBackground and FreeImage_EnlargeCanvas.
-'+ [Carsten Klein] added function FreeImage_FillBackground: although this returns BOOL in C/C++, the VB version only returns a Long.
-'+ [Carsten Klein] added wrapper functions FreeImage_FillBackgroundEx and FreeImage_FillBackgroundByLong, taking an RGBQUAD and a Long 'Color' argument respectively and return a true VB Boolean.
-'+ [Carsten Klein] added function FreeImage_EnlargeCanvas.
-'+ [Carsten Klein] added functions FreeImage_AllocateEx and FreeImage_AllocateExT.
-'+ [Carsten Klein] added function FreeImage_TmoReinhard05Ex.
-'+ [Carsten Klein] added function FreeImage_Rotate.
-'+ [Carsten Klein] added wrapper function FreeImage_RotateIOP.
-'
-'March 18, 2009 - 2.4.2 (3.11.0)
-'+ [Carsten Klein] added enumeration FREE_IMAGE_FRAME_DISPOSAL_METHODS, which provides the frame disposal options needed to create animated GIF files.
-'
-'July 29, 2008 - 2.4.1 (3.11.0)
-'* [Carsten Klein] minor documentation updates
-'! [Carsten Klein] renamed member FICF_PALETTISED_8BPP of enumeration FREE_IMAGE_CONVERSION_FLAGS into FICF_PALLETISED_8BPP.
-'
-'June 30, 2008 - 2.4 (3.11.0)
-'* [Carsten Klein] fixed some minor issues in FreeImage_PaintTransparent()
-'
-'June 06, 2008 - 2.3 (3.11.0)
-'+ [Carsten Klein] added new compression flags to the JPEG and PNG plugins
-'! [Carsten Klein] renamed wrapper function FreeImage_CloneMetadata() to FreeImage_CloneMetadataEx(): now, there is a native function called FreeImage_CloneMetadata().
-'+ [Carsten Klein] added private and internal function declaration for FreeImage_CloneMetadata() along with it's public Boolean returning wrapper function.
-'- [Carsten Klein] removed the FreeImage_ColorQuantizeEx() stuff from both functions FreeImage_ConvertColorDepth() and FreeImage_ConvertColorDepthIOP(): removed parameters PaletteSize, ReserveSize and ReservePalette.
-'- [Carsten Klein] changed declaration of FreeImage_ColorQuantizeEx() to be a internal function private to the wrapper with an 'Int' appendix.
-'+ [Carsten Klein] added two more VB-friendly public wrapper functions FreeImage_ColorQuantizeEx() and FreeImage_ColorQuantizeExIOP().
-'+ [Carsten Klein] added wrapper function FreeImage_GetPalettePtr(): gets the pointer to a specified array of RGBQUADs: intended to be used together with any of the ColorQuantizeEx functions.
-'! [Carsten Klein] changed constant FREEIMAGE_MINOR_VERSION: set to 11 to match current version 3.11.0
-'
-'December 14, 2007 - 2.2.1 (3.10.0)
-'+ [Carsten Klein] added constants for member 'biCompression' in BITMAPINFOHEADER struct
-'+ [Carsten Klein] added wrapper function FreeImage_GetInfoHeaderEx(), which returns a fully populated BITMAPINFOHEADER struct for a bitmap.
-'* [Carsten Klein] fixed a bug in FreeImage_GetFileTypeFromMemoryEx(): now calls FreeImage_CloseMemory() releasing the hStream to prevent memory leaks.
-'+ [Carsten Klein] added wrapper function FreeImage_GetColorizedPalette(): returns a colorized greyscale palettte.
-'+ [Carsten Klein] added wrapper function FreeImage_Colorize(): applies a colorized greyscale palettte obtained from FreeImage_GetColorizedPalette() to a bitmap.
-'+ [Carsten Klein] added wrapper function FreeImage_Sepia(): calls FreeImage_Colorize() with proper parameters to apply a so called sepia palette to a bitmap.
-'
-'December 12, 2007 - 2.2 (3.10.0)
-'* [Carsten Klein] fixed a small bug in FreeImage_PaintTransparent, which now calls function FreeImage_ConvertTo32Bits instead of FreeImage_ConvertTo32Bits2.
-'
-'November 15, 2007 - 2.1 (3.10.0)
-'* [Carsten Klein] adjusted page numbers of the API documentation in FreeImage function declarations to match FreeImage 3.10.0 API documentation
-'- [Carsten Klein] removed parameter 'UnloadSource' from function FreeImage_GetOlePictureIcon(): an hIcon should not be destroyed if OleCreatePictureIndirect() is called with fOwn = True.
-'! [Carsten Klein] refactored FreeImage_GetOlePicture(): now relies on FreeImage_GetBitmap().
-'
-'November 10, 2007 - 2.0.8 (3.10.0)
-'! [Carsten Klein] changed declaration of FreeImage_SetOutputMessage(): now points transparently to the __stdcall version of this function in the library.
-'+ [Carsten Klein] added function declaraton for FreeImage_MultigridPoissonSolver().
-'+ [Carsten Klein] added function declaraton for FreeImage_GetTransparentIndex() and FreeImage_SetTransparentIndex().
-'+ [Carsten Klein] added private and internal function declaration for FreeImage_AdjustColors() along with it's public Boolean returning wrapper function.
-'+ [Carsten Klein] added function declaraton for FreeImage_GetAdjustColorsLookupTable().
-'+ [Carsten Klein] added wrapper function FreeImage_GetAdjustColorsLookupTableEx(): this takes a real VB style Byte array ton receive the lookup table created.
-'+ [Carsten Klein] added function declaraton for FreeImage_ApplyColorMapping().
-'+ [Carsten Klein] added wrapper function FreeImage_ApplyColorMappingEx(): this takes a real VB style RGBQUAD array.
-'+ [Carsten Klein] added function declaratons for FreeImage_SwapColors() and FreeImage_SwapColorsByLong().
-'+ [Carsten Klein] added function declaraton for FreeImage_ApplyIndexMapping().
-'+ [Carsten Klein] added wrapper function FreeImage_ApplyIndexMappingEx(): this takes a real VB style Byte array.
-'+ [Carsten Klein] added function declaraton for FreeImage_SwapPaletteIndices().
-'
-'November 05, 2007 - 2.0.7 (3.10.0)
-'+ [Carsten Klein] added 4 bit color depth to both function pGetNextColorDepth() and pGetPrevousColorDepth()
-'- [Carsten Klein] removed member FICF_PREPARE_RESCALE from enumeration FREE_IMAGE_CONVERSION_FLAGS
-'- [Carsten Klein] removed all references to FICF_PREPARE_RESCALE: Converting color depth before rescaling an image is no longer performed by the wrapper. Since FreeImage now transparently converts color depth on rescaling, doing this in the wrapper is no longer needed.
-'! [Carsten Klein] refactored wrapper function FreeImage_ConvertColorDepth(): removed case FICF_PREPARE_RESCALE; is now more similar to C# wrapper's version of this function.
-'! [Carsten Klein] refactored wrapper function FreeImage_SaveEx(): removed case FICF_PREPARE_RESCALE; is now more similar to C# wrapper's version of this function.
-'
-'September 14, 2007 - 2.0.6 (3.10.0)
-'+ [Carsten Klein] added function declaration and Boolean wrapper function for FreeImage_PreMultiplyWithAlpha().
-'
-'July 26, 2007 - 2.0.5 (3.10.0)
-'+ [Carsten Klein] added wrapper function FreeImage_GetBitmap(): returns an HBITMAP created by the CreateDIBSection() function and so has the same color depth as the original DIB.
-'+ [Carsten Klein] added wrapper function FreeImage_GetBitmapForDevice(): returns an HBITMAP created by the CreateDIBitmap() function and so has the same color depth as the specified reference DC or as the desktop, if the 'hDC' parameter was omitted.
-'- [Carsten Klein] removed function declaration for GetWindowDC(): this function is no longer used.
-'* [Carsten Klein] fixed a bug in wrapper function FreeImage_IsExtensionValidForFIF(): string comparison now includes a comma.
-'* [Carsten Klein] fixed a bug in wrapper function FreeImage_IsFilenameValidForFIF(): string comparison now includes a comma.
-'
-'July 25, 2007 - 2.0.4 (3.10.0)
-'* [Carsten Klein] fixed a bug in function FreeImage_GetPaletteExClone(): now actually returns the palette as RGBQUAD array plus some other minor improvements
-'+ [Carsten Klein] added wrapper function FreeImage_GetPaletteExLongClone(): this function returns a VB style Byte array that is only wrapped around FreeImage's pointer to a DIB's transparency table.
-'+ [Carsten Klein] added wrapper function FreeImage_GetTransparencyTableEx(): this function returns a VB style Byte array that is only wrapped around FreeImage's pointer to a DIB's transparency table.
-'! [Carsten Klein] changed name of wrapper function FreeImage_GetTransparencyTableEx(): this function is now named FreeImage_GetTransparencyTableExClone(), since it actually returns a clone (deep copy) of an image's transparency table (compare with FreeImage_GetPaletteExClone()).
-'+ [Carsten Klein] added wrapper function FreeImage_SetPalette(): sets an image's palette through a VB style RGBQUAD array.
-'+ [Carsten Klein] added wrapper function FreeImage_SetPaletteLong(): sets an image's palette through a VB style Long array.
-'+ [Carsten Klein] added function declaration for CreateDIBsection()
-'+ [Carsten Klein] added function declaration for DeleteDC()
-'* [Carsten Klein] fixed a bug in wrapper function FreeImage_CreateFromScreen(): now the memory DC is deleted with the DeleteDC() function and no longer with the DeleteObject() function.
-'
-'July 05, 2007 - 2.0.3 (3.10.0)
-'+ [Carsten Klein] added wrapper function FreeImage_GetFileTypeFromMemoryEx(): more VB friendly version of FreeImage_GetFileTypeFromMemory() which may take an array rather than a FIMEMORY stream.
-'
-'May 21, 2007 - 2.0.2 (3.10.0)
-'! [Carsten Klein] changed constant FREEIMAGE_MINOR_VERSION: set to 10 to match current version 3.10.0
-'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 0 to match current version 3.10.0
-'+ [Carsten Klein] added image format constants FIF_EXR, FIF_J2K and FIF_JP2 to enumeration FREE_IMAGE_FORMAT.
-'+ [Carsten Klein] added tone mapping operator constant FITMO_FATTAL02 to enumeration FREE_IMAGE_TMO.
-'+ [Carsten Klein] added save option constants J2K_DEFAULT and JP2_DEFAULT for JPEG2000 format.
-'+ [Carsten Klein] added save option constants EXR_DEFAULT, EXR_FLOAT, EXR_NONE, EXR_ZIP, EXR_PIZ, EXR_PXR24, EXR_B44 and EXR_LC for EXR format.
-'+ [Carsten Klein] added save option constants for EXR format to enumeration FREE_IMAGE_SAVE_OPTIONS.
-'+ [Carsten Klein] added declared function FreeImage_TmoFattal02(): adds support for Gradient domain high dynamic range compression (R. Fattal, 2002)
-'
-'February 24, 2007 - 2.0.1 (3.9.3)
-'* [Carsten Klein] fixed a bug in function FreeImage_CreateFromScreen(): now size of image created is according to window to be captured if parameter 'hwnd' <> 0.
-'+ [Carsten Klein] added parameter 'bClientAreaOnly' to function FreeImage_CreateFromScreen().
-'+ [Carsten Klein] added blitting option 'CAPTUREBLT' when calling function BitBlt() in function FreeImage_CreateFromScreen().
-'- [Carsten Klein] removed unused variable 'hDIB' from functions FreeImage_CreateFromScreen() and FreeImage_LoadEx(). Thanks to Bruce Rusk for pointing that out.
-'
-'February 16, 2007 - 2.0 (3.9.3)
-'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 3 to match current version 3.9.3
-'! [Carsten Klein] changed JPEG load/save flag option values: changed constants and both enumerations FREE_IMAGE_SAVE_OPTIONS and FREE_IMAGE_SAVE_OPTIONS.
-'+ [Carsten Klein] added ICC Color Profile support:
-'!                 changed signature of declared function FreeImage_GetICCProfile(): is now declared 'Private' and suffixed with '...Int()'.
-'+                 added wrapper function FreeImage_GetICCProfile(): is the public wrapper function for private function FreeImage_GetICCProfileInt(), returing a real FIICCPROFILE structure.
-'+                 added constant FREE_IMAGE_ICC_COLOR_MODEL_MASK.
-'+                 added enumeration FREE_IMAGE_ICC_COLOR_MODEL.
-'+                 added wrapper function FreeImage_GetICCProfileColorModel(): returns the color profile's color model (FIICCPROFILE.flags member).
-'+                 added wrapper function FreeImage_GetICCProfileSize(): returns the color profile data's size in bytes.
-'+                 added wrapper function FreeImage_GetICCProfileDataPointer(): returns the pointer to the color profile data.
-'+                 added wrapper function FreeImage_HasICCProfile(): returns whether a color profile is available for a dib or not.
-'! [Carsten Klein] changed behaviour of wrapper function FreeImage_RescaleEx() and all it's derived functions: no clone is returned if the actual and desired image size are the same.
-'+ [Carsten Klein] added parameter 'bForceCloneCreation' to wrapper function FreeImage_RescaleEx() and all it's derived functions.
-'
-'January 09, 2007 - 1.9.4 (3.9.2)
-'! [Carsten Klein] changed scope of declared function FreeImage_GetFileTypeUInt(): is now private according to all other '...Int' functions wrapped by a VB-friendly function.
-'! [Carsten Klein] changed scope of declared function FreeImage_GetFIFFromFilenameUInt(): is now private according to all other '...Int' functions wrapped by a VB-friendly function.
-'! [Carsten Klein] changed signature of declared functions FreeImage_GetBackgroundColorInt() and FreeImage_SetBackgroundColorInt(): now both have a 'ByRef bkcolor As RGBQUAD' parameter instead of 'ByVal bkcolor As Long'.
-'+ [Carsten Klein] added declared functions FreeImage_GetBackgroundColorAsLongInt(): this has a 'ByRef bkcolor As Long' parameter and provides the background color as a Long value.
-'+ [Carsten Klein] added declared functions FreeImage_SetBackgroundColorAsLongInt(): this has a 'ByRef bkcolor As Long' parameter and takes the background color as a Long value.
-'! [Carsten Klein] changed signature of wrapper functions FreeImage_GetBackgroundColor() and FreeImage_SetBackgroundColor(): now both have a 'ByRef bkcolor As RGBQUAD' parameter instead of 'ByVal bkcolor As Long'.
-'+ [Carsten Klein] added wrapper functions FreeImage_GetBackgroundColorAsLong() and FreeImage_SetBackgroundColorAsLong(): both have a 'ByRef bkcolor As Long' parameter and so offer getting and setting the background color through a Long value.
-'+ [Carsten Klein] added wrapper functions FreeImage_GetBackgroundColorEx() and FreeImage_SetBackgroundColorEx(): both both take 4 ByRef Byte parameters 'Alpha', 'Red', 'Green' and 'Blue', one for each color component.
-'
-'January 05, 2007 - 1.9.3 (3.9.2)
-'+ [Carsten Klein] added wrapper function FreeImage_GetLockedPageNumbersEx(): this returns a real VB-style array of Longs containing the page numbers of all locked pages.
-'
-'January 02, 2007 - 1.9.2 (3.9.2)
-'* [Carsten Klein] fixed a bug in inline description of function FreeImage_GetPaletteEx(): now tells to use function FreeImage_DestroyLockedArrayRGBQUAD() to free an array returned by this function.
-'* [Carsten Klein] fixed some minor bugs in inline documentation.
-'* [Carsten Klein] fixed a serious bug in function FreeImage_SaveEx(): parameter 'UnloadSource' is now interpreted correctly under all circumstances.
-'* [Carsten Klein] fixed some minor issues in function FreeImage_SaveEx().
-'
-'December 29, 2006 - 1.9.1 (3.9.2)
-'+ [Carsten Klein] added enumeration item FID_BAYER16x16: now supports Bayer ordered dispersed dot dithering (order 4 dithering matrix).
-'
-'October 31, 2006 - 1.9 (3.9.2)
-'* [Carsten Klein] adjusted page numbers of the API documentation in header comments in FreeImage function declarations to match FreeImage 3.9.2 API documentation
-'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 2 to match current version 3.9.2
-'+ [Carsten Klein] added function declaration for FreeImage_JPEGCrop(): added both declaration and Boolean returning wrapper function.
-'! [Carsten Klein] changed data type of all occurences of parameter 'Flags' from Long to either FREE_IMAGE_LOAD_OPTIONS or FREE_IMAGE_SAVE_OPTIONS enum. This is true for declared functions as well as for wrapper functions.
-'+ [Carsten Klein] added function declaration for FreeImage_LoadMultiBitmapFromMemory().
-'+ [Carsten Klein] added wrapper function FreeImage_LoadMultiBitmapFromMemoryEx(): this is dealing with a VB style array (SAFEARRAY) like FreeImage_LoadFromMemoryEx() does.
-'
-'October 30, 2006 - 1.8 (3.9.1)
-'* [Carsten Klein] fixed a memory leak in wrapper function SavePictureEx(). Thanks to Roogames for reporting that bug.
-'! [Carsten Klein] changed return type of wrapper function SavePictureEx() to Boolean.
-'+ [Carsten Klein] added wrapper function FreeImage_SaveEx() which brings all the features, as there are inline size- and color conversion and format guessing, so far only known from SavePictureEx() for DIBs.
-'! [Carsten Klein] changed wrapper function SavePictureEx(): now this is only a thin wrapper for function FreeImage_SaveEx().
-'+ [Carsten Klein] added enumeration FREE_IMAGE_LOAD_OPTIONS.
-'- [Carsten Klein] refactored enumeration FREE_IMAGE_SAVE_OPTIONS: removed unnecessary items from enumeration.
-'! [Carsten Klein] changed wrapper function LoadPictureEx(): added parameter 'Options' (enum FREE_IMAGE_LOAD_OPTIONS) to specify image loading options (called 'flags' in FreeImage).
-'+ [Carsten Klein] added wrapper function FreeImage_LoadEx() which brings all the features, as there are inline size- and color conversion and format guessing, so far only known from LoadPictureEx() for DIBs.
-'! [Carsten Klein] changed wrapper function LoadPictureEx(): now this is only a thin wrapper for function FreeImage_LoadEx().
-'
-'October 13, 2006 - 1.7.2 (3.9.1)
-'+ [Carsten Klein] added User32 function GetDesktopWindow()
-'+                 added User32 function GetWindowDC()
-'- [Carsten Klein] removed unused constants DI_MASK, DI_IMAGE and DI_NORMAL
-'+                 added GDI32 function GetDeviceCaps() with constants HORZRES and VERTRES
-'+                 added GDI32 function SelectObject()
-'+                 added GDI32 function DeleteObject()
-'+                 added GDI32 function CreateCompatibleBitmap()
-'+                 added GDI32 function CreateCompatibleDC()
-'+                 added GDI32 function BitBlt()
-'+ [Carsten Klein] added wrapper function FreeImage_CreateFromScreen(): this function lets you capture the whole screen or any certain window
-'
-'October 10, 2006 - 1.7.1 (3.9.1)
-'! [Carsten Klein] changed parameter name 'Page' into 'hPageDib' in declared function FreeImage_UnlockPage(). 'hPageDib' must be the (dib-)handle obtained from FreeImage_LockPage() and not the page number. Now, the declaration is less confusing. Thanks to Ender Wiggin.
-'
-'August 4, 2006 - 1.7 (3.9.1)
-'* [Carsten Klein] fixed a bug in pGetTagFromTagPtr(): removed overflow error when converting unsigned short tags (FIDT_SHORT) with values between 32768 and 65535. Thanks to André Hendriks.
-'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.9.1
-'
-'July 17, 2006 - 1.6 (3.9.0)
-'+ [Carsten Klein] added more public wrapper functions for tag copying and cloning:
-'+                 added function FreeImage_CopyMetadata()
-'+                 added function FreeImage_CloneMetadata()
-'- [Carsten Klein] removed dead API functions, dead structures and dead variables
-'* [Carsten Klein] fixed a bug in FreeImage_ConvertColorDepth(): now color images are converted to 24 bits when used with FICF_PREPARE_RESCALE, all others to 8 bit
-'
-'July 16, 2006 - 1.5.6 (3.9.0)
-'+ [Carsten Klein] added more public wrapper functions for VB friendly tag access: these functions deal with a FREE_IMAGE_TAG structure instead of FreeImage's Tag pointer.
-'+                 added function FreeImage_SetMetadataEx()
-'+                 added function FreeImage_CreateTagEx()
-'+                 added function FreeImage_AppendTag()
-'+                 added function FreeImage_RemoveTag()
-'+                 added function FreeImage_RemoveTagEx()
-'+                 added function FreeImage_TagExists()
-'+                 added function FreeImage_TagExistsEx()
-'+                 added function FreeImage_DeleteTagEx()
-'+                 added function FreeImage_CloneTagEx()
-'+                 added function FreeImage_RemoveMetadataModel()
-'+                 added function FreeImage_UpdateMetadata()
-'+                 added function FreeImage_UnsignedLong()
-'+                 added function FreeImage_UnsignedShort()
-'+                 added function FreeImage_CreateRational()
-'+                 added function FreeImage_CreateSignedRational()
-'+                 added function FreeImage_GetImageComment()
-'+                 added function FreeImage_SetImageComment()
-'+ [Carsten Klein] added some private helper functions to leverage tag updating:
-'+                 added helper function pTagToTagPtr()
-'+                 added helper function pGetValueBuffer()
-'+                 added helper function pGetRationalValueBuffer()
-'+                 added helper function pGetVariantAsByteBuffer()
-'+                 added helper function pGetElementSize()
-'
-'July 5, 2006 - 1.5.5 (3.9.0)
-'! [Carsten Klein] changed function signature of FreeImage_FindNextMetadataEx(): optional parameter 'Model' is now present; see the function's inline documentation
-'
-'June 30, 2006 - 1.5.4 (3.9.0)
-'* [Carsten Klein] fixed bug in functions creating a FreeImage DIB from a windows hBitmap: workaround for palletized bitmaps is now implemented
-'*                 fixed function FreeImage_CreateFromOLEPicture()
-'*                 fixed function FreeImage_CreateFromDC()
-'
-'June 22, 2006 - 1.5.3 (3.9.0)
-'! [Carsten Klein] changed function declaration of FreeImage_GetMetadataInt(): parameter 'model' is now 'ByVal' and Tag is a Long pointer
-'! [Carsten Klein] changed function declaration of FreeImage_SetMetadataInt(): parameter 'model' is now 'ByVal' and Tag is a Long pointer
-'! [Carsten Klein] changed function declaration of FreeImage_GetMetadata(): parameter Tag is a Long pointer now
-'! [Carsten Klein] changed function declaration of FreeImage_SetMetadata(): parameter Tag is a Long pointer now
-'+ [Carsten Klein] added function declarations for tag creation and destruction:
-'+                 added declaration for function FreeImage_CreateTag()
-'+                 added declaration for procedure FreeImage_DeleteTag()
-'+                 added declaration for function FreeImage_CloneTag()
-'+ [Carsten Klein] added new items to structure FREE_IMAGE_TAG:
-'+                 added item 'Model As FREE_IMAGE_MDMODEL'
-'+                 added item 'TagPtr As Long'
-'+ [Carsten Klein] added wrapper functions for more VB friendly Tag access: these functions deal with a FREE_IMAGE_TAG structure instead of FreeImage's Tag pointer.
-'+                 added function FreeImage_FindFirstMetadataEx()
-'+                 added function FreeImage_FindNextMetadataEx()
-'+                 added function FreeImage_GetAllMetadataTags()
-'+                 added function FreeImage_GetMetadataEx()
-'* [Carsten Klein] fixed and adjusted page numbers of the API documentation in header comments in FreeImage function declarations
-'- [Carsten Klein] removed workaround for thresholding and dithering non-MINISBLACK 8 bit images in function FreeImage_ConvertColorDepth(): was fixed in FreeImage 3.9.0
-'* [Carsten Klein] fixed all pending issues in function FreeImage_PaintDC(): is now in production state
-'
-'June 14, 2006 - 1.5.2 (3.9.0)
-'! [Carsten Klein] changed signature of function FreeImage_CreateMask()
-'+ [Carsten Klein] added function FreeImage_CreateMaskImage(): this creates a monochrome mask from a source image
-'+ [Carsten Klein] added function FreeImage_CreateMaskInPlace(): this creates a monochrome mask from a source image
-'+ [Carsten Klein] added enumeration FREE_IMAGE_ICON_TRANSPARENCY_OPTION_FLAGS
-'+ [Carsten Klein] added wrapper function FreeImage_CreateSimpleBWMaskImage(): wrapper for FreeImage_CreateMaskImage() with reduced number of parameters; creates a b/w mask
-'+ [Carsten Klein] added wrapper function FreeImage_CreateSimpleBWMaskInPlace(): wrapper for FreeImage_CreateMaskInPlace() with reduced number of parameters; creates a b/w mask
-'+ [Carsten Klein] added function declaration for FreeImage_MakeThumbnail()
-'+ [Carsten Klein] added function for FreeImage_GetOlePictureThumbnail()
-'+ [Carsten Klein] added function for FreeImage_MakeThumbnailIOP()
-'+ [Carsten Klein] documented function FreeImage_ReadMemoryEx()
-'+ [Carsten Klein] documented function FreeImage_WriteMemoryEx()
-'! [Carsten Klein] divided FreeImage_TagFromPointer into an interface only function with a private helper function pGetTagFromTagPtr():
-'+                 added helper function pGetTagFromTagPtr()
-'! [Carsten Klein] added private helper functions to leverage the FIDT_RATIONAL and FIDT_SRATIONAL data type:
-'+                 added helper function pNormalizeRational()
-'+                 added helper function pNormalizeSRational()
-'+                 added helper function gcd()
-'+                 added helper function floor()
-'! [Carsten Klein] changed name of structure 'FITAG_int' to 'FITAG': is now as in FreeImage library
-'! [Carsten Klein] changed name of structure 'FITAG' to 'FREE_IMAGE_TAG': this new structure plays an important role in the wrapper's new VB friendly tag accessing concept
-'! [Carsten Klein] changed function declaration of FreeImage_GetMetadataCount(): parameter 'model' is now 'ByVal'
-'! [Carsten Klein] changed function declaration of FreeImage_TagToString(): parameter 'model' is now 'ByVal' and function returns a Long
-'! [Carsten Klein] renamed function declaration of FreeImage_TagToString() to FreeImage_TagToStringInt(): function is now Private and wrapped by a VB String returning function
-'+ [Carsten Klein] added wrapper function FreeImage_TagToString() returning a real VB String
-'+ [Carsten Klein] added structure FIRATIONAL: structure to hold an image tag's rational value
-'+ [Carsten Klein] added new items to structure FREE_IMAGE_TAG:
-'+                 added item 'StringValue As String'
-'+                 added item 'Palette() As RGBQUAD'
-'+                 added item 'RationalValue() As FIRATIONAL'
-'
-'June 13, 2006 - 1.5.1 (3.9.0)
-'! [Carsten Klein] changed version constant 'FREEIMAGE_MINOR_VERSION' to 9 to meet version 3.9.0
-'* [Carsten Klein] fixed and adjusted page numbers of the API documentation in header comments in FreeImage function declarations to match FreeImage 3.9.0 API documentation
-'+ [Carsten Klein] added function declaration for new Memory I/O functions in 3.9.0
-'+                 added declaration FreeImage_ReadMemory()
-'+                 added declaration FreeImage_WriteMemory()
-'! [Carsten Klein] changed/added optional parameter 'element_size' to private function pGetMemoryBlockPtrFromVariant(): caller now can get size in bytes one array element
-'+ [Carsten Klein] added wrapper functions for new Memory I/O functions in 3.9.0
-'+                 added function FreeImage_ReadMemoryEx()
-'+                 added function FreeImage_WriteMemoryEx()
-'+ [Carsten Klein] added constants and updated enumerations for new 3.9.0 file formats 'FAXG3' and 'SGI'
-'+ [Carsten Klein] added Windows GDI icon related declarations:
-'+                 added function declaration for CreateIconIndirect()
-'+                 added function declaration for DestroyIcon()
-'+                 added structure ICONINFO
-'+ [Carsten Klein] added function FreeImage_GetIcon(): returns a hIcon handle
-'+ [Carsten Klein] added function FreeImage_GetOlePictureIcon(): returns a VB Picture object of type vbPicTypeIcon
-'+ [Carsten Klein] added enumeration FREE_IMAGE_MASK_FLAGS
-'+ [Carsten Klein] added function FreeImage_CreateMaskColors(): returns an array filled with items from an argument list; synonym for VB's Array() function
-'+ [Carsten Klein] added enumeration FREE_IMAGE_teMask(): this creates a monochrome mask from a source image
-'+ [Carsten Klein] added function FreeImage_CreaMASK_CREATION_OPTION_FLAGS
-'
-'June 12, 2006 - 1.5 (3.8.0)
-'* [Carsten Klein] fixed bug in wrapper function FreeImage_PaintDCEx(): now handles boolean test correctly: 'If ((hDC <> 0) And (hDIB <> 0)) Then -> Thanks to ender_wiggin for reporting that bug.
-'+ [Carsten Klein] added private function pGetIOlePictureFromContainer(): used to get IPicture from image hosting control (Form, PictureBox) including custom drawings
-'+ [Carsten Klein] added wrapper function FreeImage_CreateFromImageContainer(): used to create FreeImage DIB from image hosting control (Form, PictureBox) including custom drawings
-'+ [Carsten Klein] added wrapper function SaveImageContainerEx(): derivate of wrapper function 'SavePictureEx()': saves content of image hosting control (Form, PictureBox) including custom drawings
-'
-'February 27, 2006 - 1.4.8 (3.8.0)
-'+ [Carsten Klein] added inline documentation for these wrapper functions:
-'+                 documented function FreeImage_CompareColorsLongLong()
-'+                 documented function FreeImage_CompareColorsRGBTRIPLELong()
-'+                 documented function FreeImage_CompareColorsRGBQUADLong()
-'+                 documented function FreeImage_SearchPalette()
-'! [Carsten Klein] changed and updated general remarks in section "General notes on implementation and design"
-'! [Carsten Klein] changed all function declarations of FreeImage functions that return a BOOL in C/C++: see "Functions returning Booleans" in section "General notes on implementation and design"
-'! [Carsten Klein] changed all function signatures of functions that are derived from or extend FreeImage BOOL functions: see "Functions returning Booleans" in section "General notes on implementation and design"
-'+ [Carsten Klein] added wrapper functions for all FreeImage functions that return a BOOL in C/C++: see "Functions returning Booleans" in section "General notes on implementation and design"
-'+ [Carsten Klein] added wrapper function FreeImage_CreateFromDC(): creates an DIB from a DC. Thanks to Evan (wxforecaster) for this suggestion.
-'+ [Carsten Klein] added declaration of GDI function GetCurrentObject() and constant OBJ_BITMAP
-'+ [Carsten Klein] added wrapper function FreeImage_IsAvailable(): used to test for existence of FreeImage Library (FreeImage.dll)
-'
-'February 9, 2006 - 1.4.7 (3.8.0)
-'+ [Carsten Klein] added private helper function pGetPreviousColorDepth()
-'+ [Carsten Klein] added private helper function pGetNextColorDepth()
-'! [Carsten Klein] changed/extended signature of wrapper function SavePictureEx(): now includes a parameter 'ColorDepth'
-'+ [Carsten Klein] added enumeration FREE_IMAGE_COLOR_DEPTH
-'+ [Carsten Klein] added error handling capabilities to wrapper function SavePictureEx()
-'+ [Carsten Klein] added/updated inline documentation of wrapper function SavePictureEx()
-'
-'October 31, 2005 - 1.4.6 (3.8.0)
-'+ [Carsten Klein] added wrapper function FreeImage_SwapColorLong(): this converts from a RGB to a BGR color value stored in a Long and vice versa
-'
-'October 27, 2005 - 1.4.5 (3.8.0)
-'+ [Carsten Klein] added function FreeImage_IsTransparencyTableTransparent(): checks for transparency directly on the transparency table
-'
-'October 13, 2005 - 1.4.4 (3.8.0)
-'+ [Carsten Klein] added some functions to compare colors in different formats and with tolerance:
-'+                 added function FreeImage_CompareColorsLongLong()
-'+                 added function FreeImage_CompareColorsRGBTRIPLELong()
-'+                 added function FreeImage_CompareColorsRGBQUADLong()
-'+ [Carsten Klein] added enumeration FREE_IMAGE_COLOR_FORMAT_FLAGS
-'+ [Carsten Klein] added enumeration FREE_IMAGE_TRANSPARENCY_STATE_FLAGS
-'+ [Carsten Klein] added function FreeImage_SearchPalette(): to search the palette index for a given color
-'
-'October 13, 2005 - 1.4.3 (3.8.0)
-'+ [Carsten Klein] added additional function declaration FreeImage_SetPixelColorByLong(): now color values may be provided in a long value
-'+ [Carsten Klein] added additional function declaration FreeImage_GetPixelColorByLong(): now color values may be received in a long value
-'+ [Carsten Klein] added function FreeImage_SetPixelColorEx(): color values may be provided by four different byte values
-'+ [Carsten Klein] added function FreeImage_GetPixelColorEx(): color values are returned through four different byte values
-'
-'October 11, 2005 - 1.4.2 (3.8.0)
-'* [Carsten Klein] fixed bug in wrapper function FreeImage_GetBitsExRGBQUAD(): now tests for and works with 32 bit images
-'
-'October 10, 2005 - 1.4.1 (3.8.0)
-'* [Carsten Klein] fixed serious bug in FreeImage_GetBitsEx...() functions: created custom array descriptor now really has two dimensions
-'*                 fixed wrapper function FreeImage_GetBitsEx()
-'*                 fixed wrapper function FreeImage_GetBitsExRGBTRIPLE()
-'*                 fixed wrapper function FreeImage_GetBitsExRGBQUAD()
-'
-'September 9, 2005 - 1.4 (3.8.0)
-'! [Carsten Klein] changed wrapper function FreeImage_ConvertColorDepth(): now uses FreeImage_ConvertToGreyscale
-'+ [Carsten Klein] added version numbers to change log
-'+ [Carsten Klein] added comments to IOlePicture aware toolkit and conversion functions
-'* [Carsten Klein] fixed and adjusted page numbers of the API documentation in header comments in FreeImage function declarations
-'
-'September 8, 2005 - 1.3.5
-'! [Carsten Klein] changed version constant 'FREEIMAGE_MINOR_VERSION' to 8 to meet version 3.8.0
-'+ [Carsten Klein] added function declarations for UNICODE dealing functions with additional token 'Int' appended:
-'+                 added function FreeImage_LoadUInt()
-'+                 added function FreeImage_SaveUInt()
-'+                 added function FreeImage_GetFileTypeUInt()
-'+                 added function FreeImage_GetFIFFromFilenameUInt()
-'+ [Carsten Klein] added wrapper functions to ease the use of UNICODE dealing functions:
-'+                 added function FreeImage_LoadU()
-'+                 added function FreeImage_SaveU()
-'+                 added function FreeImage_GetFileTypeU()
-'+                 added function FreeImage_GetFIFFromFilenameU()
-'+ [Carsten Klein] added function declaration for FreeImage_ConvertToGreyscale()
-'
-'July 18, 2005 - 1.3.4
-'! [Carsten Klein] changed inline comments in these wrapper functions:
-'!                 changed FreeImage_GetBitsEx(): mixed up width and height in SAFEAARAY creation
-'!                 changed FreeImage_GetBitsExRGBTRIPLE(): mixed up width and height in SAFEAARAY creation
-'!                 changed FreeImage_GetBitsExRGBQUAD(): mixed up width and height in SAFEAARAY creation
-'+ [Carsten Klein] added wrapper function FreeImage_GetScanLinesRGBTRIPLE():
-'
-'June 30, 2005 - 1.3.3
-'+ [Carsten Klein] added Kernel32 function FillMemory()
-'
-'June 24, 2005 - 1.3.2
-'+ [Carsten Klein] added pixel access functions FreeImage_GetBitsExRGBTRIPLE() and FreeImage_GetBitsExRGBQUAD()
-'+ [Carsten Klein] added IOlePicture based wrapper function FreeImage_ConvertColorDepthIOP()
-'+ [Carsten Klein] added IOlePicture based wrapper functions for FreeImage_RescaleIOP():
-'+                 added function FreeImage_FreeImage_RescaleByPixelIOP()
-'+                 added function FreeImage_FreeImage_RescaleByPercentIOP()
-'+                 added function FreeImage_FreeImage_RescaleByFactorIOP()
-'+ [Carsten Klein] added IOlePicture based wrapper function FreeImage_RescaleIOP()
-'* [Carsten Klein] fixed a bug in FreeImage_GetOlePicture(): now OlePictures returned through IPicture may be used directly by other functions accepting IPicture types without any assignment to IPictureDisp
-'
-'June 24, 2005 - 1.3.1
-'! [Carsten Klein] changed improper function declaration of function FreeImage_AdjustCurve(): now parameter 'LUT' is passed ByVal
-'+ [Carsten Klein] added wrapper function FreeImage_AdjustCurveEx()
-'+ [Carsten Klein] added IOlePicture based wrapper functions for FreeImage toolkit functions:
-'+                 added function FreeImage_RotateClassicIOP()
-'+                 added function FreeImage_RotateExIOP()
-'+                 added function FreeImage_FlipHorizontalIOP()
-'+                 added function FreeImage_FlipVerticalIOP()
-'+                 added function FreeImage_AdjustCurveIOP()
-'+                 added function FreeImage_AdjustGammaIOP()
-'+                 added function FreeImage_AdjustBrightnessIOP()
-'+                 added function FreeImage_AdjustContrastIOP()
-'+                 added function FreeImage_InvertIOP()
-'+                 added function FreeImage_GetChannelIOP()
-'+                 added function FreeImage_CopyIOP()
-'+                 added function FreeImage_PasteIOP()
-'
-'June 22, 2005 - 1.3
-'+ [Carsten Klein] added inline comments and documentation for pixel access functions
-'
-'June 18, 2005 - 1.2.9
-'+ [Carsten Klein] added function FreeImage_GetBitsEx()
-'+ [Carsten Klein] added structure SAFEARRAY2D to create 2 dimensional custom arrays
-'+ [Carsten Klein] added function declarations for converting scanlines to 4 bpp:
-'+                 added declaration for FreeImage_ConvertLine1To4()
-'+                 added declaration for FreeImage_ConvertLine8To4()
-'+                 added declaration for FreeImage_ConvertLine16To4_555()
-'+                 added declaration for FreeImage_ConvertLine16To4_565()
-'+                 added declaration for FreeImage_ConvertLine24To4()
-'+                 added declaration for FreeImage_ConvertLine32To4()
-'
-'June 16, 2005 - 1.2.8
-'! [Carsten Klein] changed improper function declaration for all functions FreeImage_ConvertLineXXXX(): now parameters 'target' and 'Source' are passed ByVal
-'
-'June 15, 2005 - 1.2.7
-'+ [Carsten Klein] added function FreeImage_DestroyLockedArrayByPtr() to destroy a locked array by it's pointer (VB can't pass a array of structures through a Variant type)
-'+ [Carsten Klein] added some wrapper functions for FreeImage_DestroyLockedArrayByPtr() for common FreeImage structures:
-'+                 added function FreeImage_DestroyLockedArrayRGBTRIPLE()
-'+                 added function FreeImage_DestroyLockedArrayRGBQUAD()
-'+                 added function FreeImage_DestroyLockedArrayFICOMPLEX()
-'+                 added function FreeImage_DestroyLockedArrayFIRGB16()
-'+                 added function FreeImage_DestroyLockedArrayFIRGBA16()
-'+                 added function FreeImage_DestroyLockedArrayFIRGBF()
-'+                 added function FreeImage_DestroyLockedArrayFIRGBAF()
-'+ [Carsten Klein] added functions to return scanlines as VB style arrays in all supported FreeImage formats:
-'+                 added function FreeImage_GetScanLineBITMAP8()
-'+                 added function FreeImage_GetScanLineBITMAP16()
-'+                 added function FreeImage_GetScanLineBITMAP24()
-'+                 added function FreeImage_GetScanLineBITMAP32()
-'+                 added function FreeImage_GetScanLineINT16()
-'+                 added function FreeImage_GetScanLineINT32()
-'+                 added function FreeImage_GetScanLineFLOAT()
-'+                 added function FreeImage_GetScanLineDOUBLE()
-'+                 added function FreeImage_GetScanLineCOMPLEX()
-'+                 added function FreeImage_GetScanLineRGB16()
-'+                 added function FreeImage_GetScanLineRGBA16()
-'+                 added function FreeImage_GetScanLineRGBF()
-'+                 added function FreeImage_GetScanLineRGBAF()
-'
-'June 14, 2005 - 1.2.6
-'! [Carsten Klein] updated documentation on array-dealing functions using arrays with custom array descriptors
-'+ [Carsten Klein] added function FreeImage_DestroyLockedArray() to destroy a self created array 'FADF_AUTO Or FADF_FIXEDSIZE' array
-'+ [Carsten Klein] added function FreeImage_GetPaletteExLong() to return palette data in an array of type Long
-'+ [Carsten Klein] added parameters 'lPaletteSize', 'vntReservePalette' and 'lReserveSize' to FreeImage_ConvertColorDepth()
-'
-'June 13, 2005 - 1.2.5
-'* [Carsten Klein] fixed a bug in helper function pGetMemoryBlockPtrFromVariant(): now 'size_in_bytes' will never exceed the size of an array provided
-'
-'June 12, 2005 - 1.2.4
-'+ [Carsten Klein] added ZLib compression function wrappers dealing with VB style arrays:
-'+                 added function FreeImage_ZLibCompressVB()
-'+                 added function FreeImage_ZLibUncompressVB()
-'+                 added function FreeImage_ZLibGZipVB()
-'+                 added function FreeImage_ZLibGUnzipVB()
-'
-'June 10, 2005 - 1.2.3
-'+ [Carsten Klein] added ZLib compression function wrappers dealing with VB style arrays:
-'+                 added function FreeImage_ZLibCompressEx()
-'+                 added function FreeImage_ZLibUncompressEx()
-'+                 added function FreeImage_ZLibGZipEx()
-'+                 added function FreeImage_ZLibCRC32Ex()
-'+                 added function FreeImage_ZLibGUnzipEx()
-'+ [Carsten Klein] added more VB friendly ZLib compression function wrappers:
-'+                 added function FreeImage_ZLibCompressVB()
-'+                 added function FreeImage_ZLibUncompressVB()
-'+                 added function FreeImage_ZLibGZipVB()
-'+                 added function FreeImage_ZLibGUnzipVB()
-'! [Carsten Klein] fixed wrong function declaration of functions FreeImage_ZLibGUnzip(): alias was '_FreeImage_ZLibZlibGUnzip@16' (double ZLib)
-'! [Carsten Klein] fixed function pGetArrayPtrFromVariantArray() that now can deal with uninitialized arrays
-'!                 fixed function pGetMemoryBlockPtrFromVariant() that now can deal with uninitialized arrays
-'! [Carsten Klein] fixed wrong function declaration of functions FreeImage_AdjustBrightness(): ...@8 -> ...@12
-'!                 fixed wrong function declaration of functions FreeImage_AdjustContrast(): ...@8 -> ...@12
-'!                 fixed wrong function declaration of functions FreeImage_AdjustGamma(): ...@8 -> ...@12
-'!                 fixed wrong function declaration of functions FreeImage_RotateClassic(): ...@8 -> ...@12
-'!                 fixed wrong function declaration of functions FreeImage_RotateEx(): ...@28 -> ...@48
-'
-'June 9, 2005 - 1.2.2
-'! [Carsten Klein] fixed wrong function declaration of function FreeImage_OpenMultiBitmap(): added parameter 'flags' (...@20 -> ...@24)
-'
-'June 8, 2005 - 1.2.1
-'! [Carsten Klein] refactored function FreeImage_LoadFromMemoryEx(): now using pGetMemoryBlockPtrFromVariant()
-'+ [Carsten Klein] added private function pGetMemoryBlockPtrFromVariant() to get poiner and size of a memory block from a Variant parameter
-'! [Carsten Klein] changed declaration of ZLib related functions: 'target' and 'Source' are now 'ByVal Long'
-'
-'June 7, 2005 - 1.2
-'+ [Carsten Klein] added some more inline comments and documentation
-'+ [Carsten Klein] added optional parameter 'UnloadSource' to function FreeImage_SaveToMemoryEx()
-'+                 added optional parameter 'UnloadSource' to function FreeImage_SaveToMemoryEx2()
-'+ [Carsten Klein] added optional parameter 'InPercent' to function SavePictureEx()
-'!                 implemented the capability to resize the image on saving in function SavePictureEx()
-'+ [Carsten Klein] added parameters 'InPercent' and 'Format' to function LoadPictureEx()
-'* [Carsten Klein] fixed wrong function declaration of function FreeImage_JPEGTransform() (...@12 -> ...@16)
-'
-'June 6, 2005 - 1.1.2
-'+ [Carsten Klein] added some more inline comments and documentation
-'
-'May 30, 2005 - 1.1.1
-'* [Carsten Klein] fixed percent calculating bug in function FreeImage_RescaleEx()
-'!                 changed behaviour of parameter 'bIsPercentValue' -> it now has no effect on integer values
-'+                 added function FreeImage_RescaleByPixel() to avoid confusion with overloading
-'+                 added function FreeImage_RescaleByPercent() to avoid confusion with overloading
-'+                 added function FreeImage_RescaleByFactor() to avoid confusion with overloading
-'! [Carsten Klein] changed name of parameter 'bUnloadDIB' to 'UnloadSource' of function FreeImage_GetOlePicture()
-'+ [Carsten Klein] added some more inline comments and documentation
-'* [Carsten Klein] fixed a potential runtime error in function FreeImage_SetTransparencyTableEx(): 'Count' will no longer exceed 256
-'
-'May 24, 2005 - 1.1
-'+ [Carsten Klein] added a new VB wrapper
-
 
 '--------------------------------------------------------------------------------
 ' Win32 API function, struct and constant declarations
@@ -829,7 +79,7 @@ Private Declare Function OleTranslateColor Lib "oleaut32.dll" ( _
     ByRef lpcolorref As Long) As Long
     
 Private Const CLR_INVALID As Long = &HFFFF&
-    
+
 
 'SAFEARRAY
 Private Const FADF_AUTO As Long = (&H1)
@@ -888,6 +138,11 @@ Private Declare Function GetClientRect Lib "user32.dll" ( _
     ByVal hWnd As Long, _
     ByRef lpRect As RECT) As Long
 
+Private Declare Function DestroyIcon Lib "user32.dll" ( _
+    ByVal hIcon As Long) As Long
+
+Private Declare Function CreateIconIndirect Lib "user32.dll" ( _
+    ByRef piconinfo As ICONINFO) As Long
 
 Private Type RECT
    Left As Long
@@ -936,6 +191,7 @@ Private Type BLENDFUNCTION
   AlphaFormat As Byte
 End Type
     
+
 'GDI32
 Private Declare Function GetDeviceCaps Lib "gdi32.dll" ( _
     ByVal hDC As Long, _
@@ -1046,17 +302,7 @@ Private Declare Function GetCurrentObject Lib "gdi32.dll" ( _
     ByVal uObjectType As Long) As Long
 
 Private Const OBJ_BITMAP As Long = 7
-    
-    
-Private Declare Function DestroyIcon Lib "user32.dll" ( _
-    ByVal hIcon As Long) As Long
 
-Private Declare Function CreateIconIndirect Lib "user32.dll" ( _
-    ByRef piconinfo As ICONINFO) As Long
-
-Private Const BLACKONWHITE As Long = 1
-Private Const WHITEONBLACK As Long = 2
-Private Const COLORONCOLOR As Long = 3
 
 'MSIMG32
 Private Declare Function AlphaBlend Lib "msimg32.dll" ( _
@@ -1075,18 +321,15 @@ Private Declare Function AlphaBlend Lib "msimg32.dll" ( _
 Private Const AC_SRC_OVER = &H0
 Private Const AC_SRC_ALPHA = &H1
 
+Private Const BLACKONWHITE As Long = 1
+Private Const WHITEONBLACK As Long = 2
+Private Const COLORONCOLOR As Long = 3
 
 Public Enum STRETCH_MODE
    SM_BLACKONWHITE = BLACKONWHITE
    SM_WHITEONBLACK = WHITEONBLACK
    SM_COLORONCOLOR = COLORONCOLOR
 End Enum
-#If False Then
-   Const SM_BLACKONWHITE = BLACKONWHITE
-   Const SM_WHITEONBLACK = WHITEONBLACK
-   Const SM_COLORONCOLOR = COLORONCOLOR
-#End If
-
 
 Private Const SRCAND As Long = &H8800C6
 Private Const SRCCOPY As Long = &HCC0020
@@ -1102,13 +345,6 @@ Public Enum RASTER_OPERATOR
    ROP_SRCINVERT = SRCINVERT
    ROP_SRCPAINT = SRCPAINT
 End Enum
-#If False Then
-   Const ROP_SRCAND = SRCAND
-   Const ROP_SRCCOPY = SRCCOPY
-   Const ROP_SRCERASE = SRCERASE
-   Const ROP_SRCINVERT = SRCINVERT
-   Const ROP_SRCPAINT = SRCPAINT
-#End If
 
 Private Const DIB_PAL_COLORS As Long = 1
 Private Const DIB_RGB_COLORS As Long = 0
@@ -1120,23 +356,11 @@ Public Enum DRAW_MODE
    DM_MIRROR_HORIZONTAL = &H2
    DM_MIRROR_BOTH = DM_MIRROR_VERTICAL Or DM_MIRROR_HORIZONTAL
 End Enum
-#If False Then
-   Const DM_DRAW_DEFAULT = &H0
-   Const DM_MIRROR_NONE = DM_DRAW_DEFAULT
-   Const DM_MIRROR_VERTICAL = &H1
-   Const DM_MIRROR_HORIZONTAL = &H2
-   Const DM_MIRROR_BOTH = DM_MIRROR_VERTICAL Or DM_MIRROR_HORIZONTAL
-#End If
 
 Public Enum HISTOGRAM_ORIENTATION
    HOR_TOP_DOWN = &H0
    HOR_BOTTOM_UP = &H1
 End Enum
-#If False Then
-   Const HOR_TOP_DOWN = &H0
-   Const HOR_BOTTOM_UP = &H1
-#End If
-
 
 '--------------------------------------------------------------------------------
 ' FreeImage 3 types, constants and enumerations
@@ -1146,8 +370,8 @@ End Enum
 
 ' Version information
 Public Const FREEIMAGE_MAJOR_VERSION As Long = 3
-Public Const FREEIMAGE_MINOR_VERSION As Long = 15
-Public Const FREEIMAGE_RELEASE_SERIAL As Long = 4
+Public Const FREEIMAGE_MINOR_VERSION As Long = 16
+Public Const FREEIMAGE_RELEASE_SERIAL As Long = 0
 
 ' Memory stream pointer operation flags
 Public Const SEEK_SET As Long = 0
@@ -1283,6 +507,8 @@ Public Const TIFF_LOGLUV As Long = &H10000           ' save using LogLuv compres
 Public Const WBMP_DEFAULT As Long = 0
 Public Const XBM_DEFAULT As Long = 0
 Public Const XPM_DEFAULT As Long = 0
+Public Const WEBP_DEFAULT As Long = 0                ' save with good quality (75:1)
+Public Const WEBP_LOSSLESS As Long = &H100           ' save in lossless mode
 
 Public Enum FREE_IMAGE_FORMAT
    FIF_UNKNOWN = -1
@@ -1322,49 +548,11 @@ Public Enum FREE_IMAGE_FORMAT
    FIF_PFM = 32
    FIF_PICT = 33
    FIF_RAW = 34
+   FIF_WEBP = 35
 End Enum
-#If False Then
-   Const FIF_UNKNOWN = -1
-   Const FIF_BMP = 0
-   Const FIF_ICO = 1
-   Const FIF_JPEG = 2
-   Const FIF_JNG = 3
-   Const FIF_KOALA = 4
-   Const FIF_LBM = 5
-   Const FIF_IFF = FIF_LBM
-   Const FIF_MNG = 6
-   Const FIF_PBM = 7
-   Const FIF_PBMRAW = 8
-   Const FIF_PCD = 9
-   Const FIF_PCX = 10
-   Const FIF_PGM = 11
-   Const FIF_PGMRAW = 12
-   Const FIF_PNG = 13
-   Const FIF_PPM = 14
-   Const FIF_PPMRAW = 15
-   Const FIF_RAS = 16
-   Const FIF_TARGA = 17
-   Const FIF_TIFF = 18
-   Const FIF_WBMP = 19
-   Const FIF_PSD = 20
-   Const FIF_CUT = 21
-   Const FIF_XBM = 22
-   Const FIF_XPM = 23
-   Const FIF_DDS = 24
-   Const FIF_GIF = 25
-   Const FIF_HDR = 26
-   Const FIF_FAXG3 = 27
-   Const FIF_SGI = 28
-   Const FIF_EXR = 29
-   Const FIF_J2K = 30
-   Const FIF_JP2 = 31
-   Const FIF_PFM = 32
-   Const FIF_PICT = 33
-   Const FIF_RAW = 34
-#End If
 
 Public Enum FREE_IMAGE_LOAD_OPTIONS
-   FILO_LOAD_NOPIXELS = &H8000                    ' load the image header only (not supported by all plugins)
+   FILO_LOAD_NOPIXELS = FIF_LOAD_NOPIXELS         ' load the image header only (not supported by all plugins)
    FILO_LOAD_DEFAULT = 0
    FILO_GIF_DEFAULT = GIF_DEFAULT
    FILO_GIF_LOAD256 = GIF_LOAD256                 ' load the image as a 256 color image with ununsed palette entries, if it's 16 or 2 color
@@ -1394,30 +582,6 @@ Public Enum FREE_IMAGE_LOAD_OPTIONS
    FISO_TIFF_DEFAULT = TIFF_DEFAULT
    FISO_TIFF_CMYK = TIFF_CMYK                     ' reads tags for separated CMYK
 End Enum
-#If False Then
-   Const FILO_LOAD_NOPIXELS = &H8000
-   Const FILO_LOAD_DEFAULT = 0
-   Const FILO_GIF_DEFAULT = GIF_DEFAULT
-   Const FILO_GIF_LOAD256 = GIF_LOAD256
-   Const FILO_GIF_PLAYBACK = GIF_PLAYBACK
-   Const FILO_ICO_DEFAULT = ICO_DEFAULT
-   Const FILO_ICO_MAKEALPHA = ICO_MAKEALPHA
-   Const FILO_JPEG_DEFAULT = JPEG_DEFAULT
-   Const FILO_JPEG_FAST = JPEG_FAST
-   Const FILO_JPEG_ACCURATE = JPEG_ACCURATE
-   Const FILO_JPEG_CMYK = JPEG_CMYK
-   Const FILO_JPEG_EXIFROTATE = JPEG_EXIFROTATE
-   Const FILO_PCD_DEFAULT = PCD_DEFAULT
-   Const FILO_PCD_BASE = PCD_BASE
-   Const FILO_PCD_BASEDIV4 = PCD_BASEDIV4
-   Const FILO_PCD_BASEDIV16 = PCD_BASEDIV16
-   Const FILO_PNG_DEFAULT = PNG_DEFAULT
-   Const FILO_PNG_IGNOREGAMMA = PNG_IGNOREGAMMA
-   Const FILO_TARGA_DEFAULT = TARGA_LOAD_RGB888
-   Const FILO_TARGA_LOAD_RGB888 = TARGA_LOAD_RGB888
-   Const FISO_TIFF_DEFAULT = TIFF_DEFAULT
-   Const FISO_TIFF_CMYK = TIFF_CMYK
-#End If
 
 Public Enum FREE_IMAGE_SAVE_OPTIONS
    FISO_SAVE_DEFAULT = 0
@@ -1464,37 +628,8 @@ Public Enum FREE_IMAGE_SAVE_OPTIONS
    FISO_TIFF_LZW = TIFF_LZW                       ' save using LZW compression
    FISO_TIFF_JPEG = TIFF_JPEG                     ' save using JPEG compression
    FISO_TIFF_LOGLUV = TIFF_LOGLUV                 ' save using LogLuv compression
+   FISO_WEBP_LOSSLESS = WEBP_LOSSLESS             ' save in lossless mode
 End Enum
-#If False Then
-   Const FISO_SAVE_DEFAULT = 0
-   Const FISO_BMP_DEFAULT = BMP_DEFAULT
-   Const FISO_BMP_SAVE_RLE = BMP_SAVE_RLE
-   Const FISO_JPEG_DEFAULT = JPEG_DEFAULT
-   Const FISO_JPEG_QUALITYSUPERB = JPEG_QUALITYSUPERB
-   Const FISO_JPEG_QUALITYGOOD = JPEG_QUALITYGOOD
-   Const FISO_JPEG_QUALITYNORMAL = JPEG_QUALITYNORMAL
-   Const FISO_JPEG_QUALITYAVERAGE = JPEG_QUALITYAVERAGE
-   Const FISO_JPEG_QUALITYBAD = JPEG_QUALITYBAD
-   Const FISO_JPEG_PROGRESSIVE = JPEG_PROGRESSIVE
-   Const FISO_JPEG_SUBSAMPLING_411 = JPEG_SUBSAMPLING_411
-   Const FISO_JPEG_SUBSAMPLING_420 = JPEG_SUBSAMPLING_420
-   Const FISO_JPEG_SUBSAMPLING_422 = JPEG_SUBSAMPLING_422
-   Const FISO_JPEG_SUBSAMPLING_444 = JPEG_SUBSAMPLING_444
-   Const FISO_PNM_DEFAULT = PNM_DEFAULT
-   Const FISO_PNM_SAVE_RAW = PNM_SAVE_RAW
-   Const FISO_PNM_SAVE_ASCII = PNM_SAVE_ASCII
-   Const FISO_TARGA_SAVE_RLE = TARGA_SAVE_RLE
-   Const FISO_TIFF_DEFAULT = TIFF_DEFAULT
-   Const FISO_TIFF_CMYK = TIFF_CMYK
-   Const FISO_TIFF_PACKBITS = TIFF_PACKBITS
-   Const FISO_TIFF_DEFLATE = TIFF_DEFLATE
-   Const FISO_TIFF_ADOBE_DEFLATE = TIFF_ADOBE_DEFLATE
-   Const FISO_TIFF_NONE = TIFF_NONE
-   Const FISO_TIFF_CCITTFAX3 = TIFF_CCITTFAX3
-   Const FISO_TIFF_CCITTFAX4 = TIFF_CCITTFAX4
-   Const FISO_TIFF_LZW = TIFF_LZW
-   Const FISO_TIFF_JPEG = TIFF_JPEG
-#End If
 
 Public Enum FREE_IMAGE_TYPE
    FIT_UNKNOWN = 0           ' unknown type
@@ -1511,21 +646,6 @@ Public Enum FREE_IMAGE_TYPE
    FIT_RGBF = 11             ' 96-bit RGB float image   : 3 x 32-bit IEEE floating point
    FIT_RGBAF = 12            ' 128-bit RGBA float image : 4 x 32-bit IEEE floating point
 End Enum
-#If False Then
-   Const FIT_UNKNOWN = 0
-   Const FIT_BITMAP = 1
-   Const FIT_UINT16 = 2
-   Const FIT_INT16 = 3
-   Const FIT_UINT32 = 4
-   Const FIT_INT32 = 5
-   Const FIT_FLOAT = 6
-   Const FIT_DOUBLE = 7
-   Const FIT_COMPLEX = 8
-   Const FIT_RGB16 = 9
-   Const FIT_RGBA16 = 10
-   Const FIT_RGBF = 11
-   Const FIT_RGBAF = 12
-#End If
 
 Public Enum FREE_IMAGE_COLOR_TYPE
    FIC_MINISWHITE = 0        ' min value is white
@@ -1535,23 +655,11 @@ Public Enum FREE_IMAGE_COLOR_TYPE
    FIC_RGBALPHA = 4          ' RGB color model with alpha channel
    FIC_CMYK = 5              ' CMYK color model
 End Enum
-#If False Then
-   Const FIC_MINISWHITE = 0
-   Const FIC_MINISBLACK = 1
-   Const FIC_RGB = 2
-   Const FIC_PALETTE = 3
-   Const FIC_RGBALPHA = 4
-   Const FIC_CMYK = 5
-#End If
 
 Public Enum FREE_IMAGE_QUANTIZE
    FIQ_WUQUANT = 0           ' Xiaolin Wu color quantization algorithm
    FIQ_NNQUANT = 1           ' NeuQuant neural-net quantization algorithm by Anthony Dekker
 End Enum
-#If False Then
-   Const FIQ_WUQUANT = 0
-   Const FIQ_NNQUANT = 1
-#End If
 
 Public Enum FREE_IMAGE_DITHER
    FID_FS = 0                ' Floyd & Steinberg error diffusion
@@ -1562,15 +670,6 @@ Public Enum FREE_IMAGE_DITHER
    FID_CLUSTER16x16 = 5      ' Ordered clustered dot dithering (order 8 - 16x16 matrix)
    FID_BAYER16x16 = 6        ' Bayer ordered dispersed dot dithering (order 4 dithering matrix)
 End Enum
-#If False Then
-   Const FID_FS = 0
-   Const FID_BAYER4x4 = 1
-   Const FID_BAYER8x8 = 2
-   Const FID_CLUSTER6x6 = 3
-   Const FID_CLUSTER8x8 = 4
-   Const FID_CLUSTER16x16 = 5
-   Const FID_BAYER16x16 = 6
-#End If
 
 Public Enum FREE_IMAGE_JPEG_OPERATION
    FIJPEG_OP_NONE = 0        ' no transformation
@@ -1582,27 +681,12 @@ Public Enum FREE_IMAGE_JPEG_OPERATION
    FIJPEG_OP_ROTATE_180 = 6  ' 180-degree rotation
    FIJPEG_OP_ROTATE_270 = 7  ' 270-degree clockwise (or 90 ccw)
 End Enum
-#If False Then
-   Const FIJPEG_OP_NONE = 0
-   Const FIJPEG_OP_FLIP_H = 1
-   Const FIJPEG_OP_FLIP_V = 2
-   Const FIJPEG_OP_TRANSPOSE = 3
-   Const FIJPEG_OP_TRANSVERSE = 4
-   Const FIJPEG_OP_ROTATE_90 = 5
-   Const FIJPEG_OP_ROTATE_180 = 6
-   Const FIJPEG_OP_ROTATE_270 = 7
-#End If
 
 Public Enum FREE_IMAGE_TMO
    FITMO_DRAGO03 = 0         ' Adaptive logarithmic mapping (F. Drago, 2003)
    FITMO_REINHARD05 = 1      ' Dynamic range reduction inspired by photoreceptor physiology (E. Reinhard, 2005)
    FITMO_FATTAL02 = 2        ' Gradient domain high dynamic range compression (R. Fattal, 2002)
 End Enum
-#If False Then
-   Const FITMO_DRAGO03 = 0
-   Const FITMO_REINHARD05 = 1
-   Const FITMO_FATTAL02 = 2
-#End If
 
 Public Enum FREE_IMAGE_FILTER
    FILTER_BOX = 0            ' Box, pulse, Fourier window, 1st order (constant) b-spline
@@ -1612,14 +696,6 @@ Public Enum FREE_IMAGE_FILTER
    FILTER_CATMULLROM = 4     ' Catmull-Rom spline, Overhauser spline
    FILTER_LANCZOS3 = 5       ' Lanczos3 filter
 End Enum
-#If False Then
-   Const FILTER_BOX = 0
-   Const FILTER_BICUBIC = 1
-   Const FILTER_BILINEAR = 2
-   Const FILTER_BSPLINE = 3
-   Const FILTER_CATMULLROM = 4
-   Const FILTER_LANCZOS3 = 5
-#End If
 
 Public Enum FREE_IMAGE_COLOR_CHANNEL
    FICC_RGB = 0              ' Use red, green and blue channels
@@ -1633,18 +709,6 @@ Public Enum FREE_IMAGE_COLOR_CHANNEL
    FICC_MAG = 8              ' Complex images: use magnitude
    FICC_PHASE = 9            ' Complex images: use phase
 End Enum
-#If False Then
-   Const FICC_RGB = 0
-   Const FICC_RED = 1
-   Const FICC_GREEN = 2
-   Const FICC_BLUE = 3
-   Const FICC_ALPHA = 4
-   Const FICC_BLACK = 5
-   Const FICC_REAL = 6
-   Const FICC_IMAG = 7
-   Const FICC_MAG = 8
-   Const FICC_PHASE = 9
-#End If
 
 Public Enum FREE_IMAGE_MDTYPE
    FIDT_NOTYPE = 0           ' placeholder
@@ -1663,23 +727,6 @@ Public Enum FREE_IMAGE_MDTYPE
    FIDT_IFD = 13             ' 32-bit unsigned integer (offset)
    FIDT_PALETTE = 14         ' 32-bit RGBQUAD
 End Enum
-#If False Then
-   Const FIDT_NOTYPE = 0
-   Const FIDT_BYTE = 1
-   Const FIDT_ASCII = 2
-   Const FIDT_SHORT = 3
-   Const FIDT_LONG = 4
-   Const FIDT_RATIONAL = 5
-   Const FIDT_SBYTE = 6
-   Const FIDT_UNDEFINED = 7
-   Const FIDT_SSHORT = 8
-   Const FIDT_SLONG = 9
-   Const FIDT_SRATIONAL = 10
-   Const FIDT_FLOAT = 11
-   Const FIDT_DOUBLE = 12
-   Const FIDT_IFD = 13
-   Const FIDT_PALETTE = 14
-#End If
 
 Public Enum FREE_IMAGE_MDMODEL
    FIMD_NODATA = -1          '
@@ -1696,21 +743,6 @@ Public Enum FREE_IMAGE_MDMODEL
    FIMD_CUSTOM = 10          ' Used to attach other metadata types to a dib
    FIMD_EXIF_RAW = 11        ' Exif metadata as a raw buffer
 End Enum
-#If False Then
-   Const FIMD_NODATA = -1
-   Const FIMD_COMMENTS = 0
-   Const FIMD_EXIF_MAIN = 1
-   Const FIMD_EXIF_EXIF = 2
-   Const FIMD_EXIF_GPS = 3
-   Const FIMD_EXIF_MAKERNOTE = 4
-   Const FIMD_EXIF_INTEROP = 5
-   Const FIMD_IPTC = 6
-   Const FIMD_XMP = 7
-   Const FIMD_GEOTIFF = 8
-   Const FIMD_ANIMATION = 9
-   Const FIMD_CUSTOM = 10
-   Const FIMD_EXIF_RAW = 11
-#End If
 
 ' These are the GIF_DISPOSAL metadata constants
 Public Enum FREE_IMAGE_FRAME_DISPOSAL_METHODS
@@ -1748,22 +780,6 @@ Public Enum FREE_IMAGE_CONVERSION_FLAGS
    FICF_KEEP_UNORDERED_GREYSCALE_PALETTE = &H0
    FICF_REORDER_GREYSCALE_PALETTE = &H1000
 End Enum
-#If False Then
-   Const FICF_MONOCHROME = &H1
-   Const FICF_MONOCHROME_THRESHOLD = FICF_MONOCHROME
-   Const FICF_MONOCHROME_DITHER = &H3
-   Const FICF_GREYSCALE_4BPP = &H4
-   Const FICF_PALLETISED_8BPP = &H8
-   Const FICF_GREYSCALE_8BPP = FICF_PALLETISED_8BPP Or FICF_MONOCHROME
-   Const FICF_GREYSCALE = FICF_GREYSCALE_8BPP
-   Const FICF_RGB_15BPP = &HF
-   Const FICF_RGB_16BPP = &H10
-   Const FICF_RGB_24BPP = &H18
-   Const FICF_RGB_32BPP = &H20
-   Const FICF_RGB_ALPHA = FICF_RGB_32BPP
-   Const FICF_KEEP_UNORDERED_GREYSCALE_PALETTE = &H0
-   Const FICF_REORDER_GREYSCALE_PALETTE = &H1000
-#End If
 
 Public Enum FREE_IMAGE_COLOR_DEPTH
    FICD_AUTO = &H0
@@ -1778,19 +794,6 @@ Public Enum FREE_IMAGE_COLOR_DEPTH
    FICD_24BPP = &H18
    FICD_32BPP = &H20
 End Enum
-#If False Then
-   Const FICD_AUTO = &H0
-   Const FICD_MONOCHROME = &H1
-   Const FICD_MONOCHROME_THRESHOLD = FICF_MONOCHROME
-   Const FICD_MONOCHROME_DITHER = &H3
-   Const FICD_1BPP = FICD_MONOCHROME
-   Const FICD_4BPP = &H4
-   Const FICD_8BPP = &H8
-   Const FICD_15BPP = &HF
-   Const FICD_16BPP = &H10
-   Const FICD_24BPP = &H18
-   Const FICD_32BPP = &H20
-#End If
 
 Public Enum FREE_IMAGE_ADJUST_MODE
    AM_STRECH = &H1
@@ -1800,14 +803,6 @@ Public Enum FREE_IMAGE_ADJUST_MODE
    AM_ADJUST_HEIGHT = &H4
    AM_ADJUST_OPTIMAL_SIZE = &H8
 End Enum
-#If False Then
-   Const AM_STRECH = &H1
-   Const AM_DEFAULT = AM_STRECH
-   Const AM_ADJUST_BOTH = AM_STRECH
-   Const AM_ADJUST_WIDTH = &H2
-   Const AM_ADJUST_HEIGHT = &H4
-   Const AM_ADJUST_OPTIMAL_SIZE = &H8
-#End If
 
 Public Enum FREE_IMAGE_MASK_FLAGS
    FIMF_MASK_NONE = &H0
@@ -1817,14 +812,6 @@ Public Enum FREE_IMAGE_MASK_FLAGS
    FIMF_MASK_FORCE_TRANSPARENCY = &H8
    FIMF_MASK_INVERSE_MASK = &H10
 End Enum
-#If False Then
-   Const FIMF_MASK_NONE = &H0
-   Const FIMF_MASK_FULL_TRANSPARENCY = &H1
-   Const FIMF_MASK_ALPHA_TRANSPARENCY = &H2
-   Const FIMF_MASK_COLOR_TRANSPARENCY = &H4
-   Const FIMF_MASK_FORCE_TRANSPARENCY = &H8
-   Const FIMF_MASK_INVERSE_MASK = &H10
-#End If
 
 Public Enum FREE_IMAGE_COLOR_FORMAT_FLAGS
    FICFF_COLOR_RGB = &H1
@@ -1838,29 +825,12 @@ Public Enum FREE_IMAGE_COLOR_FORMAT_FLAGS
    
    FICFF_COLOR_FORMAT_ORDER_MASK = FICFF_COLOR_RGB Or FICFF_COLOR_BGR
 End Enum
-#If False Then
-   Const FICFF_COLOR_RGB = &H1
-   Const FICFF_COLOR_BGR = &H2
-   Const FICFF_COLOR_PALETTE_INDEX = &H4
-   
-   Const FICFF_COLOR_HAS_ALPHA = &H100
-   
-   Const FICFF_COLOR_ARGB = FICFF_COLOR_RGB Or FICFF_COLOR_HAS_ALPHA
-   Const FICFF_COLOR_ABGR = FICFF_COLOR_BGR Or FICFF_COLOR_HAS_ALPHA
-   
-   Const FICFF_COLOR_FORMAT_ORDER_MASK = FICFF_COLOR_RGB Or FICFF_COLOR_BGR
-#End If
 
 Public Enum FREE_IMAGE_MASK_CREATION_OPTION_FLAGS
    MCOF_CREATE_MASK_IMAGE = &H1
    MCOF_MODIFY_SOURCE_IMAGE = &H2
    MCOF_CREATE_AND_MODIFY = MCOF_CREATE_MASK_IMAGE Or MCOF_MODIFY_SOURCE_IMAGE
 End Enum
-#If False Then
-   Const MCOF_CREATE_MASK_IMAGE = &H1
-   Const MCOF_MODIFY_SOURCE_IMAGE = &H2
-   Const MCOF_CREATE_AND_MODIFY = MCOF_CREATE_MASK_IMAGE Or MCOF_MODIFY_SOURCE_IMAGE
-#End If
 
 Public Enum FREE_IMAGE_TRANSPARENCY_STATE_FLAGS
    FITSF_IGNORE_TRANSPARENCY = &H0
@@ -1868,12 +838,6 @@ Public Enum FREE_IMAGE_TRANSPARENCY_STATE_FLAGS
    FITSF_TRANSPARENT = &H2
    FITSF_INCLUDE_ALPHA_TRANSPARENCY = &H4
 End Enum
-#If False Then
-   Const FITSF_IGNORE_TRANSPARENCY = &H0
-   Const FITSF_NONTRANSPARENT = &H1
-   Const FITSF_TRANSPARENT = &H2
-   Const FITSF_INCLUDE_ALPHA_TRANSPARENCY = &H4
-#End If
 
 Public Enum FREE_IMAGE_ICON_TRANSPARENCY_OPTION_FLAGS
    ITOF_NO_TRANSPARENCY = &H0
@@ -1891,28 +855,11 @@ Public Enum FREE_IMAGE_ICON_TRANSPARENCY_OPTION_FLAGS
    ITOF_USE_COLOR_SPECIFIED = &H100
    ITOF_FORCE_TRANSPARENCY_INFO = &H400
 End Enum
-#If False Then
-   Const ITOF_NO_TRANSPARENCY = &H0
-   Const ITOF_USE_TRANSPARENCY_INFO = &H1
-   Const ITOF_USE_TRANSPARENCY_INFO_ONLY = ITOF_USE_TRANSPARENCY_INFO
-   Const ITOF_USE_COLOR_TRANSPARENCY = &H2
-   Const ITOF_USE_COLOR_TRANSPARENCY_ONLY = ITOF_USE_COLOR_TRANSPARENCY
-   Const ITOF_USE_TRANSPARENCY_INFO_OR_COLOR = ITOF_USE_TRANSPARENCY_INFO Or ITOF_USE_COLOR_TRANSPARENCY
-   Const ITOF_USE_DEFAULT_TRANSPARENCY = ITOF_USE_TRANSPARENCY_INFO_OR_COLOR
-   Const ITOF_USE_COLOR_TOP_LEFT_PIXEL = &H0
-   Const ITOF_USE_COLOR_FIRST_PIXEL = ITOF_USE_COLOR_TOP_LEFT_PIXEL
-   Const ITOF_USE_COLOR_TOP_RIGHT_PIXEL = &H20
-   Const ITOF_USE_COLOR_BOTTOM_LEFT_PIXEL = &H40
-   Const ITOF_USE_COLOR_BOTTOM_RIGHT_PIXEL = &H80
-   Const ITOF_USE_COLOR_SPECIFIED = &H100
-   Const ITOF_FORCE_TRANSPARENCY_INFO = &H400
-#End If
 
 Private Const ITOF_USE_COLOR_BITMASK As Long = ITOF_USE_COLOR_TOP_RIGHT_PIXEL Or _
                                                ITOF_USE_COLOR_BOTTOM_LEFT_PIXEL Or _
                                                ITOF_USE_COLOR_BOTTOM_RIGHT_PIXEL Or _
                                                ITOF_USE_COLOR_SPECIFIED
-
 
 Public Type RGBQUAD
    rgbBlue As Byte
@@ -2320,7 +1267,6 @@ Private Declare Function FreeImage_SetPixelColorByLongInt Lib "FreeImage.dll" Al
            ByVal X As Long, _
            ByVal Y As Long, _
            ByRef Value As Long) As Long
-           
 
 
 ' Conversion functions
@@ -5177,7 +4123,6 @@ Public Function FreeImage_SaveToMemoryEx2(ByVal Format As FREE_IMAGE_FORMAT, _
    
    ' The function returns True on success and False otherwise.
 
-   
    If (Bitmap) Then
    
       If (Not FreeImage_HasPixels(Bitmap)) Then
@@ -5242,7 +4187,7 @@ Dim lpSA As Long
                                                       ' received by FreeImage_AcquireMemory
          End With
          
-         lpSA = deref(VarPtrArray(Data))
+         lpSA = pDeref(VarPtrArray(Data))
          If (lpSA = 0) Then
             ' allocate memory for an array descriptor
             Call SafeArrayAllocDescriptor(1, lpSA)
@@ -6134,7 +5079,7 @@ Dim bSetTag As Boolean
          hMDFind = FreeImage_FindFirstMetadata(Model, BitmapSrc, lpTag)
          If (hMDFind) Then
             Do
-               strKey = pGetStringFromPointerA(deref(deref(lpTag)))
+               strKey = pGetStringFromPointerA(pDeref(pDeref(lpTag)))
                bSetTag = ReplaceExisting
                If (Not bSetTag) Then
                   bSetTag = (Not FreeImage_TagExists(BitmapDst, Model, strKey))
@@ -6519,7 +5464,7 @@ Public Function FreeImage_GetICCProfileColorModel(ByVal Bitmap As Long) As FREE_
    ' Bitmap. That depends on the bitmap's color type.
 
    If (FreeImage_HasICCProfile(Bitmap)) Then
-      FreeImage_GetICCProfileColorModel = (deref(FreeImage_GetICCProfileInt(Bitmap)) _
+      FreeImage_GetICCProfileColorModel = (pDeref(FreeImage_GetICCProfileInt(Bitmap)) _
             And FREE_IMAGE_ICC_COLOR_MODEL_MASK)
    Else
       ' use FreeImage_GetColorType() to determine, whether this is a CMYK bitmap or not
@@ -6538,7 +5483,7 @@ Public Function FreeImage_GetICCProfileSize(ByVal Bitmap As Long) As Long
    ' only the size in bytes of the ICC profile data for the Bitmap specified or zero,
    ' if there is no ICC profile data for the Bitmap.
 
-   FreeImage_GetICCProfileSize = deref(FreeImage_GetICCProfileInt(Bitmap) + 4)
+   FreeImage_GetICCProfileSize = pDeref(FreeImage_GetICCProfileInt(Bitmap) + 4)
 
 End Function
 
@@ -6548,7 +5493,7 @@ Public Function FreeImage_GetICCProfileDataPointer(ByVal Bitmap As Long) As Long
    ' only the pointer (the address) of the ICC profile data for the Bitmap specified,
    ' or zero if there is no ICC profile data for the Bitmap.
 
-   FreeImage_GetICCProfileDataPointer = deref(FreeImage_GetICCProfileInt(Bitmap) + 8)
+   FreeImage_GetICCProfileDataPointer = pDeref(FreeImage_GetICCProfileInt(Bitmap) + 8)
 
 End Function
 
@@ -11224,7 +10169,7 @@ Dim lArrayDataPtr As Long
    If (IncludeSize) Then
       ' get the pointer actual pointing to the array data of
       ' the Byte array 'FreeImage_ZLibCompressVB'
-      lArrayDataPtr = deref(deref(VarPtrArray(FreeImage_ZLibCompressVB)) + 12)
+      lArrayDataPtr = pDeref(pDeref(VarPtrArray(FreeImage_ZLibCompressVB)) + 12)
 
       ' copy uncompressed size into the first 4 bytes
       Call CopyMemory(ByVal lArrayDataPtr, UBound(Data) + 1, 4)
@@ -11312,7 +10257,7 @@ Dim lArrayDataPtr As Long
    If (IncludeSize) Then
       ' get the pointer actual pointing to the array data of
       ' the Byte array 'FreeImage_ZLibCompressVB'
-      lArrayDataPtr = deref(deref(VarPtrArray(FreeImage_ZLibGZipVB)) + 12)
+      lArrayDataPtr = pDeref(pDeref(VarPtrArray(FreeImage_ZLibGZipVB)) + 12)
 
       ' copy uncompressed size into the first 4 bytes
       Call CopyMemory(ByVal lArrayDataPtr, UBound(Data) + 1, 4)
@@ -11497,7 +10442,7 @@ Dim lpArrayPtr As Long
       ' VARIANTARG structure is the VarPtr of the Variant variable in VB
       
       ' getting the contents of the data element (in C/C++: *(data + 8))
-      lpArrayPtr = deref(VarPtr(Data) + 8)
+      lpArrayPtr = pDeref(VarPtr(Data) + 8)
       
       ' call the 'FreeImage_DestroyLockedArrayByPtr' function to destroy
       ' the array properly
@@ -11517,7 +10462,7 @@ Dim lpSA As Long
    ' descriptor by a pointer to the array variable.
 
    ' dereference the pointer once (in C/C++: *ArrayPtr)
-   lpSA = deref(ArrayPtr)
+   lpSA = pDeref(ArrayPtr)
    ' now 'lpSA' is a pointer to the actual SAFEARRAY structure
    ' and could be a null pointer when the array is not initialized
    ' then, we have nothing to do here but return (-1) to indicate
@@ -11758,7 +10703,7 @@ Dim i As Long
       ' we copy Len(tTag) bytes from the address in TagPtr in to a
       ' private FITAG structure tTag so we have easy access to all
       ' FITAG members
-      Call CopyMemory(tTag, ByVal deref(TagPtr), Len(tTag))
+      Call CopyMemory(tTag, ByVal pDeref(TagPtr), Len(tTag))
       
       With pGetTagFromTagPtr
       
@@ -11795,7 +10740,6 @@ Dim i As Long
          ' StringValue is the result of FreeImage_TagToString(); we
          ' also store this tag representation in our structure
          .StringValue = FreeImage_TagToString(Model, TagPtr)
-         
          
          ' now comes the hard part, getting the tag's value
          
@@ -11902,9 +10846,12 @@ Dim i As Long
                   ' normalze the signed rational value
                   Call pNormalizeSRational(.RationalValue(i))
                End If
-               ' store the current fraction's (maybe only approximated) value in
-               ' the 'Value' member of the FREE_IMAGE_TAG structure
-               .Value(i) = .RationalValue(i).Numerator / .RationalValue(i).Denominator
+               ' store the current fraction's value (maybe only approximated) in
+               ' the 'Value' member of the FREE_IMAGE_TAG structure, if the
+               ' denominator is not zero
+               If (.RationalValue(i).Denominator <> 0) Then
+                  .Value(i) = .RationalValue(i).Numerator / .RationalValue(i).Denominator
+               End If
             Next i
             
          Case FIDT_SBYTE
@@ -12127,7 +11074,7 @@ Dim lCount As Long
 
    With Tag
    
-      lpTag = deref(.TagPtr)
+      lpTag = pDeref(.TagPtr)
       
       ' save current (FITAG) tag for an optional 'undo' operation
       ' invoked on failure
@@ -12446,7 +11393,7 @@ Dim lLength As Long
 
 End Function
 
-Private Function deref(ByVal Ptr As Long) As Long
+Private Function pDeref(ByVal Ptr As Long) As Long
 
    ' This function dereferences a pointer and returns the
    ' contents as it's return value.
@@ -12454,7 +11401,7 @@ Private Function deref(ByVal Ptr As Long) As Long
    ' in C/C++ this would be:
    ' return *(ptr);
    
-   Call CopyMemory(deref, ByVal Ptr, 4)
+   Call CopyMemory(pDeref, ByVal Ptr, 4)
 
 End Function
 
@@ -12599,10 +11546,10 @@ Dim lDataPtr As Long
       ' VARIANTARG structure is the VarPtr of the Variant variable in VB
       
       ' getting the contents of the data element (in C/C++: *(data + 8))
-      lDataPtr = deref(VarPtr(Data) + 8)
+      lDataPtr = pDeref(VarPtr(Data) + 8)
       
       ' dereference the pointer again (in C/C++: *(lDataPtr))
-      lDataPtr = deref(lDataPtr)
+      lDataPtr = pDeref(lDataPtr)
       
       ' test, whether 'lDataPtr' now is a Null pointer
       ' in that case, the array is not yet initialized and so we can't dereference
@@ -12641,7 +11588,7 @@ Dim lDataPtr As Long
          ' of 12 bytes from the base address of the structure,
          ' so dereference the pvData pointer, what indeed is a pointer
          ' to the actual array (in C/C++: *(lDataPtr + 12))
-         lDataPtr = deref(lDataPtr + 12)
+         lDataPtr = pDeref(lDataPtr + 12)
       End If
       
       ' return this value
@@ -12649,7 +11596,371 @@ Dim lDataPtr As Long
       
       ' a more shorter form of this function would be:
       ' (doesn't work for uninitialized arrays, but will likely crash!)
-      'pGetArrayPtrFromVariantArray = deref(deref(deref(VarPtr(data) + 8)) + 12)
+      'pGetArrayPtrFromVariantArray = pDeref(pDeref(pDeref(VarPtr(data) + 8)) + 12)
    End If
 
 End Function
+
+
+#If (False) Then
+
+' Enum STRETCH_MODE
+Const STRETCH_MODE = 1
+Const SM_BLACKONWHITE = 1
+Const SM_WHITEONBLACK = 1
+Const SM_COLORONCOLOR = 1
+
+' Enum RASTER_OPERATOR
+Const RASTER_OPERATOR = 1
+Const ROP_SRCAND = 1
+Const ROP_SRCCOPY = 1
+Const ROP_SRCERASE = 1
+Const ROP_SRCINVERT = 1
+Const ROP_SRCPAINT = 1
+
+' Enum DRAW_MODE
+Const DRAW_MODE = 1
+Const DM_DRAW_DEFAULT = 1
+Const DM_MIRROR_NONE = 1
+Const DM_MIRROR_VERTICAL = 1
+Const DM_MIRROR_HORIZONTAL = 1
+Const DM_MIRROR_BOTH = 1
+
+' Enum HISTOGRAM_ORIENTATION
+Const HISTOGRAM_ORIENTATION = 1
+Const HOR_TOP_DOWN = 1
+Const HOR_BOTTOM_UP = 1
+
+' Enum FREE_IMAGE_ICC_COLOR_MODEL
+Const FREE_IMAGE_ICC_COLOR_MODEL = 1
+Const FIICC_COLOR_MODEL_RGB = 1
+Const FIICC_COLOR_MODEL_CMYK = 1
+
+' Enum FREE_IMAGE_FORMAT
+Const FREE_IMAGE_FORMAT = 1
+Const FIF_UNKNOWN = 1
+Const FIF_BMP = 1
+Const FIF_ICO = 1
+Const FIF_JPEG = 1
+Const FIF_JNG = 1
+Const FIF_KOALA = 1
+Const FIF_LBM = 1
+Const FIF_IFF = 1
+Const FIF_MNG = 1
+Const FIF_PBM = 1
+Const FIF_PBMRAW = 1
+Const FIF_PCD = 1
+Const FIF_PCX = 1
+Const FIF_PGM = 1
+Const FIF_PGMRAW = 1
+Const FIF_PNG = 1
+Const FIF_PPM = 1
+Const FIF_PPMRAW = 1
+Const FIF_RAS = 1
+Const FIF_TARGA = 1
+Const FIF_TIFF = 1
+Const FIF_WBMP = 1
+Const FIF_PSD = 1
+Const FIF_CUT = 1
+Const FIF_XBM = 1
+Const FIF_XPM = 1
+Const FIF_DDS = 1
+Const FIF_GIF = 1
+Const FIF_HDR = 1
+Const FIF_FAXG3 = 1
+Const FIF_SGI = 1
+Const FIF_EXR = 1
+Const FIF_J2K = 1
+Const FIF_JP2 = 1
+Const FIF_PFM = 1
+Const FIF_PICT = 1
+Const FIF_RAW = 1
+Const FIF_WEBP = 1
+
+' Enum FREE_IMAGE_LOAD_OPTIONS
+Const FREE_IMAGE_LOAD_OPTIONS = 1
+Const FILO_LOAD_NOPIXELS = 1
+Const FILO_LOAD_DEFAULT = 1
+Const FILO_GIF_DEFAULT = 1
+Const FILO_GIF_LOAD256 = 1
+Const FILO_GIF_PLAYBACK = 1
+Const FILO_ICO_DEFAULT = 1
+Const FILO_ICO_MAKEALPHA = 1
+Const FILO_JPEG_DEFAULT = 1
+Const FILO_JPEG_FAST = 1
+Const FILO_JPEG_ACCURATE = 1
+Const FILO_JPEG_CMYK = 1
+Const FILO_JPEG_EXIFROTATE = 1
+Const FILO_JPEG_GREYSCALE = 1
+Const FILO_PCD_DEFAULT = 1
+Const FILO_PCD_BASE = 1
+Const FILO_PCD_BASEDIV4 = 1
+Const FILO_PCD_BASEDIV16 = 1
+Const FILO_PNG_DEFAULT = 1
+Const FILO_PNG_IGNOREGAMMA = 1
+Const FILO_PSD_CMYK = 1
+Const FILO_PSD_LAB = 1
+Const FILO_RAW_DEFAULT = 1
+Const FILO_RAW_PREVIEW = 1
+Const FILO_RAW_DISPLAY = 1
+Const FILO_RAW_HALFSIZE = 1
+Const FILO_TARGA_DEFAULT = 1
+Const FILO_TARGA_LOAD_RGB888 = 1
+Const FISO_TIFF_DEFAULT = 1
+Const FISO_TIFF_CMYK = 1
+
+' Enum FREE_IMAGE_SAVE_OPTIONS
+Const FREE_IMAGE_SAVE_OPTIONS = 1
+Const FISO_SAVE_DEFAULT = 1
+Const FISO_BMP_DEFAULT = 1
+Const FISO_BMP_SAVE_RLE = 1
+Const FISO_EXR_DEFAULT = 1
+Const FISO_EXR_FLOAT = 1
+Const FISO_EXR_NONE = 1
+Const FISO_EXR_ZIP = 1
+Const FISO_EXR_PIZ = 1
+Const FISO_EXR_PXR24 = 1
+Const FISO_EXR_B44 = 1
+Const FISO_EXR_LC = 1
+Const FISO_JPEG_DEFAULT = 1
+Const FISO_JPEG_QUALITYSUPERB = 1
+Const FISO_JPEG_QUALITYGOOD = 1
+Const FISO_JPEG_QUALITYNORMAL = 1
+Const FISO_JPEG_QUALITYAVERAGE = 1
+Const FISO_JPEG_QUALITYBAD = 1
+Const FISO_JPEG_PROGRESSIVE = 1
+Const FISO_JPEG_SUBSAMPLING_411 = 1
+Const FISO_JPEG_SUBSAMPLING_420 = 1
+Const FISO_JPEG_SUBSAMPLING_422 = 1
+Const FISO_JPEG_SUBSAMPLING_444 = 1
+Const FISO_JPEG_OPTIMIZE = 1
+Const FISO_JPEG_BASELINE = 1
+Const FISO_PNG_Z_BEST_SPEED = 1
+Const FISO_PNG_Z_DEFAULT_COMPRESSION = 1
+Const FISO_PNG_Z_BEST_COMPRESSION = 1
+Const FISO_PNG_Z_NO_COMPRESSION = 1
+Const FISO_PNG_INTERLACED = 1
+Const FISO_PNM_DEFAULT = 1
+Const FISO_PNM_SAVE_RAW = 1
+Const FISO_PNM_SAVE_ASCII = 1
+Const FISO_TARGA_SAVE_RLE = 1
+Const FISO_TIFF_DEFAULT = 1
+Const FISO_TIFF_CMYK = 1
+Const FISO_TIFF_PACKBITS = 1
+Const FISO_TIFF_DEFLATE = 1
+Const FISO_TIFF_ADOBE_DEFLATE = 1
+Const FISO_TIFF_NONE = 1
+Const FISO_TIFF_CCITTFAX3 = 1
+Const FISO_TIFF_CCITTFAX4 = 1
+Const FISO_TIFF_LZW = 1
+Const FISO_TIFF_JPEG = 1
+Const FISO_TIFF_LOGLUV = 1
+Const FISO_WEBP_LOSSLESS = 1
+
+' Enum FREE_IMAGE_TYPE
+Const FREE_IMAGE_TYPE = 1
+Const FIT_UNKNOWN = 1
+Const FIT_BITMAP = 1
+Const FIT_UINT16 = 1
+Const FIT_INT16 = 1
+Const FIT_UINT32 = 1
+Const FIT_INT32 = 1
+Const FIT_FLOAT = 1
+Const FIT_DOUBLE = 1
+Const FIT_COMPLEX = 1
+Const FIT_RGB16 = 1
+Const FIT_RGBA16 = 1
+Const FIT_RGBF = 1
+Const FIT_RGBAF = 1
+
+' Enum FREE_IMAGE_COLOR_TYPE
+Const FREE_IMAGE_COLOR_TYPE = 1
+Const FIC_MINISWHITE = 1
+Const FIC_MINISBLACK = 1
+Const FIC_RGB = 1
+Const FIC_PALETTE = 1
+Const FIC_RGBALPHA = 1
+Const FIC_CMYK = 1
+
+' Enum FREE_IMAGE_QUANTIZE
+Const FREE_IMAGE_QUANTIZE = 1
+Const FIQ_WUQUANT = 1
+Const FIQ_NNQUANT = 1
+
+' Enum FREE_IMAGE_DITHER
+Const FREE_IMAGE_DITHER = 1
+Const FID_FS = 1
+Const FID_BAYER4x4 = 1
+Const FID_BAYER8x8 = 1
+Const FID_CLUSTER6x6 = 1
+Const FID_CLUSTER8x8 = 1
+Const FID_CLUSTER16x16 = 1
+Const FID_BAYER16x16 = 1
+
+' Enum FREE_IMAGE_JPEG_OPERATION
+Const FREE_IMAGE_JPEG_OPERATION = 1
+Const FIJPEG_OP_NONE = 1
+Const FIJPEG_OP_FLIP_H = 1
+Const FIJPEG_OP_FLIP_V = 1
+Const FIJPEG_OP_TRANSPOSE = 1
+Const FIJPEG_OP_TRANSVERSE = 1
+Const FIJPEG_OP_ROTATE_90 = 1
+Const FIJPEG_OP_ROTATE_180 = 1
+Const FIJPEG_OP_ROTATE_270 = 1
+
+' Enum FREE_IMAGE_TMO
+Const FREE_IMAGE_TMO = 1
+Const FITMO_DRAGO03 = 1
+Const FITMO_REINHARD05 = 1
+Const FITMO_FATTAL02 = 1
+
+' Enum FREE_IMAGE_FILTER
+Const FREE_IMAGE_FILTER = 1
+Const FILTER_BOX = 1
+Const FILTER_BICUBIC = 1
+Const FILTER_BILINEAR = 1
+Const FILTER_BSPLINE = 1
+Const FILTER_CATMULLROM = 1
+Const FILTER_LANCZOS3 = 1
+
+' Enum FREE_IMAGE_COLOR_CHANNEL
+Const FREE_IMAGE_COLOR_CHANNEL = 1
+Const FICC_RGB = 1
+Const FICC_RED = 1
+Const FICC_GREEN = 1
+Const FICC_BLUE = 1
+Const FICC_ALPHA = 1
+Const FICC_BLACK = 1
+Const FICC_REAL = 1
+Const FICC_IMAG = 1
+Const FICC_MAG = 1
+Const FICC_PHASE = 1
+
+' Enum FREE_IMAGE_MDTYPE
+Const FREE_IMAGE_MDTYPE = 1
+Const FIDT_NOTYPE = 1
+Const FIDT_BYTE = 1
+Const FIDT_ASCII = 1
+Const FIDT_SHORT = 1
+Const FIDT_LONG = 1
+Const FIDT_RATIONAL = 1
+Const FIDT_SBYTE = 1
+Const FIDT_UNDEFINED = 1
+Const FIDT_SSHORT = 1
+Const FIDT_SLONG = 1
+Const FIDT_SRATIONAL = 1
+Const FIDT_FLOAT = 1
+Const FIDT_DOUBLE = 1
+Const FIDT_IFD = 1
+Const FIDT_PALETTE = 1
+
+' Enum FREE_IMAGE_MDMODEL
+Const FREE_IMAGE_MDMODEL = 1
+Const FIMD_NODATA = 1
+Const FIMD_COMMENTS = 1
+Const FIMD_EXIF_MAIN = 1
+Const FIMD_EXIF_EXIF = 1
+Const FIMD_EXIF_GPS = 1
+Const FIMD_EXIF_MAKERNOTE = 1
+Const FIMD_EXIF_INTEROP = 1
+Const FIMD_IPTC = 1
+Const FIMD_XMP = 1
+Const FIMD_GEOTIFF = 1
+Const FIMD_ANIMATION = 1
+Const FIMD_CUSTOM = 1
+Const FIMD_EXIF_RAW = 1
+
+' Enum FREE_IMAGE_FRAME_DISPOSAL_METHODS
+Const FREE_IMAGE_FRAME_DISPOSAL_METHODS = 1
+Const FIFD_GIF_DISPOSAL_UNSPECIFIED = 1
+Const FIFD_GIF_DISPOSAL_LEAVE = 1
+Const FIFD_GIF_DISPOSAL_BACKGROUND = 1
+Const FIFD_GIF_DISPOSAL_PREVIOUS = 1
+
+' Enum FREE_IMAGE_COLOR_OPTIONS
+Const FREE_IMAGE_COLOR_OPTIONS = 1
+Const FI_COLOR_IS_RGB_COLOR = 1
+Const FI_COLOR_IS_RGBA_COLOR = 1
+Const FI_COLOR_FIND_EQUAL_COLOR = 1
+Const FI_COLOR_ALPHA_IS_INDEX = 1
+
+' Enum FREE_IMAGE_CONVERSION_FLAGS
+Const FREE_IMAGE_CONVERSION_FLAGS = 1
+Const FICF_MONOCHROME = 1
+Const FICF_MONOCHROME_THRESHOLD = 1
+Const FICF_MONOCHROME_DITHER = 1
+Const FICF_GREYSCALE_4BPP = 1
+Const FICF_PALLETISED_8BPP = 1
+Const FICF_GREYSCALE_8BPP = 1
+Const FICF_GREYSCALE = 1
+Const FICF_RGB_15BPP = 1
+Const FICF_RGB_16BPP = 1
+Const FICF_RGB_24BPP = 1
+Const FICF_RGB_32BPP = 1
+Const FICF_RGB_ALPHA = 1
+Const FICF_KEEP_UNORDERED_GREYSCALE_PALETTE = 1
+Const FICF_REORDER_GREYSCALE_PALETTE = 1
+
+' Enum FREE_IMAGE_COLOR_DEPTH
+Const FREE_IMAGE_COLOR_DEPTH = 1
+Const FICD_AUTO = 1
+Const FICD_MONOCHROME = 1
+Const FICD_MONOCHROME_THRESHOLD = 1
+Const FICD_MONOCHROME_DITHER = 1
+Const FICD_1BPP = 1
+Const FICD_4BPP = 1
+Const FICD_8BPP = 1
+Const FICD_15BPP = 1
+Const FICD_16BPP = 1
+Const FICD_24BPP = 1
+Const FICD_32BPP = 1
+
+' Enum FREE_IMAGE_ADJUST_MODE
+Const FREE_IMAGE_ADJUST_MODE = 1
+Const AM_STRECH = 1
+Const AM_DEFAULT = 1
+Const AM_ADJUST_BOTH = 1
+Const AM_ADJUST_WIDTH = 1
+Const AM_ADJUST_HEIGHT = 1
+Const AM_ADJUST_OPTIMAL_SIZE = 1
+
+' Enum FREE_IMAGE_MASK_FLAGS
+Const FREE_IMAGE_MASK_FLAGS = 1
+Const FIMF_MASK_NONE = 1
+Const FIMF_MASK_FULL_TRANSPARENCY = 1
+Const FIMF_MASK_ALPHA_TRANSPARENCY = 1
+Const FIMF_MASK_COLOR_TRANSPARENCY = 1
+Const FIMF_MASK_FORCE_TRANSPARENCY = 1
+Const FIMF_MASK_INVERSE_MASK = 1
+
+' Enum FREE_IMAGE_MASK_CREATION_OPTION_FLAGS
+Const FREE_IMAGE_MASK_CREATION_OPTION_FLAGS = 1
+Const MCOF_CREATE_MASK_IMAGE = 1
+Const MCOF_MODIFY_SOURCE_IMAGE = 1
+Const MCOF_CREATE_AND_MODIFY = 1
+
+' Enum FREE_IMAGE_TRANSPARENCY_STATE_FLAGS
+Const FREE_IMAGE_TRANSPARENCY_STATE_FLAGS = 1
+Const FITSF_IGNORE_TRANSPARENCY = 1
+Const FITSF_NONTRANSPARENT = 1
+Const FITSF_TRANSPARENT = 1
+Const FITSF_INCLUDE_ALPHA_TRANSPARENCY = 1
+
+' Enum FREE_IMAGE_ICON_TRANSPARENCY_OPTION_FLAGS
+Const FREE_IMAGE_ICON_TRANSPARENCY_OPTION_FLAGS = 1
+Const ITOF_NO_TRANSPARENCY = 1
+Const ITOF_USE_TRANSPARENCY_INFO = 1
+Const ITOF_USE_TRANSPARENCY_INFO_ONLY = 1
+Const ITOF_USE_COLOR_TRANSPARENCY = 1
+Const ITOF_USE_COLOR_TRANSPARENCY_ONLY = 1
+Const ITOF_USE_TRANSPARENCY_INFO_OR_COLOR = 1
+Const ITOF_USE_DEFAULT_TRANSPARENCY = 1
+Const ITOF_USE_COLOR_TOP_LEFT_PIXEL = 1
+Const ITOF_USE_COLOR_FIRST_PIXEL = 1
+Const ITOF_USE_COLOR_TOP_RIGHT_PIXEL = 1
+Const ITOF_USE_COLOR_BOTTOM_LEFT_PIXEL = 1
+Const ITOF_USE_COLOR_BOTTOM_RIGHT_PIXEL = 1
+Const ITOF_USE_COLOR_SPECIFIED = 1
+Const ITOF_FORCE_TRANSPARENCY_INFO = 1
+
+#End If
