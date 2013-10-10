@@ -5,6 +5,14 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+October 10, 2013 - 2.20 (3.16.0)
+* [Carsten Klein] prevented a potential 'Division by zero' error in private helper function pGetTagFromTagPtr. Thanks to Bob Weiss for pointing that out.
++ [Carsten Klein] added support for the new Google WebP image format
+! [Carsten Klein] refactored and centralized all VB6 IDE tweaking constant definitions into one single '#If False' block at the end of the file
+! [Carsten Klein] changed constants FREEIMAGE_MINOR_VERSION and FREEIMAGE_RELEASE_SERIAL to match current version 3.16.0
+- [Carsten Klein] removed change log entries from source file MFreeImage.bas
+- [Carsten Klein] removed block 'General notes' form source file MFreeImage.bas
+
 March 14, 2013 - 2.19 (3.15.4)
 * [Jørgen Hartmann] fixed coordinate calculation in FreeImage_PaintDCEx applied for horizontal and/or vertical mirroring, which now works correctly for all XDst and YDst coordinates.
 
