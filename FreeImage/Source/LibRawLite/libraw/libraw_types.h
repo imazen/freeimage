@@ -155,7 +155,8 @@ typedef struct
     unsigned    is_foveon;
     int         colors;
 
-    unsigned    filters; 
+    unsigned    filters;
+    char        xtrans[6][6];
     char        cdesc[5];
 
 }libraw_iparams_t;
@@ -202,6 +203,7 @@ typedef struct
   char        model2[64];
   void        *profile;
   unsigned    profile_length;
+  unsigned    black_stat[8];
 }libraw_colordata_t;
 
 typedef struct
@@ -297,7 +299,13 @@ typedef struct
     int   wf_debanding;
     float wf_deband_treshold[4];
 	/* Raw speed */
-	int use_rawspeed;
+    int use_rawspeed;
+  /* Disable Auto-scale */
+    int no_auto_scale;
+  /* Disable intepolation */
+    int no_interpolation;
+  /* Disable sRAW YCC to RGB conversion */
+  int sraw_ycc;
 }libraw_output_params_t;
 
 typedef struct

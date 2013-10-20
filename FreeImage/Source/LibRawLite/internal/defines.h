@@ -21,13 +21,15 @@ it under the terms of the one of three licenses as you choose:
    for more information
 */
 
+#line 27 "dcraw/dcraw.c"
 #ifndef USE_JPEG
 #define NO_JPEG
 #endif
 #ifndef USE_JASPER
 #define NO_JASPER
 #endif
-#define DCRAW_VERSION "9.17"
+#line 38 "dcraw/dcraw.c"
+#define DCRAW_VERSION "9.19"
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -45,24 +47,7 @@ it under the terms of the one of three licenses as you choose:
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
-
-#ifdef NODEPS
-#define NO_JASPER
-#define NO_JPEG
-#define NO_LCMS
-#endif
-#ifndef NO_JASPER
-#include <jasper/jasper.h>	/* Decode RED camera movies */
-#endif
-#ifndef NO_JPEG
-#include <jpeglib.h>		/* Decode compressed Kodak DC120 photos */
-#endif				/* and Adobe Lossy DNGs */
-#ifdef LOCALEDIR
-#include <libintl.h>
-#define _(String) gettext(String)
-#else
-#define _(String) (String)
-#endif
+#line 65 "dcraw/dcraw.c"
 #ifdef __CYGWIN__
 #include <io.h>
 #endif
@@ -73,12 +58,38 @@ it under the terms of the one of three licenses as you choose:
 #define snprintf _snprintf
 #define strcasecmp stricmp
 #define strncasecmp strnicmp
+#line 79 "dcraw/dcraw.c"
 #else
 #include <unistd.h>
 #include <utime.h>
 #include <netinet/in.h>
 typedef long long INT64;
 typedef unsigned long long UINT64;
+#endif
+
+#ifdef NODEPS
+#define NO_JASPER
+#define NO_JPEG
+#define NO_LCMS
+#endif
+#ifndef NO_JASPER
+#include <jasper/jasper.h>	/* Decode Red camera movies */
+#endif
+#ifndef NO_JPEG
+#include <jpeglib.h>		/* Decode compressed Kodak DC120 photos */
+#endif				/* and Adobe Lossy DNGs */
+#ifndef NO_LCMS
+#ifdef USE_LCMS
+#include <lcms.h>		/* Support color profiles */
+#else
+#include <lcms2.h>		/* Support color profiles */
+#endif
+#endif
+#ifdef LOCALEDIR
+#include <libintl.h>
+#define _(String) gettext(String)
+#else
+#define _(String) (String)
 #endif
 
 #ifdef LJPEG_DECODE
@@ -89,6 +100,7 @@ typedef unsigned long long UINT64;
 #ifndef LONG_BIT
 #define LONG_BIT (8 * sizeof (long))
 #endif
+#line 192 "dcraw/dcraw.c"
 #define FORC(cnt) for (c=0; c < cnt; c++)
 #define FORC3 FORC(3)
 #define FORC4 FORC(4)
@@ -144,6 +156,7 @@ typedef unsigned long long UINT64;
 
 #define RAW(row,col) \
 	raw_image[(row)*raw_width+(col)]
+#line 253 "dcraw/dcraw.c"
 #define BAYER(row,col) \
 	image[((row) >> shrink)*iwidth + ((col) >> shrink)][FC(row,col)]
 

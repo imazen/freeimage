@@ -53,7 +53,7 @@ DllDef    const char          *libraw_strprogress(enum LibRaw_progress);
 DllDef    libraw_data_t       *libraw_init(unsigned int flags);
 DllDef    int                 libraw_open_file(libraw_data_t*, const char *);
 DllDef    int                 libraw_open_file_ex(libraw_data_t*, const char *, INT64 max_buff_sz);
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
 DllDef    int                 libraw_open_wfile(libraw_data_t*, const wchar_t *);
 DllDef    int                 libraw_open_wfile_ex(libraw_data_t*, const wchar_t *, INT64 max_buff_sz);
 #endif
@@ -73,11 +73,13 @@ DllDef    int                 libraw_versionNumber();
 DllDef    const char**        libraw_cameraList();
 DllDef    int                 libraw_cameraCount();
 
+  /* helpers */
 DllDef    void                libraw_set_memerror_handler(libraw_data_t*, memory_callback cb, void *datap);
 DllDef    void                libraw_set_dataerror_handler(libraw_data_t*,data_callback func,void *datap);
 DllDef    void                libraw_set_progress_handler(libraw_data_t*,progress_callback cb,void *datap);
 DllDef    const char *        libraw_unpack_function_name(libraw_data_t* lr);
 DllDef    int                 libraw_get_decoder_info(libraw_data_t* lr,libraw_decoder_info_t* d);
+DllDef    int libraw_COLOR(libraw_data_t*,int row, int col);
 
     /* DCRAW compatibility */
 DllDef    int                 libraw_adjust_sizes_info_only(libraw_data_t*);
@@ -103,7 +105,7 @@ class DllDef LibRaw
     LibRaw(unsigned int flags = LIBRAW_OPTIONS_NONE);
     libraw_output_params_t*     output_params_ptr() { return &imgdata.params;}
     int                         open_file(const char *fname, INT64 max_buffered_sz=LIBRAW_USE_STREAMS_DATASTREAM_MAXSIZE);
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
 	int                         open_file(const wchar_t *fname, INT64 max_buffered_sz=LIBRAW_USE_STREAMS_DATASTREAM_MAXSIZE);
 #endif
     int                         open_buffer(void *buffer, size_t size);
@@ -114,6 +116,7 @@ class DllDef LibRaw
 
     int                         adjust_sizes_info_only(void);
     int                         subtract_black();
+    int                         subtract_black_internal();
     int                         raw2image();
     int                         raw2image_ex(int do_subtract_black);
     void                        raw2image_start();
@@ -136,6 +139,7 @@ class DllDef LibRaw
     int                         dcraw_process(void);
     /* information calls */
     int is_fuji_rotated(){return libraw_internal_data.internal_output_params.fuji_width;}
+    int is_sraw();
     /* memory writers */
     virtual libraw_processed_image_t*   dcraw_make_mem_image(int *errcode=NULL);  
     virtual libraw_processed_image_t*   dcraw_make_mem_thumb(int *errcode=NULL);
@@ -165,9 +169,10 @@ class DllDef LibRaw
   void phase_one_subtract_black(ushort *src, ushort *dest);
   void        phase_one_correct();
   int set_rawspeed_camerafile(char *filename);
-
+  void setCancelFlag();
 
 protected:
+    void checkCancel();
     void phase_one_allocate_tempbuffer();
     void phase_one_free_tempbuffer();
     virtual int  is_phaseone_compressed();
@@ -232,7 +237,11 @@ protected:
     void        lin_interpolate();
     void        vng_interpolate();
     void        ppg_interpolate();
+    void        cielab(ushort rgb[3], short lab[3]);
+    void        xtrans_interpolate(int);
     void        ahd_interpolate();
+    void        dht_interpolate();
+    void        aahd_interpolate();
 
     /* from demosaic pack */
     void        ahd_interpolate_mod();
@@ -280,8 +289,10 @@ protected:
 
   /* RawSpeed data */
   void		*_rawspeed_camerameta;
-  void	    *_rawspeed_decoder;
+  void          *_rawspeed_decoder;
   void		fix_after_rawspeed(int bl);
+  /* Fast cancel flag */
+  long          _exitflag;
 
 
 #ifdef LIBRAW_LIBRARY_BUILD 

@@ -29,7 +29,6 @@
 #include "libraw/libraw_types.h"
 #include "libraw/libraw.h"
 #include "libraw/libraw_datastream.h"
-#include "internal/libraw_bytebuffer.h"
 #include <sys/stat.h>
 #ifdef USE_JASPER
 #include <jasper/jasper.h>	/* Decode RED camera movies */
@@ -41,38 +40,6 @@
 #else
 #define NO_JPEG
 #endif
-
-
-LibRaw_byte_buffer::LibRaw_byte_buffer(unsigned sz) 
-{ 
-    buf=0; size=sz; offt=0; do_free=0; 
-    if(size)
-        { 
-            buf = (unsigned char*)malloc(size); do_free=1;
-        }
-}
-
-void LibRaw_byte_buffer::set_buffer(void *bb, unsigned int sz) 
-{ 
-    buf = (unsigned char*)bb; size = sz; offt=0; do_free=0;
-}
-
-LibRaw_byte_buffer::~LibRaw_byte_buffer() 
-{ 
-    if(do_free) free(buf);
-}
-
-LibRaw_byte_buffer *LibRaw_abstract_datastream::make_byte_buffer(unsigned int sz)
-{
-  if(INT64(sz)>size())
-    throw LIBRAW_EXCEPTION_IO_CORRUPT;
-
-    LibRaw_byte_buffer *ret = new LibRaw_byte_buffer(sz);
-    if(!ret) // failed new should throw std::exception
-      throw LIBRAW_EXCEPTION_ALLOC;
-    read(ret->get_buffer(),sz,1);
-    return ret;
-}
 
 int LibRaw_abstract_datastream::tempbuffer_open(void  *buf, size_t size)
 {
@@ -121,7 +88,7 @@ LibRaw_file_datastream::LibRaw_file_datastream(const char *fname)
       }
     }
 }
-#if (defined(_MSC_VER) && _MSC_VER > 1310)
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
 LibRaw_file_datastream::LibRaw_file_datastream(const wchar_t *fname) : filename(),wfilename(fname),jas_file(NULL),_fsize(0)
 {
   if (wfilename.size()>0) 
@@ -140,7 +107,7 @@ const wchar_t *LibRaw_file_datastream::wfname()
 {
   return wfilename.size()>0?wfilename.c_str():NULL;
 }
-#endif // _MSCVER
+#endif
 
  int LibRaw_file_datastream::valid()
 { 
@@ -179,7 +146,7 @@ int LibRaw_file_datastream::seek(INT64 o, int whence)
         case SEEK_END: dir = std::ios_base::end; break;
         default: dir = std::ios_base::beg;
         }
-    return (int)f->pubseekoff((long)o, dir)<0?-1:0;
+    return f->pubseekoff((long)o, dir) < 0;
 }
 
 INT64 LibRaw_file_datastream::tell()     
@@ -245,7 +212,7 @@ int LibRaw_file_datastream::subfile_open(const char *fn)
         return 0;
 }
 
-#if (defined(_MSC_VER) && _MSC_VER > 1310)
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
 int LibRaw_file_datastream::subfile_open(const wchar_t *fn)
 {
 	LR_STREAM_CHK();
@@ -263,7 +230,8 @@ int LibRaw_file_datastream::subfile_open(const wchar_t *fn)
 
 	return 0;
 }
-#endif // _MSCVER
+#endif
+
 
 void LibRaw_file_datastream::subfile_close()
 { 
@@ -278,7 +246,7 @@ void * LibRaw_file_datastream::make_jas_stream()
 #ifdef NO_JASPER
     return NULL;
 #else
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
 	if(wfname())
 	{
 		jas_file = _wfopen(wfname(),L"rb");
@@ -298,7 +266,7 @@ int LibRaw_file_datastream::jpeg_src(void *jpegdata)
   return -1; // not supported
 #else
   if(jas_file) { fclose(jas_file); jas_file = NULL;}
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
   if(wfname())
     {
       jas_file = _wfopen(wfname(),L"rb");
@@ -443,20 +411,6 @@ int LibRaw_buffer_datastream::scanf_one(const char *fmt, void* val)
     return scanf_res;
 }
 
-LibRaw_byte_buffer *LibRaw_buffer_datastream::make_byte_buffer(unsigned int sz)
-{
-  if(INT64(sz)>size())
-    throw LIBRAW_EXCEPTION_IO_CORRUPT;
-
-    LibRaw_byte_buffer *ret = new LibRaw_byte_buffer(0);
-    if(!ret) // failed new should throw std::exception
-      throw LIBRAW_EXCEPTION_ALLOC;
-    if(streampos + sz > streamsize)
-        sz = streamsize - streampos;
-    ret->set_buffer(buf+streampos,sz);
-    return ret;
-}
-
 int LibRaw_buffer_datastream::eof()
 { 
     if(substream) return substream->eof();
@@ -522,7 +476,7 @@ LibRaw_bigfile_datastream::LibRaw_bigfile_datastream(const char *fname): filenam
     sav=0;
 }
 
-#if (defined(_MSC_VER) && _MSC_VER > 1310)
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
 LibRaw_bigfile_datastream::LibRaw_bigfile_datastream(const wchar_t *fname) : filename(),wfilename(fname)
 { 
   if(wfilename.size()>0)
@@ -548,7 +502,7 @@ const wchar_t *LibRaw_bigfile_datastream::wfname()
 {
   return wfilename.size()>0?wfilename.c_str():NULL;
 }
-#endif // _MSC_VER
+#endif
 
 LibRaw_bigfile_datastream::~LibRaw_bigfile_datastream() {if(f)fclose(f); if(sav)fclose(sav);}
 int         LibRaw_bigfile_datastream::valid() { return f?1:0;}
@@ -636,7 +590,7 @@ int LibRaw_bigfile_datastream::subfile_open(const char *fn)
     else
         return 0;
 }
-#if (defined(_MSC_VER) && _MSC_VER > 1310)
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
 int LibRaw_bigfile_datastream::subfile_open(const wchar_t *fn)
 {
 	if(sav) return EBUSY;
@@ -655,7 +609,7 @@ int LibRaw_bigfile_datastream::subfile_open(const wchar_t *fn)
 	else
 		return 0;
 }
-#endif // _MSC_VER
+#endif
 
 
 void LibRaw_bigfile_datastream::subfile_close()

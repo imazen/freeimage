@@ -75,7 +75,7 @@ extern "C"
         LibRaw *ip = (LibRaw*) lr->parent_class;
         return ip->open_file(file,sz);
     }
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
     int libraw_open_wfile(libraw_data_t* lr, const wchar_t *file)
     {
         if(!lr) return EINVAL;
@@ -210,6 +210,12 @@ extern "C"
         if(!lr || !d) return EINVAL;
         LibRaw *ip = (LibRaw*) lr->parent_class;
         return ip->get_decoder_info(d);
+    }
+    int libraw_COLOR(libraw_data_t *lr, int row, int col)
+    {
+        if(!lr) return EINVAL;
+        LibRaw *ip = (LibRaw*) lr->parent_class;
+        return ip->COLOR(row,col);
     }
 #ifdef __cplusplus
 }
