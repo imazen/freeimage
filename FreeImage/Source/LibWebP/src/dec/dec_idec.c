@@ -329,12 +329,6 @@ static VP8StatusCode DecodeWebPHeaders(WebPIDecoder* const idec) {
       return VP8_STATUS_OUT_OF_MEMORY;
     }
     idec->dec_ = dec;
-#ifdef WEBP_USE_THREAD
-    dec->use_threads_ = (idec->params_.options != NULL) &&
-                        (idec->params_.options->use_threads > 0);
-#else
-    dec->use_threads_ = 0;
-#endif
     dec->alpha_data_ = headers.alpha_data;
     dec->alpha_data_size_ = headers.alpha_data_size;
     ChangeState(idec, STATE_VP8_HEADER, headers.offset);
@@ -352,13 +346,14 @@ static VP8StatusCode DecodeWebPHeaders(WebPIDecoder* const idec) {
 static VP8StatusCode DecodeVP8FrameHeader(WebPIDecoder* const idec) {
   const uint8_t* data = idec->mem_.buf_ + idec->mem_.start_;
   const size_t curr_size = MemDataSize(&idec->mem_);
+  int width, height;
   uint32_t bits;
 
   if (curr_size < VP8_FRAME_HEADER_SIZE) {
     // Not enough data bytes to extract VP8 Frame Header.
     return VP8_STATUS_SUSPENDED;
   }
-  if (!VP8GetInfo(data, curr_size, idec->chunk_size_, NULL, NULL)) {
+  if (!VP8GetInfo(data, curr_size, idec->chunk_size_, &width, &height)) {
     return IDecError(idec, VP8_STATUS_BITSTREAM_ERROR);
   }
 
@@ -425,7 +420,9 @@ static VP8StatusCode DecodePartition0(WebPIDecoder* const idec) {
   if (dec->status_ != VP8_STATUS_OK) {
     return IDecError(idec, dec->status_);
   }
-
+  // This change must be done before calling VP8InitFrame()
+  dec->mt_method_ = VP8GetThreadMethod(params->options, NULL,
+                                       io->width, io->height);
   if (!CopyParts0Data(idec)) {
     return IDecError(idec, VP8_STATUS_OUT_OF_MEMORY);
   }
@@ -451,16 +448,11 @@ static VP8StatusCode DecodeRemaining(WebPIDecoder* const idec) {
   VP8Io* const io = &idec->io_;
 
   assert(dec->ready_);
-
   for (; dec->mb_y_ < dec->mb_h_; ++dec->mb_y_) {
     VP8BitReader* token_br = &dec->parts_[dec->mb_y_ & (dec->num_parts_ - 1)];
-    if (dec->mb_x_ == 0) {
-      VP8InitScanline(dec);
-    }
-    for (; dec->mb_x_ < dec->mb_w_;  dec->mb_x_++) {
+    for (; dec->mb_x_ < dec->mb_w_; ++dec->mb_x_) {
       MBContext context;
       SaveContext(dec, token_br, &context);
-
       if (!VP8DecodeMB(dec, token_br)) {
         RestoreContext(&context, dec, token_br);
         // We shouldn't fail when MAX_MB data was available
@@ -469,19 +461,18 @@ static VP8StatusCode DecodeRemaining(WebPIDecoder* const idec) {
         }
         return VP8_STATUS_SUSPENDED;
       }
-      // Reconstruct and emit samples.
-      VP8ReconstructBlock(dec);
-
       // Release buffer only if there is only one partition
       if (dec->num_parts_ == 1) {
         idec->mem_.start_ = token_br->buf_ - idec->mem_.buf_;
         assert(idec->mem_.start_ <= idec->mem_.end_);
       }
     }
+    VP8InitScanline(dec);   // Prepare for next scanline
+
+    // Reconstruct, filter and emit the row.
     if (!VP8ProcessRow(dec, io)) {
       return IDecError(idec, VP8_STATUS_USER_ABORT);
     }
-    dec->mb_x_ = 0;
   }
   // Synchronize the thread and check for errors.
   if (!VP8ExitCritical(dec, io)) {
@@ -625,6 +616,10 @@ void WebPIDelete(WebPIDecoder* idec) {
   if (idec == NULL) return;
   if (idec->dec_ != NULL) {
     if (!idec->is_lossless_) {
+      if (idec->state_ == STATE_VP8_DATA) {
+        // Synchronize the thread, clean-up and check for errors.
+        VP8ExitCritical(idec->dec_, &idec->io_);
+      }
       VP8Delete(idec->dec_);
     } else {
       VP8LDelete(idec->dec_);

@@ -21,6 +21,9 @@ extern "C" {
 
 #define ALIGN_MASK (32 - 1)
 
+static void ReconstructRow(const VP8Decoder* const dec,
+                           const VP8ThreadContext* ctx);  // TODO(skal): remove
+
 //------------------------------------------------------------------------------
 // Filtering
 
@@ -41,9 +44,10 @@ static WEBP_INLINE int hev_thresh_from_level(int level, int keyframe) {
 
 static void DoFilter(const VP8Decoder* const dec, int mb_x, int mb_y) {
   const VP8ThreadContext* const ctx = &dec->thread_ctx_;
+  const int cache_id = ctx->id_;
   const int y_bps = dec->cache_y_stride_;
   VP8FInfo* const f_info = ctx->f_info_ + mb_x;
-  uint8_t* const y_dst = dec->cache_y_ + ctx->id_ * 16 * y_bps + mb_x * 16;
+  uint8_t* const y_dst = dec->cache_y_ + cache_id * 16 * y_bps + mb_x * 16;
   const int level = f_info->f_level_;
   const int ilevel = f_info->f_ilevel_;
   const int limit = 2 * level + ilevel;
@@ -65,8 +69,8 @@ static void DoFilter(const VP8Decoder* const dec, int mb_x, int mb_y) {
     }
   } else {    // complex
     const int uv_bps = dec->cache_uv_stride_;
-    uint8_t* const u_dst = dec->cache_u_ + ctx->id_ * 8 * uv_bps + mb_x * 8;
-    uint8_t* const v_dst = dec->cache_v_ + ctx->id_ * 8 * uv_bps + mb_x * 8;
+    uint8_t* const u_dst = dec->cache_u_ + cache_id * 8 * uv_bps + mb_x * 8;
+    uint8_t* const v_dst = dec->cache_v_ + cache_id * 8 * uv_bps + mb_x * 8;
     const int hev_thresh =
         hev_thresh_from_level(level, dec->frm_hdr_.key_frame_);
     if (mb_x > 0) {
@@ -164,25 +168,31 @@ static void PrecomputeFilterStrengths(VP8Decoder* const dec) {
 static int FinishRow(VP8Decoder* const dec, VP8Io* const io) {
   int ok = 1;
   const VP8ThreadContext* const ctx = &dec->thread_ctx_;
+  const int cache_id = ctx->id_;
   const int extra_y_rows = kFilterExtraRows[dec->filter_type_];
   const int ysize = extra_y_rows * dec->cache_y_stride_;
   const int uvsize = (extra_y_rows / 2) * dec->cache_uv_stride_;
-  const int y_offset = ctx->id_ * 16 * dec->cache_y_stride_;
-  const int uv_offset = ctx->id_ * 8 * dec->cache_uv_stride_;
+  const int y_offset = cache_id * 16 * dec->cache_y_stride_;
+  const int uv_offset = cache_id * 8 * dec->cache_uv_stride_;
   uint8_t* const ydst = dec->cache_y_ - ysize + y_offset;
   uint8_t* const udst = dec->cache_u_ - uvsize + uv_offset;
   uint8_t* const vdst = dec->cache_v_ - uvsize + uv_offset;
-  const int first_row = (ctx->mb_y_ == 0);
-  const int last_row = (ctx->mb_y_ >= dec->br_mb_y_ - 1);
-  int y_start = MACROBLOCK_VPOS(ctx->mb_y_);
-  int y_end = MACROBLOCK_VPOS(ctx->mb_y_ + 1);
+  const int mb_y = ctx->mb_y_;
+  const int is_first_row = (mb_y == 0);
+  const int is_last_row = (mb_y >= dec->br_mb_y_ - 1);
+
+  if (dec->mt_method_ == 2) {
+    ReconstructRow(dec, ctx);
+  }
 
   if (ctx->filter_row_) {
     FilterRow(dec);
   }
 
   if (io->put != NULL) {
-    if (!first_row) {
+    int y_start = MACROBLOCK_VPOS(mb_y);
+    int y_end = MACROBLOCK_VPOS(mb_y + 1);
+    if (!is_first_row) {
       y_start -= extra_y_rows;
       io->y = ydst;
       io->u = udst;
@@ -193,7 +203,7 @@ static int FinishRow(VP8Decoder* const dec, VP8Io* const io) {
       io->v = dec->cache_v_ + uv_offset;
     }
 
-    if (!last_row) {
+    if (!is_last_row) {
       y_end -= extra_y_rows;
     }
     if (y_end > io->crop_bottom) {
@@ -234,8 +244,8 @@ static int FinishRow(VP8Decoder* const dec, VP8Io* const io) {
     }
   }
   // rotate top samples if needed
-  if (ctx->id_ + 1 == dec->num_caches_) {
-    if (!last_row) {
+  if (cache_id + 1 == dec->num_caches_) {
+    if (!is_last_row) {
       memcpy(dec->cache_y_ - ysize, ydst + 16 * dec->cache_y_stride_, ysize);
       memcpy(dec->cache_u_ - uvsize, udst + 8 * dec->cache_uv_stride_, uvsize);
       memcpy(dec->cache_v_ - uvsize, vdst + 8 * dec->cache_uv_stride_, uvsize);
@@ -252,10 +262,14 @@ static int FinishRow(VP8Decoder* const dec, VP8Io* const io) {
 int VP8ProcessRow(VP8Decoder* const dec, VP8Io* const io) {
   int ok = 1;
   VP8ThreadContext* const ctx = &dec->thread_ctx_;
-  if (!dec->use_threads_) {
+  const int filter_row =
+      (dec->filter_type_ > 0) &&
+      (dec->mb_y_ >= dec->tl_mb_y_) && (dec->mb_y_ <= dec->br_mb_y_);
+  if (dec->mt_method_ == 0) {
     // ctx->id_ and ctx->f_info_ are already set
     ctx->mb_y_ = dec->mb_y_;
-    ctx->filter_row_ = dec->filter_row_;
+    ctx->filter_row_ = filter_row;
+    ReconstructRow(dec, ctx);
     ok = FinishRow(dec, io);
   } else {
     WebPWorker* const worker = &dec->worker_;
@@ -266,13 +280,21 @@ int VP8ProcessRow(VP8Decoder* const dec, VP8Io* const io) {
       ctx->io_ = *io;
       ctx->id_ = dec->cache_id_;
       ctx->mb_y_ = dec->mb_y_;
-      ctx->filter_row_ = dec->filter_row_;
-      if (ctx->filter_row_) {    // just swap filter info
+      ctx->filter_row_ = filter_row;
+      if (dec->mt_method_ == 2) {  // swap macroblock data
+        VP8MBData* const tmp = ctx->mb_data_;
+        ctx->mb_data_ = dec->mb_data_;
+        dec->mb_data_ = tmp;
+      } else {
+        // perform reconstruction directly in main thread
+        ReconstructRow(dec, ctx);
+      }
+      if (filter_row) {            // swap filter info
         VP8FInfo* const tmp = ctx->f_info_;
         ctx->f_info_ = dec->f_info_;
         dec->f_info_ = tmp;
       }
-      WebPWorkerLaunch(worker);
+      WebPWorkerLaunch(worker);    // (reconstruct)+filter in parallel
       if (++dec->cache_id_ == dec->num_caches_) {
         dec->cache_id_ = 0;
       }
@@ -341,7 +363,7 @@ VP8StatusCode VP8EnterCritical(VP8Decoder* const dec, VP8Io* const io) {
 
 int VP8ExitCritical(VP8Decoder* const dec, VP8Io* const io) {
   int ok = 1;
-  if (dec->use_threads_) {
+  if (dec->mt_method_ > 0) {
     ok = WebPWorkerSync(&dec->worker_);
   }
 
@@ -381,7 +403,7 @@ int VP8ExitCritical(VP8Decoder* const dec, VP8Io* const io) {
 // Initialize multi/single-thread worker
 static int InitThreadContext(VP8Decoder* const dec) {
   dec->cache_id_ = 0;
-  if (dec->use_threads_) {
+  if (dec->mt_method_ > 0) {
     WebPWorker* const worker = &dec->worker_;
     if (!WebPWorkerReset(worker)) {
       return VP8SetError(dec, VP8_STATUS_OUT_OF_MEMORY,
@@ -396,6 +418,28 @@ static int InitThreadContext(VP8Decoder* const dec) {
     dec->num_caches_ = ST_CACHE_LINES;
   }
   return 1;
+}
+
+int VP8GetThreadMethod(const WebPDecoderOptions* const options,
+                       const WebPHeaderStructure* const headers,
+                       int width, int height) {
+  if (options == NULL || options->use_threads == 0) {
+    return 0;
+  }
+  (void)headers;
+  (void)width;
+  (void)height;
+  assert(!headers->is_lossless);
+#if defined(WEBP_USE_THREAD)
+  if (width < MIN_WIDTH_FOR_THREADS) return 0;
+  // TODO(skal): tune the heuristic further
+#if 0
+  if (height < 2 * width) return 2;
+#endif
+  return 2;
+#else   // !WEBP_USE_THREAD
+  return 0;
+#endif
 }
 
 #undef MT_CACHE_LINES
@@ -413,10 +457,11 @@ static int AllocateMemory(VP8Decoder* const dec) {
   const size_t mb_info_size = (mb_w + 1) * sizeof(VP8MB);
   const size_t f_info_size =
       (dec->filter_type_ > 0) ?
-          mb_w * (dec->use_threads_ ? 2 : 1) * sizeof(VP8FInfo)
+          mb_w * (dec->mt_method_ > 0 ? 2 : 1) * sizeof(VP8FInfo)
         : 0;
   const size_t yuv_size = YUV_SIZE * sizeof(*dec->yuv_b_);
-  const size_t mb_data_size = sizeof(*dec->mb_data_);
+  const size_t mb_data_size =
+      (dec->mt_method_ == 2 ? 2 : 1) * mb_w * sizeof(*dec->mb_data_);
   const size_t cache_height = (16 * num_caches
                             + kFilterExtraRows[dec->filter_type_]) * 3 / 2;
   const size_t cache_size = top_size * cache_height;
@@ -456,7 +501,7 @@ static int AllocateMemory(VP8Decoder* const dec) {
   mem += f_info_size;
   dec->thread_ctx_.id_ = 0;
   dec->thread_ctx_.f_info_ = dec->f_info_;
-  if (dec->use_threads_) {
+  if (dec->mt_method_ > 0) {
     // secondary cache line. The deblocking process need to make use of the
     // filtering strength from previous macroblock row, while the new ones
     // are being decoded in parallel. We'll just swap the pointers.
@@ -469,6 +514,10 @@ static int AllocateMemory(VP8Decoder* const dec) {
   mem += yuv_size;
 
   dec->mb_data_ = (VP8MBData*)mem;
+  dec->thread_ctx_.mb_data_ = (VP8MBData*)mem;
+  if (dec->mt_method_ == 2) {
+    dec->thread_ctx_.mb_data_ += mb_w;
+  }
   mem += mb_data_size;
 
   dec->cache_y_stride_ = 16 * mb_w;
@@ -491,8 +540,9 @@ static int AllocateMemory(VP8Decoder* const dec) {
   mem += alpha_size;
   assert(mem <= (uint8_t*)dec->mem_ + dec->mem_size_);
 
-  // note: left-info is initialized once for all.
+  // note: left/top-info is initialized once for all.
   memset(dec->mb_info_ - 1, 0, mb_info_size);
+  VP8InitScanline(dec);   // initialize left too.
 
   // initialize top
   memset(dec->intra_t_, B_DC_PRED, intra_pred_mode_size);
@@ -544,137 +594,149 @@ static void Copy32b(uint8_t* dst, uint8_t* src) {
   memcpy(dst, src, 4);
 }
 
-void VP8ReconstructBlock(const VP8Decoder* const dec) {
+static void DoTransform(uint32_t bits, const int16_t* const src,
+                        uint8_t* const dst) {
+  switch (bits >> 30) {
+    case 3:
+      VP8Transform(src, dst, 0);
+      break;
+    case 2:
+      VP8TransformAC3(src, dst);
+      break;
+    case 1:
+      VP8TransformDC(src, dst);
+      break;
+    default:
+      break;
+  }
+}
+
+static void DoUVTransform(uint32_t bits, const int16_t* const src,
+                          uint8_t* const dst) {
+  if (bits & 0xff) {    // any non-zero coeff at all?
+    if (bits & 0xaa) {  // any non-zero AC coefficient?
+      VP8TransformUV(src, dst);   // note we don't use the AC3 variant for U/V
+    } else {
+      VP8TransformDCUV(src, dst);
+    }
+  }
+}
+
+static void ReconstructRow(const VP8Decoder* const dec,
+                           const VP8ThreadContext* ctx) {
   int j;
+  int mb_x;
+  const int mb_y = ctx->mb_y_;
+  const int cache_id = ctx->id_;
   uint8_t* const y_dst = dec->yuv_b_ + Y_OFF;
   uint8_t* const u_dst = dec->yuv_b_ + U_OFF;
   uint8_t* const v_dst = dec->yuv_b_ + V_OFF;
-  const VP8MBData* const block = dec->mb_data_;
+  for (mb_x = 0; mb_x < dec->mb_w_; ++mb_x) {
+    const VP8MBData* const block = ctx->mb_data_ + mb_x;
 
-  // Rotate in the left samples from previously decoded block. We move four
-  // pixels at a time for alignment reason, and because of in-loop filter.
-  if (dec->mb_x_ > 0) {
-    for (j = -1; j < 16; ++j) {
-      Copy32b(&y_dst[j * BPS - 4], &y_dst[j * BPS + 12]);
-    }
-    for (j = -1; j < 8; ++j) {
-      Copy32b(&u_dst[j * BPS - 4], &u_dst[j * BPS + 4]);
-      Copy32b(&v_dst[j * BPS - 4], &v_dst[j * BPS + 4]);
-    }
-  } else {
-    for (j = 0; j < 16; ++j) {
-      y_dst[j * BPS - 1] = 129;
-    }
-    for (j = 0; j < 8; ++j) {
-      u_dst[j * BPS - 1] = 129;
-      v_dst[j * BPS - 1] = 129;
-    }
-    // Init top-left sample on left column too
-    if (dec->mb_y_ > 0) {
-      y_dst[-1 - BPS] = u_dst[-1 - BPS] = v_dst[-1 - BPS] = 129;
-    }
-  }
-  {
-    // bring top samples into the cache
-    VP8TopSamples* const top_yuv = dec->yuv_t_ + dec->mb_x_;
-    const int16_t* const coeffs = block->coeffs_;
-    int n;
-
-    if (dec->mb_y_ > 0) {
-      memcpy(y_dst - BPS, top_yuv[0].y, 16);
-      memcpy(u_dst - BPS, top_yuv[0].u, 8);
-      memcpy(v_dst - BPS, top_yuv[0].v, 8);
-    } else if (dec->mb_x_ == 0) {
-      // we only need to do this init once at block (0,0).
-      // Afterward, it remains valid for the whole topmost row.
-      memset(y_dst - BPS - 1, 127, 16 + 4 + 1);
-      memset(u_dst - BPS - 1, 127, 8 + 1);
-      memset(v_dst - BPS - 1, 127, 8 + 1);
-    }
-
-    // predict and add residuals
-    if (block->is_i4x4_) {   // 4x4
-      uint32_t* const top_right = (uint32_t*)(y_dst - BPS + 16);
-
-      if (dec->mb_y_ > 0) {
-        if (dec->mb_x_ >= dec->mb_w_ - 1) {    // on rightmost border
-          memset(top_right, top_yuv[0].y[15], sizeof(*top_right));
-        } else {
-          memcpy(top_right, top_yuv[1].y, sizeof(*top_right));
-        }
+    // Rotate in the left samples from previously decoded block. We move four
+    // pixels at a time for alignment reason, and because of in-loop filter.
+    if (mb_x > 0) {
+      for (j = -1; j < 16; ++j) {
+        Copy32b(&y_dst[j * BPS - 4], &y_dst[j * BPS + 12]);
       }
-      // replicate the top-right pixels below
-      top_right[BPS] = top_right[2 * BPS] = top_right[3 * BPS] = top_right[0];
-
-      // predict and add residuals for all 4x4 blocks in turn.
-      for (n = 0; n < 16; n++) {
-        uint8_t* const dst = y_dst + kScan[n];
-        VP8PredLuma4[block->imodes_[n]](dst);
-        if (block->non_zero_ac_ & (1 << n)) {
-          VP8Transform(coeffs + n * 16, dst, 0);
-        } else if (block->non_zero_ & (1 << n)) {  // only DC is present
-          VP8TransformDC(coeffs + n * 16, dst);
-        }
+      for (j = -1; j < 8; ++j) {
+        Copy32b(&u_dst[j * BPS - 4], &u_dst[j * BPS + 4]);
+        Copy32b(&v_dst[j * BPS - 4], &v_dst[j * BPS + 4]);
       }
-    } else {    // 16x16
-      const int pred_func = CheckMode(dec->mb_x_, dec->mb_y_,
-                                      block->imodes_[0]);
-      VP8PredLuma16[pred_func](y_dst);
-      if (block->non_zero_ & 0xffff) {
-        for (n = 0; n < 16; n++) {
-          uint8_t* const dst = y_dst + kScan[n];
-          if (block->non_zero_ac_ & (1 << n)) {
-            VP8Transform(coeffs + n * 16, dst, 0);
-          } else if (block->non_zero_ & (1 << n)) {  // only DC is present
-            VP8TransformDC(coeffs + n * 16, dst);
-          }
-        }
+    } else {
+      for (j = 0; j < 16; ++j) {
+        y_dst[j * BPS - 1] = 129;
+      }
+      for (j = 0; j < 8; ++j) {
+        u_dst[j * BPS - 1] = 129;
+        v_dst[j * BPS - 1] = 129;
+      }
+      // Init top-left sample on left column too
+      if (mb_y > 0) {
+        y_dst[-1 - BPS] = u_dst[-1 - BPS] = v_dst[-1 - BPS] = 129;
       }
     }
     {
-      // Chroma
-      const int pred_func = CheckMode(dec->mb_x_, dec->mb_y_, block->uvmode_);
-      VP8PredChroma8[pred_func](u_dst);
-      VP8PredChroma8[pred_func](v_dst);
+      // bring top samples into the cache
+      VP8TopSamples* const top_yuv = dec->yuv_t_ + mb_x;
+      const int16_t* const coeffs = block->coeffs_;
+      uint32_t bits = block->non_zero_y_;
+      int n;
 
-      if (block->non_zero_ & 0x0f0000) {   // chroma-U
-        const int16_t* const u_coeffs = coeffs + 16 * 16;
-        if (block->non_zero_ac_ & 0x0f0000) {
-          VP8TransformUV(u_coeffs, u_dst);
-        } else {
-          VP8TransformDCUV(u_coeffs, u_dst);
+      if (mb_y > 0) {
+        memcpy(y_dst - BPS, top_yuv[0].y, 16);
+        memcpy(u_dst - BPS, top_yuv[0].u, 8);
+        memcpy(v_dst - BPS, top_yuv[0].v, 8);
+      } else if (mb_x == 0) {
+        // we only need to do this init once at block (0,0).
+        // Afterward, it remains valid for the whole topmost row.
+        memset(y_dst - BPS - 1, 127, 16 + 4 + 1);
+        memset(u_dst - BPS - 1, 127, 8 + 1);
+        memset(v_dst - BPS - 1, 127, 8 + 1);
+      }
+
+      // predict and add residuals
+      if (block->is_i4x4_) {   // 4x4
+        uint32_t* const top_right = (uint32_t*)(y_dst - BPS + 16);
+
+        if (mb_y > 0) {
+          if (mb_x >= dec->mb_w_ - 1) {    // on rightmost border
+            memset(top_right, top_yuv[0].y[15], sizeof(*top_right));
+          } else {
+            memcpy(top_right, top_yuv[1].y, sizeof(*top_right));
+          }
+        }
+        // replicate the top-right pixels below
+        top_right[BPS] = top_right[2 * BPS] = top_right[3 * BPS] = top_right[0];
+
+        // predict and add residuals for all 4x4 blocks in turn.
+        for (n = 0; n < 16; ++n, bits <<= 2) {
+          uint8_t* const dst = y_dst + kScan[n];
+          VP8PredLuma4[block->imodes_[n]](dst);
+          DoTransform(bits, coeffs + n * 16, dst);
+        }
+      } else {    // 16x16
+        const int pred_func = CheckMode(mb_x, mb_y,
+                                        block->imodes_[0]);
+        VP8PredLuma16[pred_func](y_dst);
+        if (bits != 0) {
+          for (n = 0; n < 16; ++n, bits <<= 2) {
+            DoTransform(bits, coeffs + n * 16, y_dst + kScan[n]);
+          }
         }
       }
-      if (block->non_zero_ & 0xf00000) {   // chroma-V
-        const int16_t* const v_coeffs = coeffs + 20 * 16;
-        if (block->non_zero_ac_ & 0xf00000) {
-          VP8TransformUV(v_coeffs, v_dst);
-        } else {
-          VP8TransformDCUV(v_coeffs, v_dst);
-        }
+      {
+        // Chroma
+        const uint32_t bits_uv = block->non_zero_uv_;
+        const int pred_func = CheckMode(mb_x, mb_y, block->uvmode_);
+        VP8PredChroma8[pred_func](u_dst);
+        VP8PredChroma8[pred_func](v_dst);
+        DoUVTransform(bits_uv >> 0, coeffs + 16 * 16, u_dst);
+        DoUVTransform(bits_uv >> 8, coeffs + 20 * 16, v_dst);
+      }
+
+      // stash away top samples for next block
+      if (mb_y < dec->mb_h_ - 1) {
+        memcpy(top_yuv[0].y, y_dst + 15 * BPS, 16);
+        memcpy(top_yuv[0].u, u_dst +  7 * BPS,  8);
+        memcpy(top_yuv[0].v, v_dst +  7 * BPS,  8);
       }
     }
-
-    // stash away top samples for next block
-    if (dec->mb_y_ < dec->mb_h_ - 1) {
-      memcpy(top_yuv[0].y, y_dst + 15 * BPS, 16);
-      memcpy(top_yuv[0].u, u_dst +  7 * BPS,  8);
-      memcpy(top_yuv[0].v, v_dst +  7 * BPS,  8);
-    }
-  }
-  // Transfer reconstructed samples from yuv_b_ cache to final destination.
-  {
-    const int y_offset = dec->cache_id_ * 16 * dec->cache_y_stride_;
-    const int uv_offset = dec->cache_id_ * 8 * dec->cache_uv_stride_;
-    uint8_t* const y_out = dec->cache_y_ + dec->mb_x_ * 16 + y_offset;
-    uint8_t* const u_out = dec->cache_u_ + dec->mb_x_ * 8 + uv_offset;
-    uint8_t* const v_out = dec->cache_v_ + dec->mb_x_ * 8 + uv_offset;
-    for (j = 0; j < 16; ++j) {
-      memcpy(y_out + j * dec->cache_y_stride_, y_dst + j * BPS, 16);
-    }
-    for (j = 0; j < 8; ++j) {
-      memcpy(u_out + j * dec->cache_uv_stride_, u_dst + j * BPS, 8);
-      memcpy(v_out + j * dec->cache_uv_stride_, v_dst + j * BPS, 8);
+    // Transfer reconstructed samples from yuv_b_ cache to final destination.
+    {
+      const int y_offset = cache_id * 16 * dec->cache_y_stride_;
+      const int uv_offset = cache_id * 8 * dec->cache_uv_stride_;
+      uint8_t* const y_out = dec->cache_y_ + mb_x * 16 + y_offset;
+      uint8_t* const u_out = dec->cache_u_ + mb_x * 8 + uv_offset;
+      uint8_t* const v_out = dec->cache_v_ + mb_x * 8 + uv_offset;
+      for (j = 0; j < 16; ++j) {
+        memcpy(y_out + j * dec->cache_y_stride_, y_dst + j * BPS, 16);
+      }
+      for (j = 0; j < 8; ++j) {
+        memcpy(u_out + j * dec->cache_uv_stride_, u_dst + j * BPS, 8);
+        memcpy(v_out + j * dec->cache_uv_stride_, v_dst + j * BPS, 8);
+      }
     }
   }
 }

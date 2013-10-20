@@ -341,6 +341,10 @@
 				Name="utils"
 				>
 				<File
+					RelativePath=".\src\utils\alpha_processing.c"
+					>
+				</File>
+				<File
 					RelativePath=".\src\utils\bit_reader.c"
 					>
 				</File>
@@ -506,6 +510,10 @@
 			<Filter
 				Name="utils"
 				>
+				<File
+					RelativePath=".\src\utils\alpha_processing.h"
+					>
+				</File>
 				<File
 					RelativePath=".\src\utils\bit_reader.h"
 					>

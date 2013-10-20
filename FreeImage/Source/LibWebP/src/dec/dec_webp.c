@@ -313,12 +313,14 @@ static VP8StatusCode ParseHeadersInternal(const uint8_t* data,
   {
     uint32_t flags = 0;
     int animation_present;
+    int fragments_present;
     status = ParseVP8X(&data, &data_size, &found_vp8x,
                        &canvas_width, &canvas_height, &flags);
     if (status != VP8_STATUS_OK) {
       return status;  // Wrong VP8X / insufficient data.
     }
     animation_present = !!(flags & ANIMATION_FLAG);
+    fragments_present = !!(flags & FRAGMENTS_FLAG);
     if (!found_riff && found_vp8x) {
       // Note: This restriction may be removed in the future, if it becomes
       // necessary to send VP8X chunk to the decoder.
@@ -327,7 +329,8 @@ static VP8StatusCode ParseHeadersInternal(const uint8_t* data,
     if (has_alpha != NULL) *has_alpha = !!(flags & ALPHA_FLAG);
     if (has_animation != NULL) *has_animation = animation_present;
 
-    if (found_vp8x && animation_present && headers == NULL) {
+    if (found_vp8x && (animation_present || fragments_present) &&
+        headers == NULL) {
       if (width != NULL) *width = canvas_width;
       if (height != NULL) *height = canvas_height;
       return VP8_STATUS_OK;  // Just return features from VP8X header.
@@ -374,7 +377,7 @@ static VP8StatusCode ParseHeadersInternal(const uint8_t* data,
       return VP8_STATUS_BITSTREAM_ERROR;
     }
   }
-  // Validates image size coherency. TODO(urvang): what about FRGM?
+  // Validates image size coherency.
   if (found_vp8x) {
     if (canvas_width != image_width || canvas_height != image_height) {
       return VP8_STATUS_BITSTREAM_ERROR;
@@ -449,11 +452,6 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
     if (dec == NULL) {
       return VP8_STATUS_OUT_OF_MEMORY;
     }
-#ifdef WEBP_USE_THREAD
-    dec->use_threads_ = params->options && (params->options->use_threads > 0);
-#else
-    dec->use_threads_ = 0;
-#endif
     dec->alpha_data_ = headers.alpha_data;
     dec->alpha_data_size_ = headers.alpha_data_size;
 
@@ -465,6 +463,9 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
       status = WebPAllocateDecBuffer(io.width, io.height, params->options,
                                      params->output);
       if (status == VP8_STATUS_OK) {  // Decode
+        // This change must be done before calling VP8Decode()
+        dec->mt_method_ = VP8GetThreadMethod(params->options, &headers,
+                                             io.width, io.height);
         if (!VP8Decode(dec, &io)) {
           status = dec->status_;
         }

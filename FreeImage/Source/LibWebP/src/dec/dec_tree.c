@@ -87,7 +87,6 @@ static const uint8_t kMVProba0[2][NUM_MV_PROBAS] = {
 // Paragraph 13.5
 static const uint8_t
   CoeffsProba0[NUM_TYPES][NUM_BANDS][NUM_CTX][NUM_PROBAS] = {
-  // genereated using vp8_default_coef_probs() in entropy.c:129
   { { { 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128 },
       { 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128 },
       { 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128 }
@@ -328,7 +327,7 @@ static const uint8_t kBModesProba[NUM_BMODES][NUM_BMODES][NUM_BMODES - 1] = {
 
 void VP8ResetProba(VP8Proba* const proba) {
   memset(proba->segments_, 255u, sizeof(proba->segments_));
-  memcpy(proba->coeffs_, CoeffsProba0, sizeof(CoeffsProba0));
+  // proba->bands_[][] is initialized later
 #ifndef ONLY_KEYFRAME_CODE
   memcpy(proba->mv_, kMVProba0, sizeof(kMVProba0));
   memcpy(proba->ymode_, kYModeProbaInter0, sizeof(kYModeProbaInter0));
@@ -336,20 +335,20 @@ void VP8ResetProba(VP8Proba* const proba) {
 #endif
 }
 
-void VP8ParseIntraMode(VP8BitReader* const br,  VP8Decoder* const dec) {
+void VP8ParseIntraMode(VP8BitReader* const br, VP8Decoder* const dec) {
   uint8_t* const top = dec->intra_t_ + 4 * dec->mb_x_;
   uint8_t* const left = dec->intra_l_;
-  VP8MBData* const block = dec->mb_data_;
+  VP8MBData* const block = dec->mb_data_ + dec->mb_x_;
 
-  // Hardcoded 16x16 intra-mode decision tree.
   block->is_i4x4_ = !VP8GetBit(br, 145);   // decide for B_PRED first
   if (!block->is_i4x4_) {
+    // Hardcoded 16x16 intra-mode decision tree.
     const int ymode =
         VP8GetBit(br, 156) ? (VP8GetBit(br, 128) ? TM_PRED : H_PRED)
                            : (VP8GetBit(br, 163) ? V_PRED : DC_PRED);
     block->imodes_[0] = ymode;
-    memset(top, ymode, 4 * sizeof(top[0]));
-    memset(left, ymode, 4 * sizeof(left[0]));
+    memset(top, ymode, 4 * sizeof(*top));
+    memset(left, ymode, 4 * sizeof(*left));
   } else {
     uint8_t* modes = block->imodes_;
     int y;
@@ -360,10 +359,10 @@ void VP8ParseIntraMode(VP8BitReader* const br,  VP8Decoder* const dec) {
         const uint8_t* const prob = kBModesProba[top[x]][ymode];
 #ifdef USE_GENERIC_TREE
         // Generic tree-parsing
-        int i = 0;
-        do {
+        int i = kYModesIntra4[VP8GetBit(br, prob[0])];
+        while (i > 0) {
           i = kYModesIntra4[2 * i + VP8GetBit(br, prob[i])];
-        } while (i > 0);
+        }
         ymode = -i;
 #else
         // Hardcoded tree parsing
@@ -378,8 +377,9 @@ void VP8ParseIntraMode(VP8BitReader* const br,  VP8Decoder* const dec) {
                             (!VP8GetBit(br, prob[8]) ? B_HD_PRED : B_HU_PRED)));
 #endif    // USE_GENERIC_TREE
         top[x] = ymode;
-        *modes++ = ymode;
       }
+      memcpy(modes, top, 4 * sizeof(*top));
+      modes += 4;
       left[y] = ymode;
     }
   }
@@ -547,9 +547,9 @@ void VP8ParseProba(VP8BitReader* const br, VP8Decoder* const dec) {
     for (b = 0; b < NUM_BANDS; ++b) {
       for (c = 0; c < NUM_CTX; ++c) {
         for (p = 0; p < NUM_PROBAS; ++p) {
-          if (VP8GetBit(br, CoeffsUpdateProba[t][b][c][p])) {
-            proba->coeffs_[t][b][c][p] = VP8GetValue(br, 8);
-          }
+          const int v = VP8GetBit(br, CoeffsUpdateProba[t][b][c][p]) ?
+                        VP8GetValue(br, 8) : CoeffsProba0[t][b][c][p];
+          proba->bands_[t][b].probas_[c][p] = v;
         }
       }
     }

@@ -439,9 +439,6 @@ static const uint8_t kZigzag[16] = {
   0, 1, 4, 8,  5, 2, 3, 6,  9, 12, 13, 10,  7, 11, 14, 15
 };
 
-typedef const uint8_t (*ProbaArray)[NUM_CTX][NUM_PROBAS];  // for const-casting
-typedef const uint8_t (*ProbaCtxArray)[NUM_PROBAS];
-
 // See section 13-2: http://tools.ietf.org/html/rfc6386#section-13.2
 static int GetLargeValue(VP8BitReader* const br, const uint8_t* const p) {
   int v;
@@ -475,19 +472,20 @@ static int GetLargeValue(VP8BitReader* const br, const uint8_t* const p) {
 }
 
 // Returns the position of the last non-zero coeff plus one
-// (and 0 if there's no coeff at all)
-static int GetCoeffs(VP8BitReader* const br, ProbaArray prob,
+static int GetCoeffs(VP8BitReader* const br, const VP8BandProbas* const prob,
                      int ctx, const quant_t dq, int n, int16_t* out) {
   // n is either 0 or 1 here. kBands[n] is not necessary for extracting '*p'.
-  const uint8_t* p = prob[n][ctx];
-  if (!VP8GetBit(br, p[0])) {   // first EOB is more a 'CBP' bit.
-    return 0;
-  }
+  const uint8_t* p = prob[n].probas_[ctx];
   for (; n < 16; ++n) {
-    const ProbaCtxArray p_ctx = prob[kBands[n + 1]];
-    if (!VP8GetBit(br, p[1])) {
-      p = p_ctx[0];
-    } else {  // non zero coeff
+    if (!VP8GetBit(br, p[0])) {
+      return n;  // previous coeff was last non-zero coeff
+    }
+    while (!VP8GetBit(br, p[1])) {       // sequence of zero coeffs
+      p = prob[kBands[++n]].probas_[0];
+      if (n == 16) return 16;
+    }
+    {        // non zero coeff
+      const VP8ProbaArray* const p_ctx = &prob[kBands[n + 1]].probas_[0];
       int v;
       if (!VP8GetBit(br, p[2])) {
         v = 1;
@@ -497,116 +495,101 @@ static int GetCoeffs(VP8BitReader* const br, ProbaArray prob,
         p = p_ctx[2];
       }
       out[kZigzag[n]] = VP8GetSigned(br, v) * dq[n > 0];
-      if (n < 15 && !VP8GetBit(br, p[0])) {   // EOB
-        return n + 1;
-      }
     }
   }
   return 16;
 }
 
-// Alias-safe way of converting 4bytes to 32bits.
-typedef union {
-  uint8_t  i8[4];
-  uint32_t i32;
-} PackedNz;
-
-// Table to unpack four bits into four bytes
-static const PackedNz kUnpackTab[16] = {
-  {{0, 0, 0, 0}},  {{1, 0, 0, 0}},  {{0, 1, 0, 0}},  {{1, 1, 0, 0}},
-  {{0, 0, 1, 0}},  {{1, 0, 1, 0}},  {{0, 1, 1, 0}},  {{1, 1, 1, 0}},
-  {{0, 0, 0, 1}},  {{1, 0, 0, 1}},  {{0, 1, 0, 1}},  {{1, 1, 0, 1}},
-  {{0, 0, 1, 1}},  {{1, 0, 1, 1}},  {{0, 1, 1, 1}},  {{1, 1, 1, 1}} };
-
-// Macro to pack four LSB of four bytes into four bits.
-#if defined(__PPC__) || defined(_M_PPC) || defined(_ARCH_PPC) || \
-    defined(__BIG_ENDIAN__)
-#define PACK_CST 0x08040201U
-#else
-#define PACK_CST 0x01020408U
-#endif
-#define PACK(X, S) ((((X).i32 * PACK_CST) & 0xff000000) >> (S))
+static WEBP_INLINE uint32_t NzCodeBits(uint32_t nz_coeffs, int nz, int dc_nz) {
+  nz_coeffs <<= 2;
+  nz_coeffs |= (nz > 3) ? 3 : (nz > 1) ? 2 : dc_nz;
+  return nz_coeffs;
+}
 
 static int ParseResiduals(VP8Decoder* const dec,
                           VP8MB* const mb, VP8BitReader* const token_br) {
-  uint32_t out_t_nz, out_l_nz;
-  int first;
-  ProbaArray ac_prob;
+  VP8BandProbas (* const bands)[NUM_BANDS] = dec->proba_.bands_;
+  const VP8BandProbas* ac_proba;
   const VP8QuantMatrix* const q = &dec->dqm_[dec->segment_];
-  VP8MBData* const block = dec->mb_data_;
+  VP8MBData* const block = dec->mb_data_ + dec->mb_x_;
   int16_t* dst = block->coeffs_;
   VP8MB* const left_mb = dec->mb_info_ - 1;
-  PackedNz nz_ac, nz_dc;
-  PackedNz tnz, lnz;
-  uint32_t non_zero_ac = 0;
-  uint32_t non_zero_dc = 0;
+  uint8_t tnz, lnz;
+  uint32_t non_zero_y = 0;
+  uint32_t non_zero_uv = 0;
   int x, y, ch;
+  uint32_t out_t_nz, out_l_nz;
+  int first;
 
   memset(dst, 0, 384 * sizeof(*dst));
   if (!block->is_i4x4_) {    // parse DC
     int16_t dc[16] = { 0 };
     const int ctx = mb->nz_dc_ + left_mb->nz_dc_;
-    mb->nz_dc_ = left_mb->nz_dc_ =
-        (GetCoeffs(token_br, (ProbaArray)dec->proba_.coeffs_[1],
-                   ctx, q->y2_mat_, 0, dc) > 0);
+    const int nz = GetCoeffs(token_br, bands[1], ctx, q->y2_mat_, 0, dc);
+    mb->nz_dc_ = left_mb->nz_dc_ = (nz > 0);
+    if (nz > 1) {   // more than just the DC -> perform the full transform
+      VP8TransformWHT(dc, dst);
+    } else {        // only DC is non-zero -> inlined simplified transform
+      int i;
+      const int dc0 = (dc[0] + 3) >> 3;
+      for (i = 0; i < 16 * 16; i += 16) dst[i] = dc0;
+    }
     first = 1;
-    ac_prob = (ProbaArray)dec->proba_.coeffs_[0];
-    VP8TransformWHT(dc, dst);
+    ac_proba = bands[0];
   } else {
     first = 0;
-    ac_prob = (ProbaArray)dec->proba_.coeffs_[3];
+    ac_proba = bands[3];
   }
 
-  tnz = kUnpackTab[mb->nz_ & 0xf];
-  lnz = kUnpackTab[left_mb->nz_ & 0xf];
+  tnz = mb->nz_ & 0x0f;
+  lnz = left_mb->nz_ & 0x0f;
   for (y = 0; y < 4; ++y) {
-    int l = lnz.i8[y];
+    int l = lnz & 1;
+    uint32_t nz_coeffs = 0;
     for (x = 0; x < 4; ++x) {
-      const int ctx = l + tnz.i8[x];
-      const int nz = GetCoeffs(token_br, ac_prob, ctx,
-                               q->y1_mat_, first, dst);
-      tnz.i8[x] = l = (nz > 0);
-      nz_dc.i8[x] = (dst[0] != 0);
-      nz_ac.i8[x] = (nz > 1);
+      const int ctx = l + (tnz & 1);
+      const int nz = GetCoeffs(token_br, ac_proba, ctx, q->y1_mat_, first, dst);
+      l = (nz > first);
+      tnz = (tnz >> 1) | (l << 7);
+      nz_coeffs = NzCodeBits(nz_coeffs, nz, dst[0] != 0);
       dst += 16;
     }
-    lnz.i8[y] = l;
-    non_zero_dc |= PACK(nz_dc, 24 - y * 4);
-    non_zero_ac |= PACK(nz_ac, 24 - y * 4);
+    tnz >>= 4;
+    lnz = (lnz >> 1) | (l << 7);
+    non_zero_y = (non_zero_y << 8) | nz_coeffs;
   }
-  out_t_nz = PACK(tnz, 24);
-  out_l_nz = PACK(lnz, 24);
+  out_t_nz = tnz;
+  out_l_nz = lnz >> 4;
 
-  tnz = kUnpackTab[mb->nz_ >> 4];
-  lnz = kUnpackTab[left_mb->nz_ >> 4];
   for (ch = 0; ch < 4; ch += 2) {
+    uint32_t nz_coeffs = 0;
+    tnz = mb->nz_ >> (4 + ch);
+    lnz = left_mb->nz_ >> (4 + ch);
     for (y = 0; y < 2; ++y) {
-      int l = lnz.i8[ch + y];
+      int l = lnz & 1;
       for (x = 0; x < 2; ++x) {
-        const int ctx = l + tnz.i8[ch + x];
-        const int nz =
-            GetCoeffs(token_br, (ProbaArray)dec->proba_.coeffs_[2],
-                      ctx, q->uv_mat_, 0, dst);
-        tnz.i8[ch + x] = l = (nz > 0);
-        nz_dc.i8[y * 2 + x] = (dst[0] != 0);
-        nz_ac.i8[y * 2 + x] = (nz > 1);
+        const int ctx = l + (tnz & 1);
+        const int nz = GetCoeffs(token_br, bands[2], ctx, q->uv_mat_, 0, dst);
+        l = (nz > 0);
+        tnz = (tnz >> 1) | (l << 3);
+        nz_coeffs = NzCodeBits(nz_coeffs, nz, dst[0] != 0);
         dst += 16;
       }
-      lnz.i8[ch + y] = l;
+      tnz >>= 2;
+      lnz = (lnz >> 1) | (l << 5);
     }
-    non_zero_dc |= PACK(nz_dc, 8 - ch * 2);
-    non_zero_ac |= PACK(nz_ac, 8 - ch * 2);
+    // Note: we don't really need the per-4x4 details for U/V blocks.
+    non_zero_uv |= nz_coeffs << (4 * ch);
+    out_t_nz |= (tnz << 4) << ch;
+    out_l_nz |= (lnz & 0xf0) << ch;
   }
-  out_t_nz |= PACK(tnz, 20);
-  out_l_nz |= PACK(lnz, 20);
   mb->nz_ = out_t_nz;
   left_mb->nz_ = out_l_nz;
 
-  block->non_zero_ac_ = non_zero_ac;
-  block->non_zero_ = non_zero_ac | non_zero_dc;
-  return !block->non_zero_;   // will be used for further optimization
+  block->non_zero_y_ = non_zero_y;
+  block->non_zero_uv_ = non_zero_uv;
+  return !(non_zero_y | non_zero_uv);  // will be used for further optimization
 }
-#undef PACK
 
 //------------------------------------------------------------------------------
 // Main loop
@@ -615,7 +598,7 @@ int VP8DecodeMB(VP8Decoder* const dec, VP8BitReader* const token_br) {
   VP8BitReader* const br = &dec->br_;
   VP8MB* const left = dec->mb_info_ - 1;
   VP8MB* const mb = dec->mb_info_ + dec->mb_x_;
-  VP8MBData* const block = dec->mb_data_;
+  VP8MBData* const block = dec->mb_data_ + dec->mb_x_;
   int skip;
 
   // Note: we don't save segment map (yet), as we don't expect
@@ -640,8 +623,8 @@ int VP8DecodeMB(VP8Decoder* const dec, VP8BitReader* const token_br) {
     if (!block->is_i4x4_) {
       left->nz_dc_ = mb->nz_dc_ = 0;
     }
-    block->non_zero_ = 0;
-    block->non_zero_ac_ = 0;
+    block->non_zero_y_ = 0;
+    block->non_zero_uv_ = 0;
   }
 
   if (dec->filter_type_ > 0) {  // store filter info
@@ -658,30 +641,29 @@ void VP8InitScanline(VP8Decoder* const dec) {
   left->nz_ = 0;
   left->nz_dc_ = 0;
   memset(dec->intra_l_, B_DC_PRED, sizeof(dec->intra_l_));
-  dec->filter_row_ =
-    (dec->filter_type_ > 0) &&
-    (dec->mb_y_ >= dec->tl_mb_y_) && (dec->mb_y_ <= dec->br_mb_y_);
+  dec->mb_x_ = 0;
 }
 
 static int ParseFrame(VP8Decoder* const dec, VP8Io* io) {
   for (dec->mb_y_ = 0; dec->mb_y_ < dec->br_mb_y_; ++dec->mb_y_) {
+    // Parse bitstream for this row.
     VP8BitReader* const token_br =
         &dec->parts_[dec->mb_y_ & (dec->num_parts_ - 1)];
-    VP8InitScanline(dec);
-    for (dec->mb_x_ = 0; dec->mb_x_ < dec->mb_w_;  dec->mb_x_++) {
+    for (; dec->mb_x_ < dec->mb_w_; ++dec->mb_x_) {
       if (!VP8DecodeMB(dec, token_br)) {
         return VP8SetError(dec, VP8_STATUS_NOT_ENOUGH_DATA,
                            "Premature end-of-file encountered.");
       }
-      // Reconstruct and emit samples.
-      VP8ReconstructBlock(dec);
     }
+    VP8InitScanline(dec);   // Prepare for next scanline
+
+    // Reconstruct, filter and emit the row.
     if (!VP8ProcessRow(dec, io)) {
       return VP8SetError(dec, VP8_STATUS_USER_ABORT, "Output aborted.");
     }
   }
-  if (dec->use_threads_ && !WebPWorkerSync(&dec->worker_)) {
-    return 0;
+  if (dec->mt_method_ > 0) {
+    if (!WebPWorkerSync(&dec->worker_)) return 0;
   }
 
   // Finish
@@ -746,7 +728,7 @@ void VP8Clear(VP8Decoder* const dec) {
   if (dec == NULL) {
     return;
   }
-  if (dec->use_threads_) {
+  if (dec->mt_method_ > 0) {
     WebPWorkerEnd(&dec->worker_);
   }
   ALPHDelete(dec->alph_dec_);
