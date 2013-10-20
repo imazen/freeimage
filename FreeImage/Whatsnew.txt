@@ -7,12 +7,12 @@ What's New for FreeImage
 
 Month day, 2013 - 3.16.0
 ! FreeImage now uses LibJPEG 9
-! FreeImage now uses LibPNG 1.6.3
-! FreeImage now uses LibTIFF 4.0.3 (CVS patch 2013-05-02)
-! FreeImage now uses LibRaw 0.15.4
+! FreeImage now uses LibPNG 1.6.6
+! FreeImage now uses LibTIFF 4.0.3 (CVS patch 2013-09-12)
+! FreeImage now uses LibRaw 0.16-Alpha2
 ! FreeImage now uses OpenJPEG 2.0.0 (SVN patch 2343)
 ! FreeImage now uses ZLib 1.2.8
-! FreeImage now uses LibWebP 0.3.1 (GIT patch 2013-07-03)
+! FreeImage now uses LibWebP 0.3.1 (GIT patch 2013-10-18)
 + [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to JP2/J2K plugins
 + [Herve Drolon] added loading & writing support for the WebP image format (also support the FIF_LOAD_NOPIXELS flag)
 + [Gaël Zimmermann] added basic support for BMP v4, v5 in BMP plugin (useful for drag and drop from another application such as Firefox)
@@ -27,6 +27,7 @@ Month day, 2013 - 3.16.0
 * [Herve Drolon] fixed TIFF plugin truncating metadata tag on loading if type is ASCII and it's value is of variable size (TIFF_VARIABLE) 
 * [Herve Drolon] fixed loading of TGA 8-bit files with a palette size greater that 256
 * [Anton Kukoba] TIFF parser didn't initialize the memory with zeros in stripped mode. This caused random bitmap data if the tiff file was corrupted/invalid.
+* [Herve Drolon] improved TGA file detection when the format version is < 2.0
 
 October 27th, 2012 - 3.15.4
 ! FreeImage now uses LibPNG 1.5.13
