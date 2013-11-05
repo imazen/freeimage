@@ -293,7 +293,8 @@ LibRaw:: LibRaw(unsigned int flags)
   ZERO(callbacks);
   
   _rawspeed_camerameta = _rawspeed_decoder = NULL;
-  
+  _x3f_data = NULL;
+
 #ifdef USE_RAWSPEED
   CameraMetaDataLR *camerameta = make_camera_metadata(); // May be NULL in case of exception in make_camera_metadata()
   _rawspeed_camerameta = static_cast<void*>(camerameta);
@@ -322,6 +323,7 @@ LibRaw:: LibRaw(unsigned int flags)
   imgdata.params.no_auto_scale = 0;
   imgdata.params.no_interpolation = 0;
   imgdata.params.sraw_ycc = 0;
+  imgdata.params.force_foveon_x3f = 0;
   imgdata.params.green_matching = 0;
   imgdata.parent_class = this;
   imgdata.progress_flags = 0;
@@ -403,6 +405,9 @@ void LibRaw:: recycle_datastream()
     }
   libraw_internal_data.internal_data.input_internal = 0;
 }
+
+void x3f_clear(void*);
+
 void LibRaw:: recycle() 
 {
   recycle_datastream();
@@ -430,6 +435,12 @@ void LibRaw:: recycle()
     }
   _rawspeed_decoder = 0;
 #endif
+  if(_x3f_data)
+    {
+      x3f_clear(_x3f_data);
+      _x3f_data = 0;
+    }
+
   memmgr.cleanup();
   imgdata.thumbnail.tformat = LIBRAW_THUMBNAIL_UNKNOWN;
   imgdata.progress_flags = 0;
@@ -691,6 +702,12 @@ int LibRaw::get_decoder_info(libraw_decoder_info_t* d_info)
       d_info->decoder_flags = LIBRAW_DECODER_FLATFIELD; 
       d_info->decoder_flags |= LIBRAW_DECODER_HASCURVE;
     }
+  else if (load_raw == &LibRaw::x3f_load_raw )
+    {
+      d_info->decoder_name = "x3f_load_raw()";
+      d_info->decoder_flags = LIBRAW_DECODER_LEGACY | LIBRAW_DECODER_OWNALLOC; 
+    }
+#ifdef LIBRAW_DEMOSAIC_PACK_GPL2
   else if (load_raw == &LibRaw::foveon_sd_load_raw )
     {
       d_info->decoder_name = "foveon_sd_load_raw()";
@@ -701,6 +718,7 @@ int LibRaw::get_decoder_info(libraw_decoder_info_t* d_info)
       d_info->decoder_name = "foveon_dp_load_raw()";
       d_info->decoder_flags = LIBRAW_DECODER_LEGACY; 
     }
+#endif
   else
     {
       d_info->decoder_name = "Unknown unpack function";
@@ -882,27 +900,38 @@ struct foveon_data_t
 {
     const char *make;
     const char *model;
+    const int raw_width,raw_height;
     const int  white;
     const int  left_margin,top_margin;
     const int  width,height;
 } foveon_data [] =
 {
-    {"Sigma","SD9",	3600,20,8,2266,1510},
-    {"Sigma","SD10",9340,20,8,2266,1510},
-    {"Sigma","SD14",7200,18,12,2651,1767},
-    {"Sigma","SD15",2900,18,12,2651,1767},
-    {"Sigma","DP1",2100,18,12,2651,1767},
-    {"Sigma","DP1S",2200,18,12,2651,1767},
-    {"Sigma","DP1X",3560,18,12,2651,1767},
-    {"Sigma","DP2",2326,13,16,2651,1767},
-    {"Sigma","DP2S",2300,18,12,2651,1767},
-    {"Sigma","DP2X",2300,18,12,2651,1767},
-    {"Sigma","SD1",3900,12,52,4807,3205},
-    {"Sigma","SD1 Merill",3900,12,52,4807,3205},
-    {"Sigma","DP1 Merrill",3900,12,0,4807,3205},
-    {"Sigma","DP2 Merrill",3900,12,0,4807,3205},
-    {"Sigma","DP3 Merrill",3900,12,0,4807,3205},
-    {"Polaroid","x530",2700,10,13,1419,1059},
+    {"Sigma","SD9",	2304,1531,3600,20,8,2266,1510},
+    {"Sigma","SD10",2304,1531,9340,20,8,2266,1510},
+    {"Sigma","SD14",2688,1792,7200,18,12,2651,1767},
+    {"Sigma","SD15",2688,1792,2900,18,12,2651,1767},
+    {"Sigma","DP1",2688,1792,2100,18,12,2651,1767},
+    {"Sigma","DP1S",2688,1792,2200,18,12,2651,1767},
+    {"Sigma","DP1X",2688,1792,3560,18,12,2651,1767},
+    {"Sigma","DP2",2688,1792,2326,13,16,2651,1767},
+    {"Sigma","DP2S",2688,1792,2300,18,12,2651,1767},
+    {"Sigma","DP2X",2688,1792,2300,18,12,2651,1767},
+    {"Sigma","SD1",4928,3264,3900,12,52,4807,3205}, // Full size
+    {"Sigma","SD1",4928,1632,3900,12,26,4807,1603}, // 2/3 size
+    {"Sigma","SD1",2464,1632,3900,6,26,2403,1603}, // 1/2 size
+    {"Sigma","SD1 Merill",4928,3264,3900,12,52,4807,3205}, // Full size
+    {"Sigma","SD1 Merill",4928,1632,3900,12,26,4807,1603}, // 2/3 size
+    {"Sigma","SD1 Merill",2464,1632,3900,6,26,2403,1603}, // 1/2 size
+    {"Sigma","DP1 Merrill",4928,3264,3900,12,0,4807,3205},
+    {"Sigma","DP1 Merrill",2464,1632,3900,12,0,2403,1603}, // 1/2 size
+    {"Sigma","DP1 Merrill",4928,1632,3900,12,0,4807,1603}, // 2/3 size
+    {"Sigma","DP2 Merrill",4928,3264,3900,12,0,4807,3205},
+    {"Sigma","DP2 Merrill",2464,1632,3900,12,0,2403,1603}, // 1/2 size
+    {"Sigma","DP2 Merrill",4928,1632,3900,12,0,4807,1603}, // 2/3 size
+    {"Sigma","DP3 Merrill",4928,3264,3900,12,0,4807,3205},
+    {"Sigma","DP3 Merrill",2464,1632,3900,12,0,2403,1603}, // 1/2 size
+    {"Sigma","DP3 Merrill",4928,1632,3900,12,0,4807,1603}, // 2/3 size
+    {"Polaroid","x530",1440,1088,2700,10,13,1419,1059},
 };
 const int foveon_count = sizeof(foveon_data)/sizeof(foveon_data[0]);
 
@@ -923,12 +952,14 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
       O.use_camera_matrix = O.use_camera_wb;
 
     identify();
-#ifndef LIBRAW_DEMOSAIC_PACK_GPL2
-    // Adjust sizes
-    if(imgdata.idata.is_foveon)
+    // Adjust sizes for X3F processing
+    if(load_raw == &LibRaw::x3f_load_raw)
     {
         for(int i=0; i< foveon_count;i++)
-            if(!strcasecmp(imgdata.idata.make,foveon_data[i].make) && !strcasecmp(imgdata.idata.model,foveon_data[i].model))
+            if(!strcasecmp(imgdata.idata.make,foveon_data[i].make) && !strcasecmp(imgdata.idata.model,foveon_data[i].model)
+                && imgdata.sizes.raw_width == foveon_data[i].raw_width
+                && imgdata.sizes.raw_height == foveon_data[i].raw_height
+                )
             {
                 imgdata.sizes.top_margin = foveon_data[i].top_margin;
                 imgdata.sizes.left_margin = foveon_data[i].left_margin;
@@ -937,7 +968,6 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
                 break;
             }
     }
-#endif
 #if 0
     size_t bytes = ID.input->size()-libraw_internal_data.unpacker_data.data_offset;
     float bpp = float(bytes)/float(S.raw_width)/float(S.raw_height);
@@ -1070,6 +1100,7 @@ int LibRaw::unpack(void)
     if(!load_raw)
       return LIBRAW_UNSPECIFIED_ERROR;
         
+
     if (O.use_camera_matrix && C.cmatrix[0][0] > 0.25) 
       {
         memcpy (C.rgb_cam, C.cmatrix, sizeof (C.cmatrix));
@@ -1097,7 +1128,6 @@ int LibRaw::unpack(void)
     get_decoder_info(&decoder_info);
 
     int save_iwidth = S.iwidth, save_iheight = S.iheight, save_shrink = IO.shrink;
-    int save_width = S.width, save_height = S.height;
 
     int rwidth = S.raw_width, rheight = S.raw_height;
     if( !IO.fuji_width)
@@ -1108,7 +1138,7 @@ int LibRaw::unpack(void)
         if(rheight < S.height + S.top_margin)
           rheight = S.height + S.top_margin;
       }
-    S.raw_pitch = S.raw_width*2;
+
     imgdata.rawdata.raw_image = 0;
     imgdata.rawdata.color4_image = 0;
     imgdata.rawdata.color3_image = 0;
@@ -1199,27 +1229,23 @@ int LibRaw::unpack(void)
     if(!imgdata.rawdata.raw_image && !imgdata.rawdata.color4_image && !imgdata.rawdata.color3_image) //RawSpeed failed!
       {
         // Not allocated on RawSpeed call, try call LibRaw
-        if(decoder_info.decoder_flags &  LIBRAW_DECODER_FLATFIELD)
+        if(decoder_info.decoder_flags &  LIBRAW_DECODER_OWNALLOC)
+          {
+            // x3f foveon decoder
+            // Do nothing! Decoder will allocate data internally
+          }
+        else if(decoder_info.decoder_flags &  LIBRAW_DECODER_FLATFIELD)
           {
             imgdata.rawdata.raw_alloc = malloc(rwidth*(rheight+7)*sizeof(imgdata.rawdata.raw_image[0]));
             imgdata.rawdata.raw_image = (ushort*) imgdata.rawdata.raw_alloc;
+            if(!S.raw_pitch)
+                S.raw_pitch = S.raw_width*2; // Bayer case, not set before
           }
         else if (decoder_info.decoder_flags & LIBRAW_DECODER_LEGACY)
           {
-            // sRAW and Foveon only, so extra buffer size is just 1/4
-#ifndef LIBRAW_DEMOSAIC_PACK_GPL2
-            if(imgdata.idata.is_foveon) // new Foveon decoder
-              {
-                S.iwidth = S.width = S.raw_width;
-                S.iheight= S.height = S.raw_height;
-              }
-            else
-#endif
-              {
-                S.iwidth = S.width;
-                S.iheight= S.height;        
-
-              }
+            // sRAW and old Foveon decoders only, so extra buffer size is just 1/4
+            S.iwidth = S.width;
+            S.iheight= S.height;        
             IO.shrink = 0;
             S.raw_pitch = S.width*8;
             // allocate image as temporary buffer, size 
@@ -1234,29 +1260,22 @@ int LibRaw::unpack(void)
         (this->*load_raw)();
         if(load_raw == &LibRaw::unpacked_load_raw && !strcasecmp(imgdata.idata.make,"Nikon"))
           C.maximum = m_save;
-        if (decoder_info.decoder_flags & LIBRAW_DECODER_LEGACY)
+        if(decoder_info.decoder_flags &  LIBRAW_DECODER_OWNALLOC)
+          {
+            // x3f foveon decoder only: do nothing
+
+          }
+        else if (decoder_info.decoder_flags & LIBRAW_DECODER_LEGACY)
           {
             // successfully decoded legacy image, attach image to raw_alloc
             imgdata.rawdata.raw_alloc = imgdata.image;
             imgdata.image = 0; 
             // Restore saved values. Note: Foveon have masked frame
-#ifndef LIBRAW_DEMOSAIC_PACK_GPL2
-            if(imgdata.idata.is_foveon)
-              {
-                S.width = save_width;
-                S.iwidth = save_iwidth;
-                S.height = save_height;
-                S.iheight = save_iheight;
-              }
-            else
-#endif
-              {
-                // Other 4-color legacy data: no borders
-                S.raw_width = S.width;
-                S.left_margin = 0;
-                S.raw_height = S.height;
-                S.top_margin = 0; 
-              }
+            // Other 4-color legacy data: no borders
+            S.raw_width = S.width;
+            S.left_margin = 0;
+            S.raw_height = S.height;
+            S.top_margin = 0; 
           }
       }
 
@@ -1617,7 +1636,11 @@ int LibRaw::raw2image_ex(int do_subtract_black)
     // process cropping
     int do_crop = 0;
     unsigned save_width = S.width;
-    if (~O.cropbox[2] && ~O.cropbox[3] && load_raw != &LibRaw::foveon_sd_load_raw) // Foveon SD to be cropped later
+    if (~O.cropbox[2] && ~O.cropbox[3] 
+#ifdef LIBRAW_DEMOSAIC_PACK_GPL2
+        && load_raw != &LibRaw::foveon_sd_load_raw
+#endif
+        ) // Foveon SD to be cropped later
       {
         int crop[4],c,filt;
         for(int c=0;c<4;c++) 
@@ -2326,6 +2349,13 @@ int LibRaw::unpack_thumb(void)
             return 0;
 
           }
+        else if (write_thumb == &LibRaw::x3f_thumb_loader)
+          {
+            x3f_thumb_loader();
+            SET_PROC_FLAG(LIBRAW_PROGRESS_THUMB_LOAD);
+            return 0;
+          }
+#ifdef LIBRAW_DEMOSAIC_PACK_GPL2
         else if (write_thumb == &LibRaw::foveon_thumb)
           {
             foveon_thumb_loader();
@@ -2335,6 +2365,7 @@ int LibRaw::unpack_thumb(void)
             return 0;
           }
         // else if -- all other write_thumb cases!
+#endif
         else
           {
             return LIBRAW_UNSUPPORTED_THUMBNAIL;
@@ -2641,10 +2672,8 @@ int LibRaw::dcraw_process(void)
 
     raw2image_ex(subtract_inline); // allocate imgdata.image and copy data!
 
-    // Adjust foveon max
-#ifndef LIBRAW_DEMOSAIC_PACK_GPL2
     // Adjust sizes
-    if(imgdata.idata.is_foveon)
+    if(0 && load_raw == &LibRaw::x3f_load_raw)
     {
         for(int i=0; i< foveon_count;i++)
             if(!strcasecmp(imgdata.idata.make,foveon_data[i].make) && !strcasecmp(imgdata.idata.model,foveon_data[i].model))
@@ -2653,8 +2682,6 @@ int LibRaw::dcraw_process(void)
                 break;
             }
     }
-#endif
-
 
     int save_4color = O.four_color_rgb;
 
@@ -2697,7 +2724,14 @@ int LibRaw::dcraw_process(void)
 
     if (P1.is_foveon) 
       {
-        if(load_raw == &LibRaw::foveon_dp_load_raw)
+        if(load_raw == &LibRaw::x3f_load_raw)
+          {
+            // Filter out zeroes
+            for (int i=0; i < S.height*S.width*4; i++)
+              if ((short) imgdata.image[0][i] < 0) imgdata.image[0][i] = 0;
+          }
+#ifdef LIBRAW_DEMOSAIC_PACK_GPL2
+        else if(load_raw == &LibRaw::foveon_dp_load_raw)
           {
             for (int i=0; i < S.height*S.width*4; i++)
               if ((short) imgdata.image[0][i] < 0) imgdata.image[0][i] = 0;
@@ -2706,6 +2740,7 @@ int LibRaw::dcraw_process(void)
           {
             foveon_interpolate();
           }
+#endif
         SET_PROC_FLAG(LIBRAW_PROGRESS_FOVEON_INTERPOLATE);
       }
 
@@ -2716,7 +2751,7 @@ int LibRaw::dcraw_process(void)
 
     if (
 #ifdef LIBRAW_DEMOSAIC_PACK_GPL2
-        !P1.is_foveon && 
+        (!P1.is_foveon || O.force_foveon_x3f) &&
 #endif
         !O.no_auto_scale)
       {
@@ -3299,6 +3334,7 @@ static const char  *static_camera_list[] =
 "Panasonic DMC-GH1",
 "Panasonic DMC-GH2",
 "Panasonic DMC-GH3",
+"Panasonic DMC-GM1",
 "Panasonic DMC-GX1",
 "Panasonic DMC-L1",
 "Panasonic DMC-L10",
@@ -3414,6 +3450,8 @@ static const char  *static_camera_list[] =
 "SMaL Ultra-Pocket 3",
 "SMaL Ultra-Pocket 4",
 "SMaL Ultra-Pocket 5",
+"Sony A7",
+"Sony A7R",
 "Sony DSC-F828",
 "Sony DSC-R1",
 "Sony DSC-RX1",
@@ -3521,13 +3559,153 @@ const char * LibRaw::strprogress(enum LibRaw_progress p)
 }
 
 #undef ID
+
+
 #include "../internal/libraw_x3f.cpp"
+
+void x3f_clear(void *p)
+{
+  x3f_delete((x3f_t*)p);
+}
+
+static char *utf2char(utf16_t *str, char *buffer)
+{
+  char *b = buffer;
+
+  while (*str != 0x00) {
+    char *chr = (char *)str;
+    *b++ = *chr;
+    str++;
+  }
+  *b = 0;
+  return buffer;
+}
+
+
+
+void LibRaw::parse_x3f()
+{
+  x3f_t *x3f = x3f_new_from_file(libraw_internal_data.internal_data.input);
+  if(!x3f)
+      return;
+  _x3f_data = x3f;
+
+  x3f_header_t *H = NULL;
+  x3f_directory_section_t *DS = NULL;
+
+  H = &x3f->header;
+  // Parse RAW size from RAW section
+  x3f_directory_entry_t *DE = x3f_get_raw(x3f);
+  if(!DE) return;
+  imgdata.sizes.flip = H->rotation;
+  x3f_directory_entry_header_t *DEH = &DE->header;
+  x3f_image_data_t *ID = &DEH->data_subsection.image_data;
+  imgdata.sizes.raw_width = ID->columns;
+  imgdata.sizes.raw_height = ID->rows;
+  // Parse other params from property section
+  DE = x3f_get_prop(x3f);
+  if(! (x3f_load_data(x3f,DE) == X3F_OK))
+    return;
+  DEH = &DE->header;
+  x3f_property_list_t *PL = &DEH->data_subsection.property_list;
+  if (PL->property_table.size != 0) {
+    int i;
+    x3f_property_t *P = PL->property_table.element;
+    for (i=0; i<PL->num_properties; i++) {
+      char name[100], value[100];
+      utf2char(P[i].name,name);
+      utf2char(P[i].value,value);
+      if (!strcmp (name, "ISO"))
+	imgdata.other.iso_speed = atoi(value);
+      if (!strcmp (name, "CAMMANUF"))
+        strcpy (imgdata.idata.make, value);
+      if (!strcmp (name, "CAMMODEL"))
+        strcpy (imgdata.idata.model, value);
+      if (!strcmp (name, "WB_DESC"))
+        strcpy (imgdata.color.model2, value);
+      if (!strcmp (name, "TIME"))
+	    imgdata.other.timestamp = atoi(value);
+      if (!strcmp (name, "EXPTIME"))
+        imgdata.other.shutter = atoi(value) / 1000000.0;
+      if (!strcmp (name, "APERTURE"))
+        imgdata.other.aperture = atof(value);
+      if (!strcmp (name, "FLENGTH"))
+        imgdata.other.focal_len = atof(value);
+    }
+    imgdata.idata.raw_count=1;
+    load_raw = &LibRaw::x3f_load_raw;
+    imgdata.sizes.raw_pitch = imgdata.sizes.raw_width*6;
+    imgdata.idata.is_foveon = 1;
+    libraw_internal_data.internal_output_params.raw_color=1; // Force adobe coeff
+    imgdata.color.maximum=0x3fff; // To be reset by color table
+    libraw_internal_data.unpacker_data.order = 0x4949;
+  }
+  // Try to get thumbnail data
+  LibRaw_thumbnail_formats format = LIBRAW_THUMBNAIL_UNKNOWN;
+  if(DE = x3f_get_thumb_jpeg(x3f))
+    {
+      format = LIBRAW_THUMBNAIL_JPEG;
+    }
+  else if(DE = x3f_get_thumb_plain(x3f))
+    {
+      format = LIBRAW_THUMBNAIL_BITMAP;
+    }
+  if(DE)
+    {
+      x3f_directory_entry_header_t *DEH = &DE->header;
+      x3f_image_data_t *ID = &DEH->data_subsection.image_data;
+      imgdata.thumbnail.twidth = ID->columns;
+      imgdata.thumbnail.theight = ID->rows;
+      imgdata.thumbnail.tcolors = 3;
+      imgdata.thumbnail.tformat = format;
+      libraw_internal_data.internal_data.toffset = DE->input.offset;
+      write_thumb = &LibRaw::x3f_thumb_loader;
+    }
+}
+
+void LibRaw::x3f_thumb_loader()
+{
+  x3f_t *x3f = (x3f_t*)_x3f_data;
+  if(!x3f) return; // No data pointer set
+  x3f_directory_entry_t *DE = x3f_get_thumb_jpeg(x3f);
+  if(!DE)
+    DE = x3f_get_thumb_plain(x3f);
+  if(!DE)
+    return;
+  if(X3F_OK != x3f_load_data(x3f, DE))
+    throw LIBRAW_EXCEPTION_IO_CORRUPT;
+  x3f_directory_entry_header_t *DEH = &DE->header;
+  x3f_image_data_t *ID = &DEH->data_subsection.image_data;
+  imgdata.thumbnail.twidth = ID->columns;
+  imgdata.thumbnail.theight = ID->rows;
+  imgdata.thumbnail.tcolors = 3;
+  if(imgdata.thumbnail.tformat == LIBRAW_THUMBNAIL_JPEG)
+    {
+      imgdata.thumbnail.thumb = (char*)malloc(ID->data_size);
+      merror(imgdata.thumbnail.thumb,"LibRaw::x3f_thumb_loader()");
+      memmove(imgdata.thumbnail.thumb,ID->data,ID->data_size);
+      imgdata.thumbnail.tlength = ID->data_size;
+    }
+  else if(imgdata.thumbnail.tformat == LIBRAW_THUMBNAIL_BITMAP)
+    {
+      imgdata.thumbnail.tlength = ID->columns * ID->rows * 3;
+      imgdata.thumbnail.thumb = (char*)malloc(ID->columns * ID->rows * 3);
+      merror(imgdata.thumbnail.thumb,"LibRaw::x3f_thumb_loader()");
+      char *src0 = (char*)ID->data; 
+      for(int row = 0; row < ID->rows;row++)
+        {
+          char *dest = &imgdata.thumbnail.thumb[row*ID->columns*3];
+          char *src = &src0[row * ID->row_stride];
+          memmove(dest,src,ID->columns*3);
+        }
+    }
+}
 
 void LibRaw::x3f_load_raw()
 {
   int raise_error=0;
-  x3f_t *x3f = NULL;
-  x3f = x3f_new_from_file(libraw_internal_data.internal_data.input);
+  x3f_t *x3f = (x3f_t*)_x3f_data;
+  if(!x3f) return; // No data pointer set
   if(X3F_OK == x3f_load_data(x3f, x3f_get_raw(x3f)))
     {
       x3f_directory_entry_t *DE = x3f_get_raw(x3f);
@@ -3536,10 +3714,10 @@ void LibRaw::x3f_load_raw()
       x3f_huffman_t *HUF = ID->huffman;
       x3f_true_t *TRU = ID->tru;
       uint16_t *data = NULL;
-      if(ID->rows != S.height || ID->columns != S.width)
+      if(ID->rows != S.raw_height || ID->columns != S.raw_width)
         {
           raise_error = 1;
-          goto cleanup;
+          goto end;
         }
       if (HUF != NULL)
         data = HUF->x3rgb16.element;
@@ -3548,25 +3726,14 @@ void LibRaw::x3f_load_raw()
       if (data == NULL) 
         {
           raise_error = 1;
-          goto cleanup;
+          goto end;
         }
-      for (int row=0; row < ID->rows; row++) {
-          for (int col=0; col < ID->columns; col++) {
-              for (int color=0; color < 3; color++)
-                {
-                  imgdata.image[row*S.raw_width+col][color] = data[3 * (ID->columns * row + col) + color];
-                  if((short)imgdata.image[row*S.raw_width+col][color] < 0)
-                    imgdata.image[row*S.raw_width+col][color] = 0;
-                }
-              imgdata.image[row*S.raw_width+col][3]=0;
-          }
-        }
-
+      imgdata.rawdata.color3_image = (ushort (*)[3])data;
     }
   else
     raise_error = 1;
- cleanup:
-  x3f_delete(x3f);
+end:
   if(raise_error)
     throw LIBRAW_EXCEPTION_IO_CORRUPT;
 }
+

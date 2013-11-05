@@ -73,9 +73,8 @@ extern "C" {
 typedef __int64 INT64;
 typedef unsigned __int64 UINT64;
 #else
-#include <stdint.h>
-typedef int64_t INT64;
-typedef uint64_t UINT64;
+typedef long long INT64;
+typedef unsigned long long UINT64;
 #endif
 
 typedef unsigned char uchar;
@@ -307,42 +306,44 @@ typedef struct
     int no_interpolation;
   /* Disable sRAW YCC to RGB conversion */
   int sraw_ycc;
+  /* Force use x3f data decoding either if demosaic pack GPL2 enabled */
+  int force_foveon_x3f;
 }libraw_output_params_t;
 
 typedef struct
 {
     /* really allocated bitmap */
-    void        *raw_alloc;
-    /* alias to single_channel variant */
-    ushort      *raw_image;
-    /* alias to 4-channel variant */
-    ushort      (*color4_image)[4] ;
-	/* alias to 3-color variand decoded by RawSpeed */
-	ushort		(*color3_image)[3];
+  void          *raw_alloc;
+  /* alias to single_channel variant */
+  ushort        *raw_image;
+  /* alias to 4-channel variant */
+  ushort        (*color4_image)[4] ;
+  /* alias to 3-color variand decoded by RawSpeed */
+  ushort        (*color3_image)[3];
     
-    /* Phase One black level data; */
-    short  (*ph1_black)[2];
-    /* save color and sizes here, too.... */
-    libraw_iparams_t  iparams;
-    libraw_image_sizes_t sizes;
-    libraw_internal_output_params_t ioparams;
-    libraw_colordata_t color;
+  /* Phase One black level data; */
+  short  (*ph1_black)[2];
+  /* save color and sizes here, too.... */
+  libraw_iparams_t  iparams;
+  libraw_image_sizes_t sizes;
+  libraw_internal_output_params_t ioparams;
+  libraw_colordata_t color;
 } libraw_rawdata_t;
 
 
 typedef struct
 {
-	ushort                      (*image)[4] ;
-	libraw_image_sizes_t        sizes;
-	libraw_iparams_t            idata;
-	libraw_output_params_t		params;
-    unsigned int                progress_flags;
-    unsigned int                process_warnings;
-    libraw_colordata_t          color;
-    libraw_imgother_t           other;
-    libraw_thumbnail_t          thumbnail;
-    libraw_rawdata_t            rawdata;
-    void                *parent_class;      
+  ushort                      (*image)[4] ;
+  libraw_image_sizes_t        sizes;
+  libraw_iparams_t            idata;
+  libraw_output_params_t		params;
+  unsigned int                progress_flags;
+  unsigned int                process_warnings;
+  libraw_colordata_t          color;
+  libraw_imgother_t           other;
+  libraw_thumbnail_t          thumbnail;
+  libraw_rawdata_t            rawdata;
+  void                *parent_class;      
 } libraw_data_t;
 
 
