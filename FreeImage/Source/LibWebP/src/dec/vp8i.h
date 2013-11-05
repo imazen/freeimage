@@ -32,8 +32,6 @@ extern "C" {
 #define DEC_MIN_VERSION 3
 #define DEC_REV_VERSION 1
 
-#define ONLY_KEYFRAME_CODE      // to remove any code related to P-Frames
-
 // intra prediction modes
 enum { B_DC_PRED = 0,   // 4x4 modes
        B_TM_PRED,
@@ -144,10 +142,6 @@ typedef struct {
   uint8_t segments_[MB_FEATURE_TREE_PROBS];
   // Type: 0:Intra16-AC  1:Intra16-DC   2:Chroma   3:Intra4
   VP8BandProbas bands_[NUM_TYPES][NUM_BANDS];
-#ifndef ONLY_KEYFRAME_CODE
-  uint8_t ymode_[4], uvmode_[3];
-  uint8_t mv_[2][NUM_MV_PROBAS];
-#endif
 } VP8Proba;
 
 // Filter parameters
@@ -164,10 +158,10 @@ typedef struct {
 // Informations about the macroblocks.
 
 typedef struct {  // filter specs
-  uint8_t f_level_;      // filter strength: 0..63
-  uint8_t f_ilevel_;     // inner limit: 1..63
+  uint8_t f_limit_;      // filter limit in [3..189], or 0 if no filtering
+  uint8_t f_ilevel_;     // inner limit in [1..63]
   uint8_t f_inner_;      // do inner filtering?
-  uint8_t pad_;          // mostly needed for struct aligning on ARM
+  uint8_t hev_thresh_;   // high edge variance threshold in [0..2]
 } VP8FInfo;
 
 typedef struct {  // Top/Left Contexts used for syntax-parsing
@@ -250,13 +244,6 @@ struct VP8Decoder {
   // per-partition boolean decoders.
   VP8BitReader parts_[MAX_NUM_PARTITIONS];
 
-  // buffer refresh flags
-  //   bit 0: refresh Gold, bit 1: refresh Alt
-  //   bit 2-3: copy to Gold, bit 4-5: copy to Alt
-  //   bit 6: Gold sign bias, bit 7: Alt sign bias
-  //   bit 8: refresh last frame
-  uint32_t buffer_flags_;
-
   // dequantization (one set of DC/AC dequant factor per segment)
   VP8QuantMatrix dqm_[NUM_MB_SEGMENTS];
 
@@ -264,11 +251,6 @@ struct VP8Decoder {
   VP8Proba proba_;
   int use_skip_proba_;
   uint8_t skip_p_;
-#ifndef ONLY_KEYFRAME_CODE
-  uint8_t intra_p_, last_p_, golden_p_;
-  VP8Proba proba_saved_;
-  int update_proba_;
-#endif
 
   // Boundary data cache and persistent buffers.
   uint8_t* intra_t_;      // top intra modes values: 4 * mb_w_

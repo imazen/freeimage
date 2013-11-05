@@ -13,6 +13,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdlib.h>  // for abs()
 
 #include "./vp8enci.h"
 #include "./cost.h"
@@ -31,11 +32,75 @@
 
 #define I4_PENALTY 4000   // Rate-penalty for quick i4/i16 decision
 
+// number of non-zero coeffs below which we consider the block very flat
+// (and apply a penalty to complex predictions)
+#define FLATNESS_LIMIT_I16 10      // I16 mode
+#define FLATNESS_LIMIT_I4  3       // I4 mode
+#define FLATNESS_LIMIT_UV  2       // UV mode
+#define FLATNESS_PENALTY   140     // roughly ~1bit per block
+
 #define MULT_8B(a, b) (((a) * (b) + 128) >> 8)
+
+// #define DEBUG_BLOCK
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
+
+//------------------------------------------------------------------------------
+
+#if defined(DEBUG_BLOCK)
+
+#include <stdio.h>
+#include <stdlib.h>
+
+static void PrintBlockInfo(const VP8EncIterator* const it,
+                           const VP8ModeScore* const rd) {
+  int i, j;
+  const int is_i16 = (it->mb_->type_ == 1);
+  printf("SOURCE / OUTPUT / ABS DELTA\n");
+  for (j = 0; j < 24; ++j) {
+    if (j == 16) printf("\n");   // newline before the U/V block
+    for (i = 0; i < 16; ++i) printf("%3d ", it->yuv_in_[i + j * BPS]);
+    printf("     ");
+    for (i = 0; i < 16; ++i) printf("%3d ", it->yuv_out_[i + j * BPS]);
+    printf("     ");
+    for (i = 0; i < 16; ++i) {
+      printf("%1d ", abs(it->yuv_out_[i + j * BPS] - it->yuv_in_[i + j * BPS]));
+    }
+    printf("\n");
+  }
+  printf("\nD:%d SD:%d R:%d H:%d nz:0x%x score:%d\n",
+    (int)rd->D, (int)rd->SD, (int)rd->R, (int)rd->H, (int)rd->nz,
+    (int)rd->score);
+  if (is_i16) {
+    printf("Mode: %d\n", rd->mode_i16);
+    printf("y_dc_levels:");
+    for (i = 0; i < 16; ++i) printf("%3d ", rd->y_dc_levels[i]);
+    printf("\n");
+  } else {
+    printf("Modes[16]: ");
+    for (i = 0; i < 16; ++i) printf("%d ", rd->modes_i4[i]);
+    printf("\n");
+  }
+  printf("y_ac_levels:\n");
+  for (j = 0; j < 16; ++j) {
+    for (i = is_i16 ? 1 : 0; i < 16; ++i) {
+      printf("%4d ", rd->y_ac_levels[j][i]);
+    }
+    printf("\n");
+  }
+  printf("\n");
+  printf("uv_levels (mode=%d):\n", rd->mode_uv);
+  for (j = 0; j < 8; ++j) {
+    for (i = 0; i < 16; ++i) {
+      printf("%4d ", rd->uv_levels[j][i]);
+    }
+    printf("\n");
+  }
+}
+
+#endif   // DEBUG_BLOCK
 
 //------------------------------------------------------------------------------
 
@@ -111,23 +176,11 @@ static const uint16_t kCoeffThresh[16] = {
   30, 30, 30, 30
 };
 
-// TODO(skal): tune more. Coeff thresholding?
-static const uint8_t kBiasMatrices[3][16] = {  // [3] = [luma-ac,luma-dc,chroma]
-  { 96, 96, 96, 96,
-    96, 96, 96, 96,
-    96, 96, 96, 96,
-    96, 96, 96, 96 },
-  { 96, 96, 96, 96,
-    96, 96, 96, 96,
-    96, 96, 96, 96,
-    96, 96, 96, 96 },
-  { 96, 96, 96, 96,
-    96, 96, 96, 96,
-    96, 96, 96, 96,
-    96, 96, 96, 96 }
+static const uint8_t kBiasMatrices[3][2] = {  // [luma-ac,luma-dc,chroma][dc,ac]
+  { 96, 110 }, { 96, 112 }, { 112, 120 }
 };
 
-// Sharpening by (slightly) raising the hi-frequency coeffs (only for trellis).
+// Sharpening by (slightly) raising the hi-frequency coeffs.
 // Hack-ish but helpful for mid-bitrate range. Use with care.
 static const uint8_t kFreqSharpening[16] = {
   0,  30, 60, 90,
@@ -147,14 +200,14 @@ static int ExpandMatrix(VP8Matrix* const m, int type) {
     m->q_[i] = m->q_[1];
   }
   for (i = 0; i < 16; ++i) {
-    const int j = kZigzag[i];
-    const int bias = kBiasMatrices[type][j];
-    m->iq_[j] = (1 << QFIX) / m->q_[j];
-    m->bias_[j] = BIAS(bias);
+    const int is_ac_coeff = (i > 0);
+    const int bias = kBiasMatrices[type][is_ac_coeff];
+    m->iq_[i] = (1 << QFIX) / m->q_[i];
+    m->bias_[i] = BIAS(bias);
     // TODO(skal): tune kCoeffThresh[]
-    m->zthresh_[j] = ((256 /*+ kCoeffThresh[j]*/ - bias) * m->q_[j] + 127) >> 8;
-    m->sharpen_[j] = (kFreqSharpening[j] * m->q_[j]) >> 11;
-    sum += m->q_[j];
+    m->zthresh_[i] = ((256 /*+ kCoeffThresh[i]*/ - bias) * m->q_[i] + 127) >> 8;
+    m->sharpen_[i] = (kFreqSharpening[i] * m->q_[i]) >> 11;
+    sum += m->q_[i];
   }
   return (sum + 8) >> 4;
 }
@@ -182,17 +235,17 @@ static void SetupMatrices(VP8Encoder* enc) {
     q16 = ExpandMatrix(&m->y2_, 1);
     quv = ExpandMatrix(&m->uv_, 2);
 
-    // TODO: Switch to kLambda*[] tables?
-    {
-      m->lambda_i4_  = (3 * q4 * q4) >> 7;
-      m->lambda_i16_ = (3 * q16 * q16);
-      m->lambda_uv_  = (3 * quv * quv) >> 6;
-      m->lambda_mode_    = (1 * q4 * q4) >> 7;
-      m->lambda_trellis_i4_  = (7 * q4 * q4) >> 3;
-      m->lambda_trellis_i16_ = (q16 * q16) >> 2;
-      m->lambda_trellis_uv_  = (quv *quv) << 1;
-      m->tlambda_            = (tlambda_scale * q4) >> 5;
-    }
+    m->lambda_i4_          = (3 * q4 * q4) >> 7;
+    m->lambda_i16_         = (3 * q16 * q16);
+    m->lambda_uv_          = (3 * quv * quv) >> 6;
+    m->lambda_mode_        = (1 * q4 * q4) >> 7;
+    m->lambda_trellis_i4_  = (7 * q4 * q4) >> 3;
+    m->lambda_trellis_i16_ = (q16 * q16) >> 2;
+    m->lambda_trellis_uv_  = (quv *quv) << 1;
+    m->tlambda_            = (tlambda_scale * q4) >> 5;
+
+    m->min_disto_ = 10 * m->y1_.q_[0];   // quantization-aware min disto
+    m->max_edge_  = 0;
   }
 }
 
@@ -201,16 +254,21 @@ static void SetupMatrices(VP8Encoder* enc) {
 
 // Very small filter-strength values have close to no visual effect. So we can
 // save a little decoding-CPU by turning filtering off for these.
-#define FSTRENGTH_CUTOFF 3
+#define FSTRENGTH_CUTOFF 2
 
 static void SetupFilterStrength(VP8Encoder* const enc) {
   int i;
-  const int level0 = enc->config_->filter_strength;
+  // level0 is in [0..500]. Using '-f 50' as filter_strength is mid-filtering.
+  const int level0 = 5 * enc->config_->filter_strength;
   for (i = 0; i < NUM_MB_SEGMENTS; ++i) {
-    // Segments with lower quantizer will be less filtered. TODO: tune (wrt SNS)
-    const int level = level0 * 256 * enc->dqm_[i].quant_ / 128;
-    const int f = level / (256 + enc->dqm_[i].beta_);
-    enc->dqm_[i].fstrength_ = (f < FSTRENGTH_CUTOFF) ? 0 : (f > 63) ? 63 : f;
+    VP8SegmentInfo* const m = &enc->dqm_[i];
+    // We focus on the quantization of AC coeffs.
+    const int qstep = kAcTable[clip(m->quant_, 0, 127)] >> 2;
+    const int base_strength =
+        VP8FilterStrengthFromDelta(enc->filter_hdr_.sharpness_, qstep);
+    // Segments with lower complexity ('beta') will be less filtered.
+    const int f = base_strength * level0 / (256 + m->beta_);
+    m->fstrength_ = (f < FSTRENGTH_CUTOFF) ? 0 : (f > 63) ? 63 : f;
   }
   // We record the initial strength (mainly for the case of 1-segment only).
   enc->filter_hdr_.level_ = enc->dqm_[0].fstrength_;
@@ -649,10 +707,10 @@ static int ReconstructIntra16(VP8EncIterator* const it,
                               VP8ModeScore* const rd,
                               uint8_t* const yuv_out,
                               int mode) {
-  const VP8Encoder* const enc = it->enc_;
+  VP8Encoder* const enc = it->enc_;
   const uint8_t* const ref = it->yuv_p_ + VP8I16ModeOffsets[mode];
   const uint8_t* const src = it->yuv_in_ + Y_OFF;
-  const VP8SegmentInfo* const dqm = &enc->dqm_[it->mb_->segment_];
+  VP8SegmentInfo* const dqm = &enc->dqm_[it->mb_->segment_];
   int nz = 0;
   int n;
   int16_t tmp[16][16], dc_tmp[16];
@@ -758,6 +816,17 @@ static int ReconstructUV(VP8EncIterator* const it, VP8ModeScore* const rd,
 // RD-opt decision. Reconstruct each modes, evalue distortion and bit-cost.
 // Pick the mode is lower RD-cost = Rate + lamba * Distortion.
 
+static void StoreMaxDelta(VP8SegmentInfo* const dqm, const int16_t DCs[16]) {
+  // We look at the first three AC coefficients to determine what is the average
+  // delta between each sub-4x4 block.
+  const int v0 = abs(DCs[1]);
+  const int v1 = abs(DCs[4]);
+  const int v2 = abs(DCs[5]);
+  int max_v = (v0 > v1) ? v1 : v0;
+  max_v = (v2 > max_v) ? v2 : max_v;
+  if (max_v > dqm->max_edge_) dqm->max_edge_ = max_v;
+}
+
 static void SwapPtr(uint8_t** a, uint8_t** b) {
   uint8_t* const tmp = *a;
   *a = *b;
@@ -768,9 +837,23 @@ static void SwapOut(VP8EncIterator* const it) {
   SwapPtr(&it->yuv_out_, &it->yuv_out2_);
 }
 
+static score_t IsFlat(const int16_t* levels, int num_blocks, score_t thresh) {
+  score_t score = 0;
+  while (num_blocks-- > 0) {      // TODO(skal): refine positional scoring?
+    int i;
+    for (i = 1; i < 16; ++i) {    // omit DC, we're only interested in AC
+      score += (levels[i] != 0);
+      if (score > thresh) return 0;
+    }
+    levels += 16;
+  }
+  return 1;
+}
+
 static void PickBestIntra16(VP8EncIterator* const it, VP8ModeScore* const rd) {
-  const VP8Encoder* const enc = it->enc_;
-  const VP8SegmentInfo* const dqm = &enc->dqm_[it->mb_->segment_];
+  const int kNumBlocks = 16;
+  VP8Encoder* const enc = it->enc_;
+  VP8SegmentInfo* const dqm = &enc->dqm_[it->mb_->segment_];
   const int lambda = dqm->lambda_i16_;
   const int tlambda = dqm->tlambda_;
   const uint8_t* const src = it->yuv_in_ + Y_OFF;
@@ -789,8 +872,13 @@ static void PickBestIntra16(VP8EncIterator* const it, VP8ModeScore* const rd) {
     rd16.D = VP8SSE16x16(src, tmp_dst);
     rd16.SD = tlambda ? MULT_8B(tlambda, VP8TDisto16x16(src, tmp_dst, kWeightY))
             : 0;
-    rd16.R = VP8GetCostLuma16(it, &rd16);
     rd16.H = VP8FixedCostsI16[mode];
+    rd16.R = VP8GetCostLuma16(it, &rd16);
+    if (mode > 0 &&
+        IsFlat(rd16.y_ac_levels[0], kNumBlocks, FLATNESS_LIMIT_I16)) {
+      // penalty to avoid flat area to be mispredicted by complex mode
+      rd16.R += FLATNESS_PENALTY * kNumBlocks;
+    }
 
     // Since we always examine Intra16 first, we can overwrite *rd directly.
     SetRDScore(lambda, &rd16);
@@ -805,6 +893,13 @@ static void PickBestIntra16(VP8EncIterator* const it, VP8ModeScore* const rd) {
   }
   SetRDScore(dqm->lambda_mode_, rd);   // finalize score for mode decision.
   VP8SetIntra16Mode(it, rd->mode_i16);
+
+  // we have a blocky macroblock (only DCs are non-zero) with fairly high
+  // distortion, record max delta so we can later adjust the minimal filtering
+  // strength needed to smooth these blocks out.
+  if ((rd->nz & 0xffff) == 0 && rd->D > dqm->min_disto_) {
+    StoreMaxDelta(dqm, rd->y_dc_levels);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -838,6 +933,7 @@ static int PickBestIntra4(VP8EncIterator* const it, VP8ModeScore* const rd) {
   SetRDScore(dqm->lambda_mode_, &rd_best);
   VP8IteratorStartI4(it);
   do {
+    const int kNumBlocks = 1;
     VP8ModeScore rd_i4;
     int mode;
     int best_mode = -1;
@@ -861,8 +957,11 @@ static int PickBestIntra4(VP8EncIterator* const it, VP8ModeScore* const rd) {
       rd_tmp.SD =
           tlambda ? MULT_8B(tlambda, VP8TDisto4x4(src, tmp_dst, kWeightY))
                   : 0;
-      rd_tmp.R = VP8GetCostLuma4(it, tmp_levels);
       rd_tmp.H = mode_costs[mode];
+      rd_tmp.R = VP8GetCostLuma4(it, tmp_levels);
+      if (mode > 0 && IsFlat(tmp_levels, kNumBlocks, FLATNESS_LIMIT_I4)) {
+        rd_tmp.R += FLATNESS_PENALTY * kNumBlocks;
+      }
 
       SetRDScore(lambda, &rd_tmp);
       if (best_mode < 0 || rd_tmp.score < rd_i4.score) {
@@ -900,6 +999,7 @@ static int PickBestIntra4(VP8EncIterator* const it, VP8ModeScore* const rd) {
 //------------------------------------------------------------------------------
 
 static void PickBestUV(VP8EncIterator* const it, VP8ModeScore* const rd) {
+  const int kNumBlocks = 8;
   const VP8Encoder* const enc = it->enc_;
   const VP8SegmentInfo* const dqm = &enc->dqm_[it->mb_->segment_];
   const int lambda = dqm->lambda_uv_;
@@ -920,8 +1020,11 @@ static void PickBestUV(VP8EncIterator* const it, VP8ModeScore* const rd) {
     // Compute RD-score
     rd_uv.D  = VP8SSE16x8(src, tmp_dst);
     rd_uv.SD = 0;    // TODO: should we call TDisto? it tends to flatten areas.
-    rd_uv.R  = VP8GetCostUV(it, &rd_uv);
     rd_uv.H  = VP8FixedCostsUV[mode];
+    rd_uv.R  = VP8GetCostUV(it, &rd_uv);
+    if (mode > 0 && IsFlat(rd_uv.uv_levels[0], kNumBlocks, FLATNESS_LIMIT_UV)) {
+      rd_uv.R += FLATNESS_PENALTY * kNumBlocks;
+    }
 
     SetRDScore(lambda, &rd_uv);
     if (mode == 0 || rd_uv.score < rd_best.score) {

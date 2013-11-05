@@ -377,6 +377,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\utils\random.c"
+					>
+				</File>
+				<File
 					RelativePath=".\src\utils\rescaler.c"
 					>
 				</File>
@@ -540,6 +544,10 @@
 				</File>
 				<File
 					RelativePath=".\src\utils\quant_levels.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\utils\random.h"
 					>
 				</File>
 				<File
