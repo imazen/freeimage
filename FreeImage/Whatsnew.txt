@@ -17,6 +17,7 @@ Month day, 2013 - 3.16.0
 + [Herve Drolon] added loading & writing support for the WebP image format (also support the FIF_LOAD_NOPIXELS flag)
 + [Gaël Zimmermann] added basic support for BMP v4, v5 in BMP plugin (useful for drag and drop from another application such as Firefox)
 + [Mihail Naydenov] FreeImage_GetFIFFromFilename[U] : added support for *rgb,*rgba,*.bw extensions to the SGI plugin
++ [Mihail Naydenov] improved FreeImage_Rescale speed & spatial accuracy
 * [Herve Drolon] fixed FreeImage_CloneTag behavior with ASCII data handling (regression that appeared in 3.15.2, affect metadata writing)
 * [Carsten Klein] ICO plugin: avoid using the AND mask when loading a 32-bit (already transparent) icon
 * [Andreas Baumann] HDR plugin: removed a comma at end of an enumerator list
