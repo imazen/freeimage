@@ -12,7 +12,7 @@ Month day, 2013 - 3.16.0
 ! FreeImage now uses LibRaw 0.16-Alpha3
 ! FreeImage now uses OpenJPEG 2.0.0 (SVN patch 2343)
 ! FreeImage now uses ZLib 1.2.8
-! FreeImage now uses LibWebP 0.3.1 (GIT patch 2013-11-04)
+! FreeImage now uses LibWebP 0.3.1 (GIT patch 2013-11-19)
 + [Herve Drolon] added support for FIF_LOAD_NOPIXELS flag to JP2/J2K plugins
 + [Herve Drolon] added loading & writing support for the WebP image format (also support the FIF_LOAD_NOPIXELS flag)
 + [Gaël Zimmermann] added basic support for BMP v4, v5 in BMP plugin (useful for drag and drop from another application such as Firefox)
