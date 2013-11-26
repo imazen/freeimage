@@ -906,32 +906,50 @@ struct foveon_data_t
     const int  width,height;
 } foveon_data [] =
 {
-    {"Sigma","SD9",	2304,1531,3600,20,8,2266,1510},
-    {"Sigma","SD10",2304,1531,9340,20,8,2266,1510},
-    {"Sigma","SD14",2688,1792,7200,18,12,2651,1767},
-    {"Sigma","SD15",2688,1792,2900,18,12,2651,1767},
-    {"Sigma","DP1",2688,1792,2100,18,12,2651,1767},
-    {"Sigma","DP1S",2688,1792,2200,18,12,2651,1767},
-    {"Sigma","DP1X",2688,1792,3560,18,12,2651,1767},
-    {"Sigma","DP2",2688,1792,2326,13,16,2651,1767},
-    {"Sigma","DP2S",2688,1792,2300,18,12,2651,1767},
-    {"Sigma","DP2X",2688,1792,2300,18,12,2651,1767},
-    {"Sigma","SD1",4928,3264,3900,12,52,4807,3205}, // Full size
-    {"Sigma","SD1",4928,1632,3900,12,26,4807,1603}, // 2/3 size
-    {"Sigma","SD1",2464,1632,3900,6,26,2403,1603}, // 1/2 size
-    {"Sigma","SD1 Merill",4928,3264,3900,12,52,4807,3205}, // Full size
-    {"Sigma","SD1 Merill",4928,1632,3900,12,26,4807,1603}, // 2/3 size
-    {"Sigma","SD1 Merill",2464,1632,3900,6,26,2403,1603}, // 1/2 size
-    {"Sigma","DP1 Merrill",4928,3264,3900,12,0,4807,3205},
-    {"Sigma","DP1 Merrill",2464,1632,3900,12,0,2403,1603}, // 1/2 size
-    {"Sigma","DP1 Merrill",4928,1632,3900,12,0,4807,1603}, // 2/3 size
-    {"Sigma","DP2 Merrill",4928,3264,3900,12,0,4807,3205},
-    {"Sigma","DP2 Merrill",2464,1632,3900,12,0,2403,1603}, // 1/2 size
-    {"Sigma","DP2 Merrill",4928,1632,3900,12,0,4807,1603}, // 2/3 size
-    {"Sigma","DP3 Merrill",4928,3264,3900,12,0,4807,3205},
-    {"Sigma","DP3 Merrill",2464,1632,3900,12,0,2403,1603}, // 1/2 size
-    {"Sigma","DP3 Merrill",4928,1632,3900,12,0,4807,1603}, // 2/3 size
-    {"Polaroid","x530",1440,1088,2700,10,13,1419,1059},
+  {"Sigma","SD9",2304,1531,3600,20,8,2266,1510},
+  {"Sigma","SD9",1152,763,3600,10,2,1132,755},
+  {"Sigma","SD10",2304,1531,9340,20,8,2266,1510},
+  {"Sigma","SD10",1152,763,3600,10,2,1132,755},
+  {"Sigma","SD14",2688,1792,7200,18,12,2651,1767},
+  {"Sigma","SD14",2688,896,7200,18,6,2651,883}, // 2/3
+  {"Sigma","SD14",1344,896,7200,9,6,1326,883}, // 1/2
+  {"Sigma","SD15",2688,1792,2900,18,12,2651,1767},
+  {"Sigma","SD15",2688,896,2900,18,6,2651,883}, // 2/3 ?
+  {"Sigma","SD15",1344,896,2900,9,6,1326,883}, // 1/2 ?
+  {"Sigma","DP1",2688,1792,2100,18,12,2651,1767},
+  {"Sigma","DP1",2688,896,2100,18,6,2651,883}, // 2/3 ?
+  {"Sigma","DP1",1344,896,2100,9,6,1326,883}, // 1/2 ?
+  {"Sigma","DP1S",2688,1792,2200,18,12,2651,1767},
+  {"Sigma","DP1S",2688,896,2200,18,6,2651,883}, // 2/3
+  {"Sigma","DP1S",1344,896,2200,9,6,1326,883}, // 1/2
+  {"Sigma","DP1X",2688,1792,3560,18,12,2651,1767},
+  {"Sigma","DP1X",2688,896,3560,18,6,2651,883}, // 2/3
+  {"Sigma","DP1X",1344,896,3560,9,6,1326,883}, // 1/2
+  {"Sigma","DP2",2688,1792,2326,13,16,2651,1767},
+  {"Sigma","DP2",2688,896,2326,13,8,2651,883}, // 2/3 ??
+  {"Sigma","DP2",1344,896,2326,7,8,1325,883}, // 1/2 ??
+  {"Sigma","DP2S",2688,1792,2300,18,12,2651,1767},
+  {"Sigma","DP2S",2688,896,2300,18,6,2651,883}, // 2/3
+  {"Sigma","DP2S",1344,896,2300,9,6,1326,883}, // 1/2
+  {"Sigma","DP2X",2688,1792,2300,18,12,2651,1767},
+  {"Sigma","DP2X",2688,896,2300,18,6,2651,883}, // 2/3
+  {"Sigma","DP2X",1344,896,2300,9,6,1325,883}, // 1/2
+  {"Sigma","SD1",4928,3264,3900,12,52,4807,3205}, // Full size
+  {"Sigma","SD1",4928,1632,3900,12,26,4807,1603}, // 2/3 size
+  {"Sigma","SD1",2464,1632,3900,6,26,2403,1603}, // 1/2 size
+  {"Sigma","SD1 Merill",4928,3264,3900,12,52,4807,3205}, // Full size
+  {"Sigma","SD1 Merill",4928,1632,3900,12,26,4807,1603}, // 2/3 size
+  {"Sigma","SD1 Merill",2464,1632,3900,6,26,2403,1603}, // 1/2 size
+  {"Sigma","DP1 Merrill",4928,3264,3900,12,0,4807,3205},
+  {"Sigma","DP1 Merrill",2464,1632,3900,12,0,2403,1603}, // 1/2 size
+  {"Sigma","DP1 Merrill",4928,1632,3900,12,0,4807,1603}, // 2/3 size
+  {"Sigma","DP2 Merrill",4928,3264,3900,12,0,4807,3205},
+  {"Sigma","DP2 Merrill",2464,1632,3900,12,0,2403,1603}, // 1/2 size
+  {"Sigma","DP2 Merrill",4928,1632,3900,12,0,4807,1603}, // 2/3 size
+  {"Sigma","DP3 Merrill",4928,3264,3900,12,0,4807,3205},
+  {"Sigma","DP3 Merrill",2464,1632,3900,12,0,2403,1603}, // 1/2 size
+  {"Sigma","DP3 Merrill",4928,1632,3900,12,0,4807,1603}, // 2/3 size
+  {"Polaroid","x530",1440,1088,2700,10,13,1419,1059},
 };
 const int foveon_count = sizeof(foveon_data)/sizeof(foveon_data[0]);
 
@@ -3155,6 +3173,7 @@ static const char  *static_camera_list[] =
 "Leaf Valeo 17",
 "Leaf Valeo 22",
 "Leaf Volare",
+"Leica C (Typ 112)",
 "Leica Digilux 2",
 "Leica Digilux 3",
 "Leica D-LUX2",
@@ -3172,6 +3191,7 @@ static const char  *static_camera_list[] =
 "Leica V-LUX2",
 "Leica V-LUX3",
 "Leica V-LUX4",
+"Leica X VARIO (Typ 107)",
 "Logitech Fotoman Pixtura",
 "Mamiya ZD",
 "Micron 2010",
@@ -3207,6 +3227,7 @@ static const char  *static_camera_list[] =
 "Nikon D50",
 "Nikon D60",
 "Nikon D600",
+"Nikon D610",
 "Nikon D70",
 "Nikon D70s",
 "Nikon D80",
@@ -3222,10 +3243,12 @@ static const char  *static_camera_list[] =
 "Nikon D5000",
 "Nikon D5100",
 "Nikon D5200",
+"Nikon D5300",
 "Nikon D7000",
 "Nikon D7100",
 "Nikon D800",
 "Nikon D800E",
+"Nikon 1 AW1",
 "Nikon 1 J1",
 "Nikon 1 J2",
 "Nikon 1 J3",
@@ -3261,6 +3284,8 @@ static const char  *static_camera_list[] =
 "Nikon Coolpix S6 (\"DIAG RAW\" hack)",
 "Nokia N95",
 "Nokia X2",
+"Nokia Lumia 1020",
+"Nokia Lumia 1520",
 "Olympus C3030Z",
 "Olympus C5050Z",
 "Olympus C5060WZ",
@@ -3305,6 +3330,7 @@ static const char  *static_camera_list[] =
 "Olympus SP550UZ",
 "Olympus SP560UZ",
 "Olympus SP570UZ",
+"Olympus STYLUS1",
 "Olympus XZ-1",
 "Olympus XZ-2",
 "Olympus XZ-10",
@@ -3336,6 +3362,7 @@ static const char  *static_camera_list[] =
 "Panasonic DMC-GH3",
 "Panasonic DMC-GM1",
 "Panasonic DMC-GX1",
+"Panasonic DMC-GX7",
 "Panasonic DMC-L1",
 "Panasonic DMC-L10",
 "Panasonic DMC-LC1",
@@ -3358,6 +3385,7 @@ static const char  *static_camera_list[] =
 "Pentax K2000/K-m",
 "Pentax K-x",
 "Pentax K-r",
+"Pentax K-3",
 "Pentax K-30",
 "Pentax K-5",
 "Pentax K-5 II",
@@ -3450,12 +3478,14 @@ static const char  *static_camera_list[] =
 "SMaL Ultra-Pocket 3",
 "SMaL Ultra-Pocket 4",
 "SMaL Ultra-Pocket 5",
+"Sony A3000",
 "Sony A7",
 "Sony A7R",
 "Sony DSC-F828",
 "Sony DSC-R1",
 "Sony DSC-RX1",
 "Sony DSC-RX1R",
+"Sony DSC-RX10",
 "Sony DSC-RX100",
 "Sony DSC-RX100II",
 "Sony DSC-V3",
