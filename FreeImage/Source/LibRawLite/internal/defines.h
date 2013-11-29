@@ -59,8 +59,9 @@ it under the terms of the one of three licenses as you choose:
 #include <unistd.h>
 #include <utime.h>
 #include <netinet/in.h>
-typedef long long INT64;
-typedef unsigned long long UINT64;
+#include <stdint.h>
+typedef int64_t INT64;
+typedef uint64_t UINT64;
 #endif
 
 #ifdef NODEPS
