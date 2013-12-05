@@ -24,6 +24,8 @@ rd Source\LibRawLite\Debug /s /q
 rd Source\LibRawLite\Release /s /q
 rd Source\LibWebP\Debug /s /q
 rd Source\LibWebP\Release /s /q
+rd Source\LibJXR\Debug /s /q
+rd Source\LibJXR\Release /s /q
 rd TestAPI\Debug /s /q
 rd TestAPI\Release /s /q
 rd x64 /s /q

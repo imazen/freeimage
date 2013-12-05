@@ -139,5 +139,6 @@ void DLL_CALLCONV InitPICT(Plugin *plugin, int format_id);
 void DLL_CALLCONV InitRAW(Plugin *plugin, int format_id);
 void DLL_CALLCONV InitJNG(Plugin *plugin, int format_id);
 void DLL_CALLCONV InitWEBP(Plugin *plugin, int format_id);
+void DLL_CALLCONV InitJXR(Plugin *plugin, int format_id);
 
 #endif //!PLUGIN_H

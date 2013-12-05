@@ -60,6 +60,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibWebP", "Source\LibWebP\L
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibJXR", "Source\LibJXR\LibJXR.2003.vcproj", "{1B021BC6-301D-4FBA-96FF-2A73EE32FBD8}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -108,6 +112,10 @@ Global
 		{CD14E605-FDBD-4374-9D09-E54EB256A9A3}.Debug.Build.0 = Debug|Win32
 		{CD14E605-FDBD-4374-9D09-E54EB256A9A3}.Release.ActiveCfg = Release|Win32
 		{CD14E605-FDBD-4374-9D09-E54EB256A9A3}.Release.Build.0 = Release|Win32
+		{1B021BC6-301D-4FBA-96FF-2A73EE32FBD8}.Debug.ActiveCfg = Debug|Win32
+		{1B021BC6-301D-4FBA-96FF-2A73EE32FBD8}.Debug.Build.0 = Debug|Win32
+		{1B021BC6-301D-4FBA-96FF-2A73EE32FBD8}.Release.ActiveCfg = Release|Win32
+		{1B021BC6-301D-4FBA-96FF-2A73EE32FBD8}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
