@@ -193,9 +193,6 @@ TIFF *
 TIFFFdOpen(thandle_t handle, const char *name, const char *mode) {
 	TIFF *tif;
 
-    // Set up the callback for extended TIFF directory tag support
-	// (see XTIFF.cpp)
-    XTIFFInitialize();	
 	
 	// Open the file; the callback will set everything up
 	tif = TIFFClientOpen(name, mode, handle,
@@ -2622,6 +2619,10 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 void DLL_CALLCONV
 InitTIFF(Plugin *plugin, int format_id) {
 	s_format_id = format_id;
+
+    // Set up the callback for extended TIFF directory tag support (see XTIFF.cpp)
+	// Must be called before using libtiff
+    XTIFFInitialize();	
 
 	plugin->format_proc = Format;
 	plugin->description_proc = Description;
