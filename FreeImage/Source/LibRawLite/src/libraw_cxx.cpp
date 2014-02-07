@@ -1182,7 +1182,6 @@ int LibRaw::unpack(void)
             CameraMetaDataLR *meta = static_cast<CameraMetaDataLR*>(_rawspeed_camerameta);
             d = t.getDecoder();
             if(!d) throw "Unable to find decoder";
-            d->failOnUnknown=true;
             try {
               d->checkSupport(meta);
             }
@@ -2298,7 +2297,7 @@ void LibRaw::kodak_thumb_loader()
 #undef SWAP
 
 
-// Достает thumbnail из файла, ставит thumb_format в соответствии с форматом
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ thumbnail пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ thumb_format пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 int LibRaw::unpack_thumb(void)
 {
   CHECK_ORDER_LOW(LIBRAW_PROGRESS_IDENTIFY);
@@ -2353,7 +2352,7 @@ int LibRaw::unpack_thumb(void)
             T.tlength = T.twidth * T.theight*3;
             ushort *t_thumb = (ushort*)calloc(T.tlength,2);
             ID.input->read(t_thumb,2,T.tlength);
-            if ((libraw_internal_data.unpacker_data.order= 0x4949) == (ntohs(0x1234) == 0x1234))
+            if ((libraw_internal_data.unpacker_data.order == 0x4949) == (ntohs(0x1234) == 0x1234))
               swab ((char*)t_thumb, (char*)t_thumb, T.tlength*2);
 
             if(T.thumb) free(T.thumb);
@@ -3083,12 +3082,14 @@ static const char  *static_camera_list[] =
 "FujiFilm F800EXR",
 "FujiFilm X-Pro1",
 "FujiFilm X-S1",
+"FujiFilm XQ1",
 "FujiFilm X100",
 "FujiFilm X100S",
 "FujiFilm X10",
 "FujiFilm X20",
 "FujiFilm X-A1",
 "FujiFilm X-E1",
+"FujiFilm X-E2",
 "FujiFilm X-M1",
 "FujiFilm XF1",
 "FujiFilm IS-1",
