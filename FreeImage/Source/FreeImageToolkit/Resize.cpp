@@ -159,7 +159,7 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, unsigned uDstSize, unsigne
 	// allocate a new line contributions structure
 	//
 	// window size is the number of sampled pixels
-	m_WindowSize = 2 * (int)ceil(dWidth); 
+	m_WindowSize = 2 * (int)ceil(dWidth) + 1; 
 	// length of dst line (no. of rows / cols) 
 	m_LineLength = uDstSize; 
 
@@ -190,6 +190,7 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, unsigned uDstSize, unsigne
 		for(int iSrc = iLeft; iSrc < iRight; iSrc++) {
 			// calculate weights
 			const double weight = dFScale * pFilter->Filter(dFScale * ((double)iSrc + 0.5 - dCenter));
+			// assert((iSrc-iLeft) < m_WindowSize);
 			m_WeightTable[u].Weights[iSrc-iLeft] = weight;
 			dTotalWeight += weight;
 		}
