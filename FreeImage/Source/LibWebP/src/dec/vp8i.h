@@ -21,7 +21,7 @@
 #include "../utils/thread.h"
 #include "../dsp/dsp.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -30,8 +30,8 @@ extern "C" {
 
 // version numbers
 #define DEC_MAJ_VERSION 0
-#define DEC_MIN_VERSION 3
-#define DEC_REV_VERSION 1
+#define DEC_MIN_VERSION 4
+#define DEC_REV_VERSION 0
 
 // intra prediction modes
 enum { B_DC_PRED = 0,   // 4x4 modes
@@ -195,6 +195,8 @@ typedef struct {
   uint32_t non_zero_y_;
   uint32_t non_zero_uv_;
   uint8_t dither_;      // local dithering strength (deduced from non_zero_*)
+  uint8_t skip_;
+  uint8_t segment_;
 } VP8MBData;
 
 // Persistent information needed by the parallel processing
@@ -265,7 +267,6 @@ struct VP8Decoder {
   uint8_t* intra_t_;      // top intra modes values: 4 * mb_w_
   uint8_t  intra_l_[4];   // left intra modes values
 
-  uint8_t segment_;       // segment of the currently parsed block
   VP8TopSamples* yuv_t_;  // top y/u/v samples
 
   VP8MB* mb_info_;        // contextual macroblock info (mb_w_ + 1)
@@ -313,7 +314,8 @@ int VP8SetError(VP8Decoder* const dec,
 // in tree.c
 void VP8ResetProba(VP8Proba* const proba);
 void VP8ParseProba(VP8BitReader* const br, VP8Decoder* const dec);
-void VP8ParseIntraMode(VP8BitReader* const br,  VP8Decoder* const dec);
+// parses one row of intra mode data in partition 0, returns !eof
+int VP8ParseIntraModeRow(VP8BitReader* const br, VP8Decoder* const dec);
 
 // in quant.c
 void VP8ParseQuant(VP8Decoder* const dec);
@@ -352,7 +354,7 @@ int VP8DecodeLayer(VP8Decoder* const dec);
 
 //------------------------------------------------------------------------------
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 }    // extern "C"
 #endif
 

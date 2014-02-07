@@ -19,7 +19,7 @@
 #include "../dec/vp8li.h"
 #include "../webp/mux.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -27,8 +27,8 @@ extern "C" {
 // Defines and constants.
 
 #define MUX_MAJ_VERSION 0
-#define MUX_MIN_VERSION 1
-#define MUX_REV_VERSION 1
+#define MUX_MIN_VERSION 2
+#define MUX_REV_VERSION 0
 
 // Chunk object.
 typedef struct WebPChunk WebPChunk;
@@ -223,7 +223,7 @@ WebPMuxError MuxValidate(const WebPMux* const mux);
 
 //------------------------------------------------------------------------------
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 }    // extern "C"
 #endif
 

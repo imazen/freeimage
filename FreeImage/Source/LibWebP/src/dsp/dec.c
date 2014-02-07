@@ -14,10 +14,6 @@
 #include "./dsp.h"
 #include "../dec/vp8i.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
-
 //------------------------------------------------------------------------------
 // run-time tables (~4k)
 
@@ -721,6 +717,7 @@ VP8SimpleFilterFunc VP8SimpleHFilter16i;
 
 extern void VP8DspInitSSE2(void);
 extern void VP8DspInitNEON(void);
+extern void VP8DspInitMIPS32(void);
 
 void VP8DspInit(void) {
   DspInitTables();
@@ -754,10 +751,11 @@ void VP8DspInit(void) {
     if (VP8GetCPUInfo(kNEON)) {
       VP8DspInitNEON();
     }
+#elif defined(WEBP_USE_MIPS32)
+    if (VP8GetCPUInfo(kMIPS32)) {
+      VP8DspInitMIPS32();
+    }
 #endif
   }
 }
 
-#if defined(__cplusplus) || defined(c_plusplus)
-}    // extern "C"
-#endif

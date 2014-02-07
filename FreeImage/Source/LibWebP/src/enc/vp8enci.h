@@ -20,7 +20,7 @@
 #include "../utils/bit_writer.h"
 #include "../utils/thread.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -29,8 +29,8 @@ extern "C" {
 
 // version numbers
 #define ENC_MAJ_VERSION 0
-#define ENC_MIN_VERSION 3
-#define ENC_REV_VERSION 1
+#define ENC_MIN_VERSION 4
+#define ENC_REV_VERSION 0
 
 // intra prediction modes
 enum { B_DC_PRED = 0,   // 4x4 modes
@@ -204,9 +204,9 @@ typedef struct {
 typedef struct {
   uint8_t segments_[3];     // probabilities for segment tree
   uint8_t skip_proba_;      // final probability of being skipped.
-  ProbaArray coeffs_[NUM_TYPES][NUM_BANDS];      // 924 bytes
+  ProbaArray coeffs_[NUM_TYPES][NUM_BANDS];      // 1056 bytes
   StatsArray stats_[NUM_TYPES][NUM_BANDS];       // 4224 bytes
-  CostArray level_cost_[NUM_TYPES][NUM_BANDS];   // 11.4k
+  CostArray level_cost_[NUM_TYPES][NUM_BANDS];   // 13056 bytes
   int dirty_;               // if true, need to call VP8CalculateLevelCosts()
   int use_skip_proba_;      // Note: we always use skip_proba for now.
   int nb_skip_;             // number of skipped blocks
@@ -563,7 +563,7 @@ int VP8FilterStrengthFromDelta(int sharpness, int delta);
 
 //------------------------------------------------------------------------------
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 }    // extern "C"
 #endif
 

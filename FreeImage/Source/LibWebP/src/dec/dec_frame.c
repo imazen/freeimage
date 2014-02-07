@@ -15,10 +15,6 @@
 #include "./vp8i.h"
 #include "../utils/utils.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
-
 #define ALIGN_MASK (32 - 1)
 
 static void ReconstructRow(const VP8Decoder* const dec,
@@ -385,7 +381,7 @@ int VP8ProcessRow(VP8Decoder* const dec, VP8Io* const io) {
 
 VP8StatusCode VP8EnterCritical(VP8Decoder* const dec, VP8Io* const io) {
   // Call setup() first. This may trigger additional decoding features on 'io'.
-  // Note: Afterward, we must call teardown() not matter what.
+  // Note: Afterward, we must call teardown() no matter what.
   if (io->setup != NULL && !io->setup(io)) {
     VP8SetError(dec, VP8_STATUS_USER_ABORT, "Frame setup failed");
     return dec->status_;
@@ -399,7 +395,7 @@ VP8StatusCode VP8EnterCritical(VP8Decoder* const dec, VP8Io* const io) {
 
   // Define the area where we can skip in-loop filtering, in case of cropping.
   //
-  // 'Simple' filter reads two luma samples outside of the macroblock and
+  // 'Simple' filter reads two luma samples outside of the macroblock
   // and filters one. It doesn't filter the chroma samples. Hence, we can
   // avoid doing the in-loop filtering before crop_top/crop_left position.
   // For the 'Complex' filter, 3 samples are read and up to 3 are filtered.
@@ -506,7 +502,7 @@ int VP8GetThreadMethod(const WebPDecoderOptions* const options,
   (void)headers;
   (void)width;
   (void)height;
-  assert(!headers->is_lossless);
+  assert(headers == NULL || !headers->is_lossless);
 #if defined(WEBP_USE_THREAD)
   if (width < MIN_WIDTH_FOR_THREADS) return 0;
   // TODO(skal): tune the heuristic further
@@ -671,8 +667,8 @@ static void Copy32b(uint8_t* dst, uint8_t* src) {
   memcpy(dst, src, 4);
 }
 
-static void DoTransform(uint32_t bits, const int16_t* const src,
-                        uint8_t* const dst) {
+static WEBP_INLINE void DoTransform(uint32_t bits, const int16_t* const src,
+                                    uint8_t* const dst) {
   switch (bits >> 30) {
     case 3:
       VP8Transform(src, dst, 0);
@@ -820,6 +816,3 @@ static void ReconstructRow(const VP8Decoder* const dec,
 
 //------------------------------------------------------------------------------
 
-#if defined(__cplusplus) || defined(c_plusplus)
-}    // extern "C"
-#endif

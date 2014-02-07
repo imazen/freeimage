@@ -43,10 +43,6 @@
 
 // #define DEBUG_BLOCK
 
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
-
 //------------------------------------------------------------------------------
 
 #if defined(DEBUG_BLOCK)
@@ -169,19 +165,13 @@ static const uint16_t kAcTable2[128] = {
   385, 393, 401, 409, 416, 424, 432, 440
 };
 
-static const uint16_t kCoeffThresh[16] = {
-  0,  10, 20, 30,
-  10, 20, 30, 30,
-  20, 30, 30, 30,
-  30, 30, 30, 30
-};
-
 static const uint8_t kBiasMatrices[3][2] = {  // [luma-ac,luma-dc,chroma][dc,ac]
-  { 96, 110 }, { 96, 112 }, { 112, 120 }
+  { 96, 110 }, { 96, 108 }, { 110, 115 }
 };
 
 // Sharpening by (slightly) raising the hi-frequency coeffs.
 // Hack-ish but helpful for mid-bitrate range. Use with care.
+#define SHARPEN_BITS 11  // number of descaling bits for sharpening bias
 static const uint8_t kFreqSharpening[16] = {
   0,  30, 60, 90,
   30, 60, 90, 90,
@@ -194,19 +184,29 @@ static const uint8_t kFreqSharpening[16] = {
 
 // Returns the average quantizer
 static int ExpandMatrix(VP8Matrix* const m, int type) {
-  int i;
-  int sum = 0;
-  for (i = 2; i < 16; ++i) {
-    m->q_[i] = m->q_[1];
-  }
-  for (i = 0; i < 16; ++i) {
+  int i, sum;
+  for (i = 0; i < 2; ++i) {
     const int is_ac_coeff = (i > 0);
     const int bias = kBiasMatrices[type][is_ac_coeff];
     m->iq_[i] = (1 << QFIX) / m->q_[i];
     m->bias_[i] = BIAS(bias);
-    // TODO(skal): tune kCoeffThresh[]
-    m->zthresh_[i] = ((256 /*+ kCoeffThresh[i]*/ - bias) * m->q_[i] + 127) >> 8;
-    m->sharpen_[i] = (kFreqSharpening[i] * m->q_[i]) >> 11;
+    // zthresh_ is the exact value such that QUANTDIV(coeff, iQ, B) is:
+    //   * zero if coeff <= zthresh
+    //   * non-zero if coeff > zthresh
+    m->zthresh_[i] = ((1 << QFIX) - 1 - m->bias_[i]) / m->iq_[i];
+  }
+  for (i = 2; i < 16; ++i) {
+    m->q_[i] = m->q_[1];
+    m->iq_[i] = m->iq_[1];
+    m->bias_[i] = m->bias_[1];
+    m->zthresh_[i] = m->zthresh_[1];
+  }
+  for (sum = 0, i = 0; i < 16; ++i) {
+    if (type == 0) {  // we only use sharpening for AC luma coeffs
+      m->sharpen_[i] = (kFreqSharpening[i] * m->q_[i]) >> SHARPEN_BITS;
+    } else {
+      m->sharpen_[i] = 0;
+    }
     sum += m->q_[i];
   }
   return (sum + 8) >> 4;
@@ -598,11 +598,10 @@ static int TrellisQuantizeBlock(const VP8EncIterator* const it,
     // note: it's important to take sign of the _original_ coeff,
     // so we don't have to consider level < 0 afterward.
     const int sign = (in[j] < 0);
-    int coeff0 = (sign ? -in[j] : in[j]) + mtx->sharpen_[j];
-    int level0;
-    if (coeff0 > 2047) coeff0 = 2047;
+    const int coeff0 = (sign ? -in[j] : in[j]) + mtx->sharpen_[j];
+    int level0 = QUANTDIV(coeff0, iQ, B);
+    if (level0 > MAX_LEVEL) level0 = MAX_LEVEL;
 
-    level0 = QUANTDIV(coeff0, iQ, B);
     // test all alternate level values around level0.
     for (m = -MIN_DELTA; m <= MAX_DELTA; ++m) {
       Node* const cur = &NODE(n, m);
@@ -614,7 +613,7 @@ static int TrellisQuantizeBlock(const VP8EncIterator* const it,
       cur->sign = sign;
       cur->level = level;
       cur->ctx = (level == 0) ? 0 : (level == 1) ? 1 : 2;
-      if (level >= 2048 || level < 0) {   // node is dead?
+      if (level > MAX_LEVEL || level < 0) {   // node is dead?
         cur->cost = MAX_COST;
         continue;
       }
@@ -719,7 +718,7 @@ static int ReconstructIntra16(VP8EncIterator* const it,
     VP8FTransform(src + VP8Scan[n], ref + VP8Scan[n], tmp[n]);
   }
   VP8FTransformWHT(tmp[0], dc_tmp);
-  nz |= VP8EncQuantizeBlock(dc_tmp, rd->y_dc_levels, 0, &dqm->y2_) << 24;
+  nz |= VP8EncQuantizeBlockWHT(dc_tmp, rd->y_dc_levels, &dqm->y2_) << 24;
 
   if (DO_TRELLIS_I16 && it->do_trellis_) {
     int x, y;
@@ -1155,6 +1154,3 @@ int VP8Decimate(VP8EncIterator* const it, VP8ModeScore* const rd,
   return is_skipped;
 }
 
-#if defined(__cplusplus) || defined(c_plusplus)
-}    // extern "C"
-#endif

@@ -17,10 +17,6 @@
 #include <cpu-features.h>
 #endif
 
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
-
 //------------------------------------------------------------------------------
 // SSE2 detection.
 //
@@ -78,10 +74,13 @@ static int armCPUInfo(CPUFeature feature) {
   return 1;
 }
 VP8CPUInfo VP8GetCPUInfo = armCPUInfo;
+#elif defined(__mips__)
+static int mipsCPUInfo(CPUFeature feature) {
+  (void)feature;
+  return 1;
+}
+VP8CPUInfo VP8GetCPUInfo = mipsCPUInfo;
 #else
 VP8CPUInfo VP8GetCPUInfo = NULL;
 #endif
 
-#if defined(__cplusplus) || defined(c_plusplus)
-}    // extern "C"
-#endif

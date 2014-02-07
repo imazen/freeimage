@@ -16,7 +16,7 @@
 
 #include "../webp/types.h"
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -36,14 +36,20 @@ extern "C" {
 #define WEBP_ANDROID_NEON  // Android targets that might support NEON
 #endif
 
-#if defined(__ARM_NEON__) || defined(WEBP_ANDROID_NEON)
+#if (defined(__ARM_NEON__) && !defined(__aarch64__)) || \
+    defined(WEBP_ANDROID_NEON)
 #define WEBP_USE_NEON
+#endif
+
+#if defined(__mips__)
+#define WEBP_USE_MIPS32
 #endif
 
 typedef enum {
   kSSE2,
   kSSE3,
-  kNEON
+  kNEON,
+  kMIPS32
 } CPUFeature;
 // returns true if the CPU supports the feature.
 typedef int (*VP8CPUInfo)(CPUFeature feature);
@@ -85,6 +91,11 @@ struct VP8Matrix;   // forward declaration
 typedef int (*VP8QuantizeBlock)(int16_t in[16], int16_t out[16],
                                 int n, const struct VP8Matrix* const mtx);
 extern VP8QuantizeBlock VP8EncQuantizeBlock;
+
+// specific to 2nd transform:
+typedef int (*VP8QuantizeBlockWHT)(int16_t in[16], int16_t out[16],
+                                   const struct VP8Matrix* const mtx);
+extern VP8QuantizeBlockWHT VP8EncQuantizeBlockWHT;
 
 // Collect histogram for susceptibility calculation and accumulate in histo[].
 struct VP8Histogram;
@@ -175,7 +186,11 @@ typedef void (*WebPSampleLinePairFunc)(
     const uint8_t* u, const uint8_t* v,
     uint8_t* top_dst, uint8_t* bottom_dst, int len);
 
-extern const WebPSampleLinePairFunc WebPSamplers[/* MODE_LAST */];
+// Sampling functions to convert YUV to RGB(A) modes
+extern WebPSampleLinePairFunc WebPSamplers[/* MODE_LAST */];
+
+// Initializes MIPS version of the samplers.
+void WebPInitSamplersMIPS32(void);
 
 // General function for converting two lines of ARGB or RGBA.
 // 'alpha_is_last' should be true if 0xff000000 is stored in memory as
@@ -191,6 +206,7 @@ extern const WebPYUV444Converter WebPYUV444Converters[/* MODE_LAST */];
 
 // Main function to be called
 void WebPInitUpsamplers(void);
+void WebPInitSamplers(void);
 
 //------------------------------------------------------------------------------
 // Pre-multiply planes with alpha values
@@ -212,7 +228,7 @@ void WebPInitPremultiplyNEON(void);
 
 //------------------------------------------------------------------------------
 
-#if defined(__cplusplus) || defined(c_plusplus)
+#ifdef __cplusplus
 }    // extern "C"
 #endif
 
