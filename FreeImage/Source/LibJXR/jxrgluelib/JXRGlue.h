@@ -45,7 +45,7 @@ extern "C" {
 #ifndef min
 #define min(b,a) ((a) < (b) ? (a) : (b))
 #endif
-#ifdef __ANSI__
+#if defined(__ANSI__) || defined(__MINGW32__)
 #define STRCPY_SAFE(pszDest, cbDest, pszSrc)    (strncpy((pszDest), (pszSrc), (cbDest)) == (pszDest) ? 0 : 1)
 #else
 #define STRCPY_SAFE(pszDest, cbDest, pszSrc)    (strcpy_s((pszDest), (cbDest), (pszSrc)))

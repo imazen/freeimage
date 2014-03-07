@@ -281,7 +281,7 @@ ERR CreateWS_File(struct WMPStream** ppWS, const char* szFilename, const char* s
     pWS->SetPos = SetPosWS_File;
     pWS->GetPos = GetPosWS_File;
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
     FailIf(0 != fopen_s(&pWS->state.file.pFile, szFilename, szMode), WMP_errFileIO);
 #else
     pWS->state.file.pFile = fopen(szFilename, szMode);
@@ -664,7 +664,7 @@ ERR detach_SB(SimpleBitIO* pSB)
 //================================================================
 // Memory access functions
 //================================================================
-#if (defined(WIN32) && !defined(UNDER_CE)) || (defined(UNDER_CE) && defined(_ARM_))
+#if (defined(WIN32) && !defined(UNDER_CE) && !defined(__MINGW32__)) || (defined(UNDER_CE) && defined(_ARM_))
 // WinCE ARM and Desktop x86
 #else
 // other platform
