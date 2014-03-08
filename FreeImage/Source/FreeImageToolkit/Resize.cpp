@@ -194,7 +194,7 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, unsigned uDstSize, unsigne
 			m_WeightTable[u].Weights[iSrc-iLeft] = weight;
 			dTotalWeight += weight;
 		}
-		if(dTotalWeight > 0) {
+		if((dTotalWeight > 0) && (dTotalWeight != 1)) {
 			// normalize weight of neighbouring points
 			for(int iSrc = iLeft; iSrc < iRight; iSrc++) {
 				// normalize point
@@ -202,17 +202,8 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, unsigned uDstSize, unsigne
 			}
 		}
 
-		// simplify the filter, discarding null weights at the left & right
-		{
-			int iLeading = 0;
-			while(m_WeightTable[u].Weights[iLeading] == 0) {
-				m_WeightTable[u].Left++;
-				iLeading++;
-				if(m_WeightTable[u].Right == m_WeightTable[u].Left) {
-					break;
-				}
-			}
-
+		// simplify the filter, discarding null weights at the right
+		{			
 			int iTrailing = iRight - iLeft - 1;
 			while(m_WeightTable[u].Weights[iTrailing] == 0) {
 				m_WeightTable[u].Right--;
@@ -221,6 +212,7 @@ CWeightsTable::CWeightsTable(CGenericFilter *pFilter, unsigned uDstSize, unsigne
 					break;
 				}
 			}
+			
 		}
 
 	} // next dst pixel
