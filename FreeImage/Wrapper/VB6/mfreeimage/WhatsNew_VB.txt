@@ -5,6 +5,10 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+March 10, 2014 - 2.21 (3.16.0)
++ [Carsten Klein] added support for the new JPEG-XR image format
+- [Carsten Klein] removed block 'General notes' form source file MFreeImage.bas
+
 October 10, 2013 - 2.20 (3.16.0)
 * [Carsten Klein] prevented a potential 'Division by zero' error in private helper function pGetTagFromTagPtr. Thanks to Bob Weiss for pointing that out.
 + [Carsten Klein] added support for the new Google WebP image format

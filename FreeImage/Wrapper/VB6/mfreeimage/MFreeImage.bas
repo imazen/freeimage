@@ -190,7 +190,7 @@ Private Type BLENDFUNCTION
   SourceConstantAlpha As Byte
   AlphaFormat As Byte
 End Type
-    
+
 
 'GDI32
 Private Declare Function GetDeviceCaps Lib "gdi32.dll" ( _
@@ -509,6 +509,9 @@ Public Const XBM_DEFAULT As Long = 0
 Public Const XPM_DEFAULT As Long = 0
 Public Const WEBP_DEFAULT As Long = 0                ' save with good quality (75:1)
 Public Const WEBP_LOSSLESS As Long = &H100           ' save in lossless mode
+Public Const JXR_DEFAULT As Long = 0                 ' save with quality 80 and no chroma subsampling (4:4:4)
+Public Const JXR_LOSSLESS As Long = &H64             ' save in lossless mode
+Public Const JXR_PROGRESSIVE As Long = &H2000        ' save as a progressive-JXR (use Or to combine with other save flags)
 
 Public Enum FREE_IMAGE_FORMAT
    FIF_UNKNOWN = -1
@@ -549,6 +552,7 @@ Public Enum FREE_IMAGE_FORMAT
    FIF_PICT = 33
    FIF_RAW = 34
    FIF_WEBP = 35
+   FIF_JXR = 36
 End Enum
 
 Public Enum FREE_IMAGE_LOAD_OPTIONS
@@ -629,6 +633,8 @@ Public Enum FREE_IMAGE_SAVE_OPTIONS
    FISO_TIFF_JPEG = TIFF_JPEG                     ' save using JPEG compression
    FISO_TIFF_LOGLUV = TIFF_LOGLUV                 ' save using LogLuv compression
    FISO_WEBP_LOSSLESS = WEBP_LOSSLESS             ' save in lossless mode
+   FISO_JXR_LOSSLESS = JXR_LOSSLESS               ' save in lossless mode
+   FISO_JXR_PROGRESSIVE = JXR_PROGRESSIVE         ' save as a progressive-JXR (use Or to combine with other save flags)
 End Enum
 
 Public Enum FREE_IMAGE_TYPE
@@ -1007,8 +1013,8 @@ End Type
 '--------------------------------------------------------------------------------
 
 ' The FreeImage 3 functions are declared in the same order as they are described
-' in the FreeImage 3 API documentation. The documentation's outline is included
-' as comments.
+' in the FreeImage 3 API documentation (mostly). The documentation's outline is
+' included as comments.
 
 '--------------------------------------------------------------------------------
 ' Bitmap functions
@@ -2172,8 +2178,8 @@ Dim strImageFormat As String
 
    ' This function is called whenever the FreeImage 3 libraray throws an error.
    ' Currently this function gets the error message and the format name of the
-   ' involved image type as VB string printing each to the VB Debug console. Feel
-   ' free to modify this function to call an error handling routine of your on.
+   ' involved image type as VB string and prints both to the VB Debug console. Feel
+   ' free to modify this function to call an error handling routine of your own.
 
    strErrorMessage = pGetStringFromPointerA(Message)
    strImageFormat = FreeImage_GetFormatFromFIF(Format)
@@ -2193,8 +2199,7 @@ End Sub
 Public Function FreeImage_GetVersion() As String
 
    ' This function returns the version of the FreeImage 3 library
-   ' as VB String. Read paragraph 2 of the "General notes on implementation
-   ' and design" section to learn more about that technique.
+   ' as VB String.
    
    FreeImage_GetVersion = pGetStringFromPointerA(FreeImage_GetVersionInt)
 
@@ -2203,8 +2208,7 @@ End Function
 Public Function FreeImage_GetCopyrightMessage() As String
 
    ' This function returns the copyright message of the FreeImage 3 library
-   ' as VB String. Read paragraph 2 of the "General notes on implementation
-   ' and design" section to learn more about that technique.
+   ' as VB String.
    
    FreeImage_GetCopyrightMessage = pGetStringFromPointerA(FreeImage_GetCopyrightMessageInt)
 
@@ -2213,8 +2217,7 @@ End Function
 Public Function FreeImage_GetFormatFromFIF(ByVal Format As FREE_IMAGE_FORMAT) As String
 
    ' This function returns the result of the 'FreeImage_GetFormatFromFIF' function
-   ' as VB String. Read paragraph 2 of the "General notes on implementation
-   ' and design" section to learn more about that technique.
+   ' as VB String.
    
    ' The parameter 'Format' works according to the FreeImage 3 API documentation.
    
@@ -2225,8 +2228,7 @@ End Function
 Public Function FreeImage_GetFIFExtensionList(ByVal Format As FREE_IMAGE_FORMAT) As String
 
    ' This function returns the result of the 'FreeImage_GetFIFExtensionList' function
-   ' as VB String. Read paragraph 2 of the "General notes on implementation
-   ' and design" section to learn more about that technique.
+   ' as VB String.
    
    ' The parameter 'Format' works according to the FreeImage 3 API documentation.
    
@@ -2237,8 +2239,7 @@ End Function
 Public Function FreeImage_GetFIFDescription(ByVal Format As FREE_IMAGE_FORMAT) As String
 
    ' This function returns the result of the 'FreeImage_GetFIFDescription' function
-   ' as VB String. Read paragraph 2 of the "General notes on implementation
-   ' and design" section to learn more about that technique.
+   ' as VB String.
    
    ' The parameter 'Format' works according to the FreeImage 3 API documentation.
    
@@ -2249,8 +2250,7 @@ End Function
 Public Function FreeImage_GetFIFRegExpr(ByVal Format As FREE_IMAGE_FORMAT) As String
 
    ' This function returns the result of the 'FreeImage_GetFIFRegExpr' function
-   ' as VB String. Read paragraph 2 of the "General notes on implementation
-   ' and design" section to learn more about that technique.
+   ' as VB String.
    
    ' The parameter 'Format' works according to the FreeImage 3 API documentation.
    
@@ -2261,8 +2261,7 @@ End Function
 Public Function FreeImage_GetFIFMimeType(ByVal Format As FREE_IMAGE_FORMAT) As String
    
    ' This function returns the result of the 'FreeImage_GetFIFMimeType' function
-   ' as VB String. Read paragraph 2 of the "General notes on implementation
-   ' and design" section to learn more about that technique.
+   ' as VB String.
    
    ' The parameter 'Format' works according to the FreeImage 3 API documentation.
    
@@ -2275,8 +2274,7 @@ Public Function FreeImage_TagToString(ByVal Model As Long, _
                              Optional ByVal Make As String) As String
 
    ' This function returns the result of the 'FreeImage_TagToString' function
-   ' as VB String. Read paragraph 2 of the "General notes on implementation
-   ' and design" section to learn more about that technique.
+   ' as VB String.
    
    ' All parameters work according to the FreeImage 3 API documentation.
 
@@ -11676,6 +11674,7 @@ Const FIF_PFM = 1
 Const FIF_PICT = 1
 Const FIF_RAW = 1
 Const FIF_WEBP = 1
+Const FIF_JXR = 1
 
 ' Enum FREE_IMAGE_LOAD_OPTIONS
 Const FREE_IMAGE_LOAD_OPTIONS = 1
@@ -11756,6 +11755,8 @@ Const FISO_TIFF_LZW = 1
 Const FISO_TIFF_JPEG = 1
 Const FISO_TIFF_LOGLUV = 1
 Const FISO_WEBP_LOSSLESS = 1
+Const FISO_JXR_LOSSLESS = 1
+Const FISO_JXR_PROGRESSIVE = 1
 
 ' Enum FREE_IMAGE_TYPE
 Const FREE_IMAGE_TYPE = 1
