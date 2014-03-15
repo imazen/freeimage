@@ -44,7 +44,7 @@ RM = rm
 # Define additional libraries needed.
 # libstdc++ is included by default with MinGW, however for
 # WIN32 based builds, LibRawLite needs the winsock libraries.
-LIBRARIES = -lwsock32 -lws2_32
+LIBRARIES = -lws2_32
 
 # Define some additional symboles needed for WIN32 based builds.
 WIN32_CFLAGS = -DWINVER=0x0500 $(LIB_TYPE_FLAGS) -DOPJ_STATIC
@@ -65,7 +65,7 @@ WIN32_SHARED_FLAGS = -DFREEIMAGE_EXPORTS
 MODULES = $(SRCS:.c=.o)
 MODULES := $(MODULES:.cpp=.o)
 RESOURCE = $(RCFILE:.rc=.coff)
-CFLAGS ?= -O3 -fexceptions -DNDEBUG $(WIN32_CFLAGS)
+CFLAGS ?= -O3 -fexceptions -DNDEBUG -DDISABLE_PERF_MEASUREMENT $(WIN32_CFLAGS)
 CFLAGS += $(INCLUDE)
 CXXFLAGS ?= -O3 -fexceptions -Wno-ctor-dtor-privacy -DNDEBUG $(WIN32_CXXFLAGS)
 CXXFLAGS += $(INCLUDE)
