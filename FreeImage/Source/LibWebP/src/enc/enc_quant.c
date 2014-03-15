@@ -395,7 +395,7 @@ void VP8SetSegmentParams(VP8Encoder* const enc, float quality) {
   dq_uv_ac = clip(dq_uv_ac, MIN_DQ_UV, MAX_DQ_UV);
   // We also boost the dc-uv-quant a little, based on sns-strength, since
   // U/V channels are quite more reactive to high quants (flat DC-blocks
-  // tend to appear, and are displeasant).
+  // tend to appear, and are unpleasant).
   dq_uv_dc = -4 * enc->config_->sns_strength / 100;
   dq_uv_dc = clip(dq_uv_dc, -15, 15);   // 4bit-signed max allowed
 
@@ -517,12 +517,11 @@ static void AddScore(VP8ModeScore* const dst, const VP8ModeScore* const src) {
 // Trellis
 
 typedef struct {
-  int prev;        // best previous
-  int level;       // level
-  int sign;        // sign of coeff_i
-  score_t cost;    // bit cost
-  score_t error;   // distortion = sum of (|coeff_i| - level_i * Q_i)^2
-  int ctx;         // context (only depends on 'level'. Could be spared.)
+  int prev;               // best previous node
+  int level;              // level
+  int sign;               // sign of coeff_i
+  score_t score;          // partial RD score
+  const uint16_t* costs;  // shortcut to cost tables
 } Node;
 
 // If a coefficient was quantized to a value Q (using a neutral bias),
@@ -548,29 +547,28 @@ static int TrellisQuantizeBlock(const VP8EncIterator* const it,
                                 int ctx0, int coeff_type,
                                 const VP8Matrix* const mtx,
                                 int lambda) {
-  ProbaArray* const last_costs = it->enc_->proba_.coeffs_[coeff_type];
+  ProbaArray* const probas = it->enc_->proba_.coeffs_[coeff_type];
   CostArray* const costs = it->enc_->proba_.level_cost_[coeff_type];
   const int first = (coeff_type == 0) ? 1 : 0;
   Node nodes[17][NUM_NODES];
   int best_path[3] = {-1, -1, -1};   // store best-last/best-level/best-previous
   score_t best_score;
-  int best_node;
-  int last = first - 1;
-  int n, m, p, nz;
+  int n, m, p, last;
 
   {
     score_t cost;
-    score_t max_error;
     const int thresh = mtx->q_[1] * mtx->q_[1] / 4;
-    const int last_proba = last_costs[VP8EncBands[first]][ctx0][0];
+    const int last_proba = probas[VP8EncBands[first]][ctx0][0];
 
-    // compute maximal distortion.
-    max_error = 0;
-    for (n = first; n < 16; ++n) {
-      const int j  = kZigzag[n];
+    // compute the position of the last interesting coefficient
+    last = first - 1;
+    for (n = 15; n >= first; --n) {
+      const int j = kZigzag[n];
       const int err = in[j] * in[j];
-      max_error += kWeightTrellis[j] * err;
-      if (err > thresh) last = n;
+      if (err > thresh) {
+        last = n;
+        break;
+      }
     }
     // we don't need to go inspect up to n = 16 coeffs. We can just go up
     // to last + 1 (inclusive) without losing much.
@@ -578,92 +576,85 @@ static int TrellisQuantizeBlock(const VP8EncIterator* const it,
 
     // compute 'skip' score. This is the max score one can do.
     cost = VP8BitCost(0, last_proba);
-    best_score = RDScoreTrellis(lambda, cost, max_error);
+    best_score = RDScoreTrellis(lambda, cost, 0);
 
     // initialize source node.
     n = first - 1;
     for (m = -MIN_DELTA; m <= MAX_DELTA; ++m) {
-      NODE(n, m).cost = 0;
-      NODE(n, m).error = max_error;
-      NODE(n, m).ctx = ctx0;
+      const score_t rate = (ctx0 == 0) ? VP8BitCost(1, last_proba) : 0;
+      NODE(n, m).score = RDScoreTrellis(lambda, rate, 0);
+      NODE(n, m).costs = costs[VP8EncBands[first]][ctx0];
     }
   }
 
   // traverse trellis.
   for (n = first; n <= last; ++n) {
-    const int j  = kZigzag[n];
-    const int Q  = mtx->q_[j];
-    const int iQ = mtx->iq_[j];
-    const int B = BIAS(0x00);     // neutral bias
+    const int j = kZigzag[n];
+    const uint32_t Q  = mtx->q_[j];
+    const uint32_t iQ = mtx->iq_[j];
+    const uint32_t B = BIAS(0x00);     // neutral bias
     // note: it's important to take sign of the _original_ coeff,
     // so we don't have to consider level < 0 afterward.
     const int sign = (in[j] < 0);
-    const int coeff0 = (sign ? -in[j] : in[j]) + mtx->sharpen_[j];
+    const uint32_t coeff0 = (sign ? -in[j] : in[j]) + mtx->sharpen_[j];
     int level0 = QUANTDIV(coeff0, iQ, B);
     if (level0 > MAX_LEVEL) level0 = MAX_LEVEL;
 
     // test all alternate level values around level0.
     for (m = -MIN_DELTA; m <= MAX_DELTA; ++m) {
       Node* const cur = &NODE(n, m);
-      int delta_error, new_error;
-      score_t cur_score = MAX_COST;
       int level = level0 + m;
-      int last_proba;
+      const int ctx = (level > 2) ? 2 : level;
+      const int band = VP8EncBands[n + 1];
+      score_t base_score, last_pos_cost;
 
-      cur->sign = sign;
-      cur->level = level;
-      cur->ctx = (level == 0) ? 0 : (level == 1) ? 1 : 2;
+      cur->score = MAX_COST;
       if (level > MAX_LEVEL || level < 0) {   // node is dead?
-        cur->cost = MAX_COST;
         continue;
       }
-      last_proba = last_costs[VP8EncBands[n + 1]][cur->ctx][0];
+      cur->sign = sign;
+      cur->level = level;
+      cur->costs = costs[band][ctx];
+      cur->prev = 0;  // default, in case
 
-      // Compute delta_error = how much coding this level will
-      // subtract as distortion to max_error
-      new_error = coeff0 - level * Q;
-      delta_error =
-        kWeightTrellis[j] * (coeff0 * coeff0 - new_error * new_error);
+      // Compute extra rate cost if last coeff's position is < 15
+      last_pos_cost = (n < 15) ? VP8BitCost(0, probas[band][ctx][0]) : 0;
+
+      {
+        // Compute delta_error = how much coding this level will
+        // subtract to max_error as distortion.
+        // Here, distortion = sum of (|coeff_i| - level_i * Q_i)^2
+        const int new_error = coeff0 - level * Q;
+        const int delta_error =
+            kWeightTrellis[j] * (new_error * new_error - coeff0 * coeff0);
+        base_score = RDScoreTrellis(lambda, 0, delta_error);
+      }
 
       // Inspect all possible non-dead predecessors. Retain only the best one.
       for (p = -MIN_DELTA; p <= MAX_DELTA; ++p) {
         const Node* const prev = &NODE(n - 1, p);
-        const int prev_ctx = prev->ctx;
-        const uint16_t* const tcost = costs[VP8EncBands[n]][prev_ctx];
-        const score_t total_error = prev->error - delta_error;
-        score_t cost, base_cost, score;
-
-        if (prev->cost >= MAX_COST) {   // dead node?
-          continue;
-        }
-
-        // Base cost of both terminal/non-terminal
-        base_cost = prev->cost + VP8LevelCost(tcost, level);
-
-        // Examine node assuming it's a non-terminal one.
-        cost = base_cost;
-        if (level && n < 15) {
-          cost += VP8BitCost(1, last_proba);
-        }
-        score = RDScoreTrellis(lambda, cost, total_error);
-        if (score < cur_score) {
-          cur_score = score;
-          cur->cost  = cost;
-          cur->error = total_error;
-          cur->prev  = p;
-        }
-
-        // Now, record best terminal node (and thus best entry in the graph).
-        if (level) {
-          cost = base_cost;
-          if (n < 15) cost += VP8BitCost(0, last_proba);
-          score = RDScoreTrellis(lambda, cost, total_error);
-          if (score < best_score) {
-            best_score = score;
-            best_path[0] = n;   // best eob position
-            best_path[1] = m;   // best level
-            best_path[2] = p;   // best predecessor
+        if (prev->score < MAX_COST) {   // skip dead node
+          // Base cost of both terminal / non-terminal hypothesis
+          const score_t cost = VP8LevelCost(prev->costs, level);
+          // Examine node assuming it's a non-terminal one.
+          const score_t score =
+              base_score + prev->score + RDScoreTrellis(lambda, cost, 0);
+          if (score < cur->score) {
+            cur->score = score;
+            cur->prev  = p;
           }
+        }
+      }
+      // Now, record best terminal node (and thus best entry in the graph).
+      if (cur->level != 0) {
+        const score_t last_pos_score =
+            RDScoreTrellis(lambda, last_pos_cost, 0);
+        const score_t score = cur->score + last_pos_score;
+        if (score < best_score) {
+          best_score = score;
+          best_path[0] = n;                     // best eob position
+          best_path[1] = cur->level - level0;   // best node index ('m')
+          best_path[2] = cur->prev;             // best predecessor
         }
       }
     }
@@ -676,23 +667,25 @@ static int TrellisQuantizeBlock(const VP8EncIterator* const it,
     return 0;   // skip!
   }
 
-  // Unwind the best path.
-  // Note: best-prev on terminal node is not necessarily equal to the
-  // best_prev for non-terminal. So we patch best_path[2] in.
-  n = best_path[0];
-  best_node = best_path[1];
-  NODE(n, best_node).prev = best_path[2];   // force best-prev for terminal
-  nz = 0;
+  {
+    // Unwind the best path.
+    // Note: best-prev on terminal node is not necessarily equal to the
+    // best_prev for non-terminal. So we patch best_path[2] in.
+    int nz = 0;
+    int best_node = best_path[1];
+    n = best_path[0];
+    NODE(n, best_node).prev = best_path[2];   // force best-prev for terminal
 
-  for (; n >= first; --n) {
-    const Node* const node = &NODE(n, best_node);
-    const int j = kZigzag[n];
-    out[n] = node->sign ? -node->level : node->level;
-    nz |= (node->level != 0);
-    in[j] = out[n] * mtx->q_[j];
-    best_node = node->prev;
+    for (; n >= first; --n) {
+      const Node* const node = &NODE(n, best_node);
+      const int j = kZigzag[n];
+      out[n] = node->sign ? -node->level : node->level;
+      nz |= node->level;
+      in[j] = out[n] * mtx->q_[j];
+      best_node = node->prev;
+    }
+    return (nz != 0);
   }
-  return nz;
 }
 
 #undef NODE

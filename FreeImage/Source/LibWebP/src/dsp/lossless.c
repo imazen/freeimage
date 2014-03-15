@@ -28,8 +28,6 @@
 #define MAX_DIFF_COST (1e30f)
 
 // lookup table for small values of log2(int)
-#define APPROX_LOG_MAX  4096
-#define LOG_2_RECIPROCAL 1.44269504088896338700465094007086
 const float kLog2Table[LOG_LOOKUP_IDX_MAX] = {
   0.0000000000000000f, 0.0000000000000000f,
   1.0000000000000000f, 1.5849625007211560f,
@@ -331,16 +329,34 @@ const uint8_t kPrefixEncodeExtraBitsValue[PREFIX_LOOKUP_IDX_MAX] = {
   112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126
 };
 
+// The threshold till approximate version of log_2 can be used.
+// Practically, we can get rid of the call to log() as the two values match to
+// very high degree (the ratio of these two is 0.99999x).
+// Keeping a high threshold for now.
+#define APPROX_LOG_WITH_CORRECTION_MAX  65536
+#define APPROX_LOG_MAX                   4096
+#define LOG_2_RECIPROCAL 1.44269504088896338700465094007086
 float VP8LFastSLog2Slow(int v) {
   assert(v >= LOG_LOOKUP_IDX_MAX);
-  if (v < APPROX_LOG_MAX) {
+  if (v < APPROX_LOG_WITH_CORRECTION_MAX) {
     int log_cnt = 0;
+    int y = 1;
+    int correction = 0;
     const float v_f = (float)v;
-    while (v >= LOG_LOOKUP_IDX_MAX) {
+    const int orig_v = v;
+    do {
       ++log_cnt;
       v = v >> 1;
-    }
-    return v_f * (kLog2Table[v] + log_cnt);
+      y = y << 1;
+    } while (v >= LOG_LOOKUP_IDX_MAX);
+    // vf = (2^log_cnt) * Xf; where y = 2^log_cnt and Xf < 256
+    // Xf = floor(Xf) * (1 + (v % y) / v)
+    // log2(Xf) = log2(floor(Xf)) + log2(1 + (v % y) / v)
+    // The correction factor: log(1 + d) ~ d; for very small d values, so
+    // log2(1 + (v % y) / v) ~ LOG_2_RECIPROCAL * (v % y)/v
+    // LOG_2_RECIPROCAL ~ 23/16
+    correction = (23 * (orig_v % y)) >> 4;
+    return v_f * (kLog2Table[v] + log_cnt) + correction;
   } else {
     return (float)(LOG_2_RECIPROCAL * v * log((double)v));
   }
@@ -348,13 +364,24 @@ float VP8LFastSLog2Slow(int v) {
 
 float VP8LFastLog2Slow(int v) {
   assert(v >= LOG_LOOKUP_IDX_MAX);
-  if (v < APPROX_LOG_MAX) {
+  if (v < APPROX_LOG_WITH_CORRECTION_MAX) {
     int log_cnt = 0;
-    while (v >= LOG_LOOKUP_IDX_MAX) {
+    int y = 1;
+    const int orig_v = v;
+    double log_2;
+    do {
       ++log_cnt;
       v = v >> 1;
+      y = y << 1;
+    } while (v >= LOG_LOOKUP_IDX_MAX);
+    log_2 = kLog2Table[v] + log_cnt;
+    if (orig_v >= APPROX_LOG_MAX) {
+      // Since the division is still expensive, add this correction factor only
+      // for large values of 'v'.
+      const int correction = (23 * (orig_v % y)) >> 4;
+      log_2 += (double)correction / orig_v;
     }
-    return kLog2Table[v] + log_cnt;
+    return (float)log_2;
   } else {
     return (float)(LOG_2_RECIPROCAL * log((double)v));
   }
@@ -514,15 +541,14 @@ static const PredictorFunc kPredictors[16] = {
   Predictor0, Predictor0    // <- padding security sentinels
 };
 
-// TODO(vikasa): Replace 256 etc with defines.
-static float PredictionCostSpatial(const int* counts,
-                                   int weight_0, double exp_val) {
-  const int significant_symbols = 16;
+static float PredictionCostSpatial(const int* const counts, int weight_0,
+                                   double exp_val, int n) {
+  const int significant_symbols = n >> 4;
   const double exp_decay_factor = 0.6;
   double bits = weight_0 * counts[0];
   int i;
   for (i = 1; i < significant_symbols; ++i) {
-    bits += exp_val * (counts[i] + counts[256 - i]);
+    bits += exp_val * (counts[i] + counts[n - i]);
     exp_val *= exp_decay_factor;
   }
   return (float)(-0.1 * bits);
@@ -536,12 +562,13 @@ static float CombinedShannonEntropy(const int* const X,
   int sumX = 0, sumXY = 0;
   for (i = 0; i < n; ++i) {
     const int x = X[i];
-    const int xy = X[i] + Y[i];
+    const int xy = x + Y[i];
     if (x != 0) {
       sumX += x;
       retval -= VP8LFastSLog2(x);
-    }
-    if (xy != 0) {
+      sumXY += xy;
+      retval -= VP8LFastSLog2(xy);
+    } else if (xy != 0) {
       sumXY += xy;
       retval -= VP8LFastSLog2(xy);
     }
@@ -550,48 +577,53 @@ static float CombinedShannonEntropy(const int* const X,
   return (float)retval;
 }
 
-static float PredictionCostSpatialHistogram(int accumulated[4][256],
-                                            int tile[4][256]) {
+static float PredictionCostSpatialHistogram(const int accumulated[4][256],
+                                            const int tile[4][256]) {
   int i;
   double retval = 0;
   for (i = 0; i < 4; ++i) {
     const double kExpValue = 0.94;
-    retval += PredictionCostSpatial(tile[i], 1, kExpValue);
+    retval += PredictionCostSpatial(tile[i], 1, kExpValue, 256);
     retval += CombinedShannonEntropy(tile[i], accumulated[i], 256);
   }
   return (float)retval;
 }
 
+static WEBP_INLINE void UpdateHisto(int histo_argb[4][256], uint32_t argb) {
+  ++histo_argb[0][argb >> 24];
+  ++histo_argb[1][(argb >> 16) & 0xff];
+  ++histo_argb[2][(argb >> 8) & 0xff];
+  ++histo_argb[3][argb & 0xff];
+}
+
 static int GetBestPredictorForTile(int width, int height,
                                    int tile_x, int tile_y, int bits,
-                                   int accumulated[4][256],
+                                   const int accumulated[4][256],
                                    const uint32_t* const argb_scratch) {
   const int kNumPredModes = 14;
   const int col_start = tile_x << bits;
   const int row_start = tile_y << bits;
   const int tile_size = 1 << bits;
-  const int ymax = GetMin(tile_size, height - row_start);
-  const int xmax = GetMin(tile_size, width - col_start);
-  int histo[4][256];
+  const int max_y = GetMin(tile_size, height - row_start);
+  const int max_x = GetMin(tile_size, width - col_start);
   float best_diff = MAX_DIFF_COST;
   int best_mode = 0;
-
   int mode;
   for (mode = 0; mode < kNumPredModes; ++mode) {
     const uint32_t* current_row = argb_scratch;
     const PredictorFunc pred_func = kPredictors[mode];
     float cur_diff;
     int y;
-    memset(&histo[0][0], 0, sizeof(histo));
-    for (y = 0; y < ymax; ++y) {
+    int histo_argb[4][256];
+    memset(histo_argb, 0, sizeof(histo_argb));
+    for (y = 0; y < max_y; ++y) {
       int x;
       const int row = row_start + y;
       const uint32_t* const upper_row = current_row;
       current_row = upper_row + width;
-      for (x = 0; x < xmax; ++x) {
+      for (x = 0; x < max_x; ++x) {
         const int col = col_start + x;
         uint32_t predict;
-        uint32_t predict_diff;
         if (row == 0) {
           predict = (col == 0) ? ARGB_BLACK : current_row[col - 1];  // Left.
         } else if (col == 0) {
@@ -599,14 +631,11 @@ static int GetBestPredictorForTile(int width, int height,
         } else {
           predict = pred_func(current_row[col - 1], upper_row + col);
         }
-        predict_diff = VP8LSubPixels(current_row[col], predict);
-        ++histo[0][predict_diff >> 24];
-        ++histo[1][((predict_diff >> 16) & 0xff)];
-        ++histo[2][((predict_diff >> 8) & 0xff)];
-        ++histo[3][(predict_diff & 0xff)];
+        UpdateHisto(histo_argb, VP8LSubPixels(current_row[col], predict));
       }
     }
-    cur_diff = PredictionCostSpatialHistogram(accumulated, histo);
+    cur_diff = PredictionCostSpatialHistogram(
+        accumulated, (const int (*)[256])histo_argb);
     if (cur_diff < best_diff) {
       best_diff = cur_diff;
       best_mode = mode;
@@ -623,18 +652,18 @@ static void CopyTileWithPrediction(int width, int height,
   const int col_start = tile_x << bits;
   const int row_start = tile_y << bits;
   const int tile_size = 1 << bits;
-  const int ymax = GetMin(tile_size, height - row_start);
-  const int xmax = GetMin(tile_size, width - col_start);
+  const int max_y = GetMin(tile_size, height - row_start);
+  const int max_x = GetMin(tile_size, width - col_start);
   const PredictorFunc pred_func = kPredictors[mode];
   const uint32_t* current_row = argb_scratch;
 
   int y;
-  for (y = 0; y < ymax; ++y) {
+  for (y = 0; y < max_y; ++y) {
     int x;
     const int row = row_start + y;
     const uint32_t* const upper_row = current_row;
     current_row = upper_row + width;
-    for (x = 0; x < xmax; ++x) {
+    for (x = 0; x < max_x; ++x) {
       const int col = col_start + x;
       const int pix = row * width + col;
       uint32_t predict;
@@ -680,7 +709,8 @@ void VP8LResidualImage(int width, int height, int bits,
       if (all_x_max > width) {
         all_x_max = width;
       }
-      pred = GetBestPredictorForTile(width, height, tile_x, tile_y, bits, histo,
+      pred = GetBestPredictorForTile(width, height, tile_x, tile_y, bits,
+                                     (const int (*)[256])histo,
                                      argb_scratch);
       image[tile_y * tiles_per_row + tile_x] = 0xff000000u | (pred << 8);
       CopyTileWithPrediction(width, height, tile_x, tile_y, bits, pred,
@@ -694,11 +724,7 @@ void VP8LResidualImage(int width, int height, int bits,
         }
         ix = all_y * width + tile_x_offset;
         for (all_x = tile_x_offset; all_x < all_x_max; ++all_x, ++ix) {
-          const uint32_t a = argb[ix];
-          ++histo[0][a >> 24];
-          ++histo[1][((a >> 16) & 0xff)];
-          ++histo[2][((a >> 8) & 0xff)];
-          ++histo[3][(a & 0xff)];
+          UpdateHisto(histo, argb[ix]);
         }
       }
     }
@@ -858,16 +884,18 @@ static WEBP_INLINE uint8_t TransformColorBlue(uint8_t green_to_blue,
 static WEBP_INLINE int SkipRepeatedPixels(const uint32_t* const argb,
                                           int ix, int xsize) {
   const uint32_t v = argb[ix];
-  if (ix >= xsize + 3) {
-    if (v == argb[ix - xsize] &&
-        argb[ix - 1] == argb[ix - xsize - 1] &&
-        argb[ix - 2] == argb[ix - xsize - 2] &&
-        argb[ix - 3] == argb[ix - xsize - 3]) {
+  if (ix >= 3) {
+    if (v == argb[ix - 3] && v == argb[ix - 2] && v == argb[ix - 1]) {
       return 1;
     }
-    return v == argb[ix - 3] && v == argb[ix - 2] && v == argb[ix - 1];
-  } else if (ix >= 3) {
-    return v == argb[ix - 3] && v == argb[ix - 2] && v == argb[ix - 1];
+    if (ix >= xsize + 3) {
+      if (v == argb[ix - xsize] &&
+          argb[ix - 3] == argb[ix - xsize - 3] &&
+          argb[ix - 2] == argb[ix - xsize - 2] &&
+          argb[ix - 1] == argb[ix - xsize - 1]) {
+        return 1;
+      }
+    }
   }
   return 0;
 }
@@ -878,102 +906,183 @@ static float PredictionCostCrossColor(const int accumulated[256],
   // Favor small absolute values for PredictionCostSpatial
   static const double kExpValue = 2.4;
   return CombinedShannonEntropy(counts, accumulated, 256) +
-         PredictionCostSpatial(counts, 3, kExpValue);
+         PredictionCostSpatial(counts, 3, kExpValue, 256);
+}
+
+static float GetPredictionCostCrossColorRed(
+    int tile_x_offset, int tile_y_offset, int all_x_max, int all_y_max,
+    int xsize, Multipliers prev_x, Multipliers prev_y, int green_to_red,
+    const int accumulated_red_histo[256], const uint32_t* const argb) {
+  int all_y;
+  int histo[256] = { 0 };
+  float cur_diff;
+  for (all_y = tile_y_offset; all_y < all_y_max; ++all_y) {
+    int ix = all_y * xsize + tile_x_offset;
+    int all_x;
+    for (all_x = tile_x_offset; all_x < all_x_max; ++all_x, ++ix) {
+      if (SkipRepeatedPixels(argb, ix, xsize)) {
+        continue;
+      }
+      ++histo[TransformColorRed(green_to_red, argb[ix])];  // red.
+    }
+  }
+  cur_diff = PredictionCostCrossColor(accumulated_red_histo, histo);
+  if ((uint8_t)green_to_red == prev_x.green_to_red_) {
+    cur_diff -= 3;  // favor keeping the areas locally similar
+  }
+  if ((uint8_t)green_to_red == prev_y.green_to_red_) {
+    cur_diff -= 3;  // favor keeping the areas locally similar
+  }
+  if (green_to_red == 0) {
+    cur_diff -= 3;
+  }
+  return cur_diff;
+}
+
+static void GetBestGreenToRed(
+    int tile_x_offset, int tile_y_offset, int all_x_max, int all_y_max,
+    int xsize, Multipliers prev_x, Multipliers prev_y,
+    const int accumulated_red_histo[256], const uint32_t* const argb,
+    Multipliers* best_tx) {
+  int min_green_to_red = -64;
+  int max_green_to_red = 64;
+  int green_to_red = 0;
+  int eval_min = 1;
+  int eval_max = 1;
+  float cur_diff_min = MAX_DIFF_COST;
+  float cur_diff_max = MAX_DIFF_COST;
+  // Do a binary search to find the optimal green_to_red color transform.
+  while (max_green_to_red - min_green_to_red > 2) {
+    if (eval_min) {
+      cur_diff_min = GetPredictionCostCrossColorRed(
+          tile_x_offset, tile_y_offset, all_x_max, all_y_max, xsize,
+          prev_x, prev_y, min_green_to_red, accumulated_red_histo, argb);
+      eval_min = 0;
+    }
+    if (eval_max) {
+      cur_diff_max = GetPredictionCostCrossColorRed(
+          tile_x_offset, tile_y_offset, all_x_max, all_y_max, xsize,
+          prev_x, prev_y, max_green_to_red, accumulated_red_histo, argb);
+      eval_max = 0;
+    }
+    if (cur_diff_min < cur_diff_max) {
+      green_to_red = min_green_to_red;
+      max_green_to_red = (max_green_to_red + min_green_to_red) / 2;
+      eval_max = 1;
+    } else {
+      green_to_red = max_green_to_red;
+      min_green_to_red = (max_green_to_red + min_green_to_red) / 2;
+      eval_min = 1;
+    }
+  }
+  best_tx->green_to_red_ = green_to_red;
+}
+
+static float GetPredictionCostCrossColorBlue(
+    int tile_x_offset, int tile_y_offset, int all_x_max, int all_y_max,
+    int xsize, Multipliers prev_x, Multipliers prev_y, int green_to_blue,
+    int red_to_blue, const int accumulated_blue_histo[256],
+    const uint32_t* const argb) {
+  int all_y;
+  int histo[256] = { 0 };
+  float cur_diff;
+  for (all_y = tile_y_offset; all_y < all_y_max; ++all_y) {
+    int all_x;
+    int ix = all_y * xsize + tile_x_offset;
+    for (all_x = tile_x_offset; all_x < all_x_max; ++all_x, ++ix) {
+      if (SkipRepeatedPixels(argb, ix, xsize)) {
+        continue;
+      }
+      ++histo[TransformColorBlue(green_to_blue, red_to_blue, argb[ix])];
+    }
+  }
+  cur_diff = PredictionCostCrossColor(accumulated_blue_histo, histo);
+  if ((uint8_t)green_to_blue == prev_x.green_to_blue_) {
+    cur_diff -= 3;  // favor keeping the areas locally similar
+  }
+  if ((uint8_t)green_to_blue == prev_y.green_to_blue_) {
+    cur_diff -= 3;  // favor keeping the areas locally similar
+  }
+  if ((uint8_t)red_to_blue == prev_x.red_to_blue_) {
+    cur_diff -= 3;  // favor keeping the areas locally similar
+  }
+  if ((uint8_t)red_to_blue == prev_y.red_to_blue_) {
+    cur_diff -= 3;  // favor keeping the areas locally similar
+  }
+  if (green_to_blue == 0) {
+    cur_diff -= 3;
+  }
+  if (red_to_blue == 0) {
+    cur_diff -= 3;
+  }
+  return cur_diff;
+}
+
+static void GetBestGreenRedToBlue(
+    int tile_x_offset, int tile_y_offset, int all_x_max, int all_y_max,
+    int xsize, Multipliers prev_x, Multipliers prev_y, int quality,
+    const int accumulated_blue_histo[256], const uint32_t* const argb,
+    Multipliers* best_tx) {
+  float best_diff = MAX_DIFF_COST;
+  float cur_diff;
+  const int step = (quality < 25) ? 32 : (quality > 50) ? 8 : 16;
+  const int min_green_to_blue = -32;
+  const int max_green_to_blue = 32;
+  const int min_red_to_blue = -16;
+  const int max_red_to_blue = 16;
+  const int num_iters =
+      (1 + (max_green_to_blue - min_green_to_blue) / step) *
+      (1 + (max_red_to_blue - min_red_to_blue) / step);
+  // Number of tries to get optimal green_to_blue & red_to_blue color transforms
+  // after finding a local minima.
+  const int max_tries_after_min = 4 + (num_iters >> 2);
+  int num_tries_after_min = 0;
+  int green_to_blue;
+  for (green_to_blue = min_green_to_blue;
+       green_to_blue <= max_green_to_blue &&
+       num_tries_after_min < max_tries_after_min;
+       green_to_blue += step) {
+    int red_to_blue;
+    for (red_to_blue = min_red_to_blue;
+         red_to_blue <= max_red_to_blue &&
+         num_tries_after_min < max_tries_after_min;
+         red_to_blue += step) {
+      cur_diff = GetPredictionCostCrossColorBlue(
+          tile_x_offset, tile_y_offset, all_x_max, all_y_max, xsize, prev_x,
+          prev_y, green_to_blue, red_to_blue, accumulated_blue_histo, argb);
+      if (cur_diff < best_diff) {
+        best_diff = cur_diff;
+        best_tx->green_to_blue_ = green_to_blue;
+        best_tx->red_to_blue_ = red_to_blue;
+        num_tries_after_min = 0;
+      } else {
+        ++num_tries_after_min;
+      }
+    }
+  }
 }
 
 static Multipliers GetBestColorTransformForTile(
     int tile_x, int tile_y, int bits,
-    Multipliers prevX,
-    Multipliers prevY,
-    int step, int xsize, int ysize,
-    int* accumulated_red_histo,
-    int* accumulated_blue_histo,
+    Multipliers prev_x,
+    Multipliers prev_y,
+    int quality, int xsize, int ysize,
+    const int accumulated_red_histo[256],
+    const int accumulated_blue_histo[256],
     const uint32_t* const argb) {
-  float best_diff = MAX_DIFF_COST;
-  float cur_diff;
-  const int halfstep = step / 2;
   const int max_tile_size = 1 << bits;
   const int tile_y_offset = tile_y * max_tile_size;
   const int tile_x_offset = tile_x * max_tile_size;
-  int green_to_red;
-  int green_to_blue;
-  int red_to_blue;
   const int all_x_max = GetMin(tile_x_offset + max_tile_size, xsize);
   const int all_y_max = GetMin(tile_y_offset + max_tile_size, ysize);
   Multipliers best_tx;
   MultipliersClear(&best_tx);
 
-  for (green_to_red = -64; green_to_red <= 64; green_to_red += halfstep) {
-    int histo[256] = { 0 };
-    int all_y;
-
-    for (all_y = tile_y_offset; all_y < all_y_max; ++all_y) {
-      int ix = all_y * xsize + tile_x_offset;
-      int all_x;
-      for (all_x = tile_x_offset; all_x < all_x_max; ++all_x, ++ix) {
-        if (SkipRepeatedPixels(argb, ix, xsize)) {
-          continue;
-        }
-        ++histo[TransformColorRed(green_to_red, argb[ix])];  // red.
-      }
-    }
-    cur_diff = PredictionCostCrossColor(&accumulated_red_histo[0], &histo[0]);
-    if ((uint8_t)green_to_red == prevX.green_to_red_) {
-      cur_diff -= 3;  // favor keeping the areas locally similar
-    }
-    if ((uint8_t)green_to_red == prevY.green_to_red_) {
-      cur_diff -= 3;  // favor keeping the areas locally similar
-    }
-    if (green_to_red == 0) {
-      cur_diff -= 3;
-    }
-    if (cur_diff < best_diff) {
-      best_diff = cur_diff;
-      best_tx.green_to_red_ = green_to_red;
-    }
-  }
-  best_diff = MAX_DIFF_COST;
-  for (green_to_blue = -32; green_to_blue <= 32; green_to_blue += step) {
-    for (red_to_blue = -32; red_to_blue <= 32; red_to_blue += step) {
-      int all_y;
-      int histo[256] = { 0 };
-      for (all_y = tile_y_offset; all_y < all_y_max; ++all_y) {
-        int all_x;
-        int ix = all_y * xsize + tile_x_offset;
-        for (all_x = tile_x_offset; all_x < all_x_max; ++all_x, ++ix) {
-          if (SkipRepeatedPixels(argb, ix, xsize)) {
-            continue;
-          }
-          ++histo[TransformColorBlue(green_to_blue, red_to_blue, argb[ix])];
-        }
-      }
-      cur_diff =
-          PredictionCostCrossColor(&accumulated_blue_histo[0], &histo[0]);
-      if ((uint8_t)green_to_blue == prevX.green_to_blue_) {
-        cur_diff -= 3;  // favor keeping the areas locally similar
-      }
-      if ((uint8_t)green_to_blue == prevY.green_to_blue_) {
-        cur_diff -= 3;  // favor keeping the areas locally similar
-      }
-      if ((uint8_t)red_to_blue == prevX.red_to_blue_) {
-        cur_diff -= 3;  // favor keeping the areas locally similar
-      }
-      if ((uint8_t)red_to_blue == prevY.red_to_blue_) {
-        cur_diff -= 3;  // favor keeping the areas locally similar
-      }
-      if (green_to_blue == 0) {
-        cur_diff -= 3;
-      }
-      if (red_to_blue == 0) {
-        cur_diff -= 3;
-      }
-      if (cur_diff < best_diff) {
-        best_diff = cur_diff;
-        best_tx.green_to_blue_ = green_to_blue;
-        best_tx.red_to_blue_ = red_to_blue;
-      }
-    }
-  }
+  GetBestGreenToRed(tile_x_offset, tile_y_offset, all_x_max, all_y_max, xsize,
+                    prev_x, prev_y, accumulated_red_histo, argb, &best_tx);
+  GetBestGreenRedToBlue(tile_x_offset, tile_y_offset, all_x_max, all_y_max,
+                        xsize, prev_x, prev_y, quality, accumulated_blue_histo,
+                        argb, &best_tx);
   return best_tx;
 }
 
@@ -994,7 +1103,7 @@ static void CopyTileWithColorTransform(int xsize, int ysize,
   }
 }
 
-void VP8LColorSpaceTransform(int width, int height, int bits, int step,
+void VP8LColorSpaceTransform(int width, int height, int bits, int quality,
                              uint32_t* const argb, uint32_t* image) {
   const int max_tile_size = 1 << bits;
   const int tile_xsize = VP8LSubSampleSize(width, bits);
@@ -1018,14 +1127,13 @@ void VP8LColorSpaceTransform(int width, int height, int bits, int step,
       }
       prev_x = GetBestColorTransformForTile(tile_x, tile_y, bits,
                                             prev_x, prev_y,
-                                            step, width, height,
-                                            &accumulated_red_histo[0],
-                                            &accumulated_blue_histo[0],
+                                            quality, width, height,
+                                            accumulated_red_histo,
+                                            accumulated_blue_histo,
                                             argb);
       image[offset] = MultipliersToColorCode(&prev_x);
-      CopyTileWithColorTransform(width, height,
-                                 tile_x_offset, tile_y_offset, max_tile_size,
-                                 prev_x, argb);
+      CopyTileWithColorTransform(width, height, tile_x_offset, tile_y_offset,
+                                 max_tile_size, prev_x, argb);
 
       // Gather accumulated histogram data.
       for (y = tile_y_offset; y < all_y_max; ++y) {

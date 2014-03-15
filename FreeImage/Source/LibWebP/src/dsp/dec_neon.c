@@ -16,6 +16,8 @@
 
 #if defined(WEBP_USE_NEON)
 
+#include <arm_neon.h>
+
 #include "../dec/vp8i.h"
 
 #define QRegs "q0", "q1", "q2", "q3",                                          \
@@ -86,6 +88,26 @@
   "vst2.8   {" #c1"[5], " #c2"[5]}," #p "," #stride " \n"                      \
   "vst2.8   {" #c1"[6], " #c2"[6]}," #p "," #stride " \n"                      \
   "vst2.8   {" #c1"[7], " #c2"[7]}," #p "," #stride " \n"
+
+// Treats 'v' as an uint8x8_t and zero extends to an int16x8_t.
+static WEBP_INLINE int16x8_t ConvertU8ToS16(uint32x2_t v) {
+  return vreinterpretq_s16_u16(vmovl_u8(vreinterpret_u8_u32(v)));
+}
+
+// Performs unsigned 8b saturation on 'dst01' and 'dst23' storing the result
+// to the corresponding rows of 'dst'.
+static WEBP_INLINE void SaturateAndStore4x4(uint8_t* const dst,
+                                            int16x8_t dst01, int16x8_t dst23) {
+  // Unsigned saturate to 8b.
+  const uint8x8_t dst01_u8 = vqmovun_s16(dst01);
+  const uint8x8_t dst23_u8 = vqmovun_s16(dst23);
+
+  // Store the results.
+  *(int*)(dst + 0 * BPS) = vget_lane_s32(vreinterpret_s32_u8(dst01_u8), 0);
+  *(int*)(dst + 1 * BPS) = vget_lane_s32(vreinterpret_s32_u8(dst01_u8), 1);
+  *(int*)(dst + 2 * BPS) = vget_lane_s32(vreinterpret_s32_u8(dst23_u8), 0);
+  *(int*)(dst + 3 * BPS) = vget_lane_s32(vreinterpret_s32_u8(dst23_u8), 1);
+}
 
 //-----------------------------------------------------------------------------
 // Simple In-loop filtering (Paragraph 15.2)
@@ -313,102 +335,135 @@ static void TransformTwo(const int16_t* in, uint8_t* dst, int do_two) {
 }
 
 static void TransformDC(const int16_t* in, uint8_t* dst) {
-  const int DC = (in[0] + 4) >> 3;
-  const int kBPS = BPS;
-  __asm__ volatile (
-    "vdup.16         q1, %[DC]        \n"
+  const int16x8_t DC = vdupq_n_s16((in[0] + 4) >> 3);
+  uint32x2_t dst01 = {0, 0};
+  uint32x2_t dst23 = {0, 0};
 
-    "vld1.32         d0[0], [%[dst]], %[kBPS]    \n"
-    "vld1.32         d1[0], [%[dst]], %[kBPS]    \n"
-    "vld1.32         d0[1], [%[dst]], %[kBPS]    \n"
-    "vld1.32         d1[1], [%[dst]], %[kBPS]    \n"
+  // Load the source pixels.
+  dst01 = vset_lane_u32(*(uint32_t*)(dst + 0 * BPS), dst01, 0);
+  dst23 = vset_lane_u32(*(uint32_t*)(dst + 2 * BPS), dst23, 0);
+  dst01 = vset_lane_u32(*(uint32_t*)(dst + 1 * BPS), dst01, 1);
+  dst23 = vset_lane_u32(*(uint32_t*)(dst + 3 * BPS), dst23, 1);
 
-    "sub         %[dst], %[dst], %[kBPS], lsl #2 \n"
+  {
+    // Convert to 16b.
+    int16x8_t dst01_s16 = ConvertU8ToS16(dst01);
+    int16x8_t dst23_s16 = ConvertU8ToS16(dst23);
 
-    // add DC and convert to s16.
-    "vaddw.u8        q2, q1, d0                  \n"
-    "vaddw.u8        q3, q1, d1                  \n"
-    // convert back to u8 with saturation
-    "vqmovun.s16     d0,  q2                     \n"
-    "vqmovun.s16     d1,  q3                     \n"
+    // Add the inverse transform.
+    dst01_s16 = vaddq_s16(dst01_s16, DC);
+    dst23_s16 = vaddq_s16(dst23_s16, DC);
 
-    "vst1.32         d0[0], [%[dst]], %[kBPS]    \n"
-    "vst1.32         d1[0], [%[dst]], %[kBPS]    \n"
-    "vst1.32         d0[1], [%[dst]], %[kBPS]    \n"
-    "vst1.32         d1[1], [%[dst]]             \n"
-    : [in] "+r"(in), [dst] "+r"(dst)  /* modified registers */
-    : [kBPS] "r"(kBPS),   /* constants */
-      [DC] "r"(DC)
-    : "memory", "q0", "q1", "q2", "q3"  /* clobbered */
-  );
+    SaturateAndStore4x4(dst, dst01_s16, dst23_s16);
+  }
 }
+
+//------------------------------------------------------------------------------
+
+#define STORE_WHT(dst, col, row01, row23) do {         \
+  *dst = vgetq_lane_s32(row01.val[0], col); out += 16; \
+  *dst = vgetq_lane_s32(row01.val[1], col); out += 16; \
+  *dst = vgetq_lane_s32(row23.val[0], col); out += 16; \
+  *dst = vgetq_lane_s32(row23.val[1], col); out += 16; \
+} while (0)
 
 static void TransformWHT(const int16_t* in, int16_t* out) {
-  const int kStep = 32;  // The store is only incrementing the pointer as if we
-                         // had stored a single byte.
-  __asm__ volatile (
-    // part 1
-    // load data into q0, q1
-    "vld1.16         {q0, q1}, [%[in]]           \n"
+  int32x4x2_t tmp0;  // tmp[0..7]
+  int32x4x2_t tmp1;  // tmp[8..15]
 
-    "vaddl.s16       q2, d0, d3                  \n"  // a0 = in[0] + in[12]
-    "vaddl.s16       q3, d1, d2                  \n"  // a1 = in[4] + in[8]
-    "vsubl.s16       q10, d1, d2                 \n"  // a2 = in[4] - in[8]
-    "vsubl.s16       q11, d0, d3                 \n"  // a3 = in[0] - in[12]
+  {
+    // Load the source.
+    const int16x4_t in00_03 = vld1_s16(in + 0);
+    const int16x4_t in04_07 = vld1_s16(in + 4);
+    const int16x4_t in08_11 = vld1_s16(in + 8);
+    const int16x4_t in12_15 = vld1_s16(in + 12);
+    const int32x4_t a0 = vaddl_s16(in00_03, in12_15);  // in[0..3] + in[12..15]
+    const int32x4_t a1 = vaddl_s16(in04_07, in08_11);  // in[4..7] + in[8..11]
+    const int32x4_t a2 = vsubl_s16(in04_07, in08_11);  // in[4..7] - in[8..11]
+    const int32x4_t a3 = vsubl_s16(in00_03, in12_15);  // in[0..3] - in[12..15]
+    tmp0.val[0] = vaddq_s32(a0, a1);
+    tmp0.val[1] = vaddq_s32(a3, a2);
+    tmp1.val[0] = vsubq_s32(a0, a1);
+    tmp1.val[1] = vsubq_s32(a3, a2);
+  }
 
-    "vadd.s32        q0, q2, q3                  \n"  // tmp[0] = a0 + a1
-    "vsub.s32        q2, q2, q3                  \n"  // tmp[8] = a0 - a1
-    "vadd.s32        q1, q11, q10                \n"  // tmp[4] = a3 + a2
-    "vsub.s32        q3, q11, q10                \n"  // tmp[12] = a3 - a2
+  tmp0 = vzipq_s32(tmp0.val[0], tmp0.val[1]);  // 0,  4, 1,  5 |  2,  6,  3,  7
+  tmp1 = vzipq_s32(tmp1.val[0], tmp1.val[1]);  // 8, 12, 9, 13 | 10, 14, 11, 15
 
-    // Transpose
-    // q0 = tmp[0, 4, 8, 12], q1 = tmp[2, 6, 10, 14]
-    // q2 = tmp[1, 5, 9, 13], q3 = tmp[3, 7, 11, 15]
-    "vswp            d1, d4                      \n"  // vtrn.64 q0, q2
-    "vswp            d3, d6                      \n"  // vtrn.64 q1, q3
-    "vtrn.32         q0, q1                      \n"
-    "vtrn.32         q2, q3                      \n"
+  {
+    // Arrange the temporary results column-wise.
+    const int32x4_t tmp_0_4_8_12 =
+        vcombine_s32(vget_low_s32(tmp0.val[0]), vget_low_s32(tmp1.val[0]));
+    const int32x4_t tmp_2_6_10_14 =
+        vcombine_s32(vget_low_s32(tmp0.val[1]), vget_low_s32(tmp1.val[1]));
+    const int32x4_t tmp_1_5_9_13 =
+        vcombine_s32(vget_high_s32(tmp0.val[0]), vget_high_s32(tmp1.val[0]));
+    const int32x4_t tmp_3_7_11_15 =
+        vcombine_s32(vget_high_s32(tmp0.val[1]), vget_high_s32(tmp1.val[1]));
+    const int32x4_t three = vdupq_n_s32(3);
+    const int32x4_t dc = vaddq_s32(tmp_0_4_8_12, three);  // add rounder
+    const int32x4_t a0 = vaddq_s32(dc, tmp_3_7_11_15);
+    const int32x4_t a1 = vaddq_s32(tmp_1_5_9_13, tmp_2_6_10_14);
+    const int32x4_t a2 = vsubq_s32(tmp_1_5_9_13, tmp_2_6_10_14);
+    const int32x4_t a3 = vsubq_s32(dc, tmp_3_7_11_15);
 
-    "vmov.s32        q10, #3                     \n"  // dc = 3
-    "vadd.s32        q0, q0, q10                 \n"  // dc = tmp[0] + 3
-    "vadd.s32        q12, q0, q3                 \n"  // a0 = dc + tmp[3]
-    "vadd.s32        q13, q1, q2                 \n"  // a1 = tmp[1] + tmp[2]
-    "vsub.s32        q8, q1, q2                  \n"  // a2 = tmp[1] - tmp[2]
-    "vsub.s32        q9, q0, q3                  \n"  // a3 = dc - tmp[3]
+    tmp0.val[0] = vaddq_s32(a0, a1);
+    tmp0.val[1] = vaddq_s32(a3, a2);
+    tmp1.val[0] = vsubq_s32(a0, a1);
+    tmp1.val[1] = vsubq_s32(a3, a2);
 
-    "vadd.s32        q0, q12, q13                \n"
-    "vshrn.s32       d0, q0, #3                  \n"  // (a0 + a1) >> 3
-    "vadd.s32        q1, q9, q8                  \n"
-    "vshrn.s32       d1, q1, #3                  \n"  // (a3 + a2) >> 3
-    "vsub.s32        q2, q12, q13                \n"
-    "vshrn.s32       d2, q2, #3                  \n"  // (a0 - a1) >> 3
-    "vsub.s32        q3, q9, q8                  \n"
-    "vshrn.s32       d3, q3, #3                  \n"  // (a3 - a2) >> 3
+    // right shift the results by 3.
+    tmp0.val[0] = vshrq_n_s32(tmp0.val[0], 3);
+    tmp0.val[1] = vshrq_n_s32(tmp0.val[1], 3);
+    tmp1.val[0] = vshrq_n_s32(tmp1.val[0], 3);
+    tmp1.val[1] = vshrq_n_s32(tmp1.val[1], 3);
 
-    // set the results to output
-    "vst1.16         d0[0], [%[out]], %[kStep]   \n"
-    "vst1.16         d1[0], [%[out]], %[kStep]   \n"
-    "vst1.16         d2[0], [%[out]], %[kStep]   \n"
-    "vst1.16         d3[0], [%[out]], %[kStep]   \n"
-    "vst1.16         d0[1], [%[out]], %[kStep]   \n"
-    "vst1.16         d1[1], [%[out]], %[kStep]   \n"
-    "vst1.16         d2[1], [%[out]], %[kStep]   \n"
-    "vst1.16         d3[1], [%[out]], %[kStep]   \n"
-    "vst1.16         d0[2], [%[out]], %[kStep]   \n"
-    "vst1.16         d1[2], [%[out]], %[kStep]   \n"
-    "vst1.16         d2[2], [%[out]], %[kStep]   \n"
-    "vst1.16         d3[2], [%[out]], %[kStep]   \n"
-    "vst1.16         d0[3], [%[out]], %[kStep]   \n"
-    "vst1.16         d1[3], [%[out]], %[kStep]   \n"
-    "vst1.16         d2[3], [%[out]], %[kStep]   \n"
-    "vst1.16         d3[3], [%[out]], %[kStep]   \n"
-
-    : [out] "+r"(out)  // modified registers
-    : [in] "r"(in), [kStep] "r"(kStep)  // constants
-    : "memory", "q0", "q1", "q2", "q3",
-      "q8", "q9", "q10", "q11", "q12", "q13"  // clobbered
-  );
+    STORE_WHT(out, 0, tmp0, tmp1);
+    STORE_WHT(out, 1, tmp0, tmp1);
+    STORE_WHT(out, 2, tmp0, tmp1);
+    STORE_WHT(out, 3, tmp0, tmp1);
+  }
 }
+
+#undef STORE_WHT
+
+//------------------------------------------------------------------------------
+
+#define MUL(a, b) (((a) * (b)) >> 16)
+static void TransformAC3(const int16_t* in, uint8_t* dst) {
+  static const int kC1 = 20091 + (1 << 16);
+  static const int kC2 = 35468;
+  const int16x4_t A = vdup_n_s16(in[0] + 4);
+  const int16x4_t c4 = vdup_n_s16(MUL(in[4], kC2));
+  const int16x4_t d4 = vdup_n_s16(MUL(in[4], kC1));
+  const int c1 = MUL(in[1], kC2);
+  const int d1 = MUL(in[1], kC1);
+  const int16x4_t CD = {d1, c1, -c1, -d1};
+  const int16x4_t B = vqadd_s16(A, CD);
+  const int16x8_t m0_m1 = vcombine_s16(vqadd_s16(B, d4), vqadd_s16(B, c4));
+  const int16x8_t m2_m3 = vcombine_s16(vqsub_s16(B, c4), vqsub_s16(B, d4));
+  uint32x2_t dst01 = {0, 0};
+  uint32x2_t dst23 = {0, 0};
+
+  // Load the source pixels.
+  dst01 = vset_lane_u32(*(uint32_t*)(dst + 0 * BPS), dst01, 0);
+  dst23 = vset_lane_u32(*(uint32_t*)(dst + 2 * BPS), dst23, 0);
+  dst01 = vset_lane_u32(*(uint32_t*)(dst + 1 * BPS), dst01, 1);
+  dst23 = vset_lane_u32(*(uint32_t*)(dst + 3 * BPS), dst23, 1);
+
+  {
+    // Convert to 16b.
+    int16x8_t dst01_s16 = ConvertU8ToS16(dst01);
+    int16x8_t dst23_s16 = ConvertU8ToS16(dst23);
+
+    // Add the inverse transform.
+    dst01_s16 = vsraq_n_s16(dst01_s16, m0_m1, 3);
+    dst23_s16 = vsraq_n_s16(dst23_s16, m2_m3, 3);
+
+    SaturateAndStore4x4(dst, dst01_s16, dst23_s16);
+  }
+}
+#undef MUL
 
 #endif   // WEBP_USE_NEON
 
@@ -420,7 +475,7 @@ extern void VP8DspInitNEON(void);
 void VP8DspInitNEON(void) {
 #if defined(WEBP_USE_NEON)
   VP8Transform = TransformTwo;
-  VP8TransformAC3 = TransformOne;  // no special code here
+  VP8TransformAC3 = TransformAC3;
   VP8TransformDC = TransformDC;
   VP8TransformWHT = TransformWHT;
 
@@ -430,4 +485,3 @@ void VP8DspInitNEON(void) {
   VP8SimpleHFilter16i = SimpleHFilter16iNEON;
 #endif   // WEBP_USE_NEON
 }
-

@@ -146,6 +146,9 @@
 					RelativePath=".\src\dsp\dec.c">
 				</File>
 				<File
+					RelativePath=".\src\dsp\dec_clip_tables.c">
+				</File>
+				<File
 					RelativePath=".\src\dsp\dec_neon.c">
 				</File>
 				<File

@@ -186,9 +186,9 @@ static int GetHuffBitLengthsAndCodes(
     const VP8LHistogram* const histo = histogram_image->histograms[i];
     HuffmanTreeCode* const codes = &huffman_codes[5 * i];
     for (k = 0; k < 5; ++k) {
-      const int num_symbols = (k == 0) ? VP8LHistogramNumCodes(histo)
-                            : (k == 4) ? NUM_DISTANCE_CODES
-                            : 256;
+      const int num_symbols =
+          (k == 0) ? VP8LHistogramNumCodes(histo->palette_code_bits_) :
+          (k == 4) ? NUM_DISTANCE_CODES : 256;
       codes[k].num_symbols = num_symbols;
       total_length_size += num_symbols;
     }
@@ -695,9 +695,8 @@ static int ApplyCrossColorFilter(const VP8LEncoder* const enc,
   const int ccolor_transform_bits = enc->transform_bits_;
   const int transform_width = VP8LSubSampleSize(width, ccolor_transform_bits);
   const int transform_height = VP8LSubSampleSize(height, ccolor_transform_bits);
-  const int step = (quality < 25) ? 32 : (quality > 50) ? 8 : 16;
 
-  VP8LColorSpaceTransform(width, height, ccolor_transform_bits, step,
+  VP8LColorSpaceTransform(width, height, ccolor_transform_bits, quality,
                           enc->argb_, enc->transform_data_);
   VP8LWriteBits(bw, 1, TRANSFORM_PRESENT);
   VP8LWriteBits(bw, 2, CROSS_COLOR_TRANSFORM);
@@ -1042,7 +1041,8 @@ WebPEncodingError VP8LEncodeStream(const WebPConfig* const config,
 
   if (enc->cache_bits_ > 0) {
     if (!VP8LCalculateEstimateForCacheSize(enc->argb_, enc->current_width_,
-                                           height, &enc->cache_bits_)) {
+                                           height, quality,
+                                           &enc->cache_bits_)) {
       err = VP8_ENC_ERROR_INVALID_CONFIGURATION;
       goto Error;
     }
@@ -1095,7 +1095,8 @@ int VP8LEncodeImage(const WebPConfig* const config,
 
   width = picture->width;
   height = picture->height;
-  if (!VP8LBitWriterInit(&bw, (width * height) >> 1)) {
+  // Initialize BitWriter with size corresponding to 8bpp.
+  if (!VP8LBitWriterInit(&bw, width * height)) {
     err = VP8_ENC_ERROR_OUT_OF_MEMORY;
     goto Error;
   }
