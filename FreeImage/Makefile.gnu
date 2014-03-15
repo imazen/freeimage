@@ -15,7 +15,9 @@ LIBRARIES = -lstdc++
 
 MODULES = $(SRCS:.c=.o)
 MODULES := $(MODULES:.cpp=.o)
-CFLAGS ?= -O3 -fPIC -fexceptions -fvisibility=hidden -DNO_LCMS -DDISABLE_PERF_MEASUREMENT
+CFLAGS ?= -O3 -fPIC -fexceptions -fvisibility=hidden
+# OpenJPEG
+CFLAGS += -DOPJ_STATIC
 # LibRaw
 CFLAGS += -DNO_LCMS
 # LibJXR
