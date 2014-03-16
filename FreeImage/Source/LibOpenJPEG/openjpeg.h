@@ -43,6 +43,23 @@
 ==========================================================
 */
 
+/*
+The inline keyword is supported by C99 but not by C90. 
+Most compilers implement their own version of this keyword ... 
+*/
+#ifndef INLINE
+	#if defined(_MSC_VER)
+		#define INLINE __forceinline
+	#elif defined(__GNUC__)
+		#define INLINE __inline__
+	#elif defined(__MWERKS__)
+		#define INLINE inline
+	#else 
+		/* add other compilers here ... */
+		#define INLINE 
+	#endif /* defined(<Compiler>) */
+#endif /* INLINE */
+
 /* deprecated attribute */
 #ifdef __GNUC__
 	#define OPJ_DEPRECATED(func) func __attribute__ ((deprecated))
@@ -54,14 +71,8 @@
 #endif
 
 #if defined(OPJ_STATIC) || !defined(_WIN32)
-/* http://gcc.gnu.org/wiki/Visibility */
-#if __GNUC__ >= 4
-#define OPJ_API    __attribute__ ((visibility ("default")))
-#define OPJ_LOCAL  __attribute__ ((visibility ("hidden")))
-#else
 #define OPJ_API
 #define OPJ_LOCAL
-#endif
 #define OPJ_CALLCONV
 #else
 #define OPJ_CALLCONV __stdcall
@@ -143,7 +154,7 @@ typedef size_t   OPJ_SIZE_T;
 #define OPJ_IMG_INFO		1	/**< Basic image information provided to the user */
 #define OPJ_J2K_MH_INFO		2	/**< Codestream information based only on the main header */
 #define OPJ_J2K_TH_INFO		4	/**< Tile information based on the current tile header */
-/*FIXME #define OPJ_J2K_CSTR_INFO	6*/	/**<  */
+#define OPJ_J2K_TCH_INFO	8	/**< Tile/Component information of all tiles */
 #define OPJ_J2K_MH_IND		16	/**< Codestream index based only on the main header */
 #define OPJ_J2K_TH_IND		32	/**< Tile index based on the current tile */
 /*FIXME #define OPJ_J2K_CSTR_IND	48*/	/**<  */
@@ -193,10 +204,11 @@ typedef enum PROG_ORDER {
 */
 typedef enum COLOR_SPACE {
 	OPJ_CLRSPC_UNKNOWN = -1,	/**< not supported by the library */
-	OPJ_CLRSPC_UNSPECIFIED = 0, /**< not specified in the codestream */ 
+	OPJ_CLRSPC_UNSPECIFIED = 0,	/**< not specified in the codestream */ 
 	OPJ_CLRSPC_SRGB = 1,		/**< sRGB */
 	OPJ_CLRSPC_GRAY = 2,		/**< grayscale */
-	OPJ_CLRSPC_SYCC = 3			/**< YUV */
+	OPJ_CLRSPC_SYCC = 3,		/**< YUV */
+  OPJ_CLRSPC_EYCC = 4		/**< e-YCC */
 } OPJ_COLOR_SPACE;
 
 /**
@@ -500,6 +512,11 @@ typedef OPJ_OFF_T (* opj_stream_skip_fn) (OPJ_OFF_T p_nb_bytes, void * p_user_da
 typedef OPJ_BOOL (* opj_stream_seek_fn) (OPJ_OFF_T p_nb_bytes, void * p_user_data) ;
 
 /*
+ * Callback function prototype for free user data function
+ */
+typedef void (* opj_stream_free_user_data_fn) (void * p_user_data) ;
+
+/*
  * JPEG2000 Stream.
  */
 typedef void * opj_stream_t;
@@ -538,6 +555,8 @@ typedef struct opj_image_comp {
 	OPJ_UINT32 factor;
 	/** image component data */
 	OPJ_INT32 *data;
+  /** alpha channel */
+  OPJ_UINT16 alpha;
 } opj_image_comp_t;
 
 /** 
@@ -1004,7 +1023,7 @@ OPJ_API opj_stream_t* OPJ_CALLCONV opj_stream_create(OPJ_SIZE_T p_buffer_size, O
  *
  * @param	p_stream	the stream to destroy.
  */
-OPJ_DEPRECATED(OPJ_API void OPJ_CALLCONV opj_stream_destroy(opj_stream_t* p_stream));
+OPJ_API void OPJ_CALLCONV opj_stream_destroy(opj_stream_t* p_stream);
 
 /**
  * Destroys a stream created by opj_create_stream. This function does NOT close the abstract stream. 
@@ -1046,8 +1065,9 @@ OPJ_API void OPJ_CALLCONV opj_stream_set_seek_function(opj_stream_t* p_stream, o
  * Sets the given data to be used as a user data for the stream.
  * @param		p_stream	the stream to modify
  * @param		p_data		the data to set.
+ * @param		p_function	the function to free p_data when opj_stream_destroy() is called.
 */
-OPJ_API void OPJ_CALLCONV opj_stream_set_user_data (opj_stream_t* p_stream, void * p_data);
+OPJ_API void OPJ_CALLCONV opj_stream_set_user_data (opj_stream_t* p_stream, void * p_data, opj_stream_free_user_data_fn p_function);
 
 /**
  * Sets the length of the user data for the stream.
@@ -1058,30 +1078,12 @@ OPJ_API void OPJ_CALLCONV opj_stream_set_user_data (opj_stream_t* p_stream, void
 OPJ_API void OPJ_CALLCONV opj_stream_set_user_data_length(opj_stream_t* p_stream, OPJ_UINT64 data_length);
 
 /**
- * Helper function.
- * Sets the stream to be a file stream. The FILE must have been open previously.
- * @param p_file            the file stream to operate on
- * @param p_is_read_stream  whether the stream is a read stream (true) or not (false)
-*/
-OPJ_DEPRECATED(OPJ_API opj_stream_t* OPJ_CALLCONV opj_stream_create_default_file_stream (FILE * p_file, OPJ_BOOL p_is_read_stream));
-
-/**
  * Create a stream from a file identified with its filename with default parameters (helper function)
  * @param fname             the filename of the file to stream
  * @param p_is_read_stream  whether the stream is a read stream (true) or not (false)
 */
 OPJ_API opj_stream_t* OPJ_CALLCONV opj_stream_create_default_file_stream_v3 (const char *fname, OPJ_BOOL p_is_read_stream);
  
-/**
- * FIXME DOC
- * @param p_file            the file stream to operate on
- * @param p_buffer_size     size of the chunk used to stream
- * @param p_is_read_stream  whether the stream is a read stream (true) or not (false)
-*/
-OPJ_DEPRECATED(OPJ_API opj_stream_t* OPJ_CALLCONV opj_stream_create_file_stream (FILE * p_file, 
-                                                                  OPJ_SIZE_T p_buffer_size,
-                                                                  OPJ_BOOL p_is_read_stream));
-
 /** Create a stream from a file identified with its filename with a specific buffer size
  * @param fname             the filename of the file to stream
  * @param p_buffer_size     size of the chunk used to stream

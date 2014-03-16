@@ -80,7 +80,7 @@ opj_freeimage_stream_create(FreeImageIO *io, fi_handle handle, BOOL bRead) {
 
 		opj_stream_t *l_stream = opj_stream_create(OPJ_J2K_STREAM_CHUNK_SIZE, bRead ? OPJ_TRUE : OPJ_FALSE);
 		if (l_stream) {
-			opj_stream_set_user_data(l_stream, fio);
+			opj_stream_set_user_data(l_stream, fio, NULL);
 			opj_stream_set_user_data_length(l_stream, _LengthProc(fio));
 			opj_stream_set_read_function(l_stream, (opj_stream_read_fn)_ReadProc);
 			opj_stream_set_write_function(l_stream, (opj_stream_write_fn)_WriteProc);
