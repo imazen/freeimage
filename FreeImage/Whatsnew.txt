@@ -10,7 +10,7 @@ Month day, 2013 - 3.16.0
 ! FreeImage now uses LibPNG 1.6.9
 ! FreeImage now uses LibTIFF 4.0.3 (CVS patch 2013-11-30)
 ! FreeImage now uses LibRaw 0.16.0
-! FreeImage now uses OpenJPEG 2.0.0 (SVN patch 2343)
+! FreeImage now uses OpenJPEG 2.1.0 (SVN patch 2748)
 ! FreeImage now uses ZLib 1.2.8
 ! FreeImage now uses LibWebP 0.4.0 (GIT patch 2014-03-05)
 ! FreeImage now uses LibJXR 1.1 (GIT patch 2014-01-31)
