@@ -5,9 +5,17 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
+March 17, 2014 - 2.22 (3.16.0)
+* [Carsten Klein] renamed parameter 'Perfect' to 'Bottom' of functions FreeImage_JPEGCrop[U] to match native function declaration
+! [Carsten Klein] changed default value of optional parameter 'Perfect' to True for functions FreeImage_JPEGTransform[U]
+* [Carsten Klein] renamed function FreeImage_ApplyIndexMapping[Ex] to FreeImage_ApplyPaletteIndexMapping[Ex] (declarations and implementations)
++ [Carsten Klein] added functions FreeImage_JPEGTransformCombined[U] (declarations and implementations)
++ [Carsten Klein] added function FreeImage_JPEGTransformCombinedFromMemory (declarations and implementations)
++ [Carsten Klein] added wrapper functions FreeImage_JPEGTransformCombinedFromMemoryEx[2] working with more VB compatible memory representations (Variant and Byte array)
+! [Carsten Klein] enhanced documentation of extended memory stream functions FreeImage_[Load|Save][MultiBitmap][From|To]MemoryEx[2]
+
 March 10, 2014 - 2.21 (3.16.0)
 + [Carsten Klein] added support for the new JPEG-XR image format
-- [Carsten Klein] removed block 'General notes' form source file MFreeImage.bas
 
 October 10, 2013 - 2.20 (3.16.0)
 * [Carsten Klein] prevented a potential 'Division by zero' error in private helper function pGetTagFromTagPtr. Thanks to Bob Weiss for pointing that out.
