@@ -40,6 +40,7 @@ rd Source\OpenEXR\x64 /s /q
 rd Source\LibOpenJPEG\x64 /s /q
 rd Source\LibRawLite\x64 /s /q
 rd Source\LibWebP\x64 /s /q
+rd Source\LibJXR\x64 /s /q
 rd TestAPI\x64 /s /q
 del TestAPI\blob.png
 del TestAPI\buffer.png
