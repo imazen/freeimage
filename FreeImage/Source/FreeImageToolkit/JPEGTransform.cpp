@@ -480,31 +480,6 @@ openStdIOU(const wchar_t* src_file, const wchar_t* dst_file, FreeImageIO* dst_io
 #endif // _WIN32
 }
 
-static BOOL
-getMemIO(FIMEMORY* src_stream, FIMEMORY* dst_stream, FreeImageIO* dst_io, fi_handle* src_handle, fi_handle* dst_handle) {
-	*src_handle = NULL;
-	*dst_handle = NULL;
-
-	FreeImageIO io;
-	SetMemoryIO (&io);
-
-	if(dst_stream) {
-		FIMEMORYHEADER *mem_header = (FIMEMORYHEADER*)(dst_stream->data);
-		if(mem_header->delete_me != TRUE) {
-			// do not save in a user buffer
-			FreeImage_OutputMessageProc(FIF_JPEG, "Destination memory buffer is read only");
-			return FALSE;
-		}
-	}
-
-	*dst_io = io;
-	*src_handle = src_stream;
-	*dst_handle = dst_stream;
-
-	return TRUE;
-}
-
-
 BOOL DLL_CALLCONV
 FreeImage_JPEGTransform(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OPERATION operation, BOOL perfect) {
 	FreeImageIO io;
@@ -605,6 +580,32 @@ FreeImage_JPEGTransformCombinedU(const wchar_t *src_file, const wchar_t *dst_fil
 	closeStdIO(src, dst);
 
 	return ret;
+}
+
+// --------------------------------------------------------------------------
+
+static BOOL
+getMemIO(FIMEMORY* src_stream, FIMEMORY* dst_stream, FreeImageIO* dst_io, fi_handle* src_handle, fi_handle* dst_handle) {
+	*src_handle = NULL;
+	*dst_handle = NULL;
+
+	FreeImageIO io;
+	SetMemoryIO (&io);
+
+	if(dst_stream) {
+		FIMEMORYHEADER *mem_header = (FIMEMORYHEADER*)(dst_stream->data);
+		if(mem_header->delete_me != TRUE) {
+			// do not save in a user buffer
+			FreeImage_OutputMessageProc(FIF_JPEG, "Destination memory buffer is read only");
+			return FALSE;
+		}
+	}
+
+	*dst_io = io;
+	*src_handle = src_stream;
+	*dst_handle = dst_stream;
+
+	return TRUE;
 }
 
 BOOL DLL_CALLCONV
