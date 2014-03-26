@@ -300,14 +300,6 @@ LoadStandardIcon(FreeImageIO *io, fi_handle handle, int flags, BOOL header_only)
 	// allocate the bitmap
 	int width  = bmih.biWidth;
 	int height = bmih.biHeight / 2; // height == xor + and mask
-	
-	// handle the special case of width == 0, which is used to signify a 256x256 icon
-	// see http://blogs.msdn.com/b/oldnewthing/archive/2010/10/18/10077133.aspx
-	if (width == 0) {
-		width = 256;
-		height = 256;
-	}
-
 	unsigned bit_count = bmih.biBitCount;
 	unsigned line   = CalculateLine(width, bit_count);
 	unsigned pitch  = CalculatePitch(line);
