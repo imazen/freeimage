@@ -933,7 +933,6 @@ tiff_write_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
 static BOOL
 tiff_write_exif_profile(TIFF *tiff, FIBITMAP *dib) {
 	BOOL bResult = FALSE;
-	uint32 exif_offset = 0;
 	
 	// write EXIF_MAIN tags, EXIF_EXIF not supported yet
 	bResult = tiff_write_exif_tags(tiff, TagLib::EXIF_MAIN, dib);
@@ -1106,11 +1105,10 @@ PageCount(FreeImageIO *io, fi_handle handle, void *data) {
 check for uncommon bitspersample values (e.g. 10, 12, ...)
 @param photometric TIFFTAG_PHOTOMETRIC tiff tag
 @param bitspersample TIFFTAG_BITSPERSAMPLE tiff tag
-@param samplesperpixel TIFFTAG_SAMPLESPERPIXEL tiff tag
 @return Returns FALSE if a uncommon bit-depth is encountered, returns TRUE otherwise
 */
 static BOOL 
-IsValidBitsPerSample(uint16 photometric, uint16 bitspersample, uint16 samplesperpixel) {
+IsValidBitsPerSample(uint16 photometric, uint16 bitspersample) {
 
 	switch(bitspersample) {
 		case 1:
@@ -1376,7 +1374,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// check for unsupported formats
 		// ---------------------------------------------------------------------------------
 
-		if(IsValidBitsPerSample(photometric, bitspersample, samplesperpixel) == FALSE) {
+		if(IsValidBitsPerSample(photometric, bitspersample) == FALSE) {
 			FreeImage_OutputMessageProc(s_format_id, 
 				"Unable to handle this format: bitspersample = %d, samplesperpixel = %d, photometric = %d", 
 				(int)bitspersample, (int)samplesperpixel, (int)photometric);

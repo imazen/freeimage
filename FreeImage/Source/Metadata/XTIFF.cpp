@@ -658,7 +658,7 @@ tiff_write_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib) {
 				continue;
 			}
 			// type of storage may differ (e.g. rationnal array vs float array type)
-			if(_TIFFDataSize(tif_tag_type) != FreeImage_TagDataWidth(tag_type)) {
+			if((unsigned)_TIFFDataSize(tif_tag_type) != FreeImage_TagDataWidth(tag_type)) {
 				// skip tag or _TIFFmemcpy will fail
 				continue;
 			}

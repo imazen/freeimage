@@ -49,38 +49,58 @@
 //  Metadata definitions
 // ----------------------------------------------------------
 
-// helper for map<key, value> where value is a pointer to a FreeImage tag
+/** helper for map<key, value> where value is a pointer to a FreeImage tag */
 typedef std::map<std::string, FITAG*> TAGMAP;
 
-// helper for map<FREE_IMAGE_MDMODEL, TAGMAP*>
+/** helper for map<FREE_IMAGE_MDMODEL, TAGMAP*> */
 typedef std::map<int, TAGMAP*> METADATAMAP;
 
-// helper for metadata iterator
+/** helper for metadata iterator */
 FI_STRUCT (METADATAHEADER) { 
-	long pos;		// current position when iterating the map
-	TAGMAP *tagmap;	// pointer to the tag map
+	long pos;		//! current position when iterating the map
+	TAGMAP *tagmap;	//! pointer to the tag map
 };
 
 // ----------------------------------------------------------
 //  FIBITMAP definition
 // ----------------------------------------------------------
 
+/**
+FreeImage header structure
+*/
 FI_STRUCT (FREEIMAGEHEADER) {
-	FREE_IMAGE_TYPE type;		// data type - bitmap, array of long, double, complex, etc
+	/** data type - bitmap, array of long, double, complex, etc */
+	FREE_IMAGE_TYPE type;
 
-	RGBQUAD bkgnd_color;		// background color used for RGB transparency
+	/** background color used for RGB transparency */
+	RGBQUAD bkgnd_color;
 
-	BOOL transparent;			// why another table? for easy transparency table retrieval!
-	int  transparency_count;	// transparency could be stored in the palette, which is better
-	BYTE transparent_table[256];// overall, but it requires quite some changes and it will render
-								// FreeImage_GetTransparencyTable obsolete in its current form;
-	FIICCPROFILE iccProfile;	// space to hold ICC profile
+	/**@name transparency management */
+	//@{
+	/**
+	why another table ? for easy transparency table retrieval !
+	transparency could be stored in the palette, which is better
+	overall, but it requires quite some changes and it will render
+	FreeImage_GetTransparencyTable obsolete in its current form;
+	*/
+	BYTE transparent_table[256];
+	/** number of transparent colors */
+	int  transparency_count;
+	/** TRUE if the image is transparent */
+	BOOL transparent;
+	//@}
 
-	METADATAMAP *metadata;		// contains a list of metadata models attached to the bitmap
+	/** space to hold ICC profile */
+	FIICCPROFILE iccProfile;
 
-	BOOL has_pixels;			// FALSE if the FIBITMAP only contains the header and no pixel data
+	/** contains a list of metadata models attached to the bitmap */
+	METADATAMAP *metadata;
 
-	FIBITMAP *thumbnail;		// optionally contains a thumbnail attached to the bitmap
+	/** FALSE if the FIBITMAP only contains the header and no pixel data */
+	BOOL has_pixels;
+
+	/** optionally contains a thumbnail attached to the bitmap */
+	FIBITMAP *thumbnail;
 
 	//BYTE filler[1];			 // fill to 32-bit alignment
 };
@@ -89,10 +109,13 @@ FI_STRUCT (FREEIMAGEHEADER) {
 //  FREEIMAGERGBMASKS definition
 // ----------------------------------------------------------
 
+/**
+RGB mask structure - mainly used for 16-bit RGB555 / RGB 565 FIBITMAP
+*/
 FI_STRUCT (FREEIMAGERGBMASKS) {
-	unsigned red_mask;			// bit layout of the red components
-	unsigned green_mask;		// bit layout of the green components
-	unsigned blue_mask;			// bit layout of the blue components
+	unsigned red_mask;			//! bit layout of the red components
+	unsigned green_mask;		//! bit layout of the green components
+	unsigned blue_mask;			//! bit layout of the blue components
 };
 
 // ----------------------------------------------------------
@@ -161,31 +184,34 @@ void FreeImage_Aligned_Free(void* mem) {
 /**
 Calculate the size of a FreeImage image. 
 Align the palette and the pixels on a FIBITMAP_ALIGNMENT bytes alignment boundary.
+This function includes a protection against malicious images, based on a KISS integer overflow detection mechanism. 
 
 @param header_only If TRUE, calculate a 'header only' FIBITMAP size, otherwise calculate a full FIBITMAP size
-@param width
-@param height
-@param bpp
-@param need_masks
+@param width Image width
+@param height Image height
+@param bpp Number of bits-per-pixel
+@param need_masks We only store the masks (and allocate memory for them) for 16-bit images of type FIT_BITMAP
+@return Returns a size in BYTE units
 @see FreeImage_AllocateHeaderT
 */
 static size_t 
-FreeImage_GetImageSizeHeader(BOOL header_only, unsigned width, unsigned height, unsigned bpp, BOOL need_masks) {
-	size_t dib_size = sizeof(FREEIMAGEHEADER); 
-	dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);  
-	dib_size += FIBITMAP_ALIGNMENT - sizeof(BITMAPINFOHEADER) % FIBITMAP_ALIGNMENT; 
-	dib_size += sizeof(BITMAPINFOHEADER);  
+FreeImage_GetInternalImageSize(BOOL header_only, unsigned width, unsigned height, unsigned bpp, BOOL need_masks) {
+	size_t dib_size = sizeof(FREEIMAGEHEADER);
+	dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);
+	dib_size += FIBITMAP_ALIGNMENT - sizeof(BITMAPINFOHEADER) % FIBITMAP_ALIGNMENT;
+	dib_size += sizeof(BITMAPINFOHEADER);
 	// palette is aligned on a 16 bytes boundary
 	dib_size += sizeof(RGBQUAD) * CalculateUsedPaletteEntries(bpp);
 	// we both add palette size and masks size if need_masks is true, since CalculateUsedPaletteEntries
 	// always returns 0 if need_masks is true (which is only true for 16 bit images).
 	dib_size += need_masks ? sizeof(DWORD) * 3 : 0;
-	dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);  
+	dib_size += (dib_size % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - dib_size % FIBITMAP_ALIGNMENT : 0);
+
 	if(!header_only) {
 		const size_t header_size = dib_size;
 
 		// pixels are aligned on a 16 bytes boundary
-		dib_size += (size_t)CalculatePitch(CalculateLine(width, bpp)) * (size_t)height; 
+		dib_size += (size_t)CalculatePitch(CalculateLine(width, bpp)) * (size_t)height;
 
 		// check for possible malloc overflow using a KISS integer overflow detection mechanism
 		{
@@ -302,7 +328,7 @@ FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int
 		// palette is aligned on a 16 bytes boundary
 		// pixels are aligned on a 16 bytes boundary
 
-		size_t dib_size = FreeImage_GetImageSizeHeader(header_only, width, height, bpp, need_masks);
+		size_t dib_size = FreeImage_GetInternalImageSize(header_only, width, height, bpp, need_masks);
 
 		if(dib_size == 0) {
 			// memory allocation will fail (probably a malloc overflow)
@@ -322,7 +348,7 @@ FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int
 
 			memset(&fih->bkgnd_color, 0, sizeof(RGBQUAD));
 
-			fih->transparent        = FALSE;
+			fih->transparent = FALSE;
 			fih->transparency_count = 0;
 			memset(fih->transparent_table, 0xff, 256);
 
@@ -331,9 +357,9 @@ FreeImage_AllocateHeaderT(BOOL header_only, FREE_IMAGE_TYPE type, int width, int
 			// initialize FIICCPROFILE link
 
 			FIICCPROFILE *iccProfile = FreeImage_GetICCProfile(bitmap);
-			iccProfile->size		= 0;
-			iccProfile->data		= 0;
-			iccProfile->flags		= 0;
+			iccProfile->size = 0;
+			iccProfile->data = 0;
+			iccProfile->flags = 0;
 
 			// initialize metadata models list
 
@@ -404,8 +430,9 @@ FreeImage_Unload(FIBITMAP *dib) {
 	if (NULL != dib) {	
 		if (NULL != dib->data) {
 			// delete possible icc profile ...
-			if (FreeImage_GetICCProfile(dib)->data)
+			if (FreeImage_GetICCProfile(dib)->data) {
 				free(FreeImage_GetICCProfile(dib)->data);
+			}
 
 			// delete metadata models
 			METADATAMAP *metadata = ((FREEIMAGEHEADER *)dib->data)->metadata;
@@ -431,6 +458,7 @@ FreeImage_Unload(FIBITMAP *dib) {
 			// delete bitmap ...
 			FreeImage_Aligned_Free(dib->data);
 		}
+
 		free(dib);		// ... and the wrapper
 	}
 }
@@ -439,21 +467,24 @@ FreeImage_Unload(FIBITMAP *dib) {
 
 FIBITMAP * DLL_CALLCONV
 FreeImage_Clone(FIBITMAP *dib) {
-	if(!dib) return NULL;
+	if(!dib) {
+		return NULL;
+	}
 
 	FREE_IMAGE_TYPE type = FreeImage_GetImageType(dib);
-	unsigned width       = FreeImage_GetWidth(dib);
-	unsigned height      = FreeImage_GetHeight(dib);
-	unsigned bpp         = FreeImage_GetBPP(dib);
+	unsigned width  = FreeImage_GetWidth(dib);
+	unsigned height = FreeImage_GetHeight(dib);
+	unsigned bpp    = FreeImage_GetBPP(dib);
 	
 	// check for pixel availability ...
 	BOOL header_only = FreeImage_HasPixels(dib) ? FALSE : TRUE;
+
 	// check whether this image has masks defined ...
-	BOOL need_masks  = (bpp == 16 && type == FIT_BITMAP) ? TRUE : FALSE;
+	BOOL need_masks = (bpp == 16 && type == FIT_BITMAP) ? TRUE : FALSE;
 
 	// allocate a new dib
 	FIBITMAP *new_dib = FreeImage_AllocateHeaderT(header_only, type, width, height, bpp,
-			FreeImage_GetRedMask(dib), FreeImage_GetGreenMask(dib), FreeImage_GetBlueMask(dib));
+		FreeImage_GetRedMask(dib), FreeImage_GetGreenMask(dib), FreeImage_GetBlueMask(dib));
 
 	if (new_dib) {
 		// save ICC profile links
@@ -468,8 +499,8 @@ FreeImage_Clone(FIBITMAP *dib) {
 		// align the palette and the pixels on a FIBITMAP_ALIGNMENT bytes alignment boundary
 		// palette is aligned on a 16 bytes boundary
 		// pixels are aligned on a 16 bytes boundary
-
-		size_t dib_size = FreeImage_GetImageSizeHeader(header_only, width, height, bpp, need_masks);
+		
+		size_t dib_size = FreeImage_GetInternalImageSize(header_only, width, height, bpp, need_masks);
 
 		// copy the bitmap + internal pointers (remember to restore new_dib internal pointers later)
 		memcpy(new_dib->data, dib->data, dib_size);
@@ -589,15 +620,17 @@ FreeImage_GetColorType(FIBITMAP *dib) {
 			if ((rgb->rgbRed == 0) && (rgb->rgbGreen == 0) && (rgb->rgbBlue == 0)) {
 				rgb++;
 
-				if ((rgb->rgbRed == 255) && (rgb->rgbGreen == 255) && (rgb->rgbBlue == 255))
-					return FIC_MINISBLACK;				
+				if ((rgb->rgbRed == 255) && (rgb->rgbGreen == 255) && (rgb->rgbBlue == 255)) {
+					return FIC_MINISBLACK;
+				}
 			}
 
 			if ((rgb->rgbRed == 255) && (rgb->rgbGreen == 255) && (rgb->rgbBlue == 255)) {
 				rgb++;
 
-				if ((rgb->rgbRed == 0) && (rgb->rgbGreen == 0) && (rgb->rgbBlue == 0))
-					return FIC_MINISWHITE;				
+				if ((rgb->rgbRed == 0) && (rgb->rgbGreen == 0) && (rgb->rgbBlue == 0)) {
+					return FIC_MINISWHITE;
+				}
 			}
 
 			return FIC_PALETTE;
@@ -611,16 +644,18 @@ FreeImage_GetColorType(FIBITMAP *dib) {
 			rgb = FreeImage_GetPalette(dib);
 
 			for (int i = 0; i < ncolors; i++) {
-				if ((rgb->rgbRed != rgb->rgbGreen) || (rgb->rgbRed != rgb->rgbBlue))
+				if ((rgb->rgbRed != rgb->rgbGreen) || (rgb->rgbRed != rgb->rgbBlue)) {
 					return FIC_PALETTE;
+				}
 
 				// The DIB has a color palette if the greyscale isn't a linear ramp
 				// Take care of reversed grey images
 				if (rgb->rgbRed != i) {
-					if ((ncolors-i-1) != rgb->rgbRed)
+					if ((ncolors-i-1) != rgb->rgbRed) {
 						return FIC_PALETTE;
-				    else
+					} else {
 						minisblack = 0;
+					}
 				}
 
 				rgb++;
@@ -635,17 +670,20 @@ FreeImage_GetColorType(FIBITMAP *dib) {
 
 		case 32:
 		{
-			if (FreeImage_GetICCProfile(dib)->flags & FIICC_COLOR_IS_CMYK)
+			if (FreeImage_GetICCProfile(dib)->flags & FIICC_COLOR_IS_CMYK) {
 				return FIC_CMYK;
+			}
 
 			if( FreeImage_HasPixels(dib) ) {
 				// check for fully opaque alpha layer
 				for (unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
 					rgb = (RGBQUAD *)FreeImage_GetScanLine(dib, y);
 
-					for (unsigned x = 0; x < FreeImage_GetWidth(dib); x++)
-						if (rgb[x].rgbReserved != 0xFF)
-							return FIC_RGBALPHA;			
+					for (unsigned x = 0; x < FreeImage_GetWidth(dib); x++) {
+						if (rgb[x].rgbReserved != 0xFF) {
+							return FIC_RGBALPHA;
+						}
+					}
 				}
 				return FIC_RGB;
 			}
@@ -1011,7 +1049,9 @@ FreeImage_SetDotsPerMeterY(FIBITMAP *dib, unsigned res) {
 
 BITMAPINFOHEADER * DLL_CALLCONV
 FreeImage_GetInfoHeader(FIBITMAP *dib) {
-	if(!dib) return NULL;
+	if(!dib) {
+		return NULL;
+	}
 	size_t lp = (size_t)dib->data + sizeof(FREEIMAGEHEADER);
 	lp += (lp % FIBITMAP_ALIGNMENT ? FIBITMAP_ALIGNMENT - lp % FIBITMAP_ALIGNMENT : 0);
 	lp += FIBITMAP_ALIGNMENT - sizeof(BITMAPINFOHEADER) % FIBITMAP_ALIGNMENT;
@@ -1029,8 +1069,9 @@ FreeImage_GetInfo(FIBITMAP *dib) {
 
 FIMETADATA * DLL_CALLCONV 
 FreeImage_FindFirstMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, FITAG **tag) {
-	if(!dib)
+	if(!dib) {
 		return NULL;
+	}
 
 	// get the metadata model
 	METADATAMAP *metadata = ((FREEIMAGEHEADER *)dib->data)->metadata;
@@ -1072,8 +1113,9 @@ FreeImage_FindFirstMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, FITAG **tag
 
 BOOL DLL_CALLCONV 
 FreeImage_FindNextMetadata(FIMETADATA *mdhandle, FITAG **tag) {
-	if(!mdhandle)
+	if(!mdhandle) {
 		return FALSE;
+	}
 
 	METADATAHEADER *mdh = (METADATAHEADER *)mdhandle->data;
 	TAGMAP *tagmap = mdh->tagmap;
@@ -1115,7 +1157,9 @@ FreeImage_FindCloseMetadata(FIMETADATA *mdhandle) {
 
 BOOL DLL_CALLCONV
 FreeImage_CloneMetadata(FIBITMAP *dst, FIBITMAP *src) {
-	if(!src || !dst) return FALSE;
+	if(!src || !dst) {
+		return FALSE;
+	}
 
 	// get metadata links
 	METADATAMAP *src_metadata = ((FREEIMAGEHEADER *)src->data)->metadata;
@@ -1165,8 +1209,9 @@ FreeImage_CloneMetadata(FIBITMAP *dst, FIBITMAP *src) {
 
 BOOL DLL_CALLCONV 
 FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, FITAG *tag) {
-	if(!dib) 
+	if(!dib) {
 		return FALSE;
+	}
 
 	TAGMAP *tagmap = NULL;
 
@@ -1254,8 +1299,9 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 
 BOOL DLL_CALLCONV 
 FreeImage_GetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, FITAG **tag) {
-	if(!dib || !key || !tag) 
+	if(!dib || !key || !tag) {
 		return FALSE;
+	}
 
 	TAGMAP *tagmap = NULL;
 	*tag = NULL;
@@ -1282,8 +1328,9 @@ FreeImage_GetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 
 unsigned DLL_CALLCONV 
 FreeImage_GetMetadataCount(FREE_IMAGE_MDMODEL model, FIBITMAP *dib) {
-	if(!dib) 
+	if(!dib) {
 		return FALSE;
+	}
 
 	TAGMAP *tagmap = NULL;
 
