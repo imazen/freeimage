@@ -128,9 +128,9 @@ FI_STRUCT (FREEIMAGEHEADER) {
 RGB mask structure - mainly used for 16-bit RGB555 / RGB 565 FIBITMAP
 */
 FI_STRUCT (FREEIMAGERGBMASKS) {
-	unsigned red_mask;			//! bit layout of the red components
-	unsigned green_mask;		//! bit layout of the green components
-	unsigned blue_mask;			//! bit layout of the blue components
+	unsigned red_mask;		//! bit layout of the red components
+	unsigned green_mask;	//! bit layout of the green components
+	unsigned blue_mask;		//! bit layout of the blue components
 };
 
 // ----------------------------------------------------------
@@ -230,6 +230,13 @@ FreeImage_GetInternalImageSize(BOOL header_only, unsigned width, unsigned height
 
 		// check for possible malloc overflow using a KISS integer overflow detection mechanism
 		{
+			const double dPitch = floor( ((double)bpp * width + 31.0) / 32.0 ) * 4.0;
+			const double dImageSize = (double)header_size + dPitch * height;
+			if(dImageSize != (double)dib_size) {
+				// here, we are sure to encounter a malloc overflow: try to avoid it ...
+				return 0;
+			}
+
 			/*
 			The following constant take into account the additionnal memory used by 
 			aligned malloc functions as well as debug malloc functions. 
@@ -237,12 +244,7 @@ FreeImage_GetInternalImageSize(BOOL header_only, unsigned width, unsigned height
 			for the target compiler. 
 			*/
 			const double FIBITMAP_MAX_MEMORY = (double)((size_t)-1) - 8 * FIBITMAP_ALIGNMENT;
-			const double dPitch = floor( ((double)bpp * width + 31.0) / 32.0 ) * 4.0;
-			const double dImageSize = (double)header_size + dPitch * height;
-			if(dImageSize != (double)dib_size) {
-				// here, we are sure to encounter a malloc overflow: try to avoid it ...
-				return 0;
-			}
+
 			if(dImageSize > FIBITMAP_MAX_MEMORY) {
 				// avoid possible overflow inside C allocation functions
 				return 0;
@@ -319,7 +321,7 @@ FreeImage_AllocateBitmap(BOOL header_only, BYTE *ext_bits, unsigned ext_pitch, F
 					break;
 				case 16:
 					need_masks = TRUE;
-                    break;
+					break;
 				case 24:
 				case 32:
 					break;
@@ -614,7 +616,7 @@ FreeImage_Clone(FIBITMAP *dib) {
 		// copy the thumbnail
 		FreeImage_SetThumbnail(new_dib, FreeImage_GetThumbnail(dib));
 
-        // copy user provided pixel buffer (if any)
+		// copy user provided pixel buffer (if any)
 		if(ext_bits) {
 			const unsigned pitch = FreeImage_GetPitch(dib);
 			const unsigned linesize = FreeImage_GetLine(dib);
