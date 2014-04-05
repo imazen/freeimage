@@ -54,6 +54,7 @@ del TestAPI\test.jpg
 del TestAPI\*.tif
 del TestAPI\raw_exif.jpg
 del TestAPI\exif_new_thumb.jpg
+del TestAPI\viewport.png
 del Dist\FreeImage.h
 del *.pch /s /q
 del *.ncb /s /q
