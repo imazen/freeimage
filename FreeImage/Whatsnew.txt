@@ -10,6 +10,7 @@ Month day, 2014 - 3.16.1
 * [Tanner Helland] ICO plugin: improved support for Vista icons
 * [fpgaminer] fixed a rounding error in RGB to greyscale conversion formula
 * [Sven-Hendrik Haase] fixed Makefile.fip so that it installs symlinks
+* [Joachim Reichel] fixed a potential memory access violation in PluginHDR Save function
 
 March 23rd, 2014 - 3.16.0
 ! FreeImage now uses LibJPEG 9a
