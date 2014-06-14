@@ -13,6 +13,7 @@ Month day, 2014 - 3.16.1
 * [Joachim Reichel] fixed a potential memory access violation in PluginHDR Save function
 * [Christian Schluchter] fixed a bug in FreeImage_LookupSVGColor ("green" color was not found)
 * [Marco Altomonte] fixed TARGA signature validation for TARGA versions < 2.0
+* [Jeremy Reyniers] fixed FreeImage_GetScanLine not working with very large images on x64 platforms
 
 March 23rd, 2014 - 3.16.0
 ! FreeImage now uses LibJPEG 9a

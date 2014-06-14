@@ -295,7 +295,7 @@ CalculateUsedPaletteEntries(unsigned bit_count) {
 
 inline unsigned char *
 CalculateScanLine(unsigned char *bits, unsigned pitch, int scanline) {
-	return bits ? (bits + (pitch * scanline)) : NULL;
+	return bits ? (bits + ((size_t)pitch * scanline)) : NULL;
 }
 
 // ----------------------------------------------------------
