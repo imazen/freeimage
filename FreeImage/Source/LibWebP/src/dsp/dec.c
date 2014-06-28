@@ -115,10 +115,10 @@ static void TransformDC(const int16_t *in, uint8_t* dst) {
 }
 
 static void TransformDCUV(const int16_t* in, uint8_t* dst) {
-  if (in[0 * 16]) TransformDC(in + 0 * 16, dst);
-  if (in[1 * 16]) TransformDC(in + 1 * 16, dst + 4);
-  if (in[2 * 16]) TransformDC(in + 2 * 16, dst + 4 * BPS);
-  if (in[3 * 16]) TransformDC(in + 3 * 16, dst + 4 * BPS + 4);
+  if (in[0 * 16]) VP8TransformDC(in + 0 * 16, dst);
+  if (in[1 * 16]) VP8TransformDC(in + 1 * 16, dst + 4);
+  if (in[2 * 16]) VP8TransformDC(in + 2 * 16, dst + 4 * BPS);
+  if (in[3 * 16]) VP8TransformDC(in + 3 * 16, dst + 4 * BPS + 4);
 }
 
 #undef STORE
@@ -153,7 +153,7 @@ static void TransformWHT(const int16_t* in, int16_t* out) {
   }
 }
 
-void (*VP8TransformWHT)(const int16_t* in, int16_t* out) = TransformWHT;
+void (*VP8TransformWHT)(const int16_t* in, int16_t* out);
 
 //------------------------------------------------------------------------------
 // Intra predictions
@@ -481,8 +481,8 @@ const VP8PredFunc VP8PredChroma8[NUM_B_DC_MODES] = {
 // 4 pixels in, 2 pixels out
 static WEBP_INLINE void do_filter2(uint8_t* p, int step) {
   const int p1 = p[-2*step], p0 = p[-step], q0 = p[0], q1 = p[step];
-  const int a = 3 * (q0 - p0) + VP8ksclip1[p1 - q1];
-  const int a1 = VP8ksclip2[(a + 4) >> 3];
+  const int a = 3 * (q0 - p0) + VP8ksclip1[p1 - q1];  // in [-893,892]
+  const int a1 = VP8ksclip2[(a + 4) >> 3];            // in [-16,15]
   const int a2 = VP8ksclip2[(a + 3) >> 3];
   p[-step] = VP8kclip1[p0 + a2];
   p[    0] = VP8kclip1[q0 - a1];
@@ -506,6 +506,7 @@ static WEBP_INLINE void do_filter6(uint8_t* p, int step) {
   const int p2 = p[-3*step], p1 = p[-2*step], p0 = p[-step];
   const int q0 = p[0], q1 = p[step], q2 = p[2*step];
   const int a = VP8ksclip1[3 * (q0 - p0) + VP8ksclip1[p1 - q1]];
+  // a is in [-128,127], a1 in [-27,27], a2 in [-18,18] and a3 in [-9,9]
   const int a1 = (27 * a + 63) >> 7;  // eq. to ((3 * a + 7) * 9) >> 7
   const int a2 = (18 * a + 63) >> 7;  // eq. to ((2 * a + 7) * 9) >> 7
   const int a3 = (9  * a + 63) >> 7;  // eq. to ((1 * a + 7) * 9) >> 7
@@ -695,6 +696,7 @@ extern void VP8DspInitMIPS32(void);
 void VP8DspInit(void) {
   VP8InitClipTables();
 
+  VP8TransformWHT = TransformWHT;
   VP8Transform = TransformTwo;
   VP8TransformUV = TransformUV;
   VP8TransformDC = TransformDC;

@@ -160,6 +160,8 @@ extern const int VP8I4ModeOffsets[NUM_BMODES];
 #define I4TMP (6 * 16 * BPS + 8 * BPS +  8)
 
 typedef int64_t score_t;     // type used for scores, rate, distortion
+// Note that MAX_COST is not the maximum allowed by sizeof(score_t),
+// in order to allow overflowing computations.
 #define MAX_COST ((score_t)0x7fffffffffffffLL)
 
 #define QFIX 17
@@ -361,12 +363,14 @@ typedef struct {
   VP8Tokens* pages_;        // first page
   VP8Tokens** last_page_;   // last page
   uint16_t* tokens_;        // set to (*last_page_)->tokens_
-  int left_;          // how many free tokens left before the page is full.
+  int left_;                // how many free tokens left before the page is full
+  int page_size_;           // number of tokens per page
 #endif
   int error_;         // true in case of malloc error
 } VP8TBuffer;
 
-void VP8TBufferInit(VP8TBuffer* const b);    // initialize an empty buffer
+// initialize an empty buffer
+void VP8TBufferInit(VP8TBuffer* const b, int page_size);
 void VP8TBufferClear(VP8TBuffer* const b);   // de-allocate pages memory
 
 #if !defined(DISABLE_TOKEN_BUFFER)
@@ -421,12 +425,6 @@ struct VP8Encoder {
   uint8_t* alpha_data_;       // non-NULL if transparency is present
   uint32_t alpha_data_size_;
   WebPWorker alpha_worker_;
-
-  // enhancement layer
-  int use_layer_;
-  VP8BitWriter layer_bw_;
-  uint8_t* layer_data_;
-  size_t layer_data_size_;
 
   // quantization info (one set of DC/AC dequant factor per segment)
   VP8SegmentInfo dqm_[NUM_MB_SEGMENTS];
@@ -532,12 +530,6 @@ void VP8EncInitAlpha(VP8Encoder* const enc);    // initialize alpha compression
 int VP8EncStartAlpha(VP8Encoder* const enc);    // start alpha coding process
 int VP8EncFinishAlpha(VP8Encoder* const enc);   // finalize compressed data
 int VP8EncDeleteAlpha(VP8Encoder* const enc);   // delete compressed data
-
-  // in layer.c
-void VP8EncInitLayer(VP8Encoder* const enc);     // init everything
-void VP8EncCodeLayerBlock(VP8EncIterator* it);   // code one more macroblock
-int VP8EncFinishLayer(VP8Encoder* const enc);    // finalize coding
-void VP8EncDeleteLayer(VP8Encoder* enc);         // reclaim memory
 
   // in filter.c
 

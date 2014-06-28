@@ -86,13 +86,6 @@ typedef struct {
 //------------------------------------------------------------------------------
 // MemBuffer: incoming data handling
 
-static void RemapBitReader(VP8BitReader* const br, ptrdiff_t offset) {
-  if (br->buf_ != NULL) {
-    br->buf_ += offset;
-    br->buf_end_ += offset;
-  }
-}
-
 static WEBP_INLINE size_t MemDataSize(const MemBuffer* mem) {
   return (mem->end_ - mem->start_);
 }
@@ -129,12 +122,12 @@ static void DoRemap(WebPIDecoder* const idec, ptrdiff_t offset) {
       if (offset != 0) {
         int p;
         for (p = 0; p <= last_part; ++p) {
-          RemapBitReader(dec->parts_ + p, offset);
+          VP8RemapBitReader(dec->parts_ + p, offset);
         }
         // Remap partition #0 data pointer to new offset, but only in MAP
         // mode (in APPEND mode, partition #0 is copied into a fixed memory).
         if (mem->mode_ == MEM_MODE_MAP) {
-          RemapBitReader(&dec->br_, offset);
+          VP8RemapBitReader(&dec->br_, offset);
         }
       }
       assert(last_part >= 0);
@@ -188,7 +181,7 @@ static int AppendToMemBuffer(WebPIDecoder* const idec,
         (uint8_t*)WebPSafeMalloc(extra_size, sizeof(*new_buf));
     if (new_buf == NULL) return 0;
     memcpy(new_buf, old_base, current_size);
-    free(mem->buf_);
+    WebPSafeFree(mem->buf_);
     mem->buf_ = new_buf;
     mem->buf_size_ = (size_t)extra_size;
     mem->start_ = new_mem_start;
@@ -230,8 +223,8 @@ static void InitMemBuffer(MemBuffer* const mem) {
 static void ClearMemBuffer(MemBuffer* const mem) {
   assert(mem);
   if (mem->mode_ == MEM_MODE_APPEND) {
-    free(mem->buf_);
-    free((void*)mem->part0_buf_);
+    WebPSafeFree(mem->buf_);
+    WebPSafeFree((void*)mem->part0_buf_);
   }
 }
 
@@ -373,7 +366,7 @@ static int CopyParts0Data(WebPIDecoder* const idec) {
   assert(psize <= mem->part0_size_);  // Format limit: no need for runtime check
   if (mem->mode_ == MEM_MODE_APPEND) {
     // We copy and grab ownership of the partition #0 data.
-    uint8_t* const part0_buf = (uint8_t*)malloc(psize);
+    uint8_t* const part0_buf = (uint8_t*)WebPSafeMalloc(1ULL, psize);
     if (part0_buf == NULL) {
       return 0;
     }
@@ -573,7 +566,7 @@ static VP8StatusCode IDecode(WebPIDecoder* idec) {
 // Public functions
 
 WebPIDecoder* WebPINewDecoder(WebPDecBuffer* output_buffer) {
-  WebPIDecoder* idec = (WebPIDecoder*)calloc(1, sizeof(*idec));
+  WebPIDecoder* idec = (WebPIDecoder*)WebPSafeCalloc(1ULL, sizeof(*idec));
   if (idec == NULL) {
     return NULL;
   }
@@ -632,7 +625,7 @@ void WebPIDelete(WebPIDecoder* idec) {
   }
   ClearMemBuffer(&idec->mem_);
   WebPFreeDecBuffer(&idec->output_);
-  free(idec);
+  WebPSafeFree(idec);
 }
 
 //------------------------------------------------------------------------------
