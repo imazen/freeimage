@@ -6,6 +6,7 @@ What's New for FreeImage
 + : added
 
 Month day, 2014 - 3.16.1
+! FreeImage now uses LibPNG 1.6.12
 + [Mihail Naydenov] added FreeImage_ConvertFromRawBitsEx
 * [Tanner Helland] ICO plugin: improved support for Vista icons
 * [fpgaminer] fixed a rounding error in RGB to greyscale conversion formula
