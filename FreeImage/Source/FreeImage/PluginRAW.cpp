@@ -140,12 +140,72 @@ public:
 
 /**
 Convert a processed raw data array to a FIBITMAP
-@param image Processed raw image
+@param RawProcessor LibRaw handle containing the processed raw image
 @return Returns the converted dib if successfull, returns NULL otherwise
 */
 static FIBITMAP * 
-libraw_ConvertToDib(libraw_processed_image_t *image) {
+libraw_ConvertToDib(LibRaw *RawProcessor) {
 	FIBITMAP *dib = NULL;
+    int width, height, colors, bpp;
+
+	try {
+		int bgr = 0;	// pixel copy order: RGB if (bgr == 0) and BGR otherwise
+
+		// get image info
+		RawProcessor->get_mem_image_format(&width, &height, &colors, &bpp);
+
+		// only 3-color images supported...
+		if(colors != 3) {
+			throw "LibRaw : only 3-color images supported";
+		}
+
+		if(bpp == 16) {
+			// allocate output dib
+			dib = FreeImage_AllocateT(FIT_RGB16, width, height);
+			if(!dib) {
+				throw FI_MSG_ERROR_DIB_MEMORY;
+			}
+
+		} else if(bpp == 8) {
+#if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
+			bgr = 1;	// only useful for FIT_BITMAP types
+#endif
+
+			// allocate output dib
+			dib = FreeImage_AllocateT(FIT_BITMAP, width, height, 24);
+			if(!dib) {
+				throw FI_MSG_ERROR_DIB_MEMORY;
+			}
+		}
+
+		// copy post-processed bitmap data into FIBITMAP buffer
+		if(RawProcessor->copy_mem_image(FreeImage_GetBits(dib), FreeImage_GetPitch(dib), bgr) != LIBRAW_SUCCESS) {
+			throw "LibRaw : failed to copy data into dib";
+		}
+
+		// flip vertically
+		FreeImage_FlipVertical(dib);
+
+		return dib;
+
+	} catch(const char *text) {
+		FreeImage_Unload(dib);
+		FreeImage_OutputMessageProc(s_format_id, text);
+		return NULL;
+	}
+}
+
+
+/**
+Convert a processed raw data array to a FIBITMAP
+@param image Processed raw image
+@return Returns the converted dib if successfull, returns NULL otherwise
+@see libraw_LoadEmbeddedPreview
+*/
+static FIBITMAP * 
+libraw_ConvertProcessedImageToDib(libraw_processed_image_t *image) {
+	FIBITMAP *dib = NULL;
+
 	try {
 		unsigned width = image->width;
 		unsigned height = image->height;
@@ -185,12 +245,14 @@ libraw_ConvertToDib(libraw_processed_image_t *image) {
 				}
 			}
 		}
+		
+		return dib;
 
 	} catch(const char *text) {
+		FreeImage_Unload(dib);
 		FreeImage_OutputMessageProc(s_format_id, text);
+		return NULL;
 	}
-
-	return dib;
 }
 
 /** 
@@ -228,9 +290,9 @@ libraw_LoadEmbeddedPreview(LibRaw *RawProcessor, int flags) {
 				dib = FreeImage_LoadFromMemory(fif, hmem, flags);
 				// close the stream
 				FreeImage_CloseMemory(hmem);
-			} else {
+			} else if((flags & FIF_LOAD_NOPIXELS) != FIF_LOAD_NOPIXELS) {
 				// convert processed data to output dib
-				dib = libraw_ConvertToDib(thumb_image);
+				dib = libraw_ConvertProcessedImageToDib(thumb_image);
 			}
 		} else {
 			throw "LibRaw : failed to run dcraw_make_mem_thumb";
@@ -300,38 +362,14 @@ libraw_LoadRawData(LibRaw *RawProcessor, int bitspersample) {
 		}
 
 		// retrieve processed image
-		int error_code = 0;
-		processed_image = RawProcessor->dcraw_make_mem_image(&error_code);
-		if(processed_image) {
-			// type SHOULD be LIBRAW_IMAGE_BITMAP, but we'll check
-			if(processed_image->type != LIBRAW_IMAGE_BITMAP) {
-				throw "invalid image type";
-			}
-			// only 3-color images supported...
-			if(processed_image->colors != 3) {
-				throw "only 3-color images supported";
-			}
-		} else {
-			throw "LibRaw : failed to run dcraw_make_mem_image";
-		}
-
-		// convert processed data to output dib
-		dib = libraw_ConvertToDib(processed_image);
+		dib = libraw_ConvertToDib(RawProcessor);
 	
-		// clean-up and return
-		RawProcessor->dcraw_clear_mem(processed_image);
-
 		return dib;
 
 	} catch(const char *text) {
-		// clean-up and return
-		if(processed_image) {
-			RawProcessor->dcraw_clear_mem(processed_image);
-		}
 		FreeImage_OutputMessageProc(s_format_id, text);
+		return NULL;
 	}
-
-	return NULL;
 }
 
 // ==========================================================
