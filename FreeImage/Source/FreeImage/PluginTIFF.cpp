@@ -192,20 +192,11 @@ Open a TIFF file descriptor for reading or writing
 TIFF *
 TIFFFdOpen(thandle_t handle, const char *name, const char *mode) {
 	TIFF *tif;
-
 	
 	// Open the file; the callback will set everything up
 	tif = TIFFClientOpen(name, mode, handle,
 	    _tiffReadProc, _tiffWriteProc, _tiffSeekProc, _tiffCloseProc,
 	    _tiffSizeProc, _tiffMapProc, _tiffUnmapProc);
-
-	// Warning: tif_fd is declared as 'int' currently (see libTIFF), 
-    // may result in incorrect file pointers inside libTIFF on 
-    // 64bit machines (sizeof(int) != sizeof(long)). 
-    // Needs to be fixed within libTIFF.
-	if (tif) {
-		tif->tif_fd = (long)handle;
-	}
 
 	return tif;
 }
@@ -1129,7 +1120,12 @@ IsValidBitsPerSample(uint16 photometric, uint16 bitspersample) {
 			}
 			break;
 		case 32:
-			return TRUE;
+			if((photometric == PHOTOMETRIC_MINISWHITE) || (photometric == PHOTOMETRIC_MINISBLACK) || (photometric == PHOTOMETRIC_LOGLUV)) { 
+				return TRUE;
+			} else {
+				return FALSE;
+			}
+			break;
 		case 64:
 		case 128:
 			if(photometric == PHOTOMETRIC_MINISBLACK) { 
