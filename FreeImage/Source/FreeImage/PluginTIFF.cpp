@@ -44,29 +44,22 @@
 #include "FreeImageIO.h"
 #include "PSDParser.h"
 
-// ----------------------------------------------------------
-//   geotiff interface (see XTIFF.cpp)
-// ----------------------------------------------------------
-
-// Extended TIFF Directory GEO Tag Support
+// --------------------------------------------------------------------------
+// GeoTIFF profile (see XTIFF.cpp)
+// --------------------------------------------------------------------------
 void XTIFFInitialize();
+BOOL tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib);
+BOOL tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib);
 
-// GeoTIFF profile
-void tiff_read_geotiff_profile(TIFF *tif, FIBITMAP *dib);
-void tiff_write_geotiff_profile(TIFF *tif, FIBITMAP *dib);
-
+// --------------------------------------------------------------------------
+// TIFF Exif profile (see XTIFF.cpp)
 // ----------------------------------------------------------
-//   exif interface (see XTIFF.cpp)
-// ----------------------------------------------------------
-
-// TIFF Exif profile
 BOOL tiff_read_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib);
 BOOL tiff_write_exif_tags(TIFF *tif, TagLib::MDMODEL md_model, FIBITMAP *dib);
 
-// ----------------------------------------------------------
+// --------------------------------------------------------------------------
 //   LogLuv conversion functions interface (see TIFFLogLuv.cpp)
-// ----------------------------------------------------------
-
+// --------------------------------------------------------------------------
 void tiff_ConvertLineXYZToRGB(BYTE *target, BYTE *source, double stonits, int width_in_pixels);
 void tiff_ConvertLineRGBToXYZ(BYTE *target, BYTE *source, int width_in_pixels);
 
@@ -1052,6 +1045,8 @@ Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 	if (read) {
 		fio->tif = TIFFFdOpen((thandle_t)fio, "", "r");
 	} else {
+		// mode = "w"	: write Classic TIFF
+		// mode = "w8"	: write Big TIFF
 		fio->tif = TIFFFdOpen((thandle_t)fio, "", "w");
 	}
 	if(fio->tif == NULL) {
