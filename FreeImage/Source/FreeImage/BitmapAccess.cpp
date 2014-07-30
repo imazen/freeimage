@@ -1430,6 +1430,43 @@ FreeImage_GetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 	return (*tag != NULL) ? TRUE : FALSE;
 }
 
+/**
+Build and set a FITAG whose type is FIDT_ASCII. 
+@param model Metadata model to be filled
+@param dib Image to be filled
+@param key Tag key
+@param value Tag value as a ASCII string
+@return Returns TRUE if successful, returns FALSE otherwise
+*/
+BOOL DLL_CALLCONV 
+FreeImage_SetMetadataKeyValue(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, const char *value) {
+	if(!dib || !key || !value) {
+		return FALSE;
+	}
+	// create a tag
+	FITAG *tag = FreeImage_CreateTag();
+	if(tag) {
+		BOOL bSuccess = TRUE;
+		// fill the tag
+		DWORD tag_length = (DWORD)(strlen(value) + 1);
+		bSuccess &= FreeImage_SetTagKey(tag, key);
+		bSuccess &= FreeImage_SetTagLength(tag, tag_length);
+		bSuccess &= FreeImage_SetTagCount(tag, tag_length);
+		bSuccess &= FreeImage_SetTagType(tag, FIDT_ASCII);
+		bSuccess &= FreeImage_SetTagValue(tag, value);
+		if(bSuccess) {
+			// set the tag
+			bSuccess &= FreeImage_SetMetadata(model, dib, FreeImage_GetTagKey(tag), tag);
+		}
+		// delete the tag
+		FreeImage_DeleteTag(tag);
+
+		return bSuccess;
+	}
+
+	return FALSE;
+}
+
 // ----------------------------------------------------------
 
 unsigned DLL_CALLCONV 
