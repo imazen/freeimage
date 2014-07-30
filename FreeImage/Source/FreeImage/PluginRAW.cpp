@@ -144,7 +144,7 @@ Convert a processed raw data array to a FIBITMAP
 @return Returns the converted dib if successfull, returns NULL otherwise
 */
 static FIBITMAP * 
-libraw_ConvertToDib(LibRaw *RawProcessor) {
+libraw_ConvertProcessedRawToDib(LibRaw *RawProcessor) {
 	FIBITMAP *dib = NULL;
     int width, height, colors, bpp;
 
@@ -197,7 +197,7 @@ libraw_ConvertToDib(LibRaw *RawProcessor) {
 
 
 /**
-Convert a processed raw data array to a FIBITMAP
+Convert a processed raw image to a FIBITMAP
 @param image Processed raw image
 @return Returns the converted dib if successfull, returns NULL otherwise
 @see libraw_LoadEmbeddedPreview
@@ -324,7 +324,6 @@ Load raw data and convert to FIBITMAP
 static FIBITMAP * 
 libraw_LoadRawData(LibRaw *RawProcessor, int bitspersample) {
 	FIBITMAP *dib = NULL;
-	libraw_processed_image_t *processed_image = NULL;
 
 	try {
 		// set decoding parameters
@@ -362,11 +361,120 @@ libraw_LoadRawData(LibRaw *RawProcessor, int bitspersample) {
 		}
 
 		// retrieve processed image
-		dib = libraw_ConvertToDib(RawProcessor);
+		dib = libraw_ConvertProcessedRawToDib(RawProcessor);
 	
 		return dib;
 
 	} catch(const char *text) {
+		FreeImage_OutputMessageProc(s_format_id, text);
+		return NULL;
+	}
+}
+
+/**
+Load the Bayer matrix (unprocessed raw data) as a FIT_UINT16 image. 
+Note that some formats don't have a Bayer matrix (e.g. Foveon, Canon sRAW, demosaiced DNG files). 
+@param RawProcessor Libraw handle
+@return Returns the loaded dib if successfull, returns NULL otherwise
+*/
+static FIBITMAP * 
+libraw_LoadUnprocessedData(LibRaw *RawProcessor) {
+	FIBITMAP *dib = NULL;
+	libraw_decoder_info_t decoder_info;
+
+	try {
+		// unpack data
+		if(RawProcessor->unpack() != LIBRAW_SUCCESS) {
+			throw "LibRaw : failed to unpack data";
+		}
+
+		// check for a supported Bayer format
+		if(RawProcessor->get_decoder_info(&decoder_info) != LIBRAW_SUCCESS) {
+			throw "LibRaw : failed to get decoder info";
+		}
+		if(!(decoder_info.decoder_flags & LIBRAW_DECODER_FLATFIELD)) {
+			throw "LibRaw : only Bayer-pattern RAW files are supported";
+		}
+
+		// allocate output dib
+		const unsigned width = RawProcessor->imgdata.sizes.raw_width;
+		const unsigned height = RawProcessor->imgdata.sizes.raw_height;
+		const size_t line_size = width * sizeof(WORD);
+		const WORD *src_bits = (WORD*)RawProcessor->imgdata.rawdata.raw_image;
+
+		if(src_bits) {
+			dib = FreeImage_AllocateT(FIT_UINT16, width, height);
+		}
+		if(!dib) {
+			throw FI_MSG_ERROR_DIB_MEMORY;
+		}
+
+		// retrieve the raw image
+		for(unsigned y = 0; y < height; y++) {
+			WORD *dst_bits = (WORD*)FreeImage_GetScanLine(dib, height - 1 - y);
+			memcpy(dst_bits, src_bits, line_size);
+			src_bits += width;
+		}
+
+		// store metadata needed for post-processing
+		{
+			char value[512];
+
+			const libraw_image_sizes_t *sizes = &RawProcessor->imgdata.sizes;
+
+			// image output width & height
+			{
+				sprintf(value, "%d", sizes->iwidth);
+				FreeImage_SetMetadataKeyValue(FIMD_COMMENTS, dib, "Raw.Output.Width", value);
+				
+				sprintf(value, "%d", sizes->iheight);
+				FreeImage_SetMetadataKeyValue(FIMD_COMMENTS, dib, "Raw.Output.Height", value);
+			}
+
+			// image output frame
+			{
+				const unsigned f_left = sizes->left_margin;
+				const unsigned f_top = sizes->top_margin;
+				const unsigned f_width = sizes->width;
+				const unsigned f_height = sizes->height;
+				
+				sprintf(value, "%d", f_left);
+				FreeImage_SetMetadataKeyValue(FIMD_COMMENTS, dib, "Raw.Frame.Left", value);
+
+				sprintf(value, "%d", f_top);
+				FreeImage_SetMetadataKeyValue(FIMD_COMMENTS, dib, "Raw.Frame.Top", value);
+
+				sprintf(value, "%d", f_width);
+				FreeImage_SetMetadataKeyValue(FIMD_COMMENTS, dib, "Raw.Frame.Width", value);
+
+				sprintf(value, "%d", f_height);
+				FreeImage_SetMetadataKeyValue(FIMD_COMMENTS, dib, "Raw.Frame.Height", value);
+			}
+
+			// Bayer pattern
+			// Mask describing the order of color pixels in the matrix. 
+			// This field describe 16 pixels (8 rows with two pixels in each, from left to right and from top to bottom). 
+
+			if(RawProcessor->imgdata.idata.filters) {
+				// description of colors numbered from 0 to 3 (RGBG,RGBE,GMCY, or GBTG)
+				char *cdesc = RawProcessor->imgdata.idata.cdesc;
+				if(!cdesc[3]) {
+					cdesc[3] = 'G';
+				}
+				char *pattern = &value[0];
+				for(int i = 0; i < 16; i++) {
+					pattern[i] = cdesc[ RawProcessor->fcol(i >> 1, i & 1) ];
+				}
+				pattern[16] = 0;
+
+				FreeImage_SetMetadataKeyValue(FIMD_COMMENTS, dib, "Raw.BayerPattern", value);
+			}
+		}
+	
+		return dib;
+
+	} catch(const char *text) {
+		FreeImage_Unload(dib);
 		FreeImage_OutputMessageProc(s_format_id, text);
 		return NULL;
 	}
@@ -435,8 +543,8 @@ Extension() {
 		"sr2,"   // Sony Digital Camera Raw Image Format.
 		"srf,"   // Sony Digital Camera Raw Image Format for DSC-F828 8 megapixel digital camera or Sony DSC-R1.
 		"srw,"   // Samsung Raw Image Format.
-		"sti";   // Sinar Capture Shop Raw Image File.
-//		"x3f"   // Sigma Digital Camera Raw Image Format for devices based on Foveon X3 direct image sensor.
+		"sti,"   // Sinar Capture Shop Raw Image File.
+		"x3f";   // Sigma Digital Camera Raw Image Format for devices based on Foveon X3 direct image sensor.
 	return raw_extensions;
 }
 
@@ -585,6 +693,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		RawProcessor->imgdata.params.shot_select = 0;
 		// (-w) Use camera white balance, if possible (otherwise, fallback to auto_wb)
 		RawProcessor->imgdata.params.use_camera_wb = 1;
+		// (-M) Use any color matrix from the camera metadata. This option only affects Olympus, Leaf, and Phase One cameras.
+		RawProcessor->imgdata.params.use_camera_matrix = 1;
 		// (-h) outputs the image in 50% size
 		RawProcessor->imgdata.params.half_size = ((flags & RAW_HALFSIZE) == RAW_HALFSIZE) ? 1 : 0;
 
@@ -596,6 +706,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		if(header_only) {
 			// header only mode
 			dib = FreeImage_AllocateHeaderT(header_only, FIT_RGB16, RawProcessor->imgdata.sizes.width, RawProcessor->imgdata.sizes.height);
+		}
+		else if((flags & RAW_UNPROCESSED) == RAW_UNPROCESSED) {
+			// load raw data without post-processing (i.e. as a Bayer matrix)
+			dib = libraw_LoadUnprocessedData(RawProcessor);
 		}
 		else if((flags & RAW_PREVIEW) == RAW_PREVIEW) {
 			// try to get the embedded JPEG
