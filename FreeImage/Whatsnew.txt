@@ -23,6 +23,7 @@ Month day, 2014 - 3.16.1
 * [Herve Drolon] improved memory allocation in PluginRAW
 * [Herve Drolon] fixed loading/saving of TIFF containing a GPS IFD inside the Exif-TIFF metadata segment (the solution is to ignore the tag) 
 * [Mihail Naydenov] fixed a bug in FreeImage_JPEGCrop*/_JPEGTransform* functions occuring when using the same source / destination filename
+* [Herve Drolon] fixed a bug with output image quality in PluginJP2::Save & PluginJ2K::Save functions (regression from FI 3.15.4)
 
 March 23rd, 2014 - 3.16.0
 ! FreeImage now uses LibJPEG 9a
