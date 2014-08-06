@@ -16,7 +16,17 @@
 #ifndef WEBP_UTILS_BIT_READER_INL_H_
 #define WEBP_UTILS_BIT_READER_INL_H_
 
+#ifdef HAVE_CONFIG_H
+#include "../webp/config.h"
+#endif
+
+#ifdef WEBP_FORCE_ALIGNED
+#include <string.h>  // memcpy
+#endif
+
+#include "../dsp/dsp.h"
 #include "./bit_reader.h"
+#include "./endian_inl.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,18 +45,6 @@ typedef uint16_t lbit_t;
 typedef uint8_t lbit_t;
 #endif
 
-// some endian fix (e.g.: mips-gcc doesn't define __BIG_ENDIAN__)
-#if !defined(__BIG_ENDIAN__) && defined(__BYTE_ORDER__) && \
-    (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-#define __BIG_ENDIAN__
-#endif
-
-// gcc 4.3 has builtin functions for swap32/swap64
-#if defined(__GNUC__) && \
-           (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
-#define HAVE_BUILTIN_BSWAP
-#endif
-
 extern const uint8_t kVP8Log2Range[128];
 extern const range_t kVP8NewRange[128];
 
@@ -63,7 +61,10 @@ static WEBP_INLINE void VP8LoadNewBytes(VP8BitReader* const br) {
   if (br->buf_ + sizeof(lbit_t) <= br->buf_end_) {
     // convert memory type to register type (with some zero'ing!)
     bit_t bits;
-#if defined(__mips__)                          // MIPS
+#if defined(WEBP_FORCE_ALIGNED)
+    lbit_t in_bits;
+    memcpy(&in_bits, br->buf_, sizeof(in_bits));
+#elif defined(WEBP_USE_MIPS32)
     // This is needed because of un-aligned read.
     lbit_t in_bits;
     lbit_t* p_buf_ = (lbit_t*)br->buf_;
@@ -81,47 +82,19 @@ static WEBP_INLINE void VP8LoadNewBytes(VP8BitReader* const br) {
     const lbit_t in_bits = *(const lbit_t*)br->buf_;
 #endif
     br->buf_ += BITS >> 3;
-#if !defined(__BIG_ENDIAN__)
+#if !defined(WORDS_BIGENDIAN)
 #if (BITS > 32)
-#if defined(HAVE_BUILTIN_BSWAP)
-    bits = (bit_t)__builtin_bswap64(in_bits);
-#elif defined(_MSC_VER)
-    bits = (bit_t)_byteswap_uint64(in_bits);
-#elif defined(__x86_64__)
-    __asm__ volatile("bswapq %0" : "=r"(bits) : "0"(in_bits));
-#else  // generic code for swapping 64-bit values (suggested by bdb@)
-    bits = (bit_t)in_bits;
-    bits = ((bits & 0xffffffff00000000ull) >> 32) |
-           ((bits & 0x00000000ffffffffull) << 32);
-    bits = ((bits & 0xffff0000ffff0000ull) >> 16) |
-           ((bits & 0x0000ffff0000ffffull) << 16);
-    bits = ((bits & 0xff00ff00ff00ff00ull) >> 8) |
-           ((bits & 0x00ff00ff00ff00ffull) << 8);
-#endif
+    bits = BSwap64(in_bits);
     bits >>= 64 - BITS;
 #elif (BITS >= 24)
-#if defined(HAVE_BUILTIN_BSWAP)
-    bits = (bit_t)__builtin_bswap32(in_bits);
-#elif defined(__i386__) || defined(__x86_64__)
-    {
-      lbit_t swapped_in_bits;
-      __asm__ volatile("bswap %k0" : "=r"(swapped_in_bits) : "0"(in_bits));
-      bits = (bit_t)swapped_in_bits;   // 24b/32b -> 32b/64b zero-extension
-    }
-#elif defined(_MSC_VER)
-    bits = (bit_t)_byteswap_ulong(in_bits);
-#else
-    bits = (bit_t)(in_bits >> 24) | ((in_bits >> 8) & 0xff00)
-         | ((in_bits << 8) & 0xff0000)  | (in_bits << 24);
-#endif  // x86
+    bits = BSwap32(in_bits);
     bits >>= (32 - BITS);
 #elif (BITS == 16)
-    // gcc will recognize a 'rorw $8, ...' here:
-    bits = (bit_t)(in_bits >> 8) | ((in_bits & 0xff) << 8);
+    bits = BSwap16(in_bits);
 #else   // BITS == 8
     bits = (bit_t)in_bits;
 #endif  // BITS > 32
-#else    // BIG_ENDIAN
+#else    // WORDS_BIGENDIAN
     bits = (bit_t)in_bits;
     if (BITS != 8 * sizeof(bit_t)) bits >>= (8 * sizeof(bit_t) - BITS);
 #endif

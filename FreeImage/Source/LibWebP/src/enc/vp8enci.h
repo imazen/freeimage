@@ -30,7 +30,7 @@ extern "C" {
 // version numbers
 #define ENC_MAJ_VERSION 0
 #define ENC_MIN_VERSION 4
-#define ENC_REV_VERSION 0
+#define ENC_REV_VERSION 1
 
 // intra prediction modes
 enum { B_DC_PRED = 0,   // 4x4 modes
@@ -457,10 +457,10 @@ struct VP8Encoder {
   VP8MBInfo* mb_info_;   // contextual macroblock infos (mb_w_ + 1)
   uint8_t*   preds_;     // predictions modes: (4*mb_w+1) * (4*mb_h+1)
   uint32_t*  nz_;        // non-zero bit context: mb_w+1
-  uint8_t   *y_top_;     // top luma samples.
-  uint8_t   *uv_top_;    // top u/v samples.
+  uint8_t*   y_top_;     // top luma samples.
+  uint8_t*   uv_top_;    // top u/v samples.
                          // U and V are packed into 16 bytes (8 U + 8 V)
-  LFStats   *lf_stats_;  // autofilter stats (if NULL, autofilter is off)
+  LFStats*   lf_stats_;  // autofilter stats (if NULL, autofilter is off)
 };
 
 //------------------------------------------------------------------------------
@@ -552,6 +552,26 @@ void VP8AdjustFilterStrength(VP8EncIterator* const it);
 // returns the approximate filtering strength needed to smooth a edge
 // step of 'delta', given a sharpness parameter 'sharpness'.
 int VP8FilterStrengthFromDelta(int sharpness, int delta);
+
+  // misc utils for picture_*.c:
+
+// Remove reference to the ARGB/YUVA buffer (doesn't free anything).
+void WebPPictureResetBuffers(WebPPicture* const picture);
+
+// Allocates ARGB buffer of given dimension (previous one is always free'd).
+// Preserves the YUV(A) buffer. Returns false in case of error (invalid param,
+// out-of-memory).
+int WebPPictureAllocARGB(WebPPicture* const picture, int width, int height);
+
+// Allocates YUVA buffer of given dimension (previous one is always free'd).
+// Uses picture->csp to determine whether an alpha buffer is needed.
+// Preserves the ARGB buffer.
+// Returns false in case of error (invalid param, out-of-memory).
+int WebPPictureAllocYUVA(WebPPicture* const picture, int width, int height);
+
+  // in near_lossless.c
+// Near lossless preprocessing in RGB color-space.
+int VP8ApplyNearLossless(int xsize, int ysize, uint32_t* argb, int quality);
 
 //------------------------------------------------------------------------------
 

@@ -49,7 +49,9 @@
 // (register alloc, probably). The variants somewhat mitigate the problem, but
 // not quite. HFilter16i() remains problematic.
 static WEBP_INLINE uint8x8x4_t Load4x8(const uint8_t* const src, int stride) {
-  uint8x8x4_t out = {{{0}, {0}, {0}, {0}}};
+  const uint8x8_t zero = vdup_n_u8(0);
+  uint8x8x4_t out;
+  INIT_VECTOR4(out, zero, zero, zero, zero);
   out = vld4_lane_u8(src + 0 * stride, out, 0);
   out = vld4_lane_u8(src + 1 * stride, out, 1);
   out = vld4_lane_u8(src + 2 * stride, out, 2);
@@ -84,7 +86,9 @@ static WEBP_INLINE void Load4x16(const uint8_t* const src, int stride,
 static WEBP_INLINE void Load4x16(const uint8_t* src, int stride,
                                  uint8x16_t* const p1, uint8x16_t* const p0,
                                  uint8x16_t* const q0, uint8x16_t* const q1) {
-  uint32x4x4_t in = {{{0}, {0}, {0}, {0}}};
+  const uint32x4_t zero = vdupq_n_u32(0);
+  uint32x4x4_t in;
+  INIT_VECTOR4(in, zero, zero, zero, zero);
   src -= 2;
   LOADQ_LANE_32b(in.val[0], 0);
   LOADQ_LANE_32b(in.val[1], 0);
@@ -273,10 +277,13 @@ static WEBP_INLINE void Store4x8(const uint8x8x4_t v,
 static WEBP_INLINE void Store4x16(const uint8x16_t p1, const uint8x16_t p0,
                                   const uint8x16_t q0, const uint8x16_t q1,
                                   uint8_t* const dst, int stride) {
-  const uint8x8x4_t lo = {{ vget_low_u8(p1), vget_low_u8(p0),
-                            vget_low_u8(q0), vget_low_u8(q1) }};
-  const uint8x8x4_t hi = {{ vget_high_u8(p1), vget_high_u8(p0),
-                            vget_high_u8(q0), vget_high_u8(q1) }};
+  uint8x8x4_t lo, hi;
+  INIT_VECTOR4(lo,
+               vget_low_u8(p1), vget_low_u8(p0),
+               vget_low_u8(q0), vget_low_u8(q1));
+  INIT_VECTOR4(hi,
+               vget_high_u8(p1), vget_high_u8(p0),
+               vget_high_u8(q0), vget_high_u8(q1));
   Store4x8(lo, dst - 2 + 0 * stride, stride);
   Store4x8(hi, dst - 2 + 8 * stride, stride);
 }
@@ -327,12 +334,11 @@ static WEBP_INLINE void Store6x8x2(const uint8x16_t p2, const uint8x16_t p1,
                                    const uint8x16_t q1, const uint8x16_t q2,
                                    uint8_t* u, uint8_t* v,
                                    int stride) {
-  const uint8x8x3_t u0 = {{vget_low_u8(p2), vget_low_u8(p1), vget_low_u8(p0)}};
-  const uint8x8x3_t u1 = {{vget_low_u8(q0), vget_low_u8(q1), vget_low_u8(q2)}};
-  const uint8x8x3_t v0 =
-      {{vget_high_u8(p2), vget_high_u8(p1), vget_high_u8(p0)}};
-  const uint8x8x3_t v1 =
-      {{vget_high_u8(q0), vget_high_u8(q1), vget_high_u8(q2)}};
+  uint8x8x3_t u0, u1, v0, v1;
+  INIT_VECTOR3(u0, vget_low_u8(p2), vget_low_u8(p1), vget_low_u8(p0));
+  INIT_VECTOR3(u1, vget_low_u8(q0), vget_low_u8(q1), vget_low_u8(q2));
+  INIT_VECTOR3(v0, vget_high_u8(p2), vget_high_u8(p1), vget_high_u8(p0));
+  INIT_VECTOR3(v1, vget_high_u8(q0), vget_high_u8(q1), vget_high_u8(q2));
   STORE6_LANE(u, u0, u1, 0);
   STORE6_LANE(u, u0, u1, 1);
   STORE6_LANE(u, u0, u1, 2);
@@ -356,10 +362,13 @@ static WEBP_INLINE void Store4x8x2(const uint8x16_t p1, const uint8x16_t p0,
                                    const uint8x16_t q0, const uint8x16_t q1,
                                    uint8_t* const u, uint8_t* const v,
                                    int stride) {
-  const uint8x8x4_t u0 = {{ vget_low_u8(p1), vget_low_u8(p0),
-                            vget_low_u8(q0), vget_low_u8(q1) }};
-  const uint8x8x4_t v0 = {{ vget_high_u8(p1), vget_high_u8(p0),
-                            vget_high_u8(q0), vget_high_u8(q1) }};
+  uint8x8x4_t u0, v0;
+  INIT_VECTOR4(u0,
+               vget_low_u8(p1), vget_low_u8(p0),
+               vget_low_u8(q0), vget_low_u8(q1));
+  INIT_VECTOR4(v0,
+               vget_high_u8(p1), vget_high_u8(p0),
+               vget_high_u8(q0), vget_high_u8(q1));
   vst4_lane_u8(u - 2 + 0 * stride, u0, 0);
   vst4_lane_u8(u - 2 + 1 * stride, u0, 1);
   vst4_lane_u8(u - 2 + 2 * stride, u0, 2);
@@ -403,8 +412,8 @@ static WEBP_INLINE void SaturateAndStore4x4(uint8_t* const dst,
 
 static WEBP_INLINE void Add4x4(const int16x8_t row01, const int16x8_t row23,
                                uint8_t* const dst) {
-  uint32x2_t dst01 = vcreate_u32(0);
-  uint32x2_t dst23 = vcreate_u32(0);
+  uint32x2_t dst01 = vdup_n_u32(0);
+  uint32x2_t dst23 = vdup_n_u32(0);
 
   // Load the source pixels.
   dst01 = vld1_lane_u32((uint32_t*)(dst + 0 * BPS), dst01, 0);
@@ -1014,7 +1023,8 @@ static WEBP_INLINE void TransformPass(int16x8x2_t* const rows) {
 }
 
 static void TransformOne(const int16_t* in, uint8_t* dst) {
-  int16x8x2_t rows = {{ vld1q_s16(in + 0), vld1q_s16(in + 8) }};
+  int16x8x2_t rows;
+  INIT_VECTOR2(rows, vld1q_s16(in + 0), vld1q_s16(in + 8));
   TransformPass(&rows);
   TransformPass(&rows);
   Add4x4(rows.val[0], rows.val[1], dst);
@@ -1236,7 +1246,11 @@ static void TransformAC3(const int16_t* in, uint8_t* dst) {
   const int16x4_t d4 = vdup_n_s16(MUL(in[4], kC1_full));
   const int c1 = MUL(in[1], kC2_full);
   const int d1 = MUL(in[1], kC1_full);
-  const int16x4_t CD = { d1, c1, -c1, -d1 };
+  const uint64_t cd = (uint64_t)( d1 & 0xffff) <<  0 |
+                      (uint64_t)( c1 & 0xffff) << 16 |
+                      (uint64_t)(-c1 & 0xffff) << 32 |
+                      (uint64_t)(-d1 & 0xffff) << 48;
+  const int16x4_t CD = vcreate_s16(cd);
   const int16x4_t B = vqadd_s16(A, CD);
   const int16x8_t m0_m1 = vcombine_s16(vqadd_s16(B, d4), vqadd_s16(B, c4));
   const int16x8_t m2_m3 = vcombine_s16(vqsub_s16(B, c4), vqsub_s16(B, d4));

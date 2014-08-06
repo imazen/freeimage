@@ -34,31 +34,6 @@ int WebPGetEncoderVersion(void) {
 }
 
 //------------------------------------------------------------------------------
-// WebPPicture
-//------------------------------------------------------------------------------
-
-static int DummyWriter(const uint8_t* data, size_t data_size,
-                       const WebPPicture* const picture) {
-  // The following are to prevent 'unused variable' error message.
-  (void)data;
-  (void)data_size;
-  (void)picture;
-  return 1;
-}
-
-int WebPPictureInitInternal(WebPPicture* picture, int version) {
-  if (WEBP_ABI_IS_INCOMPATIBLE(version, WEBP_ENCODER_ABI_VERSION)) {
-    return 0;   // caller/system version mismatch!
-  }
-  if (picture != NULL) {
-    memset(picture, 0, sizeof(*picture));
-    picture->writer = DummyWriter;
-    WebPEncodingSetError(picture, VP8_ENC_OK);
-  }
-  return 1;
-}
-
-//------------------------------------------------------------------------------
 // VP8Encoder
 //------------------------------------------------------------------------------
 
@@ -144,23 +119,21 @@ static void MapConfigToTools(VP8Encoder* const enc) {
 // Memory scaling with dimensions:
 //  memory (bytes) ~= 2.25 * w + 0.0625 * w * h
 //
-// Typical memory footprint (768x510 picture)
-// Memory used:
-//              encoder: 33919
-//          block cache: 2880
-//                 info: 3072
-//                preds: 24897
-//          top samples: 1623
-//             non-zero: 196
-//             lf-stats: 2048
-//                total: 68635
+// Typical memory footprint (614x440 picture)
+//              encoder: 22111
+//                 info: 4368
+//                preds: 17741
+//          top samples: 1263
+//             non-zero: 175
+//             lf-stats: 0
+//                total: 45658
 // Transient object sizes:
-//       VP8EncIterator: 352
-//         VP8ModeScore: 912
-//       VP8SegmentInfo: 532
-//             VP8Proba: 31032
+//       VP8EncIterator: 3360
+//         VP8ModeScore: 872
+//       VP8SegmentInfo: 732
+//             VP8Proba: 18352
 //              LFStats: 2048
-// Picture size (yuv): 589824
+// Picture size (yuv): 419328
 
 static VP8Encoder* InitVP8Encoder(const WebPConfig* const config,
                                   WebPPicture* const picture) {
@@ -389,6 +362,11 @@ int WebPEncode(const WebPConfig* config, WebPPicture* pic) {
     }
     ok &= DeleteVP8Encoder(enc);  // must always be called, even if !ok
   } else {
+    if (config->near_lossless > 0 &&
+        !VP8ApplyNearLossless(pic->width, pic->height,
+                              pic->argb, config->near_lossless)) {
+      return 0;
+    }
     // Make sure we have ARGB samples.
     if (pic->argb == NULL && !WebPPictureYUVAToARGB(pic)) {
       return 0;
@@ -399,4 +377,3 @@ int WebPEncode(const WebPConfig* config, WebPPicture* pic) {
 
   return ok;
 }
-

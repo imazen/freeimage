@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 #include "./bit_writer.h"
+#include "./endian_inl.h"
 #include "./utils.h"
 
 //------------------------------------------------------------------------------
@@ -51,7 +52,7 @@ static int BitWriterResize(VP8BitWriter* const bw, size_t extra_size) {
   return 1;
 }
 
-static void kFlush(VP8BitWriter* const bw) {
+static void Flush(VP8BitWriter* const bw) {
   const int s = 8 + bw->nb_bits_;
   const int32_t bits = bw->value_ >> s;
   assert(bw->nb_bits_ >= 0);
@@ -117,7 +118,7 @@ int VP8PutBit(VP8BitWriter* const bw, int bit, int prob) {
     bw->range_ = kNewRange[bw->range_];
     bw->value_ <<= shift;
     bw->nb_bits_ += shift;
-    if (bw->nb_bits_ > 0) kFlush(bw);
+    if (bw->nb_bits_ > 0) Flush(bw);
   }
   return bit;
 }
@@ -134,7 +135,7 @@ int VP8PutBitUniform(VP8BitWriter* const bw, int bit) {
     bw->range_ = kNewRange[bw->range_];
     bw->value_ <<= 1;
     bw->nb_bits_ += 1;
-    if (bw->nb_bits_ > 0) kFlush(bw);
+    if (bw->nb_bits_ > 0) Flush(bw);
   }
   return bit;
 }
@@ -172,14 +173,14 @@ int VP8BitWriterInit(VP8BitWriter* const bw, size_t expected_size) {
 uint8_t* VP8BitWriterFinish(VP8BitWriter* const bw) {
   VP8PutValue(bw, 0, 9 - bw->nb_bits_);
   bw->nb_bits_ = 0;   // pad with zeroes
-  kFlush(bw);
+  Flush(bw);
   return bw->buf_;
 }
 
 int VP8BitWriterAppend(VP8BitWriter* const bw,
                        const uint8_t* data, size_t size) {
   assert(data != NULL);
-  if (bw->nb_bits_ != -8) return 0;   // kFlush() must have been called
+  if (bw->nb_bits_ != -8) return 0;   // Flush() must have been called
   if (!BitWriterResize(bw, size)) return 0;
   memcpy(bw->buf_ + bw->pos_, data, size);
   bw->pos_ += size;
@@ -203,35 +204,6 @@ void VP8BitWriterWipeOut(VP8BitWriter* const bw) {
 #define VP8L_WRITER_BYTES ((int)sizeof(vp8l_wtype_t))
 #define VP8L_WRITER_BITS (VP8L_WRITER_BYTES * 8)
 #define VP8L_WRITER_MAX_BITS (8 * (int)sizeof(vp8l_atype_t))
-
-//  endian-specific htoleXX() definition
-// TODO(skal): move this to config.h, and collect all the endian-related code
-// in a proper .h file
-#if defined(_WIN32)
-#if !defined(_M_PPC)
-#define htole32(x) (x)
-#define htole16(x) (x)
-#else     // PPC is BIG_ENDIAN
-#include <stdlib.h>
-#define htole32(x) (_byteswap_ulong((unsigned long)(x)))
-#define htole16(x) (_byteswap_ushort((unsigned short)(x)))
-#endif    // _M_PPC
-#elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__) || \
-      defined(__DragonFly__)
-#include <sys/endian.h>
-#elif defined(__APPLE__)
-#include <libkern/OSByteOrder.h>
-#define htole32 OSSwapHostToLittleInt32
-#define htole16 OSSwapHostToLittleInt16
-#elif defined(__native_client__) && !defined(__GLIBC__)
-// NaCl without glibc is assumed to be little-endian
-#define htole32(x) (x)
-#define htole16(x) (x)
-#elif defined(__QNX__)
-#include <net/netbyte.h>
-#else     // pretty much all linux and/or glibc
-#include <endian.h>
-#endif
 
 // Returns 1 on success.
 static int VP8LBitWriterResize(VP8LBitWriter* const bw, size_t extra_size) {

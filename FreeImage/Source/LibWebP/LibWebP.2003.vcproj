@@ -255,7 +255,22 @@
 					RelativePath=".\src\enc\iterator.c">
 				</File>
 				<File
+					RelativePath=".\src\enc\near_lossless.c">
+				</File>
+				<File
 					RelativePath=".\src\enc\picture.c">
+				</File>
+				<File
+					RelativePath=".\src\enc\picture_csp.c">
+				</File>
+				<File
+					RelativePath=".\src\enc\picture_psnr.c">
+				</File>
+				<File
+					RelativePath=".\src\enc\picture_rescale.c">
+				</File>
+				<File
+					RelativePath=".\src\enc\picture_tools.c">
 				</File>
 				<File
 					RelativePath=".\src\enc\syntax.c">
@@ -410,6 +425,9 @@
 				</File>
 				<File
 					RelativePath=".\src\utils\color_cache.h">
+				</File>
+				<File
+					RelativePath=".\src\utils\endian_inl.h">
 				</File>
 				<File
 					RelativePath=".\src\utils\filters.h">
