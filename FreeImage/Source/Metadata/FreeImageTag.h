@@ -471,8 +471,11 @@ extern "C" {
 // --------------------------------------------------------------------------
 BOOL jpeg_read_exif_profile(FIBITMAP *dib, const BYTE *dataptr, unsigned datalen);
 BOOL jpeg_read_exif_profile_raw(FIBITMAP *dib, const BYTE *profile, unsigned length);
-BOOL jpegxr_read_exif_profile(FIBITMAP *dib, const BYTE *profile, unsigned length);
-BOOL jpegxr_read_exif_gps_profile(FIBITMAP *dib, const BYTE *profile, unsigned length);
+BOOL jpegxr_read_exif_profile(FIBITMAP *dib, const BYTE *profile, unsigned length, unsigned file_offset);
+BOOL jpegxr_read_exif_gps_profile(FIBITMAP *dib, const BYTE *profile, unsigned length, unsigned file_offset);
+
+BOOL tiff_get_ifd_profile(FIBITMAP *dib, FREE_IMAGE_MDMODEL md_model, BYTE **ppbProfile, unsigned *uProfileLength);
+
 
 // JPEG / TIFF IPTC profile (see IPTC.cpp)
 // --------------------------------------------------------------------------
