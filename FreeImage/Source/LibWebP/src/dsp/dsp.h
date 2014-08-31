@@ -32,8 +32,18 @@ extern "C" {
 # define LOCAL_GCC_PREREQ(maj, min) \
     (LOCAL_GCC_VERSION >= (((maj) << 8) | (min)))
 #else
+# define LOCAL_GCC_VERSION 0
 # define LOCAL_GCC_PREREQ(maj, min) 0
 #endif
+
+#ifdef __clang__
+# define LOCAL_CLANG_VERSION ((__clang_major__ << 8) | __clang_minor__)
+# define LOCAL_CLANG_PREREQ(maj, min) \
+    (LOCAL_CLANG_VERSION >= (((maj) << 8) | (min)))
+#else
+# define LOCAL_CLANG_VERSION 0
+# define LOCAL_CLANG_PREREQ(maj, min) 0
+#endif  // __clang__
 
 #if defined(_MSC_VER) && _MSC_VER > 1310 && \
     (defined(_M_X64) || defined(_M_IX86))
@@ -60,8 +70,14 @@ extern "C" {
 #define WEBP_USE_NEON
 #endif
 
-#if defined(__mips__) && !defined(__mips64)
+#if defined(__mips__) && !defined(__mips64) && (__mips_isa_rev < 6)
 #define WEBP_USE_MIPS32
+#if (__mips_isa_rev >= 2)
+#define WEBP_USE_MIPS32_R2
+#if defined(__mips_dspr2) || (__mips_dsp_rev >= 2)
+#define WEBP_USE_MIPS_DSP_R2
+#endif
+#endif
 #endif
 
 typedef enum {
@@ -70,7 +86,8 @@ typedef enum {
   kAVX,
   kAVX2,
   kNEON,
-  kMIPS32
+  kMIPS32,
+  kMIPSdspR2
 } CPUFeature;
 // returns true if the CPU supports the feature.
 typedef int (*VP8CPUInfo)(CPUFeature feature);
@@ -110,7 +127,12 @@ extern VP8BlockCopy VP8Copy4x4;
 struct VP8Matrix;   // forward declaration
 typedef int (*VP8QuantizeBlock)(int16_t in[16], int16_t out[16],
                                 const struct VP8Matrix* const mtx);
+// Same as VP8QuantizeBlock, but quantizes two consecutive blocks.
+typedef int (*VP8Quantize2Blocks)(int16_t in[32], int16_t out[32],
+                                  const struct VP8Matrix* const mtx);
+
 extern VP8QuantizeBlock VP8EncQuantizeBlock;
+extern VP8Quantize2Blocks VP8EncQuantize2Blocks;
 
 // specific to 2nd transform:
 typedef int (*VP8QuantizeBlockWHT)(int16_t in[16], int16_t out[16],
@@ -224,13 +246,15 @@ typedef void (*WebPYUV444Converter)(const uint8_t* y,
                                     const uint8_t* u, const uint8_t* v,
                                     uint8_t* dst, int len);
 
-extern const WebPYUV444Converter WebPYUV444Converters[/* MODE_LAST */];
+extern WebPYUV444Converter WebPYUV444Converters[/* MODE_LAST */];
 
 // Must be called before using the WebPUpsamplers[] (and for premultiplied
 // colorspaces like rgbA, rgbA4444, etc)
 void WebPInitUpsamplers(void);
 // Must be called before using WebPSamplers[]
 void WebPInitSamplers(void);
+// Must be called before using WebPYUV444Converters[]
+void WebPInitYUV444Converters(void);
 
 //------------------------------------------------------------------------------
 // Utilities for processing transparent channel.
@@ -243,6 +267,13 @@ extern void (*WebPApplyAlphaMultiply)(
 // Same, buf specifically for RGBA4444 format
 extern void (*WebPApplyAlphaMultiply4444)(
     uint8_t* rgba4444, int w, int h, int stride);
+
+
+// Dispatch the values from alpha[] plane to the ARGB destination 'dst'.
+// Returns true if alpha[] plane has non-trivial values different from 0xff.
+extern int (*WebPDispatchAlpha)(const uint8_t* alpha, int alpha_stride,
+                                int width, int height,
+                                uint8_t* dst, int dst_stride);
 
 // Pre-Multiply operation transforms x into x * A / 255  (where x=Y,R,G or B).
 // Un-Multiply operation transforms x into x * 255 / A.

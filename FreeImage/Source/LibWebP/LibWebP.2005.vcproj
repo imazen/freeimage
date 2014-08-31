@@ -232,6 +232,14 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath=".\src\dsp\alpha_processing_mips_dsp_r2.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\alpha_processing_sse2.c"
+					>
+				</File>
+				<File
 					RelativePath=".\src\dsp\cpu.c"
 					>
 				</File>
@@ -276,6 +284,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\dsp\filters_mips_dsp_r2.c"
+					>
+				</File>
+				<File
 					RelativePath=".\src\dsp\lossless.c"
 					>
 				</File>
@@ -296,6 +308,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\dsp\upsampling_mips_dsp_r2.c"
+					>
+				</File>
+				<File
 					RelativePath=".\src\dsp\upsampling_neon.c"
 					>
 				</File>
@@ -309,6 +325,10 @@
 				</File>
 				<File
 					RelativePath=".\src\dsp\yuv_mips32.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\yuv_mips_dsp_r2.c"
 					>
 				</File>
 				<File
