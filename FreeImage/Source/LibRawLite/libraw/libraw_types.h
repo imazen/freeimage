@@ -73,9 +73,8 @@ extern "C" {
 typedef __int64 INT64;
 typedef unsigned __int64 UINT64;
 #else
-#include <stdint.h>
-typedef int64_t INT64;
-typedef uint64_t UINT64;
+typedef long long INT64;
+typedef unsigned long long UINT64;
 #endif
 
 typedef unsigned char uchar;
@@ -148,17 +147,18 @@ typedef struct
 
 typedef struct
 {
-    char        make[64];
-    char        model[64];
-
-    unsigned    raw_count;
-    unsigned    dng_version;
-    unsigned    is_foveon;
-    int         colors;
-
-    unsigned    filters;
-    char        xtrans[6][6];
-    char        cdesc[5];
+  char        make[64];
+  char        model[64];
+  unsigned    raw_count;
+  unsigned    dng_version;
+  unsigned    is_foveon;
+  int         colors;
+  unsigned    filters;
+  char        xtrans[6][6];
+  char        xtrans_abs[6][6];
+  char        cdesc[5];
+  unsigned    xmplen;
+  char	      *xmpdata;
 
 }libraw_iparams_t;
 
@@ -181,14 +181,22 @@ typedef struct
 
 struct ph1_t
 {
-    int format, key_off, t_black, black_off, split_col, tag_21a;
-    float tag_210;
+  int format, key_off, tag_21a;
+  int t_black, split_col, black_col, split_row, black_row;
+  float tag_210;
 };
 
 typedef struct
 {
+  unsigned short illuminant;
+  float calibration[4][4];
+  float colormatrix[4][3];
+} dng_color_t;
+
+typedef struct
+{
   ushort      curve[0x10000]; 
-  unsigned    cblack[4];
+  unsigned    cblack[4102];
   unsigned    black;
   unsigned    data_maximum;
   unsigned    maximum;
@@ -205,6 +213,7 @@ typedef struct
   void        *profile;
   unsigned    profile_length;
   unsigned    black_stat[8];
+  dng_color_t  dng_color[2];
 }libraw_colordata_t;
 
 typedef struct
@@ -258,7 +267,6 @@ typedef struct
     int         user_qual;      /* -q */
     int         user_black;     /* -k */
     int		user_cblack[4];
-    int		sony_arw2_hack;
     int         user_sat;       /* -S */
 
     int         med_passes;     /* -m */
@@ -309,6 +317,10 @@ typedef struct
   int sraw_ycc;
   /* Force use x3f data decoding either if demosaic pack GPL2 enabled */
   int force_foveon_x3f;
+  int x3f_flags;
+  /* Sony ARW2 digging mode */
+  int sony_arw2_options;
+  int sony_arw2_posterization_thr;
 }libraw_output_params_t;
 
 typedef struct
@@ -323,7 +335,8 @@ typedef struct
   ushort        (*color3_image)[3];
     
   /* Phase One black level data; */
-  short  (*ph1_black)[2];
+  short  (*ph1_cblack)[2];
+  short  (*ph1_rblack)[2];
   /* save color and sizes here, too.... */
   libraw_iparams_t  iparams;
   libraw_image_sizes_t sizes;

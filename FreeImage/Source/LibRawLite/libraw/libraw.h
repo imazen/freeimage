@@ -110,6 +110,7 @@ class DllDef LibRaw
 #endif
     int                         open_buffer(void *buffer, size_t size);
     int                         open_datastream(LibRaw_abstract_datastream *);
+	int							error_count(){return libraw_internal_data.unpacker_data.data_error;}
 	void							recycle_datastream();
     int                         unpack(void);
     int                         unpack_thumb(void);
@@ -140,6 +141,8 @@ class DllDef LibRaw
     /* information calls */
     int is_fuji_rotated(){return libraw_internal_data.internal_output_params.fuji_width;}
     int is_sraw();
+	int sraw_midpoint();
+	int is_nikon_sraw();
     /* memory writers */
     virtual libraw_processed_image_t*   dcraw_make_mem_image(int *errcode=NULL);  
     virtual libraw_processed_image_t*   dcraw_make_mem_thumb(int *errcode=NULL);
@@ -163,13 +166,14 @@ class DllDef LibRaw
     libraw_internal_data_t * get_internal_data_pointer(){ return &libraw_internal_data; }
 
     /* Debanding filter */
-    int                         wf_remove_banding();
+    int  wf_remove_banding();
 
   /* Phase one correction/subtractBL calls */
   void phase_one_subtract_black(ushort *src, ushort *dest);
-  void        phase_one_correct();
-  int set_rawspeed_camerafile(char *filename);
+  void phase_one_correct();
+  int  set_rawspeed_camerafile(char *filename);
   void setCancelFlag();
+  void adobe_coeff (const char *, const char *, int internal_only=0);
 
 protected:
     void checkCancel();
@@ -292,6 +296,7 @@ protected:
 
     int         flip_index (int row, int col);
     void        gamma_curve (double pwr, double ts, int mode, int imax);
+    void        cubic_spline (const int *x_, const int *y_, const int len);
 
   /* RawSpeed data */
   void		*_rawspeed_camerameta;

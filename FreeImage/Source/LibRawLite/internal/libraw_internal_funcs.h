@@ -79,7 +79,7 @@ void        crw_init_tables (unsigned table, ushort *huff[2]);
 
 // Nikon (and Minolta Z2)
     void        nikon_load_raw();
-//void        nikon_load_raw();
+    void        nikon_load_sraw();
     int         nikon_e995();
     int         nikon_e2100();
     void        nikon_3700();
@@ -157,6 +157,7 @@ void        crw_init_tables (unsigned table, ushort *huff[2]);
     void        sony_arw_load_raw();
     void        sony_arw2_load_raw();
     void        samsung_load_raw();
+    void        samsung2_load_raw();
     void        parse_minolta (int base);
 
 // Foveon/Sigma
@@ -180,11 +181,12 @@ void        crw_init_tables (unsigned table, ushort *huff[2]);
 // We always have x3f code compiled in!
     void        parse_x3f();
     void        x3f_load_raw();
+    void        x3f_dpq_interpolate_rg();
+	void        x3f_dpq_interpolate_af(int xstep, int ystep, int scale); // 1x1 af pixels
 
 // CAM/RGB
     void        pseudoinverse (double (*in)[3], double (*out)[3], int size);
-    void        cam_xyz_coeff (double cam_xyz[4][3]);
-    void        adobe_coeff (const char *, const char *);
+    void        cam_xyz_coeff (float _rgb_cam[3][4],double cam_xyz[4][3]);
     void        simple_coeff (int index);
 
 

@@ -31,7 +31,9 @@ it under the terms of the one of three licenses as you choose:
 #define cdesc           (imgdata.idata.cdesc)
 #define filters         (imgdata.idata.filters)
 #define xtrans         (imgdata.idata.xtrans)
-
+#define xtrans_abs         (imgdata.idata.xtrans_abs)
+#define xmpdata			(imgdata.idata.xmpdata)
+#define xmplen			(imgdata.idata.xmplen)
 //imgdata image
 #define image           (imgdata.image)
 #define raw_image       (imgdata.rawdata.raw_image)
@@ -146,6 +148,7 @@ it under the terms of the one of three licenses as you choose:
 #define ofp             libraw_internal_data.internal_data.output
 #define profile_offset  (libraw_internal_data.internal_data.profile_offset)
 #define thumb_offset    (libraw_internal_data.internal_data.toffset)
+#define pana_black		(libraw_internal_data.internal_data.pana_black)
 
 //libraw_internal_data.internal_output_params
 #define mix_green       (libraw_internal_data.internal_output_params.mix_green)
