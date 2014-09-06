@@ -9,6 +9,7 @@ Month day, 2014 - 3.16.1
 ! FreeImage now uses LibPNG 1.6.12
 ! FreeImage now uses LibWebP 0.4.0 (GIT patch 2014-08-30)
 ! FreeImage now uses LibRaw 0.17.0 (GIT patch 2014-09-06)
+! FreeImage now uses LibTIFF 4.0.3 (CVS patch 2014-08-31)
 + [Mihail Naydenov] added FreeImage_ConvertFromRawBitsEx
 + [Herve Drolon] added RAW_UNPROCESSED load flag to the RAW plugin
 + [Herve Drolon] added FreeImage_SetMetadataKeyValue
