@@ -246,7 +246,7 @@ static int ReadHuffmanCodeLengths(
   ok = 1;
 
  End:
-  dec->status_ = VP8_STATUS_BITSTREAM_ERROR;
+  if (!ok) dec->status_ = VP8_STATUS_BITSTREAM_ERROR;
   return ok;
 }
 
@@ -745,6 +745,85 @@ static void ExtractPalettedAlphaRows(VP8LDecoder* const dec, int row) {
   dec->last_row_ = dec->last_out_row_ = row;
 }
 
+// cyclic rotation of pattern word
+static WEBP_INLINE uint32_t Rotate8b(uint32_t V) {
+#if defined(WORDS_BIGENDIAN)
+  return ((V & 0xff000000u) >> 24) | (V << 8);
+#else
+  return ((V & 0xffu) << 24) | (V >> 8);
+#endif
+}
+
+// copy 1, 2 or 4-bytes pattern
+static WEBP_INLINE void CopySmallPattern(const uint8_t* data_src,
+                                         uint8_t* data_dst,
+                                         int length, uint32_t pattern) {
+  uint32_t* pdata;
+  int j = 0;
+  int i;
+  // align 'data_dst' to 4-bytes boundary. Adjust the pattern along the way.
+  while ((uintptr_t)data_dst & 3) {
+    *data_dst++ = data_src[j];
+    pattern = Rotate8b(pattern);
+    ++j;
+  }
+  length -= j;
+  data_src += j;
+  // Copy the pattern 4 bytes at a time.
+  pdata = (uint32_t*)data_dst;
+  for (i = 0; i < (length >> 2); ++i) {
+    pdata[i] = pattern;
+  }
+  // Finish with left-overs. 'pattern' is still correctly positioned,
+  // so no Rotate8b() call is needed.
+  for (i <<= 2; i < length; ++i) {
+    data_dst[i] = data_src[i];
+  }
+}
+
+static WEBP_INLINE void CopyBlock(uint8_t* data_dst, int dist, int length) {
+  const uint8_t* data_src = data_dst - dist;
+  if (length >= 8) {
+    uint32_t pattern;
+    switch (dist) {
+      case 1:
+        pattern = *data_src;
+#if defined(__arm__) || defined(_M_ARM)   // arm doesn't like multiply that much
+        pattern |= pattern << 8;
+        pattern |= pattern << 16;
+#elif defined(WEBP_USE_MIPS_DSP_R2)
+        __asm__ volatile ("replv.qb %0, %0" : "+r"(pattern));
+#else
+        pattern = 0x01010101u * pattern;
+#endif
+        break;
+      case 2:
+        pattern = *(const uint16_t*)data_src;
+#if defined(__arm__) || defined(_M_ARM)
+        pattern |= pattern << 16;
+#elif defined(WEBP_USE_MIPS_DSP_R2)
+        __asm__ volatile ("replv.ph %0, %0" : "+r"(pattern));
+#else
+        pattern = 0x00010001u * pattern;
+#endif
+        break;
+      case 4:
+        pattern = *(const uint32_t*)data_src;
+        break;
+      default:
+        goto Copy;
+        break;
+    }
+    CopySmallPattern(data_src, data_dst, length, pattern);
+  } else {
+ Copy:
+    {
+      int i;
+      for (i = 0; i < length; ++i) data_dst[i] = data_src[i];
+    }
+  }
+}
+
 static int DecodeAlphaData(VP8LDecoder* const dec, uint8_t* const data,
                            int width, int height, int last_row) {
   int ok = 1;
@@ -791,8 +870,7 @@ static int DecodeAlphaData(VP8LDecoder* const dec, uint8_t* const data,
       dist_code = GetCopyDistance(dist_symbol, br);
       dist = PlaneCodeToDistance(width, dist_code);
       if (pos >= dist && end - pos >= length) {
-        int i;
-        for (i = 0; i < length; ++i) data[pos + i] = data[pos + i - dist];
+        CopyBlock(data + pos, dist, length);
       } else {
         ok = 0;
         goto End;
@@ -813,6 +891,7 @@ static int DecodeAlphaData(VP8LDecoder* const dec, uint8_t* const data,
       ok = 0;
       goto End;
     }
+    assert(br->eos_ == VP8LIsEndOfStream(br));
     ok = !br->error_;
     if (!ok) goto End;
   }
@@ -930,6 +1009,7 @@ static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
       ok = 0;
       goto End;
     }
+    assert(br->eos_ == VP8LIsEndOfStream(br));
     ok = !br->error_;
     if (!ok) goto End;
   }
