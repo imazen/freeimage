@@ -352,6 +352,7 @@ LibRaw:: LibRaw(unsigned int flags)
   imgdata.params.green_matching = 0;
   imgdata.parent_class = this;
   imgdata.progress_flags = 0;
+  imgdata.color.baseline_exposure = -999.f;
   _exitflag = 0;
   tls = new LibRaw_TLS;
   tls->init();
@@ -452,6 +453,7 @@ void LibRaw:: recycle()
   ZERO(imgdata.rawdata);
   ZERO(imgdata.sizes);
   ZERO(imgdata.color);
+  imgdata.color.baseline_exposure = -999.f;
   ZERO(libraw_internal_data);
   _exitflag = 0;
 #ifdef USE_RAWSPEED
@@ -1017,8 +1019,9 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
 	}
 
 	if(load_raw == &LibRaw::packed_load_raw && !strcasecmp(imgdata.idata.make,"Nikon")
-		 && !libraw_internal_data.unpacker_data.load_flags &&
-		 libraw_internal_data.unpacker_data.data_size*2 == imgdata.sizes.raw_height*imgdata.sizes.raw_width*3)
+		 && !libraw_internal_data.unpacker_data.load_flags 
+		 && strcasecmp(imgdata.idata.model,"COOLPIX P340")
+		 && libraw_internal_data.unpacker_data.data_size*2 == imgdata.sizes.raw_height*imgdata.sizes.raw_width*3)
 	{
 		libraw_internal_data.unpacker_data.load_flags = 80;
 	}
