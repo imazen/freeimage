@@ -256,6 +256,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\dsp\dec_mips_dsp_r2.c"
+					>
+				</File>
+				<File
 					RelativePath=".\src\dsp\dec_neon.c"
 					>
 				</File>
@@ -293,6 +297,10 @@
 				</File>
 				<File
 					RelativePath=".\src\dsp\lossless_mips32.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\lossless_mips_dsp_r2.c"
 					>
 				</File>
 				<File
