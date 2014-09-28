@@ -22,6 +22,12 @@
 
 #include "FreeImage.h"
 #include "Utilities.h"
+
+#ifdef _MSC_VER
+// OpenEXR has many problems with MSVC warnings (why not just correct them ?), just ignore one of them
+#pragma warning (disable : 4800) // ImfVersion.h - 'const int' : forcing value to bool 'true' or 'false' (performance warning)
+#endif 
+
 #include "../OpenEXR/IlmImf/ImfIO.h"
 #include "../OpenEXR/Iex/Iex.h"
 #include "../OpenEXR/IlmImf/ImfOutputFile.h"
