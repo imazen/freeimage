@@ -134,13 +134,13 @@ typedef struct {
 static tmsize_t 
 _tiffReadProc(thandle_t handle, void *buf, tmsize_t size) {
 	fi_TIFFIO *fio = (fi_TIFFIO*)handle;
-	return fio->io->read_proc(buf, size, 1, fio->handle) * size;
+	return fio->io->read_proc(buf, (unsigned)size, 1, fio->handle) * size;
 }
 
 static tmsize_t
 _tiffWriteProc(thandle_t handle, void *buf, tmsize_t size) {
 	fi_TIFFIO *fio = (fi_TIFFIO*)handle;
-	return fio->io->write_proc(buf, size, 1, fio->handle) * size;
+	return fio->io->write_proc(buf, (unsigned)size, 1, fio->handle) * size;
 }
 
 static toff_t
@@ -2018,8 +2018,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				// calculate src line and dst pitch
 				int dst_pitch = FreeImage_GetPitch(dib);
-				int tileRowSize = TIFFTileRowSize(tif);
-				int imageRowSize = TIFFScanlineSize(tif);
+				uint32 tileRowSize = (uint32)TIFFTileRowSize(tif);
+				uint32 imageRowSize = (uint32)TIFFScanlineSize(tif);
 
 
 				// In the tiff file the lines are saved from up to down 
@@ -2027,11 +2027,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				BYTE *bits = FreeImage_GetScanLine(dib, height - 1);
 				
-				uint32 x, y, rowSize;
-				for (y = 0; y < height; y += tileHeight) {						
+				for (uint32 y = 0; y < height; y += tileHeight) {						
 					int32 nrows = (y + tileHeight > height ? height - y : tileHeight);					
 
-					for (x = 0, rowSize = 0; x < width; x += tileWidth, rowSize += tileRowSize) {
+					for (uint32 x = 0, rowSize = 0; x < width; x += tileWidth, rowSize += tileRowSize) {
 						memset(tileBuffer, 0, tileSize);
 
 						// read one tile
