@@ -31,6 +31,7 @@ Month day, 2014 - 3.16.1
 * [Herve Drolon] fixed a bug with output image quality in PluginJP2::Save & PluginJ2K::Save functions (regression from FI 3.15.4)
 * [Herve Drolon] improved RAW file format detection
 * [Aaron Shumate] fixed FreeImage_GetFileType behavior with ANI file formats
+* [Herve Drolon] improved Exif reader so as to handle Exif IFD with a suspicious offset (can occur with maker notes)
 
 March 23rd, 2014 - 3.16.0
 ! FreeImage now uses LibJPEG 9a
