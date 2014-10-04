@@ -24,6 +24,7 @@ it under the terms of the one of three licenses as you choose:
 // imgdata.idata
 #define make            (imgdata.idata.make)
 #define model           (imgdata.idata.model)
+#define software           (imgdata.idata.software)
 #define is_raw          (imgdata.idata.raw_count)
 #define dng_version     (imgdata.idata.dng_version)
 #define is_foveon       (imgdata.idata.is_foveon)
@@ -118,6 +119,7 @@ it under the terms of the one of three licenses as you choose:
 #define output_tiff     (imgdata.params.output_tiff)
 #define med_passes      (imgdata.params.med_passes)
 #define no_auto_bright  (imgdata.params.no_auto_bright)
+#define auto_bright_thr  (imgdata.params.auto_bright_thr)
 #define use_fuji_rotate (imgdata.params.use_fuji_rotate)
 #define filtering_mode (imgdata.params.filtering_mode)
 

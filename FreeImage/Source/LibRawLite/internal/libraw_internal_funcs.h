@@ -25,7 +25,7 @@ it under the terms of the one of three licenses as you choose:
 #else
     /* WF */
     void        wf_bayer4_igauss_filter(int radius,void* src_image, int src_imgmode, void* dst_image, int dst_imgmode);
-    void	wf_bayer4_green_blur   (int mode,void* src_image, int src_imgmode, void* dst_image, int dst_imgmode);
+    void			wf_bayer4_green_blur   (int mode,void* src_image, int src_imgmode, void* dst_image, int dst_imgmode);
     void        wf_bayer4_block_filter (int* radius_list, void* src_image, int src_imgmode, void* dst_image, int dst_imgmode);
     double	wf_filter_energy       (int r1_greenmode, int r1, int r2_greenmode, int r2);
 
@@ -80,6 +80,7 @@ void        crw_init_tables (unsigned table, ushort *huff[2]);
 // Nikon (and Minolta Z2)
     void        nikon_load_raw();
     void        nikon_load_sraw();
+    void	nikon_coolscan_load_raw();
     int         nikon_e995();
     int         nikon_e2100();
     void        nikon_3700();

@@ -135,7 +135,7 @@ FILE *ifp, *ofp;
 short order;
 const char *ifname;
 char *meta_data, xtrans[6][6], xtrans_abs[6][6];
-char cdesc[5], desc[512], make[64], model[64], model2[64], artist[64];
+char cdesc[5], desc[512], make[64], model[64], model2[64], artist[64],software[64];
 float flash_used, canon_ev, iso_speed, shutter, aperture, focal_len;
 time_t timestamp;
 off_t strip_offset, data_offset;
@@ -1331,6 +1331,36 @@ void CLASS pentax_load_raw()
       if (hpred[col & 1] >> tiff_bps) derror();
     }
   }
+}
+
+void CLASS nikon_coolscan_load_raw()
+{
+  int bufsize = width*3*tiff_bps/8;
+  fseek (ifp, data_offset, SEEK_SET);
+  unsigned char *buf = (unsigned char*)malloc(bufsize);
+  unsigned short *ubuf = (unsigned short *)buf;
+  for(int row = 0; row < raw_height; row++)
+    {
+      int red = fread (buf, 1, bufsize, ifp);
+      unsigned short (*ip)[4] = (unsigned short (*)[4]) image + row*width;
+      if(tiff_bps <= 8)
+        for(int col=0; col<width;col++)
+          {
+            ip[col][0] = buf[col*3];
+            ip[col][1] = buf[col*3+1];
+            ip[col][2] = buf[col*3+2];
+            ip[col][3]=0;
+          }
+      else
+        for(int col=0; col<width;col++)
+          {
+            ip[col][0] = ubuf[col*3];
+            ip[col][1] = ubuf[col*3+1];
+            ip[col][2] = ubuf[col*3+2];
+            ip[col][3]=0;
+          }
+    }
+  free(buf);
 }
 
 void CLASS nikon_load_raw()
@@ -6782,6 +6812,14 @@ void CLASS parse_exif (int base)
   if(!strcmp(make,"Hasselblad") && (tiff_nifds > 3) && (entries > 512)) return;
   while (entries--) {
     tiff_get (base, &tag, &type, &len, &save);
+#ifdef LIBRAW_LIBRARY_BUILD
+    if(callbacks.exif_cb)
+      {
+        int savepos = ftell(ifp);
+        callbacks.exif_cb(callbacks.exifparser_data,tag,type,len,order,ifp);
+        fseek(ifp,savepos,SEEK_SET);
+      }
+#endif
     switch (tag) {
       case 33434:  shutter = getreal(type);		break;
       case 33437:  aperture = getreal(type);		break;
@@ -6969,7 +7007,7 @@ int CLASS parse_tiff_ifd (int base)
 {
   unsigned entries, tag, type, len, plen=16, save;
   int ifd, use_cm=0, cfa, i, j, c, ima_len=0;
-  char software[64], *cbuf, *cp;
+  char *cbuf, *cp;
   uchar cfa_pat[16], cfa_pc[] = { 0,1,2,3 }, tab[256];
   double cc[4][4], cm[4][3], cam_xyz[4][3], num;
   double ab[]={ 1,1,1,1 }, asn[] = { 0,0,0,0 }, xyz[] = { 1,1,1 };
@@ -6991,6 +7029,14 @@ int CLASS parse_tiff_ifd (int base)
   if (entries > 512) return 1;
   while (entries--) {
     tiff_get (base, &tag, &type, &len, &save);
+#ifdef LIBRAW_LIBRARY_BUILD
+    if(callbacks.exif_cb)
+      {
+        int savepos = ftell(ifp);
+        callbacks.exif_cb(callbacks.exifparser_data,tag,type,len,order,ifp);
+        fseek(ifp,savepos,SEEK_SET);
+      }
+#endif
     switch (tag) {
       case 1:   if(len==4) pana_raw = get4(); break;
       case 5:   width  = get2();  break;
@@ -7122,7 +7168,6 @@ int CLASS parse_tiff_ifd (int base)
 	    !strncmp(software,"dcraw",5) ||
 	    !strncmp(software,"UFRaw",5) ||
 	    !strncmp(software,"Bibble",6) ||
-	    !strncmp(software,"Nikon Scan",10) ||
 	    !strcmp (software,"Digital Photo Professional"))
 	  is_raw = 0;
 	break;
@@ -7695,6 +7740,13 @@ void CLASS apply_tiff()
       case 32770:
       case 32773: goto slr;
       case 0:  case 1:
+        if(!strcasecmp(make,"Nikon") && !strncmp(software,"Nikon Scan",10))
+          {
+            load_raw = &CLASS nikon_coolscan_load_raw;
+            raw_color = 1;
+            filters = 0;
+            break;
+          }
 	if (!strncmp(make,"OLYMPUS",7) &&
 		tiff_ifd[raw].bytes*2 == raw_width*raw_height*3)
 	  load_flags = 24;
@@ -7750,10 +7802,11 @@ void CLASS apply_tiff()
       default: is_raw = 0;
     }
   if (!dng_version)
-    if ( (tiff_samples == 3 && tiff_ifd[raw].bytes && tiff_bps != 14 &&
+    if ( ((tiff_samples == 3 && tiff_ifd[raw].bytes && tiff_bps != 14 &&
 	  (tiff_compress & -16) != 32768)
       || (tiff_bps == 8 && !strcasestr(make,"Kodak") &&
 	  !strstr(model2,"DEBUG RAW")))
+         && strncmp(software,"Nikon Scan",10))
       is_raw = 0;
   for (i=0; i < tiff_nifds; i++)
     if (i != raw && tiff_ifd[i].samples == max_samp &&
@@ -8678,6 +8731,8 @@ void CLASS adobe_coeff (const char *t_make, const char *t_model
 	{ 6578,-259,-502,-5974,13030,3309,-308,1058,4970 } },
     { "Canon PowerShot SX50 HS", 0, 0,
 	{ 12432,-4753,-1247,-2110,10691,1629,-412,1623,4926 } },
+    { "Canon PowerShot SX60 HS", 0, 0, /* temp */
+	{ 12432,-4753,-1247,-2110,10691,1629,-412,1623,4926 } },
     { "Canon PowerShot A3300", 0, 0,	/* DJC */
 	{ 10826,-3654,-1023,-3215,11310,1906,0,999,4960 } },
     { "Canon PowerShot A470", 0, 0,	/* DJC */
@@ -8790,6 +8845,8 @@ void CLASS adobe_coeff (const char *t_make, const char *t_model
 	{ 13509,-6199,-1254,-4430,12733,1865,-331,1441,5022 } },
     { "Fujifilm X20", 0, 0,
 	{ 11768,-4971,-1133,-4904,12927,2183,-480,1723,4605 } },
+    { "Fujifilm X30", 0, 0, /* temp */
+	{ 14305,-7365,-687,-3117,12383,432,-287,1660,4361 } },
     { "Fujifilm X-Pro1", 0, 0,
 	{ 10413,-3996,-993,-3721,11640,2361,-733,1540,6011 } },
     { "Fujifilm X-A1", 0, 0,
@@ -8982,6 +9039,8 @@ void CLASS adobe_coeff (const char *t_make, const char *t_model
 	{ 8198,-2239,-724,-4871,12389,2798,-1043,2050,7181 } },
     { "Nikon D7100", 0, 0,
 	{ 8322,-3112,-1047,-6367,14342,2179,-988,1638,6394 } },
+    {"Nikon D750",-600, 0, /* LibRaw */
+     { 10532,-4157,-410,-3242,11501,1362,-1259,2499,6511 } },
     { "Nikon D700", 0, 0,
 	{ 8139,-2171,-663,-8747,16541,2295,-1925,2008,8093 } },
     { "Nikon D70", 0, 0,
@@ -9230,6 +9289,10 @@ void CLASS adobe_coeff (const char *t_make, const char *t_model
 	{ 9379,-3267,-816,-3227,11560,1881,-926,1928,5340 } },
     { "Panasonic DMC-LX1", 0, 0xf7f,
 	{ 10704,-4187,-1230,-8314,15952,2501,-920,945,8927 } },
+    { "Leica D-Lux (Typ 109)", 0, 0xf7f, /* Temp copy from LX1 */
+	{ 10704,-4187,-1230,-8314,15952,2501,-920,945,8927 } },
+    { "Panasonic DMC-LX100", 0, 0xf7f, /* Temp copy from LX1 */
+	{ 10704,-4187,-1230,-8314,15952,2501,-920,945,8927 } },
     { "Leica D-LUX2", 0, 0xf7f,
 	{ 10704,-4187,-1230,-8314,15952,2501,-920,945,8927 } },
     { "Panasonic DMC-LX2", 0, 0,
@@ -9248,6 +9311,8 @@ void CLASS adobe_coeff (const char *t_make, const char *t_model
 	{ 10148,-3743,-991,-2837,11366,1659,-701,1893,4899 } },
     { "Leica D-LUX 6", -15, 0,
 	{ 10148,-3743,-991,-2837,11366,1659,-701,1893,4899 } },
+    { "Leica V-LUX (Typ 114)", -15, 0,	/* LibRaw */
+        { 9653,-4154,-509,-2262,10985,936,-1120,2255,4061 } },
     { "Panasonic DMC-FZ1000", -15, 0,	/* LibRaw */
         { 9653,-4154,-509,-2262,10985,936,-1120,2255,4061 } },
     { "Panasonic DMC-FZ100", -15, 0xfff,
@@ -9651,6 +9716,7 @@ void CLASS identify()
     { 4480, 3348,  12, 10, 36, 12, 0, 0, 0, 18, 0x49 },
     { 4480, 3366,  80, 50,  0,  0 },
     { 4496, 3366,  80, 50, 12,  0 },
+    { 4768, 3516,  96, 18,  0,  0 },
     { 4832, 3204,  62, 26,  0,  0 },
     { 4832, 3228,  62, 51,  0,  0 },
     { 5108, 3349,  98, 13,  0,  0 },
@@ -9660,6 +9726,7 @@ void CLASS identify()
     { 5344, 3584, 126,100,  0,  2 },
     { 5360, 3516, 158, 51,  0,  0 },
     { 5568, 3708,  72, 38,  0,  0 },
+    { 5632, 3710,  132, 40,  0,  0 },
     { 5712, 3774,  62, 20, 10,  2 },
     { 5792, 3804, 158, 51,  0,  0 },
     { 5920, 3950, 122, 80,  2,  0 },
@@ -9696,6 +9763,7 @@ void CLASS identify()
     { 0x286, "EOS 600D" },
     { 0x287, "EOS 60D" },
     { 0x288, "EOS 1100D" },
+    { 0x289, "EOS 7D Mark II" },
     { 0x301, "EOS 650D" },
     { 0x302, "EOS 6D" },
     { 0x324, "EOS-1D C" },
@@ -9756,10 +9824,13 @@ void CLASS identify()
     {306,"ILCE-7"},
     {307,"NEX-5T"},
     {308,"DSC-RX100M2"},
+    {309,"DSC-RX10"},
     {310,"DSC-RX1R"},
     {311,"ILCE-7R"},
     {312,"ILCE-6000"},
     {313,"ILCE-5000"},
+    {317,"DSC-RX100M3"},
+    {318,"ILCE-7S"},
     {319,"ILCA-77M2"},
     {339,"ILCE-5100"}
   };
@@ -11547,7 +11618,11 @@ void CLASS write_ppm_tiff()
   int c, row, col, soff, rstep, cstep;
   int perc, val, total, t_white=0x2000;
 
+#ifdef LIBRAW_LIBRARY_BUILD
+  perc = width * height * auto_bright_thr;
+#else
   perc = width * height * 0.01;		/* 99th percentile white level */
+#endif
   if (fuji_width) perc /= 2;
   if (!((highlight & ~2) || no_auto_bright))
     for (t_white=c=0; c < colors; c++) {

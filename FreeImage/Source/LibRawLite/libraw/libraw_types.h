@@ -73,9 +73,8 @@ extern "C" {
 typedef __int64 INT64;
 typedef unsigned __int64 UINT64;
 #else
-#include <stdint.h>
-typedef int64_t INT64;
-typedef uint64_t UINT64;
+typedef long long INT64;
+typedef unsigned long long UINT64;
 #endif
 
 typedef unsigned char uchar;
@@ -112,6 +111,7 @@ typedef struct
 
 
 typedef void (* memory_callback)(void * data, const char *file, const char *where);
+typedef void (*exif_parser_callback) (void *context, int tag, int type, int len,unsigned int ord, void *ifp);
 
 DllDef void default_memory_callback(void *data,const char *file, const char *where);
 
@@ -131,6 +131,9 @@ typedef struct
 
     progress_callback progress_cb;
     void *progresscb_data;
+
+	exif_parser_callback exif_cb;
+	void *exifparser_data;
 } libraw_callbacks_t;
 
 
@@ -150,6 +153,7 @@ typedef struct
 {
   char        make[64];
   char        model[64];
+  char		  software[64];
   unsigned    raw_count;
   unsigned    dng_version;
   unsigned    is_foveon;

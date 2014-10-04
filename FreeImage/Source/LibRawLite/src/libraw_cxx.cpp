@@ -323,6 +323,7 @@ LibRaw:: LibRaw(unsigned int flags)
 #endif
   callbacks.mem_cb = (flags & LIBRAW_OPIONS_NO_MEMERR_CALLBACK) ? NULL:  &default_memory_callback;
   callbacks.data_cb = (flags & LIBRAW_OPIONS_NO_DATAERR_CALLBACK)? NULL : &default_data_callback;
+  callbacks.exif_cb = NULL; // no default callback
   memmove(&imgdata.params.aber,&aber,sizeof(aber));
   memmove(&imgdata.params.gamm,&gamm,sizeof(gamm));
   memmove(&imgdata.params.greybox,&greybox,sizeof(greybox));
@@ -540,6 +541,11 @@ int LibRaw::get_decoder_info(libraw_decoder_info_t* d_info)
       d_info->decoder_name = "nikon_load_raw()";
       d_info->decoder_flags = LIBRAW_DECODER_FLATFIELD | LIBRAW_DECODER_TRYRAWSPEED;
     }
+  else if (load_raw == &LibRaw::nikon_coolscan_load_raw )
+  {
+	  d_info->decoder_name = "nikon_coolscan_load_raw()";
+	  d_info->decoder_flags = LIBRAW_DECODER_LEGACY | LIBRAW_DECODER_FIXEDMAXC; 
+  }
   else if (load_raw == &LibRaw::nikon_load_sraw )
     {
       d_info->decoder_name = "nikon_load_sraw()";
@@ -1011,11 +1017,26 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
 
     identify();
 
+	if(!imgdata.idata.dng_version && !strcmp(imgdata.idata.make,"Samsung") && !strcmp(imgdata.idata.model,"NX1"))
+	{
+		imgdata.idata.raw_count = 0; // Disabled for non-DNG
+	}
+
 	// S3Pro DNG patch
 	if(imgdata.idata.dng_version && !strcmp(imgdata.idata.make,"Fujifilm") && !strcmp(imgdata.idata.model,"S3Pro") && imgdata.sizes.raw_width == 4288 )
 	{
 		imgdata.sizes.left_margin++;
 		imgdata.sizes.width--;
+	}
+	if(imgdata.idata.dng_version && !strcmp(imgdata.idata.make,"Fujifilm") && !strcmp(imgdata.idata.model,"S5Pro") && imgdata.sizes.raw_width == 4288 )
+	{
+		imgdata.sizes.left_margin++;
+		imgdata.sizes.width--;
+	}
+	if(!imgdata.idata.dng_version && !strcmp(imgdata.idata.make,"Fujifilm") && !strcmp(imgdata.idata.model,"S20Pro"))
+	{
+		if(imgdata.idata.raw_count>1)
+			imgdata.idata.raw_count = 1;
 	}
 
 	if(load_raw == &LibRaw::packed_load_raw && !strcasecmp(imgdata.idata.make,"Nikon")
@@ -2204,7 +2225,7 @@ int LibRaw::copy_mem_image(void* scan0, int stride, int bgr)
     if(libraw_internal_data.output_data.histogram)
       {
         int perc, val, total, t_white=0x2000,c;
-        perc = S.width * S.height * 0.01;        /* 99th percentile white level */
+        perc = S.width * S.height * O.auto_bright_thr;
         if (IO.fuji_width) perc /= 2;
         if (!((O.highlight & ~2) || O.no_auto_bright))
           for (t_white=c=0; c < P1.colors; c++) {
@@ -3262,6 +3283,7 @@ static const char  *static_camera_list[] =
 "Canon PowerShot G5",
 "Canon PowerShot G6",
 "Canon PowerShot G7 (CHDK hack)",
+"Canon PowerShot G7 X",
 "Canon PowerShot G9",
 "Canon PowerShot G10",
 "Canon PowerShot G11",
@@ -3286,6 +3308,7 @@ static const char  *static_camera_list[] =
 "Canon PowerShot S120",
 "Canon PowerShot SX1 IS",
 "Canon PowerShot SX50 HS",
+"Canon PowerShot SX60 HS",
 "Canon PowerShot SX110 IS (CHDK hack)",
 "Canon PowerShot SX120 IS (CHDK hack)",
 "Canon PowerShot SX220 HS (CHDK hack)",
@@ -3298,6 +3321,7 @@ static const char  *static_camera_list[] =
 "Canon EOS 5D Mark III",
 "Canon EOS 6D",
 "Canon EOS 7D",
+"Canon EOS 7D Mark II",
 "Canon EOS 10D",
 "Canon EOS 20D",
 "Canon EOS 20Da",
@@ -3429,6 +3453,7 @@ static const char  *static_camera_list[] =
 "FujiFilm X100S",
 "FujiFilm X10",
 "FujiFilm X20",
+"FujiFilm X30",
 "FujiFilm X-A1",
 "FujiFilm X-E1",
 "FujiFilm X-E2",
@@ -3507,6 +3532,7 @@ static const char  *static_camera_list[] =
 "Kodak C603",
 "Kodak P850",
 "Kodak P880",
+"Kodak S-1",
 "Kodak Z980",
 "Kodak Z981",
 "Kodak Z990",
@@ -3550,6 +3576,7 @@ static const char  *static_camera_list[] =
 "Leica D-LUX4",
 "Leica D-LUX5",
 "Leica D-LUX6",
+"Leica D-Lux (Typ 109)",
 "Leica M8",
 "Leica M8.2",
 "Leica M9",
@@ -3567,6 +3594,7 @@ static const char  *static_camera_list[] =
 "Leica V-LUX2",
 "Leica V-LUX3",
 "Leica V-LUX4",
+"Leica V-Lux (Typ 114)",
 "Leica X VARIO (Typ 107)",
 "Logitech Fotoman Pixtura",
 "Mamiya ZD",
@@ -3588,6 +3616,7 @@ static const char  *static_camera_list[] =
 "Minolta Alpha/Dynax/Maxxum 5D",
 "Minolta Alpha/Dynax/Maxxum 7D",
 "Motorola PIXL",
+"Nikon Coolscan NEF",
 "Nikon D1",
 "Nikon D1H",
 "Nikon D1X",
@@ -3615,6 +3644,7 @@ static const char  *static_camera_list[] =
 "Nikon D600",
 "Nikon D610",
 "Nikon D700",
+"Nikon D750",
 "Nikon D800",
 "Nikon D800E",
 "Nikon D810",
@@ -3771,6 +3801,7 @@ static const char  *static_camera_list[] =
 "Panasonic DMC-LX3",
 "Panasonic DMC-LX5",
 "Panasonic DMC-LX7",
+"Panasonic DMC-LX100",
 "Panasonic DMC-TZ60/61/SZ40",
 "Pentax *ist D",
 "Pentax *ist DL",
@@ -3912,6 +3943,7 @@ static const char  *static_camera_list[] =
 "Sony ILCE-5000",
 "Sony ILCE-5100",
 "Sony ILCE-6000",
+"Sony ILCE-QX1",
 "Sony DSC-F828",
 "Sony DSC-R1",
 "Sony DSC-RX1",
