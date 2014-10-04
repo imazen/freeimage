@@ -577,6 +577,10 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, DWORD dwOffsetIfd0, DWORD d
 
 		// determine how many entries there are in the current IFD
 		nde = ReadUint16(msb_order, ifdp);
+		if (((size_t)(ifdp - tiffp) + 12 * nde) > (size_t)dwLength) {
+			// suspicious IFD offset, ignore
+			continue;
+		}
 
 		for(; de < nde; de++) {
 			char *pde = NULL;	// pointer to the directory entry
@@ -590,7 +594,9 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, DWORD dwOffsetIfd0, DWORD d
 			pde = (char*) DIR_ENTRY_ADDR(ifdp, de);
 
 			// get the tag ID
-			FreeImage_SetTagID(tag, ReadUint16(msb_order, pde));
+			WORD tag_id = ReadUint16(msb_order, pde);
+			FreeImage_SetTagID(tag, tag_id);
+
 			// get the tag type
 			WORD tag_type = (WORD)ReadUint16(msb_order, pde + 2);
             if((tag_type - 1) >= EXIF_NUM_FORMATS) {
@@ -602,7 +608,9 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, DWORD dwOffsetIfd0, DWORD d
 			FreeImage_SetTagType(tag, (FREE_IMAGE_MDTYPE)tag_type);
 
 			// get number of components
-			FreeImage_SetTagCount(tag, ReadUint32(msb_order, pde + 4));
+			DWORD tag_count = ReadUint32(msb_order, pde + 4);
+			FreeImage_SetTagCount(tag, tag_count);
+
             // check that tag length (size of the tag value in bytes) will fit in a DWORD
             unsigned tag_data_width = FreeImage_TagDataWidth(FreeImage_GetTagType(tag));
             if (tag_data_width != 0 && FreeImage_GetTagCount(tag) > ~(DWORD)0 / tag_data_width) {
@@ -666,7 +674,7 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, DWORD dwOffsetIfd0, DWORD d
 				if((sub_offset < dwLength) && (next_mdmodel != TagLib::UNKNOWN)) {
 					// push our current directory state onto the stack
 					ifdstack.push(ifdp);
-					// bump to the next entry
+					// jump to the next entry
 					de++;
 					destack.push(de);
 
