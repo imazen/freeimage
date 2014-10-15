@@ -38,7 +38,7 @@ build_script:
   
   - SET zip=libgd-msvc12-%build_platform%.zip
   - if [%build_compiler%]==[msvc] (
-      FreeImage.2013.sln /p:Configuration=Release /v:m )
+      msbuild FreeImage.2013.sln /p:Configuration=Release /v:m )
   
   - ps: if($env:build_compiler -eq 'msvc') {
       invoke '7z' "a $($env:zip) .\Dist\FreeImage.dll .\Dist\FreeImage.h .\Dist\FreeImage.lib";
