@@ -1,0 +1,41 @@
+version: 3.16.1.{build}
+shallow_clone: true
+
+
+environment:
+  matrix:
+    - build_platform: "x86"
+      build_compiler: "msvc"
+    
+    - build_platform: "x64"
+      build_compiler: "msvc"
+
+
+
+install:
+  - ps: if($env:build_platform -eq 'x64') {
+          $env:vcvar_arg = 'x86_amd64';
+        }
+        else {
+          $env:vcvar_arg = 'x86';
+        }
+
+
+
+build_script:
+  
+  # set env
+  
+  - '"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall" %vcvar_arg%'
+  
+  
+  # build msvc
+  
+  - SET zip=libgd-msvc12-%build_platform%.zip
+  - if [%build_compiler%]==[msvc] (
+      FreeImage.2013.sln /p:Configuration=Release /v:m )
+  
+  - ps: if($env:build_compiler -eq 'msvc') {
+      invoke '7z' "a $($env:zip) .\Dist\FreeImage.dll .\Dist\FreeImage.h .\Dist\FreeImage.lib";
+      Push-AppveyorArtifact $env:zip; }
+
