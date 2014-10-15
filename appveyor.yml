@@ -19,6 +19,11 @@ install:
         else {
           $env:vcvar_arg = 'x86';
         }
+  
+  
+  # get common functions
+  - git clone https://github.com/imazen/gd-appveyor-helpers
+  - ps: . .\gd-appveyor-helpers\appveyor_funcs.ps1
 
 
 
