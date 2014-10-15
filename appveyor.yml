@@ -36,7 +36,7 @@ build_script:
   
   # build msvc
   
-  - SET zip=libgd-msvc12-%build_platform%.zip
+  - SET zip=freeimage-msvc12-%build_platform%.zip
   - if [%build_compiler%]==[msvc] (
       msbuild FreeImage.2013.sln /p:Configuration=Release /v:m )
   
