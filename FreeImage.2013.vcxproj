@@ -134,6 +134,7 @@
       <ImportLibrary>.\Release/FreeImage.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>true</Profile>
+      <AdditionalOptions>/OPT:REF %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>copy Release\FreeImage.dll Dist
@@ -302,7 +303,6 @@ copy Source\FreeImage.h Dist
     <ClCompile Include="Source\FreeImage\PluginBMP.cpp" />
     <ClCompile Include="Source\FreeImage\PluginCUT.cpp" />
     <ClCompile Include="Source\FreeImage\PluginDDS.cpp" />
-    <ClCompile Include="Source\FreeImage\PluginEXR.cpp" />
     <ClCompile Include="Source\FreeImage\PluginG3.cpp" />
     <ClCompile Include="Source\FreeImage\PluginGIF.cpp" />
     <ClCompile Include="Source\FreeImage\PluginHDR.cpp" />
@@ -377,6 +377,7 @@ copy Source\FreeImage.h Dist
     <ClCompile Include="Source\FreeImageToolkit\MultigridPoissonSolver.cpp" />
     <ClCompile Include="Source\FreeImageToolkit\Rescale.cpp" />
     <ClCompile Include="Source\FreeImageToolkit\Resize.cpp" />
+    <ClCompile Include="Source\OpenEXR\Half\half.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="FreeImage.rc" />
@@ -432,6 +433,10 @@ copy Source\FreeImage.h Dist
     <ProjectReference Include="Source\OpenEXR\OpenEXR.2013.vcxproj">
       <Project>{17a4874b-0606-4687-90b6-f91f8cb3b8af}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>false</Private>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
     <ProjectReference Include="Source\ZLib\ZLib.2013.vcxproj">
       <Project>{33134f61-c1ad-4b6f-9cea-503a9f140c52}</Project>
