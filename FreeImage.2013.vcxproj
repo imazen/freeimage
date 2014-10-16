@@ -134,7 +134,6 @@
       <ImportLibrary>.\Release/FreeImage.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>true</Profile>
-      <AdditionalOptions>/OPT:REF %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>copy Release\FreeImage.dll Dist

@@ -194,7 +194,6 @@ copy ..\FreeImage.h ..\..\Dist
     <Lib>
       <OutputFile>Release\FreeImage.lib</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalOptions>/INCREMENTAL:NO /OPT:REF %(AdditionalOptions)</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
       <Command>copy Release\FreeImage.lib ..\..\Dist
