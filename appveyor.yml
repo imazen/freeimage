@@ -40,6 +40,12 @@ build_script:
   - SET zipNet=FreeImageNET-%build_platform%.zip
   - if [%build_compiler%]==[msvc] (
       msbuild FreeImage.2013.sln /p:Configuration=Release /v:m &&
+      cd TestAPI &&
+      msbuild Test.2013.sln /p:Configuration=Release /v:m &&
+      copy Release\Test.exe . &&
+      copy ..\Dist\FreeImage.dll . &&
+      Test &&
+      cd .. &&
       cd Wrapper\FreeImage.NET\cs\Library &&
       msbuild Library.csproj /p:Configuration=Release /v:m &&
       cd ..\..\..\.. )
