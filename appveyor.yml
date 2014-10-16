@@ -4,6 +4,7 @@ shallow_clone: true
 
 environment:
   pack_dlls: 1      # will fetch upx
+  dyn_runtime: 1    
   
   matrix:
     - build_platform: "x86"
@@ -22,6 +23,14 @@ install:
           $env:vcvar_arg = 'x86';
         }
   
+  # set to /MD
+  - ps: if($env:dyn_runtime -eq '1') {
+          foreach($file in (get-childitem *.vcxproj -r -file)) {
+            (Get-Content $file) | 
+            Foreach-Object {$_ -replace "<RuntimeLibrary>.*</RuntimeLibrary>", "<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>"} |
+            Set-Content $file
+          }
+        }
   
   # get common functions
   - git clone https://github.com/imazen/gd-appveyor-helpers
