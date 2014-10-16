@@ -61,17 +61,23 @@ build_script:
       if [%pack_dlls%]==[1] ( upx Dist\FreeImage.dll ) &&
       cd TestAPI &&
       msbuild Test.2013.sln /p:Configuration=Release /v:m &&
-      copy Release\Test.exe . &&
-      copy ..\Dist\FreeImage.dll . &&
-      Test &&
       cd .. &&
       cd Wrapper\FreeImage.NET\cs\Library &&
       msbuild Library.csproj /p:Configuration=Release /v:m &&
       cd ..\..\..\.. )
   
   - ps: if($env:build_compiler -eq 'msvc') {
-      invoke '7z' "a $($env:zip) .\Dist\FreeImage.dll .\Dist\FreeImage.h .\Dist\FreeImage.lib";
+      invoke '7z' "a $($env:zip) .\Dist\FreeImage.dll .\Dist\FreeImage.h .\Dist\FreeImage.lib .\Release\vc120.pdb";
       Push-AppveyorArtifact $env:zip;
       invoke '7z' "a $($env:zipNet) .\Dist\FreeImage.dll .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.dll .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.XML";
       Push-AppveyorArtifact $env:zipNet; }
 
+
+
+test_script:
+  - if [%build_compiler%]==[msvc] (
+     cd TestAPI &&
+      copy Release\Test.exe . &&
+      copy ..\Dist\FreeImage.dll . &&
+      Test &&
+      cd .. )
