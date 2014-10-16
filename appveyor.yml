@@ -58,7 +58,7 @@ build_script:
   - SET zipNet=FreeImageNET-%build_platform%.zip
   - if [%build_compiler%]==[msvc] (
       msbuild FreeImage.2013.sln /p:Configuration=Release /v:m &&
-      if [%pack_dlls%]==[1] ( upx Dist\FreeImage.dll ) &&
+      (if [%pack_dlls%]==[1] upx Dist\FreeImage.dll ) &&
       cd TestAPI &&
       msbuild Test.2013.sln /p:Configuration=Release /v:m &&
       cd .. &&
