@@ -3,6 +3,8 @@ shallow_clone: true
 
 
 environment:
+  pack_dlls: 1      # will fetch upx
+  
   matrix:
     - build_platform: "x86"
       build_compiler: "msvc"
@@ -24,6 +26,13 @@ install:
   # get common functions
   - git clone https://github.com/imazen/gd-appveyor-helpers
   - ps: . .\gd-appveyor-helpers\appveyor_funcs.ps1
+  
+  
+  # get upx (cinst broken; gets dos ver)
+  #- if [%pack_dlls%]==[1] cinst upx
+  - if [%pack_dlls%]==[1] (
+      curl -L -o upx.zip http://upx.sourceforge.net/download/upx391w.zip &&
+      7z e upx.zip *.exe -r )
 
 
 
@@ -40,6 +49,7 @@ build_script:
   - SET zipNet=FreeImageNET-%build_platform%.zip
   - if [%build_compiler%]==[msvc] (
       msbuild FreeImage.2013.sln /p:Configuration=Release /v:m &&
+      if [%pack_dlls%]==[1] ( upx Dist\FreeImage.dll ) &&
       cd TestAPI &&
       msbuild Test.2013.sln /p:Configuration=Release /v:m &&
       copy Release\Test.exe . &&
