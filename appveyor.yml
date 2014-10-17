@@ -3,8 +3,8 @@ shallow_clone: true
 
 
 environment:
-  pack_dlls: 1      # will fetch upx
-  dyn_runtime: 1    
+  pack_dlls:   1    # will fetch upx
+  dyn_runtime: 1    #
   
   matrix:
     - build_platform: "x86"
@@ -36,12 +36,14 @@ install:
   - git clone https://github.com/imazen/gd-appveyor-helpers
   - ps: . .\gd-appveyor-helpers\appveyor_funcs.ps1
   
-  
   # get upx (cinst broken; gets dos ver)
   #- if [%pack_dlls%]==[1] cinst upx
   - if [%pack_dlls%]==[1] (
       curl -L -o upx.zip http://upx.sourceforge.net/download/upx391w.zip &&
       7z e upx.zip *.exe -r )
+  
+  - curl -L -o utd.zip https://s3.amazonaws.com/public-unit-test-resources/FreeImage.NET/UnitTestData.zip
+  - 7z x utd.zip -oWrapper\FreeImage.NET\cs
 
 
 
@@ -64,7 +66,10 @@ build_script:
       cd .. &&
       cd Wrapper\FreeImage.NET\cs\Library &&
       msbuild Library.csproj /p:Configuration=Release /v:m &&
-      cd ..\..\..\.. )
+      cd ..\..\..\.. &&
+      cd Wrapper\FreeImage.NET\cs\UnitTest &&
+      msbuild UnitTest.csproj /p:Configuration=Release /v:m &&
+      cd ..\..\..\..)
   
   - ps: if($env:build_compiler -eq 'msvc') {
       invoke '7z' "a $($env:zip) .\Dist\FreeImage.dll .\Dist\FreeImage.h .\Dist\FreeImage.lib .\Release\vc120.pdb";
@@ -75,9 +80,15 @@ build_script:
 
 
 test_script:
+  
   - if [%build_compiler%]==[msvc] (
-     cd TestAPI &&
+      cd TestAPI &&
       copy Release\Test.exe . &&
       copy ..\Dist\FreeImage.dll . &&
       Test &&
-      cd .. )
+      cd .. &&
+      copy Dist\FreeImage.dll Wrapper\FreeImage.NET\cs\UnitTest\bin\Release &&
+      (if [%build_platform%]==[x86] (nunit-console-x86 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe)
+      else if [%build_platform%]==[x64] (nunit-console Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe)) &&
+      appveyor PushArtifact TestResult.xml
+    )
