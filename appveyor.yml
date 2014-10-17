@@ -69,7 +69,7 @@ build_script:
       cd ..\..\..\.. &&
       cd Wrapper\FreeImage.NET\cs\UnitTest &&
       msbuild UnitTest.csproj /p:Configuration=Release /v:m &&
-      cd ..\..\..\..)
+      cd ..\..\..\.. )
   
   - ps: if($env:build_compiler -eq 'msvc') {
       invoke '7z' "a $($env:zip) .\Dist\FreeImage.dll .\Dist\FreeImage.h .\Dist\FreeImage.lib .\Release\vc120.pdb";
