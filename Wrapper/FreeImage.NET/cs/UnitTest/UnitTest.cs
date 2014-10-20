@@ -479,7 +479,7 @@ namespace FreeImageNETUnitTest
 			Assert.AreNotEqual(IntPtr.Zero, FreeImage.GetTransparencyTable(dib));
 			FreeImage.SetTransparent(dib, false);
 			FreeImage.SetTransparencyTable(dib, new byte[] { });
-			Assert.IsTrue(FreeImage.IsTransparent(dib));
+			Assert.IsFalse(FreeImage.IsTransparent(dib));
 			Assert.IsFalse(FreeImage.HasBackgroundColor(dib));
 			RGBQUAD rgb = Color.Teal;
 			Assert.IsTrue(FreeImage.SetBackgroundColor(dib, ref rgb));
@@ -4142,7 +4142,7 @@ namespace FreeImageNETUnitTest
 
 			Marshal.FreeHGlobal(buffer);
 
-			testString = @"‰ˆ¸?=ß%/!)ß(%&)(ß";
+			testString = @"‰ˆÅE=ß%/!)ß(%&)(ß";
 			buffer = Marshal.AllocHGlobal(testString.Length + 1);
 
 			for (index = 0; index < testString.Length; index++)
