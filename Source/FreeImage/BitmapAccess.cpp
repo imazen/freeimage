@@ -3,7 +3,7 @@
 //
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
-// - Hervé Drolon (drolon@infonie.fr)
+// - HervEDrolon (drolon@infonie.fr)
 // - Detlev Vendt (detlev.vendt@brillit.de)
 // - Petr Supina (psup@centrum.cz)
 // - Carsten Klein (c.klein@datagis.com)
@@ -823,11 +823,13 @@ unsigned DLL_CALLCONV
 FreeImage_GetRedMask(FIBITMAP *dib) {
 	FREEIMAGERGBMASKS *masks = NULL;
 	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+	unsigned bpp = FreeImage_GetBPP(dib);
 	switch(image_type) {
 		case FIT_BITMAP:
 			// check for 16-bit RGB (565 or 555)
 			masks = FreeImage_GetRGBMasks(dib);
-			return masks ? masks->red_mask : FI_RGBA_RED_MASK;
+			if (masks) return masks->red_mask;
+			return bpp >= 24 ? FI_RGBA_RED_MASK : 0;
 		default:
 			return 0;
 	}
@@ -837,11 +839,13 @@ unsigned DLL_CALLCONV
 FreeImage_GetGreenMask(FIBITMAP *dib) {
 	FREEIMAGERGBMASKS *masks = NULL;
 	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+	unsigned bpp = FreeImage_GetBPP(dib);
 	switch(image_type) {
 		case FIT_BITMAP:
 			// check for 16-bit RGB (565 or 555)
 			masks = FreeImage_GetRGBMasks(dib);
-			return masks ? masks->green_mask : FI_RGBA_GREEN_MASK;
+			if (masks) return masks->green_mask;
+			return bpp >= 24 ? FI_RGBA_GREEN_MASK : 0;
 		default:
 			return 0;
 	}
@@ -851,11 +855,13 @@ unsigned DLL_CALLCONV
 FreeImage_GetBlueMask(FIBITMAP *dib) {
 	FREEIMAGERGBMASKS *masks = NULL;
 	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
+	unsigned bpp = FreeImage_GetBPP(dib);
 	switch(image_type) {
 		case FIT_BITMAP:
 			// check for 16-bit RGB (565 or 555)
 			masks = FreeImage_GetRGBMasks(dib);
-			return masks ? masks->blue_mask : FI_RGBA_BLUE_MASK;
+			if (masks) return masks->blue_mask;
+			return bpp >= 24 ? FI_RGBA_BLUE_MASK : 0;
 		default:
 			return 0;
 	}
