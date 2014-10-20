@@ -18,9 +18,11 @@ environment:
 install:
   - ps: if($env:build_platform -eq 'x64') {
           $env:vcvar_arg = 'x86_amd64';
+          $env:bin_subdir = 'x64';
         }
         else {
           $env:vcvar_arg = 'x86';
+          $env:bin_subdir = '';
         }
   
   # set to /MD
@@ -69,12 +71,21 @@ build_script:
       cd ..\..\..\.. &&
       cd Wrapper\FreeImage.NET\cs\UnitTest &&
       msbuild UnitTest.csproj /p:Configuration=Release /v:m &&
+      cd ..\..\..\.. &&
+      copy Dist\FreeImage.lib Wrapper\FreeImage.NET\cpp\FreeImageIO &&
+      copy Dist\FreeImage.h Wrapper\FreeImage.NET\cpp\FreeImageIO &&
+      cd Wrapper\FreeImage.NET\cpp\FreeImageIO &&
+      msbuild FreeImageIO.sln /p:Configuration=Release /v:m &&
       cd ..\..\..\.. )
   
   - ps: if($env:build_compiler -eq 'msvc') {
       invoke '7z' "a $($env:zip) .\Dist\FreeImage.dll .\Dist\FreeImage.h .\Dist\FreeImage.lib .\Release\vc120.pdb";
       Push-AppveyorArtifact $env:zip;
-      invoke '7z' "a $($env:zipNet) .\Dist\FreeImage.dll .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.dll .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.XML";
+      invoke '7z' "a $($env:zipNet)
+        .\Dist\FreeImage.dll
+        .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.dll
+        .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.XML
+        .\Wrapper\FreeImage.NET\cpp\FreeImageIO\$($env:bin_subdir)\Release\FreeImageIO.Net.dll";
       Push-AppveyorArtifact $env:zipNet; }
 
 
