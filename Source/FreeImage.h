@@ -3,7 +3,7 @@
 //
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
-// - HervÈ Drolon (drolon@infonie.fr)
+// - HervÅEDrolon (drolon@infonie.fr)
 //
 // Contributors:
 // - see changes log named 'Whatsnew.txt', see header of each .h and .cpp file
@@ -398,14 +398,21 @@ FI_ENUM(FREE_IMAGE_FORMAT) {
 	FIF_HDR		= 26,
 	FIF_FAXG3	= 27,
 	FIF_SGI		= 28,
-//	FIF_EXR		= 29,
+/*	FIF_EXR		= 29,
 	FIF_J2K		= 30,
 	FIF_JP2		= 31,
 	FIF_PFM		= 32,
 	FIF_PICT	= 33,
 	FIF_RAW		= 34,
 	FIF_WEBP	= 35,
-	FIF_JXR		= 36
+	FIF_JXR		= 36*/
+	FIF_J2K		= 29,
+	FIF_JP2		= 30,
+	FIF_PFM		= 31,
+	FIF_PICT	= 32,
+	FIF_RAW		= 33,
+	FIF_WEBP	= 34,
+	FIF_JXR		= 35
 };
 
 /** Image type used in FreeImage.
