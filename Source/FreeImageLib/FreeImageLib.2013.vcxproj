@@ -351,10 +351,6 @@ copy ..\FreeImage.h ..\..\Dist
     <Text Include="..\..\Whatsnew.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LibJPEG\LibJPEG.2013.vcxproj">
-      <Project>{5e1d4e5f-e10c-4ba3-b663-f33014fd21d9}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
     <ProjectReference Include="..\LibJXR\LibJXR.2013.vcxproj">
       <Project>{244455e0-5f25-4451-9540-f317883e52a8}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
@@ -377,10 +373,6 @@ copy ..\FreeImage.h ..\..\Dist
     </ProjectReference>
     <ProjectReference Include="..\LibWebP\LibWebP.2013.vcxproj">
       <Project>{097d9f6c-fd0e-4cbc-9676-009012aaeca8}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\OpenEXR\OpenEXR.2013.vcxproj">
-      <Project>{17a4874b-0606-4687-90b6-f91f8cb3b8af}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <ProjectReference Include="..\ZLib\ZLib.2013.vcxproj">

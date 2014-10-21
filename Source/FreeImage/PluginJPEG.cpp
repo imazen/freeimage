@@ -7,7 +7,7 @@
 // - Jan L. Nauta (jln@magentammt.com)
 // - Markus Loibl (markus.loibl@epost.de)
 // - Karl-Heinz Bussian (khbussian@moss.de)
-// - Hervé Drolon (drolon@infonie.fr)
+// - HervEDrolon (drolon@infonie.fr)
 // - Jascha Wetzel (jascha@mainia.de)
 // - Mihail Naydenov (mnaydenov@users.sourceforge.net)
 //
@@ -575,7 +575,7 @@ jpeg_read_icc_profile(j_decompress_ptr cinfo, JOCTET **icc_data_ptr, unsigned *i
 	// and fill it in
 	for (marker = cinfo->marker_list; marker != NULL; marker = marker->next) {
 		if (marker_is_icc(marker)) {
-			JOCTET FAR *src_ptr;
+			JOCTET *src_ptr;
 			JOCTET *dst_ptr;
 			unsigned length;
 			seq_no = GETJOCTET(marker->data[12]);

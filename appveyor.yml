@@ -38,6 +38,12 @@ install:
   - git clone https://github.com/imazen/gd-appveyor-helpers
   - ps: . .\gd-appveyor-helpers\appveyor_funcs.ps1
   
+  # fetch prebuilt deps
+  - ps: invoke 'nuget' "install libjpeg-$($env:build_compiler)-$($env:build_platform)-master -Source https://ci.appveyor.com/nuget/libjpeg-turbo-t70qw53csfhj"
+  - mkdir deps
+  - ps: move libjpeg*\jpeg_static.lib deps\jpeg.lib
+  - ps: move libjpeg*\*.h Source\LibJPEG -force
+  
   # get upx (cinst broken; gets dos ver)
   #- if [%pack_dlls%]==[1] cinst upx
   - if [%pack_dlls%]==[1] (
