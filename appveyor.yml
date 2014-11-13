@@ -113,6 +113,6 @@ test_script:
   #    Test &&
   #    cd .. &&
   
-  - ps: copy $(.\thumbs list_bin) "Wrapper\FreeImage.NET\cs\UnitTest\bin\Release"
+  - ps: copy $(.\thumbs list_bin) "Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\FreeImage.dll"
   - if [%tbs_arch%]==[x86] nunit-console-x86 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
   - if [%tbs_arch%]==[x64] nunit-console Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
