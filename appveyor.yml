@@ -72,6 +72,8 @@ build_script:
   - 7z a %zip% %files%
   - appveyor PushArtifact %zip%
   
+  - for /f "tokens=*" %%i in ('thumbs list') do copy %%i Dist
+  
   #- if [%build_compiler%]==[msvc] (
   #    msbuild FreeImage.2013.sln /p:Configuration=Release /v:m &&
   #    (if [%pack_dlls%]==[1] upx Dist\FreeImage.dll ) &&
@@ -80,9 +82,6 @@ build_script:
   #    cd .. &&
   #    cd Wrapper\FreeImage.NET\cs\Library &&
   #    msbuild Library.csproj /p:Configuration=Release /v:m &&
-  #    cd ..\..\..\.. &&
-  #    cd Wrapper\FreeImage.NET\cs\UnitTest &&
-  #    msbuild UnitTest.csproj /p:Configuration=Release /v:m &&
   #    cd ..\..\..\.. &&
   #    copy Dist\FreeImage.lib Wrapper\FreeImage.NET\cpp\FreeImageIO &&
   #    copy Dist\FreeImage.h Wrapper\FreeImage.NET\cpp\FreeImageIO &&
@@ -97,6 +96,12 @@ build_script:
   #      .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.XML
   #      .\Wrapper\FreeImage.NET\cpp\FreeImageIO\$($env:bin_subdir)\Release\FreeImageIO.Net.dll";
   #    Push-AppveyorArtifact $env:zipNet; }
+  
+  # build .net unit tests
+  
+  - cd Wrapper\FreeImage.NET\cs\UnitTest
+  - msbuild UnitTest.csproj /p:Configuration=Release /v:m
+  - cd ..\..\..\..
 
 
 
@@ -107,6 +112,11 @@ test_script:
   #    copy ..\Dist\FreeImage.dll . &&
   #    Test &&
   #    cd .. &&
+  
+  - copy Dist\FreeImage.dll Wrapper\FreeImage.NET\cs\UnitTest\bin\Release &&
+  - if [%tbs_arch%]==[x86] nunit-console-x86 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
+  - if [%tbs_arch%]==[x64] nunit-console Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
+  - appveyor PushArtifact TestResult.xml
   
   #- if [%tbs_tools%]==[msvc12] (
   #    copy Dist\FreeImage.dll Wrapper\FreeImage.NET\cs\UnitTest\bin\Release &&
