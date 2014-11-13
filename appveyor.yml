@@ -65,7 +65,7 @@ install:
       invoke '7z' 'x -oC:\ mw64.7z'; }
   
   # get mingw-w64-32bit (C:\mingw32)
-  - ps: if($env:tbs_tools -eq 'mingw' -and $env:tbs_arch -eq 'x86' -and $env:build_bindings -eq 1) {
+  - ps: if($env:tbs_tools -eq 'mingw' -and $env:tbs_arch -eq 'x86') {
       invoke 'curl' '-L -o mw64-32.7z "http://libgd.blob.core.windows.net/mingw/i686-4.9.1-release-posix-dwarf-rt_v3-rev1.7z"';
       invoke '7z' 'x -oC:\ mw64-32.7z'; }
 
