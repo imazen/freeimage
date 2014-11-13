@@ -67,6 +67,10 @@ set( FREEIMAGE_SOURCES
 	FreeImage/ZLibInterface.cpp
 )
 
+IF(ENABLE_PNG)
+  SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} FreeImage/PluginPNG.cpp)
+ENDIF()
+
 #	FreeImage/PluginG3.cpp
 #	FreeImage/PluginTIFF.cpp
 #	Metadata/XTIFF.cpp
@@ -80,7 +84,6 @@ set( FREEIMAGE_SOURCES
 
 #	FreeImage/PluginWebP.cpp
 #	FreeImage/PluginRAW.cpp
-#	FreeImage/PluginPNG.cpp
 #	FreeImage/PluginEXR.cpp
 
 IF(FREEIMAGE_BUILD_STATIC)

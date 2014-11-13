@@ -267,17 +267,21 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 		s_plugins->AddNode(InitBMP, FIF_BMP);
 		s_plugins->AddNode(InitICO, FIF_ICO);
 //		s_plugins->AddNode(InitJPEG, FIF_JPEG);
-//		s_plugins->AddNode(InitMNG, FIF_JNG, NULL, "JNG", "JPEG Network Graphics", "jng", "");
+		s_plugins->AddNode(InitMNG, FIF_JNG, NULL, "JNG", "JPEG Network Graphics", "jng", "");
 		s_plugins->AddNode(InitKOALA,FIF_KOALA);
 		s_plugins->AddNode(InitIFF, FIF_LBM);
-//		s_plugins->AddNode(InitMNG, FIF_MNG);
+		s_plugins->AddNode(InitMNG, FIF_MNG);
 		s_plugins->AddNode(InitPNM, FIF_PBM, NULL, "PBM", "Portable Bitmap (ASCII)", "pbm", "^P1");
 		s_plugins->AddNode(InitPNM, FIF_PBMRAW, NULL, "PBMRAW", "Portable Bitmap (RAW)", "pbm", "^P4");
 		s_plugins->AddNode(InitPCD, FIF_PCD);
 		s_plugins->AddNode(InitPCX, FIF_PCX);
 		s_plugins->AddNode(InitPNM, FIF_PGM, NULL, "PGM", "Portable Greymap (ASCII)", "pgm", "^P2");
 		s_plugins->AddNode(InitPNM, FIF_PGMRAW, NULL, "PGMRAW", "Portable Greymap (RAW)", "pgm", "^P5");
-//		s_plugins->AddNode(InitPNG, FIF_PNG);
+
+#ifdef ENABLE_PNG
+		s_plugins->AddNode(InitPNG, FIF_PNG);
+#endif
+
 		s_plugins->AddNode(InitPNM, FIF_PPM, NULL, "PPM", "Portable Pixelmap (ASCII)", "ppm", "^P3");
 		s_plugins->AddNode(InitPNM, FIF_PPMRAW, NULL, "PPMRAW", "Portable Pixelmap (RAW)", "ppm", "^P6");
 		s_plugins->AddNode(InitRAS, FIF_RAS);

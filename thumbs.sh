@@ -30,7 +30,7 @@
 [ $tbs_tools ]          || export tbs_tools=gnu
 [ $tbs_static_runtime ] || export tbs_static_runtime=0
 
-[ $tbs_fi_png ]         || export tbs_fi_png=0
+[ $tbs_fi_png ]         || export tbs_fi_png=1
 [ $tbs_fi_jpeg ]        || export tbs_fi_jpeg=0
 [ $tbs_fi_tiff ]        || export tbs_fi_tiff=0
 
@@ -196,9 +196,9 @@ c_flags=
 cm_tools=
 cm_args=(-DCMAKE_BUILD_TYPE=$tbs_conf)
 
-#cm_args+=(-DENABLE_PNG=$tbs_fi_png)
-#cm_args+=(-DENABLE_JPEG=$tbs_fi_jpeg)
-#cm_args+=(-DENABLE_TIFF=$tbs_fi_tiff)
+cm_args+=(-DENABLE_PNG=$tbs_fi_png)
+cm_args+=(-DENABLE_JPEG=$tbs_fi_jpeg)
+cm_args+=(-DENABLE_TIFF=$tbs_fi_tiff)
 
 target=
 [ $2 ] && target=$2
