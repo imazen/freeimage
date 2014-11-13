@@ -67,8 +67,8 @@ post=()
 [ $tbsd_libjpeg_turbo_repo ] || export tbsd_libjpeg_turbo_repo="https://github.com/imazen/libjpeg-turbo libjpeg_turbo"
 [ $tbsd_libtiff_repo ]       || export tbsd_libtiff_repo="https://github.com/imazen/libtiff"
 
-#deps+=(zlib); targ+=(zlibstatic)
-#post+=("cp -u \$(./thumbs.sh list_slib) ../../deps/$zname")
+deps+=(zlib); targ+=(zlibstatic)
+post+=("cp -u \$(./thumbs.sh list_slib) ../../deps/$zname")
 
 if [ $tbs_fi_png -gt 0 ]; then
   deps+=(libpng); targ+=(png16_static)
@@ -130,8 +130,6 @@ process_deps()
       cd ..
     fi
   done
-  
-  export "${i_dep_incdir}=../../deps/freetype;deps/freetype"
   
   cd ..
 }
@@ -200,7 +198,6 @@ cm_args=(-DCMAKE_BUILD_TYPE=$tbs_conf)
 
 #cm_args+=(-DENABLE_PNG=$tbs_fi_png)
 #cm_args+=(-DENABLE_JPEG=$tbs_fi_jpeg)
-#cm_args+=(-DENABLE_FREETYPE=$tbs_fi_freetype)
 #cm_args+=(-DENABLE_TIFF=$tbs_fi_tiff)
 
 target=
@@ -270,8 +267,8 @@ fi
 
 case "$1" in
 make)
-  #process_deps
-  #postproc_deps
+  process_deps
+  postproc_deps
   
   mkdir build
   cd build
@@ -292,7 +289,15 @@ check)
   ;;
   
 clean)
+  rm -rf build_deps
+  rm -rf deps
   rm -rf build
+  
+  rm -f Dist/*.lib
+  rm -f Dist/*.a
+  rm -f Dist/*.dll
+  rm -f Dist/*.so
+  rm -f Dist/*.h
   ;;
 
 list) echo $list;;

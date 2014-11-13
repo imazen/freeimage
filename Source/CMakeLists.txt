@@ -59,12 +59,13 @@ set( FREEIMAGE_SOURCES
 	Metadata/Exif.cpp Metadata/FIRational.cpp Metadata/FreeImageTag.cpp 
 	Metadata/IPTC.cpp Metadata/TagConversion.cpp Metadata/TagLib.cpp
 	Metadata/FIRational.h
+	
+	# needs zlib
+	FreeImage/MNGHelper.cpp
+	FreeImage/PluginJNG.cpp
+	FreeImage/PluginMNG.cpp
+	FreeImage/ZLibInterface.cpp
 )
-
-#	FreeImage/MNGHelper.cpp
-#	FreeImage/PluginJNG.cpp
-#	FreeImage/PluginMNG.cpp
-#	FreeImage/ZLibInterface.cpp
 
 #	FreeImage/PluginG3.cpp
 #	FreeImage/PluginTIFF.cpp
@@ -98,7 +99,7 @@ ENDIF()
 IF(FREEIMAGE_BUILD_DLL)
   ADD_DEFINITIONS(-DFREEIMAGE_EXPORTS -DLIBRAW_NODLL -DOPJ_STATIC)
   add_library (FreeImage SHARED ${FREEIMAGE_SOURCES} )
-  #target_link_libraries(FreeImage ${FREEIMAGE_LIBRARIES})
+  target_link_libraries(FreeImage ${LIBS})
 
 INSTALL(TARGETS 
 	FreeImage

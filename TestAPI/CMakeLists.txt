@@ -7,7 +7,6 @@ MainTestSuite.cpp
 testHeaderOnly.cpp 
 testChannels.cpp 
 testImageType.cpp 
-testJPEG.cpp 
 testMemIO.cpp 
 testMPage.cpp 
 testMPageMemory.cpp 
@@ -18,6 +17,10 @@ testTools.cpp
 testWrappedBuffer.cpp 
 TestSuite.h 
 )
+
+IF(ENABLE_JPEG)
+  set(TEST_SOURCES ${TEST_SOURCES} testJPEG.cpp)
+ENDIF()
 
 ADD_DEFINITIONS(${FREEIMAGE_BUILD_FLAGS})
 add_executable(Test ${TEST_SOURCES} )
