@@ -113,7 +113,7 @@ test_script:
   #    Test &&
   #    cd .. &&
   
-  - copy Dist\FreeImage.dll Wrapper\FreeImage.NET\cs\UnitTest\bin\Release &&
+  - copy Dist\FreeImage.dll Wrapper\FreeImage.NET\cs\UnitTest\bin\Release
   - if [%tbs_arch%]==[x86] nunit-console-x86 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
   - if [%tbs_arch%]==[x64] nunit-console Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
   - appveyor PushArtifact TestResult.xml
