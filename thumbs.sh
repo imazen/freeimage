@@ -226,18 +226,18 @@ msvc12)
 #  l_dlib="./build/Bin/libgd.so"
 #  l_bin="$l_dlib"
 #  list="$l_slib $l_dlib $l_inc" ;;
-#mingw)
-#  cm_tools="MinGW Makefiles"
-#  make="mingw32-make $target"
-#  c_flags+=" -fkeep-inline-functions"
-#  
+mingw)
+  cm_tools="MinGW Makefiles"
+  make="mingw32-make $target"
+  c_flags+=" -fkeep-inline-functions"
+  
   # allow sh in path; some old cmake/mingw bug?
-#  cm_args+=(-DCMAKE_SH=)
-#  
-#  l_slib="./build/Bin/liblibgd.a"
-#  l_dlib="./build/Bin/liblibgd.dll.a"
-#  l_bin="./build/Bin/liblibgd.dll"
-#  list="$l_bin $l_slib $l_dlib $l_inc" ;;
+  cm_args+=(-DCMAKE_SH=)
+  
+  l_slib=""
+  l_dlib="./build/lib/libFreeImage.dll.a"
+  l_bin="./build/bin/libFreeImage.dll"
+  list="$l_bin $l_slib $l_dlib $l_inc" ;;
 
 *) echo "Tool config not found for $tbs_tools"
    exit 1 ;;
