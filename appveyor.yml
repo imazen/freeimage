@@ -4,45 +4,44 @@ shallow_clone: true
 
 environment:
   pack_dlls:   1    # will fetch upx
-  dyn_runtime: 1    #
   
   matrix:
-    - build_platform: "x86"
-      build_compiler: "msvc"
+    - tbs_arch: "x86"
+      tbs_tools: "msvc12"
+      tbs_static_runtime: 0
     
-    - build_platform: "x64"
-      build_compiler: "msvc"
+    - tbs_arch: "x64"
+      tbs_tools: "msvc12"
+      tbs_static_runtime: 0
+    
+    #- tbs_arch: "x86"
+    #  tbs_tools: "mingw"
+    #  tbs_static_runtime: 1
+    
+    #- tbs_arch: "x64"
+    #  tbs_tools: "mingw"
+    #  tbs_static_runtime: 1
 
 
 
 install:
   - ps: if($env:build_platform -eq 'x64') {
           $env:vcvar_arg = 'x86_amd64';
-          $env:bin_subdir = 'x64';
         }
         else {
           $env:vcvar_arg = 'x86';
-          $env:bin_subdir = '';
         }
   
-  # set to /MD
-  - ps: if($env:dyn_runtime -eq '1') {
-          foreach($file in (get-childitem *.vcxproj -r -file)) {
-            (Get-Content $file) | 
-            Foreach-Object {$_ -replace "<RuntimeLibrary>.*</RuntimeLibrary>", "<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>"} |
-            Set-Content $file
-          }
-        }
   
   # get common functions
   - git clone https://github.com/imazen/gd-appveyor-helpers
   - ps: . .\gd-appveyor-helpers\appveyor_funcs.ps1
   
   # fetch prebuilt deps
-  - ps: invoke 'nuget' "install libjpeg-$($env:build_compiler)-$($env:build_platform)-master -Source https://ci.appveyor.com/nuget/libjpeg-turbo-t70qw53csfhj"
-  - mkdir deps
-  - ps: move libjpeg*\jpeg_static.lib deps\jpeg.lib
-  - ps: move libjpeg*\*.h Source\LibJPEG -force
+  #- ps: invoke 'nuget' "install libjpeg-$($env:build_compiler)-$($env:build_platform)-master -Source https://ci.appveyor.com/nuget/libjpeg-turbo-t70qw53csfhj"
+  #- mkdir deps
+  #- ps: move libjpeg*\jpeg_static.lib deps\jpeg.lib
+  #- ps: move libjpeg*\*.h Source\LibJPEG -force
   
   # get upx (cinst broken; gets dos ver)
   #- if [%pack_dlls%]==[1] cinst upx
@@ -56,56 +55,55 @@ install:
 
 
 build_script:
-  
-  # set env
-  
   - '"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall" %vcvar_arg%'
   
+  - SET zip=freeimage-%tbs_tools%-%tbs_arch%.zip
+  - SET zipNet=FreeImageNET-tbs_arch%.zip
   
-  # build msvc
+  - thumbs make
+  - for /f "tokens=*" %%i in ('thumbs list') do set files=%%i
+  - 7z a %zip% %files%
+  - appveyor PushArtifact %zip%
   
-  - SET zip=freeimage-msvc12-%build_platform%.zip
-  - SET zipNet=FreeImageNET-%build_platform%.zip
-  - if [%build_compiler%]==[msvc] (
-      msbuild FreeImage.2013.sln /p:Configuration=Release /v:m &&
-      (if [%pack_dlls%]==[1] upx Dist\FreeImage.dll ) &&
-      cd TestAPI &&
-      msbuild Test.2013.sln /p:Configuration=Release /v:m &&
-      cd .. &&
-      cd Wrapper\FreeImage.NET\cs\Library &&
-      msbuild Library.csproj /p:Configuration=Release /v:m &&
-      cd ..\..\..\.. &&
-      cd Wrapper\FreeImage.NET\cs\UnitTest &&
-      msbuild UnitTest.csproj /p:Configuration=Release /v:m &&
-      cd ..\..\..\.. &&
-      copy Dist\FreeImage.lib Wrapper\FreeImage.NET\cpp\FreeImageIO &&
-      copy Dist\FreeImage.h Wrapper\FreeImage.NET\cpp\FreeImageIO &&
-      cd Wrapper\FreeImage.NET\cpp\FreeImageIO &&
-      msbuild FreeImageIO.sln /p:Configuration=Release /v:m &&
-      cd ..\..\..\.. )
+  #- if [%build_compiler%]==[msvc] (
+  #    msbuild FreeImage.2013.sln /p:Configuration=Release /v:m &&
+  #    (if [%pack_dlls%]==[1] upx Dist\FreeImage.dll ) &&
+  #    cd TestAPI &&
+  #    msbuild Test.2013.sln /p:Configuration=Release /v:m &&
+  #    cd .. &&
+  #    cd Wrapper\FreeImage.NET\cs\Library &&
+  #    msbuild Library.csproj /p:Configuration=Release /v:m &&
+  #    cd ..\..\..\.. &&
+  #    cd Wrapper\FreeImage.NET\cs\UnitTest &&
+  #    msbuild UnitTest.csproj /p:Configuration=Release /v:m &&
+  #    cd ..\..\..\.. &&
+  #    copy Dist\FreeImage.lib Wrapper\FreeImage.NET\cpp\FreeImageIO &&
+  #    copy Dist\FreeImage.h Wrapper\FreeImage.NET\cpp\FreeImageIO &&
+  #    cd Wrapper\FreeImage.NET\cpp\FreeImageIO &&
+  #    msbuild FreeImageIO.sln /p:Configuration=Release /v:m &&
+  #    cd ..\..\..\.. )
   
-  - ps: if($env:build_compiler -eq 'msvc') {
-      invoke '7z' "a $($env:zip) .\Dist\FreeImage.dll .\Dist\FreeImage.h .\Dist\FreeImage.lib .\Release\vc120.pdb";
-      Push-AppveyorArtifact $env:zip;
-      invoke '7z' "a $($env:zipNet)
-        .\Dist\FreeImage.dll
-        .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.dll
-        .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.XML
-        .\Wrapper\FreeImage.NET\cpp\FreeImageIO\$($env:bin_subdir)\Release\FreeImageIO.Net.dll";
-      Push-AppveyorArtifact $env:zipNet; }
+  #- ps: if($env:tbs_tools -eq 'msvc12') {
+  #    invoke '7z' "a $($env:zipNet)
+  #      .\Dist\FreeImage.dll
+  #      .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.dll
+  #      .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.XML
+  #      .\Wrapper\FreeImage.NET\cpp\FreeImageIO\$($env:bin_subdir)\Release\FreeImageIO.Net.dll";
+  #    Push-AppveyorArtifact $env:zipNet; }
 
 
 
 test_script:
   
-  - if [%build_compiler%]==[msvc] (
-      cd TestAPI &&
-      copy Release\Test.exe . &&
-      copy ..\Dist\FreeImage.dll . &&
-      Test &&
-      cd .. &&
-      copy Dist\FreeImage.dll Wrapper\FreeImage.NET\cs\UnitTest\bin\Release &&
-      (if [%build_platform%]==[x86] (nunit-console-x86 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe)
-      else if [%build_platform%]==[x64] (nunit-console Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe)) &&
-      appveyor PushArtifact TestResult.xml
-    )
+  #cd TestAPI &&
+  #    copy Release\Test.exe . &&
+  #    copy ..\Dist\FreeImage.dll . &&
+  #    Test &&
+  #    cd .. &&
+  
+  #- if [%tbs_tools%]==[msvc12] (
+  #    copy Dist\FreeImage.dll Wrapper\FreeImage.NET\cs\UnitTest\bin\Release &&
+  #    (if [%tbs_arch%]==[x86] (nunit-console-x86 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe)
+  #    else if [%tbs_arch%]==[x64] (nunit-console Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe)) &&
+  #    appveyor PushArtifact TestResult.xml
+  #  )

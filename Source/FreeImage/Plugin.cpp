@@ -266,39 +266,39 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 		*/
 		s_plugins->AddNode(InitBMP, FIF_BMP);
 		s_plugins->AddNode(InitICO, FIF_ICO);
-		s_plugins->AddNode(InitJPEG, FIF_JPEG);
-		s_plugins->AddNode(InitMNG, FIF_JNG, NULL, "JNG", "JPEG Network Graphics", "jng", "");
+//		s_plugins->AddNode(InitJPEG, FIF_JPEG);
+//		s_plugins->AddNode(InitMNG, FIF_JNG, NULL, "JNG", "JPEG Network Graphics", "jng", "");
 		s_plugins->AddNode(InitKOALA,FIF_KOALA);
 		s_plugins->AddNode(InitIFF, FIF_LBM);
-		s_plugins->AddNode(InitMNG, FIF_MNG);
+//		s_plugins->AddNode(InitMNG, FIF_MNG);
 		s_plugins->AddNode(InitPNM, FIF_PBM, NULL, "PBM", "Portable Bitmap (ASCII)", "pbm", "^P1");
 		s_plugins->AddNode(InitPNM, FIF_PBMRAW, NULL, "PBMRAW", "Portable Bitmap (RAW)", "pbm", "^P4");
 		s_plugins->AddNode(InitPCD, FIF_PCD);
 		s_plugins->AddNode(InitPCX, FIF_PCX);
 		s_plugins->AddNode(InitPNM, FIF_PGM, NULL, "PGM", "Portable Greymap (ASCII)", "pgm", "^P2");
 		s_plugins->AddNode(InitPNM, FIF_PGMRAW, NULL, "PGMRAW", "Portable Greymap (RAW)", "pgm", "^P5");
-		s_plugins->AddNode(InitPNG, FIF_PNG);
+//		s_plugins->AddNode(InitPNG, FIF_PNG);
 		s_plugins->AddNode(InitPNM, FIF_PPM, NULL, "PPM", "Portable Pixelmap (ASCII)", "ppm", "^P3");
 		s_plugins->AddNode(InitPNM, FIF_PPMRAW, NULL, "PPMRAW", "Portable Pixelmap (RAW)", "ppm", "^P6");
 		s_plugins->AddNode(InitRAS, FIF_RAS);
 		s_plugins->AddNode(InitTARGA, FIF_TARGA);
-		s_plugins->AddNode(InitTIFF, FIF_TIFF);
+//		s_plugins->AddNode(InitTIFF, FIF_TIFF);
 		s_plugins->AddNode(InitWBMP, FIF_WBMP);
 		s_plugins->AddNode(InitPSD, FIF_PSD);
 		s_plugins->AddNode(InitCUT, FIF_CUT);
 		s_plugins->AddNode(InitXBM, FIF_XBM);
 		s_plugins->AddNode(InitXPM, FIF_XPM);
 		s_plugins->AddNode(InitDDS, FIF_DDS);
-	    s_plugins->AddNode(InitGIF, FIF_GIF );
+		s_plugins->AddNode(InitGIF, FIF_GIF );
 		s_plugins->AddNode(InitHDR, FIF_HDR	);
-		s_plugins->AddNode(InitG3,  FIF_FAXG3);
+//		s_plugins->AddNode(InitG3,  FIF_FAXG3);
 		s_plugins->AddNode(InitSGI, FIF_SGI	);
 //		s_plugins->AddNode(InitEXR, FIF_EXR	);
-		s_plugins->AddNode(InitJ2K, FIF_J2K	);
-		s_plugins->AddNode(InitJP2, FIF_JP2	);
+//		s_plugins->AddNode(InitJ2K, FIF_J2K	);
+//		s_plugins->AddNode(InitJP2, FIF_JP2	);
 		s_plugins->AddNode(InitPFM, FIF_PFM	);
 		s_plugins->AddNode(InitPICT, FIF_PICT );
-		s_plugins->AddNode(InitRAW, FIF_RAW	);
+//		s_plugins->AddNode(InitRAW, FIF_RAW	);
 		
 		// external plugin initialization
 
