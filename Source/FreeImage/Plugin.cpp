@@ -290,7 +290,12 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 		s_plugins->AddNode(InitPNM, FIF_PPMRAW, NULL, "PPMRAW", "Portable Pixelmap (RAW)", "ppm", "^P6");
 		s_plugins->AddNode(InitRAS, FIF_RAS);
 		s_plugins->AddNode(InitTARGA, FIF_TARGA);
-//		s_plugins->AddNode(InitTIFF, FIF_TIFF);
+
+#ifdef ENABLE_TIFF
+		s_plugins->AddNode(InitTIFF, FIF_TIFF);
+		s_plugins->AddNode(InitG3,  FIF_FAXG3);
+#endif
+
 		s_plugins->AddNode(InitWBMP, FIF_WBMP);
 		s_plugins->AddNode(InitPSD, FIF_PSD);
 		s_plugins->AddNode(InitCUT, FIF_CUT);
@@ -299,7 +304,6 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 		s_plugins->AddNode(InitDDS, FIF_DDS);
 		s_plugins->AddNode(InitGIF, FIF_GIF );
 		s_plugins->AddNode(InitHDR, FIF_HDR	);
-//		s_plugins->AddNode(InitG3,  FIF_FAXG3);
 		s_plugins->AddNode(InitSGI, FIF_SGI	);
 //		s_plugins->AddNode(InitEXR, FIF_EXR	);
 //		s_plugins->AddNode(InitJ2K, FIF_J2K	);

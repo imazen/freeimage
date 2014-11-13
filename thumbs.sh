@@ -32,7 +32,7 @@
 
 [ $tbs_fi_png ]         || export tbs_fi_png=1
 [ $tbs_fi_jpeg ]        || export tbs_fi_jpeg=1
-[ $tbs_fi_tiff ]        || export tbs_fi_tiff=0
+[ $tbs_fi_tiff ]        || export tbs_fi_tiff=1
 
 
 # tbsd_* contains dep related settings
