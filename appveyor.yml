@@ -72,7 +72,7 @@ build_script:
   - 7z a %zip% %files%
   - appveyor PushArtifact %zip%
   
-  - for /f "tokens=*" %%i in ('thumbs list') do copy %%i Dist
+  - ps: $(.\thumbs list).split(' ') | %{copy $_ "Dist"}
   
   #- if [%build_compiler%]==[msvc] (
   #    msbuild FreeImage.2013.sln /p:Configuration=Release /v:m &&
