@@ -218,14 +218,14 @@ msvc12)
   l_dlib="./build/lib/$tbs_conf/FreeImage.lib"
   l_bin="./build/Bin/$tbs_conf/FreeImage.dll"
   list="$l_bin $l_slib $l_dlib $l_inc" ;;
-#gnu)
-#  cm_tools="Unix Makefiles"
-#  c_flags+=" -fPIC"
-#  make="make $target"
-#  l_slib="./build/Bin/libgd.a"
-#  l_dlib="./build/Bin/libgd.so"
-#  l_bin="$l_dlib"
-#  list="$l_slib $l_dlib $l_inc" ;;
+gnu)
+  cm_tools="Unix Makefiles"
+  c_flags+=" -fPIC"
+  make="make $target"
+  l_slib=""
+  l_dlib="./build/bin/libFreeImage.so"
+  l_bin="$l_dlib"
+  list="$l_slib $l_dlib $l_inc" ;;
 mingw)
   cm_tools="MinGW Makefiles"
   make="mingw32-make $target"
@@ -292,8 +292,6 @@ check)
   ;;
   
 clean)
-  #rm -rf deps
-  #rm -rf build_deps
   rm -rf build
   ;;
 
