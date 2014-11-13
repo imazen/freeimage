@@ -229,7 +229,6 @@ msvc12)
 mingw)
   cm_tools="MinGW Makefiles"
   make="mingw32-make $target"
-  c_flags+=" -fkeep-inline-functions"
   
   # allow sh in path; some old cmake/mingw bug?
   cm_args+=(-DCMAKE_SH=)
