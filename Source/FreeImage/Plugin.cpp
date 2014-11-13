@@ -266,7 +266,11 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 		*/
 		s_plugins->AddNode(InitBMP, FIF_BMP);
 		s_plugins->AddNode(InitICO, FIF_ICO);
-//		s_plugins->AddNode(InitJPEG, FIF_JPEG);
+
+#ifdef ENABLE_JPEG
+		s_plugins->AddNode(InitJPEG, FIF_JPEG);
+#endif
+
 		s_plugins->AddNode(InitMNG, FIF_JNG, NULL, "JNG", "JPEG Network Graphics", "jng", "");
 		s_plugins->AddNode(InitKOALA,FIF_KOALA);
 		s_plugins->AddNode(InitIFF, FIF_LBM);

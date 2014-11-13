@@ -3,7 +3,7 @@ shallow_clone: true
 
 
 environment:
-  pack_dlls:   1    # will fetch upx
+  #pack_dlls:   1    # will fetch upx
   
   matrix:
     - tbs_arch: "x86"
@@ -37,6 +37,13 @@ install:
   - git clone https://github.com/imazen/gd-appveyor-helpers
   - ps: . .\gd-appveyor-helpers\appveyor_funcs.ps1
   
+  # get nasm (jpeg-turbo)
+  #- cinst nasm
+  #nasm's main site down...
+  - curl -L -o nasminst.exe http://libgd.blob.core.windows.net/nasm/nasm-2.07-installer.exe
+  - start /wait nasminst.exe /S
+  - ps: $env:path="C:\Program Files (x86)\nasm;$($env:path)"
+  
   # fetch prebuilt deps
   #- ps: invoke 'nuget' "install libjpeg-$($env:build_compiler)-$($env:build_platform)-master -Source https://ci.appveyor.com/nuget/libjpeg-turbo-t70qw53csfhj"
   #- mkdir deps
@@ -45,9 +52,9 @@ install:
   
   # get upx (cinst broken; gets dos ver)
   #- if [%pack_dlls%]==[1] cinst upx
-  - if [%pack_dlls%]==[1] (
-      curl -L -o upx.zip http://upx.sourceforge.net/download/upx391w.zip &&
-      7z e upx.zip *.exe -r )
+  #- if [%pack_dlls%]==[1] (
+  #    curl -L -o upx.zip http://upx.sourceforge.net/download/upx391w.zip &&
+  #    7z e upx.zip *.exe -r )
   
   - curl -L -o utd.zip https://s3.amazonaws.com/public-unit-test-resources/FreeImage.NET/UnitTestData.zip
   - 7z x utd.zip -oWrapper\FreeImage.NET\cs

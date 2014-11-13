@@ -70,6 +70,10 @@ set( FREEIMAGE_SOURCES
 IF(ENABLE_PNG)
   SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} FreeImage/PluginPNG.cpp)
 ENDIF()
+IF(ENABLE_JPEG)
+  SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} FreeImage/PluginJPEG.cpp)
+  SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} FreeImageToolkit/JPEGTransform.cpp)
+ENDIF()
 
 #	FreeImage/PluginG3.cpp
 #	FreeImage/PluginTIFF.cpp
@@ -78,9 +82,6 @@ ENDIF()
 #	FreeImage/J2KHelper.cpp
 #	FreeImage/PluginJP2.cpp
 #	FreeImage/PluginJ2K.cpp
-
-#	FreeImage/PluginJPEG.cpp
-#	FreeImageToolkit/JPEGTransform.cpp
 
 #	FreeImage/PluginWebP.cpp
 #	FreeImage/PluginRAW.cpp

@@ -31,7 +31,7 @@
 [ $tbs_static_runtime ] || export tbs_static_runtime=0
 
 [ $tbs_fi_png ]         || export tbs_fi_png=1
-[ $tbs_fi_jpeg ]        || export tbs_fi_jpeg=0
+[ $tbs_fi_jpeg ]        || export tbs_fi_jpeg=1
 [ $tbs_fi_tiff ]        || export tbs_fi_tiff=0
 
 
