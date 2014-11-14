@@ -229,6 +229,7 @@ gnu)
 mingw)
   cm_tools="MinGW Makefiles"
   make="mingw32-make $target"
+  ld_flags+=" --kill-at"
   
   # allow sh in path; some old cmake/mingw bug?
   cm_args+=(-DCMAKE_SH=)
