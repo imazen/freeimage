@@ -193,6 +193,7 @@ list=
 
 make=
 c_flags=
+ld_flags=
 cm_tools=
 cm_args=(-DCMAKE_BUILD_TYPE=$tbs_conf)
 
@@ -226,6 +227,7 @@ gnu)
 mingw)
   cm_tools="MinGW Makefiles"
   make="mingw32-make $target"
+  ld_flags+=" -Wl,--kill-at"
   
   # allow sh in path; some old cmake/mingw bug?
   cm_args+=(-DCMAKE_SH=)
@@ -257,8 +259,8 @@ esac
 if [ $tbs_static_runtime -gt 0 ]
 then
   [ $tbs_tools = msvc12 ] && cm_args+=(-DFREEIMAGE_DYNAMIC_C_RUNTIME:BOOL=OFF)
-  [ $tbs_tools = gnu ] && cm_args+=(-DCMAKE_SHARED_LINKER_FLAGS="-static-libgcc -static-libstdc++")
-  [ $tbs_tools = mingw ] && cm_args+=(-DCMAKE_SHARED_LINKER_FLAGS="-static")
+  [ $tbs_tools = gnu ] && ld_flags+=" -static-libgcc -static-libstdc++"
+  [ $tbs_tools = mingw ] && ld_flags+=" -static"
 else
   [ $tbs_tools = msvc12 ] && cm_args+=(-DFREEIMAGE_DYNAMIC_C_RUNTIME:BOOL=ON)
 fi
@@ -273,8 +275,12 @@ make)
   mkdir build
   cd build
   
-  cm_args+=(-DCMAKE_C_FLAGS_$(upper $tbs_conf)="$c_flags")
-  cm_args+=(-DCMAKE_CXX_FLAGS_$(upper $tbs_conf)="$c_flags")
+  fsx=
+  [ $tbs_tools = gnu ] || fsx=_$(upper $tbs_conf)
+  
+  cm_args+=(-DCMAKE_C_FLAGS$fsx="$c_flags")
+  cm_args+=(-DCMAKE_CXX_FLAGS$fsx="$c_flags")
+  cm_args+=(-DCMAKE_SHARED_LINKER_FLAGS$fsx="$ld_flags")
   
   cmake -G "$cm_tools" "${cm_args[@]}" .. || exit 1
   $make || exit 1
