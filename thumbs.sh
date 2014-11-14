@@ -229,7 +229,7 @@ gnu)
 mingw)
   cm_tools="MinGW Makefiles"
   make="mingw32-make $target"
-  ld_flags+=" -Wl,--kill-at"
+  ld_flags+=" -Wl,--add-stdcall-alias"
   
   # allow sh in path; some old cmake/mingw bug?
   cm_args+=(-DCMAKE_SH=)
@@ -283,6 +283,7 @@ make)
   cm_args+=(-DCMAKE_C_FLAGS$fsx="$c_flags")
   cm_args+=(-DCMAKE_CXX_FLAGS$fsx="$c_flags")
   cm_args+=(-DCMAKE_SHARED_LINKER_FLAGS$fsx="$ld_flags")
+  cm_args+=(-DCMAKE_EXE_LINKER_FLAGS$fsx="$ld_flags")
   
   cmake -G "$cm_tools" "${cm_args[@]}" .. || exit 1
   $make || exit 1
