@@ -19,5 +19,6 @@ before_install:
 
 script:
   - export tbs_fi_tests=1
+  - export tbs_fi_webp=1
   - ./thumbs.sh make
   - ./thumbs.sh check

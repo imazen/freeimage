@@ -80,6 +80,7 @@ build_script:
   - SET zipNet=FreeImageNET-tbs_arch%.zip
   
   - SET tbs_fi_tests=1
+  - SET tbs_fi_webp=1
   
   - thumbs make
   - for /f "tokens=*" %%i in ('thumbs list') do set files=%%i
