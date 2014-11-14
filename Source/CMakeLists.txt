@@ -80,12 +80,14 @@ IF(ENABLE_TIFF)
   SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} Metadata/XTIFF.cpp)
   SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} Half/half.cpp)
 ENDIF()
+IF(ENABLE_WEBP)
+  SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} FreeImage/PluginWebP.cpp)
+ENDIF()
 
 #	FreeImage/J2KHelper.cpp
 #	FreeImage/PluginJP2.cpp
 #	FreeImage/PluginJ2K.cpp
 
-#	FreeImage/PluginWebP.cpp
 #	FreeImage/PluginRAW.cpp
 #	FreeImage/PluginEXR.cpp
 
