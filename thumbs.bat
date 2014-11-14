@@ -18,7 +18,7 @@ rem copy all known env vars to bash
 setlocal enableDelayedExpansion
 set exports=
 
-for %%i in (tbs_conf tbs_arch tbs_tools tbs_static_runtime) do (
+for %%i in (tbs_conf tbs_arch tbs_tools tbs_static_runtime tbs_fi_tests) do (
   if not [!%%i!]==[] (
     set exports=!exports!export %%i=!%%i!;
   )

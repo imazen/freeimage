@@ -25,3 +25,5 @@ ENDIF()
 ADD_DEFINITIONS(${FREEIMAGE_BUILD_FLAGS})
 add_executable(Test ${TEST_SOURCES} )
 target_link_libraries( Test ${FREEIMAGE_LIBRARIES} )
+
+add_test(NAME Test COMMAND Test WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/TestAPI)

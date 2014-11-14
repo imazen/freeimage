@@ -18,5 +18,6 @@ before_install:
     fi
 
 script:
+  - export tbs_fi_tests=1
   - ./thumbs.sh make
   - ./thumbs.sh check

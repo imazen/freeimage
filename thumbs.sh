@@ -30,6 +30,7 @@
 [ $tbs_tools ]          || export tbs_tools=gnu
 [ $tbs_static_runtime ] || export tbs_static_runtime=0
 
+[ $tbs_fi_tests ]       || export tbs_fi_tests=0
 [ $tbs_fi_png ]         || export tbs_fi_png=1
 [ $tbs_fi_jpeg ]        || export tbs_fi_jpeg=1
 [ $tbs_fi_tiff ]        || export tbs_fi_tiff=1
@@ -197,6 +198,7 @@ ld_flags=
 cm_tools=
 cm_args=(-DCMAKE_BUILD_TYPE=$tbs_conf)
 
+cm_args+=(-DENABLE_TESTS=$tbs_fi_tests)
 cm_args+=(-DENABLE_PNG=$tbs_fi_png)
 cm_args+=(-DENABLE_JPEG=$tbs_fi_jpeg)
 cm_args+=(-DENABLE_TIFF=$tbs_fi_tiff)
@@ -227,7 +229,6 @@ gnu)
 mingw)
   cm_tools="MinGW Makefiles"
   make="mingw32-make $target"
-  ld_flags+=" -Wl,--kill-at"
   
   # allow sh in path; some old cmake/mingw bug?
   cm_args+=(-DCMAKE_SH=)

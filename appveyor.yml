@@ -74,6 +74,8 @@ build_script:
   - SET zip=freeimage-%tbs_tools%-%tbs_arch%.zip
   - SET zipNet=FreeImageNET-tbs_arch%.zip
   
+  - SET tbs_fi_tests=1
+  
   - thumbs make
   - for /f "tokens=*" %%i in ('thumbs list') do set files=%%i
   - 7z a %zip% %files%
@@ -113,12 +115,11 @@ build_script:
 
 
 test_script:
-  
-  #cd TestAPI &&
-  #    copy Release\Test.exe . &&
-  #    copy ..\Dist\FreeImage.dll . &&
-  #    Test &&
-  #    cd .. &&
+  - SET fail=0
+  - thumbs check || SET fail=1 & ver > nul
+  - ps: Push-Ctest-Results 'build'
+  - ps: Push-AppveyorArtifact build\Testing\Temporary\LastTest.log
+  - exit %fail%
   
   - ps: copy $(.\thumbs list_bin) "Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\FreeImage.dll"
   - if [%tbs_arch%]==[x86] nunit-console-x86 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe

@@ -13,6 +13,7 @@ OPTION(ENABLE_PNG "Enable PNG support" 1)
 OPTION(ENABLE_JPEG "Enable JPEG support" 1)
 OPTION(ENABLE_TIFF "Enable TIFF support" 1)
 OPTION(ENABLE_WEBP "Enable WebP support" 0)
+OPTION(ENABLE_TESTS "Make built in tests" 0)
 OPTION(FREEIMAGE_DYNAMIC_C_RUNTIME "If ON build FreeImage with dynamicly linked C/C++ runtime. If OFF FreeImage is staticly linked with C/C++ runtime.")
 
 IF(NOT FREEIMAGE_DYNAMIC_C_RUNTIME)
@@ -68,4 +69,8 @@ SET(FREEIMAGE_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/Source)
 SET(FREEIMAGE_LIBRARY_DIRS ${CMAKE_BINARY_DIR}/Lib)
 
 add_subdirectory(Source)
-#add_subdirectory(TestAPI)
+
+IF(ENABLE_TESTS)
+  ENABLE_TESTING()
+  add_subdirectory(TestAPI)
+ENDIF()

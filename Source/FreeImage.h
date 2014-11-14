@@ -41,7 +41,7 @@
 	#define DLL_CALLCONV
 #else
 	#if defined(_WIN32) || defined(__WIN32__)
-		#define DLL_CALLCONV __stdcall
+		#define DLL_CALLCONV __cdecl
 		// The following ifdef block is the standard way of creating macros which make exporting 
 		// from a DLL simpler. All files within this DLL are compiled with the FREEIMAGE_EXPORTS
 		// symbol defined on the command line. this symbol should not be defined on any project
