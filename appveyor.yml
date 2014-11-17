@@ -26,7 +26,7 @@ install:
   - SET pack_dlls=1
   
   # webp doesn't link correctly on msvc12/x64 -> works locally??
-  - SET tbs_fi_webp=0
+  - SET tbs_fi_webp=1
   - SET tbs_fi_tests=1
   - SET tbs_fi_raw=1
   - SET tbs_fi_openjp=1
