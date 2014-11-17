@@ -32,6 +32,9 @@ install:
           $env:vcvar_arg = 'x86';
         }
   
+  # udpate cmake
+  - cinst cmake
+  - cmake -version
   
   # get common functions
   - git clone https://github.com/imazen/gd-appveyor-helpers
