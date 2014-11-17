@@ -3,6 +3,18 @@ shallow_clone: true
 
 
 environment:
+  pack_dlls: 1
+  tbs_fi_tests: 1
+  
+  tbs_fi_png: 1
+  tbs_fi_jpeg: 1
+  tbs_fi_tiff: 1
+  
+  tbs_fi_webp: 1
+  tbs_fi_raw: 1
+  tbs_fi_openjp: 1
+  
+  
   matrix:
     - tbs_arch: "x86"
       tbs_tools: "msvc12"
@@ -23,15 +35,6 @@ environment:
 
 
 install:
-  - SET pack_dlls=1
-  
-  # webp doesn't link correctly on msvc12/x64 -> works locally??
-  - SET tbs_fi_webp=1
-  - SET tbs_fi_tests=1
-  - SET tbs_fi_raw=1
-  - SET tbs_fi_openjp=1
-  
-  
   - ps: if($env:build_platform -eq 'x64') {
           $env:vcvar_arg = 'x86_amd64';
           $env:bin_subdir = 'x64';
@@ -46,24 +49,52 @@ install:
   - git clone https://github.com/imazen/gd-appveyor-helpers
   - ps: . .\gd-appveyor-helpers\appveyor_funcs.ps1
   
-  # get nasm (jpeg-turbo)
-  #- cinst nasm
-  #nasm's main site down...
-  - curl -L -o nasminst.exe http://libgd.blob.core.windows.net/nasm/nasm-2.07-installer.exe
-  - start /wait nasminst.exe /S
-  - ps: $env:path="C:\Program Files (x86)\nasm;$($env:path)"
   
   # fetch prebuilt deps
   - mkdir deps
   
-  #- ps: invoke 'nuget' "install libjpeg-$($env:build_compiler)-$($env:build_platform)-master -Source https://ci.appveyor.com/nuget/libjpeg-turbo-t70qw53csfhj"
-  #- ps: move libjpeg*\jpeg_static.lib deps\jpeg.lib
-  #- ps: move libjpeg*\*.h Source\LibJPEG -force
+  - nuget install zlib-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/zlib-94hmpf3q011d
+  - ps: move zlib*\* deps -force
+  - if [%tbs_tools%]==[mingw] move deps\libzlibstatic.a deps\libz.a
+  - if [%tbs_tools%]==[msvc12] move deps\zlibstatic.lib deps\zlib.lib
+  - SET tbsd_zlib_built=1
+  - SET tbsd_zlib_incdir=deps
+  - SET tbsd_zlib_libdir=deps
+  
+  - if [%tbs_fi_jpeg%]==[1] (
+      nuget install libjpeg-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libjpeg-turbo-t70qw53csfhj &&
+      powershell -Command "move libjpeg*\* deps -force" &&
+      (if [%tbs_tools%]==[msvc12] move deps\jpeg_static.lib deps\jpeg.lib) &&
+      SET tbsd_libjpeg_turbo_built=1)
+  
+  - if [%tbs_fi_png%]==[1] (
+      nuget install libpng-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libpng-7hwq4pmmrc48 &&
+      powershell -Command "move libpng*\* deps -force" &&
+      (if [%tbs_tools%]==[mingw] move deps\libpng16.a deps\libpng.a) &&
+      (if [%tbs_tools%]==[msvc12] move deps\libpng16_static.lib deps\png.lib) &&
+      SET tbsd_libpng_built=1)
+  
+  - if [%tbs_fi_tiff%]==[1] (
+      nuget install libtiff-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libtiff-i3h8tqqy7o7b &&
+      powershell -Command "move libtiff*\* deps -force" &&
+      (if [%tbs_tools%]==[msvc12] move deps\tiff_static.lib deps\tiff.lib) &&
+      SET tbsd_libtiff_built=1)
   
   - if [%tbs_fi_webp%]==[1] (
       nuget install libwebp-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libwebp-nebpf5jgkaqn &&
       powershell -Command "move libwebp*\* deps -force" &&
       SET tbsd_libwebp_built=1)
+  
+  - if [%tbs_fi_raw%]==[1] (
+      nuget install libraw-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libraw-er90wfvfpafj &&
+      powershell -Command "move libraw*\* deps -force" &&
+      SET tbsd_libraw_built=1)
+  
+  - if [%tbs_fi_openjp%]==[1] (
+      nuget install openjpeg-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/openjpeg-h6qw5mcmk4dw &&
+      powershell -Command "move openjpeg*\* deps -force" &&
+      SET tbsd_openjpeg_built=1)
+  
   
   # get upx (cinst broken; gets dos ver)
   #- if [%pack_dlls%]==[1] cinst upx
@@ -93,7 +124,7 @@ build_script:
   - if [%tbs_tools%]==[mingw] if [%tbs_arch%]==[x64] SET PATH=C:\mingw64\bin;%PATH%
   
   - SET zip=freeimage-%tbs_tools%-%tbs_arch%.zip
-  - SET zipNet=FreeImageNET-tbs_arch%.zip
+  - SET zipNet=FreeImageNET-%tbs_arch%.zip
   
   - thumbs make
   - if [%pack_dlls%]==[1] for /f "tokens=*" %%i in ('thumbs list_bin') do upx %%i
