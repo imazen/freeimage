@@ -86,10 +86,11 @@ ENDIF()
 IF(ENABLE_RAW)
   SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} FreeImage/PluginRAW.cpp)
 ENDIF()
-
-#	FreeImage/J2KHelper.cpp
-#	FreeImage/PluginJP2.cpp
-#	FreeImage/PluginJ2K.cpp
+IF(ENABLE_OPENJP)
+  SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} FreeImage/J2KHelper.cpp)
+  SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} FreeImage/PluginJP2.cpp)
+  SET(FREEIMAGE_SOURCES ${FREEIMAGE_SOURCES} FreeImage/PluginJ2K.cpp)
+ENDIF()
 
 #	FreeImage/PluginEXR.cpp
 

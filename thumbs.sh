@@ -36,6 +36,7 @@
 [ $tbs_fi_tiff ]        || export tbs_fi_tiff=1
 [ $tbs_fi_webp ]        || export tbs_fi_webp=0
 [ $tbs_fi_raw ]         || export tbs_fi_raw=0
+[ $tbs_fi_openjp ]      || export tbs_fi_openjp=0
 
 
 # tbsd_* contains dep related settings
@@ -71,6 +72,7 @@ post=()
 [ $tbsd_libtiff_repo ]       || export tbsd_libtiff_repo="https://github.com/imazen/libtiff"
 [ $tbsd_libwebp_repo ]       || export tbsd_libwebp_repo="https://github.com/imazen/libwebp"
 [ $tbsd_libraw_repo ]        || export tbsd_libraw_repo="https://github.com/imazen/libraw"
+[ $tbsd_openjpeg_repo ]      || export tbsd_openjpeg_repo="https://github.com/imazen/openjpeg"
 
 deps+=(zlib); targ+=(zlibstatic)
 post+=("cp -u \$(./thumbs.sh list_slib) ../../deps/$zname")
@@ -99,6 +101,12 @@ fi
 
 if [ $tbs_fi_raw -gt 0 ]; then
   deps+=(libraw); targ+=("")
+  post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && cp -u \$lib ../../deps/; done")
+fi
+
+if [ $tbs_fi_openjp -gt 0 ]; then
+  export tbsd_openjpeg_static=1
+  deps+=(openjpeg); targ+=("")
   post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && cp -u \$lib ../../deps/; done")
 fi
 
@@ -218,6 +226,7 @@ cm_args+=(-DENABLE_JPEG=$tbs_fi_jpeg)
 cm_args+=(-DENABLE_TIFF=$tbs_fi_tiff)
 cm_args+=(-DENABLE_WEBP=$tbs_fi_webp)
 cm_args+=(-DENABLE_RAW=$tbs_fi_raw)
+cm_args+=(-DENABLE_OPENJP=$tbs_fi_openjp)
 
 target=
 [ $2 ] && target=$2
