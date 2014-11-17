@@ -30,6 +30,7 @@
 [ $tbs_tools ]          || export tbs_tools=gnu
 [ $tbs_static_runtime ] || export tbs_static_runtime=0
 
+[ $tbs_fi_static ]      || export tbs_fi_static=0
 [ $tbs_fi_tests ]       || export tbs_fi_tests=0
 [ $tbs_fi_png ]         || export tbs_fi_png=1
 [ $tbs_fi_jpeg ]        || export tbs_fi_jpeg=1
@@ -228,6 +229,8 @@ cm_args+=(-DENABLE_WEBP=$tbs_fi_webp)
 cm_args+=(-DENABLE_RAW=$tbs_fi_raw)
 cm_args+=(-DENABLE_OPENJP=$tbs_fi_openjp)
 
+[ $tbs_fi_static -gt 0 ] && cm_args+=(-DFREEIMAGE_BUILD_STATIC=1)
+
 target=
 [ $2 ] && target=$2
 
@@ -341,5 +344,6 @@ list_slib) echo $l_slib;;
 list_dlib) echo $l_dlib;;
 
 *) echo "Unknown command $1"
-   exit 1;;
+   exit 1
+   ;;
 esac
