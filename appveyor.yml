@@ -25,8 +25,9 @@ environment:
 install:
   - SET pack_dlls=1
   
+  # webp doesn't link correctly on msvc12/x64 -> works locally??
+  - SET tbs_fi_webp=0
   - SET tbs_fi_tests=1
-  #- SET tbs_fi_webp=1 #doesn't link correctly on msvc12/x64 -> works locally??
   - SET tbs_fi_raw=1
   - SET tbs_fi_openjp=1
   
@@ -53,10 +54,16 @@ install:
   - ps: $env:path="C:\Program Files (x86)\nasm;$($env:path)"
   
   # fetch prebuilt deps
+  - mkdir deps
+  
   #- ps: invoke 'nuget' "install libjpeg-$($env:build_compiler)-$($env:build_platform)-master -Source https://ci.appveyor.com/nuget/libjpeg-turbo-t70qw53csfhj"
-  #- mkdir deps
   #- ps: move libjpeg*\jpeg_static.lib deps\jpeg.lib
   #- ps: move libjpeg*\*.h Source\LibJPEG -force
+  
+  - if [%tbs_fi_webp%]==[1] (
+      nuget install libwebp-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libwebp-nebpf5jgkaqn &&
+      powershell -Command "move libwebp*\* deps -force" &&
+      SET tbsd_libwebp_built=1)
   
   # get upx (cinst broken; gets dos ver)
   #- if [%pack_dlls%]==[1] cinst upx
@@ -89,7 +96,7 @@ build_script:
   - SET zipNet=FreeImageNET-tbs_arch%.zip
   
   - thumbs make
-  - if [%pack_dlls%]==[1] for /f "tokens=*" %%i in ('thumbs list_bin') upx %%i
+  - if [%pack_dlls%]==[1] for /f "tokens=*" %%i in ('thumbs list_bin') do upx %%i
   - for /f "tokens=*" %%i in ('thumbs list') do set files=%%i
   - 7z a %zip% %files%
   - appveyor PushArtifact %zip%
