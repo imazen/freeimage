@@ -102,7 +102,7 @@ install:
   # get upx (cinst broken; gets dos ver)
   #- if [%pack_dlls%]==[1] cinst upx
   - if [%pack_dlls%]==[1] (
-      curl -L -o upx.zip http://upx.sourceforge.net/download/upx391w.zip &&
+      curl -L -o upx.zip http://libgd.blob.core.windows.net/upx/upx391w.zip &&
       7z e upx.zip *.exe -r )
   
   # get unit test data
