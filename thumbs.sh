@@ -245,7 +245,7 @@ gnu)
 mingw)
   cm_tools="MinGW Makefiles"
   make="mingw32-make $target"
-  ld_flags+=" -Wl,--add-stdcall-alias"
+  ld_flags+=" -Wl,--add-stdcall-alias -lws2_32"
   
   # allow sh in path; some old cmake/mingw bug?
   cm_args+=(-DCMAKE_SH=)
