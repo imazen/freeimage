@@ -3,8 +3,6 @@ shallow_clone: true
 
 
 environment:
-  #pack_dlls:   1    # will fetch upx
-  
   matrix:
     - tbs_arch: "x86"
       tbs_tools: "msvc12"
@@ -25,17 +23,23 @@ environment:
 
 
 install:
+  - SET pack_dlls=1
+  
   - SET tbs_fi_tests=1
   #- SET tbs_fi_webp=1 #doesn't link correctly on msvc12/x64 -> works locally??
   - SET tbs_fi_raw=1
   - SET tbs_fi_openjp=1
   
+  
   - ps: if($env:build_platform -eq 'x64') {
           $env:vcvar_arg = 'x86_amd64';
+          $env:bin_subdir = 'x64';
         }
         else {
           $env:vcvar_arg = 'x86';
+          $env:bin_subdir = '';
         }
+  
   
   # get common functions
   - git clone https://github.com/imazen/gd-appveyor-helpers
@@ -56,9 +60,9 @@ install:
   
   # get upx (cinst broken; gets dos ver)
   #- if [%pack_dlls%]==[1] cinst upx
-  #- if [%pack_dlls%]==[1] (
-  #    curl -L -o upx.zip http://upx.sourceforge.net/download/upx391w.zip &&
-  #    7z e upx.zip *.exe -r )
+  - if [%pack_dlls%]==[1] (
+      curl -L -o upx.zip http://upx.sourceforge.net/download/upx391w.zip &&
+      7z e upx.zip *.exe -r )
   
   # get unit test data
   - curl -L -o utd.zip https://s3.amazonaws.com/public-unit-test-resources/FreeImage.NET/UnitTestData.zip
@@ -85,34 +89,34 @@ build_script:
   - SET zipNet=FreeImageNET-tbs_arch%.zip
   
   - thumbs make
+  - if [%pack_dlls%]==[1] for /f "tokens=*" %%i in ('thumbs list_bin') upx %%i
   - for /f "tokens=*" %%i in ('thumbs list') do set files=%%i
   - 7z a %zip% %files%
   - appveyor PushArtifact %zip%
   
   - ps: $(.\thumbs list).split(' ') | %{copy $_ "Dist"}
   
-  #- if [%build_compiler%]==[msvc] (
-  #    msbuild FreeImage.2013.sln /p:Configuration=Release /v:m &&
-  #    (if [%pack_dlls%]==[1] upx Dist\FreeImage.dll ) &&
-  #    cd TestAPI &&
-  #    msbuild Test.2013.sln /p:Configuration=Release /v:m &&
-  #    cd .. &&
-  #    cd Wrapper\FreeImage.NET\cs\Library &&
-  #    msbuild Library.csproj /p:Configuration=Release /v:m &&
-  #    cd ..\..\..\.. &&
-  #    copy Dist\FreeImage.lib Wrapper\FreeImage.NET\cpp\FreeImageIO &&
-  #    copy Dist\FreeImage.h Wrapper\FreeImage.NET\cpp\FreeImageIO &&
-  #    cd Wrapper\FreeImage.NET\cpp\FreeImageIO &&
-  #    msbuild FreeImageIO.sln /p:Configuration=Release /v:m &&
-  #    cd ..\..\..\.. )
   
-  #- ps: if($env:tbs_tools -eq 'msvc12') {
-  #    invoke '7z' "a $($env:zipNet)
-  #      .\Dist\FreeImage.dll
-  #      .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.dll
-  #      .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.XML
-  #      .\Wrapper\FreeImage.NET\cpp\FreeImageIO\$($env:bin_subdir)\Release\FreeImageIO.Net.dll";
-  #    Push-AppveyorArtifact $env:zipNet; }
+  # build .net wrappers
+  
+  - if [%build_compiler%]==[msvc] (
+      cd Wrapper\FreeImage.NET\cs\Library &&
+      msbuild Library.csproj /p:Configuration=Release /v:m &&
+      cd ..\..\..\.. &&
+      copy Dist\FreeImage.lib Wrapper\FreeImage.NET\cpp\FreeImageIO &&
+      copy Dist\FreeImage.h Wrapper\FreeImage.NET\cpp\FreeImageIO &&
+      cd Wrapper\FreeImage.NET\cpp\FreeImageIO &&
+      msbuild FreeImageIO.sln /p:Configuration=Release /v:m &&
+      cd ..\..\..\.. )
+  
+  - ps: if($env:tbs_tools -eq 'msvc12') {
+      invoke '7z' "a $($env:zipNet)
+        .\Dist\FreeImage.dll
+        .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.dll
+        .\Wrapper\FreeImage.NET\cs\Library\bin\Release\FreeImageNET.XML
+        .\Wrapper\FreeImage.NET\cpp\FreeImageIO\$($env:bin_subdir)\Release\FreeImageIO.Net.dll";
+      Push-AppveyorArtifact $env:zipNet; }
+  
   
   # build .net unit tests
   
