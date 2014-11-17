@@ -26,7 +26,7 @@ for %%i in (tbs_conf tbs_arch tbs_tools tbs_static_runtime tbs_fi_tests tbs_fi_w
 
 rem copy dep settings
 
-for %%i in (zlib libjpeg_turbo libpng libtiff) do (
+for %%i in (zlib libjpeg_turbo libpng libtiff libwebp openjpeg libraw) do (
   for %%j in (repo incdir libdir built) do (
     if not [!tbsd_%%i_%%j!]==[] (
       set exports=!exports!export tbsd_%%i_%%j=!tbsd_%%i_%%j!;
