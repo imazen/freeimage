@@ -34,6 +34,7 @@ install:
   
   # udpate cmake
   - cinst cmake
+  - SET path=C:\ProgramData\chocolatey\bin;%path%
   - cmake -version
   
   # get common functions
