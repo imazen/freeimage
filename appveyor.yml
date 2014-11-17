@@ -95,6 +95,9 @@ install:
       powershell -Command "move openjpeg*\* deps -force" &&
       SET tbsd_openjpeg_built=1)
   
+  - del deps\*.dll*
+  
+  
   
   # get upx (cinst broken; gets dos ver)
   #- if [%pack_dlls%]==[1] cinst upx
