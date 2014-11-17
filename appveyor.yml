@@ -25,17 +25,15 @@ environment:
 
 
 install:
+  - SET tbs_fi_tests=1
+  #- SET tbs_fi_webp=1 #doesn't link correctly on msvc12/x64 -> works locally??
+  
   - ps: if($env:build_platform -eq 'x64') {
           $env:vcvar_arg = 'x86_amd64';
         }
         else {
           $env:vcvar_arg = 'x86';
         }
-  
-  # udpate cmake
-  - cinst cmake
-  - SET path=C:\ProgramData\chocolatey\bin;%path%
-  - cmake -version
   
   # get common functions
   - git clone https://github.com/imazen/gd-appveyor-helpers
@@ -60,6 +58,7 @@ install:
   #    curl -L -o upx.zip http://upx.sourceforge.net/download/upx391w.zip &&
   #    7z e upx.zip *.exe -r )
   
+  # get unit test data
   - curl -L -o utd.zip https://s3.amazonaws.com/public-unit-test-resources/FreeImage.NET/UnitTestData.zip
   - 7z x utd.zip -oWrapper\FreeImage.NET\cs
   
@@ -82,9 +81,6 @@ build_script:
   
   - SET zip=freeimage-%tbs_tools%-%tbs_arch%.zip
   - SET zipNet=FreeImageNET-tbs_arch%.zip
-  
-  - SET tbs_fi_tests=1
-  - SET tbs_fi_webp=1
   
   - thumbs make
   - for /f "tokens=*" %%i in ('thumbs list') do set files=%%i
