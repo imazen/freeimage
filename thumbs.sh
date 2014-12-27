@@ -75,40 +75,44 @@ post=()
 [ $tbsd_libraw_repo ]        || export tbsd_libraw_repo="https://github.com/imazen/libraw"
 [ $tbsd_openjpeg_repo ]      || export tbsd_openjpeg_repo="https://github.com/imazen/openjpeg"
 
+if [[ "$OSTYPE" == "darwin"* ]]; then cp="rsync"
+else cp="cp"
+fi
+
 deps+=(zlib); targ+=(zlibstatic)
-post+=("cp -u \$(./thumbs.sh list_slib) ../../deps/$zname")
+post+=("$cp -u \$(./thumbs.sh list_slib) ../../deps/$zname")
 
 if [ $tbs_fi_png -gt 0 ]; then
   deps+=(libpng); targ+=(png16_static)
-  post+=("cp -u \$(./scripts/thumbs.sh list_slib) ../../deps/$pname")
+  post+=("$cp -u \$(./scripts/thumbs.sh list_slib) ../../deps/$pname")
 fi
 
 if [ $tbs_fi_jpeg -gt 0 ]; then
   deps+=(libjpeg_turbo); targ+=(jpeg_static)
-  post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && cp -u \$lib ../../deps/$jname; done")
+  post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && $cp -u \$lib ../../deps/$jname; done")
 fi
 
 if [ $tbs_fi_tiff -gt 0 ]; then
   ttarg="libtiff/tiff_static"
   [ $tbs_tools = gnu -o $tbs_tools = mingw ] && ttarg=tiff_static
   deps+=(libtiff); targ+=($ttarg)
-  post+=("cp -u \$(./thumbs.sh list_slib) ../../deps/$tname")
+  post+=("$cp -u \$(./thumbs.sh list_slib) ../../deps/$tname")
 fi
 
 if [ $tbs_fi_webp -gt 0 ]; then
   deps+=(libwebp); targ+=("")
-  post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && cp -u \$lib ../../deps/; done")
+  post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && $cp -u \$lib ../../deps/; done")
 fi
 
 if [ $tbs_fi_raw -gt 0 ]; then
   deps+=(libraw); targ+=("")
-  post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && cp -u \$lib ../../deps/; done")
+  post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && $cp -u \$lib ../../deps/; done")
 fi
 
 if [ $tbs_fi_openjp -gt 0 ]; then
   export tbsd_openjpeg_static=1
   deps+=(openjpeg); targ+=("")
-  post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && cp -u \$lib ../../deps/; done")
+  post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && $cp -u \$lib ../../deps/; done")
 fi
 
 
@@ -143,7 +147,7 @@ process_deps()
       $thumbs make ${targ[$key]} || exit 1
       
       # copy any includes and do poststep
-      cp -u -r $($thumbs list_inc) ../../deps
+      $cp -u -r $($thumbs list_inc) ../../deps
       eval ${post[$key]}
       
       # look in both local and parent dep dirs
