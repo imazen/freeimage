@@ -53,7 +53,7 @@ install:
   # fetch prebuilt deps
   - mkdir deps
   
-  - nuget install zlib-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/zlib-94hmpf3q011d
+  - nuget install zlib-%tbs_tools%-%tbs_arch%-master -Version 1.2.7.2 -Source https://ci.appveyor.com/nuget/zlib-shallow-x0n34b3pfq1b
   - ps: move zlib*\* deps -force
   - if [%tbs_tools%]==[mingw] move deps\libzlibstatic.a deps\libz.a
   - if [%tbs_tools%]==[msvc12] move deps\zlibstatic.lib deps\zlib.lib
@@ -62,36 +62,36 @@ install:
   - SET tbsd_zlib_libdir=deps
   
   - if [%tbs_fi_jpeg%]==[1] (
-      nuget install libjpeg-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libjpeg-turbo-t70qw53csfhj &&
+      nuget install libjpeg-%tbs_tools%-%tbs_arch%-master -Version 1.3.43.57 -Source https://ci.appveyor.com/nuget/libjpeg-turbo-t70qw53csfhj &&
       powershell -Command "move libjpeg*\* deps -force" &&
       (if [%tbs_tools%]==[msvc12] move deps\jpeg_static.lib deps\jpeg.lib) &&
       SET tbsd_libjpeg_turbo_built=1)
   
   - if [%tbs_fi_png%]==[1] (
-      nuget install libpng-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libpng-7hwq4pmmrc48 &&
+      nuget install libpng-%tbs_tools%-%tbs_arch%-master -Version 1.6.14.31 -Source https://ci.appveyor.com/nuget/libpng-7hwq4pmmrc48 &&
       powershell -Command "move libpng*\* deps -force" &&
       (if [%tbs_tools%]==[mingw] move deps\libpng16.a deps\libpng.a) &&
       (if [%tbs_tools%]==[msvc12] move deps\libpng16_static.lib deps\png.lib) &&
       SET tbsd_libpng_built=1)
   
   - if [%tbs_fi_tiff%]==[1] (
-      nuget install libtiff-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libtiff-i3h8tqqy7o7b &&
+      nuget install libtiff-%tbs_tools%-%tbs_arch%-master -Version 4.0.3.47 -Source https://ci.appveyor.com/nuget/libtiff-i3h8tqqy7o7b &&
       powershell -Command "move libtiff*\* deps -force" &&
       (if [%tbs_tools%]==[msvc12] move deps\tiff_static.lib deps\tiff.lib) &&
       SET tbsd_libtiff_built=1)
   
   - if [%tbs_fi_webp%]==[1] (
-      nuget install libwebp-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libwebp-nebpf5jgkaqn &&
+      nuget install libwebp-%tbs_tools%-%tbs_arch%-master -Version 0.4.2.12 -Source https://ci.appveyor.com/nuget/libwebp-nebpf5jgkaqn &&
       powershell -Command "move libwebp*\* deps -force" &&
       SET tbsd_libwebp_built=1)
   
   - if [%tbs_fi_raw%]==[1] (
-      nuget install libraw-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/libraw-er90wfvfpafj &&
+      nuget install libraw-%tbs_tools%-%tbs_arch%-master -Version 0.17.0.25 -Source https://ci.appveyor.com/nuget/libraw-er90wfvfpafj &&
       powershell -Command "move libraw*\* deps -force" &&
       SET tbsd_libraw_built=1)
   
   - if [%tbs_fi_openjp%]==[1] (
-      nuget install openjpeg-%tbs_tools%-%tbs_arch%-master -Source https://ci.appveyor.com/nuget/openjpeg-h6qw5mcmk4dw &&
+      nuget install openjpeg-%tbs_tools%-%tbs_arch%-master -Version 2.1.9 -Source https://ci.appveyor.com/nuget/openjpeg-h6qw5mcmk4dw &&
       powershell -Command "move openjpeg*\* deps -force" &&
       SET tbsd_openjpeg_built=1)
   
