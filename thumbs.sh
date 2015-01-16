@@ -72,7 +72,7 @@ post=()
 [[ $tbsd_libjpeg_turbo_repo ]] || export tbsd_libjpeg_turbo_repo="git clone https://github.com/imazen/libjpeg-turbo libjpeg_turbo ; cd libjpeg_turbo && git reset --hard 2bb3c77c6963dae603ed86a9a32f4ab5fbed2e9e"
 [[ $tbsd_libtiff_repo ]]       || export tbsd_libtiff_repo="git clone https://github.com/imazen/libtiff ; cd libtiff && git reset --hard 5bf56a4365fac0293b83fecab90e4bc588ea1e53"
 [[ $tbsd_libwebp_repo ]]       || export tbsd_libwebp_repo="git clone https://github.com/imazen/libwebp ; cd libwebp && git reset --hard fee09f582645bfac9ac90bda2f7303db8f45dbf2"
-[[ $tbsd_libraw_repo ]]        || export tbsd_libraw_repo="git clone https://github.com/imazen/libraw ; cd libraw && git reset --hard d13a74c8a8f66ee19421ed1dfc90155d751dffb9"
+[[ $tbsd_libraw_repo ]]        || export tbsd_libraw_repo="git clone https://github.com/imazen/libraw ; cd libraw && git reset --hard efcfb6014c38ff36ba9cae6f27bdc0612c3259d4"
 [[ $tbsd_openjpeg_repo ]]      || export tbsd_openjpeg_repo="git clone https://github.com/imazen/openjpeg ; cd openjpeg && git reset --hard 2dbf899e70e7fcf7a3e99ac8dd88e502155e74b7"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then cp="rsync"
