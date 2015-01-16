@@ -67,13 +67,13 @@ deps=()
 targ=()
 post=()
 
-[ $tbsd_zlib_repo ]          || export tbsd_zlib_repo="git clone https://github.com/imazen/zlib_shallow && cd zlib_shallow && git reset --hard b041a7f485778d7f5a49ecb48b591325caa9ae81"
-[ $tbsd_libpng_repo ]        || export tbsd_libpng_repo="git clone https://github.com/imazen/libpng && cd libpng && git reset --hard bcec51049eded7b77805710b9451e12a1887faa4"
-[ $tbsd_libjpeg_turbo_repo ] || export tbsd_libjpeg_turbo_repo="git clone https://github.com/imazen/libjpeg-turbo libjpeg_turbo && cd libjpeg_turbo && git reset --hard 48903948aba941ca00e23457d8569727d78cd1f7"
-[ $tbsd_libtiff_repo ]       || export tbsd_libtiff_repo="git clone https://github.com/imazen/libtiff && cd libtiff && git reset --hard e07d98e728a36f091bd5546b7a059c1d38efda39"
-[ $tbsd_libwebp_repo ]       || export tbsd_libwebp_repo="git clone https://github.com/imazen/libwebp && cd libwebp && git reset --hard fee09f582645bfac9ac90bda2f7303db8f45dbf2"
-[ $tbsd_libraw_repo ]        || export tbsd_libraw_repo="git clone https://github.com/imazen/libraw && cd libraw && git reset --hard d13a74c8a8f66ee19421ed1dfc90155d751dffb9"
-[ $tbsd_openjpeg_repo ]      || export tbsd_openjpeg_repo="git clone https://github.com/imazen/openjpeg && cd openjpeg && git reset --hard 2dbf899e70e7fcf7a3e99ac8dd88e502155e74b7"
+[[ $tbsd_zlib_repo ]]          || export tbsd_zlib_repo="git clone https://github.com/imazen/zlib_shallow ; cd zlib_shallow && git reset --hard b041a7f485778d7f5a49ecb48b591325caa9ae81"
+[[ $tbsd_libpng_repo ]]        || export tbsd_libpng_repo="git clone https://github.com/imazen/libpng ; cd libpng && git reset --hard 62957cf48c945fffb62a80ae6bf88037b5697947"
+[[ $tbsd_libjpeg_turbo_repo ]] || export tbsd_libjpeg_turbo_repo="git clone https://github.com/imazen/libjpeg-turbo libjpeg_turbo ; cd libjpeg_turbo && git reset --hard 2bb3c77c6963dae603ed86a9a32f4ab5fbed2e9e"
+[[ $tbsd_libtiff_repo ]]       || export tbsd_libtiff_repo="git clone https://github.com/imazen/libtiff ; cd libtiff && git reset --hard 5bf56a4365fac0293b83fecab90e4bc588ea1e53"
+[[ $tbsd_libwebp_repo ]]       || export tbsd_libwebp_repo="git clone https://github.com/imazen/libwebp ; cd libwebp && git reset --hard fee09f582645bfac9ac90bda2f7303db8f45dbf2"
+[[ $tbsd_libraw_repo ]]        || export tbsd_libraw_repo="git clone https://github.com/imazen/libraw ; cd libraw && git reset --hard d13a74c8a8f66ee19421ed1dfc90155d751dffb9"
+[[ $tbsd_openjpeg_repo ]]      || export tbsd_openjpeg_repo="git clone https://github.com/imazen/openjpeg ; cd openjpeg && git reset --hard 2dbf899e70e7fcf7a3e99ac8dd88e502155e74b7"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then cp="rsync"
 else cp="cp"
