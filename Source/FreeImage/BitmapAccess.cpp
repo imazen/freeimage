@@ -3,7 +3,7 @@
 //
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
-// - HervEDrolon (drolon@infonie.fr)
+// - Hervé Drolon (drolon@infonie.fr)
 // - Detlev Vendt (detlev.vendt@brillit.de)
 // - Petr Supina (psup@centrum.cz)
 // - Carsten Klein (c.klein@datagis.com)
@@ -36,6 +36,7 @@
 #include "FreeImage.h"
 #include "FreeImageIO.h"
 #include "Utilities.h"
+#include "MapIntrospector.h"
 
 #include "../Metadata/FreeImageTag.h"
 
@@ -823,13 +824,14 @@ unsigned DLL_CALLCONV
 FreeImage_GetRedMask(FIBITMAP *dib) {
 	FREEIMAGERGBMASKS *masks = NULL;
 	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
-	unsigned bpp = FreeImage_GetBPP(dib);
 	switch(image_type) {
 		case FIT_BITMAP:
 			// check for 16-bit RGB (565 or 555)
 			masks = FreeImage_GetRGBMasks(dib);
-			if (masks) return masks->red_mask;
-			return bpp >= 24 ? FI_RGBA_RED_MASK : 0;
+			if (masks) {
+				return masks->red_mask;
+			}
+			return FreeImage_GetBPP(dib) >= 24 ? FI_RGBA_RED_MASK : 0;
 		default:
 			return 0;
 	}
@@ -839,13 +841,14 @@ unsigned DLL_CALLCONV
 FreeImage_GetGreenMask(FIBITMAP *dib) {
 	FREEIMAGERGBMASKS *masks = NULL;
 	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
-	unsigned bpp = FreeImage_GetBPP(dib);
 	switch(image_type) {
 		case FIT_BITMAP:
 			// check for 16-bit RGB (565 or 555)
 			masks = FreeImage_GetRGBMasks(dib);
-			if (masks) return masks->green_mask;
-			return bpp >= 24 ? FI_RGBA_GREEN_MASK : 0;
+			if (masks) {
+				return masks->green_mask;
+			}
+			return FreeImage_GetBPP(dib) >= 24 ? FI_RGBA_GREEN_MASK : 0;
 		default:
 			return 0;
 	}
@@ -855,13 +858,14 @@ unsigned DLL_CALLCONV
 FreeImage_GetBlueMask(FIBITMAP *dib) {
 	FREEIMAGERGBMASKS *masks = NULL;
 	FREE_IMAGE_TYPE image_type = FreeImage_GetImageType(dib);
-	unsigned bpp = FreeImage_GetBPP(dib);
 	switch(image_type) {
 		case FIT_BITMAP:
 			// check for 16-bit RGB (565 or 555)
 			masks = FreeImage_GetRGBMasks(dib);
-			if (masks) return masks->blue_mask;
-			return bpp >= 24 ? FI_RGBA_BLUE_MASK : 0;
+			if (masks) {
+				return masks->blue_mask;
+			}
+			return FreeImage_GetBPP(dib) >= 24 ? FI_RGBA_BLUE_MASK : 0;
 		default:
 			return 0;
 	}
@@ -1499,4 +1503,71 @@ FreeImage_GetMetadataCount(FREE_IMAGE_MDMODEL model, FIBITMAP *dib) {
 
 // ----------------------------------------------------------
 
+unsigned DLL_CALLCONV
+FreeImage_GetMemorySize(FIBITMAP *dib) {
+	if (!dib) {
+		return 0;
+	}
+	FREEIMAGEHEADER *header = (FREEIMAGEHEADER *)dib->data;
+	BITMAPINFOHEADER *bih = FreeImage_GetInfoHeader(dib);
+
+	BOOL header_only = !header->has_pixels || header->external_bits != NULL;
+	BOOL need_masks = bih->biCompression == BI_BITFIELDS;
+	unsigned width = bih->biWidth;
+	unsigned height = bih->biHeight;
+	unsigned bpp = bih->biBitCount;
+	
+	// start off with the size of the FIBITMAP structure
+	size_t size = sizeof(FIBITMAP);
+	
+	// add sizes of FREEIMAGEHEADER, BITMAPINFOHEADER, palette and DIB data
+	size += FreeImage_GetInternalImageSize(header_only, width, height, bpp, need_masks);
+
+	// add ICC profile size
+	size += header->iccProfile.size;
+
+	// add thumbnail image size
+	if (header->thumbnail) {
+		// we assume a thumbnail not having a thumbnail as well, 
+		// so this recursive call should not create an infinite loop
+		size += FreeImage_GetMemorySize(header->thumbnail);
+	}
+
+	// add metadata size
+	METADATAMAP *md = header->metadata;
+	if (!md) {
+		return (unsigned)size;
+	}
+
+	// add size of METADATAMAP
+	size += sizeof(METADATAMAP);
+
+	const size_t models = md->size();
+	if (models == 0) {
+		return (unsigned)size;
+	}
+
+	unsigned tags = 0;
+
+	for (METADATAMAP::iterator i = md->begin(); i != md->end(); i++) {
+		TAGMAP *tm = i->second;
+		if (tm) {
+			for (TAGMAP::iterator j = tm->begin(); j != tm->end(); j++) {
+				++tags;
+				const std::string & key = j->first;
+				size += key.capacity();
+				size += FreeImage_GetTagMemorySize(j->second);
+			}
+		}
+	}
+
+	// add size of all TAGMAP instances
+	size += models * sizeof(TAGMAP);
+	// add size of tree nodes in METADATAMAP
+	size += MapIntrospector<METADATAMAP>::GetNodesMemorySize(models);
+	// add size of tree nodes in TAGMAP
+	size += MapIntrospector<TAGMAP>::GetNodesMemorySize(tags);
+
+	return (unsigned)size;
+}
 

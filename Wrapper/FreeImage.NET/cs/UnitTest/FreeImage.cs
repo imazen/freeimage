@@ -3278,7 +3278,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// OpenEXR format (*.EXR)
 		/// </summary>
-		/*FIF_EXR = 29,
+		FIF_EXR = 29,
 		/// <summary>
 		/// JPEG-2000 format (*.J2K, *.J2C)
 		/// </summary>
@@ -3298,14 +3298,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// RAW camera image (*.*)
 		/// </summary>
-		FIF_RAW = 34,*/
-		FIF_J2K = 29,
-		FIF_JP2 = 30,
-		FIF_PFM = 31,
-		FIF_PICT = 32,
-		FIF_RAW = 33,
-		FIF_WEBP = 34,
-		FIF_JXR = 35
+		FIF_RAW = 34,
 	}
 }
 

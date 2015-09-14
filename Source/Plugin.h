@@ -34,23 +34,28 @@
 
 struct Plugin;
 
-// TODO PluginNode is not needed (anymore). Refactor to use just Plugin (extend it if necessary)
-
 // =====================================================================
 //  Plugin Node
 // =====================================================================
 
 FI_STRUCT (PluginNode) {
-	int m_id;				// FREE_IMAGE_FORMATs - legacy, not needed, but still used
-	void *m_instance;	// handle to a user plugins DLL (NULL for standard plugins)
-	Plugin *m_plugin;	// The actual Plugin, holding the func pointers
-//	PluginNode *m_next; // legacy, not used, remove
-	BOOL m_enabled;		// Enable/Disable switch
+	/** FREE_IMAGE_FORMAT attached to this plugin */
+	int m_id;
+	/** Handle to a user plugin DLL (NULL for standard plugins) */
+	void *m_instance;
+	/** The actual plugin, holding the function pointers */
+	Plugin *m_plugin;
+	/** Enable/Disable switch */
+	BOOL m_enabled;
 
-	const char *m_format;			//< Used to overide the ones, returned from Plugin's func pointers
-	const char *m_description;	//< (not really needed)
-	const char *m_extension;		//<
-	const char *m_regexpr;			//<
+	/** Unique format string for the plugin */
+	const char *m_format;
+	/** Description string for the plugin */
+	const char *m_description;
+	/** Comma separated list of file extensions indicating what files this plugin can open */
+	const char *m_extension;
+	/** optional regular expression to help	software identifying a bitmap type */
+	const char *m_regexpr;
 };
 
 // =====================================================================
@@ -59,29 +64,20 @@ FI_STRUCT (PluginNode) {
 
 class PluginList {
 public :
-	typedef std::map<int, PluginNode *> PluginMap;
-	typedef PluginMap::const_iterator const_iterator;
 	PluginList();
 	~PluginList();
 
-	FREE_IMAGE_FORMAT AddNode(FI_InitProc proc, FREE_IMAGE_FORMAT, void *instance = NULL, const char *format = 0, const char *description = 0, const char *extension = 0, const char *regexpr = 0);
+	FREE_IMAGE_FORMAT AddNode(FI_InitProc proc, void *instance = NULL, const char *format = 0, const char *description = 0, const char *extension = 0, const char *regexpr = 0);
 	PluginNode *FindNodeFromFormat(const char *format);
 	PluginNode *FindNodeFromMime(const char *mime);
 	PluginNode *FindNodeFromFIF(int node_id);
 
-	const_iterator begin() const;
-	const_iterator end() const;
-	
-	int lastId() const;
-	
 	int Size() const;
-//	BOOL IsEmpty() const; //### unused
+	BOOL IsEmpty() const;
 
 private :
-	 PluginMap m_plugin_map;
-
-	// helper variable to generate ids beyond FIF_CUSTOM
-	int m_lastId;
+	std::map<int, PluginNode *> m_plugin_map;
+	int m_node_count;
 };
 
 // ==========================================================
@@ -103,8 +99,8 @@ int FreeImage_stricmp(const char *s1, const char *s2);
 extern "C" {
 	BOOL DLL_CALLCONV FreeImage_Validate(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle);
     void * DLL_CALLCONV FreeImage_Open(PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_for_reading);
-    void DLL_CALLCONV FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data);
-    PluginList * DLL_CALLCONV FreeImage_GetPluginList();
+    void DLL_CALLCONV FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data); // plugin.cpp
+    PluginList * DLL_CALLCONV FreeImage_GetPluginList(); // plugin.cpp
 }
 
 // ==========================================================

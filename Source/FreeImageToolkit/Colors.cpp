@@ -2,7 +2,7 @@
 // Color manipulation routines
 //
 // Design and implementation by
-// - HervÅEDrolon (drolon@infonie.fr)
+// - HervÈ Drolon (drolon@infonie.fr)
 // - Carsten Klein (c.klein@datagis.com)
 // - Mihail Naydenov (mnaydenov@users.sourceforge.net)
 //
@@ -61,7 +61,6 @@ FreeImage_Invert(FIBITMAP *src) {
 			case 1 :
 			case 4 :
 			case 8 :
-			case 16 :
 			{
 				// if the dib has a colormap, just invert it
 				// else, keep the linear grayscale

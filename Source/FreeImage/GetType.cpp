@@ -19,19 +19,40 @@
 // Use at your own risk!
 // ==========================================================
 
-// TODO Remove this file, so-called 'Type' is file type and all its code is in Plugin.cpp
-
 #ifdef _MSC_VER 
 #pragma warning (disable : 4786) // identifier was truncated to 'number' characters
 #endif 
 
 #include "FreeImage.h"
-//#include "Utilities.h"
+#include "Utilities.h"
 #include "FreeImageIO.h"
-//#include "Plugin.h"
+#include "Plugin.h"
 #include "../DeprecationManager/DeprecationMgr.h"
 
 // ----------------------------------------------------------
+
+FREE_IMAGE_FORMAT DLL_CALLCONV
+FreeImage_GetFileTypeFromHandle(FreeImageIO *io, fi_handle handle, int size) {
+	if (handle != NULL) {
+		int fif_count = FreeImage_GetFIFCount();
+
+		for (int i = 0; i < fif_count; ++i) {
+			FREE_IMAGE_FORMAT fif = (FREE_IMAGE_FORMAT)i;
+			if (FreeImage_Validate(fif, io, handle)) {
+				if(fif == FIF_TIFF) {
+					// many camera raw files use a TIFF signature ...
+					// ... try to revalidate against FIF_RAW (even if it breaks the code genericity)
+					if (FreeImage_Validate(FIF_RAW, io, handle)) {
+						return FIF_RAW;
+					}
+				}
+				return fif;
+			}
+		}
+	}
+
+	return FIF_UNKNOWN;
+}
 
 FREE_IMAGE_FORMAT DLL_CALLCONV
 FreeImage_GetFileType(const char *filename, int size) {

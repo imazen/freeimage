@@ -1030,7 +1030,18 @@ public:
 };
 
 /**
-Write a metadata model as a TIF IFD to a FIMEMORY handle
+Write a metadata model as a TIF IFD to a FIMEMORY handle.
+The entries in the TIF IFD are sorted in ascending order by tag id.	
+The last entry is written as 0 (4 bytes) which means no more IFD to follow. 
+Supported metadata models are
+<ul>
+<li>FIMD_EXIF_MAIN
+<li>FIMD_EXIF_EXIF
+<li>FIMD_EXIF_GPS
+<li>FIMD_EXIF_INTEROP
+</ul>
+The end of the buffer is filled with 4 bytes equal to 0 (end of IFD offset)
+
 @param dib Input FIBITMAP
 @param md_model Metadata model to write
 @param hmem Memory handle
@@ -1043,14 +1054,16 @@ tiff_write_ifd(FIBITMAP *dib, FREE_IMAGE_MDMODEL md_model, FIMEMORY *hmem) {
 	FIMETADATA *mdhandle = NULL;
 	std::vector<FITAG*> vTagList;
 	TagLib::MDMODEL internal_md_model;
-	DWORD ifd_offset = 0; // WORD-aligned IFD value offset
+
+	DWORD ifd_offset = 0;	// WORD-aligned IFD value offset
+
 	const BYTE empty_byte = 0;
 
 	// start of the file
 	const long start_of_file = FreeImage_TellMemory(hmem);
 
 	// get the metadata count
-	const unsigned metadata_count = FreeImage_GetMetadataCount(md_model, dib);
+	unsigned metadata_count = FreeImage_GetMetadataCount(md_model, dib);
 	if(metadata_count == 0) {
 		return FALSE;
 	}
@@ -1076,7 +1089,8 @@ tiff_write_ifd(FIBITMAP *dib, FREE_IMAGE_MDMODEL md_model, FIMEMORY *hmem) {
 	}
 
 	try {
-		// 1) the entries in a TIF IFD must be sorted in ascending order by tag id
+		// 1) according to the TIFF specifications, 
+		// the entries in a TIF IFD must be sorted in ascending order by tag id
 
 		// store the tags into a vector
 		vTagList.reserve(metadata_count);
@@ -1087,13 +1101,14 @@ tiff_write_ifd(FIBITMAP *dib, FREE_IMAGE_MDMODEL md_model, FIMEMORY *hmem) {
 				// rewrite the tag id using FreeImage internal database
 				// (in case the tag id is wrong or missing)
 				const char *key = FreeImage_GetTagKey(tag);
-				WORD tag_id = s.getTagID(internal_md_model, key);
+				int tag_id = s.getTagID(internal_md_model, key);
 				if(tag_id != -1) {
 					// this is a known tag, set the tag ID
-					FreeImage_SetTagID(tag, tag_id);
+					FreeImage_SetTagID(tag, (WORD)tag_id);
 					// record the tag
 					vTagList.push_back(tag);
 				}
+				// else ignore this tag
 			} while(FreeImage_FindNextMetadata(mdhandle, &tag));
 
 			FreeImage_FindCloseMetadata(mdhandle);
@@ -1101,17 +1116,25 @@ tiff_write_ifd(FIBITMAP *dib, FREE_IMAGE_MDMODEL md_model, FIMEMORY *hmem) {
 			// sort the vector by tag id
 			std::sort(vTagList.begin(), vTagList.end(), PredicateTagIDCompare());
 
+			// update the metadata_count
+			metadata_count = (unsigned)vTagList.size();
+
 		} else {
 			throw(1);
 		}
 
-		// 2) prepare the place for each IFD entries
-		{
-			// 2 bytes for number of entries + 12 bytes for each entry + 4 bytes for end-of-IFD
-			unsigned ifd_size = 2 + 12 * metadata_count + 4;
-			for(unsigned k = 0; k < ifd_size; k++) {
-				FreeImage_WriteMemory(&empty_byte, 1, 1, hmem);
-			}
+		// 2) prepare the place for each IFD entries.
+
+		/*
+		An Image File Directory (IFD) consists of a 2-byte count of the number of directory entries (i.e., the number of fields), 
+		followed by a sequence of 12-byte field entries, 
+		followed by a 4-byte offset of the next IFD (or 0 if none). Do not forget to write the 4 bytes of 0 after the last IFD.
+		*/
+
+		{		
+			// prepare place for 2 bytes for number of entries + 12 bytes for each entry
+			unsigned ifd_size = 2 + 12 * metadata_count;
+			FreeImage_WriteMemory(&empty_byte, 1, ifd_size, hmem);
 			// record the offset used to write values > 4-bytes
 			ifd_offset = FreeImage_TellMemory(hmem);
 			// rewind
@@ -1130,13 +1153,13 @@ tiff_write_ifd(FIBITMAP *dib, FREE_IMAGE_MDMODEL md_model, FIMEMORY *hmem) {
 			// tag id
 			WORD tag_id = FreeImage_GetTagID(tag);
 			FreeImage_WriteMemory(&tag_id, 1, 2, hmem);
-			// tag type
+			// tag type (compliant with TIFF specification)
 			WORD tag_type = (WORD)FreeImage_GetTagType(tag);
 			FreeImage_WriteMemory(&tag_type, 1, 2, hmem);
 			// tag count
 			DWORD tag_count = FreeImage_GetTagCount(tag);
 			FreeImage_WriteMemory(&tag_count, 1, 4, hmem);
-			// tag value or offset
+			// tag value or offset (results are in BYTE's units)
 			unsigned tag_length = FreeImage_GetTagLength(tag);
 			if(tag_length <= 4) {
 				// 4 bytes or less, write the value (left justified)
@@ -1149,7 +1172,7 @@ tiff_write_ifd(FIBITMAP *dib, FREE_IMAGE_MDMODEL md_model, FIMEMORY *hmem) {
 				// write an offset
 				FreeImage_WriteMemory(&ifd_offset, 1, 4, hmem);
 				// write the value
-				long position = FreeImage_TellMemory(hmem);
+				long current_position = FreeImage_TellMemory(hmem);
 				FreeImage_SeekMemory(hmem, ifd_offset, SEEK_SET);
 				FreeImage_WriteMemory(FreeImage_GetTagValue(tag), 1, tag_length, hmem);
 				if(tag_length & 1) {
@@ -1159,11 +1182,13 @@ tiff_write_ifd(FIBITMAP *dib, FREE_IMAGE_MDMODEL md_model, FIMEMORY *hmem) {
 				// next offset to use
 				ifd_offset = FreeImage_TellMemory(hmem);
 				// rewind
-				FreeImage_SeekMemory(hmem, position, SEEK_SET);
+				FreeImage_SeekMemory(hmem, current_position, SEEK_SET);
 			}
 		}
 
-		FreeImage_SeekMemory(hmem, 0, SEEK_END);
+		// end-of-IFD or next IFD (0 == none)
+		FreeImage_SeekMemory(hmem, ifd_offset, SEEK_SET);
+		FreeImage_WriteMemory(&empty_byte, 1, 4, hmem);
 
 		return TRUE;
 	}
@@ -1180,6 +1205,7 @@ The buffer is allocated by the function and must be freed by the caller, using '
 @param ppbProfile Returned buffer
 @param uProfileLength Returned buffer size
 @return Returns TRUE if successful, FALSE otherwise
+@see tiff_write_ifd
 */
 BOOL
 tiff_get_ifd_profile(FIBITMAP *dib, FREE_IMAGE_MDMODEL md_model, BYTE **ppbProfile, unsigned *uProfileLength) {
