@@ -35,9 +35,10 @@ extern "C" {
 #undef FAR
 #include <setjmp.h>
 
-#include "../LibJPEG/jinclude.h"
-#include "../LibJPEG/jpeglib.h"
-#include "../LibJPEG/jerror.h"
+#include "jmorecfg.h"
+#include "jinclude.h"
+#include "jpeglib.h"
+#include "jerror.h"
 }
 
 #include "FreeImage.h"
@@ -502,6 +503,7 @@ marker_is_icc(jpeg_saved_marker_ptr marker) {
   NOTE: if the file contains invalid ICC APP2 markers, we just silently
   return FALSE.  You might want to issue an error message instead.
 */
+
 static BOOL 
 jpeg_read_icc_profile(j_decompress_ptr cinfo, JOCTET **icc_data_ptr, unsigned *icc_data_len) {
 	jpeg_saved_marker_ptr marker;
