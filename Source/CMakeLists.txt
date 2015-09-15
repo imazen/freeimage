@@ -12,17 +12,22 @@ set( FREEIMAGE_SOURCES
 	FreeImage/Conversion16_555.cpp FreeImage/Conversion16_565.cpp 
 	FreeImage/Conversion24.cpp FreeImage/Conversion32.cpp 
 	FreeImage/Conversion4.cpp FreeImage/Conversion8.cpp
-	FreeImage/ConversionFloat.cpp 
+	FreeImage/ConversionFloat.cpp
+        FreeImage/ConversionRGBAF.cpp
+        FreeImage/ConversionRGBA16.cpp
 	FreeImage/ConversionRGBF.cpp FreeImage/ConversionRGB16.cpp FreeImage/ConversionType.cpp 
 	FreeImage/ConversionUINT16.cpp
 	FreeImage/FreeImage.cpp FreeImage/FreeImageIO.cpp FreeImage/GetType.cpp 
 	FreeImage/Halftoning.cpp
+        FreeImage/LFPQuantizer.cpp
 	FreeImage/MemoryIO.cpp
 	FreeImage/MultiPage.cpp FreeImage/NNQuantizer.cpp 
 	FreeImage/PixelAccess.cpp FreeImage/Plugin.cpp FreeImage/PluginBMP.cpp 
 	FreeImage/PluginCUT.cpp FreeImage/PluginDDS.cpp
+        # FreeImage/PluginEXR.cpp
 	FreeImage/PluginGIF.cpp FreeImage/PluginHDR.cpp
 	FreeImage/PluginICO.cpp FreeImage/PluginIFF.cpp
+        
 
 	FreeImage/PluginKOALA.cpp
 	FreeImage/PluginPCD.cpp FreeImage/PluginPCX.cpp FreeImage/PluginPFM.cpp 
@@ -59,6 +64,8 @@ set( FREEIMAGE_SOURCES
 	FreeImage/PluginJNG.cpp
 	FreeImage/PluginMNG.cpp
 	FreeImage/ZLibInterface.cpp
+
+        OpenEXR/Half/half.cpp 
 )
 
 IF(ENABLE_PNG)
