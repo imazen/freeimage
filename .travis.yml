@@ -11,8 +11,9 @@ os:
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ];
     then
+      sudo add-apt-repository --yes ppa:kalakris/cmake;
       sudo apt-get update -qq;
-      sudo apt-get -y install nasm;
+      sudo apt-get -y install nasm cmake;
       if [ "$tbs_arch" = "x86" ];
       then
         sudo apt-get -y install gcc-multilib;
