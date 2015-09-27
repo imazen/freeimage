@@ -73,7 +73,7 @@ post=()
 [[ $tbsd_libtiff_repo ]]       || export tbsd_libtiff_repo="git clone https://github.com/imazen/libtiff ; cd libtiff && git reset --hard 6cc983bcd5eaeba3e965371e705a22e9eb80ef39"
 [[ $tbsd_libwebp_repo ]]       || export tbsd_libwebp_repo="git clone https://github.com/imazen/libwebp ; cd libwebp && git reset --hard 5dc1e4b2d07f21f5248d382369fc0d2e2a06860e"
 [[ $tbsd_libraw_repo ]]        || export tbsd_libraw_repo="git clone https://github.com/imazen/libraw ; cd libraw && git reset --hard fb7444c57f8e01d6ed15f47dde3b07e264b7e83d"
-[[ $tbsd_openjpeg_repo ]]      || export tbsd_openjpeg_repo="git clone https://github.com/imazen/openjpeg-official ; cd openjpeg-official && git reset --hard 0719f0d37b5d8259c35c9468292aec867e1bb4ea"
+[[ $tbsd_openjpeg_repo ]]      || export tbsd_openjpeg_repo="git clone https://github.com/imazen/openjpeg-offical ; cd openjpeg-offical && git reset --hard 0719f0d37b5d8259c35c9468292aec867e1bb4ea"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then cp="rsync"
 else cp="cp"
