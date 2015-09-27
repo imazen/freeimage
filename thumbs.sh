@@ -68,9 +68,9 @@ targ=()
 post=()
 
 [[ $tbsd_zlib_repo ]]          || export tbsd_zlib_repo="git clone https://github.com/imazen/zlib_shallow ; cd zlib_shallow && git reset --hard 638262adec2b52e907e5703e4322a7f866896a13"
-[[ $tbsd_libpng_repo ]]        || export tbsd_libpng_repo="git clone https://github.com/imazen/libpng ; cd libpng && git reset --hard d79ed4297979ef3f795672499b764c811f5d21a4"
+[[ $tbsd_libpng_repo ]]        || export tbsd_libpng_repo="git clone https://github.com/imazen/libpng ; cd libpng && git reset --hard 8a86aae5aecc7d128011d25f6ace5b10334c724e"
 [[ $tbsd_libjpeg_turbo_repo ]] || export tbsd_libjpeg_turbo_repo="git clone https://github.com/imazen/libjpegturbo libjpeg_turbo ; cd libjpeg_turbo && git reset --hard 7f7ac7c2562afbecfd080448137543da9fc657f1"
-[[ $tbsd_libtiff_repo ]]       || export tbsd_libtiff_repo="git clone https://github.com/imazen/libtiff ; cd libtiff && git reset --hard b8b246bc81ef48e0d1eba42bfd536bab9c133284"
+[[ $tbsd_libtiff_repo ]]       || export tbsd_libtiff_repo="git clone https://github.com/imazen/libtiff ; cd libtiff && git reset --hard 7ecc87b01ee9773f5bdf02006b11c6892fa0c773"
 [[ $tbsd_libwebp_repo ]]       || export tbsd_libwebp_repo="git clone https://github.com/imazen/libwebp ; cd libwebp && git reset --hard 5dc1e4b2d07f21f5248d382369fc0d2e2a06860e"
 [[ $tbsd_libraw_repo ]]        || export tbsd_libraw_repo="git clone https://github.com/imazen/libraw ; cd libraw && git reset --hard fb7444c57f8e01d6ed15f47dde3b07e264b7e83d"
 [[ $tbsd_openjpeg_repo ]]      || export tbsd_openjpeg_repo="git clone https://github.com/imazen/openjpeg-offical ; cd openjpeg-offical && git reset --hard 5bff410c011548a168bba78ad0a5717e80b0ba51"
