@@ -88,7 +88,7 @@ if [ $tbs_fi_png -gt 0 ]; then
 fi
 
 if [ $tbs_fi_jpeg -gt 0 ]; then
-  deps+=(libjpeg_turbo); targ+=(jpeg_static)
+  deps+=(libjpeg_turbo); targ+=(jpeg-static)
   post+=("for lib in \$(./thumbs.sh list_slib); do [ -f \$lib ] && $cp -u \$lib ../../deps/$jname; done")
 fi
 
