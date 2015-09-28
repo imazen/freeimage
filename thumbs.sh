@@ -278,7 +278,7 @@ esac
 
 case "$tbs_arch" in
 x64)
-  [ $tbs_tools = msvc12 ] && cm_tools="$cm_tools Win64"
+  [ $tbs_tools = msvc12 ] && cm_tools="$cm_tools Win64" && c_flags+=" -D_CRT_SECURE_NO_WARNINGS" ;;
   [ $tbs_tools = gnu -o $tbs_tools = mingw ] && c_flags+=" -m64" ;;
 x86)
   [ $tbs_tools = gnu -o $tbs_tools = mingw ] && c_flags+=" -m32" ;;
