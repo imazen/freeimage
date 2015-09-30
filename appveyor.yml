@@ -162,7 +162,7 @@ build_script:
   # build .net unit tests
   
   - cd Wrapper\FreeImage.NET\cs\UnitTest
-  - ..\nuget restore -PackagesDirectory ..\pacakages
+  - ..\nuget restore -PackagesDirectory ..\packages
   - msbuild UnitTest.csproj /p:Configuration=Release /v:m
   - cd ..\..\..\..
 
