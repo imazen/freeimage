@@ -479,7 +479,7 @@ namespace FreeImageNETUnitTest
 			Assert.AreNotEqual(IntPtr.Zero, FreeImage.GetTransparencyTable(dib));
 			FreeImage.SetTransparent(dib, false);
 			FreeImage.SetTransparencyTable(dib, new byte[] { });
-			Assert.IsTrue(FreeImage.IsTransparent(dib), "FreeImage bitmap should not be Transparent after an empty transparency table is assigned" ); //FreeImage behavior Changed October 27th, 2012 - 3.15.4
+			Assert.IsFalse(FreeImage.IsTransparent(dib), "FreeImage bitmap should not be Transparent after an empty transparency table is assigned" ); //FreeImage behavior Changed October 27th, 2012 - 3.15.4
             Assert.IsFalse(FreeImage.HasBackgroundColor(dib), "Should not have a background color");
 			RGBQUAD rgb = Color.Teal;
 			Assert.IsTrue(FreeImage.SetBackgroundColor(dib, ref rgb));
