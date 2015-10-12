@@ -3,7 +3,7 @@
 //
 // Design and implementation by
 // - Ryan Rubley <ryan@lostreality.org>
-// - Raphaël Gaquer <raphael.gaquer@alcer.com>
+// - Raphaï¿½l Gaquer <raphael.gaquer@alcer.com>
 // - Aaron Shumate <aaron@shumate.us>
 //
 // This file is part of FreeImage 3
@@ -504,8 +504,6 @@ Validate(FreeImageIO *io, fi_handle handle) {
 		}
 	}
 
-	io->seek_proc(handle, -6, SEEK_CUR);
-
 	return bResult;
 }
 
@@ -541,8 +539,7 @@ Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 			if( !Validate(io, handle) ) {
 				throw FI_MSG_ERROR_MAGIC_NUMBER;
 			}
-			io->seek_proc(handle, 6, SEEK_CUR);
-
+			
 			//Logical Screen Descriptor
 			io->seek_proc(handle, 4, SEEK_CUR);
 			BYTE packed;
