@@ -479,8 +479,8 @@ namespace FreeImageNETUnitTest
 			Assert.AreNotEqual(IntPtr.Zero, FreeImage.GetTransparencyTable(dib));
 			FreeImage.SetTransparent(dib, false);
 			FreeImage.SetTransparencyTable(dib, new byte[] { });
-			Assert.IsTrue(FreeImage.IsTransparent(dib));
-			Assert.IsFalse(FreeImage.HasBackgroundColor(dib));
+			Assert.IsTrue(FreeImage.IsTransparent(dib), "FreeImage bitmap should be Transparent after an empty transparency table is assigned" );
+			Assert.IsFalse(FreeImage.HasBackgroundColor(dib), "Should not have a background color");
 			RGBQUAD rgb = Color.Teal;
 			Assert.IsTrue(FreeImage.SetBackgroundColor(dib, ref rgb));
 			Assert.IsTrue(FreeImage.GetBackgroundColor(dib, out rgb));
@@ -1293,9 +1293,9 @@ namespace FreeImageNETUnitTest
 			dib = iManager.GetBitmap(ImageType.Odd, ImageColorType.Type_16_555);
 			Assert.That(!dib.IsNull);
 
-			Assert.IsTrue(FreeImage.Invert(dib));
+			Assert.IsTrue(FreeImage.Invert(dib), "FreeImage.Invert should succeed on a Type_16_555 ImageType.odd image" );
 
-			FreeImage.UnloadEx(ref dib);
+            FreeImage.UnloadEx(ref dib);
 		}
 
 		[Test]
