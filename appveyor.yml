@@ -1,13 +1,13 @@
 version: 3.17.0.{build}
 shallow_clone: true
-
+os: Visual Studio 2015
 
 environment:
   pack_dlls: 1
   tbs_fi_tests: 1
   
   tbs_fi_png: 1
-  tbs_fi_jpeg: 1
+  tbs_fi_jpeg: 0
   tbs_fi_tiff: 0
   
   tbs_fi_webp: 1
