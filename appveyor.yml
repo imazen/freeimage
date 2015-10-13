@@ -7,8 +7,8 @@ environment:
   tbs_fi_tests: 1
   
   tbs_fi_png: 1
-  tbs_fi_jpeg: 0
-  tbs_fi_tiff: 0
+  tbs_fi_jpeg: 1
+  tbs_fi_tiff: 1
   
   tbs_fi_webp: 1
   tbs_fi_raw: 1
@@ -75,7 +75,7 @@ install:
       SET tbsd_libpng_built=1)
   
   - if [%tbs_fi_tiff%]==[1] (
-      nuget install libtiff-%tbs_tools%-%tbs_arch%-master -Version 4.0.6.82 -Source https://ci.appveyor.com/nuget/libtiff-i3h8tqqy7o7b &&
+      nuget install libtiff-%tbs_tools%-%tbs_arch%-master -Version 4.0.6.83 -Source https://ci.appveyor.com/nuget/libtiff-i3h8tqqy7o7b &&
       powershell -Command "move libtiff*\* deps -force" &&
       (if [%tbs_tools%]==[msvc12] move deps\tiff_static.lib deps\tiff.lib) &&
       SET tbsd_libtiff_built=1)
@@ -97,7 +97,8 @@ install:
   
   - del deps\*.dll*
   
-  
+  - 7z a deps.zip .\deps\*
+  - ps: Push-AppveyorArtifact deps.zip
   
   # get upx (cinst broken; gets dos ver)
   #- if [%pack_dlls%]==[1] cinst upx
@@ -118,7 +119,6 @@ install:
   - ps: if($env:tbs_tools -eq 'mingw' -and $env:tbs_arch -eq 'x86') {
       invoke 'curl' '-L -o mw64-32.7z "http://libgd.blob.core.windows.net/mingw/i686-4.9.1-release-posix-dwarf-rt_v3-rev1.7z"';
       invoke '7z' 'x -oC:\ mw64-32.7z'; }
-
 
 
 build_script:
