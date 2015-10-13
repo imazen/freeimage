@@ -3,4 +3,10 @@ set bin_subdir=x64
 SET PATH=%PATH%;C:\Program Files (x86)\cmake\bin
 SET PATH=%PATH%;%LOCALAPPDATA%\nasm
 SET tbs_tools=msvc14
+
+SET tbs_fi_tests=1
+SET tbs_fi_webp=1
+SET tbs_fi_raw=1
+SET tbs_fi_openjp=1
+  
 cmd /k "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall" x86_amd64

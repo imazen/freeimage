@@ -10,7 +10,8 @@ for %%i in (git.exe) do set gitexe=%%~$PATH:i
 pushd "%gitexe%\..\..\bin"
 set bashdir=%cd%
 popd
-set path=%bashdir%;%path%
+set bash_free_path=%path%
+set path=;%bashdir%;%path%
 
 
 rem copy all known env vars to bash

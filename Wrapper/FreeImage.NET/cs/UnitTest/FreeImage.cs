@@ -14022,6 +14022,10 @@ namespace FreeImageAPI.IO
 			{
 				return 1;
 			}
+            if (origin == SeekOrigin.Begin && offset < 0)
+            {
+                throw new IOException(string.Format("Attempted to seek to position {} in a stream with length of {}", offset, stream.Length));
+            }
 			stream.Seek((long)offset, origin);
 			return 0;
 		}
@@ -27482,7 +27486,7 @@ namespace FreeImageAPI
 			FreeImageIO io = FreeImageStreamIO.io;
 			using (fi_handle handle = new fi_handle(stream))
 			{
-				return GetFileTypeFromHandle(ref io, handle, 0);
+				return GetFileTypeFromHandle(ref io, handle, (int)stream.Length);
 			}
 		}
 
