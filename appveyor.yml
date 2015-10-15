@@ -16,6 +16,7 @@ environment:
   
   
   matrix:
+    fail_fast: true
     - tbs_arch: "x86"
       tbs_tools: "msvc14"
       tbs_static_runtime: 0
@@ -56,7 +57,7 @@ install:
   - nuget install zlib-%tbs_tools%-%tbs_arch%-master -Version 1.2.8.4 -Source https://ci.appveyor.com/nuget/zlib-shallow-x0n34b3pfq1b
   - ps: move zlib*\* deps -force
   - if [%tbs_tools%]==[mingw] move deps\libzlibstatic.a deps\libz.a
-  - if [%tbs_tools%]==[msvc12] move deps\zlibstatic.lib deps\zlib.lib
+  - if [%tbs_tools%]==[msvc14] move deps\zlibstatic.lib deps\zlib.lib
   - SET tbsd_zlib_built=1
   - SET tbsd_zlib_incdir=deps
   - SET tbsd_zlib_libdir=deps
@@ -64,20 +65,20 @@ install:
   - if [%tbs_fi_jpeg%]==[1] (
       nuget install libjpeg-%tbs_tools%-%tbs_arch%-master -Version 1.4.80.21 -Source https://ci.appveyor.com/nuget/libjpegturbo-o6k4js4y7pjw &&
       powershell -Command "move libjpeg*\* deps -force" &&
-      (if [%tbs_tools%]==[msvc12] move deps\jpeg_static.lib deps\jpeg.lib) &&
+      (if [%tbs_tools%]==[msvc14] move deps\jpeg-static.lib deps\jpeg.lib) &&
       SET tbsd_libjpeg_turbo_built=1)
   
   - if [%tbs_fi_png%]==[1] (
       nuget install libpng-%tbs_tools%-%tbs_arch%-master -Version 1.6.18.44 -Source https://ci.appveyor.com/nuget/libpng-7hwq4pmmrc48 &&
       powershell -Command "move libpng*\* deps -force" &&
       (if [%tbs_tools%]==[mingw] move deps\libpng16.a deps\libpng.a) &&
-      (if [%tbs_tools%]==[msvc12] move deps\libpng16_static.lib deps\png.lib) &&
+      (if [%tbs_tools%]==[msvc14] move deps\libpng16_static.lib deps\png.lib) &&
       SET tbsd_libpng_built=1)
   
   - if [%tbs_fi_tiff%]==[1] (
       nuget install libtiff-%tbs_tools%-%tbs_arch%-master -Version 4.0.6.83 -Source https://ci.appveyor.com/nuget/libtiff-i3h8tqqy7o7b &&
       powershell -Command "move libtiff*\* deps -force" &&
-      (if [%tbs_tools%]==[msvc12] move deps\tiff_static.lib deps\tiff.lib) &&
+      (if [%tbs_tools%]==[msvc14] move deps\tiff_static.lib deps\tiff.lib) &&
       SET tbsd_libtiff_built=1)
   
   - if [%tbs_fi_webp%]==[1] (
