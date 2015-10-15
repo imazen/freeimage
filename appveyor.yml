@@ -16,7 +16,7 @@ environment:
   
   
   matrix:
-    fail_fast: true
+    fast_finish: true
     - tbs_arch: "x86"
       tbs_tools: "msvc14"
       tbs_static_runtime: 0
