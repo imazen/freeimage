@@ -77,7 +77,7 @@ install:
   - if [%tbs_fi_tiff%]==[1] (
       nuget install libtiff-%tbs_tools%-%tbs_arch%-master -Version 4.0.3.47 -Source https://ci.appveyor.com/nuget/libtiff-i3h8tqqy7o7b &&
       powershell -Command "move libtiff*\* deps -force" &&
-      (if [%tbs_tools%]==[msvc12] move deps\tiff_static.lib deps\tiff.lib) &&
+      (if [%tbs_tools%]==[msvc12] move deps\tiff-static.lib deps\tiff.lib) &&
       SET tbsd_libtiff_built=1)
   
   - if [%tbs_fi_webp%]==[1] (
