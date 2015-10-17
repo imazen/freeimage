@@ -37,6 +37,7 @@
 
 #include "FreeImage.h"
 #include "Utilities.h"
+#define USE_WIN32_FILEIO
 #include "tiffiop.h"
 #include "../Metadata/FreeImageTag.h"
 #include "../OpenEXR/Half/half.h"
