@@ -10,8 +10,13 @@ for %%i in (git.exe) do set gitexe=%%~$PATH:i
 pushd "%gitexe%\..\..\bin"
 set bashdir=%cd%
 popd
+pushd "%gitexe%\..\..\usr\bin"
+set git_usrbin=%cd%
+popd
 set path=%bashdir%;%path%
 
+
+if exist "%git_usrbin%\link.exe" echo Rename "%git_usrbin%\link.exe" before continuing or build will fail. && exit /B
 
 rem copy all known env vars to bash
 
