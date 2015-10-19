@@ -158,6 +158,7 @@ build_script:
   - SET zipNet=FreeImageNET-%tbs_arch%.zip
   
   - .\thumbs make
+  - cd %APPVEYOR_BUILD_FOLDER%
   - if [%pack_dlls%]==[1] for /f "tokens=*" %%i in ('.\thumbs list_bin') do upx %%i
   - for /f "tokens=*" %%i in ('.\thumbs list') do set files=%%i
   - 7z a %zip% %files%
