@@ -22,18 +22,32 @@ environment:
     - tbs_arch: "x86"
       tbs_tools: "msvc14"
       tbs_static_runtime: 0
+      tbs_clone_all: 1
     
     - tbs_arch: "x64"
       tbs_tools: "msvc14"
       tbs_static_runtime: 0
+      tbs_clone_all: 1
+      
+    - tbs_arch: "x86"
+      tbs_tools: "msvc14"
+      tbs_static_runtime: 0
+      tbs_clone_all: 0
+      
+    - tbs_arch: "x64"
+      tbs_tools: "msvc14"
+      tbs_static_runtime: 0
+      tbs_clone_all: 0
     
     - tbs_arch: "x86"
       tbs_tools: "mingw"
       tbs_static_runtime: 1
+      tbs_clone_all: 0
     
     - tbs_arch: "x64"
       tbs_tools: "mingw"
       tbs_static_runtime: 1
+      tbs_clone_all: 0
 
 
 
@@ -64,36 +78,37 @@ install:
   - SET tbsd_zlib_incdir=deps
   - SET tbsd_zlib_libdir=deps
   
-  - if [%tbs_fi_jpeg%]==[1] (
+  - if [%tbs_fi_jpeg%]==[1] if [%tbs_clone_all%]==[0] (
       nuget install libjpeg-%tbs_tools%-%tbs_arch%-master -Version 1.4.80.21 -Source https://ci.appveyor.com/nuget/libjpegturbo-o6k4js4y7pjw &&
       powershell -Command "move libjpeg*\* deps -force" &&
       (if [%tbs_tools%]==[msvc14] move deps\jpeg-static.lib deps\jpeg.lib) &&
       SET tbsd_libjpeg_turbo_built=1)
   
-  - if [%tbs_fi_png%]==[1] (
+  - if [%tbs_fi_png%]==[1] if [%tbs_clone_all%]==[0] (
       nuget install libpng-%tbs_tools%-%tbs_arch%-master -Version 1.6.18.44 -Source https://ci.appveyor.com/nuget/libpng-7hwq4pmmrc48 &&
       powershell -Command "move libpng*\* deps -force" &&
       (if [%tbs_tools%]==[mingw] move deps\libpng16.a deps\libpng.a) &&
       (if [%tbs_tools%]==[msvc14] move deps\libpng16_static.lib deps\png.lib) &&
       SET tbsd_libpng_built=1)
   
-  - if [%tbs_fi_tiff%]==[1] (
+  - if [%tbs_fi_tiff%]==[1] if [%tbs_clone_all%]==[0] (
       nuget install libtiff-%tbs_tools%-%tbs_arch%-master -Version 4.0.6.85 -Source https://ci.appveyor.com/nuget/libtiff-i3h8tqqy7o7b &&
       powershell -Command "move libtiff*\* deps -force" &&
       (if [%tbs_tools%]==[msvc14] move deps\tiff_static.lib deps\tiff.lib) &&
       SET tbsd_libtiff_built=1)
   
-  - if [%tbs_fi_webp%]==[1] (
+  - if [%tbs_fi_webp%]==[1] if [%tbs_clone_all%]==[0] (
       nuget install libwebp-%tbs_tools%-%tbs_arch%-master -Version 0.4.3.18 -Source https://ci.appveyor.com/nuget/libwebp-nebpf5jgkaqn &&
       powershell -Command "move libwebp*\* deps -force" &&
       SET tbsd_libwebp_built=1)
   
-  - if [%tbs_fi_raw%]==[1] (
+  - if [%tbs_fi_raw%]==[1] if [%tbs_clone_all%]==[0] (
       nuget install libraw-%tbs_tools%-%tbs_arch%-master -Version 0.17.0.33 -Source https://ci.appveyor.com/nuget/libraw-er90wfvfpafj &&
       powershell -Command "move libraw*\* deps -force" &&
+      (if [%tbs_tools%]==[msvc14] move deps\raw_static.lib deps\raw.lib) &&
       SET tbsd_libraw_built=1)
   
-  - if [%tbs_fi_openjp%]==[1] (
+  - if [%tbs_fi_openjp%]==[1] if [%tbs_clone_all%]==[0] (
       nuget install openjpeg-%tbs_tools%-%tbs_arch%-master -Version 2.1.3 -Source https://ci.appveyor.com/nuget/openjpeg-offical-lq80qyghj7m5 &&
       powershell -Command "move openjpeg*\* deps -force" &&
       SET tbsd_openjpeg_built=1)
@@ -110,8 +125,12 @@ install:
       7z e upx.zip *.exe -r )
   
   # get unit test data
-  - curl -L -o utd.zip https://s3.amazonaws.com/public-unit-test-resources/FreeImage.NET/UnitTestData.zip
-  - 7z x utd.zip -oWrapper\FreeImage.NET\cs
+  - 
+  
+  
+  
+  
+  
   
   # get mingw-w64 (C:\mingw64)
   - ps: if($env:tbs_tools -eq 'mingw' -and $env:tbs_arch -eq 'x64') {
