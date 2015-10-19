@@ -26,5 +26,5 @@ popd
 
 set nunit_console=Wrapper\FreeImage.NET\cs\packages\NUnit.Runners.2.6.4\tools\nunit-console
 powershell copy $(.\thumbs list_bin) "Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\FreeImage.dll"
-REM %nunit_console%-x86  /framework:net-4.5 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
-%nunit_console%  /framework:net-4.5 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
+if [%tbs_arch%]==[x86] %nunit_console%-x86  /framework:net-4.5 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
+if [%tbs_arch%]==[x64] %nunit_console%  /framework:net-4.5 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
