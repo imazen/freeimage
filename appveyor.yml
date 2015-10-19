@@ -130,10 +130,10 @@ install:
       curl -L -o upx.zip http://libgd.blob.core.windows.net/upx/upx391w.zip &&
       7z e upx.zip *.exe -r )
   
+
   # get unit test data
-  - 
-  
-  
+  - curl -L -o utd.zip https://s3.amazonaws.com/public-unit-test-resources/FreeImage.NET/UnitTestData.zip
+  - 7z x utd.zip -oWrapper\FreeImage.NET\cs
   
   
   
@@ -157,13 +157,13 @@ build_script:
   - SET zip=freeimage-%tbs_tools%-%tbs_arch%.zip
   - SET zipNet=FreeImageNET-%tbs_arch%.zip
   
-  - thumbs make
-  - if [%pack_dlls%]==[1] for /f "tokens=*" %%i in ('thumbs list_bin') do upx %%i
-  - for /f "tokens=*" %%i in ('thumbs list') do set files=%%i
+  - .\thumbs make
+  - if [%pack_dlls%]==[1] for /f "tokens=*" %%i in ('.\thumbs list_bin') do upx %%i
+  - for /f "tokens=*" %%i in ('.\thumbs list') do set files=%%i
   - 7z a %zip% %files%
   - appveyor PushArtifact %zip%
   
-  - ps: $(.\thumbs list).split(' ') | %{copy $_ "Dist"}
+  - ps: $(.\thumbs.bat list).split(' ') | %{copy $_ "Dist"}
   
   
   # build .net wrappers
@@ -198,11 +198,11 @@ build_script:
 
 test_script:
   - SET fail=0
-  - thumbs check || SET fail=1 & ver > nul
+  - .\thumbs check || SET fail=1 & ver > nul
   - ps: Push-Ctest-Results 'build'
   - ps: Push-AppveyorArtifact build\Testing\Temporary\LastTest.log
   - exit %fail%
   
-  - ps: copy $(.\thumbs list_bin) "Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\FreeImage.dll"
+  - ps: copy $(.\thumbs.bat list_bin) "Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\FreeImage.dll"
   - if [%tbs_arch%]==[x86] nunit-console-x86 Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
   - if [%tbs_arch%]==[x64] nunit-console Wrapper\FreeImage.NET\cs\UnitTest\bin\Release\UnitTest.exe
