@@ -70,13 +70,14 @@ install:
   # fetch prebuilt deps
   - mkdir deps
   
-  - nuget install zlib-%tbs_tools%-%tbs_arch%-master -Version 1.2.8.4 -Source https://ci.appveyor.com/nuget/zlib-shallow-x0n34b3pfq1b
-  - ps: move zlib*\* deps -force
-  - if [%tbs_tools%]==[mingw] move deps\libzlibstatic.a deps\libz.a
-  - if [%tbs_tools%]==[msvc14] move deps\zlibstatic.lib deps\zlib.lib
-  - SET tbsd_zlib_built=1
-  - SET tbsd_zlib_incdir=deps
-  - SET tbsd_zlib_libdir=deps
+  - if [%tbs_clone_all%]==[0] (
+       nuget install zlib-%tbs_tools%-%tbs_arch%-master -Version 1.2.8.4 -Source https://ci.appveyor.com/nuget/zlib-shallow-x0n34b3pfq1b &&
+      powershell -Command "move zlib*\* deps -force" &&
+      (if [%tbs_tools%]==[msvc14] move deps\zlibstatic.lib deps\zlib.lib) &&
+      (if [%tbs_tools%]==[mingw] move deps\libzlibstatic.a deps\libz.a) &&
+      SET tbsd_zlib_built=1 && SET tbsd_zlib_incdir=deps && SET tbsd_zlib_libdir=deps)
+      
+      
   
   - if [%tbs_fi_jpeg%]==[1] if [%tbs_clone_all%]==[0] (
       nuget install libjpeg-%tbs_tools%-%tbs_arch%-master -Version 1.4.80.21 -Source https://ci.appveyor.com/nuget/libjpegturbo-o6k4js4y7pjw &&
