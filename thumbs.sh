@@ -35,9 +35,9 @@
 [ $tbs_fi_png ]         || export tbs_fi_png=1
 [ $tbs_fi_jpeg ]        || export tbs_fi_jpeg=1
 [ $tbs_fi_tiff ]        || export tbs_fi_tiff=1
-[ $tbs_fi_webp ]        || export tbs_fi_webp=0
-[ $tbs_fi_raw ]         || export tbs_fi_raw=0
-[ $tbs_fi_openjp ]      || export tbs_fi_openjp=0
+[ $tbs_fi_webp ]        || export tbs_fi_webp=1
+[ $tbs_fi_raw ]         || export tbs_fi_raw=1
+[ $tbs_fi_openjp ]      || export tbs_fi_openjp=1
 
 
 # tbsd_* contains dep related settings
