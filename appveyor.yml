@@ -3,7 +3,7 @@ shallow_clone: true
 os: Visual Studio 2015
 
 matrix: 
-  fast_finish: true
+  fast_finish: false
       
 environment:
   pack_dlls: 1
